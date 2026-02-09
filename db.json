@@ -1,0 +1,121 @@
+{
+  "trainingPlans": [
+    {
+      "trainingCode": "TP001",
+      "trainingType": "Technical",
+      "trainingCoverageScope": "Software Development",
+      "trainingDetails": "Advanced React and TypeScript",
+      "trainingDate": "2024-07-15",
+      "trainingTime": "10:00 AM",
+      "id": "171b"
+    },
+    {
+      "trainingCode": "TP002",
+      "trainingType": "Soft Skills",
+      "trainingCoverageScope": "Communication",
+      "trainingDetails": "Effective Communication Strategies",
+      "trainingDate": "2024-08-01",
+      "trainingTime": "2:00 PM",
+      "id": "e320"
+    },
+    {
+      "trainingCode": "TP003",
+      "trainingType": "Leadership",
+      "trainingCoverageScope": "Management",
+      "trainingDetails": "Leading High-Performance Teams",
+      "trainingDate": "2024-09-10",
+      "trainingTime": "9:00 AM",
+      "id": "1863"
+    },
+    {
+      "id": "562e",
+      "trainingCode": "T004",
+      "trainingType": "Internal",
+      "trainingCoverageScope": "HR",
+      "trainingDetails": "Theory",
+      "trainersDetails": [],
+      "trainingDate": "2025-08-27",
+      "trainingTime": "05:42"
+    },
+    {
+      "id": "01dc",
+      "trainingCode": "TP005",
+      "trainingType": "Internal",
+      "trainingCoverageScope": "HR",
+      "trainingDetails": "Theory",
+      "trainersDetails": [],
+      "trainingDate": "2025-08-25",
+      "trainingTime": "06:17"
+    },
+    {
+      "id": "15d4",
+      "trainingCode": "TP006",
+      "trainingType": "Internal",
+      "trainingCoverageScope": "HR",
+      "trainingDetails": "Theory",
+      "trainersDetails": [],
+      "trainingDate": "2025-08-26",
+      "trainingTime": "11:00:00"
+    },
+    {
+      "id": "5045",
+      "trainingCode": "TP007",
+      "trainingType": "Internal",
+      "trainingCoverageScope": "HR",
+      "trainingDetails": "Theory",
+      "trainersDetails": [],
+      "trainingDate": "2025-08-29",
+      "trainingTime": "12:01:00"
+    },
+    {
+      "id": "4ca6",
+      "trainingCode": "TP008",
+      "trainingType": "Internal",
+      "trainingCoverageScope": "HR",
+      "trainingDetails": "Theory",
+      "trainersDetails": [],
+      "trainingDate": "2025-09-01",
+      "trainingTime": "06:19"
+    },
+    {
+      "id": "e800",
+      "trainingCode": "TP009",
+      "trainingType": "Internal",
+      "trainingCoverageScope": "HR",
+      "trainingDetails": "Theory",
+      "trainersDetails": [],
+      "trainingDate": "2025-08-28",
+      "trainingTime": "11:39"
+    },
+    {
+      "id": "5f35",
+      "trainingCode": "TP010",
+      "trainingType": "Internal",
+      "trainingCoverageScope": "HR",
+      "trainingDetails": "Theory",
+      "trainersDetails": [],
+      "trainingDate": "2025-09-02",
+      "trainingTime": "04:13"
+    },
+    {
+      "id": "fc73",
+      "trainingCode": "TP011",
+      "trainingType": "Internal",
+      "trainingCoverageScope": "HR",
+      "trainingDetails": "Theory",
+      "trainersDetails": [],
+      "trainingDate": "2025-09-03",
+      "trainingTime": "11:30:00"
+    },
+    {
+      "id": "d8a8",
+      "trainingCode": "T0012",
+      "trainingType": "Internal",
+      "trainingCoverageScope": "Test",
+      "trainingDetails": "Test",
+      "trainersDetails": [],
+      "trainingDate": "2025-09-04",
+      "trainingTime": "09:46"
+    }
+  ]
+}
