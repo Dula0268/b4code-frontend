@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import type trainingPlan from "../../models/training-plan";
 
 export default async function ViewTrainingPlans() {
-  let response = await api.get<trainingPlan[]>(`trainingPlans`);
+  const response = await api.get<trainingPlan[]>(`trainingPlans`);
   const transformedData = response.data.map((item) => ({
     trainingCode: item.trainingCode,
     trainingType: item.trainingType,
@@ -46,7 +46,7 @@ export default async function ViewTrainingPlans() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transformedData.map((item: any) => (
+            {transformedData.map((item) => (
               <TableRow key={item.trainingCode}>
                 <TableCell>{item.trainingCode}</TableCell>
                 <TableCell>{item.trainingType}</TableCell>

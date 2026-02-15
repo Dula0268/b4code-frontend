@@ -23,8 +23,9 @@ export const useTrainingPlanStore = create<State>((set, get) => ({
       const response = await api.get<TrainingPlan[]>(`trainingPlans`);
       console.log("API response data:", response.data);
       set({ trainingPlanData: response.data, loading: false });
-    } catch (err: any) {
-      set({ error: err.message || 'Error fetching users', loading: false });
+    } catch (err) {
+      const error = err instanceof Error ? err.message : 'Error fetching users';
+      set({ error, loading: false });
     }
   },
 }));

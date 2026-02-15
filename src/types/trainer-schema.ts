@@ -1,4 +1,3 @@
-import { id } from 'date-fns/locale';
 import { z } from 'zod';
 
 const TrainerDetailsSchema = z.object({

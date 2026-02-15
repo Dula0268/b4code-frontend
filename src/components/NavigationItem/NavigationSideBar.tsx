@@ -7,9 +7,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarSeparator,
 } from "../ui/sidebar";
 
 import {
