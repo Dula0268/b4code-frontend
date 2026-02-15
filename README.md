@@ -1,36 +1,116 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🏨 Hospitality Booking & F&B Platform — Frontend
 
-## Getting Started
+A modern hospitality marketplace frontend built with Next.js for seamless property booking, guest management, QR-based F&B ordering, and enterprise-grade admin controls.
+Designed for scalability, performance, and clean UX using Tailwind CSS + shadcn/ui.
 
-First, run the development server:
+This repository contains only the frontend application. Backend services are maintained in a separate repository.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+✨ Features
+👤 User Roles
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+    Guest: Browse properties, book rooms, order food via QR
+    Property Owner: Manage listings, availability, pricing
+    Staff: Handle orders, bookings, service status
+    Admin: Platform health, moderation, audit logs, payouts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+🧭 Core Capabilities
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+    🔎 Property discovery & booking flow
+    ⏱️ Fast search → booking → confirmation UX
+    📱 QR-based F&B ordering
+    📊 Admin dashboard with platform health metrics
+    🛡️ Role-based access (RBAC/ABAC ready)
+    📜 Audit logs & downloadable activity reports
+    💸 Payout & payment oversight
 
-## Learn More
+🧱 Tech Stack - Frontend
 
-To learn more about Next.js, take a look at the following resources:
+    Framework: Next.js (App Router, SSR & SSG)
+    Language: TypeScript
+    State Management: Zustand
+    Styling: Tailwind CSS + shadcn/ui
+    Forms: React Hook Form
+    Validation: Zod
+    File Handling: React Dropzone, PDF.js Viewer
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Auth & API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+    JWT-based authentication
+    REST API integration (Spring Boot backend)
 
-## Deploy on Vercel
+🧭 Project Structure
+    frontend/
+    ├─ app/                 # Next.js App Router pages
+    │  ├─ (auth)/           # Login / Register
+    │  ├─ admin/            # Admin Console (Student 5)
+    │  ├─ owner/            # Owner dashboards
+    │  ├─ staff/            # Staff panels
+    │  └─ guest/            # Guest-facing pages
+    ├─ components/          # Shared UI components
+    ├─ store/               # Zustand stores
+    ├─ lib/                 # API clients, helpers
+    ├─ hooks/               # Custom React hooks
+    ├─ styles/              # Global styles
+    ├─ public/              # Static assets
+    └─ .github/workflows/   # CI pipelines
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+🚀 Quick Start (Local Development)
+Prerequisites
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    Node.js 18+
+    npm or pnpm
+    Backend API running locally or remotely
+
+1️⃣ Clone Repository
+    git clone https://github.com/Dula0268/b4code-frontend.git
+    cd frontend
+
+2️⃣ Environment Setup
+Create a .env.local file in the root:
+
+NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_APP_NAME=Hospitality Booking Platform
+
+3️⃣ Install Dependencies
+    npm install
+
+4️⃣ Run Development Server
+    npm run dev
+
+
+App runs at:
+👉 http://localhost:3000
+
+🔐 Authentication Flow
+
+    Login returns JWT access + refresh tokens
+    Tokens stored securely (HTTP-only cookie or memory)
+    Protected routes via middleware
+    Role-based routing (Admin / Owner / Staff / Guest)
+
+🧪 Scripts
+    npm run dev      # Start dev server
+    npm run build    # Production build
+    npm run start    # Start production server
+    npm run lint     # Run ESLint
+
+🔄 CI Integration
+GitHub Actions pipeline runs on Pull Requests:
+
+    Dependency install
+    Lint checks
+    Build validation
+
+Location: .github/workflows/frontend-ci.yml
+
+✨Branch Naming Convention
+
+    feature/<feature-name>-<member>
+    fix/<issue-name>-<member>
+    refactor/<scope>-<member>
+
+✨commit syntaxs 
+
+    git add .
+    git commit -m "Commit massage"
+    git push origin feature/frontend-readme-buddhika
