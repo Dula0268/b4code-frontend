@@ -11,6 +11,8 @@ import {
 import { Card } from "@/components/ui/card";
 import type trainingPlan from "../../models/training-plan";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ViewTrainingPlans() {
   const response = await api.get<trainingPlan[]>(`trainingPlans`);
   const transformedData = response.data.map((item) => ({
