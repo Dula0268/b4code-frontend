@@ -114,3 +114,13 @@ Location: .github/workflows/frontend-ci.yml
     git add .
     git commit -m "Commit massage"
     git push origin feature/frontend-readme-buddhika
+
+## 🐳 Docker (Frontend Only)
+
+### Prerequisites
+- Docker Desktop (WSL2 enabled)
+
+### Setup
+```bash
+cp .env.example .env
+docker compose up --build
