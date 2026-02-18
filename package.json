@@ -1,12 +1,19 @@
 {
-  "name": "training-and-dev-template",
+  "name": "b4code-frontend",
   "version": "0.1.0",
   "private": true,
+  "description": "Frontend for the Hospitality Booking & F&B Platform",
+  "author": "B4Code Team ",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dula0268/b4code-frontend.git"
+  },
+  "license": "MIT",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -19,7 +26,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-table": "^8.21.3",
-    "axios": "^1.11.0",
+    "axios": "^1.13.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
