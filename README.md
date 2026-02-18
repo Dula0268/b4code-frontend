@@ -250,6 +250,17 @@ refactor/<scope>-<member>
 ```bash
 git add .
 git commit -m "feat: add guest booking flow"
+                feat     → new feature
+                fix      → bug fix
+                style    → UI/design change only
+                refactor → code improvement (no feature change)
+                perf     → performance improvement
+                test     → adding or updating tests
+                docs     → documentation only
+                chore    → maintenance/config/dependency update
+                build    → build system / docker / env changes
+                ci       → CI/CD pipeline changes
+                remove   → deleting unused code/files
 git push origin feature/guest-booking-membername
 ```
 
