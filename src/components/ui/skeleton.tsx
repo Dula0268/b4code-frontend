@@ -1,10 +1,13 @@
-export default function Placeholder() {
+import { cn } from "@/lib/utils"
+
+function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div style={{ padding: 16, border: "1px dashed #ccc", borderRadius: 12 }}>
-      <h3 style={{ margin: 0, fontWeight: 600 }}>ui/skeleton.tsx (shadcn placeholder)</h3>
-      <p style={{ marginTop: 8, color: "#666" }}>
-        Placeholder component. Replace with real UI.
-      </p>
-    </div>
-  );
+    <div
+      data-slot="skeleton"
+      className={cn("bg-accent animate-pulse rounded-md", className)}
+      {...props}
+    />
+  )
 }
+
+export { Skeleton }
