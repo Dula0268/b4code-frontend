@@ -91,7 +91,7 @@ export default function AdminSidebar() {
                         marginTop: "6px",
                         fontSize: "15px",
                         fontWeight: 400,
-                        color: "var(--gray-3)",
+                        color: "rgba(149, 48, 2, 0.7)",
                         letterSpacing: "0.01em",
                     }}
                 >
@@ -127,27 +127,27 @@ export default function AdminSidebar() {
                                         textDecoration: "none",
                                         fontWeight: isActive ? 600 : 400,
                                         fontSize: "14px",
-                                        color: isActive ? "var(--brand-primary)" : "var(--gray-2)",
+                                        color: isActive ? "var(--brand-primary)" : "var(--black-1)",
                                         backgroundColor: isActive ? "rgba(149, 48, 2, 0.08)" : "transparent",
                                         transition: "background-color 0.15s ease, color 0.15s ease",
                                     }}
                                     onMouseEnter={(e) => {
                                         if (!isActive) {
-                                            (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "var(--gray-5)";
-                                            (e.currentTarget as HTMLAnchorElement).style.color = "var(--gray-1)";
+                                            (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "rgba(109, 34, 0, 0.1)";
+                                            (e.currentTarget as HTMLAnchorElement).style.color = "var(--primary-hover)";
                                         }
                                     }}
                                     onMouseLeave={(e) => {
                                         if (!isActive) {
                                             (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "transparent";
-                                            (e.currentTarget as HTMLAnchorElement).style.color = "var(--gray-2)";
+                                            (e.currentTarget as HTMLAnchorElement).style.color = "var(--black-1)";
                                         }
                                     }}
                                 >
                                     <Icon
                                         size={18}
                                         style={{
-                                            color: isActive ? "var(--brand-primary)" : "var(--gray-3)",
+                                            color: isActive ? "var(--brand-primary)" : "var(--black-1)",
                                             flexShrink: 0,
                                         }}
                                     />
@@ -183,24 +183,24 @@ export default function AdminSidebar() {
                             textDecoration: "none",
                             fontSize: "14px",
                             fontWeight: pathname === "/admin/settings" ? 600 : 400,
-                            color: pathname === "/admin/settings" ? "var(--brand-primary)" : "var(--gray-2)",
+                            color: pathname === "/admin/settings" ? "var(--brand-primary)" : "var(--black-1)",
                             backgroundColor: pathname === "/admin/settings" ? "rgba(149, 48, 2, 0.08)" : "transparent",
                             transition: "background-color 0.15s ease, color 0.15s ease",
                         }}
                         onMouseEnter={(e) => {
                             if (pathname !== "/admin/settings") {
-                                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "var(--gray-5)";
-                                (e.currentTarget as HTMLAnchorElement).style.color = "var(--gray-1)";
+                                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "rgba(109, 34, 0, 0.1)";
+                                (e.currentTarget as HTMLAnchorElement).style.color = "var(--primary-hover)";
                             }
                         }}
                         onMouseLeave={(e) => {
                             if (pathname !== "/admin/settings") {
                                 (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "transparent";
-                                (e.currentTarget as HTMLAnchorElement).style.color = "var(--gray-2)";
+                                (e.currentTarget as HTMLAnchorElement).style.color = "var(--black-1)";
                             }
                         }}
                     >
-                        <Settings size={18} style={{ color: "var(--gray-3)", flexShrink: 0 }} />
+                        <Settings size={18} style={{ color: "var(--black-1)", flexShrink: 0 }} />
                         <span>Settings</span>
                     </Link>
 
@@ -221,7 +221,7 @@ export default function AdminSidebar() {
                             cursor: "pointer",
                             fontSize: "14px",
                             fontWeight: 400,
-                            color: "var(--gray-2)",
+                            color: "var(--black-1)",
                             width: "100%",
                             textAlign: "left",
                             transition: "background-color 0.15s ease, color 0.15s ease",
@@ -232,10 +232,10 @@ export default function AdminSidebar() {
                         }}
                         onMouseLeave={(e) => {
                             (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                            (e.currentTarget as HTMLButtonElement).style.color = "var(--gray-2)";
+                            (e.currentTarget as HTMLButtonElement).style.color = "var(--black-1)";
                         }}
                     >
-                        <LogOut size={18} style={{ color: "var(--gray-3)", flexShrink: 0 }} />
+                        <LogOut size={18} style={{ color: "var(--black-1)", flexShrink: 0 }} />
                         <span>Log Out</span>
                     </button>
                 </div>
