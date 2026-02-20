@@ -184,16 +184,8 @@ function ActivityIcon({ type }: { type: ActionType }) {
   const { bg, icon } = cfg[type];
   return (
     <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "26px",
-        height: "26px",
-        borderRadius: "50%",
-        backgroundColor: bg,
-        flexShrink: 0,
-      }}
+      className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-full flex-shrink-0"
+      style={{ backgroundColor: bg }}
     >
       {icon}
     </span>
@@ -208,37 +200,12 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: "24px",
-        right: "24px",
-        zIndex: 999,
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-        background: "#fff",
-        borderRadius: "12px",
-        padding: "14px 18px",
-        boxShadow: "0 6px 24px rgba(0,0,0,0.12)",
-        border: "1px solid #e8f5e9",
-        animation: "slideIn 0.25s ease",
-      }}
-    >
+    <div className="fixed top-6 right-6 z-[999] flex items-center gap-[10px] bg-white rounded-xl px-[18px] py-[14px] shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-[#e8f5e9] animate-[slideIn_0.25s_ease]">
       <CheckCircle2 size={18} color="#27ae60" />
-      <span style={{ fontSize: "14px", fontWeight: 600, color: "#1d1d1d" }}>
-        {message}
-      </span>
+      <span className="text-sm font-semibold text-[#1d1d1d]">{message}</span>
       <button
         onClick={onClose}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#888",
-          marginLeft: "4px",
-          display: "flex",
-        }}
+        className="bg-transparent border-none cursor-pointer text-[#888] ml-1 flex"
       >
         <X size={15} />
       </button>
@@ -259,101 +226,35 @@ function ResetPasswordModal({
 }) {
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 998,
-        backgroundColor: "rgba(0,0,0,0.45)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      className="fixed inset-0 z-[998] bg-black/45 flex items-center justify-center"
       onClick={onClose}
     >
       <div
-        style={{
-          background: "#fff",
-          borderRadius: "16px",
-          padding: "36px 32px",
-          width: "420px",
-          boxShadow: "0 12px 40px rgba(0,0,0,0.18)",
-        }}
+        className="bg-white rounded-2xl px-8 py-9 w-[420px] shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Icon */}
-        <div
-          style={{
-            width: "52px",
-            height: "52px",
-            borderRadius: "50%",
-            backgroundColor: "rgba(149,48,2,0.1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: "18px",
-          }}
-        >
+        <div className="w-[52px] h-[52px] rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center mb-[18px]">
           <RotateCcw size={22} color="var(--brand-primary)" />
         </div>
-        <h2
-          style={{
-            margin: "0 0 8px",
-            fontSize: "20px",
-            fontWeight: 700,
-            color: "var(--black-2)",
-          }}
-        >
+        <h2 className="m-0 mb-2 text-xl font-bold text-[var(--black-2)]">
           Reset Password?
         </h2>
-        <p
-          style={{
-            margin: "0 0 28px",
-            fontSize: "14px",
-            color: "var(--gray-3)",
-            lineHeight: 1.6,
-          }}
-        >
+        <p className="m-0 mb-7 text-sm text-[var(--gray-3)] leading-relaxed">
           A secure reset link will be sent to
           <br />
-          <strong style={{ color: "var(--black-2)" }}>{email}</strong>
+          <strong className="text-[var(--black-2)]">{email}</strong>
         </p>
-        <div
-          style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
-        >
+        <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}
-            style={{
-              padding: "10px 22px",
-              borderRadius: "10px",
-              border: "1px solid var(--gray-5)",
-              background: "#fff",
-              fontSize: "14px",
-              fontWeight: 600,
-              color: "var(--gray-2)",
-              cursor: "pointer",
-            }}
+            className="px-[22px] py-[10px] rounded-[10px] border border-[var(--gray-5)] bg-white text-sm font-semibold text-[var(--gray-2)] cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={onSend}
-            style={{
-              padding: "10px 22px",
-              borderRadius: "10px",
-              border: "none",
-              backgroundColor: "var(--brand-primary)",
-              color: "#fff",
-              fontSize: "14px",
-              fontWeight: 700,
-              cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(149,48,2,0.25)",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "var(--primary-hover)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "var(--brand-primary)")
-            }
+            className="px-[22px] py-[10px] rounded-[10px] border-none bg-[var(--brand-primary)] text-white text-sm font-bold cursor-pointer shadow-[0_2px_8px_rgba(149,48,2,0.25)] hover:bg-[var(--primary-hover)]"
           >
             Send Reset Link
           </button>
@@ -400,148 +301,54 @@ export default function UserDetailPage() {
         />
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div className="flex flex-col gap-6">
         {/* ── Breadcrumb ── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            fontSize: "14px",
-          }}
-        >
+        <div className="flex items-center gap-1.5 text-sm">
           <button
             onClick={() => router.back()}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--gray-3)",
-              fontSize: "14px",
-              padding: 0,
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = "var(--black-2)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = "var(--gray-3)")
-            }
+            className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-[var(--gray-3)] text-sm p-0 hover:text-[var(--black-2)]"
           >
             <ArrowLeft size={14} />
             User Management
           </button>
           <ChevronRight size={14} color="var(--gray-4)" />
-          <span style={{ color: "var(--brand-primary)", fontWeight: 600 }}>
+          <span className="text-[var(--brand-primary)] font-semibold">
             Account Details
           </span>
         </div>
 
         {/* ── Profile Header Card ── */}
-        <div
-          style={{
-            backgroundColor: "#fff",
-            borderRadius: "16px",
-            padding: "24px 28px",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-            display: "flex",
-            alignItems: "center",
-            gap: "20px",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="bg-white rounded-2xl px-7 py-6 shadow-sm flex items-center gap-5 flex-wrap">
           {/* Avatar */}
-          <div style={{ position: "relative", flexShrink: 0 }}>
+          <div className="relative flex-shrink-0">
             <div
-              style={{
-                width: "72px",
-                height: "72px",
-                borderRadius: "50%",
-                backgroundColor: user.avatarColor,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-                fontWeight: 800,
-                fontSize: "26px",
-              }}
+              className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-white font-extrabold text-[26px]"
+              style={{ backgroundColor: user.avatarColor }}
             >
               {user.avatarInitial}
             </div>
             {/* Online dot */}
             <span
-              style={{
-                position: "absolute",
-                bottom: "4px",
-                right: "4px",
-                width: "12px",
-                height: "12px",
-                borderRadius: "50%",
-                backgroundColor: suspended ? "#eb5757" : "#27ae60",
-                border: "2px solid #fff",
-              }}
+              className="absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white"
+              style={{ backgroundColor: suspended ? "#eb5757" : "#27ae60" }}
             />
           </div>
 
           {/* Name / email / badges */}
-          <div style={{ flex: 1, minWidth: "200px" }}>
-            <h1
-              style={{
-                margin: "0 0 4px",
-                fontSize: "22px",
-                fontWeight: 800,
-                color: "var(--black-2)",
-              }}
-            >
+          <div className="flex-1 min-w-[200px]">
+            <h1 className="m-0 mb-1 text-[22px] font-extrabold text-[var(--black-2)]">
               {user.name}
             </h1>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                flexWrap: "wrap",
-              }}
-            >
-              <span style={{ fontSize: "14px", color: "var(--gray-3)" }}>
-                {user.email}
-              </span>
-              <span
-                style={{
-                  width: "4px",
-                  height: "4px",
-                  borderRadius: "50%",
-                  backgroundColor: "var(--gray-4)",
-                  flexShrink: 0,
-                }}
-              />
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-[var(--gray-3)]">{user.email}</span>
+              <span className="w-1 h-1 rounded-full bg-[var(--gray-4)] flex-shrink-0" />
               {/* Role badge */}
-              <span
-                style={{
-                  padding: "2px 10px",
-                  borderRadius: "999px",
-                  backgroundColor: "rgba(155,89,182,0.12)",
-                  color: "#7d3c98",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                }}
-              >
+              <span className="px-[10px] py-[2px] rounded-full bg-[rgba(155,89,182,0.12)] text-[#7d3c98] text-xs font-bold">
                 {user.role}
               </span>
               {/* Suspended badge (only when suspended) */}
               {suspended && (
-                <span
-                  style={{
-                    padding: "2px 10px",
-                    borderRadius: "999px",
-                    backgroundColor: "rgba(235,87,87,0.12)",
-                    color: "#b83030",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                  }}
-                >
+                <span className="px-[10px] py-[2px] rounded-full bg-[rgba(235,87,87,0.12)] text-[#b83030] text-xs font-bold">
                   Suspended
                 </span>
               )}
@@ -549,39 +356,11 @@ export default function UserDetailPage() {
           </div>
 
           {/* Action buttons */}
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              flexShrink: 0,
-              flexWrap: "wrap",
-            }}
-          >
+          <div className="flex gap-3 flex-shrink-0 flex-wrap">
             {/* Reset Password */}
             <button
               onClick={() => setShowResetModal(true)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "7px",
-                padding: "10px 18px",
-                borderRadius: "10px",
-                border: "1.5px solid var(--gray-5)",
-                backgroundColor: "#fff",
-                fontSize: "14px",
-                fontWeight: 600,
-                color: "var(--black-2)",
-                cursor: "pointer",
-                transition: "border-color 0.15s, color 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--brand-primary)";
-                e.currentTarget.style.color = "var(--brand-primary)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--gray-5)";
-                e.currentTarget.style.color = "var(--black-2)";
-              }}
+              className="flex items-center gap-[7px] px-[18px] py-[10px] rounded-[10px] border-[1.5px] border-[var(--gray-5)] bg-white text-sm font-semibold text-[var(--black-2)] cursor-pointer transition-colors hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
             >
               <RotateCcw size={15} />
               Reset Password
@@ -590,31 +369,11 @@ export default function UserDetailPage() {
             {/* Suspend / Reactivate */}
             <button
               onClick={handleSuspendToggle}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "7px",
-                padding: "10px 18px",
-                borderRadius: "10px",
-                border: "none",
-                backgroundColor: suspended
-                  ? "var(--state-success)"
-                  : "var(--state-error)",
-                color: "#fff",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: "pointer",
-                boxShadow: suspended
-                  ? "0 2px 8px rgba(39,174,96,0.3)"
-                  : "0 2px 8px rgba(235,87,87,0.3)",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.88";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
+              className={`flex items-center gap-[7px] px-[18px] py-[10px] rounded-[10px] border-none text-white text-sm font-semibold cursor-pointer transition-opacity hover:opacity-88 ${
+                suspended
+                  ? "bg-[var(--state-success)] shadow-[0_2px_8px_rgba(39,174,96,0.3)]"
+                  : "bg-[var(--state-error)] shadow-[0_2px_8px_rgba(235,87,87,0.3)]"
+              }`}
             >
               {suspended ? <RefreshCw size={15} /> : <ShieldOff size={15} />}
               {suspended ? "Reactivate Account" : "Suspend Account"}
@@ -623,31 +382,10 @@ export default function UserDetailPage() {
         </div>
 
         {/* ── Two-column body ── */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1.7fr",
-            gap: "20px",
-            alignItems: "start",
-          }}
-        >
+        <div className="grid grid-cols-[1fr_1.7fr] gap-5 items-start">
           {/* ── Account Information ── */}
-          <div
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: "16px",
-              padding: "24px 28px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-            }}
-          >
-            <h2
-              style={{
-                margin: "0 0 22px",
-                fontSize: "16px",
-                fontWeight: 700,
-                color: "var(--black-2)",
-              }}
-            >
+          <div className="bg-white rounded-2xl px-7 py-6 shadow-sm">
+            <h2 className="m-0 mb-[22px] text-base font-bold text-[var(--black-2)]">
               Account Information
             </h2>
             {[
@@ -685,45 +423,15 @@ export default function UserDetailPage() {
           </div>
 
           {/* ── Activity Log ── */}
-          <div
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: "16px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-              overflow: "hidden",
-            }}
-          >
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             {/* Header */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "20px 24px 0",
-              }}
-            >
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  color: "var(--black-2)",
-                }}
-              >
+            <div className="flex justify-between items-center px-6 pt-5">
+              <h2 className="m-0 text-base font-bold text-[var(--black-2)]">
                 Activity Log
               </h2>
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div className="flex gap-2">
                 {/* Filter icon */}
-                <button
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--gray-3)",
-                    display: "flex",
-                    padding: "4px",
-                  }}
-                >
+                <button className="bg-transparent border-none cursor-pointer text-[var(--gray-3)] flex p-1">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path
                       d="M2 4h12M4 8h8M6 12h4"

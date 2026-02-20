@@ -2,303 +2,425 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronDown, MoreVertical, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
+import {
+  Search,
+  ChevronDown,
+  MoreVertical,
+  ChevronLeft,
+  ChevronRight,
+  UserPlus,
+} from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type UserRole = "Owner" | "Staff";
 type UserStatus = "Active" | "Suspended";
 
 interface User {
-    id: string;
-    name: string;
-    email: string;
-    avatarColor: string;
-    avatarInitial: string;
-    role: UserRole;
-    status: UserStatus;
-    lastLogin: string;
-    lastLoginTime: string;
+  id: string;
+  name: string;
+  email: string;
+  avatarColor: string;
+  avatarInitial: string;
+  role: UserRole;
+  status: UserStatus;
+  lastLogin: string;
+  lastLoginTime: string;
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 const ALL_USERS: User[] = [
-    { id: "1", name: "Sarah Jenkins", email: "sarah.j@primestay.com", avatarColor: "#f4a261", avatarInitial: "S", role: "Owner", status: "Active", lastLogin: "Oct 24, 2023", lastLoginTime: "09:41 AM" },
-    { id: "2", name: "Mike Ross", email: "mike.ross@primestay.com", avatarColor: "#2f80ed", avatarInitial: "M", role: "Staff", status: "Active", lastLogin: "Oct 23, 2023", lastLoginTime: "02:15 PM" },
-    { id: "3", name: "John Doe", email: "john.d@gmail.com", avatarColor: "#953002", avatarInitial: "J", role: "Staff", status: "Suspended", lastLogin: "Sep 12, 2023", lastLoginTime: "11:00 AM" },
-    { id: "4", name: "Emily Chen", email: "emily.chen@primestay.com", avatarColor: "#27ae60", avatarInitial: "E", role: "Owner", status: "Active", lastLogin: "Oct 24, 2023", lastLoginTime: "08:30 AM" },
-    { id: "5", name: "Aisha Kumar", email: "aisha.k@primestay.com", avatarColor: "#e67e22", avatarInitial: "A", role: "Staff", status: "Active", lastLogin: "Oct 21, 2023", lastLoginTime: "03:40 PM" },
-    { id: "6", name: "Nina Patel", email: "nina.patel@primestay.com", avatarColor: "#e84393", avatarInitial: "N", role: "Owner", status: "Active", lastLogin: "Oct 24, 2023", lastLoginTime: "07:55 AM" },
-    { id: "7", name: "Daniel Osei", email: "daniel.o@primestay.com", avatarColor: "#16a085", avatarInitial: "D", role: "Staff", status: "Active", lastLogin: "Oct 20, 2023", lastLoginTime: "11:30 AM" },
-    { id: "8", name: "Priya Sharma", email: "priya.s@primestay.com", avatarColor: "#8e44ad", avatarInitial: "P", role: "Owner", status: "Suspended", lastLogin: "Oct 19, 2023", lastLoginTime: "02:00 PM" },
+  {
+    id: "1",
+    name: "Sarah Jenkins",
+    email: "sarah.j@primestay.com",
+    avatarColor: "#f4a261",
+    avatarInitial: "S",
+    role: "Owner",
+    status: "Active",
+    lastLogin: "Oct 24, 2023",
+    lastLoginTime: "09:41 AM",
+  },
+  {
+    id: "2",
+    name: "Mike Ross",
+    email: "mike.ross@primestay.com",
+    avatarColor: "#2f80ed",
+    avatarInitial: "M",
+    role: "Staff",
+    status: "Active",
+    lastLogin: "Oct 23, 2023",
+    lastLoginTime: "02:15 PM",
+  },
+  {
+    id: "3",
+    name: "John Doe",
+    email: "john.d@gmail.com",
+    avatarColor: "#953002",
+    avatarInitial: "J",
+    role: "Staff",
+    status: "Suspended",
+    lastLogin: "Sep 12, 2023",
+    lastLoginTime: "11:00 AM",
+  },
+  {
+    id: "4",
+    name: "Emily Chen",
+    email: "emily.chen@primestay.com",
+    avatarColor: "#27ae60",
+    avatarInitial: "E",
+    role: "Owner",
+    status: "Active",
+    lastLogin: "Oct 24, 2023",
+    lastLoginTime: "08:30 AM",
+  },
+  {
+    id: "5",
+    name: "Aisha Kumar",
+    email: "aisha.k@primestay.com",
+    avatarColor: "#e67e22",
+    avatarInitial: "A",
+    role: "Staff",
+    status: "Active",
+    lastLogin: "Oct 21, 2023",
+    lastLoginTime: "03:40 PM",
+  },
+  {
+    id: "6",
+    name: "Nina Patel",
+    email: "nina.patel@primestay.com",
+    avatarColor: "#e84393",
+    avatarInitial: "N",
+    role: "Owner",
+    status: "Active",
+    lastLogin: "Oct 24, 2023",
+    lastLoginTime: "07:55 AM",
+  },
+  {
+    id: "7",
+    name: "Daniel Osei",
+    email: "daniel.o@primestay.com",
+    avatarColor: "#16a085",
+    avatarInitial: "D",
+    role: "Staff",
+    status: "Active",
+    lastLogin: "Oct 20, 2023",
+    lastLoginTime: "11:30 AM",
+  },
+  {
+    id: "8",
+    name: "Priya Sharma",
+    email: "priya.s@primestay.com",
+    avatarColor: "#8e44ad",
+    avatarInitial: "P",
+    role: "Owner",
+    status: "Suspended",
+    lastLogin: "Oct 19, 2023",
+    lastLoginTime: "02:00 PM",
+  },
 ];
 
 const PAGE_SIZE = 6;
 
 // ─── Role Badge ───────────────────────────────────────────────────────────────
 function RoleBadge({ role }: { role: UserRole }) {
-    const cfg: Record<UserRole, { bg: string; color: string }> = {
-        Owner: { bg: "rgba(155,89,182,0.12)", color: "#7d3c98" },
-        Staff: { bg: "rgba(47,128,237,0.12)", color: "#1a5fa8" },
-
-    };
-    const { bg, color } = cfg[role];
-    return (
-        <span style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", backgroundColor: bg, color, fontSize: "12px", fontWeight: 600 }}>
-            {role}
-        </span>
-    );
+  const cfg: Record<UserRole, string> = {
+    Owner: "bg-[rgba(155,89,182,0.12)] text-[#7d3c98]",
+    Staff: "bg-[rgba(47,128,237,0.12)] text-[#1a5fa8]",
+  };
+  return (
+    <span
+      className={`inline-block px-3 py-[3px] rounded-full text-xs font-semibold ${cfg[role]}`}
+    >
+      {role}
+    </span>
+  );
 }
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: UserStatus }) {
-    const cfg: Record<UserStatus, { bg: string; dot: string; color: string }> = {
-        Active: { bg: "rgba(39,174,96,0.12)", dot: "#27ae60", color: "#1a7a45" },
-        Suspended: { bg: "rgba(235,87,87,0.12)", dot: "#eb5757", color: "#b83030" },
-    };
-    const { bg, dot, color } = cfg[status];
-    return (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 12px", borderRadius: "999px", backgroundColor: bg, color, fontSize: "12px", fontWeight: 600 }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: dot, flexShrink: 0 }} />
-            {status}
-        </span>
-    );
+  const cfg: Record<UserStatus, { class: string; dot: string }> = {
+    Active: {
+      class: "bg-[rgba(39,174,96,0.12)] text-[#1a7a45]",
+      dot: "#27ae60",
+    },
+    Suspended: {
+      class: "bg-[rgba(235,87,87,0.12)] text-[#b83030]",
+      dot: "#eb5757",
+    },
+  };
+  const { class: classNames, dot } = cfg[status];
+  return (
+    <span
+      className={`inline-flex items-center gap-[5px] px-3 py-[3px] rounded-full text-xs font-semibold ${classNames}`}
+    >
+      <span
+        className="w-[6px] h-[6px] rounded-full flex-shrink-0"
+        style={{ backgroundColor: dot }}
+      />
+      {status}
+    </span>
+  );
 }
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 function UserAvatar({ user }: { user: User }) {
-    return (
-        <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: user.avatarColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", fontWeight: 700, fontSize: "14px" }}>
-            {user.avatarInitial}
-        </div>
-    );
+  return (
+    <div
+      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
+      style={{ backgroundColor: user.avatarColor }}
+    >
+      {user.avatarInitial}
+    </div>
+  );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function UsersManagementPage() {
-    const [search, setSearch] = useState("");
-    const [roleFilter, setRoleFilter] = useState<"All" | UserRole>("All");
-    const [roleOpen, setRoleOpen] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"All" | UserRole>("All");
+  const [roleOpen, setRoleOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const router = useRouter();
 
-    // ── Filter ──
-    const filtered = ALL_USERS.filter((u) => {
-        const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) ||
-            u.email.toLowerCase().includes(search.toLowerCase()) ||
-            u.role.toLowerCase().includes(search.toLowerCase());
-        const matchRole = roleFilter === "All" || u.role === roleFilter;
-        return matchSearch && matchRole;
-    });
+  // ── Filter ──
+  const filtered = ALL_USERS.filter((u) => {
+    const matchSearch =
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase()) ||
+      u.role.toLowerCase().includes(search.toLowerCase());
+    const matchRole = roleFilter === "All" || u.role === roleFilter;
+    return matchSearch && matchRole;
+  });
 
-    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-    const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
-    const roles: ("All" | UserRole)[] = ["All", "Owner", "Staff"];
+  const roles: ("All" | UserRole)[] = ["All", "Owner", "Staff"];
 
-    return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-
-            {/* ── Page Header ── */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                    <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "var(--black-2)" }}>User Management</h1>
-                    <p style={{ margin: "6px 0 0", fontSize: "14px", color: "var(--gray-3)" }}>Manage platform access, roles, and account statuses.</p>
-                </div>
-                <button
-                    style={{
-                        display: "flex", alignItems: "center", gap: "8px",
-                        padding: "10px 20px", borderRadius: "10px",
-                        backgroundColor: "var(--brand-primary)", color: "#fff",
-                        border: "none", cursor: "pointer",
-                        fontSize: "14px", fontWeight: 600,
-                        boxShadow: "0 2px 8px rgba(149,48,2,0.25)",
-                        transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--primary-hover)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--brand-primary)")}
-                >
-                    <UserPlus size={16} />
-                    Add New User
-                </button>
-            </div>
-
-            {/* ── Table Card ── */}
-            <div style={{ backgroundColor: "#fff", borderRadius: "16px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", overflow: "hidden" }}>
-
-                {/* ── Toolbar ── */}
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px 20px", borderBottom: "1px solid var(--gray-5)" }}>
-                    {/* Search */}
-                    <div style={{ position: "relative", flex: 1, maxWidth: "340px" }}>
-                        <Search size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--gray-4)", pointerEvents: "none" }} />
-                        <input
-                            placeholder="Search by name, email, or role..."
-                            value={search}
-                            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                            style={{
-                                width: "100%", padding: "9px 12px 9px 36px",
-                                borderRadius: "8px", border: "1px solid var(--gray-5)",
-                                fontSize: "13px", color: "var(--black-2)",
-                                backgroundColor: "#fff", outline: "none",
-                                boxSizing: "border-box",
-                            }}
-                        />
-                    </div>
-
-                    {/* Spacer */}
-                    <div style={{ flex: 1 }} />
-
-                    {/* Filter by Role */}
-                    <div style={{ position: "relative" }}>
-                        <button
-                            onClick={() => setRoleOpen(!roleOpen)}
-                            style={{
-                                display: "flex", alignItems: "center", gap: "7px",
-                                padding: "8px 14px", borderRadius: "8px",
-                                border: "1px solid var(--gray-5)", backgroundColor: "#fff",
-                                fontSize: "13px", color: "var(--gray-2)", cursor: "pointer",
-                            }}
-                        >
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                <path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                            {roleFilter === "All" ? "Filter by Role" : roleFilter}
-                            <ChevronDown size={13} />
-                        </button>
-                        {roleOpen && (
-                            <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, backgroundColor: "#fff", border: "1px solid var(--gray-5)", borderRadius: "10px", boxShadow: "0 4px 16px rgba(0,0,0,0.10)", zIndex: 100, minWidth: "140px", overflow: "hidden" }}>
-                                {roles.map((r) => (
-                                    <button
-                                        key={r}
-                                        onClick={() => { setRoleFilter(r); setRoleOpen(false); setCurrentPage(1); }}
-                                        style={{
-                                            display: "block", width: "100%", textAlign: "left",
-                                            padding: "9px 16px", border: "none",
-                                            backgroundColor: roleFilter === r ? "rgba(149,48,2,0.07)" : "#fff",
-                                            color: roleFilter === r ? "var(--brand-primary)" : "var(--gray-2)",
-                                            fontSize: "13px", cursor: "pointer", fontWeight: roleFilter === r ? 600 : 400,
-                                        }}
-                                    >
-                                        {r}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* ── Table ── */}
-                <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
-                        <thead>
-                            <tr style={{ backgroundColor: "#F6F8F7" }}>
-                                {["USER", "ROLE", "STATUS", "LAST LOGIN", ""].map((h) => (
-                                    <th key={h} style={{ padding: "11px 16px", textAlign: "left", fontSize: "11.5px", fontWeight: 700, color: "var(--gray-3)", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paged.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "var(--gray-3)", fontSize: "14px" }}>
-                                        No users found.
-                                    </td>
-                                </tr>
-                            ) : paged.map((user, idx) => (
-                                <tr
-                                    key={user.id}
-                                    onClick={() => router.push(`/admin/users/${user.id}`)}
-                                    style={{
-                                        borderTop: "1px solid var(--gray-5)",
-                                        backgroundColor: idx % 2 === 0 ? "#fff" : "#fafafa",
-                                        transition: "background 0.12s",
-                                        cursor: "pointer",
-                                    }}
-                                    onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "#f5efec"; }}
-                                    onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = idx % 2 === 0 ? "#fff" : "#fafafa"; }}
-                                >
-                                    {/* User */}
-                                    <td style={{ padding: "14px 16px", minWidth: "220px" }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                            <UserAvatar user={user} />
-                                            <div>
-                                                <p style={{ margin: 0, fontWeight: 600, color: "var(--black-2)" }}>{user.name}</p>
-                                                <p style={{ margin: 0, fontSize: "12px", color: "var(--gray-3)" }}>{user.email}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    {/* Role */}
-                                    <td style={{ padding: "14px 16px" }}><RoleBadge role={user.role} /></td>
-                                    {/* Status */}
-                                    <td style={{ padding: "14px 16px" }}><StatusBadge status={user.status} /></td>
-                                    {/* Last Login */}
-                                    <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
-                                        <span style={{ color: "var(--black-2)", fontWeight: 500 }}>{user.lastLogin}</span>
-                                        <span style={{ color: "var(--gray-3)", marginLeft: "8px", fontSize: "13px" }}>{user.lastLoginTime}</span>
-                                    </td>
-                                    {/* Actions */}
-                                    <td style={{ padding: "14px 16px", width: "40px" }}>
-                                        <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gray-4)", display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", borderRadius: "6px" }}
-                                            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--gray-5)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--gray-2)"; }}
-                                            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "var(--gray-4)"; }}
-                                        >
-                                            <MoreVertical size={16} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* ── Pagination ── */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderTop: "1px solid var(--gray-5)" }}>
-                    <span style={{ fontSize: "13px", color: "var(--gray-3)" }}>
-                        Showing <strong style={{ color: "var(--black-2)" }}>{filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}</strong> to{" "}
-                        <strong style={{ color: "var(--black-2)" }}>{Math.min(currentPage * PAGE_SIZE, filtered.length)}</strong> of{" "}
-                        <strong style={{ color: "var(--black-2)" }}>{filtered.length}</strong> results
-                    </span>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                        {/* Prev */}
-                        <button
-                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid var(--gray-5)", backgroundColor: "#fff", cursor: currentPage === 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: currentPage === 1 ? "var(--gray-4)" : "var(--gray-2)" }}
-                        >
-                            <ChevronLeft size={15} />
-                        </button>
-
-                        {/* Page numbers */}
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                            <button
-                                key={p}
-                                onClick={() => setCurrentPage(p)}
-                                style={{
-                                    width: "32px", height: "32px", borderRadius: "8px",
-                                    border: "1px solid", borderColor: currentPage === p ? "var(--brand-secondary)" : "var(--gray-5)",
-                                    backgroundColor: currentPage === p ? "var(--brand-secondary)" : "#fff",
-                                    color: currentPage === p ? "#fff" : "var(--gray-2)",
-                                    cursor: "pointer", fontSize: "13px", fontWeight: currentPage === p ? 700 : 400,
-                                }}
-                            >
-                                {p}
-                            </button>
-                        ))}
-
-                        {/* Next */}
-                        <button
-                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages || totalPages === 0}
-                            style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid var(--gray-5)", backgroundColor: "#fff", cursor: currentPage === totalPages ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: currentPage === totalPages ? "var(--gray-4)" : "var(--gray-2)" }}
-                        >
-                            <ChevronRight size={15} />
-                        </button>
-                    </div>
-                </div>
-
-            </div>
+  return (
+    <div className="flex flex-col gap-6">
+      {/* ── Page Header ── */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">
+            User Management
+          </h1>
+          <p className="mt-[6px] mb-0 text-sm text-[var(--gray-3)]">
+            Manage platform access, roles, and account statuses.
+          </p>
         </div>
-    );
+        <button className="flex items-center gap-2 px-5 py-[10px] rounded-[10px] bg-[var(--brand-primary)] text-white border-none cursor-pointer text-sm font-semibold shadow-[0_2px_8px_rgba(149,48,2,0.25)] transition-colors hover:bg-[var(--primary-hover)]">
+          <UserPlus size={16} />
+          Add New User
+        </button>
+      </div>
+
+      {/* ── Table Card ── */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {/* ── Toolbar ── */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--gray-5)]">
+          {/* Search */}
+          <div className="relative flex-1 max-w-[340px]">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-4)] pointer-events-none"
+            />
+            <input
+              placeholder="Search by name, email, or role..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full py-[9px] pr-3 pl-9 rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] bg-white outline-none box-border"
+            />
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Filter by Role */}
+          <div className="relative">
+            <button
+              onClick={() => setRoleOpen(!roleOpen)}
+              className="flex items-center gap-[7px] px-[14px] py-2 rounded-lg border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] cursor-pointer"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M1 3h12M3 7h8M5 11h4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              {roleFilter === "All" ? "Filter by Role" : roleFilter}
+              <ChevronDown size={13} />
+            </button>
+            {roleOpen && (
+              <div className="absolute top-[calc(100%+6px)] right-0 bg-white border border-[var(--gray-5)] rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.10)] z-[100] min-w-[140px] overflow-hidden">
+                {roles.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => {
+                      setRoleFilter(r);
+                      setRoleOpen(false);
+                      setCurrentPage(1);
+                    }}
+                    className={`block w-full text-left px-4 py-[9px] border-none text-[13px] cursor-pointer ${
+                      roleFilter === r
+                        ? "bg-[rgba(149,48,2,0.07)] text-[var(--brand-primary)] font-semibold"
+                        : "bg-white text-[var(--gray-2)] font-normal"
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Table ── */}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-[#F6F8F7]">
+                {["USER", "ROLE", "STATUS", "LAST LOGIN", ""].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-[11px] text-left text-[11.5px] font-bold text-[var(--gray-3)] tracking-[0.06em] uppercase whitespace-nowrap"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paged.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="py-10 text-center text-[var(--gray-3)] text-sm"
+                  >
+                    No users found.
+                  </td>
+                </tr>
+              ) : (
+                paged.map((user, idx) => (
+                  <tr
+                    key={user.id}
+                    onClick={() => router.push(`/admin/users/${user.id}`)}
+                    className={`border-t border-[var(--gray-5)] transition-colors cursor-pointer ${
+                      idx % 2 === 0 ? "bg-white" : "bg-[#fafafa]"
+                    } hover:bg-[#f5efec]`}
+                  >
+                    {/* User */}
+                    <td className="px-4 py-[14px] min-w-[220px]">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar user={user} />
+                        <div>
+                          <p className="m-0 font-semibold text-[var(--black-2)]">
+                            {user.name}
+                          </p>
+                          <p className="m-0 text-xs text-[var(--gray-3)]">
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    {/* Role */}
+                    <td className="px-4 py-[14px]">
+                      <RoleBadge role={user.role} />
+                    </td>
+                    {/* Status */}
+                    <td className="px-4 py-[14px]">
+                      <StatusBadge status={user.status} />
+                    </td>
+                    {/* Last Login */}
+                    <td className="px-4 py-[14px] whitespace-nowrap">
+                      <span className="text-[var(--black-2)] font-medium">
+                        {user.lastLogin}
+                      </span>
+                      <span className="text-[var(--gray-3)] ml-2 text-[13px]">
+                        {user.lastLoginTime}
+                      </span>
+                    </td>
+                    {/* Actions */}
+                    <td className="px-4 py-[14px] w-10">
+                      <button className="bg-transparent border-none cursor-pointer text-[var(--gray-4)] flex items-center justify-center p-1 rounded-md hover:bg-[var(--gray-5)] hover:text-[var(--gray-2)]">
+                        <MoreVertical size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── Pagination ── */}
+        <div className="flex justify-between items-center px-5 py-[14px] border-t border-[var(--gray-5)]">
+          <span className="text-[13px] text-[var(--gray-3)]">
+            Showing{" "}
+            <strong className="text-[var(--black-2)]">
+              {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
+            </strong>{" "}
+            to{" "}
+            <strong className="text-[var(--black-2)]">
+              {Math.min(currentPage * PAGE_SIZE, filtered.length)}
+            </strong>{" "}
+            of{" "}
+            <strong className="text-[var(--black-2)]">{filtered.length}</strong>{" "}
+            results
+          </span>
+
+          <div className="flex items-center gap-1">
+            {/* Prev */}
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
+                currentPage === 1
+                  ? "cursor-not-allowed text-[var(--gray-4)]"
+                  : "cursor-pointer text-[var(--gray-2)]"
+              }`}
+            >
+              <ChevronLeft size={15} />
+            </button>
+
+            {/* Page numbers */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setCurrentPage(p)}
+                className={`w-8 h-8 rounded-lg border cursor-pointer text-[13px] ${
+                  currentPage === p
+                    ? "border-[var(--brand-secondary)] bg-[var(--brand-secondary)] text-white font-bold"
+                    : "border-[var(--gray-5)] bg-white text-[var(--gray-2)] font-normal"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+
+            {/* Next */}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
+                currentPage === totalPages
+                  ? "cursor-not-allowed text-[var(--gray-4)]"
+                  : "cursor-pointer text-[var(--gray-2)]"
+              }`}
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

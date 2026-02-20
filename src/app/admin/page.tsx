@@ -62,27 +62,43 @@ const RECENT_VERIFICATIONS: VerificationRequest[] = [
 ];
 
 // ─── Chart Data ──────────────────────────────────────────────────────────────
-const CHART_POINTS = [210, 185, 155, 120, 135, 175, 230, 280, 310, 295, 265, 255, 270, 305, 335, 355, 375, 390];
+const CHART_POINTS = [
+  210, 185, 155, 120, 135, 175, 230, 280, 310, 295, 265, 255, 270, 305, 335,
+  355, 375, 390,
+];
 const CHART_LABELS = ["Week 1", "Week 2", "Week 3", "Week 4"];
 // Indices of inflection point dots shown on chart
 const DOT_INDICES = [3, 7, 10, 15];
 
 // ─── Helper: Catmull-Rom → Cubic Bezier smooth path ──────────────────────────
-function buildSmoothPath(points: number[], width: number, height: number, pad = 28): { line: string; area: string } {
+function buildSmoothPath(
+  points: number[],
+  width: number,
+  height: number,
+  pad = 28,
+): { line: string; area: string } {
   const min = Math.min(...points);
   const max = Math.max(...points);
   const range = max - min || 1;
-  const xs = points.map((_, i) => pad + (i / (points.length - 1)) * (width - pad * 2));
-  const ys = points.map((v) => pad + (1 - (v - min) / range) * (height - pad * 2));
+  const xs = points.map(
+    (_, i) => pad + (i / (points.length - 1)) * (width - pad * 2),
+  );
+  const ys = points.map(
+    (v) => pad + (1 - (v - min) / range) * (height - pad * 2),
+  );
 
   // Catmull-Rom tension
   const tension = 0.4;
   let line = `M ${xs[0].toFixed(2)},${ys[0].toFixed(2)}`;
   for (let i = 0; i < xs.length - 1; i++) {
-    const p0x = xs[Math.max(i - 1, 0)], p0y = ys[Math.max(i - 1, 0)];
-    const p1x = xs[i],   p1y = ys[i];
-    const p2x = xs[i+1], p2y = ys[i+1];
-    const p3x = xs[Math.min(i + 2, xs.length - 1)], p3y = ys[Math.min(i + 2, ys.length - 1)];
+    const p0x = xs[Math.max(i - 1, 0)],
+      p0y = ys[Math.max(i - 1, 0)];
+    const p1x = xs[i],
+      p1y = ys[i];
+    const p2x = xs[i + 1],
+      p2y = ys[i + 1];
+    const p3x = xs[Math.min(i + 2, xs.length - 1)],
+      p3y = ys[Math.min(i + 2, ys.length - 1)];
 
     const cp1x = p1x + (p2x - p0x) * tension;
     const cp1y = p1y + (p2y - p0y) * tension;
@@ -100,7 +116,10 @@ function buildSmoothPath(points: number[], width: number, height: number, pad = 
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: VerificationStatus }) {
-  const config: Record<VerificationStatus, { bg: string; dot: string; text: string }> = {
+  const config: Record<
+    VerificationStatus,
+    { bg: string; dot: string; text: string }
+  > = {
     Pending: { bg: "rgba(255,180,1,0.15)", dot: "#ffb401", text: "#a07600" },
     Verified: { bg: "rgba(39,174,96,0.12)", dot: "#27ae60", text: "#1a7a45" },
     Rejected: { bg: "rgba(235,87,87,0.12)", dot: "#eb5757", text: "#b83030" },
@@ -120,7 +139,15 @@ function StatusBadge({ status }: { status: VerificationStatus }) {
         color: c.text,
       }}
     >
-      <span style={{ width: "7px", height: "7px", borderRadius: "50%", backgroundColor: c.dot, flexShrink: 0 }} />
+      <span
+        style={{
+          width: "7px",
+          height: "7px",
+          borderRadius: "50%",
+          backgroundColor: c.dot,
+          flexShrink: 0,
+        }}
+      />
       {status}
     </span>
   );
@@ -128,11 +155,19 @@ function StatusBadge({ status }: { status: VerificationStatus }) {
 
 // ─── Entity Icon ─────────────────────────────────────────────────────────────
 function EntityIcon({ type }: { type: "property" | "user" }) {
-  const bg = type === "property" ? "rgba(149,48,2,0.1)" : "rgba(47,128,237,0.1)";
+  const bg =
+    type === "property" ? "rgba(149,48,2,0.1)" : "rgba(47,128,237,0.1)";
   const color = type === "property" ? "var(--brand-primary)" : "#2f80ed";
   return (
-    <div style={{ width: "36px", height: "36px", borderRadius: "8px", backgroundColor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      {type === "property" ? <Building2 size={16} color={color} /> : <User size={16} color={color} />}
+    <div
+      className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+      style={{ backgroundColor: bg }}
+    >
+      {type === "property" ? (
+        <Building2 size={16} color={color} />
+      ) : (
+        <User size={16} color={color} />
+      )}
     </div>
   );
 }
@@ -172,71 +207,71 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-
+    <div className="flex flex-col gap-6">
       {/* ── Page Title ── */}
-      <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--black-2)", margin: 0 }}>
+      <h1 className="text-[22px] font-bold text-[var(--black-2)] m-0">
         Dashboard Overview
       </h1>
 
       {/* ── Stat Cards ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
+      <div className="grid grid-cols-3 gap-5">
         {statCards.map((card) => (
           <div
             key={card.label}
-            style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "16px",
-              padding: "24px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
+            className="bg-white rounded-2xl p-6 shadow-sm flex flex-col gap-3"
           >
             {/* Top row */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <span style={{ fontSize: "13px", color: "var(--gray-3)", fontWeight: 500 }}>{card.label}</span>
-              <div style={{ width: "38px", height: "38px", borderRadius: "10px", backgroundColor: card.iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="flex justify-between items-start">
+              <span className="text-[13px] text-[var(--gray-3)] font-medium">
+                {card.label}
+              </span>
+              <div
+                className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center"
+                style={{ backgroundColor: card.iconBg }}
+              >
                 {card.icon}
               </div>
             </div>
             {/* Value */}
-            <p style={{ fontSize: "26px", fontWeight: 700, color: "var(--black-2)", margin: 0, lineHeight: 1 }}>
+            <p className="text-[26px] font-bold text-[var(--black-2)] m-0 leading-none">
               {card.value}
             </p>
             {/* Change */}
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {card.positive
-                ? <TrendingUp size={14} color="#27ae60" />
-                : <TrendingDown size={14} color="#eb5757" />}
-              <span style={{ fontSize: "13px", fontWeight: 600, color: card.positive ? "#27ae60" : "#eb5757" }}>
+            <div className="flex items-center gap-1.5">
+              {card.positive ? (
+                <TrendingUp size={14} color="#27ae60" />
+              ) : (
+                <TrendingDown size={14} color="#eb5757" />
+              )}
+              <span
+                className="text-[13px] font-semibold"
+                style={{ color: card.positive ? "#27ae60" : "#eb5757" }}
+              >
                 {card.change}
               </span>
-              <span style={{ fontSize: "13px", color: "var(--gray-4)" }}>vs last month</span>
+              <span className="text-[13px] text-[var(--gray-4)]">
+                vs last month
+              </span>
             </div>
           </div>
         ))}
       </div>
 
       {/* ── Platform Activity Chart ── */}
-      <div style={{ backgroundColor: "#ffffff", borderRadius: "16px", padding: "24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+        <div className="flex justify-between items-start mb-5">
           <div>
-            <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "var(--black-2)" }}>Platform Activity</h2>
-            <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--gray-3)" }}>Revenue trend over the last 30 days</p>
+            <h2 className="m-0 text-base font-bold text-[var(--black-2)]">
+              Platform Activity
+            </h2>
+            <p className="mt-1 mb-0 text-[13px] text-[var(--gray-3)]">
+              Revenue trend over the last 30 days
+            </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className="flex items-center gap-[10px]">
             {/* Range selector */}
-            <button
-              style={{
-                display: "flex", alignItems: "center", gap: "6px",
-                padding: "8px 14px", borderRadius: "8px",
-                border: "1px solid var(--gray-5)", backgroundColor: "#fff",
-                fontSize: "13px", color: "var(--gray-2)", cursor: "pointer",
-              }}
-            >
+            <button className="flex items-center gap-1.5 px-[14px] py-2 rounded-lg border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] cursor-pointer">
               {selectedRange} <ChevronDown size={14} />
             </button>
           </div>
@@ -244,11 +279,15 @@ export default function AdminDashboardPage() {
 
         {/* SVG Chart */}
         <div style={{ width: "100%", overflowX: "auto" }}>
-          <svg viewBox={`0 0 ${chartW} ${chartH}`} style={{ width: "100%", height: "auto", display: "block" }} preserveAspectRatio="none">
+          <svg
+            viewBox={`0 0 ${chartW} ${chartH}`}
+            style={{ width: "100%", height: "auto", display: "block" }}
+            preserveAspectRatio="none"
+          >
             <defs>
               <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor="#953002" stopOpacity="0.14" />
-                <stop offset="60%"  stopColor="#953002" stopOpacity="0.04" />
+                <stop offset="0%" stopColor="#953002" stopOpacity="0.14" />
+                <stop offset="60%" stopColor="#953002" stopOpacity="0.04" />
                 <stop offset="100%" stopColor="#953002" stopOpacity="0" />
               </linearGradient>
             </defs>
@@ -257,9 +296,13 @@ export default function AdminDashboardPage() {
             {[0.3, 0.6].map((t) => (
               <line
                 key={t}
-                x1={28} y1={28 + t * (chartH - 56)}
-                x2={chartW - 28} y2={28 + t * (chartH - 56)}
-                stroke="#e8e2df" strokeWidth="1" strokeDasharray="6 6"
+                x1={28}
+                y1={28 + t * (chartH - 56)}
+                x2={chartW - 28}
+                y2={28 + t * (chartH - 56)}
+                stroke="#e8e2df"
+                strokeWidth="1"
+                strokeDasharray="6 6"
               />
             ))}
 
@@ -267,17 +310,32 @@ export default function AdminDashboardPage() {
             <path d={area} fill="url(#chartGrad)" />
 
             {/* Smooth line */}
-            <path d={line} fill="none" stroke="#953002" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d={line}
+              fill="none"
+              stroke="#953002"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
 
             {/* Small hollow dots at key inflection points */}
             {DOT_INDICES.map((idx) => {
-              const v   = CHART_POINTS[idx];
+              const v = CHART_POINTS[idx];
               const minV = Math.min(...CHART_POINTS);
               const maxV = Math.max(...CHART_POINTS);
               const x = 28 + (idx / (CHART_POINTS.length - 1)) * (chartW - 56);
               const y = 28 + (1 - (v - minV) / (maxV - minV)) * (chartH - 56);
               return (
-                <circle key={idx} cx={x} cy={y} r={4} fill="#fff" stroke="#953002" strokeWidth="2" />
+                <circle
+                  key={idx}
+                  cx={x}
+                  cy={y}
+                  r={4}
+                  fill="#fff"
+                  stroke="#953002"
+                  strokeWidth="2"
+                />
               );
             })}
 
@@ -300,23 +358,65 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ── Recent Verification Requests ── */}
-      <div style={{ backgroundColor: "#ffffff", borderRadius: "16px", padding: "24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "16px",
+          padding: "24px",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        }}
+      >
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "var(--black-2)" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              fontSize: "16px",
+              fontWeight: 700,
+              color: "var(--black-2)",
+            }}
+          >
             Recent Verification Requests
           </h2>
-          <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "var(--brand-primary)" }}>
+          <button
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "var(--brand-primary)",
+            }}
+          >
             View All
           </button>
         </div>
 
         {/* Table */}
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: "14px",
+            }}
+          >
             <thead>
               <tr style={{ backgroundColor: "#F6F8F7" }}>
-                {["Name / Entity", "Type", "Date Submitted", "Status", "Actions"].map((col) => (
+                {[
+                  "Name / Entity",
+                  "Type",
+                  "Date Submitted",
+                  "Status",
+                  "Actions",
+                ].map((col) => (
                   <th
                     key={col}
                     style={{
@@ -344,23 +444,58 @@ export default function AdminDashboardPage() {
                     backgroundColor: idx % 2 === 0 ? "#ffffff" : "#fafafa",
                     transition: "background-color 0.15s",
                   }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "#f5efec"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = idx % 2 === 0 ? "#ffffff" : "#fafafa"; }}
+                  onMouseEnter={(e) => {
+                    (
+                      e.currentTarget as HTMLTableRowElement
+                    ).style.backgroundColor = "#f5efec";
+                  }}
+                  onMouseLeave={(e) => {
+                    (
+                      e.currentTarget as HTMLTableRowElement
+                    ).style.backgroundColor =
+                      idx % 2 === 0 ? "#ffffff" : "#fafafa";
+                  }}
                 >
                   {/* Name / Entity */}
                   <td style={{ padding: "14px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                      }}
+                    >
                       <EntityIcon type={row.icon} />
                       <div>
-                        <p style={{ margin: 0, fontWeight: 600, color: "var(--black-2)" }}>{row.name}</p>
-                        <p style={{ margin: 0, fontSize: "12px", color: "var(--gray-3)" }}>{row.entityId}</p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontWeight: 600,
+                            color: "var(--black-2)",
+                          }}
+                        >
+                          {row.name}
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: "12px",
+                            color: "var(--gray-3)",
+                          }}
+                        >
+                          {row.entityId}
+                        </p>
                       </div>
                     </div>
                   </td>
                   {/* Type */}
-                  <td style={{ padding: "14px 16px", color: "var(--gray-2)" }}>{row.type}</td>
+                  <td style={{ padding: "14px 16px", color: "var(--gray-2)" }}>
+                    {row.type}
+                  </td>
                   {/* Date */}
-                  <td style={{ padding: "14px 16px", color: "var(--gray-2)" }}>{row.dateSubmitted}</td>
+                  <td style={{ padding: "14px 16px", color: "var(--gray-2)" }}>
+                    {row.dateSubmitted}
+                  </td>
                   {/* Status */}
                   <td style={{ padding: "14px 16px" }}>
                     <StatusBadge status={row.status} />
@@ -374,7 +509,10 @@ export default function AdminDashboardPage() {
                         cursor: "pointer",
                         fontSize: "13px",
                         fontWeight: 600,
-                        color: row.action === "Review" ? "var(--brand-primary)" : "var(--gray-3)",
+                        color:
+                          row.action === "Review"
+                            ? "var(--brand-primary)"
+                            : "var(--gray-3)",
                         padding: 0,
                       }}
                     >
@@ -387,7 +525,6 @@ export default function AdminDashboardPage() {
           </table>
         </div>
       </div>
-
     </div>
   );
 }

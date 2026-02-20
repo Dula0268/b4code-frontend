@@ -184,27 +184,17 @@ const PAGE_SIZE = 10;
 
 // ─── Action Badge ──────────────────────────────────────────────────────────────
 function ActionBadge({ action }: { action: ActionType }) {
-  const cfg: Record<ActionType, { bg: string; color: string }> = {
-    Updated: { bg: "rgba(226,185,59,0.18)", color: "#a0780a" },
-    Deleted: { bg: "rgba(235,87,87,0.14)", color: "#b83030" },
-    "Login Success": { bg: "rgba(39,174,96,0.14)", color: "#1a7a45" },
-    Created: { bg: "rgba(39,174,96,0.14)", color: "#1a7a45" },
-    "Config Change": { bg: "rgba(100,100,100,0.12)", color: "#444" },
-    "Login Failed": { bg: "rgba(235,87,87,0.14)", color: "#b83030" },
+  const cfg: Record<ActionType, string> = {
+    Updated: "bg-yellow-100/80 text-yellow-800",
+    Deleted: "bg-red-100/70 text-red-700",
+    "Login Success": "bg-green-100/70 text-green-700",
+    Created: "bg-green-100/70 text-green-700",
+    "Config Change": "bg-gray-100/70 text-gray-700",
+    "Login Failed": "bg-red-100/70 text-red-700",
   };
-  const { bg, color } = cfg[action];
   return (
     <span
-      style={{
-        display: "inline-block",
-        padding: "4px 12px",
-        borderRadius: "999px",
-        backgroundColor: bg,
-        color,
-        fontSize: "12px",
-        fontWeight: 700,
-        whiteSpace: "nowrap",
-      }}
+      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${cfg[action]}`}
     >
       {action}
     </span>
@@ -215,19 +205,8 @@ function ActionBadge({ action }: { action: ActionType }) {
 function Avatar({ entry }: { entry: LogEntry }) {
   return (
     <div
-      style={{
-        width: "34px",
-        height: "34px",
-        borderRadius: "50%",
-        backgroundColor: entry.avatarColor,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#fff",
-        fontWeight: 700,
-        fontSize: "13px",
-        flexShrink: 0,
-      }}
+      className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0"
+      style={{ backgroundColor: entry.avatarColor }}
     >
       {entry.avatarInitial}
     </div>
@@ -236,11 +215,11 @@ function Avatar({ entry }: { entry: LogEntry }) {
 
 // ─── Role Pill (for filter active) ────────────────────────────────────────────
 function roleCfg(role: "All" | UserRole) {
-  const map: Record<string, { bg: string; color: string }> = {
-    All: { bg: "rgba(149,48,2,0.08)", color: "#953002" },
-    Admin: { bg: "rgba(47,128,237,0.12)", color: "#1a5fa8" },
-    Staff: { bg: "rgba(39,174,96,0.12)", color: "#1a7a45" },
-    Owner: { bg: "rgba(155,89,182,0.12)", color: "#7d3c98" },
+  const map: Record<string, string> = {
+    All: "bg-[var(--brand-primary)]/8 text-[var(--brand-primary)]",
+    Admin: "bg-blue-500/12 text-blue-700",
+    Staff: "bg-green-500/12 text-green-700",
+    Owner: "bg-purple-500/12 text-purple-700",
   };
   return map[role] ?? map.All;
 }
@@ -276,87 +255,31 @@ export default function AuditLogsPage() {
     setCurrentPage(Math.max(1, Math.min(totalPages, p)));
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div className="flex flex-col gap-6">
       {/* ── Page Header ── */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
-      >
+      <div className="flex justify-between items-start">
         <div>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "24px",
-              fontWeight: 800,
-              color: "var(--black-2)",
-            }}
-          >
+          <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">
             Audit Logs
           </h1>
-          <p
-            style={{
-              margin: "6px 0 0",
-              fontSize: "14px",
-              color: "var(--gray-3)",
-            }}
-          >
+          <p className="mt-1.5 mb-0 text-sm text-[var(--gray-3)]">
             Track system-wide activities, user actions, and security events.
           </p>
         </div>
         {/* Export CSV */}
-        <button
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "10px 18px",
-            borderRadius: "10px",
-            border: "1.5px solid var(--gray-5)",
-            backgroundColor: "#fff",
-            fontSize: "13.5px",
-            fontWeight: 600,
-            color: "var(--black-2)",
-            cursor: "pointer",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--brand-primary)";
-            e.currentTarget.style.color = "var(--brand-primary)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "var(--gray-5)";
-            e.currentTarget.style.color = "var(--black-2)";
-          }}
-        >
+        <button className="flex items-center gap-2 px-[18px] py-2.5 rounded-[10px] border-[1.5px] border-[var(--gray-5)] bg-white text-[13.5px] font-semibold text-[var(--black-2)] cursor-pointer shadow-sm hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] transition-colors">
           <Download size={15} />
           Export CSV
         </button>
       </div>
 
       {/* ── Filters Bar ── */}
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          alignItems: "center",
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="flex gap-3 items-center flex-wrap">
         {/* Search */}
-        <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
+        <div className="relative flex-1 min-w-[240px]">
           <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-4)] pointer-events-none"
             size={14}
-            style={{
-              position: "absolute",
-              left: "12px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--gray-4)",
-              pointerEvents: "none",
-            }}
           />
           <input
             placeholder="Search by User, IP, or Entity ID"
@@ -365,78 +288,23 @@ export default function AuditLogsPage() {
               setSearch(e.target.value);
               setCurrentPage(1);
             }}
-            style={{
-              width: "100%",
-              padding: "9px 12px 9px 36px",
-              borderRadius: "10px",
-              border: "1.5px solid var(--gray-5)",
-              fontSize: "13px",
-              color: "var(--black-2)",
-              backgroundColor: "#fff",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--brand-primary)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--gray-5)";
-            }}
+            className="w-full py-2 px-3 pl-9 rounded-[10px] border-[1.5px] border-[var(--gray-5)] text-[13px] text-[var(--black-2)] bg-white outline-none box-border focus:border-[var(--brand-primary)]"
           />
         </div>
 
         {/* Role Filter */}
-        <div style={{ position: "relative" }}>
+        <div className="relative">
           <button
             onClick={() => setRoleOpen(!roleOpen)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "9px 16px",
-              borderRadius: "10px",
-              border: "1.5px solid var(--gray-5)",
-              backgroundColor: "#fff",
-              fontSize: "13px",
-              color: "var(--gray-2)",
-              cursor: "pointer",
-              minWidth: "150px",
-              justifyContent: "space-between",
-            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-[10px] border-[1.5px] border-[var(--gray-5)] bg-white text-[13px] font-semibold cursor-pointer ${roleCfg(roleFilter)}`}
           >
-            <span style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-              {roleFilter !== "All" && (
-                <span
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: roleCfg(roleFilter).color,
-                    flexShrink: 0,
-                  }}
-                />
-              )}
-              {roleFilter === "All" ? "All Roles" : roleFilter}
-            </span>
-            <ChevronDown size={13} />
+            Role: {roleFilter}
+            <ChevronDown size={14} />
           </button>
           {roleOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "calc(100% + 6px)",
-                left: 0,
-                backgroundColor: "#fff",
-                border: "1.5px solid var(--gray-5)",
-                borderRadius: "10px",
-                boxShadow: "0 6px 20px rgba(0,0,0,0.10)",
-                zIndex: 100,
-                minWidth: "150px",
-                overflow: "hidden",
-              }}
-            >
+            <div className="absolute top-[calc(100%+6px)] left-0 bg-white border-[1.5px] border-[var(--gray-5)] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-[100] min-w-[150px] overflow-hidden">
               {roles.map((r) => {
-                const { color } = roleCfg(r);
+                const colorClass = roleCfg(r);
                 return (
                   <button
                     key={r}
@@ -445,33 +313,22 @@ export default function AuditLogsPage() {
                       setRoleOpen(false);
                       setCurrentPage(1);
                     }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "9px 14px",
-                      border: "none",
-                      backgroundColor:
-                        roleFilter === r ? "rgba(149,48,2,0.06)" : "#fff",
-                      color:
-                        roleFilter === r
-                          ? "var(--brand-primary)"
-                          : "var(--gray-2)",
-                      fontSize: "13px",
-                      cursor: "pointer",
-                      fontWeight: roleFilter === r ? 600 : 400,
-                    }}
+                    className={`flex items-center gap-2 w-full text-left px-3.5 py-2 border-none text-[13px] cursor-pointer ${
+                      roleFilter === r
+                        ? "bg-[var(--brand-primary)]/5 text-[var(--brand-primary)] font-semibold"
+                        : "bg-white text-[var(--gray-2)] font-normal hover:bg-gray-50"
+                    }`}
                   >
                     {r !== "All" && (
                       <span
+                        className="w-2 h-2 rounded-full shrink-0"
                         style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "50%",
-                          backgroundColor: color,
-                          flexShrink: 0,
+                          backgroundColor:
+                            r === "Admin"
+                              ? "#1a5fa8"
+                              : r === "Staff"
+                                ? "#1a7a45"
+                                : "#7d3c98",
                         }}
                       />
                     )}
@@ -484,20 +341,7 @@ export default function AuditLogsPage() {
         </div>
 
         {/* Date Range (static display) */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "9px 16px",
-            borderRadius: "10px",
-            border: "1.5px solid var(--gray-5)",
-            backgroundColor: "#fff",
-            fontSize: "13px",
-            color: "var(--gray-2)",
-            cursor: "pointer",
-          }}
-        >
+        <div className="flex items-center gap-2 px-4 py-2 rounded-[10px] border-[1.5px] border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] cursor-pointer">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <rect
               x="1"
@@ -520,24 +364,11 @@ export default function AuditLogsPage() {
       </div>
 
       {/* ── Table Card ── */}
-      <div
-        style={{
-          backgroundColor: "#fff",
-          borderRadius: "16px",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: "14px",
-            }}
-          >
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
             <thead>
-              <tr style={{ backgroundColor: "#F6F8F7" }}>
+              <tr className="bg-[#F6F8F7]">
                 {[
                   "USER / ROLE",
                   "IP ADDRESS",
@@ -547,16 +378,7 @@ export default function AuditLogsPage() {
                 ].map((h) => (
                   <th
                     key={h}
-                    style={{
-                      padding: "11px 20px",
-                      textAlign: "left",
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      color: "var(--gray-3)",
-                      letterSpacing: "0.07em",
-                      textTransform: "uppercase",
-                      whiteSpace: "nowrap",
-                    }}
+                    className="px-5 py-[11px] text-left text-[11px] font-bold text-[var(--gray-3)] tracking-wider uppercase whitespace-nowrap"
                   >
                     {h}
                   </th>
@@ -568,12 +390,7 @@ export default function AuditLogsPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    style={{
-                      padding: "48px",
-                      textAlign: "center",
-                      color: "var(--gray-3)",
-                      fontSize: "14px",
-                    }}
+                    className="py-12 text-center text-[var(--gray-3)] text-sm"
                   >
                     No audit logs found.
                   </td>
@@ -582,101 +399,43 @@ export default function AuditLogsPage() {
                 paged.map((log, idx) => (
                   <tr
                     key={log.id}
-                    style={{
-                      borderTop: "1px solid var(--gray-5)",
-                      backgroundColor: idx % 2 === 0 ? "#fff" : "#fafafa",
-                      transition: "background 0.12s",
-                    }}
-                    onMouseEnter={(e) => {
-                      (
-                        e.currentTarget as HTMLTableRowElement
-                      ).style.backgroundColor = "#f5efec";
-                    }}
-                    onMouseLeave={(e) => {
-                      (
-                        e.currentTarget as HTMLTableRowElement
-                      ).style.backgroundColor =
-                        idx % 2 === 0 ? "#fff" : "#fafafa";
-                    }}
+                    className={`border-t border-[var(--gray-5)] transition-colors ${
+                      idx % 2 === 0 ? "bg-white" : "bg-[#fafafa]"
+                    } hover:bg-[#f5efec]`}
                   >
                     {/* User / Role */}
-                    <td style={{ padding: "14px 20px", minWidth: "180px" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                        }}
-                      >
+                    <td className="px-5 py-[14px] min-w-[180px]">
+                      <div className="flex items-center gap-[10px]">
                         <Avatar entry={log} />
                         <div>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontWeight: 600,
-                              color: "var(--black-2)",
-                            }}
-                          >
+                          <p className="m-0 font-semibold text-[var(--black-2)]">
                             {log.userName}
                           </p>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: "12px",
-                              color: "var(--gray-3)",
-                            }}
-                          >
+                          <p className="m-0 text-xs text-[var(--gray-3)]">
                             {log.userRole}
                           </p>
                         </div>
                       </div>
                     </td>
                     {/* IP */}
-                    <td
-                      style={{
-                        padding: "14px 20px",
-                        color: "var(--gray-2)",
-                        fontFamily: "monospace",
-                        fontSize: "13px",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <td className="px-5 py-[14px] text-[var(--gray-2)] font-mono text-[13px] whitespace-nowrap">
                       {log.ip}
                     </td>
                     {/* Action */}
-                    <td style={{ padding: "14px 20px" }}>
+                    <td className="px-5 py-[14px]">
                       <ActionBadge action={log.action} />
                     </td>
                     {/* Entity */}
-                    <td style={{ padding: "14px 20px", minWidth: "220px" }}>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontWeight: 600,
-                          color: "var(--black-2)",
-                        }}
-                      >
+                    <td className="px-5 py-[14px] min-w-[220px]">
+                      <p className="m-0 font-semibold text-[var(--black-2)]">
                         {log.entity}
                       </p>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: "12px",
-                          color: "var(--gray-3)",
-                        }}
-                      >
+                      <p className="m-0 text-xs text-[var(--gray-3)]">
                         {log.entityDetail}
                       </p>
                     </td>
                     {/* Timestamp */}
-                    <td
-                      style={{
-                        padding: "14px 20px",
-                        color: "var(--gray-3)",
-                        fontSize: "13px",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <td className="px-5 py-[14px] text-[var(--gray-3)] text-[13px] whitespace-nowrap">
                       {log.timestamp}
                     </td>
                   </tr>
@@ -687,48 +446,31 @@ export default function AuditLogsPage() {
         </div>
 
         {/* ── Pagination ── */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "14px 20px",
-            borderTop: "1px solid var(--gray-5)",
-          }}
-        >
-          <span style={{ fontSize: "13px", color: "var(--gray-3)" }}>
+        <div className="flex justify-between items-center px-5 py-[14px] border-t border-[var(--gray-5)]">
+          <span className="text-[13px] text-[var(--gray-3)]">
             Showing{" "}
-            <strong style={{ color: "var(--black-2)" }}>
+            <strong className="text-[var(--black-2)]">
               {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
             </strong>{" "}
             to{" "}
-            <strong style={{ color: "var(--black-2)" }}>
+            <strong className="text-[var(--black-2)]">
               {Math.min(currentPage * PAGE_SIZE, filtered.length)}
             </strong>{" "}
             of{" "}
-            <strong style={{ color: "var(--black-2)" }}>
-              {filtered.length}
-            </strong>{" "}
+            <strong className="text-[var(--black-2)]">{filtered.length}</strong>{" "}
             results
           </span>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <div className="flex items-center gap-1">
             {/* Prev */}
             <button
               onClick={() => goPage(currentPage - 1)}
               disabled={currentPage === 1}
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "8px",
-                border: "1px solid var(--gray-5)",
-                backgroundColor: "#fff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                color: currentPage === 1 ? "var(--gray-4)" : "var(--gray-2)",
-              }}
+              className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
+                currentPage === 1
+                  ? "cursor-not-allowed text-[var(--gray-4)]"
+                  : "cursor-pointer text-[var(--gray-2)]"
+              }`}
             >
               <ChevronLeft size={14} />
             </button>
@@ -754,15 +496,7 @@ export default function AuditLogsPage() {
                 p === "..." ? (
                   <span
                     key={`e${i}`}
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "13px",
-                      color: "var(--gray-3)",
-                    }}
+                    className="w-8 h-8 flex items-center justify-center text-[13px] text-[var(--gray-3)]"
                   >
                     …
                   </span>
@@ -770,22 +504,11 @@ export default function AuditLogsPage() {
                   <button
                     key={p}
                     onClick={() => goPage(p as number)}
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "8px",
-                      border: "1px solid",
-                      borderColor:
-                        currentPage === p
-                          ? "var(--brand-secondary)"
-                          : "var(--gray-5)",
-                      backgroundColor:
-                        currentPage === p ? "var(--brand-secondary)" : "#fff",
-                      color: currentPage === p ? "#fff" : "var(--gray-2)",
-                      cursor: "pointer",
-                      fontSize: "13px",
-                      fontWeight: currentPage === p ? 700 : 400,
-                    }}
+                    className={`w-8 h-8 rounded-lg border cursor-pointer text-[13px] ${
+                      currentPage === p
+                        ? "border-[var(--brand-secondary)] bg-[var(--brand-secondary)] text-white font-bold"
+                        : "border-[var(--gray-5)] bg-white text-[var(--gray-2)] font-normal"
+                    }`}
                   >
                     {p}
                   </button>
@@ -797,21 +520,11 @@ export default function AuditLogsPage() {
             <button
               onClick={() => goPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "8px",
-                border: "1px solid var(--gray-5)",
-                backgroundColor: "#fff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                color:
-                  currentPage === totalPages
-                    ? "var(--gray-4)"
-                    : "var(--gray-2)",
-              }}
+              className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
+                currentPage === totalPages
+                  ? "cursor-not-allowed text-[var(--gray-4)]"
+                  : "cursor-pointer text-[var(--gray-2)]"
+              }`}
             >
               <ChevronRight size={14} />
             </button>

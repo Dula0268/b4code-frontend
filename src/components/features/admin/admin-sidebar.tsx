@@ -58,67 +58,29 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside
-      style={{
-        width: "260px",
-        minHeight: "100vh",
-        backgroundColor: "var(--white)",
-        borderRight: "1px solid var(--gray-5)",
-        display: "flex",
-        flexDirection: "column",
-        padding: "24px 0",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        bottom: 0,
-        zIndex: 50,
-      }}
-    >
+    <aside className="w-[260px] min-h-screen bg-[var(--white)] border-r border-[var(--gray-5)] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
       {/* ── Logo + Role Label ── */}
-      <div style={{ padding: "0 20px 24px 20px" }}>
-        <Link href="/admin" style={{ textDecoration: "none" }}>
+      <div className="px-5 pb-6">
+        <Link href="/admin" className="no-underline">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/prime-stay-logo.svg"
             alt="Prime Stay Logo"
-            style={{ width: "140px", height: "56px", objectFit: "contain" }}
+            className="w-[140px] h-14 object-contain"
           />
         </Link>
         {/* Admin Console plain text under the logo */}
-        <p
-          style={{
-            marginTop: "6px",
-            fontSize: "15px",
-            fontWeight: 400,
-            color: "rgba(149, 48, 2, 0.7)",
-            letterSpacing: "0.01em",
-          }}
-        >
+        <p className="mt-1.5 text-[15px] font-normal text-[rgba(149,48,2,0.7)] tracking-[0.01em]">
           Admin Console
-        </p>{" "}
+        </p>
       </div>
 
       {/* ── Divider ── */}
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: "var(--gray-5)",
-          margin: "0 20px 16px 20px",
-        }}
-      />
+      <div className="h-px bg-[var(--gray-5)] mx-5 mb-4" />
 
       {/* ── Main Navigation ── */}
-      <nav style={{ flex: 1, padding: "0 12px", overflowY: "auto" }}>
-        <ul
-          style={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-          }}
-        >
+      <nav className="flex-1 px-3 overflow-y-auto">
+        <ul className="list-none m-0 p-0 flex flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -129,48 +91,19 @@ export default function AdminSidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "10px 14px",
-                    borderRadius: "10px",
-                    textDecoration: "none",
-                    fontWeight: isActive ? 600 : 400,
-                    fontSize: "14px",
-                    color: isActive ? "var(--brand-primary)" : "var(--black-1)",
-                    backgroundColor: isActive
-                      ? "rgba(149, 48, 2, 0.08)"
-                      : "transparent",
-                    transition: "background-color 0.15s ease, color 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      (
-                        e.currentTarget as HTMLAnchorElement
-                      ).style.backgroundColor = "rgba(109, 34, 0, 0.1)";
-                      (e.currentTarget as HTMLAnchorElement).style.color =
-                        "var(--primary-hover)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      (
-                        e.currentTarget as HTMLAnchorElement
-                      ).style.backgroundColor = "transparent";
-                      (e.currentTarget as HTMLAnchorElement).style.color =
-                        "var(--black-1)";
-                    }
-                  }}
+                  className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${
+                    isActive
+                      ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
+                      : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
+                  }`}
                 >
                   <Icon
                     size={18}
-                    style={{
-                      color: isActive
-                        ? "var(--brand-primary)"
-                        : "var(--black-1)",
-                      flexShrink: 0,
-                    }}
+                    className={`flex-shrink-0 ${
+                      isActive
+                        ? "text-[var(--brand-primary)]"
+                        : "text-[var(--black-1)]"
+                    }`}
                   />
                   <span>{item.label}</span>
                 </Link>
@@ -183,64 +116,21 @@ export default function AdminSidebar() {
       {/* ── Bottom Section: Settings & Logout ── */}
       <div>
         {/* Divider */}
-        <div
-          style={{
-            height: "1px",
-            backgroundColor: "var(--gray-5)",
-            margin: "16px 20px",
-          }}
-        />
+        <div className="h-px bg-[var(--gray-5)] mx-5 my-4" />
 
-        <div
-          style={{
-            padding: "0 12px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-          }}
-        >
+        <div className="px-3 flex flex-col gap-1">
           {/* Settings */}
           <Link
             href="/admin/settings"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "10px 14px",
-              borderRadius: "10px",
-              textDecoration: "none",
-              fontSize: "14px",
-              fontWeight: pathname === "/admin/settings" ? 600 : 400,
-              color:
-                pathname === "/admin/settings"
-                  ? "var(--brand-primary)"
-                  : "var(--black-1)",
-              backgroundColor:
-                pathname === "/admin/settings"
-                  ? "rgba(149, 48, 2, 0.08)"
-                  : "transparent",
-              transition: "background-color 0.15s ease, color 0.15s ease",
-            }}
-            onMouseEnter={(e) => {
-              if (pathname !== "/admin/settings") {
-                (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
-                  "rgba(109, 34, 0, 0.1)";
-                (e.currentTarget as HTMLAnchorElement).style.color =
-                  "var(--primary-hover)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (pathname !== "/admin/settings") {
-                (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
-                  "transparent";
-                (e.currentTarget as HTMLAnchorElement).style.color =
-                  "var(--black-1)";
-              }
-            }}
+            className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${
+              pathname === "/admin/settings"
+                ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
+                : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
+            }`}
           >
             <Settings
               size={18}
-              style={{ color: "var(--black-1)", flexShrink: 0 }}
+              className="text-[var(--black-1)] flex-shrink-0"
             />
             <span>Settings</span>
           </Link>
@@ -251,39 +141,9 @@ export default function AdminSidebar() {
               // TODO: wire up your auth logout logic here
               console.log("Logout clicked");
             }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "10px 14px",
-              borderRadius: "10px",
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: 400,
-              color: "var(--black-1)",
-              width: "100%",
-              textAlign: "left",
-              transition: "background-color 0.15s ease, color 0.15s ease",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                "rgba(235, 87, 87, 0.08)";
-              (e.currentTarget as HTMLButtonElement).style.color =
-                "var(--state-error)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                "transparent";
-              (e.currentTarget as HTMLButtonElement).style.color =
-                "var(--black-1)";
-            }}
+            className="flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] border-none bg-transparent cursor-pointer text-sm font-normal text-[var(--black-1)] w-full text-left transition-colors hover:bg-[rgba(235,87,87,0.08)] hover:text-[var(--state-error)]"
           >
-            <LogOut
-              size={18}
-              style={{ color: "var(--black-1)", flexShrink: 0 }}
-            />
+            <LogOut size={18} className="text-[var(--black-1)] flex-shrink-0" />
             <span>Log Out</span>
           </button>
         </div>
