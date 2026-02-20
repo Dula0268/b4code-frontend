@@ -54,27 +54,24 @@ export default function AdminHeader({
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
-                    backgroundColor: "#f5f5f5",
-                    border: "1px solid var(--gray-5)",
+                    backgroundColor: "#f5efec",
+                    border: "none",
                     borderRadius: "999px",
-                    padding: "8px 16px",
-                    width: "280px",
-                    transition: "box-shadow 0.15s ease, border-color 0.15s ease",
+                    padding: "10px 18px",
+                    width: "300px",
+                    transition: "box-shadow 0.15s ease",
                 }}
                 onFocusCapture={(e) => {
                     (e.currentTarget as HTMLDivElement).style.boxShadow =
-                        "0 0 0 3px rgba(149, 48, 2, 0.15)";
-                    (e.currentTarget as HTMLDivElement).style.borderColor =
-                        "var(--brand-primary)";
+                        "0 0 0 2px rgba(149, 48, 2, 0.25)";
                 }}
                 onBlurCapture={(e) => {
                     (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
-                    (e.currentTarget as HTMLDivElement).style.borderColor = "var(--gray-5)";
                 }}
             >
                 <Search
                     size={16}
-                    style={{ color: "var(--gray-3)", flexShrink: 0 }}
+                    style={{ color: "var(--brand-primary)", flexShrink: 0, opacity: 0.7 }}
                 />
                 <input
                     type="text"
@@ -86,7 +83,7 @@ export default function AdminHeader({
                         outline: "none",
                         background: "transparent",
                         fontSize: "14px",
-                        color: "var(--gray-1)",
+                        color: "var(--brand-primary)",
                         width: "100%",
                     }}
                 />
