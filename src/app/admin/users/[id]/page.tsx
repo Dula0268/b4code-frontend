@@ -366,10 +366,6 @@ export default function UserDetailPage() {
                                 <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gray-3)", display: "flex", padding: "4px" }}>
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
                                 </button>
-                                {/* Download icon */}
-                                <button style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gray-3)", display: "flex", padding: "4px" }}>
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v7m0 0l-3-3m3 3l3-3M3 13h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                </button>
                             </div>
                         </div>
 
