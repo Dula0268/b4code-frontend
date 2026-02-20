@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, ChevronDown, MoreVertical, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -78,6 +79,7 @@ export default function UsersManagementPage() {
     const [roleFilter, setRoleFilter] = useState<"All" | UserRole>("All");
     const [roleOpen, setRoleOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const router = useRouter();
 
     // ── Filter ──
     const filtered = ALL_USERS.filter((u) => {
@@ -206,10 +208,12 @@ export default function UsersManagementPage() {
                             ) : paged.map((user, idx) => (
                                 <tr
                                     key={user.id}
+                                    onClick={() => router.push(`/admin/users/${user.id}`)}
                                     style={{
                                         borderTop: "1px solid var(--gray-5)",
                                         backgroundColor: idx % 2 === 0 ? "#fff" : "#fafafa",
                                         transition: "background 0.12s",
+                                        cursor: "pointer",
                                     }}
                                     onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "#f5efec"; }}
                                     onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.backgroundColor = idx % 2 === 0 ? "#fff" : "#fafafa"; }}
