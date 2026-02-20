@@ -3,7 +3,7 @@ import AdminHeader from "@/components/features/admin/admin-header";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f9f9f9" }}>
+        <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F6F8F7" }}>
             {/* Fixed Sidebar */}
             <AdminSidebar />
 

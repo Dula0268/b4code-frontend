@@ -112,7 +112,11 @@ export default function AdminSidebar() {
                 <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "4px" }}>
                     {NAV_ITEMS.map((item) => {
                         const Icon = item.icon;
-                        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                        const isActive =
+                            pathname === item.href ||
+                            pathname.startsWith(item.href + "/") ||
+                            // Treat /admin root as Dashboard active
+                            (item.href === "/admin/dashboard" && pathname === "/admin");
 
                         return (
                             <li key={item.href}>
