@@ -18,48 +18,50 @@ export default function GuestTopbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#e0e0e0]">
-      <div className="max-w-[1440px] mx-auto px-[30px] h-16 flex items-center justify-between">
+      <div className="w-full pl-4 pr-6 h-16 flex items-center justify-between">
 
         <Logo />
 
-        <nav className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map(({ label, href }) => {
-            const isActive = pathname === href
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={[
-                  "text-[15px] font-medium no-underline transition-colors duration-200 pb-0.5",
-                  isActive
-                    ? "text-[#953002] border-b-2 border-[#953002]"
-                    : "text-[#4f4f4f] hover:text-[#953002]",
-                ].join(" ")}
-                aria-current={isActive ? "page" : undefined}
-              >
-                {label}
-              </Link>
-            )
-          })}
-        </nav>
+        <div className="hidden md:flex items-center gap-8 ml-auto">
+          <nav className="flex items-center gap-8">
+            {NAV_LINKS.map(({ label, href }) => {
+              const isActive = pathname === href
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={[
+                    "text-[15px] font-medium no-underline transition-colors duration-200 pb-0.5",
+                    isActive
+                      ? "text-[#953002] border-b-2 border-[#953002]"
+                      : "text-[#4f4f4f] hover:text-[#953002]",
+                  ].join(" ")}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {label}
+                </Link>
+              )
+            })}
+          </nav>
 
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            href="/auth/register"
-            className="px-4 py-2 text-sm font-semibold text-[#953002] border-2 border-[#953002] rounded-lg hover:bg-[#953002]/5 transition-colors no-underline"
-          >
-            Register
-          </Link>
-          <Link
-            href="/auth/login"
-            className="px-4 py-2 text-sm font-semibold text-white bg-[#953002] rounded-lg hover:bg-[#6d2200] transition-colors no-underline"
-          >
-            Login
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/auth/register"
+              className="px-4 py-2 text-sm font-semibold text-[#953002] border-2 border-[#953002] rounded-lg hover:bg-[#953002]/5 transition-colors no-underline"
+            >
+              Register
+            </Link>
+            <Link
+              href="/auth/login"
+              className="px-4 py-2 text-sm font-semibold text-white bg-[#953002] rounded-lg hover:bg-[#6d2200] transition-colors no-underline"
+            >
+              Login
+            </Link>
+          </div>
         </div>
 
         <button
-          className="md:hidden p-2 text-[#1d1d1d]"
+          className="md:hidden p-2 text-[#1d1d1d] ml-auto"
           onClick={() => setMobileOpen(prev => !prev)}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
         >

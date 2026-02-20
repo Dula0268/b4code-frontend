@@ -14,7 +14,7 @@ export default function StaffCtaSection() {
         src="/images/staff-bg.jpg"
         alt=""
         fill
-        className="object-contain object-center"
+        className="object-cover object-top"
       />
 
       {/* Stronger gradient at bottom — staff photo is lighter so needs more overlay */}

@@ -15,7 +15,7 @@ export default function HeroSection() {
         src="/images/hero-bg.jpg"
         alt=""
         fill
-        className="object-contain object-center"
+        className="object-cover object-top"
         priority
       />
 
