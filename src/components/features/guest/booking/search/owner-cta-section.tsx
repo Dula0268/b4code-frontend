@@ -14,7 +14,7 @@ export default function OwnerCtaSection() {
         src="/images/owner-bg.jpg"
         alt=""
         fill
-        className="object-contain object-center"
+        className="object-cover object-top"
       />
 
       {/* Gradient from transparent top to dark bottom so text is readable */}
