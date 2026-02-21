@@ -60,7 +60,7 @@ export default function PlatformActivityChart({
   chartWidth = 900,
   chartHeight = 260,
 }: PlatformActivityChartProps) {
-  const [selectedRange, setSelectedRange] = useState("Last 30 Days");
+  const [selectedRange] = useState("Last 30 Days");
   const { line, area } = buildSmoothPath(chartPoints, chartWidth, chartHeight);
 
   return (

@@ -7,7 +7,6 @@ import AuditLogsHeader from "@/components/features/admin/audit-logs/audit-logs-h
 import AuditLogsTable, {
   LogEntry,
   UserRole,
-  ActionType,
 } from "@/components/features/admin/audit-logs/audit-logs-table";
 
 // ─── Helper Functions ──────────────────────────────────────────────────────────

@@ -38,7 +38,6 @@ export interface LocationPickerProps {
 // ─── Component ────────────────────────────────────────────────────────────
 export default function LocationPicker({
     value,
-    onChange,
     onSelect,
     open,
     maxSuggestions = 7,
