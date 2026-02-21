@@ -10,6 +10,7 @@ import {
   ChevronRight,
   UserPlus,
 } from "lucide-react";
+import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type UserRole = "Owner" | "Staff";
@@ -201,226 +202,232 @@ export default function UsersManagementPage() {
   const roles: ("All" | UserRole)[] = ["All", "Owner", "Staff"];
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* ── Page Header ── */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">
-            User Management
-          </h1>
-          <p className="mt-[6px] mb-0 text-sm text-[var(--gray-3)]">
-            Manage platform access, roles, and account statuses.
-          </p>
-        </div>
-        <button className="flex items-center gap-2 px-5 py-[10px] rounded-[10px] bg-[var(--brand-primary)] text-white border-none cursor-pointer text-sm font-semibold shadow-[0_2px_8px_rgba(149,48,2,0.25)] transition-colors hover:bg-[var(--primary-hover)]">
-          <UserPlus size={16} />
-          Add New User
-        </button>
-      </div>
-
-      {/* ── Table Card ── */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        {/* ── Toolbar ── */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--gray-5)]">
-          {/* Search */}
-          <div className="relative flex-1 max-w-[340px]">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-4)] pointer-events-none"
-            />
-            <input
-              placeholder="Search by name, email, or role..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full py-[9px] pr-3 pl-9 rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] bg-white outline-none box-border"
-            />
+    <AdminPageLayout>
+      <div className="flex flex-col gap-6">
+        {/* ── Page Header ── */}
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">
+              User Management
+            </h1>
+            <p className="mt-[6px] mb-0 text-sm text-[var(--gray-3)]">
+              Manage platform access, roles, and account statuses.
+            </p>
           </div>
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Filter by Role */}
-          <div className="relative">
-            <button
-              onClick={() => setRoleOpen(!roleOpen)}
-              className="flex items-center gap-[7px] px-[14px] py-2 rounded-lg border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] cursor-pointer"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M1 3h12M3 7h8M5 11h4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              {roleFilter === "All" ? "Filter by Role" : roleFilter}
-              <ChevronDown size={13} />
-            </button>
-            {roleOpen && (
-              <div className="absolute top-[calc(100%+6px)] right-0 bg-white border border-[var(--gray-5)] rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.10)] z-[100] min-w-[140px] overflow-hidden">
-                {roles.map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      setRoleFilter(r);
-                      setRoleOpen(false);
-                      setCurrentPage(1);
-                    }}
-                    className={`block w-full text-left px-4 py-[9px] border-none text-[13px] cursor-pointer ${
-                      roleFilter === r
-                        ? "bg-[rgba(149,48,2,0.07)] text-[var(--brand-primary)] font-semibold"
-                        : "bg-white text-[var(--gray-2)] font-normal"
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <button className="flex items-center gap-2 px-5 py-[10px] rounded-[10px] bg-[var(--brand-primary)] text-white border-none cursor-pointer text-sm font-semibold shadow-[0_2px_8px_rgba(149,48,2,0.25)] transition-colors hover:bg-[var(--primary-hover)]">
+            <UserPlus size={16} />
+            Add New User
+          </button>
         </div>
 
-        {/* ── Table ── */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-[#F6F8F7]">
-                {["USER", "ROLE", "STATUS", "LAST LOGIN", ""].map((h) => (
-                  <th
-                    key={h}
-                    className="px-4 py-[11px] text-left text-[11.5px] font-bold text-[var(--gray-3)] tracking-[0.06em] uppercase whitespace-nowrap"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {paged.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="py-10 text-center text-[var(--gray-3)] text-sm"
-                  >
-                    No users found.
-                  </td>
+        {/* ── Table Card ── */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          {/* ── Toolbar ── */}
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--gray-5)]">
+            {/* Search */}
+            <div className="relative flex-1 max-w-[340px]">
+              <Search
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-4)] pointer-events-none"
+              />
+              <input
+                placeholder="Search by name, email, or role..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full py-[9px] pr-3 pl-9 rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] bg-white outline-none box-border"
+              />
+            </div>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Filter by Role */}
+            <div className="relative">
+              <button
+                onClick={() => setRoleOpen(!roleOpen)}
+                className="flex items-center gap-[7px] px-[14px] py-2 rounded-lg border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] cursor-pointer"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path
+                    d="M1 3h12M3 7h8M5 11h4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                {roleFilter === "All" ? "Filter by Role" : roleFilter}
+                <ChevronDown size={13} />
+              </button>
+              {roleOpen && (
+                <div className="absolute top-[calc(100%+6px)] right-0 bg-white border border-[var(--gray-5)] rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.10)] z-[100] min-w-[140px] overflow-hidden">
+                  {roles.map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        setRoleFilter(r);
+                        setRoleOpen(false);
+                        setCurrentPage(1);
+                      }}
+                      className={`block w-full text-left px-4 py-[9px] border-none text-[13px] cursor-pointer ${
+                        roleFilter === r
+                          ? "bg-[rgba(149,48,2,0.07)] text-[var(--brand-primary)] font-semibold"
+                          : "bg-white text-[var(--gray-2)] font-normal"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Table ── */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-[#F6F8F7]">
+                  {["USER", "ROLE", "STATUS", "LAST LOGIN", ""].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-[11px] text-left text-[11.5px] font-bold text-[var(--gray-3)] tracking-[0.06em] uppercase whitespace-nowrap"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ) : (
-                paged.map((user, idx) => (
-                  <tr
-                    key={user.id}
-                    onClick={() => router.push(`/admin/users/${user.id}`)}
-                    className={`border-t border-[var(--gray-5)] transition-colors cursor-pointer ${
-                      idx % 2 === 0 ? "bg-white" : "bg-[#fafafa]"
-                    } hover:bg-[#f5efec]`}
-                  >
-                    {/* User */}
-                    <td className="px-4 py-[14px] min-w-[220px]">
-                      <div className="flex items-center gap-3">
-                        <UserAvatar user={user} />
-                        <div>
-                          <p className="m-0 font-semibold text-[var(--black-2)]">
-                            {user.name}
-                          </p>
-                          <p className="m-0 text-xs text-[var(--gray-3)]">
-                            {user.email}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    {/* Role */}
-                    <td className="px-4 py-[14px]">
-                      <RoleBadge role={user.role} />
-                    </td>
-                    {/* Status */}
-                    <td className="px-4 py-[14px]">
-                      <StatusBadge status={user.status} />
-                    </td>
-                    {/* Last Login */}
-                    <td className="px-4 py-[14px] whitespace-nowrap">
-                      <span className="text-[var(--black-2)] font-medium">
-                        {user.lastLogin}
-                      </span>
-                      <span className="text-[var(--gray-3)] ml-2 text-[13px]">
-                        {user.lastLoginTime}
-                      </span>
-                    </td>
-                    {/* Actions */}
-                    <td className="px-4 py-[14px] w-10">
-                      <button className="bg-transparent border-none cursor-pointer text-[var(--gray-4)] flex items-center justify-center p-1 rounded-md hover:bg-[var(--gray-5)] hover:text-[var(--gray-2)]">
-                        <MoreVertical size={16} />
-                      </button>
+              </thead>
+              <tbody>
+                {paged.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="py-10 text-center text-[var(--gray-3)] text-sm"
+                    >
+                      No users found.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  paged.map((user, idx) => (
+                    <tr
+                      key={user.id}
+                      onClick={() => router.push(`/admin/users/${user.id}`)}
+                      className={`border-t border-[var(--gray-5)] transition-colors cursor-pointer ${
+                        idx % 2 === 0 ? "bg-white" : "bg-[#fafafa]"
+                      } hover:bg-[#f5efec]`}
+                    >
+                      {/* User */}
+                      <td className="px-4 py-[14px] min-w-[220px]">
+                        <div className="flex items-center gap-3">
+                          <UserAvatar user={user} />
+                          <div>
+                            <p className="m-0 font-semibold text-[var(--black-2)]">
+                              {user.name}
+                            </p>
+                            <p className="m-0 text-xs text-[var(--gray-3)]">
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      {/* Role */}
+                      <td className="px-4 py-[14px]">
+                        <RoleBadge role={user.role} />
+                      </td>
+                      {/* Status */}
+                      <td className="px-4 py-[14px]">
+                        <StatusBadge status={user.status} />
+                      </td>
+                      {/* Last Login */}
+                      <td className="px-4 py-[14px] whitespace-nowrap">
+                        <span className="text-[var(--black-2)] font-medium">
+                          {user.lastLogin}
+                        </span>
+                        <span className="text-[var(--gray-3)] ml-2 text-[13px]">
+                          {user.lastLoginTime}
+                        </span>
+                      </td>
+                      {/* Actions */}
+                      <td className="px-4 py-[14px] w-10">
+                        <button className="bg-transparent border-none cursor-pointer text-[var(--gray-4)] flex items-center justify-center p-1 rounded-md hover:bg-[var(--gray-5)] hover:text-[var(--gray-2)]">
+                          <MoreVertical size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-        {/* ── Pagination ── */}
-        <div className="flex justify-between items-center px-5 py-[14px] border-t border-[var(--gray-5)]">
-          <span className="text-[13px] text-[var(--gray-3)]">
-            Showing{" "}
-            <strong className="text-[var(--black-2)]">
-              {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
-            </strong>{" "}
-            to{" "}
-            <strong className="text-[var(--black-2)]">
-              {Math.min(currentPage * PAGE_SIZE, filtered.length)}
-            </strong>{" "}
-            of{" "}
-            <strong className="text-[var(--black-2)]">{filtered.length}</strong>{" "}
-            results
-          </span>
+          {/* ── Pagination ── */}
+          <div className="flex justify-between items-center px-5 py-[14px] border-t border-[var(--gray-5)]">
+            <span className="text-[13px] text-[var(--gray-3)]">
+              Showing{" "}
+              <strong className="text-[var(--black-2)]">
+                {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
+              </strong>{" "}
+              to{" "}
+              <strong className="text-[var(--black-2)]">
+                {Math.min(currentPage * PAGE_SIZE, filtered.length)}
+              </strong>{" "}
+              of{" "}
+              <strong className="text-[var(--black-2)]">
+                {filtered.length}
+              </strong>{" "}
+              results
+            </span>
 
-          <div className="flex items-center gap-1">
-            {/* Prev */}
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
-                currentPage === 1
-                  ? "cursor-not-allowed text-[var(--gray-4)]"
-                  : "cursor-pointer text-[var(--gray-2)]"
-              }`}
-            >
-              <ChevronLeft size={15} />
-            </button>
-
-            {/* Page numbers */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <div className="flex items-center gap-1">
+              {/* Prev */}
               <button
-                key={p}
-                onClick={() => setCurrentPage(p)}
-                className={`w-8 h-8 rounded-lg border cursor-pointer text-[13px] ${
-                  currentPage === p
-                    ? "border-[var(--brand-secondary)] bg-[var(--brand-secondary)] text-white font-bold"
-                    : "border-[var(--gray-5)] bg-white text-[var(--gray-2)] font-normal"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
+                  currentPage === 1
+                    ? "cursor-not-allowed text-[var(--gray-4)]"
+                    : "cursor-pointer text-[var(--gray-2)]"
                 }`}
               >
-                {p}
+                <ChevronLeft size={15} />
               </button>
-            ))}
 
-            {/* Next */}
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
-                currentPage === totalPages
-                  ? "cursor-not-allowed text-[var(--gray-4)]"
-                  : "cursor-pointer text-[var(--gray-2)]"
-              }`}
-            >
-              <ChevronRight size={15} />
-            </button>
+              {/* Page numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-8 h-8 rounded-lg border cursor-pointer text-[13px] ${
+                    currentPage === p
+                      ? "border-[var(--brand-secondary)] bg-[var(--brand-secondary)] text-white font-bold"
+                      : "border-[var(--gray-5)] bg-white text-[var(--gray-2)] font-normal"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+
+              {/* Next */}
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
+                  currentPage === totalPages
+                    ? "cursor-not-allowed text-[var(--gray-4)]"
+                    : "cursor-pointer text-[var(--gray-2)]"
+                }`}
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 }

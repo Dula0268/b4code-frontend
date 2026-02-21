@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   ArrowLeft,
 } from "lucide-react";
+import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 
 // ─── Shared user data (same as users list) ───────────────────────────────────
 const ALL_USERS = [
@@ -301,266 +302,270 @@ export default function UserDetailPage() {
         />
       )}
 
-      <div className="flex flex-col gap-6">
-        {/* ── Breadcrumb ── */}
-        <div className="flex items-center gap-1.5 text-sm">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-[var(--gray-3)] text-sm p-0 hover:text-[var(--black-2)]"
-          >
-            <ArrowLeft size={14} />
-            User Management
-          </button>
-          <ChevronRight size={14} color="var(--gray-4)" />
-          <span className="text-[var(--brand-primary)] font-semibold">
-            Account Details
-          </span>
-        </div>
-
-        {/* ── Profile Header Card ── */}
-        <div className="bg-white rounded-2xl px-7 py-6 shadow-sm flex items-center gap-5 flex-wrap">
-          {/* Avatar */}
-          <div className="relative flex-shrink-0">
-            <div
-              className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-white font-extrabold text-[26px]"
-              style={{ backgroundColor: user.avatarColor }}
-            >
-              {user.avatarInitial}
-            </div>
-            {/* Online dot */}
-            <span
-              className="absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white"
-              style={{ backgroundColor: suspended ? "#eb5757" : "#27ae60" }}
-            />
-          </div>
-
-          {/* Name / email / badges */}
-          <div className="flex-1 min-w-[200px]">
-            <h1 className="m-0 mb-1 text-[22px] font-extrabold text-[var(--black-2)]">
-              {user.name}
-            </h1>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-[var(--gray-3)]">{user.email}</span>
-              <span className="w-1 h-1 rounded-full bg-[var(--gray-4)] flex-shrink-0" />
-              {/* Role badge */}
-              <span className="px-[10px] py-[2px] rounded-full bg-[rgba(155,89,182,0.12)] text-[#7d3c98] text-xs font-bold">
-                {user.role}
-              </span>
-              {/* Suspended badge (only when suspended) */}
-              {suspended && (
-                <span className="px-[10px] py-[2px] rounded-full bg-[rgba(235,87,87,0.12)] text-[#b83030] text-xs font-bold">
-                  Suspended
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex gap-3 flex-shrink-0 flex-wrap">
-            {/* Reset Password */}
+      <AdminPageLayout>
+        <div className="flex flex-col gap-6">
+          {/* ── Breadcrumb ── */}
+          <div className="flex items-center gap-1.5 text-sm">
             <button
-              onClick={() => setShowResetModal(true)}
-              className="flex items-center gap-[7px] px-[18px] py-[10px] rounded-[10px] border-[1.5px] border-[var(--gray-5)] bg-white text-sm font-semibold text-[var(--black-2)] cursor-pointer transition-colors hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+              onClick={() => router.back()}
+              className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-[var(--gray-3)] text-sm p-0 hover:text-[var(--black-2)]"
             >
-              <RotateCcw size={15} />
-              Reset Password
+              <ArrowLeft size={14} />
+              User Management
             </button>
-
-            {/* Suspend / Reactivate */}
-            <button
-              onClick={handleSuspendToggle}
-              className={`flex items-center gap-[7px] px-[18px] py-[10px] rounded-[10px] border-none text-white text-sm font-semibold cursor-pointer transition-opacity hover:opacity-88 ${
-                suspended
-                  ? "bg-[var(--state-success)] shadow-[0_2px_8px_rgba(39,174,96,0.3)]"
-                  : "bg-[var(--state-error)] shadow-[0_2px_8px_rgba(235,87,87,0.3)]"
-              }`}
-            >
-              {suspended ? <RefreshCw size={15} /> : <ShieldOff size={15} />}
-              {suspended ? "Reactivate Account" : "Suspend Account"}
-            </button>
-          </div>
-        </div>
-
-        {/* ── Two-column body ── */}
-        <div className="grid grid-cols-[1fr_1.7fr] gap-5 items-start">
-          {/* ── Account Information ── */}
-          <div className="bg-white rounded-2xl px-7 py-6 shadow-sm">
-            <h2 className="m-0 mb-[22px] text-base font-bold text-[var(--black-2)]">
-              Account Information
-            </h2>
-            {[
-              { label: "EMAIL ADDRESS", value: user.email },
-              { label: "PHONE NUMBER", value: user.phone },
-              { label: "JOINED DATE", value: user.joined },
-              { label: "LAST LOGIN", value: user.lastLogin },
-              { label: "TIME ZONE", value: user.timezone },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ marginBottom: "20px" }}>
-                <p
-                  style={{
-                    margin: "0 0 4px",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    letterSpacing: "0.07em",
-                    color: "var(--gray-3)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {label}
-                </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "14px",
-                    color: "var(--black-2)",
-                    fontWeight: 500,
-                  }}
-                >
-                  {value}
-                </p>
-              </div>
-            ))}
+            <ChevronRight size={14} color="var(--gray-4)" />
+            <span className="text-[var(--brand-primary)] font-semibold">
+              Account Details
+            </span>
           </div>
 
-          {/* ── Activity Log ── */}
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            {/* Header */}
-            <div className="flex justify-between items-center px-6 pt-5">
-              <h2 className="m-0 text-base font-bold text-[var(--black-2)]">
-                Activity Log
-              </h2>
-              <div className="flex gap-2">
-                {/* Filter icon */}
-                <button className="bg-transparent border-none cursor-pointer text-[var(--gray-3)] flex p-1">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="M2 4h12M4 8h8M6 12h4"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Table */}
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "13px",
-                marginTop: "12px",
-              }}
-            >
-              <thead>
-                <tr style={{ borderBottom: "1px solid var(--gray-5)" }}>
-                  {["ACTION", "TARGET", "DATE & TIME", "IP ADDRESS"].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        style={{
-                          padding: "8px 24px",
-                          textAlign: "left",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          color: "var(--gray-3)",
-                          letterSpacing: "0.06em",
-                          textTransform: "uppercase",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {ACTIVITY_LOG.map((log, i) => (
-                  <tr
-                    key={i}
-                    style={{ borderBottom: "1px solid var(--gray-5)" }}
-                    onMouseEnter={(e) => {
-                      (
-                        e.currentTarget as HTMLTableRowElement
-                      ).style.backgroundColor = "#f5efec";
-                    }}
-                    onMouseLeave={(e) => {
-                      (
-                        e.currentTarget as HTMLTableRowElement
-                      ).style.backgroundColor = "";
-                    }}
-                  >
-                    <td style={{ padding: "13px 24px" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                        }}
-                      >
-                        <ActivityIcon type={log.action} />
-                        <span
-                          style={{ fontWeight: 600, color: "var(--black-2)" }}
-                        >
-                          {log.label}
-                        </span>
-                      </div>
-                    </td>
-                    <td
-                      style={{ padding: "13px 24px", color: "var(--gray-3)" }}
-                    >
-                      {log.target}
-                    </td>
-                    <td
-                      style={{
-                        padding: "13px 24px",
-                        color: "var(--gray-3)",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {log.date}
-                    </td>
-                    <td
-                      style={{
-                        padding: "13px 24px",
-                        color: "var(--gray-3)",
-                        whiteSpace: "nowrap",
-                        fontFamily: "monospace",
-                      }}
-                    >
-                      {log.ip}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* View Full Log */}
-            <div style={{ padding: "16px 24px", textAlign: "center" }}>
-              <button
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--brand-primary)",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.textDecoration = "underline")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.textDecoration = "none")
-                }
+          {/* ── Profile Header Card ── */}
+          <div className="bg-white rounded-2xl px-7 py-6 shadow-sm flex items-center gap-5 flex-wrap">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <div
+                className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-white font-extrabold text-[26px]"
+                style={{ backgroundColor: user.avatarColor }}
               >
-                View Full Activity Log
+                {user.avatarInitial}
+              </div>
+              {/* Online dot */}
+              <span
+                className="absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white"
+                style={{ backgroundColor: suspended ? "#eb5757" : "#27ae60" }}
+              />
+            </div>
+
+            {/* Name / email / badges */}
+            <div className="flex-1 min-w-[200px]">
+              <h1 className="m-0 mb-1 text-[22px] font-extrabold text-[var(--black-2)]">
+                {user.name}
+              </h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-[var(--gray-3)]">
+                  {user.email}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-[var(--gray-4)] flex-shrink-0" />
+                {/* Role badge */}
+                <span className="px-[10px] py-[2px] rounded-full bg-[rgba(155,89,182,0.12)] text-[#7d3c98] text-xs font-bold">
+                  {user.role}
+                </span>
+                {/* Suspended badge (only when suspended) */}
+                {suspended && (
+                  <span className="px-[10px] py-[2px] rounded-full bg-[rgba(235,87,87,0.12)] text-[#b83030] text-xs font-bold">
+                    Suspended
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3 flex-shrink-0 flex-wrap">
+              {/* Reset Password */}
+              <button
+                onClick={() => setShowResetModal(true)}
+                className="flex items-center gap-[7px] px-[18px] py-[10px] rounded-[10px] border-[1.5px] border-[var(--gray-5)] bg-white text-sm font-semibold text-[var(--black-2)] cursor-pointer transition-colors hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+              >
+                <RotateCcw size={15} />
+                Reset Password
+              </button>
+
+              {/* Suspend / Reactivate */}
+              <button
+                onClick={handleSuspendToggle}
+                className={`flex items-center gap-[7px] px-[18px] py-[10px] rounded-[10px] border-none text-white text-sm font-semibold cursor-pointer transition-opacity hover:opacity-88 ${
+                  suspended
+                    ? "bg-[var(--state-success)] shadow-[0_2px_8px_rgba(39,174,96,0.3)]"
+                    : "bg-[var(--state-error)] shadow-[0_2px_8px_rgba(235,87,87,0.3)]"
+                }`}
+              >
+                {suspended ? <RefreshCw size={15} /> : <ShieldOff size={15} />}
+                {suspended ? "Reactivate Account" : "Suspend Account"}
               </button>
             </div>
           </div>
+
+          {/* ── Two-column body ── */}
+          <div className="grid grid-cols-[1fr_1.7fr] gap-5 items-start">
+            {/* ── Account Information ── */}
+            <div className="bg-white rounded-2xl px-7 py-6 shadow-sm">
+              <h2 className="m-0 mb-[22px] text-base font-bold text-[var(--black-2)]">
+                Account Information
+              </h2>
+              {[
+                { label: "EMAIL ADDRESS", value: user.email },
+                { label: "PHONE NUMBER", value: user.phone },
+                { label: "JOINED DATE", value: user.joined },
+                { label: "LAST LOGIN", value: user.lastLogin },
+                { label: "TIME ZONE", value: user.timezone },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ marginBottom: "20px" }}>
+                  <p
+                    style={{
+                      margin: "0 0 4px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.07em",
+                      color: "var(--gray-3)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {label}
+                  </p>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "14px",
+                      color: "var(--black-2)",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Activity Log ── */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              {/* Header */}
+              <div className="flex justify-between items-center px-6 pt-5">
+                <h2 className="m-0 text-base font-bold text-[var(--black-2)]">
+                  Activity Log
+                </h2>
+                <div className="flex gap-2">
+                  {/* Filter icon */}
+                  <button className="bg-transparent border-none cursor-pointer text-[var(--gray-3)] flex p-1">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M2 4h12M4 8h8M6 12h4"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Table */}
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: "13px",
+                  marginTop: "12px",
+                }}
+              >
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--gray-5)" }}>
+                    {["ACTION", "TARGET", "DATE & TIME", "IP ADDRESS"].map(
+                      (h) => (
+                        <th
+                          key={h}
+                          style={{
+                            padding: "8px 24px",
+                            textAlign: "left",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            color: "var(--gray-3)",
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ACTIVITY_LOG.map((log, i) => (
+                    <tr
+                      key={i}
+                      style={{ borderBottom: "1px solid var(--gray-5)" }}
+                      onMouseEnter={(e) => {
+                        (
+                          e.currentTarget as HTMLTableRowElement
+                        ).style.backgroundColor = "#f5efec";
+                      }}
+                      onMouseLeave={(e) => {
+                        (
+                          e.currentTarget as HTMLTableRowElement
+                        ).style.backgroundColor = "";
+                      }}
+                    >
+                      <td style={{ padding: "13px 24px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                          }}
+                        >
+                          <ActivityIcon type={log.action} />
+                          <span
+                            style={{ fontWeight: 600, color: "var(--black-2)" }}
+                          >
+                            {log.label}
+                          </span>
+                        </div>
+                      </td>
+                      <td
+                        style={{ padding: "13px 24px", color: "var(--gray-3)" }}
+                      >
+                        {log.target}
+                      </td>
+                      <td
+                        style={{
+                          padding: "13px 24px",
+                          color: "var(--gray-3)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {log.date}
+                      </td>
+                      <td
+                        style={{
+                          padding: "13px 24px",
+                          color: "var(--gray-3)",
+                          whiteSpace: "nowrap",
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        {log.ip}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* View Full Log */}
+              <div style={{ padding: "16px 24px", textAlign: "center" }}>
+                <button
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--brand-primary)",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.textDecoration = "underline")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.textDecoration = "none")
+                  }
+                >
+                  View Full Activity Log
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </AdminPageLayout>
     </>
   );
 }
