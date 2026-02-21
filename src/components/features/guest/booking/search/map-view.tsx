@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import type { LatLngBoundsExpression, Map as LeafletMap, Marker } from "leaflet"
 import type { PropertyListing } from "./property-card"
 
 // ─── Sri Lanka coordinates for each location ──────────────────────────────
@@ -35,17 +36,14 @@ function formatLKR(v: number) {
 interface MapViewProps {
     listings: PropertyListing[]
     hoveredId?: string | null
-    onHover?: (id: string | null) => void
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 // We dynamically import Leaflet inside useEffect to avoid SSR issues.
-export default function MapView({ listings, hoveredId, onHover }: MapViewProps) {
+export default function MapView({ listings, hoveredId }: MapViewProps) {
     const containerRef = useRef<HTMLDivElement>(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mapRef = useRef<any>(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const markersRef = useRef<Map<string, any>>(new Map())
+    const mapRef = useRef<LeafletMap | null>(null)
+    const markersRef = useRef<Map<string, Marker>>(new Map())
 
     useEffect(() => {
         if (!containerRef.current || mapRef.current) return
@@ -53,7 +51,7 @@ export default function MapView({ listings, hoveredId, onHover }: MapViewProps) 
         // Dynamic import of leaflet (client-side only)
         import("leaflet").then(L => {
             // Fix default icon paths broken by webpack
-            // @ts-ignore
+            // @ts-expect-error – Leaflet internal property not in types
             delete L.Icon.Default.prototype._getIconUrl
             L.Icon.Default.mergeOptions({
                 iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -118,29 +116,30 @@ export default function MapView({ listings, hoveredId, onHover }: MapViewProps) 
               onerror="this.style.display='none'"
             />
             <p style="font-size:13px;font-weight:700;color:#1d1d1d;margin:0 0 2px 0;line-height:1.3;">${listing.title}</p>
-            <p style="font-size:11px;color:#828282;margin:0 0 6px 0;">${listing.beds} bed${listing.beds !== 1 ? "s" : ""} · ${listing.highlights}</p>
+            <p style="font-size:11px;color:#828282;margin:0 0 6px 0;">${listing.propertyType} · ${listing.reviewCount} reviews</p>
             <p style="font-size:13px;font-weight:700;color:#953002;margin:0;">${formatLKR(listing.pricePerNight)} <span style="font-weight:400;color:#828282;font-size:11px;">/ night</span></p>
             ${listing.rating ? `<p style="font-size:11px;color:#ffb401;margin:4px 0 0 0;">★ ${listing.rating.toFixed(2)}</p>` : ""}
           </div>
         `, { maxWidth: 230 })
 
                 marker.addTo(map)
-                markersRef.current.set(listing.id, marker as any)
+                markersRef.current.set(listing.id, marker as Marker)
             })
 
             // Fit map to all markers
             if (listings.length > 0) {
                 const bounds = listings.map(l => getCoords(l.location))
-                map.fitBounds(bounds as any, { padding: [40, 40], maxZoom: 10 })
+                map.fitBounds(bounds as LatLngBoundsExpression, { padding: [40, 40], maxZoom: 10 })
             }
 
-            mapRef.current = map as any
+            mapRef.current = map
         })
 
         return () => {
+            const markers = markersRef.current
             mapRef.current?.remove()
             mapRef.current = null
-            markersRef.current.clear()
+            markers.clear()
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
@@ -176,7 +175,7 @@ export default function MapView({ listings, hoveredId, onHover }: MapViewProps) 
                     iconAnchor: [40, 16],
                     popupAnchor: [0, -20],
                 })
-                    ; (marker as any).setIcon(icon)
+                marker.setIcon(icon)
             })
         })
     }, [hoveredId, listings])

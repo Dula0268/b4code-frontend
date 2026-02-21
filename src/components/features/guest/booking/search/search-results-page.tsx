@@ -210,7 +210,6 @@ export default function SearchResultsPage() {
                                     <MapView
                                         listings={sorted}
                                         hoveredId={hoveredId}
-                                        onHover={setHoveredId}
                                     />
                                 </div>
                             )}
