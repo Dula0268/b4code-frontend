@@ -8,7 +8,12 @@ import CalendarPicker from "@/components/shared/forms/calendar-picker"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
 import LocationPicker from "@/components/shared/forms/location-picker"
 
-export default function SearchBar() {
+interface SearchBarProps {
+  variant?: "hero" | "compact"
+}
+
+export default function SearchBar({ variant = "hero" }: SearchBarProps) {
+  const isCompact = variant === "compact"
   const router = useRouter()
 
   // ── State ──────────────────────────────────────────────────────────────
@@ -65,7 +70,7 @@ export default function SearchBar() {
       ...(checkOut && { checkOut: checkOut.toISOString().split("T")[0] }),
       guests: String(guestTotal),
     })
-    router.push(`/search?${params.toString()}`)
+    router.push(`/guest/search?${params.toString()}`)
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────
@@ -74,7 +79,12 @@ export default function SearchBar() {
   return (
     <div
       role="search"
-      className="bg-white rounded-xl p-2 flex flex-col md:flex-row gap-1 shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-[640px]"
+      className={[
+        "bg-white rounded-xl flex flex-col md:flex-row gap-1",
+        isCompact
+          ? "p-1 border border-[#e0e0e0] shadow-[0_2px_12px_rgba(0,0,0,0.08)] w-full max-w-[580px]"
+          : "p-2 shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-[640px]",
+      ].join(" ")}
     >
 
       {/* ── Location ─────────────────────────────────────────────────── */}
