@@ -386,7 +386,7 @@ export default function UsersManagementPage() {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
+                className={`w-8 h-8 rounded-md border border-[var(--gray-5)] bg-white flex items-center justify-center ${
                   currentPage === 1
                     ? "cursor-not-allowed text-[var(--gray-4)]"
                     : "cursor-pointer text-[var(--gray-2)]"
@@ -400,7 +400,7 @@ export default function UsersManagementPage() {
                 <button
                   key={p}
                   onClick={() => setCurrentPage(p)}
-                  className={`w-8 h-8 rounded-lg border cursor-pointer text-[13px] ${
+                  className={`w-8 h-8 rounded-md border cursor-pointer text-[13px] ${
                     currentPage === p
                       ? "border-[var(--brand-secondary)] bg-[var(--brand-secondary)] text-white font-bold"
                       : "border-[var(--gray-5)] bg-white text-[var(--gray-2)] font-normal"
@@ -416,7 +416,7 @@ export default function UsersManagementPage() {
                   setCurrentPage((p) => Math.min(totalPages, p + 1))
                 }
                 disabled={currentPage === totalPages || totalPages === 0}
-                className={`w-8 h-8 rounded-lg border border-[var(--gray-5)] bg-white flex items-center justify-center ${
+                className={`w-8 h-8 rounded-md border border-[var(--gray-5)] bg-white flex items-center justify-center ${
                   currentPage === totalPages
                     ? "cursor-not-allowed text-[var(--gray-4)]"
                     : "cursor-pointer text-[var(--gray-2)]"
