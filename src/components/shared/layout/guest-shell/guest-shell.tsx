@@ -1,19 +1,10 @@
-'use client';
-
-import React from 'react';
-import GuestTopbar from './guest-topbar';
-
-interface GuestShellProps {
-  children: React.ReactNode;
-}
-
-export default function GuestShell({ children }: GuestShellProps) {
+export default function Placeholder() {
   return (
-    <div className="bg-white min-h-screen pt-16 overflow-x-hidden">
-      <GuestTopbar />
-      <main className="max-w-7xl mx-auto">
-        {children}
-      </main>
+    <div style={{ padding: 16, border: "1px dashed #ccc", borderRadius: 12 }}>
+      <h3 style={{ margin: 0, fontWeight: 600 }}>shared/layout/guest-shell/guest-shell</h3>
+      <p style={{ marginTop: 8, color: "#666" }}>
+        Placeholder component. Replace with real UI.
+      </p>
     </div>
   );
 }
