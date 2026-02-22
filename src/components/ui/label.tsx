@@ -1,24 +1,23 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as LabelPrimitive from "@radix-ui/react-label"
+import * as React from "react";
+import clsx from "clsx";
+import { twMerge } from "tailwind-merge";
 
-import { cn } from "@/lib/utils"
+function cn(...inputs: Array<string | undefined | null | false>) {
+  return twMerge(clsx(inputs));
+}
 
-function Label({
-  className,
-  ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>) {
-  return (
-    <LabelPrimitive.Root
-      data-slot="label"
-      className={cn(
-        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        className
-      )}
+export type LabelProps = React.LabelHTMLAttributes<HTMLLabelElement>
+
+export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
+  ({ className, ...props }, ref) => (
+    <label
+      ref={ref}
+      className={cn("text-sm font-semibold text-neutral-800", className)}
       {...props}
     />
   )
-}
+);
 
-export { Label }
+Label.displayName = "Label";

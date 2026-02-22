@@ -121,10 +121,6 @@ export default function SearchResultsPage() {
         }
     }
 
-    // ── Formatted date label for header ──────────────────────────────────────
-    const dateLabel = checkIn && checkOut
-        ? `${checkIn} - ${checkOut}`
-        : checkIn || undefined
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
