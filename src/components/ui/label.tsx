@@ -8,8 +8,7 @@ function cn(...inputs: Array<string | undefined | null | false>) {
   return twMerge(clsx(inputs));
 }
 
-export interface LabelProps
-  extends React.LabelHTMLAttributes<HTMLLabelElement> {}
+export type LabelProps = React.LabelHTMLAttributes<HTMLLabelElement>
 
 export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
   ({ className, ...props }, ref) => (
