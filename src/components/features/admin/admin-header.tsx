@@ -12,6 +12,11 @@ interface AdminHeaderProps {
   avatarSrc?: string;
   /** Called when the user types in the search box */
   onSearch?: (query: string) => void;
+  /**
+   * When true the header spans the full viewport width (left-0).
+   * Use on pages that have NO sidebar.
+   */
+  fullWidth?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -19,6 +24,7 @@ export default function AdminHeader({
   adminName = "Admin",
   avatarSrc,
   onSearch,
+  fullWidth = false,
 }: AdminHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -31,19 +37,23 @@ export default function AdminHeader({
   const initial = adminName.charAt(0).toUpperCase();
 
   return (
-    <header className="fixed top-0 left-[260px] right-0 h-[68px] z-40 bg-[var(--white)] border-b border-[var(--gray-5)] flex items-center justify-end px-7 gap-4">
+    <header
+      className={`fixed top-0 right-0 h-[68px] z-40 bg-[var(--white)] border-b border-[var(--gray-5)] flex items-center justify-end px-7 gap-4 ${fullWidth ? "left-0" : "left-[260px]"
+        }`}
+    >
       {/* ── Search Bar ── */}
-      <div className="flex items-center gap-2 bg-[#f5efec] border-none rounded-full py-[10px] px-[18px] w-[300px] transition-shadow duration-150 focus-within:shadow-[0_0_0_2px_rgba(149,48,2,0.25)]">
+      <div className="flex items-center gap-2 bg-[#f0ebe7] rounded-xl py-[9px] px-[16px] w-[280px] transition-shadow duration-150 focus-within:shadow-[0_0_0_2px_rgba(149,48,2,0.18)]">
         <Search
-          size={16}
-          className="text-[var(--brand-primary)] flex-shrink-0 opacity-70"
+          size={15}
+          className="flex-shrink-0"
+          style={{ color: "#b07a6e" }}
         />
         <input
           type="text"
           placeholder="Search..."
           value={searchQuery}
           onChange={handleSearchChange}
-          className="border-none outline-none bg-transparent text-sm text-[var(--brand-primary)] w-full placeholder:text-[var(--brand-primary)]/60"
+          className="border-none outline-none bg-transparent text-sm w-full placeholder:text-[#b07a6e] text-[#6b3a2a]"
         />
       </div>
 
