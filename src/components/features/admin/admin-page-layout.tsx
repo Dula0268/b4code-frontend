@@ -10,7 +10,7 @@ interface AdminPageLayoutProps {
 export default function AdminPageLayout({
   children,
   adminName = "Admin",
-  avatarSrc = "/admin-avatar.png",
+  avatarSrc,
 }: AdminPageLayoutProps) {
   return (
     <div className="flex min-h-screen bg-[#F6F8F7]">

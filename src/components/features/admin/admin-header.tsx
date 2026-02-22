@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import UserIcon from "@/components/features/admin/user-icon";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface AdminHeaderProps {
@@ -33,8 +34,7 @@ export default function AdminHeader({
     onSearch?.(e.target.value);
   };
 
-  // First letter of name for fallback initials avatar
-  const initial = adminName.charAt(0).toUpperCase();
+
 
   return (
     <header
@@ -60,21 +60,21 @@ export default function AdminHeader({
       {/* ── User Avatar ── */}
       <div
         title={adminName}
-        className="relative w-[42px] h-[42px] rounded-full flex-shrink-0 cursor-pointer"
+        className="relative w-[42px] h-[42px] flex-shrink-0 cursor-pointer"
       >
-        {avatarSrc ? (
-          <Image
-            src={avatarSrc}
-            alt={adminName}
-            fill
-            className="rounded-full object-cover"
-          />
-        ) : (
-          /* Fallback: coloured circle with initial */
-          <div className="w-[42px] h-[42px] rounded-full bg-[var(--brand-primary)] text-[var(--white)] flex items-center justify-center font-bold text-base select-none">
-            {initial}
-          </div>
-        )}
+        {/* Avatar circle — overflow-hidden so SVG clips cleanly */}
+        <div className="w-[42px] h-[42px] rounded-full overflow-hidden">
+          {avatarSrc ? (
+            <Image
+              src={avatarSrc}
+              alt={adminName}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <UserIcon size={42} />
+          )}
+        </div>
 
         {/* Green online indicator dot */}
         <span className="absolute bottom-[1px] right-[1px] w-[11px] h-[11px] rounded-full bg-[var(--state-success)] border-2 border-[var(--white)]" />
