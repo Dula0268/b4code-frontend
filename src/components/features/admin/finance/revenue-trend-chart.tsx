@@ -27,7 +27,17 @@ const revenueData = [
 ];
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload }: any) {
+interface TooltipPayload {
+  payload: { month: string };
+  value: number;
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+}
+
+function CustomTooltip({ active, payload }: TooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white px-4 py-3 rounded-lg border border-[#F0EBE7] shadow-md">
