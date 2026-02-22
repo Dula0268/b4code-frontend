@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Logo from "@/components/shared/branding/logo";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -61,14 +62,7 @@ export default function AdminSidebar() {
     <aside className="w-[260px] min-h-screen bg-[var(--white)] border-r border-[var(--gray-5)] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
       {/* ── Logo + Role Label ── */}
       <div className="px-5 pb-6">
-        <Link href="/admin" className="no-underline">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/prime-stay-logo.svg"
-            alt="Prime Stay Logo"
-            className="w-[140px] h-14 object-contain"
-          />
-        </Link>
+        <Logo href="/admin" variant="default" width={140} height={48} />
         {/* Admin Console plain text under the logo */}
         <p className="mt-1.5 text-[15px] font-normal text-[rgba(149,48,2,0.7)] tracking-[0.01em]">
           Admin Console
@@ -91,19 +85,17 @@ export default function AdminSidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${
-                    isActive
+                  className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
                       ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
                       : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
-                  }`}
+                    }`}
                 >
                   <Icon
                     size={18}
-                    className={`flex-shrink-0 ${
-                      isActive
+                    className={`flex-shrink-0 ${isActive
                         ? "text-[var(--brand-primary)]"
                         : "text-[var(--black-1)]"
-                    }`}
+                      }`}
                   />
                   <span>{item.label}</span>
                 </Link>
@@ -122,11 +114,10 @@ export default function AdminSidebar() {
           {/* Settings */}
           <Link
             href="/admin/settings"
-            className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${
-              pathname === "/admin/settings"
+            className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${pathname === "/admin/settings"
                 ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
                 : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
-            }`}
+              }`}
           >
             <Settings
               size={18}
