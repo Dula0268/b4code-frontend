@@ -320,6 +320,22 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                                 </div>
                             </div>
 
+                            <div className="mb-5 pb-5 border-b border-[#f0f0f0]">
+                                <button className="text-[14px] font-semibold text-[#953002] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between">
+                                    <span>Have a promo code?</span>
+                                </button>
+                                <div className="mt-3 flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Enter code"
+                                        className="flex-1 w-full px-3 py-2 border border-[#e0e0e0] rounded-xl text-[14px] outline-none focus:border-[#953002] transition-colors bg-[#fafafa]"
+                                    />
+                                    <button className="px-4 py-2 bg-[#1d1d1d] hover:bg-[#333] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap">
+                                        Apply
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="flex justify-between items-center mb-6">
                                 <span className="text-[18px] font-bold text-[#1d1d1d]">Total</span>
                                 <span className="text-[20px] font-bold text-[#953002]">{formatLKR(room.pricePerNight * 4 + 1500)}</span>
