@@ -42,7 +42,7 @@ function RatingBar({ label, score }: { label: string; score: number }) {
 }
 
 // ─── Room Card ────────────────────────────────────────────────────────────────
-function RoomCard({ room }: { room: Room }) {
+function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
     const tagStyle =
         room.tag === "Refundable"
             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
@@ -94,12 +94,13 @@ function RoomCard({ room }: { room: Room }) {
                     <p className="text-[18px] font-bold text-[#1d1d1d]">{formatLKR(room.pricePerNight)}</p>
                     <p className="text-[11px] text-[#828282]">per night</p>
                 </div>
-                <button
+                <Link
+                    href={`/guest/property/${propertyId}/room/${room.id}`}
                     id={`select-room-${room.id}`}
-                    className="px-4 py-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap"
+                    className="px-4 py-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap block"
                 >
                     Select Room
-                </button>
+                </Link>
             </div>
         </div>
     )
@@ -369,7 +370,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                             </div>
                             <div className="flex flex-col gap-3">
                                 {property.rooms.map(room => (
-                                    <RoomCard key={room.id} room={room} />
+                                    <RoomCard key={room.id} room={room} propertyId={property.id} />
                                 ))}
                             </div>
                         </div>
