@@ -111,11 +111,42 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
     const [galleryOpen, setGalleryOpen] = useState(false)
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
     const [descExpanded, setDescExpanded] = useState(false)
+    const [shareToast, setShareToast] = useState<"copied" | "shared" | null>(null)
+
+    const handleShare = async () => {
+        const url = typeof window !== "undefined" ? window.location.href : ""
+        const text = property.title
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: text, text: `Check out ${text} on Prime Stay`, url })
+                setShareToast("shared")
+            } catch {
+                // user cancelled — no toast
+                return
+            }
+        } else {
+            await navigator.clipboard.writeText(url)
+            setShareToast("copied")
+        }
+        setTimeout(() => setShareToast(null), 2800)
+    }
 
     const allImages = [property.imageSrc, ...property.galleryImages]
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
+
+            {/* ── Share toast ───────────────────────────────────────────────── */}
+            <div
+                className={[
+                    "fixed top-20 right-6 z-[60] flex items-center gap-2.5 bg-[#1d1d1d] text-white text-[13px] font-medium",
+                    "px-4 py-3 rounded-xl shadow-xl transition-all duration-300",
+                    shareToast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none",
+                ].join(" ")}
+            >
+                <span className="text-[16px]">{shareToast === "shared" ? "🎉" : "🔗"}</span>
+                {shareToast === "shared" ? "Shared successfully!" : "Link copied to clipboard"}
+            </div>
             <div className="max-w-[1200px] mx-auto px-6 pt-24 pb-20">
 
                 {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
@@ -209,7 +240,8 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                     <div className="flex items-center gap-3 flex-shrink-0">
                         <button
                             id="share-property"
-                            className="flex items-center gap-2 px-4 py-2 border border-[#e0e0e0] rounded-xl text-[13px] font-medium text-[#333] hover:border-[#953002]/40 transition-colors bg-white shadow-sm cursor-pointer"
+                            onClick={handleShare}
+                            className="flex items-center gap-2 px-4 py-2 border border-[#e0e0e0] rounded-xl text-[13px] font-medium text-[#333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors bg-white shadow-sm cursor-pointer"
                         >
                             <Share2 size={15} />
                             Share
