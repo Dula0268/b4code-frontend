@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import {
     ChevronRight, Home, Users, BedDouble, SquareDot, CheckCircle2,
-    Star, ArrowRight, Grid2X2, MapPin, Search, Calendar, Divide
+    Star, ArrowRight, Grid2X2, MapPin
 } from "lucide-react"
 import type { PropertyDetail, Room } from "@/lib/mock-properties"
 
@@ -22,7 +22,6 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
     const [payNow, setPayNow] = useState(true)
 
     const allImages = [room.imageSrc, ...(property.galleryImages || [])]
-    const extraImagesCount = Math.max(0, property.galleryImages.length)
 
     // Calendar mock data for October 2024
     // Oct 1 is Tuesday. 31 days.
@@ -156,7 +155,7 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                                     <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
                                     </div>
-                                    55" Smart TV
+                                    55&quot; Smart TV
                                 </div>
                                 <div className="flex items-center gap-3 text-[14px] font-medium text-[#333]">
                                     <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
@@ -217,7 +216,6 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                                         // with the middle being dark. Let's make 10 to 14 colored.
                                         let bgClass = ""
                                         let textClass = "hover:bg-gray-100"
-                                        let extraStyle = {}
 
                                         if (d === 10) {
                                             bgClass = "bg-[#f58e8e] text-white"
@@ -345,7 +343,7 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                                 Confirm & Book <ArrowRight size={18} />
                             </button>
 
-                            <div className="text-center text-[13px] text-[#828282] mb-6">You won't be charged yet</div>
+                            <div className="text-center text-[13px] text-[#828282] mb-6">You won&apos;t be charged yet</div>
 
                             <div className="flex flex-col gap-3">
                                 <div className="flex items-start gap-2 text-[12px] font-medium text-[#2E7D32]">
