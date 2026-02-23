@@ -56,18 +56,27 @@ export default function SearchResultsPage() {
 
     // ── Filtering ────────────────────────────────────────────────────────────
     const filtered = useMemo(() => {
+        const query = destination.trim().toLowerCase()
         return ALL_LISTINGS.filter(l => {
-            if (l.pricePerNight < filters.priceMin || l.pricePerNight > filters.priceMax) return false
-            if (filters.propertyTypes.length > 0) {
-                // Simple: all our mock listings are "Apartment" or "House" — just filter by property type name match
-                // In real app this would use l.type field
+            // Filter by destination search term (title or location match)
+            if (query && query !== "sri lanka") {
+                const matchesTitle = l.title.toLowerCase().includes(query)
+                const matchesLocation = l.location.toLowerCase().includes(query)
+                if (!matchesTitle && !matchesLocation) return false
             }
+            // Filter by price range
+            if (l.pricePerNight < filters.priceMin || l.pricePerNight > filters.priceMax) return false
+            // Filter by property type
+            if (filters.propertyTypes.length > 0) {
+                if (!filters.propertyTypes.includes(l.propertyType)) return false
+            }
+            // Filter by guest rating
             if (filters.guestRating) {
                 if (l.rating < Number(filters.guestRating)) return false
             }
             return true
         })
-    }, [filters])
+    }, [filters, destination])
 
     // ── Sorting ──────────────────────────────────────────────────────────────
     const sorted = useMemo(() => {
