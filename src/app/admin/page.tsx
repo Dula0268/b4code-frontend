@@ -4,7 +4,7 @@ import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import TotalRevenueCard from "@/components/features/admin/dashboard/kpi-cards/total-revenue-card";
 import OccupancyRateCard from "@/components/features/admin/dashboard/kpi-cards/occupancy-rate-card";
 import ActiveBookingsCard from "@/components/features/admin/dashboard/kpi-cards/active-bookings-card";
-import PlatformActivityChart from "@/components/features/admin/dashboard/platform-activity-chart";
+import RevenueTrendChart from "@/components/features/admin/finance/revenue-trend-chart";
 import RecentVerificationRequests, {
   type VerificationRequest,
 } from "@/components/features/admin/dashboard/recent-verification-requests";
@@ -43,14 +43,6 @@ const RECENT_VERIFICATIONS: VerificationRequest[] = [
   },
 ];
 
-// ─── Chart Data ──────────────────────────────────────────────────────────────
-const CHART_POINTS = [
-  210, 185, 155, 120, 135, 175, 230, 280, 310, 295, 265, 255, 270, 305, 335,
-  355, 375, 390,
-];
-const CHART_LABELS = ["Week 1", "Week 2", "Week 3", "Week 4"];
-const DOT_INDICES = [3, 7, 10, 15];
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
   return (
@@ -72,12 +64,8 @@ export default function AdminDashboardPage() {
           <ActiveBookingsCard value="1,240" change="-1%" positive={false} />
         </div>
 
-        {/* ── Platform Activity Chart ── */}
-        <PlatformActivityChart
-          chartPoints={CHART_POINTS}
-          chartLabels={CHART_LABELS}
-          dotIndices={DOT_INDICES}
-        />
+        {/* ── Revenue Trend Chart ── */}
+        <RevenueTrendChart />
 
         {/* ── Recent Verification Requests ── */}
         <RecentVerificationRequests requests={RECENT_VERIFICATIONS} />
