@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import Image from "next/image"
 import SearchBar from "./search-bar"
 
@@ -29,7 +30,9 @@ export default function HeroSection() {
         <p className="text-white/90 text-[15px] leading-relaxed max-w-[480px] drop-shadow">
           Search thousands of verified properties, enjoy secure payments, and experience stress-free travel planning.
         </p>
-        <SearchBar />
+        <Suspense fallback={<div className="h-14 w-full max-w-[640px] rounded-xl bg-white/20 animate-pulse" />}>
+          <SearchBar />
+        </Suspense>
       </div>
     </section>
   )
