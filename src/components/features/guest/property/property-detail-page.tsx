@@ -355,7 +355,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                                                 ))}
                                             </div>
                                         </div>
-                                        <p className="text-[13px] text-[#555] leading-relaxed">"{rev.text}"</p>
+                                        <p className="text-[13px] text-[#555] leading-relaxed">&quot;{rev.text}&quot;</p>
                                     </div>
                                 ))}
                             </div>
