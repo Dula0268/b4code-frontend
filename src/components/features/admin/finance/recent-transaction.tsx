@@ -58,8 +58,7 @@ const TRANSACTIONS: Transaction[] = [
 
 // ─── Icon helpers ─────────────────────────────────────────────────────────────
 function TransactionIcon({ type }: { type: TransactionType }) {
-  const base =
-    "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0";
+  const base = "w-9 h-9 rounded-full flex items-center justify-center shrink-0";
 
   if (type === "booking") {
     return (

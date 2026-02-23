@@ -171,7 +171,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div className="fixed top-6 right-6 z-[999] flex items-center gap-[10px] bg-white rounded-xl px-[18px] py-[14px] shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-[#e8f5e9] animate-[slideIn_0.25s_ease]">
+    <div className="fixed top-6 right-6 z-999 flex items-center gap-2.5 bg-white rounded-xl px-4.5 py-3.5 shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-[#e8f5e9] animate-[slideIn_0.25s_ease]">
       <CheckCircle2 size={18} color="#27ae60" />
       <span className="text-sm font-semibold text-[#1d1d1d]">{message}</span>
       <button
@@ -197,35 +197,35 @@ function ResetPasswordModal({
 }) {
   return (
     <div
-      className="fixed inset-0 z-[998] bg-black/45 flex items-center justify-center"
+      className="fixed inset-0 z-998 bg-black/45 flex items-center justify-center"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl px-8 py-9 w-[420px] shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
+        className="bg-white rounded-2xl px-8 py-9 w-105 shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Icon */}
-        <div className="w-[52px] h-[52px] rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center mb-[18px]">
+        <div className="w-13 h-13 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center mb-4.5">
           <RotateCcw size={22} color="var(--brand-primary)" />
         </div>
-        <h2 className="m-0 mb-2 text-xl font-bold text-[var(--black-2)]">
+        <h2 className="m-0 mb-2 text-xl font-bold text-(--black-2)">
           Reset Password?
         </h2>
-        <p className="m-0 mb-7 text-sm text-[var(--gray-3)] leading-relaxed">
+        <p className="m-0 mb-7 text-sm text-(--gray-3) leading-relaxed">
           A secure reset link will be sent to
           <br />
-          <strong className="text-[var(--black-2)]">{email}</strong>
+          <strong className="text-(--black-2)">{email}</strong>
         </p>
         <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-[22px] py-[10px] rounded-[10px] border border-[var(--gray-5)] bg-white text-sm font-semibold text-[var(--gray-2)] cursor-pointer"
+            className="px-5.5 py-2.5 rounded-[10px] border border-(--gray-5) bg-white text-sm font-semibold text-(--gray-2) cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={onSend}
-            className="px-[22px] py-[10px] rounded-[10px] border-none bg-[var(--brand-primary)] text-white text-sm font-bold cursor-pointer shadow-[0_2px_8px_rgba(149,48,2,0.25)] hover:bg-[var(--primary-hover)]"
+            className="px-5.5 py-2.5 rounded-[10px] border-none bg-(--brand-primary) text-white text-sm font-bold cursor-pointer shadow-[0_2px_8px_rgba(149,48,2,0.25)] hover:bg-(--primary-hover)"
           >
             Send Reset Link
           </button>
@@ -278,13 +278,13 @@ export default function UserDetailPage() {
           <div className="flex items-center gap-1.5 text-sm">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-[var(--gray-3)] text-sm p-0 hover:text-[var(--black-2)]"
+              className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-(--gray-3) text-sm p-0 hover:text-(--black-2)"
             >
               <ArrowLeft size={14} />
               User Management
             </button>
             <ChevronRight size={14} color="var(--gray-4)" />
-            <span className="text-[var(--brand-primary)] font-semibold">
+            <span className="text-(--brand-primary) font-semibold">
               Account Details
             </span>
           </div>

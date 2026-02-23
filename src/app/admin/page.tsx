@@ -49,7 +49,7 @@ export default function AdminDashboardPage() {
     <AdminPageLayout>
       <div className="flex flex-col gap-6">
         {/* ── Page Title ── */}
-        <h1 className="text-[22px] font-bold text-[var(--black-2)] m-0">
+        <h1 className="text-[22px] font-bold text-(--black-2) m-0">
           Dashboard Overview
         </h1>
 
