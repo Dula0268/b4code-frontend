@@ -196,12 +196,19 @@
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: var(--page-pad);
-    padding-right: var(--page-pad);
+    padding-left: 16px;
+    padding-right: 16px;
     max-width: var(--grid-desktop-hd-frame);
   }
 
-  /* If you want a slightly tighter container for normal desktop pages */
+  @media (min-width: 768px) {
+    .ps-container {
+      padding-left: var(--page-pad);
+      padding-right: var(--page-pad);
+    }
+  }
+
+  /* Slightly tighter container for normal desktop pages */
   .ps-container-md {
     width: 100%;
     margin-left: auto;
@@ -221,6 +228,15 @@
   /* Brand text helpers */
   .text-brand { color: var(--brand-primary); }
   .text-muted { color: var(--muted); }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 
   /* Status helpers */
   .text-info { color: var(--state-info); }
