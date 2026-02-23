@@ -29,7 +29,7 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
 
     return (
         <Link
-            href={`/properties/${listing.id}`}
+            href={`/guest/property/${listing.id}`}
             className="group block no-underline text-inherit"
             aria-label={`View ${listing.title}`}
         >
