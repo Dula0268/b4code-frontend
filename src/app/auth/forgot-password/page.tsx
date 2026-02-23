@@ -129,11 +129,13 @@ export default function ForgotPasswordPage() {
                                             <p className="text-sm text-neutral-600 mb-4 leading-relaxed">
                                                 We received a request to reset the password for your PrimeStay account. Click the button below to choose a new password.
                                             </p>
-                                            <Link href="/auth/reset-password" className="block w-full">
-                                                <Button type="button" size="lg" className="w-full h-[48px] text-[15px] font-bold rounded-lg bg-[#953002] hover:bg-[#7a2600] transition-all">
-                                                    Reset Password
-                                                </Button>
-                                            </Link>
+                                            <div className="flex justify-center mt-6 mb-2">
+                                                <Link href="/auth/reset-password" className="inline-block w-[80%] max-w-[280px]">
+                                                    <Button type="button" size="lg" className="w-full h-[52px] text-[16px] font-extrabold rounded-full bg-[#137333] hover:bg-[#0d5324] text-white shadow-lg tracking-wide transition-all transform hover:scale-[1.02]">
+                                                        Reset Password
+                                                    </Button>
+                                                </Link>
+                                            </div>
                                         </div>
 
                                         <div className="pt-4 text-center space-y-4">
