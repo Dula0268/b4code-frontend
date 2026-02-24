@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { MapPin, Calendar, Users, Search } from "lucide-react"
 
 import CalendarPicker from "@/components/shared/forms/calendar-picker"
@@ -15,21 +15,33 @@ interface SearchBarProps {
 export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const isCompact = variant === "compact"
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // ── Seed initial values from URL params (compact / results page) ────────
+  const initDestination = isCompact ? (searchParams.get("destination") ?? "") : ""
+  const initCheckIn = isCompact && searchParams.get("checkIn")
+    ? new Date(searchParams.get("checkIn")! + "T00:00:00")
+    : null
+  const initCheckOut = isCompact && searchParams.get("checkOut")
+    ? new Date(searchParams.get("checkOut")! + "T00:00:00")
+    : null
+  const initGuests = isCompact ? Number(searchParams.get("guests") ?? 1) : 1
 
   // ── State ──────────────────────────────────────────────────────────────
   // Location
-  const [destination, setDestination] = useState("")
+  const [destination, setDestination] = useState(initDestination)
   const [locationOpen, setLocationOpen] = useState(false)
   const locationRef = useRef<HTMLDivElement>(null)
 
   // Dates
-  const [checkIn, setCheckIn] = useState<Date | null>(null)
-  const [checkOut, setCheckOut] = useState<Date | null>(null)
+  const [checkIn, setCheckIn] = useState<Date | null>(initCheckIn)
+  const [checkOut, setCheckOut] = useState<Date | null>(initCheckOut)
   const [calOpen, setCalOpen] = useState(false)
   const calRef = useRef<HTMLDivElement>(null)
 
   // Guests
-  const [guests, setGuests] = useState<GuestCounts>({ adults: 1, children: 0 })
+  const [guests, setGuests] = useState<GuestCounts>({ adults: Math.max(1, initGuests), children: 0 })
   const [guestOpen, setGuestOpen] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
 
@@ -70,7 +82,13 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       ...(checkOut && { checkOut: checkOut.toISOString().split("T")[0] }),
       guests: String(guestTotal),
     })
-    router.push(`/guest/search?${params.toString()}`)
+    const url = `/guest/search?${params.toString()}`
+    // Replace history entry when already on search page to avoid stacking
+    if (pathname.startsWith("/guest/search")) {
+      router.replace(url)
+    } else {
+      router.push(url)
+    }
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────

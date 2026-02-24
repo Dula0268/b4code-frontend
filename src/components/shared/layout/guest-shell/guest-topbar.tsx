@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
@@ -34,7 +34,9 @@ export default function GuestTopbar() {
         {/* ── Compact Search Bar (search page only) ── */}
         {isSearchPage && (
           <div className="hidden md:flex flex-1 justify-center px-4">
-            <SearchBar variant="compact" />
+            <Suspense fallback={<div className="h-10 w-[580px] rounded-xl bg-gray-100 animate-pulse" />}>
+              <SearchBar variant="compact" />
+            </Suspense>
           </div>
         )}
 
@@ -66,7 +68,7 @@ export default function GuestTopbar() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="/auth/register"
+              href="/auth/register?role=guest"
               className="px-4 py-2 text-sm font-semibold text-[#953002] border-2 border-[#953002] rounded-lg hover:bg-[#953002]/5 transition-colors no-underline whitespace-nowrap"
             >
               Register
@@ -96,7 +98,9 @@ export default function GuestTopbar() {
           {/* Compact search on mobile search page */}
           {isSearchPage && (
             <div className="pb-2 border-b border-[#e0e0e0]">
-              <SearchBar variant="compact" />
+              <Suspense fallback={<div className="h-10 rounded-xl bg-gray-100 animate-pulse" />}>
+                <SearchBar variant="compact" />
+              </Suspense>
             </div>
           )}
 
@@ -114,7 +118,7 @@ export default function GuestTopbar() {
             </Link>
           ))}
           <div className="flex flex-col gap-2 pt-2 border-t border-[#e0e0e0]">
-            <Link href="/auth/register" className="px-4 py-2 text-sm font-semibold text-center text-[#953002] border-2 border-[#953002] rounded-lg no-underline">
+            <Link href="/auth/register?role=guest" className="px-4 py-2 text-sm font-semibold text-center text-[#953002] border-2 border-[#953002] rounded-lg no-underline">
               Register
             </Link>
             <Link href="/auth/login" className="px-4 py-2 text-sm font-semibold text-center text-white bg-[#953002] rounded-lg no-underline">
