@@ -134,6 +134,10 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
 
     const allImages = [property.imageSrc, ...property.galleryImages]
 
+    const cheapestRoomId = property.rooms.length > 0
+        ? property.rooms.reduce((min, room) => room.pricePerNight < min.pricePerNight ? room : min).id
+        : ""
+
     return (
         <div className="min-h-screen bg-[#fafafa]">
 
@@ -408,12 +412,13 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                             <p className="text-[12px] text-white/70 mb-0.5">Starting from</p>
                             <p className="text-[26px] font-bold leading-tight">{formatLKR(property.pricePerNight)}</p>
                             <p className="text-[12px] text-white/70 mb-4">per night · incl. taxes</p>
-                            <button
+                            <Link
+                                href={`/guest/property/${property.id}/room/${cheapestRoomId}`}
                                 id="book-now-btn"
-                                className="w-full bg-white text-[#953002] font-bold rounded-xl py-2.5 text-[14px] hover:bg-[#fff5f0] transition-colors cursor-pointer"
+                                className="w-full block text-center bg-white text-[#953002] font-bold rounded-xl py-2.5 text-[14px] hover:bg-[#fff5f0] transition-colors cursor-pointer"
                             >
                                 Book Now
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
