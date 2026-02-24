@@ -32,8 +32,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1000px] items-center justify-center px-4 py-6 md:px-6 md:py-10">
+    <div className="min-h-screen bg-white flex flex-col p-4 md:p-8">
+      <div className="mx-auto w-full max-w-[1000px] my-auto">
         {/* CARD — stacks vertically on mobile, side-by-side on desktop */}
         <div className="flex w-full flex-col overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl md:grid md:[grid-template-columns:1fr_520px]">
           {/* LEFT IMAGE PANEL — banner on mobile, full panel on desktop */}
