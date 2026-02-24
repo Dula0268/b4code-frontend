@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import {
     ChevronRight, Home, Users, BedDouble, SquareDot, CheckCircle2,
     Star, ArrowRight, Grid2X2, MapPin
 } from "lucide-react"
 import type { PropertyDetail, Room } from "@/lib/mock-properties"
 import { Calendar } from "@/components/ui/calendar"
+import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
 import { addDays, differenceInDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 
@@ -16,7 +18,16 @@ function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
 }
 
-export default function RoomDetailPage({ property, room }: { property: PropertyDetail; room: Room }) {
+function RoomDetailPageContent({ property, room }: { property: PropertyDetail; room: Room }) {
+    const searchParams = useSearchParams()
+
+    // Parse initial dates from URL
+    const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : new Date(2026, 9, 10)
+    const initialCheckOut = searchParams?.get("checkOut") ? new Date(searchParams.get("checkOut")!) : new Date(2026, 9, 14)
+
+    // Parse Initial guests
+    const initialGuestCount = parseInt(searchParams?.get("guests") || "2", 10)
+
     const [galleryOpen, setGalleryOpen] = useState(false)
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
     const [descExpanded, setDescExpanded] = useState(false)
@@ -28,17 +39,20 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
 
     // Calendar & Booking State setup
     const [date, setDate] = useState<DateRange | undefined>({
-        from: new Date(2024, 9, 10), // Oct 10 2024
-        to: new Date(2024, 9, 14),   // Oct 14 2024
+        from: initialCheckIn,
+        to: initialCheckOut,
     })
+
+    const [guests, setGuests] = useState<GuestCounts>({ adults: initialGuestCount, children: 0 })
+    const [guestOpen, setGuestOpen] = useState(false)
 
     // Mock booked dates
     const bgBooked = [
-        new Date(2024, 9, 5),
-        new Date(2024, 9, 6),
-        new Date(2024, 9, 7),
-        new Date(2024, 9, 18),
-        new Date(2024, 9, 19),
+        new Date(2026, 9, 5),
+        new Date(2026, 9, 6),
+        new Date(2026, 9, 7),
+        new Date(2026, 9, 18),
+        new Date(2026, 9, 19),
     ]
 
     const nights = date?.from && date?.to ? Math.max(1, differenceInDays(date.to, date.from)) : 1
@@ -212,11 +226,11 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                             </div>
 
                             {/* Calendar Block */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-sm w-full overflow-x-auto" style={{ '--primary': '14 96% 30%', '--primary-foreground': '0 0% 100%', '--accent': '28 100% 96%', '--accent-foreground': '14 96% 30%', '--ring': '14 96% 30%' } as React.CSSProperties}>
-                                <div className="min-w-[550px] flex justify-center">
+                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-sm w-full overflow-x-auto">
+                                <div className="min-w-[550px] flex justify-center [&_[data-selected-single=true]]:!bg-[#953002] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[#953002] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[#953002] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[#953002]">
                                     <Calendar
                                         mode="range"
-                                        defaultMonth={new Date(2024, 9, 1)}
+                                        defaultMonth={date?.from || new Date(2026, 9, 1)}
                                         selected={date}
                                         onSelect={setDate}
                                         numberOfMonths={2}
@@ -275,7 +289,7 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                                 <span className="text-[14px] text-[#828282] font-medium">/ night</span>
                             </div>
 
-                            <div className="border border-[#e0e0e0] rounded-xl overflow-hidden mb-5">
+                            <div className="border border-[#e0e0e0] rounded-xl overflow-visible mb-5 bg-white relative z-10">
                                 <div className="flex border-b border-[#e0e0e0]">
                                     <div className="flex-1 p-3 border-r border-[#e0e0e0]">
                                         <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Check-in</div>
@@ -286,9 +300,26 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                                         <div className="text-[14px] font-semibold text-[#1d1d1d]">{date?.to ? format(date.to, "MMM d, yyyy") : "Select date"}</div>
                                     </div>
                                 </div>
-                                <div className="p-3">
-                                    <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Guests</div>
-                                    <div className="text-[14px] font-semibold text-[#1d1d1d]">2 Adults, 1 Child</div>
+                                <div
+                                    className="p-3 relative cursor-pointer hover:bg-gray-50 transition-colors rounded-b-xl"
+                                    onClick={() => setGuestOpen(!guestOpen)}
+                                >
+                                    <div className="text-[10px] font-bold text-[#828282] uppercase mb-1 flex items-center justify-between">
+                                        <span>Guests</span>
+                                        <ChevronRight size={12} className={guestOpen ? "rotate-90 transition-transform" : "transition-transform"} />
+                                    </div>
+                                    <div className="text-[14px] font-semibold text-[#1d1d1d]">
+                                        {guests.adults} Adults{guests.children > 0 ? `, ${guests.children} Children` : ""}
+                                    </div>
+
+                                    {guestOpen && (
+                                        <div
+                                            className="absolute top-full left-0 mt-2 bg-white rounded-xl z-50 shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <GuestPicker value={guests} onChange={setGuests} />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -394,5 +425,13 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                 </div>
             )}
         </div>
+    )
+}
+
+export default function RoomDetailPage({ property, room }: { property: PropertyDetail; room: Room }) {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading booking details...</div>}>
+            <RoomDetailPageContent property={property} room={room} />
+        </Suspense>
     )
 }
