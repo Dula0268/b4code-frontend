@@ -46,6 +46,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const [guests, setGuests] = useState<GuestCounts>({ adults: initialGuestCount, children: 0 })
     const [guestOpen, setGuestOpen] = useState(false)
 
+    // Promo code state
+    const [promoCode, setPromoCode] = useState("")
+    const [isPromoApplied, setIsPromoApplied] = useState(false)
+
     // Mock booked dates
     const bgBooked = [
         new Date(2026, 9, 5),
@@ -59,7 +63,8 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const totalRoomPrice = room.pricePerNight * nights
     const serviceFee = 1000
     const taxes = 500
-    const finalTotal = totalRoomPrice + serviceFee + taxes
+    const discount = isPromoApplied ? totalRoomPrice * 0.2 : 0 // 20% discount on room price
+    const finalTotal = totalRoomPrice + serviceFee + taxes - discount
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -336,19 +341,36 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                     <span>Taxes & Fees</span>
                                     <span className="font-semibold text-[#1d1d1d]">{formatLKR(taxes)}</span>
                                 </div>
+                                {isPromoApplied && (
+                                    <div className="flex justify-between text-[14px] text-[#953002] font-semibold mt-1">
+                                        <span>Promo Code Discount (20%)</span>
+                                        <span>-{formatLKR(discount)}</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="mb-5 pb-5 border-b border-[#f0f0f0]">
                                 <button className="text-[14px] font-semibold text-[#953002] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between">
-                                    <span>Have a promo code?</span>
+                                    <span>Have a promo code? {isPromoApplied && "✅ Applied"}</span>
                                 </button>
                                 <div className="mt-3 flex gap-2">
                                     <input
                                         type="text"
                                         placeholder="Enter code"
+                                        value={promoCode}
+                                        onChange={(e) => setPromoCode(e.target.value)}
                                         className="flex-1 w-full px-3 py-2 border border-[#e0e0e0] rounded-xl text-[14px] outline-none focus:border-[#953002] transition-colors bg-[#fafafa]"
                                     />
-                                    <button className="px-4 py-2 bg-[#1d1d1d] hover:bg-[#333] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap">
+                                    <button
+                                        onClick={() => {
+                                            if (promoCode === "1234") {
+                                                setIsPromoApplied(true)
+                                            } else {
+                                                setIsPromoApplied(false)
+                                                alert("Invalid promo code")
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-[#1d1d1d] hover:bg-[#333] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap">
                                         Apply
                                     </button>
                                 </div>
