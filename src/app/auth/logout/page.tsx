@@ -22,7 +22,6 @@ export default function LogoutPage() {
             setCountdown((prev) => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    router.push("/auth/login");
                     return 0;
                 }
                 return prev - 1;
@@ -30,7 +29,14 @@ export default function LogoutPage() {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [logout, router]);
+    }, [logout]);
+
+    // Separate effect for navigation to avoid side-effect in state updater
+    useEffect(() => {
+        if (countdown === 0) {
+            router.push("/auth/login");
+        }
+    }, [countdown, router]);
 
     return (
         <div className="min-h-screen bg-neutral-50 flex flex-col font-sans">

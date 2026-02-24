@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Logo from "@/components/shared/branding/logo";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -57,6 +57,7 @@ const NAV_ITEMS = [
 // ─── Component ─────────────────────────────────────────────────────────────────
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <aside className="w-[260px] min-h-screen bg-[var(--white)] border-r border-[var(--gray-5)] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
@@ -86,15 +87,15 @@ export default function AdminSidebar() {
                 <Link
                   href={item.href}
                   className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
-                      ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
-                      : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
+                    ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
+                    : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
                     }`}
                 >
                   <Icon
                     size={18}
                     className={`flex-shrink-0 ${isActive
-                        ? "text-[var(--brand-primary)]"
-                        : "text-[var(--black-1)]"
+                      ? "text-[var(--brand-primary)]"
+                      : "text-[var(--black-1)]"
                       }`}
                   />
                   <span>{item.label}</span>
@@ -115,8 +116,8 @@ export default function AdminSidebar() {
           <Link
             href="/admin/settings"
             className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${pathname === "/admin/settings"
-                ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
-                : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
+              ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
+              : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
               }`}
           >
             <Settings
@@ -129,8 +130,7 @@ export default function AdminSidebar() {
           {/* Log Out */}
           <button
             onClick={() => {
-              // TODO: wire up your auth logout logic here
-              console.log("Logout clicked");
+              router.push("/auth/logout");
             }}
             className="flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] border-none bg-transparent cursor-pointer text-sm font-normal text-[var(--black-1)] w-full text-left transition-colors hover:bg-[rgba(235,87,87,0.08)] hover:text-[var(--state-error)]"
           >

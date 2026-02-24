@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import { Mail, Lock, CheckCircle2, Phone, User, Home, MapPin, Building2, Briefcase, KeyRound, Building } from "lucide-react";
 import clsx from "clsx";
 
@@ -15,10 +15,27 @@ import { useAuthStore } from "@/store/auth/auth.store";
 type Role = "guest" | "owner" | "staff";
 
 export default function RegisterPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <RegisterForm />
+        </Suspense>
+    );
+}
+
+function RegisterForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { register, loading, error: authError, setError } = useAuthStore();
 
     const [role, setRole] = useState<Role>("guest");
+
+    // Initialize role from query params
+    useEffect(() => {
+        const roleParam = searchParams.get("role") as Role;
+        if (roleParam && ["guest", "owner", "staff"].includes(roleParam)) {
+            setRole(roleParam);
+        }
+    }, [searchParams]);
 
     // Common Fields
     const [fullName, setFullName] = useState("");
@@ -74,11 +91,6 @@ export default function RegisterPage() {
         }
     };
 
-    const handleRoleSelect = (selectedRole: Role) => {
-        setRole(selectedRole);
-        setError(null);
-        setLocalError(null);
-    };
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -172,10 +184,10 @@ export default function RegisterPage() {
                                 </p>
                             </div>
 
-                            {/* ROLE TOGGLE */}
+                            {/* ROLE DISPLAY (HIDDEN TOGGLE) */}
                             <div className="mb-6">
                                 <div className="flex items-center justify-between mb-2">
-                                    <Label className="text-[12px] font-extrabold text-neutral-800 uppercase tracking-wider block">Join as a</Label>
+                                    <Label className="text-[12px] font-extrabold text-neutral-800 uppercase tracking-wider block">Joining as</Label>
                                     <button
                                         type="button"
                                         onClick={handleFillMockData}
@@ -184,34 +196,10 @@ export default function RegisterPage() {
                                         Auto-fill Mock Data
                                     </button>
                                 </div>
-                                <div className="flex p-1 bg-[#f0e8e4] rounded-full">
-                                    <button
-                                        onClick={() => handleRoleSelect("guest")}
-                                        className={clsx(
-                                            "flex-1 py-2 text-[14px] font-bold rounded-full transition-all",
-                                            role === "guest" ? "bg-[#953002] text-white shadow-sm" : "text-neutral-600 hover:text-neutral-900"
-                                        )}
-                                    >
-                                        Guest
-                                    </button>
-                                    <button
-                                        onClick={() => handleRoleSelect("owner")}
-                                        className={clsx(
-                                            "flex-1 py-2 text-[14px] font-bold rounded-full transition-all",
-                                            role === "owner" ? "bg-[#953002] text-white shadow-sm" : "text-neutral-600 hover:text-neutral-900"
-                                        )}
-                                    >
-                                        Owner
-                                    </button>
-                                    <button
-                                        onClick={() => handleRoleSelect("staff")}
-                                        className={clsx(
-                                            "flex-1 py-2 text-[14px] font-bold rounded-full transition-all",
-                                            role === "staff" ? "bg-[#953002] text-white shadow-sm" : "text-neutral-600 hover:text-neutral-900"
-                                        )}
-                                    >
-                                        Staff
-                                    </button>
+                                <div className="flex p-3 bg-[#f0e8e4] rounded-2xl items-center justify-center">
+                                    <span className="text-[#953002] text-lg font-black uppercase tracking-widest">
+                                        {role}
+                                    </span>
                                 </div>
                             </div>
 
