@@ -8,6 +8,9 @@ import {
     Star, ArrowRight, Grid2X2, MapPin
 } from "lucide-react"
 import type { PropertyDetail, Room } from "@/lib/mock-properties"
+import { Calendar } from "@/components/ui/calendar"
+import { addDays, differenceInDays, format } from "date-fns"
+import type { DateRange } from "react-day-picker"
 
 function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
@@ -23,10 +26,26 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
 
     const allImages = [room.imageSrc, ...(property.galleryImages || [])]
 
-    // Calendar mock data for October 2024
-    // Oct 1 is Tuesday. 31 days.
-    const octDays = Array.from({ length: 31 }, (_, i) => i + 1)
-    const emptyStart = Array.from({ length: 2 }) // Sun, Mon
+    // Calendar & Booking State setup
+    const [date, setDate] = useState<DateRange | undefined>({
+        from: new Date(2024, 9, 10), // Oct 10 2024
+        to: new Date(2024, 9, 14),   // Oct 14 2024
+    })
+
+    // Mock booked dates
+    const bgBooked = [
+        new Date(2024, 9, 5),
+        new Date(2024, 9, 6),
+        new Date(2024, 9, 7),
+        new Date(2024, 9, 18),
+        new Date(2024, 9, 19),
+    ]
+
+    const nights = date?.from && date?.to ? Math.max(1, differenceInDays(date.to, date.from)) : 1
+    const totalRoomPrice = room.pricePerNight * nights
+    const serviceFee = 1000
+    const taxes = 500
+    const finalTotal = totalRoomPrice + serviceFee + taxes
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -193,49 +212,19 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                             </div>
 
                             {/* Calendar Block */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-sm w-full max-w-[480px]">
-                                <div className="flex items-center justify-between mb-6">
-                                    <button className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"><ChevronRight size={18} className="rotate-180 text-[#555]" /></button>
-                                    <span className="font-bold text-[#1d1d1d] text-[16px]">October 2024</span>
-                                    <button className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"><ChevronRight size={18} className="text-[#555]" /></button>
-                                </div>
-                                <div className="grid grid-cols-7 gap-y-4 gap-x-1 text-center text-[13px]">
-                                    {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                                        <div key={i} className="font-semibold text-[#828282]">{d}</div>
-                                    ))}
-                                    {emptyStart.map((_, i) => <div key={`empty-${i}`}></div>)}
-                                    {octDays.map(d => {
-                                        // Mock rules: 10,14 are Booked (red/pinkish?), 11,12,13 are Selected (dark red)?
-                                        // Wait, the image shows 10, 14 as light red round shape. 11,12,13 as dark red rectangle.
-                                        // Actually:
-                                        // 10: rounded-l-lg, bg-[#E07070]? Wait, if 10 to 14 is the selection?
-                                        // The image shows Check-In Oct 10, Check-Out Oct 14.
-                                        // 10 is the Check-In day, 11,12,13 are fully selected, 14 is the Check-Out day.
-                                        // Actually the legend says Selected (dark red), Booked (light red).
-                                        // In the image, maybe 10 and 14 are light red? Or maybe they are part of the selection range, 
-                                        // with the middle being dark. Let's make 10 to 14 colored.
-                                        let bgClass = ""
-                                        let textClass = "hover:bg-gray-100"
-
-                                        if (d === 10) {
-                                            bgClass = "bg-[#f58e8e] text-white"
-                                            textClass = ""
-                                        } else if (d >= 11 && d <= 13) {
-                                            bgClass = "bg-[#953002] text-white"
-                                            textClass = ""
-                                        } else if (d === 14) {
-                                            bgClass = "bg-[#eb6767] text-white"
-                                            textClass = ""
-                                        } else if (d >= 1 && d <= 5) {
-                                            // Make them look slightly gray or just regular
-                                        }
-
-                                        return (
-                                            <div key={d} className={`py-2 rounded-xl transition-colors cursor-pointer text-[#1d1d1d] font-medium ${bgClass} ${textClass}`}>
-                                                {d}
-                                            </div>
-                                        )
-                                    })}
+                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-sm w-full overflow-x-auto" style={{ '--primary': '14 96% 30%', '--primary-foreground': '0 0% 100%', '--accent': '28 100% 96%', '--accent-foreground': '14 96% 30%', '--ring': '14 96% 30%' } as React.CSSProperties}>
+                                <div className="min-w-[550px] flex justify-center">
+                                    <Calendar
+                                        mode="range"
+                                        defaultMonth={new Date(2024, 9, 1)}
+                                        selected={date}
+                                        onSelect={setDate}
+                                        numberOfMonths={2}
+                                        disabled={bgBooked}
+                                        modifiers={{ booked: bgBooked }}
+                                        modifiersClassNames={{ booked: "line-through !text-[#E07070] opacity-70 !bg-[#E07070]/10" }}
+                                        className="p-0"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -290,11 +279,11 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                                 <div className="flex border-b border-[#e0e0e0]">
                                     <div className="flex-1 p-3 border-r border-[#e0e0e0]">
                                         <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Check-in</div>
-                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">Oct 10, 2024</div>
+                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">{date?.from ? format(date.from, "MMM d, yyyy") : "Select date"}</div>
                                     </div>
                                     <div className="flex-1 p-3">
                                         <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Check-out</div>
-                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">Oct 14, 2024</div>
+                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">{date?.to ? format(date.to, "MMM d, yyyy") : "Select date"}</div>
                                     </div>
                                 </div>
                                 <div className="p-3">
@@ -305,16 +294,16 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
 
                             <div className="flex flex-col gap-3 mb-5 border-b border-[#f0f0f0] pb-5">
                                 <div className="flex justify-between text-[14px] text-[#555]">
-                                    <span>{formatLKR(room.pricePerNight)} x 4 nights</span>
-                                    <span className="font-semibold text-[#1d1d1d]">{formatLKR(room.pricePerNight * 4)}</span>
+                                    <span>{formatLKR(room.pricePerNight)} x {nights} nights</span>
+                                    <span className="font-semibold text-[#1d1d1d]">{formatLKR(totalRoomPrice)}</span>
                                 </div>
                                 <div className="flex justify-between text-[14px] text-[#555]">
                                     <span>Service Fee</span>
-                                    <span className="font-semibold text-[#1d1d1d]">LKR 1,000</span>
+                                    <span className="font-semibold text-[#1d1d1d]">{formatLKR(serviceFee)}</span>
                                 </div>
                                 <div className="flex justify-between text-[14px] text-[#555]">
                                     <span>Taxes & Fees</span>
-                                    <span className="font-semibold text-[#1d1d1d]">LKR 500</span>
+                                    <span className="font-semibold text-[#1d1d1d]">{formatLKR(taxes)}</span>
                                 </div>
                             </div>
 
@@ -336,7 +325,7 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
 
                             <div className="flex justify-between items-center mb-6">
                                 <span className="text-[18px] font-bold text-[#1d1d1d]">Total</span>
-                                <span className="text-[20px] font-bold text-[#953002]">{formatLKR(room.pricePerNight * 4 + 1500)}</span>
+                                <span className="text-[20px] font-bold text-[#953002]">{formatLKR(finalTotal)}</span>
                             </div>
 
                             <button className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4">
