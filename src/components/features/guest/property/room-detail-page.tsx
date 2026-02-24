@@ -54,7 +54,7 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                 {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
                 <nav className="flex items-center gap-1.5 text-[13px] mb-5">
                     <Link href="/" aria-label="Home" className="text-[#828282] hover:text-[#953002] transition-colors flex items-center">
-                        <Home size={15} /> <span className="ml-1">Home</span>
+                        <Home size={15} />
                     </Link>
                     <ChevronRight size={13} className="text-[#bbb]" />
                     <Link href="/guest/search" className="text-[#828282] hover:text-[#953002] transition-colors">
