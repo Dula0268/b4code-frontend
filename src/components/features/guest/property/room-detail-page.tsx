@@ -1,19 +1,33 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import {
     ChevronRight, Home, Users, BedDouble, SquareDot, CheckCircle2,
     Star, ArrowRight, Grid2X2, MapPin
 } from "lucide-react"
 import type { PropertyDetail, Room } from "@/lib/mock-properties"
+import { Calendar } from "@/components/ui/calendar"
+import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
+import { addDays, differenceInDays, format } from "date-fns"
+import type { DateRange } from "react-day-picker"
 
 function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
 }
 
-export default function RoomDetailPage({ property, room }: { property: PropertyDetail; room: Room }) {
+function RoomDetailPageContent({ property, room }: { property: PropertyDetail; room: Room }) {
+    const searchParams = useSearchParams()
+
+    // Parse initial dates from URL
+    const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : new Date(2026, 9, 10)
+    const initialCheckOut = searchParams?.get("checkOut") ? new Date(searchParams.get("checkOut")!) : new Date(2026, 9, 14)
+
+    // Parse Initial guests
+    const initialGuestCount = parseInt(searchParams?.get("guests") || "2", 10)
+
     const [galleryOpen, setGalleryOpen] = useState(false)
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
     const [descExpanded, setDescExpanded] = useState(false)
@@ -23,10 +37,34 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
 
     const allImages = [room.imageSrc, ...(property.galleryImages || [])]
 
-    // Calendar mock data for October 2024
-    // Oct 1 is Tuesday. 31 days.
-    const octDays = Array.from({ length: 31 }, (_, i) => i + 1)
-    const emptyStart = Array.from({ length: 2 }) // Sun, Mon
+    // Calendar & Booking State setup
+    const [date, setDate] = useState<DateRange | undefined>({
+        from: initialCheckIn,
+        to: initialCheckOut,
+    })
+
+    const [guests, setGuests] = useState<GuestCounts>({ adults: initialGuestCount, children: 0 })
+    const [guestOpen, setGuestOpen] = useState(false)
+
+    // Promo code state
+    const [promoCode, setPromoCode] = useState("")
+    const [isPromoApplied, setIsPromoApplied] = useState(false)
+
+    // Mock booked dates
+    const bgBooked = [
+        new Date(2026, 9, 5),
+        new Date(2026, 9, 6),
+        new Date(2026, 9, 7),
+        new Date(2026, 9, 18),
+        new Date(2026, 9, 19),
+    ]
+
+    const nights = date?.from && date?.to ? Math.max(1, differenceInDays(date.to, date.from)) : 1
+    const totalRoomPrice = room.pricePerNight * nights
+    const serviceFee = 1000
+    const taxes = 500
+    const discount = isPromoApplied ? totalRoomPrice * 0.2 : 0 // 20% discount on room price
+    const finalTotal = totalRoomPrice + serviceFee + taxes - discount
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -35,7 +73,7 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                 {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
                 <nav className="flex items-center gap-1.5 text-[13px] mb-5">
                     <Link href="/" aria-label="Home" className="text-[#828282] hover:text-[#953002] transition-colors flex items-center">
-                        <Home size={15} /> <span className="ml-1">Home</span>
+                        <Home size={15} />
                     </Link>
                     <ChevronRight size={13} className="text-[#bbb]" />
                     <Link href="/guest/search" className="text-[#828282] hover:text-[#953002] transition-colors">
@@ -193,49 +231,19 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                             </div>
 
                             {/* Calendar Block */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-sm w-full max-w-[480px]">
-                                <div className="flex items-center justify-between mb-6">
-                                    <button className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"><ChevronRight size={18} className="rotate-180 text-[#555]" /></button>
-                                    <span className="font-bold text-[#1d1d1d] text-[16px]">October 2024</span>
-                                    <button className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"><ChevronRight size={18} className="text-[#555]" /></button>
-                                </div>
-                                <div className="grid grid-cols-7 gap-y-4 gap-x-1 text-center text-[13px]">
-                                    {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                                        <div key={i} className="font-semibold text-[#828282]">{d}</div>
-                                    ))}
-                                    {emptyStart.map((_, i) => <div key={`empty-${i}`}></div>)}
-                                    {octDays.map(d => {
-                                        // Mock rules: 10,14 are Booked (red/pinkish?), 11,12,13 are Selected (dark red)?
-                                        // Wait, the image shows 10, 14 as light red round shape. 11,12,13 as dark red rectangle.
-                                        // Actually:
-                                        // 10: rounded-l-lg, bg-[#E07070]? Wait, if 10 to 14 is the selection?
-                                        // The image shows Check-In Oct 10, Check-Out Oct 14.
-                                        // 10 is the Check-In day, 11,12,13 are fully selected, 14 is the Check-Out day.
-                                        // Actually the legend says Selected (dark red), Booked (light red).
-                                        // In the image, maybe 10 and 14 are light red? Or maybe they are part of the selection range, 
-                                        // with the middle being dark. Let's make 10 to 14 colored.
-                                        let bgClass = ""
-                                        let textClass = "hover:bg-gray-100"
-
-                                        if (d === 10) {
-                                            bgClass = "bg-[#f58e8e] text-white"
-                                            textClass = ""
-                                        } else if (d >= 11 && d <= 13) {
-                                            bgClass = "bg-[#953002] text-white"
-                                            textClass = ""
-                                        } else if (d === 14) {
-                                            bgClass = "bg-[#eb6767] text-white"
-                                            textClass = ""
-                                        } else if (d >= 1 && d <= 5) {
-                                            // Make them look slightly gray or just regular
-                                        }
-
-                                        return (
-                                            <div key={d} className={`py-2 rounded-xl transition-colors cursor-pointer text-[#1d1d1d] font-medium ${bgClass} ${textClass}`}>
-                                                {d}
-                                            </div>
-                                        )
-                                    })}
+                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-sm w-full overflow-x-auto">
+                                <div className="min-w-[550px] flex justify-center [&_[data-selected-single=true]]:!bg-[#953002] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[#953002] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[#953002] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[#953002]">
+                                    <Calendar
+                                        mode="range"
+                                        defaultMonth={date?.from || new Date(2026, 9, 1)}
+                                        selected={date}
+                                        onSelect={setDate}
+                                        numberOfMonths={2}
+                                        disabled={bgBooked}
+                                        modifiers={{ booked: bgBooked }}
+                                        modifiersClassNames={{ booked: "line-through !text-[#E07070] opacity-70 !bg-[#E07070]/10" }}
+                                        className="p-0"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -286,49 +294,83 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                                 <span className="text-[14px] text-[#828282] font-medium">/ night</span>
                             </div>
 
-                            <div className="border border-[#e0e0e0] rounded-xl overflow-hidden mb-5">
+                            <div className="border border-[#e0e0e0] rounded-xl overflow-visible mb-5 bg-white relative z-10">
                                 <div className="flex border-b border-[#e0e0e0]">
                                     <div className="flex-1 p-3 border-r border-[#e0e0e0]">
                                         <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Check-in</div>
-                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">Oct 10, 2024</div>
+                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">{date?.from ? format(date.from, "MMM d, yyyy") : "Select date"}</div>
                                     </div>
                                     <div className="flex-1 p-3">
                                         <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Check-out</div>
-                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">Oct 14, 2024</div>
+                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">{date?.to ? format(date.to, "MMM d, yyyy") : "Select date"}</div>
                                     </div>
                                 </div>
-                                <div className="p-3">
-                                    <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Guests</div>
-                                    <div className="text-[14px] font-semibold text-[#1d1d1d]">2 Adults, 1 Child</div>
+                                <div
+                                    className="p-3 relative cursor-pointer hover:bg-gray-50 transition-colors rounded-b-xl"
+                                    onClick={() => setGuestOpen(!guestOpen)}
+                                >
+                                    <div className="text-[10px] font-bold text-[#828282] uppercase mb-1 flex items-center justify-between">
+                                        <span>Guests</span>
+                                        <ChevronRight size={12} className={guestOpen ? "rotate-90 transition-transform" : "transition-transform"} />
+                                    </div>
+                                    <div className="text-[14px] font-semibold text-[#1d1d1d]">
+                                        {guests.adults} Adults{guests.children > 0 ? `, ${guests.children} Children` : ""}
+                                    </div>
+
+                                    {guestOpen && (
+                                        <div
+                                            className="absolute top-full left-0 mt-2 bg-white rounded-xl z-50 shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <GuestPicker value={guests} onChange={setGuests} />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="flex flex-col gap-3 mb-5 border-b border-[#f0f0f0] pb-5">
                                 <div className="flex justify-between text-[14px] text-[#555]">
-                                    <span>{formatLKR(room.pricePerNight)} x 4 nights</span>
-                                    <span className="font-semibold text-[#1d1d1d]">{formatLKR(room.pricePerNight * 4)}</span>
+                                    <span>{formatLKR(room.pricePerNight)} x {nights} nights</span>
+                                    <span className="font-semibold text-[#1d1d1d]">{formatLKR(totalRoomPrice)}</span>
                                 </div>
                                 <div className="flex justify-between text-[14px] text-[#555]">
                                     <span>Service Fee</span>
-                                    <span className="font-semibold text-[#1d1d1d]">LKR 1,000</span>
+                                    <span className="font-semibold text-[#1d1d1d]">{formatLKR(serviceFee)}</span>
                                 </div>
                                 <div className="flex justify-between text-[14px] text-[#555]">
                                     <span>Taxes & Fees</span>
-                                    <span className="font-semibold text-[#1d1d1d]">LKR 500</span>
+                                    <span className="font-semibold text-[#1d1d1d]">{formatLKR(taxes)}</span>
                                 </div>
+                                {isPromoApplied && (
+                                    <div className="flex justify-between text-[14px] text-[#953002] font-semibold mt-1">
+                                        <span>Promo Code Discount (20%)</span>
+                                        <span>-{formatLKR(discount)}</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="mb-5 pb-5 border-b border-[#f0f0f0]">
                                 <button className="text-[14px] font-semibold text-[#953002] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between">
-                                    <span>Have a promo code?</span>
+                                    <span>Have a promo code? {isPromoApplied && "✅ Applied"}</span>
                                 </button>
                                 <div className="mt-3 flex gap-2">
                                     <input
                                         type="text"
                                         placeholder="Enter code"
+                                        value={promoCode}
+                                        onChange={(e) => setPromoCode(e.target.value)}
                                         className="flex-1 w-full px-3 py-2 border border-[#e0e0e0] rounded-xl text-[14px] outline-none focus:border-[#953002] transition-colors bg-[#fafafa]"
                                     />
-                                    <button className="px-4 py-2 bg-[#1d1d1d] hover:bg-[#333] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap">
+                                    <button
+                                        onClick={() => {
+                                            if (promoCode === "1234") {
+                                                setIsPromoApplied(true)
+                                            } else {
+                                                setIsPromoApplied(false)
+                                                alert("Invalid promo code")
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-[#1d1d1d] hover:bg-[#333] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap">
                                         Apply
                                     </button>
                                 </div>
@@ -336,7 +378,7 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
 
                             <div className="flex justify-between items-center mb-6">
                                 <span className="text-[18px] font-bold text-[#1d1d1d]">Total</span>
-                                <span className="text-[20px] font-bold text-[#953002]">{formatLKR(room.pricePerNight * 4 + 1500)}</span>
+                                <span className="text-[20px] font-bold text-[#953002]">{formatLKR(finalTotal)}</span>
                             </div>
 
                             <button className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4">
@@ -405,5 +447,13 @@ export default function RoomDetailPage({ property, room }: { property: PropertyD
                 </div>
             )}
         </div>
+    )
+}
+
+export default function RoomDetailPage({ property, room }: { property: PropertyDetail; room: Room }) {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading booking details...</div>}>
+            <RoomDetailPageContent property={property} room={room} />
+        </Suspense>
     )
 }

@@ -134,6 +134,10 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
 
     const allImages = [property.imageSrc, ...property.galleryImages]
 
+    const cheapestRoomId = property.rooms.length > 0
+        ? property.rooms.reduce((min, room) => room.pricePerNight < min.pricePerNight ? room : min).id
+        : ""
+
     return (
         <div className="min-h-screen bg-[#fafafa]">
 
@@ -379,23 +383,6 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
 
                     {/* ── RIGHT COLUMN — Map + Location ───────────────────────────────── */}
                     <div className="w-[300px] flex-shrink-0 sticky top-24">
-                        {/* Reviews panel */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-sm p-5 mb-4">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-[13px] font-semibold text-[#1d1d1d]">
-                                    Excellent · {property.reviewCount.toLocaleString()} verified reviews
-                                </span>
-                                <span className="text-[18px] font-bold text-[#953002]">
-                                    {property.rating.toFixed(1)} / 5
-                                </span>
-                            </div>
-                            <div className="flex flex-col gap-2 mt-3">
-                                {property.reviewBreakdown.map(r => (
-                                    <RatingBar key={r.label} label={r.label} score={r.score} />
-                                ))}
-                            </div>
-                        </div>
-
                         {/* Map embed */}
                         <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-sm overflow-hidden">
                             <div className="relative h-[200px] bg-[#e8f4f8]">
@@ -425,12 +412,13 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                             <p className="text-[12px] text-white/70 mb-0.5">Starting from</p>
                             <p className="text-[26px] font-bold leading-tight">{formatLKR(property.pricePerNight)}</p>
                             <p className="text-[12px] text-white/70 mb-4">per night · incl. taxes</p>
-                            <button
+                            <Link
+                                href={`/guest/property/${property.id}/room/${cheapestRoomId}`}
                                 id="book-now-btn"
-                                className="w-full bg-white text-[#953002] font-bold rounded-xl py-2.5 text-[14px] hover:bg-[#fff5f0] transition-colors cursor-pointer"
+                                className="w-full block text-center bg-white text-[#953002] font-bold rounded-xl py-2.5 text-[14px] hover:bg-[#fff5f0] transition-colors cursor-pointer"
                             >
                                 Book Now
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
