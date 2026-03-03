@@ -6,7 +6,7 @@ import { CalendarCheck, BedDouble, User } from "lucide-react"
 import Logo from "@/components/shared/branding/logo"
 
 const NAV_ITEMS = [
-    { label: "My Bookings", href: "/guest/order/my-orders", icon: CalendarCheck },
+    { label: "My Bookings", href: "/guest/booking/my-bookings", icon: CalendarCheck },
     { label: "My Room", href: "/guest/property/1", icon: BedDouble },
 ]
 
