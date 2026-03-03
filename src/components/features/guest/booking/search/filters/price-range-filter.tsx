@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import type { FilterState } from "./filter-types"
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -20,17 +21,54 @@ interface PriceRangeFilterProps {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function PriceRangeFilter({ priceMin, priceMax, onChange }: PriceRangeFilterProps) {
+    const [minInput, setMinInput] = useState(priceMin.toLocaleString("en-US"))
+    const [maxInput, setMaxInput] = useState(priceMax.toLocaleString("en-US"))
+
+    useEffect(() => {
+        setMinInput(priceMin.toLocaleString("en-US"))
+    }, [priceMin])
+
+    useEffect(() => {
+        setMaxInput(priceMax.toLocaleString("en-US"))
+    }, [priceMax])
+
     const range = PRICE_ABSOLUTE_MAX - PRICE_ABSOLUTE_MIN
     const leftPct = ((priceMin - PRICE_ABSOLUTE_MIN) / range) * 100
     const rightPct = ((priceMax - PRICE_ABSOLUTE_MIN) / range) * 100
 
     const handleMin = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = Number(e.target.value)
-        if (val < priceMax - 10_000) onChange({ priceMin: val, priceMax })
+        if (val <= priceMax) onChange({ priceMin: val, priceMax })
     }
     const handleMax = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = Number(e.target.value)
-        if (val > priceMin + 10_000) onChange({ priceMin, priceMax: val })
+        if (val >= priceMin) onChange({ priceMin, priceMax: val })
+    }
+
+    const handleMinInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setMinInput(e.target.value)
+    }
+    const handleMinInputBlur = () => {
+        let val = parseInt(minInput.replace(/\D/g, ''), 10)
+        if (isNaN(val)) val = PRICE_ABSOLUTE_MIN
+        val = Math.max(PRICE_ABSOLUTE_MIN, Math.min(val, priceMax))
+        onChange({ priceMin: val, priceMax })
+        setMinInput(val.toLocaleString("en-US"))
+    }
+
+    const handleMaxInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setMaxInput(e.target.value)
+    }
+    const handleMaxInputBlur = () => {
+        let val = parseInt(maxInput.replace(/\D/g, ''), 10)
+        if (isNaN(val)) val = PRICE_ABSOLUTE_MAX
+        val = Math.max(priceMin, Math.min(val, PRICE_ABSOLUTE_MAX))
+        onChange({ priceMin, priceMax: val })
+        setMaxInput(val.toLocaleString("en-US"))
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") e.currentTarget.blur()
     }
 
     return (
@@ -83,7 +121,7 @@ export default function PriceRangeFilter({ priceMin, priceMax, onChange }: Price
                     value={priceMin}
                     onChange={handleMin}
                     aria-label="Minimum price"
-                    className="absolute w-full h-1 opacity-0 cursor-pointer"
+                    className="absolute w-full h-1 opacity-0 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto cursor-pointer"
                     style={{ zIndex: priceMin > PRICE_ABSOLUTE_MAX - 50_000 ? 5 : 3 }}
                 />
                 {/* Max input */}
@@ -95,7 +133,7 @@ export default function PriceRangeFilter({ priceMin, priceMax, onChange }: Price
                     value={priceMax}
                     onChange={handleMax}
                     aria-label="Maximum price"
-                    className="absolute w-full h-1 opacity-0 cursor-pointer"
+                    className="absolute w-full h-1 opacity-0 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto cursor-pointer"
                     style={{ zIndex: 4 }}
                 />
                 {/* Visual thumb – min */}
@@ -116,14 +154,30 @@ export default function PriceRangeFilter({ priceMin, priceMax, onChange }: Price
             <div className="flex gap-3">
                 <div className="flex-1">
                     <label className="block text-[10px] font-medium text-[#828282] uppercase tracking-wide mb-1">Min</label>
-                    <div className="border border-[#e0e0e0] rounded-lg px-3 py-2 text-[13px] text-[#1d1d1d] font-medium bg-white">
-                        LKR {priceMin.toLocaleString("en-US")}
+                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[#953002] transition-colors">
+                        <span className="text-[13px] text-[#828282]">LKR</span>
+                        <input
+                            type="text"
+                            value={minInput}
+                            onChange={handleMinInputChange}
+                            onBlur={handleMinInputBlur}
+                            onKeyDown={handleKeyDown}
+                            className="text-[13px] text-[#1d1d1d] font-medium bg-transparent outline-none w-full min-w-0"
+                        />
                     </div>
                 </div>
                 <div className="flex-1">
                     <label className="block text-[10px] font-medium text-[#828282] uppercase tracking-wide mb-1">Max</label>
-                    <div className="border border-[#e0e0e0] rounded-lg px-3 py-2 text-[13px] text-[#1d1d1d] font-medium bg-white">
-                        LKR {priceMax.toLocaleString("en-US")}
+                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[#953002] transition-colors">
+                        <span className="text-[13px] text-[#828282]">LKR</span>
+                        <input
+                            type="text"
+                            value={maxInput}
+                            onChange={handleMaxInputChange}
+                            onBlur={handleMaxInputBlur}
+                            onKeyDown={handleKeyDown}
+                            className="text-[13px] text-[#1d1d1d] font-medium bg-transparent outline-none w-full min-w-0"
+                        />
                     </div>
                 </div>
             </div>
