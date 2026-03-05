@@ -381,9 +381,12 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 <span className="text-[20px] font-bold text-[#953002]">{formatLKR(finalTotal)}</span>
                             </div>
 
-                            <button className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4">
+                            <Link
+                                href="/guest/booking/confirmation"
+                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
+                            >
                                 Confirm & Book <ArrowRight size={18} />
-                            </button>
+                            </Link>
 
                             <div className="text-center text-[13px] text-[#828282] mb-6">You won&apos;t be charged yet</div>
 
