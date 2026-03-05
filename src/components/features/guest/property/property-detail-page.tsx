@@ -407,19 +407,6 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                             </div>
                         </div>
 
-                        {/* Starting price */}
-                        <div className="mt-4 bg-[#953002] text-white rounded-2xl p-5">
-                            <p className="text-[12px] text-white/70 mb-0.5">Starting from</p>
-                            <p className="text-[26px] font-bold leading-tight">{formatLKR(property.pricePerNight)}</p>
-                            <p className="text-[12px] text-white/70 mb-4">per night · incl. taxes</p>
-                            <Link
-                                href={`/guest/property/${property.id}/room/${cheapestRoomId}`}
-                                id="book-now-btn"
-                                className="w-full block text-center bg-white text-[#953002] font-bold rounded-xl py-2.5 text-[14px] hover:bg-[#fff5f0] transition-colors cursor-pointer"
-                            >
-                                Book Now
-                            </Link>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -474,3 +461,4 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
         </div>
     )
 }
+    
