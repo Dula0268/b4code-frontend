@@ -24,7 +24,7 @@ const QUICK_ACTIONS = [
         badge: "Gourmet Selection",
         title: "Room Service",
         imageSrc: "/images/room/room-service.png",
-        cta: { label: "Message Staff", icon: MessageSquare, secondary: false },
+        cta: { label: "Message Staff", icon: MessageSquare, href: "/guest/my-room/message-staff" },
     },
 ]
 
