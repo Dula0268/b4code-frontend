@@ -193,9 +193,12 @@ function BookingCard({ booking }: { booking: Booking }) {
                             >
                                 <Pencil size={13} /> Modify
                             </Link>
-                            <button className="inline-flex items-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                            <Link
+                                href="/guest/booking/cancel"
+                                className="inline-flex items-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
+                            >
                                 <XCircle size={14} /> Cancel
-                            </button>
+                            </Link>
                         </>
                     )}
 
