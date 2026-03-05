@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
     CalendarDays, Hash, ChevronRight, Info,
-    ChevronDown, AlertTriangle,
+    ChevronDown,
 } from "lucide-react"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -42,7 +42,6 @@ export default function CancelBookingPage() {
     const [comments, setComments] = useState("")
     const [agreed, setAgreed] = useState(false)
     const [submitting, setSubmitting] = useState(false)
-    const [submitted, setSubmitted] = useState(false)
 
     // Price calc
     const cancellationFee = Math.round(BOOKING.totalPaid * (BOOKING.cancellationPctFee / 100))
@@ -53,36 +52,9 @@ export default function CancelBookingPage() {
     const handleCancel = async () => {
         if (!canSubmit) return
         setSubmitting(true)
-        await new Promise(r => setTimeout(r, 1500))
+        await new Promise(r => setTimeout(r, 1200))
         setSubmitting(false)
-        setSubmitted(true)
-    }
-
-    // ── Success state ──────────────────────────────────────────────────────────
-    if (submitted) {
-        return (
-            <div className="min-h-screen bg-[#f4f4f4] pt-20 pb-16 flex items-center justify-center">
-                <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.10)] p-10 max-w-[480px] w-full text-center">
-                    <div className="w-16 h-16 rounded-full bg-[#fff4eb] flex items-center justify-center mx-auto mb-5">
-                        <AlertTriangle size={28} className="text-[#953002]" />
-                    </div>
-                    <h2 className="text-[22px] font-bold text-[#1d1d1d] mb-2">Cancellation Requested</h2>
-                    <p className="text-[13px] text-[#828282] leading-relaxed mb-1">
-                        Your booking <span className="font-semibold text-[#1d1d1d]">{BOOKING.id}</span> has been cancelled.
-                    </p>
-                    <p className="text-[13px] text-[#828282] leading-relaxed mb-6">
-                        A refund of <span className="font-bold text-[#953002]">{formatLKR(refundableAmount)}</span> will be
-                        processed to your Visa ending in {BOOKING.cardLast4} within 5–7 business days.
-                    </p>
-                    <Link
-                        href="/guest/booking/my-bookings"
-                        className="inline-flex items-center justify-center w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[14px] py-3 rounded-xl transition-colors no-underline"
-                    >
-                        Back to My Bookings
-                    </Link>
-                </div>
-            </div>
-        )
+        router.push("/guest/booking/refund")
     }
 
     return (
