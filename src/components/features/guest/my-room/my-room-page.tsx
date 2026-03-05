@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { Zap, Compass, Star, QrCode, MessageSquare, Send } from "lucide-react"
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -16,7 +17,7 @@ const QUICK_ACTIONS = [
         badge: "Gourmet Selection",
         title: "Food & Beverage",
         imageSrc: "/images/room/food-beverage.png",
-        cta: { label: "Scan QR Code", icon: QrCode, secondary: false },
+        cta: { label: "Scan QR Code", icon: QrCode, href: "/guest/my-room/qr-scanner" },
     },
     {
         id: "service",
@@ -109,39 +110,43 @@ export default function MyRoomPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {QUICK_ACTIONS.map(action => (
-                            <div
-                                key={action.id}
-                                className="relative rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.12)] group cursor-pointer h-[240px]"
-                            >
-                                {/* Background image */}
-                                <Image
-                                    src={action.imageSrc}
-                                    alt={action.title}
-                                    fill
-                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                    sizes="(max-width: 600px) 100vw, 50vw"
-                                />
-                                {/* Dark overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                        {QUICK_ACTIONS.map(action => {
+                            const CardWrapper = action.cta.href ? Link : "div"
+                            return (
+                                <CardWrapper
+                                    key={action.id}
+                                    href={action.cta.href || "#"}
+                                    className="relative rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.12)] group h-[240px] block no-underline cursor-pointer"
+                                >
+                                    {/* Background image */}
+                                    <Image
+                                        src={action.imageSrc}
+                                        alt={action.title}
+                                        fill
+                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                        sizes="(max-width: 600px) 100vw, 50vw"
+                                    />
+                                    {/* Dark overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-                                {/* Content */}
-                                <div className="absolute inset-0 flex flex-col justify-between p-5">
-                                    {/* Badge */}
-                                    <span className="self-start text-[10px] font-bold uppercase tracking-widest text-white bg-[#953002] px-2.5 py-1 rounded-full">
-                                        {action.badge}
-                                    </span>
-                                    {/* Title + CTA */}
-                                    <div className="flex items-end justify-between">
-                                        <p className="text-[22px] font-black text-white drop-shadow">{action.title}</p>
-                                        <button className="inline-flex items-center gap-1.5 bg-[#f0a500] hover:bg-[#d49000] text-black text-[12px] font-bold px-3.5 py-2 rounded-xl transition-colors cursor-pointer shadow-lg">
-                                            <action.cta.icon size={14} />
-                                            {action.cta.label}
-                                        </button>
+                                    {/* Content */}
+                                    <div className="absolute inset-0 flex flex-col justify-between p-5 pointer-events-none">
+                                        {/* Badge */}
+                                        <span className="self-start text-[10px] font-bold uppercase tracking-widest text-white bg-[#953002] px-2.5 py-1 rounded-full">
+                                            {action.badge}
+                                        </span>
+                                        {/* Title + CTA */}
+                                        <div className="flex items-end justify-between">
+                                            <p className="text-[22px] font-black text-white drop-shadow">{action.title}</p>
+                                            <span className="inline-flex items-center gap-1.5 bg-[#f0a500] group-hover:bg-[#d49000] text-black text-[12px] font-bold px-3.5 py-2 rounded-xl transition-colors shadow-lg">
+                                                <action.cta.icon size={14} />
+                                                {action.cta.label}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
+                                </CardWrapper>
+                            )
+                        })}
                     </div>
                 </section>
 
