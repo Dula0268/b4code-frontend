@@ -181,9 +181,12 @@ function BookingCard({ booking }: { booking: Booking }) {
                 <div className="flex items-center gap-2.5 flex-wrap mt-1">
                     {isUpcoming && (
                         <>
-                            <button className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                            <Link
+                                href="/guest/booking/message-host"
+                                className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
+                            >
                                 <MessageSquare size={14} /> Message Host
-                            </button>
+                            </Link>
                             <button className="inline-flex items-center gap-2 border border-[#953002] text-[#953002] hover:bg-[#fff4eb] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer">
                                 <Pencil size={13} /> Modify
                             </button>
