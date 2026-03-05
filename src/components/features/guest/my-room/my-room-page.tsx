@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Zap, Compass, Star, QrCode, MessageSquare, Send } from "lucide-react"
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -75,11 +76,13 @@ function StarRating({ rating, onRate }: { rating: number; onRate: (r: number) =>
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function MyRoomPage() {
+    const router = useRouter()
     const [rating, setRating] = useState(0)
-    const [reviewSubmitted, setReviewSubmitted] = useState(false)
 
     const handleWriteReview = () => {
-        if (rating > 0) setReviewSubmitted(true)
+        if (rating > 0) {
+            router.push(`/guest/my-room/submit-review?rating=${rating}`)
+        }
     }
 
     return (
@@ -183,39 +186,25 @@ export default function MyRoomPage() {
 
                 {/* ── Review Section ────────────────────────────────────────── */}
                 <section className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] p-8 text-center">
-                    {reviewSubmitted ? (
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="w-14 h-14 rounded-full bg-[#e8f5e9] flex items-center justify-center mx-auto">
-                                <Star size={26} className="text-[#27AE60] fill-[#27AE60]" />
-                            </div>
-                            <h3 className="text-[18px] font-bold text-[#1d1d1d]">Thank you for your review!</h3>
-                            <p className="text-[13px] text-[#828282]">
-                                Your {rating}-star feedback helps future travelers find their perfect stay.
-                            </p>
-                        </div>
-                    ) : (
-                        <>
-                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-2">
-                                How was your stay at{" "}
-                                <span className="text-[#953002]">{HOTEL_NAME}?</span>
-                            </h2>
-                            <p className="text-[13px] text-[#828282] leading-relaxed mb-6 max-w-[420px] mx-auto">
-                                Hi {GUEST_FIRST}, we hope you&apos;re settling back in. Your feedback helps us improve
-                                and helps future travelers find their perfect stay.
-                            </p>
-                            <StarRating rating={rating} onRate={setRating} />
-                            <button
-                                id="write-review-btn"
-                                onClick={handleWriteReview}
-                                disabled={rating === 0}
-                                className="mt-6 inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-[14px] px-8 py-3.5 rounded-xl transition-colors cursor-pointer"
-                            >
-                                Write a Review <Send size={15} />
-                            </button>
-                            {rating === 0 && (
-                                <p className="mt-3 text-[12px] text-[#bbb]">Click a star above to rate your stay first</p>
-                            )}
-                        </>
+                    <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-2">
+                        How was your stay at{" "}
+                        <span className="text-[#953002]">{HOTEL_NAME}?</span>
+                    </h2>
+                    <p className="text-[13px] text-[#828282] leading-relaxed mb-6 max-w-[420px] mx-auto">
+                        Hi {GUEST_FIRST}, we hope you&apos;re settling back in. Your feedback helps us improve
+                        and helps future travelers find their perfect stay.
+                    </p>
+                    <StarRating rating={rating} onRate={setRating} />
+                    <button
+                        id="write-review-btn"
+                        onClick={handleWriteReview}
+                        disabled={rating === 0}
+                        className="mt-6 inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-[14px] px-8 py-3.5 rounded-xl transition-colors cursor-pointer"
+                    >
+                        Write a Review <Send size={15} />
+                    </button>
+                    {rating === 0 && (
+                        <p className="mt-3 text-[12px] text-[#bbb]">Click a star above to rate your stay first</p>
                     )}
                 </section>
             </div>
