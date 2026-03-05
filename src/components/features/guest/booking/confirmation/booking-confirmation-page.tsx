@@ -245,7 +245,7 @@ export default function BookingConfirmationPage() {
                             Go to Your Room
                         </Link>
                         <Link
-                            href="/guest/order/my-orders"
+                            href="/guest/booking/my-bookings"
                             className="flex-1 flex items-center justify-center gap-2 bg-[#953002] text-white rounded-xl px-5 py-3 text-[14px] font-semibold hover:bg-[#6d2200] transition-colors no-underline"
                         >
                             <CalendarDays size={16} />
@@ -289,22 +289,6 @@ export default function BookingConfirmationPage() {
                             </div>
                         ))}
                     </div>
-                </div>
-
-                {/* ── Footer links ──────────────────────────────────────────── */}
-                <div className="flex flex-col items-center gap-2 pt-2">
-                    <p className="text-[13px] text-[#828282]">
-                        Need to make changes?{" "}
-                        <Link href="/guest/order/my-orders" className="text-[#953002] font-semibold hover:underline">
-                            Manage booking
-                        </Link>
-                    </p>
-                    <Link
-                        href="/"
-                        className="text-[13px] text-[#828282] hover:text-[#1d1d1d] transition-colors no-underline"
-                    >
-                        Back to Home
-                    </Link>
                 </div>
             </div>
         </div>
