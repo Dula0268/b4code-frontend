@@ -7,7 +7,7 @@ import Logo from "@/components/shared/branding/logo"
 
 const NAV_ITEMS = [
     { label: "My Bookings", href: "/guest/booking/my-bookings", icon: CalendarCheck },
-    { label: "My Room", href: "/guest/property/1", icon: BedDouble },
+    { label: "My Room", href: "/guest/my-room", icon: BedDouble },
 ]
 
 export default function BookingTopbar() {

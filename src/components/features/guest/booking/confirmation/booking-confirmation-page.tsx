@@ -238,7 +238,7 @@ export default function BookingConfirmationPage() {
                     {/* CTA buttons */}
                     <div className="px-5 pb-5 flex flex-col sm:flex-row gap-3">
                         <Link
-                            href="/guest/property/1"
+                            href="/guest/my-room"
                             className="flex-1 flex items-center justify-center gap-2 bg-[#953002] text-white rounded-xl px-5 py-3 text-[14px] font-semibold hover:bg-[#6d2200] transition-colors no-underline"
                         >
                             <BedDouble size={16} />
