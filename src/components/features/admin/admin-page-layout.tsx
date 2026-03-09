@@ -18,12 +18,12 @@ export default function AdminPageLayout({
       <AdminSidebar />
 
       {/* Right side: header + page content */}
-      <div className="ml-[260px] flex-1 flex flex-col">
+      <div className="ml-65 flex-1 flex flex-col">
         {/* Fixed Header */}
         <AdminHeader adminName={adminName} avatarSrc={avatarSrc} />
 
         {/* Page Content — padded down below the fixed header */}
-        <main className="mt-[68px] p-7 flex-1">{children}</main>
+        <main className="mt-17 p-7 flex-1">{children}</main>
       </div>
     </div>
   );

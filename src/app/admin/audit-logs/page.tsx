@@ -43,16 +43,16 @@ function AuditLogsFilters({
   return (
     <div className="flex gap-3 items-center flex-wrap">
       {/* Search */}
-      <div className="relative flex-1 min-w-[240px]">
+      <div className="relative flex-1 min-w-60">
         <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-4)] pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-(--gray-4) pointer-events-none"
           size={14}
         />
         <input
           placeholder="Search by User, IP, or Entity ID"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full py-2 px-3 pl-9 rounded-[10px] border-[1.5px] border-[var(--gray-5)] text-[13px] text-[var(--black-2)] bg-white outline-none box-border focus:border-[var(--brand-primary)]"
+          className="w-full py-2 px-3 pl-9 rounded-[10px] border-[1.5px] border-(--gray-5) text-[13px] text-(--black-2) bg-white outline-none box-border focus:border-(--brand-primary)"
         />
       </div>
 
@@ -60,13 +60,13 @@ function AuditLogsFilters({
       <div className="relative">
         <button
           onClick={() => onRoleOpenChange(!roleOpen)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-[10px] border-[1.5px] border-[var(--gray-5)] bg-white text-[13px] font-semibold cursor-pointer ${roleCfg(roleFilter)}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-[10px] border-[1.5px] border-(--gray-5) bg-white text-[13px] font-semibold cursor-pointer ${roleCfg(roleFilter)}`}
         >
           Role: {roleFilter}
           <ChevronDown size={14} />
         </button>
         {roleOpen && (
-          <div className="absolute top-[calc(100%+6px)] left-0 bg-white border-[1.5px] border-[var(--gray-5)] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-[100] min-w-[150px] overflow-hidden">
+          <div className="absolute top-[calc(100%+6px)] left-0 bg-white border-[1.5px] border-(--gray-5) rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-100 min-w-37.5 overflow-hidden">
             {roles.map((r) => {
               return (
                 <button
@@ -77,8 +77,8 @@ function AuditLogsFilters({
                   }}
                   className={`flex items-center gap-2 w-full text-left px-3.5 py-2 border-none text-[13px] cursor-pointer ${
                     roleFilter === r
-                      ? "bg-[var(--brand-primary)]/5 text-[var(--brand-primary)] font-semibold"
-                      : "bg-white text-[var(--gray-2)] font-normal hover:bg-gray-50"
+                      ? "bg-(--brand-primary)/5 text-(--brand-primary) font-semibold"
+                      : "bg-white text-(--gray-2) font-normal hover:bg-gray-50"
                   }`}
                 >
                   {r !== "All" && (
@@ -103,7 +103,7 @@ function AuditLogsFilters({
       </div>
 
       {/* Date Range (static display) */}
-      <div className="flex items-center gap-2 px-4 py-2 rounded-[10px] border-[1.5px] border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] cursor-pointer">
+      <div className="flex items-center gap-2 px-4 py-2 rounded-[10px] border-[1.5px] border-(--gray-5) bg-white text-[13px] text-(--gray-2) cursor-pointer">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <rect
             x="1"

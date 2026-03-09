@@ -60,7 +60,7 @@ export default function AdminSidebar() {
   const router = useRouter();
 
   return (
-    <aside className="w-[260px] min-h-screen bg-[var(--white)] border-r border-[var(--gray-5)] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
+    <aside className="w-65 min-h-screen bg-(--white) border-r border-(--gray-5) flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
       {/* ── Logo + Role Label ── */}
       <div className="px-5 pb-6">
         <Logo href="/admin" variant="default" width={140} height={48} />
@@ -71,7 +71,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* ── Divider ── */}
-      <div className="h-px bg-[var(--gray-5)] mx-5 mb-4" />
+      <div className="h-px bg-(--gray-5) mx-5 mb-4" />
 
       {/* ── Main Navigation ── */}
       <nav className="flex-1 px-3 overflow-y-auto">
@@ -86,17 +86,17 @@ export default function AdminSidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
-                    ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
-                    : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
-                    }`}
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-[10px] no-underline text-sm transition-colors ${
+                    isActive
+                      ? "font-semibold text-(--brand-primary) bg-[rgba(149,48,2,0.08)]"
+                      : "font-normal text-(--black-1) bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-(--primary-hover)"
+                  }`}
                 >
                   <Icon
                     size={18}
-                    className={`flex-shrink-0 ${isActive
-                      ? "text-[var(--brand-primary)]"
-                      : "text-[var(--black-1)]"
-                      }`}
+                    className={`shrink-0 ${
+                      isActive ? "text-(--brand-primary)" : "text-(--black-1)"
+                    }`}
                   />
                   <span>{item.label}</span>
                 </Link>
@@ -109,21 +109,19 @@ export default function AdminSidebar() {
       {/* ── Bottom Section: Settings & Logout ── */}
       <div>
         {/* Divider */}
-        <div className="h-px bg-[var(--gray-5)] mx-5 my-4" />
+        <div className="h-px bg-(--gray-5) mx-5 my-4" />
 
         <div className="px-3 flex flex-col gap-1">
           {/* Settings */}
           <Link
             href="/admin/settings"
-            className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${pathname === "/admin/settings"
-              ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
-              : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
-              }`}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-[10px] no-underline text-sm transition-colors ${
+              pathname === "/admin/settings"
+                ? "font-semibold text-(--brand-primary) bg-[rgba(149,48,2,0.08)]"
+                : "font-normal text-(--black-1) bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-(--primary-hover)"
+            }`}
           >
-            <Settings
-              size={18}
-              className="text-[var(--black-1)] flex-shrink-0"
-            />
+            <Settings size={18} className="text-(--black-1) shrink-0" />
             <span>Settings</span>
           </Link>
 
@@ -132,9 +130,9 @@ export default function AdminSidebar() {
             onClick={() => {
               router.push("/auth/logout");
             }}
-            className="flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] border-none bg-transparent cursor-pointer text-sm font-normal text-[var(--black-1)] w-full text-left transition-colors hover:bg-[rgba(235,87,87,0.08)] hover:text-[var(--state-error)]"
+            className="flex items-center gap-3 px-3.5 py-2.5 rounded-[10px] border-none bg-transparent cursor-pointer text-sm font-normal text-(--black-1) w-full text-left transition-colors hover:bg-[rgba(235,87,87,0.08)] hover:text-(--state-error)"
           >
-            <LogOut size={18} className="text-[var(--black-1)] flex-shrink-0" />
+            <LogOut size={18} className="text-(--black-1) shrink-0" />
             <span>Log Out</span>
           </button>
         </div>

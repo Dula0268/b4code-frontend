@@ -27,7 +27,7 @@ function ActivityIcon({ type }: { type: ActionType }) {
   const { bg, icon } = cfg[type];
   return (
     <span
-      className="inline-flex items-center justify-center w-[26px] h-[26px] rounded-full flex-shrink-0"
+      className="inline-flex items-center justify-center w-6.5 h-6.5 rounded-full shrink-0"
       style={{ backgroundColor: bg }}
     >
       {icon}
@@ -43,12 +43,12 @@ export default function UserActivityLog({
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex justify-between items-center px-6 pt-5">
-        <h2 className="m-0 text-base font-bold text-[var(--black-2)]">
+        <h2 className="m-0 text-base font-bold text-(--black-2)">
           Activity Log
         </h2>
         <div className="flex gap-2">
           {/* Filter icon */}
-          <button className="bg-transparent border-none cursor-pointer text-[var(--gray-3)] flex p-1">
+          <button className="bg-transparent border-none cursor-pointer text-(--gray-3) flex p-1">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M2 4h12M4 8h8M6 12h4"

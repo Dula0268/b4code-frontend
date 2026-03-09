@@ -21,18 +21,16 @@ export default function KpiCard({
     <div className="bg-white rounded-2xl p-6 shadow-sm flex flex-col gap-3">
       {/* Top row */}
       <div className="flex justify-between items-start">
-        <span className="text-[13px] text-[var(--gray-3)] font-medium">
-          {label}
-        </span>
+        <span className="text-[13px] text-(--gray-3) font-medium">{label}</span>
         <div
-          className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center"
+          className="w-9.5 h-9.5 rounded-[10px] flex items-center justify-center"
           style={{ backgroundColor: iconBg }}
         >
           {icon}
         </div>
       </div>
       {/* Value */}
-      <p className="text-[26px] font-bold text-[var(--black-2)] m-0 leading-none">
+      <p className="text-[26px] font-bold text-(--black-2) m-0 leading-none">
         {value}
       </p>
       {/* Change */}
@@ -48,7 +46,7 @@ export default function KpiCard({
         >
           {change}
         </span>
-        <span className="text-[13px] text-[var(--gray-4)]">vs last month</span>
+        <span className="text-[13px] text-(--gray-4)">vs last month</span>
       </div>
     </div>
   );

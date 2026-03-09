@@ -58,8 +58,7 @@ const TRANSACTIONS: Transaction[] = [
 
 // ─── Icon helpers ─────────────────────────────────────────────────────────────
 function TransactionIcon({ type }: { type: TransactionType }) {
-  const base =
-    "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0";
+  const base = "w-9 h-9 rounded-full flex items-center justify-center shrink-0";
 
   if (type === "booking") {
     return (
@@ -86,7 +85,7 @@ function TransactionIcon({ type }: { type: TransactionType }) {
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function RecentTransactions() {
   return (
-    <div className="w-[300px] flex-shrink-0 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-4">
+    <div className="w-75 shrink-0 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-4">
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <h2 className="text-[16px] font-bold text-[#1A1A1A]">
@@ -111,7 +110,7 @@ export default function RecentTransactions() {
             </div>
 
             <span
-              className={`text-[13px] font-bold flex-shrink-0 ${
+              className={`text-[13px] font-bold shrink-0 ${
                 tx.positive ? "text-[#16A34A]" : "text-[#1A1A1A]"
               }`}
             >
