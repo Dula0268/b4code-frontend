@@ -1,8 +1,10 @@
 "use client";
 
+import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { useGuestReviewsStore } from "@/store/guest/reviews/reviews.store";
 import type { MenuItem } from "@/store/guest/order/cart-store";
 
 const TAG_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
@@ -21,6 +23,17 @@ export default function MenuItemCard({
   onAdd: () => void;
   formatLkr: (n: number) => string;
 }) {
+  const getAverageRating = useGuestReviewsStore((s) => s.getAverageRating);
+  const getReviewsForItem = useGuestReviewsStore((s) => s.getReviewsForItem);
+
+  const avgRating = React.useMemo(() => {
+    return getAverageRating(item.id);
+  }, [item.id, getAverageRating]);
+
+  const reviewCount = React.useMemo(() => {
+    return getReviewsForItem(item.id).length;
+  }, [item.id, getReviewsForItem]);
+
   const tagInfo = item.tag ? TAG_CONFIG[item.tag] : null;
 
   return (
@@ -42,19 +55,29 @@ export default function MenuItemCard({
 
       {/* Content */}
       <div className="px-2 py-1.5 md:px-3 md:py-3 flex flex-col flex-1">
-        {/* Title + Tag */}
+        {/* Title + Tag + Rating */}
         <div className="flex items-start justify-between gap-1 md:gap-2 pb-0.5 md:pb-1.5">
           <h3 className="text-[11px] md:text-sm font-bold text-[#111827] leading-[14px] md:leading-5 line-clamp-1 md:line-clamp-2">
             {item.title}
           </h3>
-          {tagInfo ? (
-            <span
-              className="shrink-0 rounded-full px-1.5 md:px-2 py-0.5 text-[10px] md:text-xs font-medium hidden sm:inline-flex"
-              style={{ backgroundColor: tagInfo.bg, color: tagInfo.text }}
-            >
-              {tagInfo.label}
-            </span>
-          ) : null}
+          <div className="flex items-center gap-1 shrink-0">
+            {tagInfo ? (
+              <span
+                className="rounded-full px-1.5 md:px-2 py-0.5 text-[10px] md:text-xs font-medium hidden sm:inline-flex"
+                style={{ backgroundColor: tagInfo.bg, color: tagInfo.text }}
+              >
+                {tagInfo.label}
+              </span>
+            ) : null}
+            {reviewCount > 0 && (
+              <span className="rounded-full px-1.5 md:px-2 py-0.5 text-[10px] md:text-xs font-medium bg-[#fef3c7] text-[#92400e] inline-flex items-center gap-0.5">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="#f59e0b">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+                </svg>
+                <span>{avgRating.toFixed(1)}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Description */}
