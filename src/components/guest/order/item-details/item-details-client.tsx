@@ -57,7 +57,7 @@ export default function ItemDetailsClient({
     return arr;
   }, [itemReviews, sortBy]);
 
-  const addOns = item.addOns ?? [];
+  const addOns = React.useMemo(() => item.addOns ?? [], [item.addOns]);
   const gallery = item.gallery ?? (item.imageUrl ? [item.imageUrl] : []);
   const heroSrc = gallery[activeImage] ?? item.imageUrl;
 
@@ -383,7 +383,7 @@ export default function ItemDetailsClient({
                 {/* Sort dropdown */}
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) => setSortBy(e.target.value as "newest" | "rating-high" | "helpful")}
                   className="px-3 py-2 text-[13px] border border-[#e5e7eb] rounded-lg bg-white text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#953002] cursor-pointer"
                 >
                   <option value="newest">Newest first</option>
