@@ -66,7 +66,7 @@ function EntityIcon({ type }: { type: "property" | "user" }) {
   const color = type === "property" ? "var(--brand-primary)" : "#2f80ed";
   return (
     <div
-      className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+      className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
       style={{ backgroundColor: bg }}
     >
       {type === "property" ? (

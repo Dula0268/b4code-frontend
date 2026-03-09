@@ -21,7 +21,7 @@ export default function UserAccountInformation({
 
   return (
     <div className="bg-white rounded-2xl px-7 py-6 shadow-sm">
-      <h2 className="m-0 mb-[22px] text-base font-bold text-[var(--black-2)]">
+      <h2 className="m-0 mb-5.5 text-base font-bold text-(--black-2)">
         Account Information
       </h2>
       {fields.map(({ label, value }) => (
