@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Logo from "@/components/shared/branding/logo";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -57,6 +57,7 @@ const NAV_ITEMS = [
 // ─── Component ─────────────────────────────────────────────────────────────────
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <aside className="w-65 min-h-screen bg-(--white) border-r border-(--gray-5) flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
@@ -127,8 +128,7 @@ export default function AdminSidebar() {
           {/* Log Out */}
           <button
             onClick={() => {
-              // TODO: wire up your auth logout logic here
-              console.log("Logout clicked");
+              router.push("/auth/logout");
             }}
             className="flex items-center gap-3 px-3.5 py-2.5 rounded-[10px] border-none bg-transparent cursor-pointer text-sm font-normal text-(--black-1) w-full text-left transition-colors hover:bg-[rgba(235,87,87,0.08)] hover:text-(--state-error)"
           >

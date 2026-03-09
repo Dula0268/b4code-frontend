@@ -28,7 +28,7 @@ export default function StaffCtaSection() {
           Manage reservations, update order statuses, handle food orders, and respond to guest requests in real time.
         </p>
         <Link
-          href="/auth/login?role=staff"
+          href="/auth/register?role=staff"
           className="inline-flex items-center justify-center px-8 py-3 bg-[#953002] hover:bg-[#6d2200] text-white font-semibold text-[15px] rounded-xl transition-colors no-underline"
         >
           Continue as Staff
