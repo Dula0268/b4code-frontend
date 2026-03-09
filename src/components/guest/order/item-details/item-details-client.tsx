@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCartStore } from "@/store/guest/order/cart-store";
+import { useGuestReviewsStore } from "@/store/guest/reviews/reviews.store";
 import type { MenuItemDetail } from "@/data/menu-items";
 
 /* ─── Tag config matching the Figma badge ─── */
@@ -30,10 +31,33 @@ export default function ItemDetailsClient({
   const [selectedAddOns, setSelectedAddOns] = React.useState<Record<string, boolean>>({});
   const [specialInstructions, setSpecialInstructions] = React.useState("");
   const [activeImage, setActiveImage] = React.useState(0);
+  const [sortBy, setSortBy] = React.useState<"newest" | "rating-high" | "helpful">("newest");
 
   const addToCart = useCartStore((s) => s.add);
+  const getReviewsForItem = useGuestReviewsStore((s) => s.getReviewsForItem);
+  const getAverageRating = useGuestReviewsStore((s) => s.getAverageRating);
 
-  const addOns = item.addOns ?? [];
+  const itemReviews = React.useMemo(() => {
+    return getReviewsForItem(item.id);
+  }, [item.id, getReviewsForItem]);
+
+  const avgRating = React.useMemo(() => {
+    return getAverageRating(item.id);
+  }, [item.id, getAverageRating]);
+
+  const sortedReviews = React.useMemo(() => {
+    const arr = [...itemReviews];
+    if (sortBy === "rating-high") {
+      arr.sort((a, b) => b.rating - a.rating);
+    } else if (sortBy === "helpful") {
+      arr.sort((a, b) => b.helpful - a.helpful);
+    } else {
+      arr.sort((a, b) => b.timestamp - a.timestamp);
+    }
+    return arr;
+  }, [itemReviews, sortBy]);
+
+  const addOns = React.useMemo(() => item.addOns ?? [], [item.addOns]);
   const gallery = item.gallery ?? (item.imageUrl ? [item.imageUrl] : []);
   const heroSrc = gallery[activeImage] ?? item.imageUrl;
 
@@ -315,6 +339,129 @@ export default function ItemDetailsClient({
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ════════════════════ GUEST REVIEWS SECTION ════════════════════ */}
+      <div className="mt-16 pt-12 border-t border-[rgba(146,48,2,0.1)]">
+        <div className="space-y-6">
+          {/* Header */}
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-[#111827] mb-2">
+              Guest Reviews
+            </h2>
+            {itemReviews.length === 0 ? (
+              <p className="text-[14px] text-[#6b7280]">
+                No reviews yet. Be the first to review this item!
+              </p>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg
+                        key={star}
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill={star <= Math.round(avgRating) ? "#f59e0b" : "none"}
+                        stroke={star <= Math.round(avgRating) ? "#f59e0b" : "#e5e7eb"}
+                        strokeWidth="1.5"
+                      >
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="text-[14px] font-medium text-[#374151]">
+                    {avgRating.toFixed(1)} out of 5
+                  </span>
+                  <span className="text-[14px] text-[#6b7280]">
+                    ({itemReviews.length} {itemReviews.length === 1 ? "review" : "reviews"})
+                  </span>
+                </div>
+
+                {/* Sort dropdown */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as "newest" | "rating-high" | "helpful")}
+                  className="px-3 py-2 text-[13px] border border-[#e5e7eb] rounded-lg bg-white text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#953002] cursor-pointer"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="rating-high">Highest rating</option>
+                  <option value="helpful">Most helpful</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Reviews List */}
+          {itemReviews.length === 0 ? (
+            <div className="bg-[#f9fafb] border border-[#e5e7eb] rounded-lg p-6 text-center">
+              <p className="text-[14px] text-[#6b7280] mb-3">
+                Be the first guest to share your thoughts about this dish!
+              </p>
+              <Link
+                href="/guest/order/review"
+                className="inline-block text-[14px] font-medium text-[#953002] hover:text-[#7c2606] underline transition"
+              >
+                Write a Review
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="border border-[#e5e7eb] rounded-lg p-5 hover:shadow-md transition"
+                >
+                  {/* Review header */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 className="text-[14px] font-semibold text-[#111827]">
+                        {review.guestName}
+                      </h4>
+                      <p className="text-[12px] text-[#9ca3af] mt-1">
+                        {new Date(review.timestamp).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <svg
+                          key={star}
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill={star <= review.rating ? "#f59e0b" : "none"}
+                          stroke={star <= review.rating ? "#f59e0b" : "#e5e7eb"}
+                          strokeWidth="1.5"
+                        >
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+                        </svg>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Review text */}
+                  {review.reviewText && (
+                    <p className="text-[13px] text-[#4b5563] leading-[18px] mb-3">
+                      {review.reviewText}
+                    </p>
+                  )}
+
+                  {/* Helpful count */}
+                  {review.helpful > 0 && (
+                    <div className="text-[12px] text-[#6b7280]">
+                      👍 {review.helpful} {review.helpful === 1 ? "person found" : "people found"} this helpful
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

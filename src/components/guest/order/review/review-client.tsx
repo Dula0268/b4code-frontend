@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOrderStore } from "@/store/guest/order/order-store";
+import { useGuestReviewsStore } from "@/store/guest/reviews/reviews.store";
 
 /* ─── Helpers ─── */
 
@@ -35,7 +36,7 @@ function StarRating({
             onMouseLeave={() => setHover(0)}
             className="cursor-pointer p-0.5 transition"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z"
                 fill={filled ? "#F2C94C" : "none"}
@@ -57,166 +58,145 @@ function StarRating({
 export default function ReviewClient() {
   const router = useRouter();
   const order = useOrderStore((s) => s.currentOrder);
-  const [foodQuality, setFoodQuality] = React.useState(0);
-  const [deliverySpeed, setDeliverySpeed] = React.useState(0);
-  const [overall, setOverall] = React.useState(0);
-  const [feedback, setFeedback] = React.useState("");
+  const addReview = useGuestReviewsStore((s) => s.addReview);
 
-  const orderId = order?.id ?? "#ORD-0000";
-  const orderDate = order?.placedAt ?? "Today";
   const orderItems = order?.lines ?? [];
-  const orderTotal = order?.total ?? 0;
   const roomNumber = order?.roomNumber ?? "304";
 
+  // State for item reviews
+  const [itemReviews, setItemReviews] = React.useState<
+    Record<string, { rating: number; text: string }>
+  >({});
+
+  const handleItemRatingChange = (itemId: string, rating: number) => {
+    setItemReviews((prev) => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], rating },
+    }));
+  };
+
+  const handleItemTextChange = (itemId: string, text: string) => {
+    setItemReviews((prev) => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], text },
+    }));
+  };
+
   const handleSubmit = () => {
-    // In a real app, this would submit the review via an API
+    // Submit reviews for items that have been rated
+    Object.entries(itemReviews).forEach(([itemId, review]) => {
+      if (review.rating > 0) {
+        const item = orderItems.find((line) => line.item.id === itemId);
+        if (item) {
+          addReview({
+            itemId: item.item.id,
+            itemTitle: item.item.title,
+            rating: review.rating,
+            reviewText: review.text,
+            guestName: `Guest Room ${roomNumber}`,
+            timestamp: Date.now(),
+            helpful: 0,
+          });
+        }
+      }
+    });
+
     router.push("/guest/order/thank-you");
   };
 
   return (
-    <div className="min-h-[calc(100vh-72px)] bg-[#fafaf9] flex items-center justify-center px-4 py-4">
-      <div className="w-full max-w-[880px] bg-white border border-[#E0E0E0] rounded-2xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col md:flex-row">
-        {/* ════════════════════ LEFT: Order Completed ════════════════════ */}
-        <div className="w-full md:w-[340px] md:shrink-0 bg-white p-5 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-[#E0E0E0]">
-          {/* Green checkmark */}
-          <div className="w-[48px] h-[48px] rounded-full bg-[#e8f5e9] flex items-center justify-center mb-3">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" fill="#27AE60" />
-              <path
-                d="M8 12l3 3 5-5"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-
-          <h2 className="text-[18px] font-bold text-[#1D1D1D] leading-[24px] mb-1">
-            Order Completed!
-          </h2>
-          <p className="text-[13px] text-[#828282] leading-[18px] max-w-[260px] mb-4">
-            Thank you for dining with Prime Stay. We hope you enjoyed your meal.
+    <div className="min-h-[calc(100vh-72px)] bg-[#fafaf9] px-4 py-6">
+      <div className="max-w-[1000px] mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-[28px] font-bold text-[#1D1D1D] leading-[36px] mb-2">
+            Rate Your Items
+          </h1>
+          <p className="text-[14px] text-[#828282] leading-[20px]">
+            Share your feedback about each item from your order
           </p>
-
-          {/* Order details mini card */}
-          <div className="w-full bg-[#fafaf9] border border-[#E0E0E0] rounded-lg p-3 text-left space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] font-semibold text-[#333333] uppercase tracking-wider">
-                ORDER {orderId}
-              </span>
-              <span className="text-[12px] font-semibold text-[#27AE60]">{orderDate}</span>
-            </div>
-
-            <div className="space-y-1">
-              {orderItems.map((line, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <span className="text-[13px] text-[#333333] leading-[18px]">{line.item.title}</span>
-                  <span className="text-[13px] text-[#828282] leading-[18px]">{line.qty}x</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-[#E0E0E0] pt-2 flex items-center justify-between">
-              <span className="text-[13px] font-bold text-[#1D1D1D]">Total</span>
-              <span className="text-[13px] font-bold text-[#973102]">
-                {formatLkr(orderTotal)}
-              </span>
-            </div>
-          </div>
-
-          {/* View Receipt button */}
-          <Link
-            href="/guest/order/receipt"
-            className="mt-3 w-full flex items-center justify-center gap-2 border border-[#E0E0E0] bg-white rounded-lg px-4 py-2 hover:bg-[#f8f6f5] transition"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"
-                stroke="#333333"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
-                stroke="#333333"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="text-[13px] font-medium text-[#333333] leading-[18px]">
-              View Receipt
-            </span>
-          </Link>
         </div>
 
-        {/* ════════════════════ RIGHT: Rate Your Experience ════════════════════ */}
-        <div className="flex-1 p-5">
-          <h2 className="text-[22px] font-bold text-[#1D1D1D] leading-[28px] mb-1">
-            Rate Your Experience
-          </h2>
-          <p className="text-[13px] text-[#828282] leading-[18px] mb-4">
-            How was your meal in Room {roomNumber}?
-          </p>
-
-          <div className="space-y-4">
-            {/* Food Quality */}
-            <div className="space-y-2">
-              <label className="text-[14px] font-semibold text-[#333333] leading-[20px]">
-                Food Quality
-              </label>
-              <StarRating value={foodQuality} onChange={setFoodQuality} />
+        {/* Items Review Grid */}
+        <div className="space-y-4 mb-6">
+          {orderItems.length === 0 ? (
+            <div className="bg-white border border-[#E0E0E0] rounded-lg p-6 text-center">
+              <p className="text-[14px] text-[#828282]">
+                No items in your order to review
+              </p>
             </div>
+          ) : (
+            orderItems.map((line) => {
+              const itemId = line.item.id;
+              const review = itemReviews[itemId] || { rating: 0, text: "" };
+              return (
+                <div
+                  key={itemId}
+                  className="bg-white border border-[#E0E0E0] rounded-lg p-5 shadow-sm"
+                >
+                  <div className="flex items-start gap-4 mb-4">
+                    {/* Item info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[16px] font-semibold text-[#1D1D1D] leading-[22px] mb-1">
+                        {line.item.title}
+                      </h3>
+                      <p className="text-[13px] text-[#828282] leading-[18px]">
+                        Qty: {line.qty}x • Price: {formatLkr(line.item.priceLkr * line.qty)}
+                      </p>
+                    </div>
+                  </div>
 
-            {/* Delivery Speed */}
-            <div className="space-y-2">
-              <label className="text-[14px] font-semibold text-[#333333] leading-[20px]">
-                Delivery Speed
-              </label>
-              <StarRating value={deliverySpeed} onChange={setDeliverySpeed} />
-            </div>
+                  {/* Rating for item */}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[13px] font-semibold text-[#333333] leading-[18px] mb-2 block">
+                        How would you rate this item?
+                      </label>
+                      <StarRating
+                        value={review.rating}
+                        onChange={(v) => handleItemRatingChange(itemId, v)}
+                      />
+                    </div>
 
-            {/* Overall Experience */}
-            <div className="space-y-2">
-              <label className="text-[14px] font-semibold text-[#333333] leading-[20px]">
-                Overall Experience
-              </label>
-              <StarRating value={overall} onChange={setOverall} />
-            </div>
+                    {/* Comment for item */}
+                    <div>
+                      <label className="text-[13px] font-semibold text-[#333333] leading-[18px] mb-2 block">
+                        Share your thoughts
+                      </label>
+                      <textarea
+                        value={review.text}
+                        onChange={(e) =>
+                          handleItemTextChange(itemId, e.target.value)
+                        }
+                        placeholder="What did you like or dislike about this item?"
+                        className="w-full h-[60px] border border-[#E0E0E0] rounded-lg px-3 py-2 text-[13px] text-[#333333] placeholder:text-[#828282] leading-[18px] resize-none focus:outline-none focus:ring-2 focus:ring-[#973102]/20 focus:border-[#973102] transition"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
 
-            {/* Detailed Feedback */}
-            <div className="space-y-2">
-              <label className="text-[14px] font-semibold text-[#333333] leading-[20px]">
-                Detailed Feedback
-              </label>
-              <textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="Tell us more about your experience... (e.g., dish presentation, taste, service quality)"
-                className="w-full h-[80px] border border-[#E0E0E0] rounded-lg px-3 py-2 text-[13px] text-[#333333] placeholder:text-[#828282] leading-[18px] resize-none focus:outline-none focus:ring-2 focus:ring-[#973102]/20 focus:border-[#973102] transition"
-              />
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center justify-between mt-4">
-            <button
-              onClick={() => router.push("/guest/order/thank-you")}
-              className="text-[13px] font-medium text-[#828282] hover:text-[#973102] transition cursor-pointer"
-            >
-              Skip Feedback
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="bg-[#973102] rounded-lg px-6 py-2.5 text-[14px] font-semibold text-white leading-[20px] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] transition cursor-pointer"
-            >
-              Submit Review
-            </button>
-          </div>
+        {/* Action buttons */}
+        <div className="flex items-center justify-between gap-4">
+          <button
+            onClick={() => router.push("/guest/order/thank-you")}
+            className="text-[14px] font-medium text-[#828282] hover:text-[#973102] transition cursor-pointer"
+          >
+            Skip Reviews
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="bg-[#973102] rounded-lg px-6 py-3 text-[14px] font-semibold text-white leading-[20px] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] transition cursor-pointer"
+          >
+            Submit Reviews
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
+
