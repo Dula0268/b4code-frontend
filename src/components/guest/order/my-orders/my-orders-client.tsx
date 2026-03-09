@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useOrderStore, type Order, type OrderStatus } from "@/store/guest/order/order-store";
 
 /* ─── Helpers ─── */
@@ -59,6 +60,7 @@ const PAGE_SIZE = 5;
 /* ─── Component ─── */
 
 export default function MyOrdersClient() {
+  const router = useRouter();
   const orderHistory = useOrderStore((s) => s.orderHistory);
   const currentOrder = useOrderStore((s) => s.currentOrder);
 
@@ -112,12 +114,13 @@ export default function MyOrdersClient() {
       {/* ─── Table ─── */}
       <div className="bg-white border border-[#ede4de] rounded-xl shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden mb-5">
         {/* Table header — desktop only */}
-        <div className="hidden md:grid bg-[#fcfaf9] border-b border-[#ede4de] px-6 py-3 grid-cols-[140px_180px_220px_1fr_160px_50px] gap-4 items-center">
+        <div className="hidden md:grid bg-[#fcfaf9] border-b border-[#ede4de] px-6 py-3 grid-cols-[140px_180px_220px_1fr_160px_100px_50px] gap-4 items-center">
           <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px]">Order ID</span>
           <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px]">Date & Time</span>
           <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px]">Service</span>
           <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px] text-right">Total LKR</span>
           <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px] text-center">Status</span>
+          <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px] text-center">Action</span>
           <span />
         </div>
 
@@ -130,11 +133,13 @@ export default function MyOrdersClient() {
         ) : (
           paged.map((order, idx) => {
             const placedTs = order.timeline[0]?.timestamp ?? Date.now();
+            // Use unique key combining order ID and timeline timestamp to avoid duplicates
+            const uniqueKey = `${order.id}-${order.timeline[0]?.timestamp ?? idx}`;
             return (
-              <React.Fragment key={order.id}>
+              <React.Fragment key={uniqueKey}>
                 {/* Desktop row */}
                 <div
-                  className={`hidden md:grid px-6 py-4 grid-cols-[140px_180px_220px_1fr_160px_50px] gap-4 items-center hover:bg-[#faf8f7] transition ${idx > 0 ? "border-t border-[#ede4de]" : ""}`}
+                  className={`hidden md:grid px-6 py-4 grid-cols-[140px_180px_220px_1fr_160px_100px_50px] gap-4 items-center hover:bg-[#faf8f7] transition ${idx > 0 ? "border-t border-[#ede4de]" : ""}`}
                 >
                   {/* Order ID */}
                   <span className="text-[14px] font-medium text-[#af3a04] leading-[20px]">
@@ -163,6 +168,19 @@ export default function MyOrdersClient() {
                     <StatusBadge status={order.currentStatus} />
                   </div>
 
+                  {/* Review button */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => {
+                        useOrderStore.setState({ currentOrder: order });
+                        router.push("/guest/order/review");
+                      }}
+                      className="text-[12px] font-medium text-[#af3a04] hover:text-[#973102] underline transition cursor-pointer"
+                    >
+                      Review
+                    </button>
+                  </div>
+
                   {/* Chevron */}
                   <div className="flex justify-end">
                     <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
@@ -181,7 +199,7 @@ export default function MyOrdersClient() {
                     </span>
                     <StatusBadge status={order.currentStatus} />
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <ServiceIcon />
                       <div>
@@ -198,6 +216,15 @@ export default function MyOrdersClient() {
                       </svg>
                     </div>
                   </div>
+                  <button
+                    onClick={() => {
+                      useOrderStore.setState({ currentOrder: order });
+                      router.push("/guest/order/review");
+                    }}
+                    className="w-full text-[12px] font-medium text-center text-[#af3a04] hover:text-[#973102] underline transition cursor-pointer"
+                  >
+                    Write Review
+                  </button>
                 </div>
               </React.Fragment>
             );
