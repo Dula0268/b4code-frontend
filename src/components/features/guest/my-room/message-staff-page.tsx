@@ -62,7 +62,7 @@ export default function MessageStaffPage() {
                             <div className="bg-white rounded-[28px] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
                                 <div className="relative w-full h-[140px] rounded-2xl overflow-hidden mb-4 bg-[#f0f0f0]">
                                     <Image
-                                        src="/images/room/resort-exterior.png"
+                                        src="/images/room-features/resort-exterior.png"
                                         alt="Grand Horizon Resort"
                                         fill
                                         className="object-cover"

@@ -11,7 +11,7 @@ export default function OwnerCtaSection() {
         h-screen makes this section cover the entire viewport
       */}
       <Image
-        src="/images/owner-bg.jpg"
+        src="/images/backgrounds/owner-bg.jpg"
         alt=""
         fill
         className="object-cover object-top"

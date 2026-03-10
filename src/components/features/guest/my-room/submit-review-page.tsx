@@ -123,13 +123,13 @@ export default function SubmitReviewPage() {
                         {/* Uploaded Thumbnails Mock */}
                         <div className="flex items-center gap-3">
                             <div className="relative w-[64px] h-[64px] rounded-lg overflow-hidden border border-[#eee]">
-                                <Image src="/images/room/resort-exterior.png" alt="Upload 1" fill className="object-cover" />
+                                <Image src="/images/room-features/resort-exterior.png" alt="Upload 1" fill className="object-cover" />
                                 <button className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center">
                                     <X size={10} />
                                 </button>
                             </div>
                             <div className="relative w-[64px] h-[64px] rounded-lg overflow-hidden border border-[#eee]">
-                                <Image src="/images/room/food-beverage.png" alt="Upload 2" fill className="object-cover" />
+                                <Image src="/images/room-features/food-beverage.png" alt="Upload 2" fill className="object-cover" />
                                 <button className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center">
                                     <X size={10} />
                                 </button>

@@ -17,14 +17,14 @@ const QUICK_ACTIONS = [
         id: "food",
         badge: "Gourmet Selection",
         title: "Food & Beverage",
-        imageSrc: "/images/room/food-beverage.png",
+        imageSrc: "/images/room-features/food-beverage.png",
         cta: { label: "Scan QR Code", icon: QrCode, href: "/guest/my-room/qr-scanner" },
     },
     {
         id: "service",
         badge: "Gourmet Selection",
         title: "Room Service",
-        imageSrc: "/images/room/room-service.png",
+        imageSrc: "/images/room-features/room-service.png",
         cta: { label: "Message Staff", icon: MessageSquare, href: "/guest/my-room/message-staff" },
     },
 ]
@@ -34,19 +34,19 @@ const HOTEL_FACILITIES = [
         id: "pool",
         name: "Pool & Spa",
         desc: "Heated indoor pool & luxury massage treatments.",
-        imageSrc: "/images/room/pool-spa.png",
+        imageSrc: "/images/room-features/pool-spa.png",
     },
     {
         id: "gym",
         name: "Gym",
         desc: "State-of-the-art equipment available 24/7.",
-        imageSrc: "/images/room/gym.png",
+        imageSrc: "/images/room-features/gym.png",
     },
     {
         id: "biz",
         name: "Business Center",
         desc: "Quiet coworking spaces and meeting rooms.",
-        imageSrc: "/images/room/business-center.png",
+        imageSrc: "/images/room-features/business-center.png",
     },
 ]
 

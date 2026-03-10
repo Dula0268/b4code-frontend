@@ -13,7 +13,7 @@ export default function HeroSection() {
         priority = loads first (above-the-fold image)
       */}
       <Image
-        src="/images/hero-bg.jpg"
+        src="/images/backgrounds/hero-bg.jpg"
         alt=""
         fill
         className="object-cover object-top"

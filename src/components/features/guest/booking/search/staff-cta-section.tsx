@@ -11,7 +11,7 @@ export default function StaffCtaSection() {
         object-contain = shows the full image without any cropping
       */}
       <Image
-        src="/images/staff-bg.jpg"
+        src="/images/backgrounds/staff-bg.jpg"
         alt=""
         fill
         className="object-cover object-top"
