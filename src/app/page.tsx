@@ -26,7 +26,7 @@ export default function HomePage() {
         <OwnerCtaSection />
         <StaffCtaSection />
       </main>
-      <GuestFooter />
+      <GuestFooter variant="full" />
     </>
   )
 }
