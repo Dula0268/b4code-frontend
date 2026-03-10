@@ -28,14 +28,14 @@ export default function StatsSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative py-20 px-5 bg-gradient-to-br from-[#0f1923] via-[#1a2a3a] to-[#0f1923] overflow-hidden"
+      className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-5 bg-gradient-to-br from-[#0f1923] via-[#1a2a3a] to-[#0f1923] overflow-hidden"
     >
-      {/* Decorative glowing orbs */}
-      <div className="absolute top-1/2 left-1/4 w-[300px] h-[300px] bg-[#953002]/10 rounded-full blur-[100px] -translate-y-1/2" />
-      <div className="absolute top-1/2 right-1/4 w-[250px] h-[250px] bg-[#ffb401]/8 rounded-full blur-[80px] -translate-y-1/2" />
+      {/* Decorative glowing orbs - hidden on mobile for performance */}
+      <div className="hidden sm:block absolute top-1/2 left-1/4 w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] bg-[#953002]/10 rounded-full blur-[80px] sm:blur-[100px] -translate-y-1/2" />
+      <div className="hidden sm:block absolute top-1/2 right-1/4 w-[150px] sm:w-[250px] h-[150px] sm:h-[250px] bg-[#ffb401]/8 rounded-full blur-[60px] sm:blur-[80px] -translate-y-1/2" />
 
       <div className="relative max-w-[1100px] mx-auto">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 lg:gap-12">
           {STATS.map((stat, i) => {
             const Icon = stat.icon
             return (
@@ -47,13 +47,13 @@ export default function StatsSection() {
                   }`}
                 style={{ transitionDelay: `${i * 120}ms` }}
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center mx-auto mb-4 shadow-lg`}>
-                  <Icon size={24} className="text-white" />
+                <div className={`w-10 sm:w-12 md:w-14 h-10 sm:h-12 md:h-14 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center mx-auto mb-2 sm:mb-3 md:mb-4 shadow-lg flex-shrink-0`}>
+                  <Icon size={20} className="text-white sm:size-[24px]" />
                 </div>
-                <p className="text-white text-[clamp(28px,4vw,40px)] font-black tracking-tight mb-1">
+                <p className="text-white text-[clamp(24px,5vw,40px)] font-black tracking-tight mb-0.5 sm:mb-1 leading-tight">
                   {stat.value}
                 </p>
-                <p className="text-white/50 text-[13px] font-medium uppercase tracking-wider">
+                <p className="text-white/50 text-[11px] sm:text-[12px] md:text-[13px] font-medium uppercase tracking-wider">
                   {stat.label}
                 </p>
               </div>

@@ -64,7 +64,7 @@ export default function WhyChooseUs() {
   }, [])
 
   return (
-    <section ref={sectionRef} className="relative py-24 px-5 bg-white overflow-hidden">
+    <section ref={sectionRef} className="relative py-12 sm:py-16 md:py-24 px-4 sm:px-5 bg-white overflow-hidden">
       {/* Subtle pattern background */}
       <div className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -76,43 +76,43 @@ export default function WhyChooseUs() {
       <div className="relative max-w-[1200px] mx-auto">
         {/* Section header */}
         <div
-          className={`text-center mb-16 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+          className={`text-center mb-10 sm:mb-12 md:mb-16 transition-all duration-700 px-2 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
             }`}
         >
-          <span className="inline-block text-[#953002] text-[12px] font-bold tracking-[0.2em] uppercase mb-3">
+          <span className="inline-block text-[#953002] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
             Why Prime Stay
           </span>
-          <h2 className="text-[clamp(26px,4vw,44px)] font-black text-[#1d1d1d] leading-[1.1] tracking-tight mb-4">
+          <h2 className="text-[clamp(22px,5vw,44px)] font-black text-[#1d1d1d] leading-[1.1] tracking-tight mb-3 sm:mb-4">
             A Booking Experience That&apos;s{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#953002] to-[#c84a15]">
               Simply Better
             </span>
           </h2>
-          <p className="text-[#828282] text-[15px] max-w-[500px] mx-auto leading-relaxed">
+          <p className="text-[#828282] text-[clamp(13px,2.5vw,15px)] max-w-[500px] mx-auto leading-relaxed">
             We go beyond just listing rooms. Here&apos;s why thousands of travelers trust Prime Stay for their Sri Lankan adventures.
           </p>
         </div>
 
         {/* Feature cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
           {FEATURES.map((feature, i) => {
             const Icon = feature.icon
             return (
               <div
                 key={feature.title}
-                className={`group relative p-7 rounded-2xl border border-[#f0f0f0] bg-white hover:bg-gradient-to-br ${feature.gradient} transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:border-transparent ${isVisible
+                className={`group relative p-4 sm:p-5 md:p-7 rounded-2xl border border-[#f0f0f0] bg-white hover:bg-gradient-to-br ${feature.gradient} transition-all duration-500 hover:shadow-xl hover:-translate-y-1 hover:border-transparent ${isVisible
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-8"
                   }`}
                 style={{ transitionDelay: `${i * 100 + 200}ms` }}
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon size={22} className={feature.iconColor} />
+                <div className={`w-10 sm:w-12 h-10 sm:h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}>
+                  <Icon size={20} className={feature.iconColor} />
                 </div>
-                <h3 className="text-[18px] font-bold text-[#1d1d1d] mb-2 tracking-tight">
+                <h3 className="text-[16px] sm:text-[17px] md:text-[18px] font-bold text-[#1d1d1d] mb-2 tracking-tight">
                   {feature.title}
                 </h3>
-                <p className="text-[#828282] text-[14px] leading-relaxed">
+                <p className="text-[#828282] text-[13px] sm:text-[14px] leading-relaxed">
                   {feature.description}
                 </p>
               </div>
