@@ -76,10 +76,34 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
 
   // ── Search ─────────────────────────────────────────────────────────────
   const handleSearch = () => {
+    // Validate destination
+    if (!destination.trim()) {
+      alert("Please select a destination")
+      return
+    }
+
+    // Validate dates
+    if (!checkIn || !checkOut) {
+      alert("Please select check-in and check-out dates")
+      return
+    }
+
+    // Validate date order
+    if (checkOut <= checkIn) {
+      alert("Check-out date must be after check-in date")
+      return
+    }
+
+    // Validate guests
+    if (guestTotal < 1) {
+      alert("Please select at least one guest")
+      return
+    }
+
     const params = new URLSearchParams({
-      ...(destination && { destination }),
-      ...(checkIn && { checkIn: checkIn.toISOString().split("T")[0] }),
-      ...(checkOut && { checkOut: checkOut.toISOString().split("T")[0] }),
+      destination,
+      checkIn: checkIn.toISOString().split("T")[0],
+      checkOut: checkOut.toISOString().split("T")[0],
       guests: String(guestTotal),
     })
     const url = `/guest/search?${params.toString()}`
