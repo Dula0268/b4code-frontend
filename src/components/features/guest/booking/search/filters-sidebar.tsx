@@ -20,15 +20,15 @@ interface FiltersSidebarProps {
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
 export default function FiltersSidebar({ filters, onChange, onClear }: FiltersSidebarProps) {
     return (
-        <aside className="w-[256px] flex-shrink-0">
+        <aside className="w-full min-w-0">
 
             {/* ── Header ───────────────────────────────────────────────────────── */}
-            <div className="flex items-center justify-between mb-6">
-                <span className="text-[17px] font-bold text-[#1d1d1d]">Filters</span>
+            <div className="flex items-center justify-between mb-5 sm:mb-6">
+                <span className="text-[16px] sm:text-[17px] font-bold text-[#1d1d1d]">Filters</span>
                 <button
                     id="clear-all-filters"
                     onClick={onClear}
-                    className="text-[13px] text-[#953002] font-medium hover:underline cursor-pointer bg-transparent border-none p-0"
+                    className="text-[12px] sm:text-[13px] text-[#953002] font-medium hover:underline cursor-pointer bg-transparent border-none p-0"
                 >
                     Clear all
                 </button>

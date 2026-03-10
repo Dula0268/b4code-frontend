@@ -5,7 +5,14 @@ import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
 import { ResultsHeader, PropertyCard, type PropertyListing } from "./components"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet"
 
 // Dynamically import the map (Leaflet must not run on server)
 const MapView = dynamic(() => import("./components/map-view"), { ssr: false })
@@ -51,6 +58,7 @@ export default function SearchResultsPage() {
     const [sortBy, setSortBy] = useState("recommended")
     const [page, setPage] = useState(1)
     const [mapOpen, setMapOpen] = useState(false)
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
 
     // ── Filtering ────────────────────────────────────────────────────────────
@@ -134,18 +142,51 @@ export default function SearchResultsPage() {
         <div className="min-h-screen bg-[#fafafa]">
 
             {/* ── Main Content ──────────────────────────────────────────────────── */}
-            <div className="max-w-[1440px] mx-auto px-[30px] pt-24 pb-16">
-                <div className="flex gap-8">
+            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-10 sm:pb-16">
+                <div className="flex flex-col lg:flex-row gap-5 lg:gap-8">
 
                     {/* ── Filters Sidebar ─────────────────────────────────────────── */}
-                    <FiltersSidebar
-                        filters={filters}
-                        onChange={handleFiltersChange}
-                        onClear={handleClearFilters}
-                    />
+                    <div className="hidden lg:block w-[256px] flex-shrink-0">
+                        <FiltersSidebar
+                            filters={filters}
+                            onChange={handleFiltersChange}
+                            onClear={handleClearFilters}
+                        />
+                    </div>
 
                     {/* ── Results ─────────────────────────────────────────────────── */}
                     <div className="flex-1 min-w-0">
+
+                        {/* Mobile filter controls */}
+                        <div className="lg:hidden mb-4">
+                            <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+                                <SheetTrigger asChild>
+                                    <button
+                                        className="inline-flex items-center gap-2 rounded-xl border border-[#e0e0e0] bg-white px-4 py-2.5 text-[13px] font-medium text-[#1d1d1d] shadow-sm"
+                                        aria-label="Open filters"
+                                    >
+                                        <SlidersHorizontal size={14} />
+                                        Filters
+                                        <span className="text-[#828282]">({activeFilters.length})</span>
+                                    </button>
+                                </SheetTrigger>
+                                <SheetContent side="left" className="w-[90vw] max-w-[360px] overflow-y-auto p-0">
+                                    <SheetHeader className="border-b border-[#e0e0e0]">
+                                        <SheetTitle>Filters</SheetTitle>
+                                    </SheetHeader>
+                                    <div className="px-4 pb-6 pt-2">
+                                        <FiltersSidebar
+                                            filters={filters}
+                                            onChange={handleFiltersChange}
+                                            onClear={() => {
+                                                handleClearFilters()
+                                                setMobileFiltersOpen(false)
+                                            }}
+                                        />
+                                    </div>
+                                </SheetContent>
+                            </Sheet>
+                        </div>
 
                         {/* Results header */}
                         <ResultsHeader
@@ -163,10 +204,10 @@ export default function SearchResultsPage() {
                         />
 
                         {/* Grid + optional Map split */}
-                        <div className={["flex gap-4", mapOpen ? "items-start" : ""].join(" ")}>
+                        <div className={["flex flex-col lg:flex-row gap-4", mapOpen ? "items-start" : ""].join(" ")}>
 
                             {/* ── Property grid (shrinks when map is open) ── */}
-                            <div className={mapOpen ? "w-[45%] flex-shrink-0" : "flex-1 min-w-0"}>
+                            <div className={mapOpen ? "w-full lg:w-[45%] lg:flex-shrink-0" : "flex-1 min-w-0"}>
 
                                 {paginated.length > 0 ? (
                                     <div className={[
@@ -210,7 +251,7 @@ export default function SearchResultsPage() {
 
                             {/* ── Map Panel ── */}
                             {mapOpen && (
-                                <div className="flex-1 sticky top-20" style={{ height: "calc(100vh - 100px)" }}>
+                                <div className="hidden lg:block flex-1 sticky top-20" style={{ height: "calc(100vh - 100px)" }}>
                                     <MapView
                                         listings={sorted}
                                         hoveredId={hoveredId}
@@ -222,14 +263,14 @@ export default function SearchResultsPage() {
 
                         {/* ── Pagination ──────────────────────────────────────────────── */}
                         {totalPages > 1 && (
-                            <div className="mt-10 flex flex-col items-center gap-3">
-                                <div className="flex items-center gap-2">
+                            <div className="mt-8 sm:mt-10 flex flex-col items-center gap-3">
+                                <div className="flex items-center gap-1.5 sm:gap-2 max-w-full overflow-x-auto pb-1">
                                     {/* Prev */}
                                     <button
                                         onClick={() => setPage(p => Math.max(1, p - 1))}
                                         disabled={page === 1}
                                         aria-label="Previous page"
-                                        className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
+                                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer flex-shrink-0"
                                     >
                                         <ChevronLeft size={16} />
                                     </button>
@@ -241,7 +282,7 @@ export default function SearchResultsPage() {
                                             id={`page-${p}`}
                                             onClick={() => setPage(p)}
                                             className={[
-                                                "w-9 h-9 rounded-xl text-[14px] font-medium transition-colors cursor-pointer border",
+                                                "w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-[13px] sm:text-[14px] font-medium transition-colors cursor-pointer border flex-shrink-0",
                                                 p === page
                                                     ? "bg-[#953002] text-white border-[#953002]"
                                                     : "bg-white text-[#333333] border-[#e0e0e0] hover:border-[#953002]/40 hover:text-[#953002]",
@@ -256,7 +297,7 @@ export default function SearchResultsPage() {
                                         onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                         disabled={page === totalPages}
                                         aria-label="Next page"
-                                        className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
+                                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer flex-shrink-0"
                                     >
                                         <ChevronRight size={16} />
                                     </button>
