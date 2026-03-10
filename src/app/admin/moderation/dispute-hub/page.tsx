@@ -108,7 +108,9 @@ function StatusBadge({ status }: { status: DisputeStatus }) {
   };
   const c = cfg[status];
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${c.text}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold ${c.text}`}
+    >
       <span className={`w-2 h-2 rounded-full ${c.dot}`} />
       {status}
     </span>
@@ -137,7 +139,7 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
   };
 
   return (
-    <div className="w-[340px] shrink-0 flex flex-col gap-5">
+    <div className="w-85 shrink-0 flex flex-col gap-5">
       {/* ── Header ── */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2.5">
@@ -145,7 +147,9 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
             <FileText size={18} className="text-[#92400E]" />
           </div>
           <h3 className="text-[17px] font-bold text-[#1A1A1A] m-0">
-            Resolution<br />Summary
+            Resolution
+            <br />
+            Summary
           </h3>
         </div>
         <span className="text-[12px] text-[#9E7B6A]">
@@ -194,7 +198,7 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
           <div className="flex gap-3">
             <div className="flex flex-col items-center">
               <div className="w-2.5 h-2.5 rounded-full bg-[#2563EB] shrink-0" />
-              <div className="w-[2px] flex-1 bg-[#E5E7EB]" />
+              <div className="w-0.5 flex-1 bg-[#E5E7EB]" />
             </div>
             <div className="pb-4">
               <p className="m-0 text-[11px] text-[#9E7B6A]">Oct 14, 10:00 AM</p>
@@ -207,7 +211,7 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
           <div className="flex gap-3">
             <div className="flex flex-col items-center">
               <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A] shrink-0" />
-              <div className="w-[2px] flex-1 bg-[#E5E7EB]" />
+              <div className="w-0.5 flex-1 bg-[#E5E7EB]" />
             </div>
             <div className="pb-4">
               <p className="m-0 text-[11px] text-[#9E7B6A]">Oct 14, 03:30 PM</p>
@@ -222,7 +226,9 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
               <div className="w-2.5 h-2.5 rounded-full bg-[#DC2626] shrink-0" />
             </div>
             <div>
-              <p className="m-0 text-[11px] text-[#DC2626] font-bold">CURRENT STEP</p>
+              <p className="m-0 text-[11px] text-[#DC2626] font-bold">
+                CURRENT STEP
+              </p>
               <p className="m-0 text-[13px] font-semibold text-[#1A1A1A]">
                 Admin Decision Pending
               </p>
@@ -237,7 +243,7 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
           EVIDENCE
         </p>
         <div className="flex gap-3">
-          <div className="relative w-[120px] h-[90px] rounded-xl overflow-hidden border border-[#E8DDD8]">
+          <div className="relative w-30 h-22.5 rounded-xl overflow-hidden border border-[#E8DDD8]">
             <Image
               src="/evidence-photo.png"
               alt="Evidence Photo"
@@ -248,7 +254,7 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
               Photo
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center w-[90px] h-[90px] rounded-xl border border-[#E8DDD8] bg-[#FAFAF8] cursor-pointer hover:bg-[#f5efec] transition-colors">
+          <div className="flex flex-col items-center justify-center w-22.5 h-22.5 rounded-xl border border-[#E8DDD8] bg-[#FAFAF8] cursor-pointer hover:bg-[#f5efec] transition-colors">
             <FileText size={22} className="text-[#9E7B6A] mb-1" />
             <span className="text-[10px] text-[#9E7B6A]">chat_log.pdf</span>
           </div>
@@ -284,7 +290,7 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Add a private note for the team..."
-            className="w-full h-[70px] border-none outline-none resize-none text-[13px] text-[#1A1A1A] bg-transparent placeholder:text-[#C4B5AC] box-border"
+            className="w-full h-17.5 border-none outline-none resize-none text-[13px] text-[#1A1A1A] bg-transparent placeholder:text-[#C4B5AC] box-border"
           />
           <div className="flex justify-end">
             <button className="text-[12px] font-bold text-[#C05621] bg-transparent border-none cursor-pointer hover:underline">
@@ -304,7 +310,7 @@ function DisputeResolvedView() {
 
   return (
     <div className="flex items-center justify-center py-16">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#F0EBE7] w-full max-w-[520px] flex flex-col items-center">
+      <div className="bg-white rounded-2xl shadow-sm border border-[#F0EBE7] w-full max-w-130 flex flex-col items-center">
         <div className="flex flex-col items-center py-12 px-8 gap-4">
           {/* Green Check */}
           <div className="w-16 h-16 rounded-full bg-[#DCFCE7] flex items-center justify-center">
@@ -357,7 +363,7 @@ export default function DisputeHubPage() {
   const totalPages = Math.max(1, Math.ceil(DISPUTE_CASES.length / PAGE_SIZE));
   const paged = DISPUTE_CASES.slice(
     (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+    currentPage * PAGE_SIZE,
   );
 
   const goPage = (p: number) =>
@@ -394,11 +400,24 @@ export default function DisputeHubPage() {
 
       {/* ── Sub-Tab ── */}
       <div className="flex items-center gap-2 border-b-2 border-[#F0EBE7]">
-        <button className="flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold text-[#C05621] border-b-[3px] border-[#C05621] -mb-[2px] bg-transparent cursor-pointer">
+        <button className="flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold text-[#C05621] border-b-[3px] border-[#C05621] -mb-0.5 bg-transparent cursor-pointer">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <rect x="1" y="2" width="14" height="12" rx="2" stroke="#C05621" strokeWidth="1.5" />
+            <rect
+              x="1"
+              y="2"
+              width="14"
+              height="12"
+              rx="2"
+              stroke="#C05621"
+              strokeWidth="1.5"
+            />
             <path d="M1 6h14" stroke="#C05621" strokeWidth="1.5" />
-            <path d="M5 2V0M11 2V0" stroke="#C05621" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M5 2V0M11 2V0"
+              stroke="#C05621"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
           All Open Cases
           <span className="w-5 h-5 rounded-full bg-[#16A34A] text-white text-[11px] font-bold flex items-center justify-center">
@@ -410,14 +429,23 @@ export default function DisputeHubPage() {
       {/* ── Content: Table + Detail Panel ── */}
       <div className="flex gap-6">
         {/* ── Disputes Table ── */}
-        <div className={`bg-white rounded-2xl shadow-sm overflow-hidden ${selectedDispute ? "flex-1 min-w-0" : "w-full"}`}>
+        <div
+          className={`bg-white rounded-2xl shadow-sm overflow-hidden ${selectedDispute ? "flex-1 min-w-0" : "w-full"}`}
+        >
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-[#F6F8F7]">
                   {(selectedDispute
                     ? ["DISPUTE ID", "PARTIES", "REASON", "AMOUNT"]
-                    : ["DISPUTE ID", "PARTIES", "REASON", "AMOUNT", "STATUS", ""]
+                    : [
+                        "DISPUTE ID",
+                        "PARTIES",
+                        "REASON",
+                        "AMOUNT",
+                        "STATUS",
+                        "",
+                      ]
                   ).map((h) => (
                     <th
                       key={h}
@@ -455,7 +483,8 @@ export default function DisputeHubPage() {
                         <td className="px-5 py-3.5">
                           <span
                             className={`font-bold ${
-                              dispute.status === "Decision Pending" || isSelected
+                              dispute.status === "Decision Pending" ||
+                              isSelected
                                 ? "text-[#C05621]"
                                 : "text-[#6B7280]"
                             }`}
@@ -464,11 +493,13 @@ export default function DisputeHubPage() {
                           </span>
                         </td>
                         {/* Parties */}
-                        <td className="px-5 py-3.5 min-w-[180px]">
+                        <td className="px-5 py-3.5 min-w-45">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1.5 text-[13px] text-[#1A1A1A]">
                               <User size={12} className="text-[#9E7B6A]" />
-                              <span className="font-semibold">{dispute.guestName}</span>
+                              <span className="font-semibold">
+                                {dispute.guestName}
+                              </span>
                             </div>
                             <div className="flex items-center gap-1.5 text-[12px] text-[#9E7B6A]">
                               <Home size={12} className="text-[#9E7B6A]" />
@@ -493,7 +524,10 @@ export default function DisputeHubPage() {
                         {/* Chevron – hidden when panel open */}
                         {!selectedDispute && (
                           <td className="px-5 py-3.5">
-                            <ChevronRight size={16} className="text-[#D1D5DB]" />
+                            <ChevronRight
+                              size={16}
+                              className="text-[#D1D5DB]"
+                            />
                           </td>
                         )}
                       </tr>
@@ -507,8 +541,8 @@ export default function DisputeHubPage() {
           {/* ── Pagination ── */}
           <div className="flex justify-between items-center px-5 py-3.5 border-t border-[#F0EBE7]">
             <span className="text-[13px] text-[#9E7B6A]">
-              Showing <strong className="text-[#1A1A1A]">{startIndex}</strong> to{" "}
-              <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
+              Showing <strong className="text-[#1A1A1A]">{startIndex}</strong>{" "}
+              to <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
               <strong className="text-[#1A1A1A]">{DISPUTE_CASES.length}</strong>{" "}
               results
             </span>

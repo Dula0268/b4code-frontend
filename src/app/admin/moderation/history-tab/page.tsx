@@ -8,7 +8,10 @@ import {
   Download,
   ScrollText,
 } from "lucide-react";
-import type { HistoryAction, HistoryEntry } from "@/store/admin/moderation/admin-moderation.store";
+import type {
+  HistoryAction,
+  HistoryEntry,
+} from "@/store/admin/moderation/admin-moderation.store";
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 const HISTORY_ENTRIES: HistoryEntry[] = [
@@ -103,7 +106,6 @@ export default function HistoryTabPage() {
     "Appeal Denied",
   ];
 
-
   const filtered = HISTORY_ENTRIES.filter((e) => {
     const q = search.toLowerCase();
     const matchSearch =
@@ -119,13 +121,14 @@ export default function HistoryTabPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice(
     (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+    currentPage * PAGE_SIZE,
   );
 
   const goPage = (p: number) =>
     setCurrentPage(Math.max(1, Math.min(totalPages, p)));
 
-  const startIndex = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const startIndex =
+    filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const endIndex = Math.min(currentPage * PAGE_SIZE, filtered.length);
 
   return (
@@ -150,7 +153,7 @@ export default function HistoryTabPage() {
       {/* ── Search + Filters ── */}
       <div className="flex gap-3 items-center flex-wrap">
         {/* Search */}
-        <div className="relative flex-1 min-w-[260px]">
+        <div className="relative flex-1 min-w-65">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 text-[#D1D5DB] pointer-events-none"
             size={14}
@@ -176,7 +179,7 @@ export default function HistoryTabPage() {
             <ChevronRight size={14} className="rotate-90" />
           </button>
           {actionOpen && (
-            <div className="absolute top-[calc(100%+6px)] right-0 bg-white border-[1.5px] border-[#E8DDD8] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-50 min-w-[180px] overflow-hidden">
+            <div className="absolute top-[calc(100%+6px)] right-0 bg-white border-[1.5px] border-[#E8DDD8] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-50 min-w-45 overflow-hidden">
               {actionOptions.map((opt) => (
                 <button
                   key={opt}
@@ -197,7 +200,6 @@ export default function HistoryTabPage() {
             </div>
           )}
         </div>
-
       </div>
 
       {/* ── History Table ── */}
@@ -287,7 +289,8 @@ export default function HistoryTabPage() {
           <span className="text-[13px] text-[#9E7B6A]">
             Showing <strong className="text-[#1A1A1A]">{startIndex}</strong> to{" "}
             <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
-            <strong className="text-[#1A1A1A]">{filtered.length}</strong> results
+            <strong className="text-[#1A1A1A]">{filtered.length}</strong>{" "}
+            results
           </span>
           <div className="flex items-center gap-1">
             <button
@@ -337,7 +340,7 @@ export default function HistoryTabPage() {
                   >
                     {p}
                   </button>
-                )
+                ),
               );
             })()}
             <button

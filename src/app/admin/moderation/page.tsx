@@ -18,7 +18,12 @@ const TABS: {
   badge?: number;
   icon: React.ElementType;
 }[] = [
-  { key: "reviews", label: "Reviews Queue", badge: 24, icon: MessageSquareWarning },
+  {
+    key: "reviews",
+    label: "Reviews Queue",
+    badge: 24,
+    icon: MessageSquareWarning,
+  },
   { key: "disputes", label: "Disputes", badge: 8, icon: Scale },
   { key: "history", label: "History", icon: History },
 ];
@@ -49,7 +54,7 @@ export default function ModerationPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium border-b-[3px] -mb-[2px] bg-transparent cursor-pointer transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium border-b-[3px] -mb-0.5 bg-transparent cursor-pointer transition-colors ${
                   isActive
                     ? "text-[#C05621] border-[#C05621] font-semibold"
                     : "text-[#9E7B6A] border-transparent hover:text-[#C05621]"
@@ -59,7 +64,7 @@ export default function ModerationPage() {
                 {tab.label}
                 {tab.badge !== undefined && (
                   <span
-                    className={`min-w-[20px] h-5 rounded-full text-[11px] font-bold flex items-center justify-center px-1.5 ${
+                    className={`min-w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center px-1.5 ${
                       isActive
                         ? "bg-[#16A34A] text-white"
                         : "bg-[#E8DDD8] text-[#9E7B6A]"

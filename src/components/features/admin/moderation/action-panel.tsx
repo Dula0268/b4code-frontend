@@ -1,6 +1,13 @@
 "use client";
 
-import { Star, ShieldCheck, Ban, CheckCircle, X, ArrowLeft } from "lucide-react";
+import {
+  Star,
+  ShieldCheck,
+  Ban,
+  CheckCircle,
+  X,
+  ArrowLeft,
+} from "lucide-react";
 import {
   useAdminModerationStore,
   type FlaggedReview,
@@ -10,10 +17,26 @@ import {
 // ─── Flag Badge (Larger) ──────────────────────────────────────────────────────
 function FlagBadge({ status }: { status: FlagStatus }) {
   const cfg: Record<FlagStatus, { bg: string; text: string; icon: string }> = {
-    Harassment: { bg: "bg-red-50 border-red-200", text: "text-red-600", icon: "🚩" },
-    "Spam / Scam": { bg: "bg-yellow-50 border-yellow-200", text: "text-yellow-700", icon: "⚠" },
-    Profanity: { bg: "bg-orange-50 border-orange-200", text: "text-orange-600", icon: "🚫" },
-    "Policy Violation": { bg: "bg-blue-50 border-blue-200", text: "text-blue-600", icon: "⊘" },
+    Harassment: {
+      bg: "bg-red-50 border-red-200",
+      text: "text-red-600",
+      icon: "🚩",
+    },
+    "Spam / Scam": {
+      bg: "bg-yellow-50 border-yellow-200",
+      text: "text-yellow-700",
+      icon: "⚠",
+    },
+    Profanity: {
+      bg: "bg-orange-50 border-orange-200",
+      text: "text-orange-600",
+      icon: "🚫",
+    },
+    "Policy Violation": {
+      bg: "bg-blue-50 border-blue-200",
+      text: "text-blue-600",
+      icon: "⊘",
+    },
   };
   const c = cfg[status];
   return (
@@ -46,18 +69,12 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 // ─── Highlighted Text ─────────────────────────────────────────────────────────
-function HighlightedText({
-  text,
-  terms,
-}: {
-  text: string;
-  terms: string[];
-}) {
+function HighlightedText({ text, terms }: { text: string; terms: string[] }) {
   if (!terms.length) return <span>{text}</span>;
 
   const regex = new RegExp(
     `(${terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
-    "gi"
+    "gi",
   );
   const parts = text.split(regex);
 
@@ -65,7 +82,7 @@ function HighlightedText({
     <span>
       {parts.map((part, i) => {
         const isHighlighted = terms.some(
-          (t) => t.toLowerCase() === part.toLowerCase()
+          (t) => t.toLowerCase() === part.toLowerCase(),
         );
         return isHighlighted ? (
           <span
@@ -84,8 +101,16 @@ function HighlightedText({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function FlaggedReviewDetail() {
-  const { selectedReview, setSelectedReview, toast, showToast, dismissToast, banner, showBanner, dismissBanner } =
-    useAdminModerationStore();
+  const {
+    selectedReview,
+    setSelectedReview,
+    toast,
+    showToast,
+    dismissToast,
+    banner,
+    showBanner,
+    dismissBanner,
+  } = useAdminModerationStore();
 
   if (!selectedReview) return null;
 
@@ -109,7 +134,7 @@ export default function FlaggedReviewDetail() {
       message: "Removed content successfully",
     });
     showBanner(
-      `The review from property "${selectedReview.propertyName}" has been removed due to policy violation. The user has been notified via email.`
+      `The review from property "${selectedReview.propertyName}" has been removed due to policy violation. The user has been notified via email.`,
     );
     setTimeout(() => {
       dismissToast();
@@ -137,9 +162,9 @@ export default function FlaggedReviewDetail() {
 
       {/* ── Toast Notification (top-right) ── */}
       {toast && (
-        <div className="fixed top-6 right-6 z-[9999] animate-[slideInRight_0.3s_ease-out]">
+        <div className="fixed top-6 right-6 z-9999 animate-[slideInRight_0.3s_ease-out]">
           <div
-            className={`flex items-start gap-3 px-5 py-4 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border min-w-[280px] ${
+            className={`flex items-start gap-3 px-5 py-4 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border min-w-70 ${
               toast.type === "success"
                 ? "bg-white border-green-200"
                 : "bg-white border-red-200"
@@ -172,7 +197,7 @@ export default function FlaggedReviewDetail() {
       )}
 
       {/* ── Review Card ── */}
-      <div className="max-w-[680px] mx-auto w-full">
+      <div className="max-w-170 mx-auto w-full">
         <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm p-6">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
@@ -234,7 +259,7 @@ export default function FlaggedReviewDetail() {
 
       {/* ── Banner Notification (bottom) ── */}
       {banner && (
-        <div className="max-w-[680px] mx-auto w-full animate-[slideInUp_0.3s_ease-out]">
+        <div className="max-w-170 mx-auto w-full animate-[slideInUp_0.3s_ease-out]">
           <div className="flex items-start gap-3 px-5 py-4 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0]">
             <CheckCircle size={20} className="text-green-500 shrink-0 mt-0.5" />
             <div className="flex-1">

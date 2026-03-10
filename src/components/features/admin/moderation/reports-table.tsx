@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Star, Flag } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Flag,
+} from "lucide-react";
 import TotalDisputesCard from "./kpi-cards/total-disputes-card";
 import UrgentCard from "./kpi-cards/urgent-card";
 import RemovedTodayCard from "./kpi-cards/removed-today-card";
@@ -120,14 +126,17 @@ function HighlightedSnippet({
 }) {
   if (!terms.length) return <span>{text}</span>;
 
-  const regex = new RegExp(`(${terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`, "gi");
+  const regex = new RegExp(
+    `(${terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+    "gi",
+  );
   const parts = text.split(regex);
 
   return (
     <span>
       {parts.map((part, i) => {
         const isHighlighted = terms.some(
-          (t) => t.toLowerCase() === part.toLowerCase()
+          (t) => t.toLowerCase() === part.toLowerCase(),
         );
         return isHighlighted ? (
           <span
@@ -151,9 +160,7 @@ export default function ReviewsQueue() {
   const [ratingFilter, setRatingFilter] = useState("Any");
   const [flagOpen, setFlagOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
-  const setSelectedReview = useAdminModerationStore(
-    (s) => s.setSelectedReview
-  );
+  const setSelectedReview = useAdminModerationStore((s) => s.setSelectedReview);
 
   const filtered = FLAGGED_REVIEWS.filter((r) => {
     if (flagFilter !== "All" && r.flagStatus !== flagFilter) return false;
@@ -165,13 +172,14 @@ export default function ReviewsQueue() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice(
     (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+    currentPage * PAGE_SIZE,
   );
 
   const goPage = (p: number) =>
     setCurrentPage(Math.max(1, Math.min(totalPages, p)));
 
-  const startIndex = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const startIndex =
+    filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const endIndex = Math.min(currentPage * PAGE_SIZE, filtered.length);
 
   const flagOptions: string[] = [
@@ -209,7 +217,7 @@ export default function ReviewsQueue() {
               <ChevronDown size={14} />
             </button>
             {flagOpen && (
-              <div className="absolute top-[calc(100%+6px)] right-0 bg-white border-[1.5px] border-[#E8DDD8] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-50 min-w-[180px] overflow-hidden">
+              <div className="absolute top-[calc(100%+6px)] right-0 bg-white border-[1.5px] border-[#E8DDD8] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-50 min-w-45 overflow-hidden">
                 {flagOptions.map((opt) => (
                   <button
                     key={opt}
@@ -243,7 +251,7 @@ export default function ReviewsQueue() {
               <ChevronDown size={14} />
             </button>
             {ratingOpen && (
-              <div className="absolute top-[calc(100%+6px)] right-0 bg-white border-[1.5px] border-[#E8DDD8] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-50 min-w-[120px] overflow-hidden">
+              <div className="absolute top-[calc(100%+6px)] right-0 bg-white border-[1.5px] border-[#E8DDD8] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-50 min-w-30 overflow-hidden">
                 {ratingOptions.map((opt) => (
                   <button
                     key={opt}
@@ -258,7 +266,9 @@ export default function ReviewsQueue() {
                         : "bg-white text-[#6B7280] font-normal hover:bg-gray-50"
                     }`}
                   >
-                    {opt === "Any" ? "Any" : `${opt} Star${opt === "1" ? "" : "s"}`}
+                    {opt === "Any"
+                      ? "Any"
+                      : `${opt} Star${opt === "1" ? "" : "s"}`}
                   </button>
                 ))}
               </div>
@@ -281,16 +291,20 @@ export default function ReviewsQueue() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-[#F6F8F7]">
-                {["REVIEWER", "RATING", "PROPERTY", "CONTENT SNIPPET", "FLAG STATUS"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="px-5 py-2.5 text-left text-[11px] font-bold text-[#9E7B6A] tracking-wider uppercase whitespace-nowrap"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {[
+                  "REVIEWER",
+                  "RATING",
+                  "PROPERTY",
+                  "CONTENT SNIPPET",
+                  "FLAG STATUS",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="px-5 py-2.5 text-left text-[11px] font-bold text-[#9E7B6A] tracking-wider uppercase whitespace-nowrap"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -313,7 +327,7 @@ export default function ReviewsQueue() {
                     } hover:bg-[#f5efec]`}
                   >
                     {/* Reviewer */}
-                    <td className="px-5 py-3.5 min-w-[160px]">
+                    <td className="px-5 py-3.5 min-w-40">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8.5 h-8.5 rounded-full bg-[#FDEADE] flex items-center justify-center text-[#C05621] font-bold text-[13px] shrink-0">
                           {review.reviewerName.charAt(0)}
@@ -342,7 +356,7 @@ export default function ReviewsQueue() {
                       </p>
                     </td>
                     {/* Content Snippet */}
-                    <td className="px-5 py-3.5 max-w-[280px]">
+                    <td className="px-5 py-3.5 max-w-70">
                       <p className="m-0 text-[13px] text-[#6B7280] truncate">
                         <HighlightedSnippet
                           text={review.contentSnippet}
@@ -366,8 +380,8 @@ export default function ReviewsQueue() {
           <span className="text-[13px] text-[#9E7B6A]">
             Showing <strong className="text-[#1A1A1A]">{startIndex}</strong> to{" "}
             <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
-            <strong className="text-[#1A1A1A]">{filtered.length}</strong> flagged
-            reviews
+            <strong className="text-[#1A1A1A]">{filtered.length}</strong>{" "}
+            flagged reviews
           </span>
           <div className="flex items-center gap-1">
             <button
