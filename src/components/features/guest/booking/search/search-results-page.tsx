@@ -17,20 +17,25 @@ import {
 // Dynamically import the map (Leaflet must not run on server)
 const MapView = dynamic(() => import("./components/map-view"), { ssr: false })
 
+function getGuestAdjustedPrice(basePrice: number, guests: number, baseGuests: number, extraGuestFee: number) {
+    const extraGuests = Math.max(0, guests - baseGuests)
+    return basePrice + extraGuests * extraGuestFee
+}
+
 // ─── Mock listing data ────────────────────────────────────────────────────
 const ALL_LISTINGS: PropertyListing[] = [
-    { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg" },
-    { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg" },
-    { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg" },
-    { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg" },
-    { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg" },
-    { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg" },
-    { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg" },
-    { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg" },
-    { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg" },
-    { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg" },
-    { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg" },
-    { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg" },
+    { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg", maxGuests: 2, baseGuests: 1, extraGuestFee: 3_500 },
+    { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg", maxGuests: 3, baseGuests: 2, extraGuestFee: 3_000 },
+    { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg", maxGuests: 6, baseGuests: 2, extraGuestFee: 5_500 },
+    { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 4_000 },
+    { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg", maxGuests: 5, baseGuests: 2, extraGuestFee: 5_000 },
+    { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 3_500 },
+    { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg", maxGuests: 8, baseGuests: 2, extraGuestFee: 6_000 },
+    { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg", maxGuests: 10, baseGuests: 2, extraGuestFee: 8_000 },
+    { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 4_500 },
+    { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg", maxGuests: 2, baseGuests: 1, extraGuestFee: 2_500 },
+    { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 4_000 },
+    { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg", maxGuests: 6, baseGuests: 2, extraGuestFee: 5_500 },
 ]
 
 const ITEMS_PER_PAGE = 6
@@ -52,7 +57,7 @@ export default function SearchResultsPage() {
     const destination = searchParams.get("destination") || "Sri Lanka"
     const checkIn = searchParams.get("checkIn") || ""
     const checkOut = searchParams.get("checkOut") || ""
-    const guests = Number(searchParams.get("guests") || 2)
+    const guests = Math.max(1, Number(searchParams.get("guests") || 2) || 1)
 
     const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
     const [sortBy, setSortBy] = useState("recommended")
@@ -61,16 +66,25 @@ export default function SearchResultsPage() {
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
 
+    const guestAdjustedListings = useMemo(() => {
+        return ALL_LISTINGS.map(l => ({
+            ...l,
+            pricePerNight: getGuestAdjustedPrice(l.pricePerNight, guests, l.baseGuests, l.extraGuestFee),
+        }))
+    }, [guests])
+
     // ── Filtering ────────────────────────────────────────────────────────────
     const filtered = useMemo(() => {
         const query = destination.trim().toLowerCase()
-        return ALL_LISTINGS.filter(l => {
+        return guestAdjustedListings.filter(l => {
             // Filter by destination search term (title or location match)
             if (query && query !== "sri lanka") {
                 const matchesTitle = l.title.toLowerCase().includes(query)
                 const matchesLocation = l.location.toLowerCase().includes(query)
                 if (!matchesTitle && !matchesLocation) return false
             }
+            // Filter by guest capacity
+            if (guests > l.maxGuests) return false
             // Filter by price range
             if (l.pricePerNight < filters.priceMin || l.pricePerNight > filters.priceMax) return false
             // Filter by property type
@@ -83,7 +97,7 @@ export default function SearchResultsPage() {
             }
             return true
         })
-    }, [filters, destination])
+    }, [filters, destination, guestAdjustedListings, guests])
 
     // ── Sorting ──────────────────────────────────────────────────────────────
     const sorted = useMemo(() => {
@@ -236,7 +250,7 @@ export default function SearchResultsPage() {
                                             No properties match your filters
                                         </h3>
                                         <p className="text-[14px] text-[#828282] mb-4">
-                                            Try adjusting your price range or removing some filters.
+                                            Try reducing guest count, adjusting your price range, or removing some filters.
                                         </p>
                                         <button
                                             onClick={handleClearFilters}

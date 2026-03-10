@@ -12,6 +12,9 @@ export interface PropertyListing {
     location: string
     propertyType: string       // e.g. "Villa" | "Hotel" | "Guesthouse" | "Apartment"
     pricePerNight: number      // LKR — shown as "Starting from LKR X"
+    maxGuests: number
+    baseGuests: number
+    extraGuestFee: number
     rating: number             // 0–5
     reviewCount: number        // shown as "(148 reviews)"
     badge?: "Superhost" | "Guest favorite"
@@ -96,6 +99,9 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                     {/* Review count */}
                     <p className="text-[11px] sm:text-[12px] text-[#828282]">
                         {listing.reviewCount.toLocaleString()} reviews
+                    </p>
+                    <p className="text-[11px] sm:text-[12px] text-[#828282]">
+                        Up to {listing.maxGuests} guest{listing.maxGuests !== 1 ? "s" : ""}
                     </p>
 
                     {/* Divider + Starting price */}
