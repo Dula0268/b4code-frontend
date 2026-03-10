@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import {
   useAdminModerationStore,
-  type FlaggedReview,
   type FlagStatus,
 } from "@/store/admin/moderation/admin-moderation.store";
 

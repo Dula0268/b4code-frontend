@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  Download,
-  ScrollText,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Download } from "lucide-react";
 import type {
   HistoryAction,
   HistoryEntry,
