@@ -67,6 +67,8 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const taxes = 500
     const discount = isPromoApplied ? totalRoomPrice * 0.2 : 0 // 20% discount on room price
     const finalTotal = totalRoomPrice + serviceFee + taxes - discount
+    const checkInParam = date?.from ? format(date.from, "yyyy-MM-dd") : ""
+    const checkOutParam = date?.to ? format(date.to, "yyyy-MM-dd") : ""
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -384,7 +386,19 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             </div>
 
                             <Link
-                                href="/guest/booking/confirmation"
+                                href={{
+                                    pathname: "/guest/booking/confirmation",
+                                    query: {
+                                        propertyId: property.id,
+                                        roomId: room.id,
+                                        roomType: room.name,
+                                        checkIn: checkInParam,
+                                        checkOut: checkOutParam,
+                                        guests: guests.adults + guests.children,
+                                        total: Math.round(finalTotal),
+                                        paidInFull: payNow ? "1" : "0",
+                                    },
+                                }}
                                 className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-3.5 sm:py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
                             >
                                 Confirm & Book <ArrowRight size={18} />
