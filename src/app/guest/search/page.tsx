@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import SearchResultsPage from "@/components/features/guest/booking/search/search-results-page"
+import SearchResultsPage from "@/components/features/guest/search/search-results-page"
 
 export const metadata = {
     title: "Search Stays — Prime Stay Sri Lanka",

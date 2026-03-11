@@ -40,7 +40,7 @@ export default function LoginPage() {
           <div className="relative h-52 md:h-auto md:block">
             <div className="absolute inset-0 bg-[#1a0a05]" />
             <Image
-              src="/login-cover.jpg"
+              src="/images/auth/login-cover.jpg"
               alt="PrimeStay login cover"
               fill
               className="object-cover opacity-100"
