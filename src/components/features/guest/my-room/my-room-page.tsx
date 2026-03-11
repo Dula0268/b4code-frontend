@@ -91,7 +91,7 @@ export default function MyRoomPage() {
 
                 {/* ── Welcome Header ────────────────────────────────────────── */}
                 <div className="mb-8">
-                    <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">
+                    <h1 className="text-[28px] sm:text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">
                         Welcome, {GUEST.name}
                     </h1>
                     <div className="flex flex-wrap items-center gap-3 text-[13px] text-[#555]">
@@ -160,7 +160,7 @@ export default function MyRoomPage() {
                         <h2 className="text-[18px] font-bold text-[#1d1d1d]">Explore the Hotel</h2>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {HOTEL_FACILITIES.map(facility => (
                             <div key={facility.id} className="group cursor-pointer">
                                 {/* Image card */}
@@ -170,7 +170,7 @@ export default function MyRoomPage() {
                                         alt={facility.name}
                                         fill
                                         className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                        sizes="33vw"
+                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                     />
                                     {/* Label overlay */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -185,7 +185,7 @@ export default function MyRoomPage() {
                 </section>
 
                 {/* ── Review Section ────────────────────────────────────────── */}
-                <section className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] p-8 text-center">
+                <section className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] p-5 sm:p-8 text-center">
                     <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-2">
                         How was your stay at{" "}
                         <span className="text-[#953002]">{HOTEL_NAME}?</span>

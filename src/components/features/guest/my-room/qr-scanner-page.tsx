@@ -102,19 +102,19 @@ export default function QrScannerPage() {
                     <div className="w-12 h-1 bg-[#a03b10] mb-6 rounded-full" />
 
                     {/* Title */}
-                    <h1 className="text-[34px] font-bold text-[#1a1a1a] tracking-tight leading-tight mb-3">
+                    <h1 className="text-[28px] sm:text-[34px] font-bold text-[#1a1a1a] tracking-tight leading-tight mb-3">
                         Scan to Access Digital Menu
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="text-[16px] text-[#c17a5c] leading-relaxed mb-10">
-                        Point your phone camera at the code below to<br />
+                    <p className="text-[15px] sm:text-[16px] text-[#c17a5c] leading-relaxed mb-8 sm:mb-10">
+                        Point your phone camera at the code below to<br className="hidden sm:block" />
                         view our services and menu.
                     </p>
 
                     {/* QR Card */}
                     <div className="relative mb-10">
-                        <div className="bg-white rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-8 flex items-center justify-center w-[280px] h-[280px]">
+                        <div className="bg-white rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-6 sm:p-8 flex items-center justify-center w-[240px] h-[240px] sm:w-[280px] sm:h-[280px]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={QR_IMAGE_URL}
@@ -130,7 +130,7 @@ export default function QrScannerPage() {
                         <button
                             onClick={startCamera}
                             aria-label="Open camera to scan QR code"
-                            className="absolute -top-3 -right-3 w-[46px] h-[46px] bg-[#000000] hover:bg-[#a03b10] rounded-xl flex items-center justify-center shadow-[0_6px_20px_rgba(0,0,0,0.2)] transition-colors cursor-pointer"
+                            className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] bg-[#000000] hover:bg-[#a03b10] rounded-xl flex items-center justify-center shadow-[0_6px_20px_rgba(0,0,0,0.2)] transition-colors cursor-pointer"
                         >
                             <Camera size={22} className="text-white" />
                         </button>
@@ -138,13 +138,13 @@ export default function QrScannerPage() {
 
                     {/* Visit Menu Directly */}
                     <button
-                        className="w-[280px] flex items-center justify-center gap-2 bg-[#a03b10] hover:bg-[#852f0b] text-white font-bold text-[15px] py-[15px] rounded-xl transition-colors cursor-pointer mb-6"
+                        className="w-full max-w-[280px] flex items-center justify-center gap-2 bg-[#a03b10] hover:bg-[#852f0b] text-white font-bold text-[15px] py-[15px] rounded-xl transition-colors cursor-pointer mb-6"
                     >
                         Visit Menu Directly <ExternalLink size={17} />
                     </button>
 
                     {/* Help text */}
-                    <div className="w-[280px] border border-[#e5dfd5] rounded-full py-2.5 flex items-center justify-center gap-2">
+                    <div className="w-full max-w-[280px] border border-[#e5dfd5] rounded-2xl sm:rounded-full py-2.5 px-4 flex items-center justify-center gap-2 text-center">
                         <HelpCircle size={14} className="text-[#a03b10]" />
                         <span className="text-[12px] text-[#a03b10]/90">Need help? Ask our staff for assistance.</span>
                     </div>
@@ -217,7 +217,7 @@ export default function QrScannerPage() {
                                 </div>
                                 <button
                                     onClick={() => { setCameraPhase("idle"); startCamera() }}
-                                    className="flex items-center justify-center gap-2 border border-white/20 hover:border-white/40 text-white/70 hover:text-white text-[13px] font-semibold py-2.5 rounded-xl transition-colors cursor-pointer"
+                                    className="flex items-center justify-center gap-2 border border-white/20 hover:border-white/40 text-white/70 hover:text-white text-[13px] font-semibold py-2.5 px-4 rounded-xl transition-colors cursor-pointer w-full"
                                 >
                                     <RefreshCw size={14} /> Try Again
                                 </button>

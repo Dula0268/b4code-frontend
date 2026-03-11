@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 
 export default function MenuScreen() {
   return (
-    <div className="grid grid-cols-12 gap-8">
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
       {/* Left: menu content */}
-      <div className="col-span-8 space-y-6">
-        <div className="flex gap-3">
+      <div className="xl:col-span-8 space-y-6 min-w-0">
+        <div className="flex gap-3 overflow-x-auto pb-1">
           <Button className="rounded-full px-6">All Items</Button>
           <Button variant="outline" className="rounded-full px-6">Starters</Button>
           <Button variant="outline" className="rounded-full px-6">Mains</Button>
@@ -16,7 +16,7 @@ export default function MenuScreen() {
           <Button variant="outline" className="rounded-full px-6">Beverages</Button>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="text-2xl font-semibold">Popular Dishes</h2>
           <div className="flex gap-2">
             <Button variant="outline" size="icon">🔎</Button>
@@ -24,7 +24,7 @@ export default function MenuScreen() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {[1,2,3,4,5,6].map((i) => (
             <Card key={i} className="overflow-hidden rounded-2xl">
               <div className="h-40 bg-muted" />
@@ -42,8 +42,8 @@ export default function MenuScreen() {
       </div>
 
       {/* Right: order sidebar */}
-      <div className="col-span-4">
-        <Card className="sticky top-24 rounded-2xl p-6 space-y-4">
+      <div className="xl:col-span-4">
+        <Card className="xl:sticky xl:top-24 rounded-2xl p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="text-lg font-semibold">Your Order</div>
             <div className="text-sm text-muted-foreground">0 items</div>

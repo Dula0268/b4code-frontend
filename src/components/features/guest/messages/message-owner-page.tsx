@@ -91,7 +91,7 @@ export default function MessageOwnerPage() {
                     </p>
                 </div>
 
-                <div className="flex gap-6 items-start">
+                <div className="flex flex-col lg:flex-row gap-6 items-stretch lg:items-start">
                     <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] overflow-hidden flex flex-col">
                         <div className="flex items-center gap-3 px-5 py-4 border-b border-[#f0f0f0]">
                             <div className="relative">
@@ -106,11 +106,11 @@ export default function MessageOwnerPage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4 min-h-[300px] max-h-[360px]">
+                        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 flex flex-col gap-4 min-h-[280px] max-h-[360px]">
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`flex flex-col ${msg.sender === "guest" ? "items-end" : "items-start"}`}>
                                     {msg.sender === "host" && (
-                                        <div className="flex items-end gap-2 max-w-[75%]">
+                                        <div className="flex items-end gap-2 max-w-[88%] sm:max-w-[75%]">
                                             <div className="w-7 h-7 rounded-full bg-[#f0f0f0] flex items-center justify-center flex-shrink-0 mb-4">
                                                 <span className="text-[11px] text-[#828282]">🏨</span>
                                             </div>
@@ -123,7 +123,7 @@ export default function MessageOwnerPage() {
                                         </div>
                                     )}
                                     {msg.sender === "guest" && (
-                                        <div className="max-w-[75%]">
+                                        <div className="max-w-[88%] sm:max-w-[75%]">
                                             <div className="bg-[#953002] rounded-2xl rounded-tr-sm px-4 py-3 text-[13px] text-white leading-relaxed">
                                                 {msg.text}
                                             </div>
@@ -152,7 +152,7 @@ export default function MessageOwnerPage() {
                         </div>
 
                         <div className="px-5 py-4 border-t border-[#f0f0f0]">
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                                 <button className="w-8 h-8 rounded-full border border-[#953002] text-[#953002] flex items-center justify-center hover:bg-[#fff4eb] transition-colors cursor-pointer flex-shrink-0">
                                     <Plus size={16} />
                                 </button>
@@ -163,13 +163,13 @@ export default function MessageOwnerPage() {
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
-                                    className="flex-1 text-[13px] text-[#1d1d1d] placeholder:text-[#bbb] bg-transparent outline-none"
+                                    className="flex-1 min-w-0 text-[13px] text-[#1d1d1d] placeholder:text-[#bbb] bg-transparent outline-none border border-[#f0f0f0] rounded-xl px-3 py-2.5 sm:border-0 sm:px-0 sm:py-0"
                                 />
                                 <button
                                     id="send-message-btn"
                                     onClick={() => sendMessage(input)}
                                     disabled={!input.trim()}
-                                    className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] disabled:opacity-50 text-white text-[13px] font-semibold px-5 py-2.5 rounded-xl transition-colors cursor-pointer flex-shrink-0"
+                                    className="inline-flex items-center justify-center gap-2 bg-[#953002] hover:bg-[#6d2200] disabled:opacity-50 text-white text-[13px] font-semibold px-5 py-2.5 rounded-xl transition-colors cursor-pointer flex-shrink-0 w-full sm:w-auto"
                                 >
                                     Send Message <Send size={13} />
                                 </button>
@@ -180,7 +180,7 @@ export default function MessageOwnerPage() {
                         </div>
                     </div>
 
-                    <div className="w-[280px] flex-shrink-0 flex flex-col gap-4">
+                    <div className="w-full lg:w-[280px] flex-shrink-0 flex flex-col gap-4">
                         <div className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] overflow-hidden">
                             <div className="px-5 pt-4 pb-3 border-b border-[#f5f5f5]">
                                 <p className="text-[14px] font-bold text-[#1d1d1d]">Booking Details</p>
