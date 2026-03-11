@@ -81,7 +81,7 @@ export default function MyRoomPage() {
 
     const handleWriteReview = () => {
         if (rating > 0) {
-            router.push(`/guest/my-room/submit-review?rating=${rating}`)
+            router.push(`/guest/reviews/submit?rating=${rating}`)
         }
     }
 

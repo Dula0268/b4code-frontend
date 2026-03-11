@@ -1,12 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Star, UploadCloud, X, Camera } from "lucide-react"
+import { Star, X, Camera } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
-// ─── Shared Star Rating Component ─────────────────────────────────────────────
 function StarRating({ rating, setRating, size = 32 }: { rating: number; setRating: (r: number) => void; size?: number }) {
     const [hover, setHover] = useState(0)
 
@@ -38,8 +37,6 @@ function SmallStarRating({ rating, setRating }: { rating: number; setRating: (r:
     return <StarRating rating={rating} setRating={setRating} size={18} />
 }
 
-
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function SubmitReviewPage() {
     const router = useRouter()
 
@@ -52,8 +49,6 @@ export default function SubmitReviewPage() {
     return (
         <div className="min-h-screen bg-[#f4f4f4] pt-20 pb-16">
             <div className="max-w-[800px] mx-auto px-4 pt-4">
-
-                {/* ── Header ────────────────────────────────────────────────── */}
                 <div className="text-center mb-8">
                     <h1 className="text-[28px] md:text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">
                         Submit Property Review
@@ -63,10 +58,7 @@ export default function SubmitReviewPage() {
                     </p>
                 </div>
 
-                {/* ── Review Form Card ──────────────────────────────────────── */}
                 <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.04)] p-6 md:p-10 mb-8 border border-[#f0f0f0]">
-
-                    {/* Overall Experience */}
                     <div className="flex flex-col items-center mb-10">
                         <h2 className="text-[16px] font-bold text-[#1d1d1d] mb-4">How was your overall experience?</h2>
                         <StarRating rating={overallRating} setRating={setOverallRating} size={36} />
@@ -75,7 +67,6 @@ export default function SubmitReviewPage() {
 
                     <div className="w-full h-px bg-[#f0f0f0] mb-8" />
 
-                    {/* Detailed Ratings */}
                     <div className="mb-10">
                         <h3 className="text-[15px] font-bold text-[#1d1d1d] mb-5">Detailed Ratings</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4">
@@ -96,7 +87,6 @@ export default function SubmitReviewPage() {
 
                     <div className="w-full h-px bg-[#f0f0f0] mb-8" />
 
-                    {/* Written Review */}
                     <div className="mb-10">
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-[15px] font-bold text-[#1d1d1d]">Your Written Review</h3>
@@ -110,7 +100,6 @@ export default function SubmitReviewPage() {
                         />
                     </div>
 
-                    {/* Add Photos */}
                     <div className="mb-10">
                         <h3 className="text-[15px] font-bold text-[#1d1d1d] mb-3">Add Photos (Optional)</h3>
 
@@ -120,7 +109,6 @@ export default function SubmitReviewPage() {
                             <p className="text-[11px] text-[#a0a0a0]">or click to browse from your computer</p>
                         </div>
 
-                        {/* Uploaded Thumbnails Mock */}
                         <div className="flex items-center gap-3">
                             <div className="relative w-[64px] h-[64px] rounded-lg overflow-hidden border border-[#eee]">
                                 <Image src="/images/room-features/resort-exterior.png" alt="Upload 1" fill className="object-cover" />
@@ -137,7 +125,6 @@ export default function SubmitReviewPage() {
                         </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6 mt-4">
                         <button
                             onClick={() => router.push("/guest/my-room")}
@@ -152,14 +139,11 @@ export default function SubmitReviewPage() {
                             Cancel
                         </Link>
                     </div>
-
                 </div>
 
-                {/* ── Footer text ───────────────────────────────────────────── */}
                 <p className="text-[11px] text-[#999] text-center max-w-[420px] mx-auto leading-relaxed">
                     By submitting this review, you certify that this review is based on your own experience and is your genuine opinion of this property.
                 </p>
-
             </div>
         </div>
     )

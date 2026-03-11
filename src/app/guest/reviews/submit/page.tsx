@@ -1,5 +1,5 @@
 import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
-import SubmitReviewPage from "@/components/features/guest/my-room/submit-review-page"
+import SubmitReviewPage from "@/components/features/guest/reviews/submit-review-page"
 
 export const metadata = {
     title: "Submit Property Review — Prime Stay Sri Lanka",
