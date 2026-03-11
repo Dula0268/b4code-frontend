@@ -1,6 +1,6 @@
 import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import BookingForm from "@/components/features/guest/booking/booking-form/booking-form"
+import CheckoutPage from "@/components/features/guest/booking/checkout/checkout-page"
 
 export const metadata = {
     title: "Booking Checkout — Prime Stay Sri Lanka",
@@ -12,7 +12,7 @@ export default function BookingCheckoutRoute() {
         <>
             <BookingTopbar />
             <main>
-                <BookingForm />
+                <CheckoutPage />
             </main>
             <GuestFooter />
         </>

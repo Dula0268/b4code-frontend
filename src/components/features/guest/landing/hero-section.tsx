@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react"
 import Image from "next/image"
-import SearchBar from "@/components/features/guest/booking/search/search-bar"
+import SearchBar from "@/components/features/guest/search/search-bar"
 import { ChevronDown } from "lucide-react"
 
 function FloatingParticle({ delay, size, left, duration }: { delay: number; size: number; left: string; duration: number }) {
