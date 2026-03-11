@@ -17,7 +17,7 @@ export default function HostInformation() {
       <div className="bg-white border border-[#E8DDD8] rounded-xl p-5">
         <div className="flex items-center gap-5 flex-wrap">
           {/* Avatar */}
-          <div className="relative w-[70px] h-[70px] rounded-full overflow-hidden shrink-0 border-[3px] border-[#3B82F6]">
+          <div className="relative w-17.5 h-17.5 rounded-full overflow-hidden shrink-0 border-[3px] border-[#3B82F6]">
             <Image
               src="/images/properties/host-avatar.png"
               alt="Host Avatar"
@@ -27,7 +27,7 @@ export default function HostInformation() {
           </div>
 
           {/* Info block */}
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-50">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-bold text-[16px] text-[#1A1A1A]">
                 Sarah Jenkins

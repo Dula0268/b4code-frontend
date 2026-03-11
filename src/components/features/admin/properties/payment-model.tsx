@@ -6,7 +6,7 @@ import { Save, CheckCircle2, X } from "lucide-react";
 // ─── Success Toast ────────────────────────────────────────────────────────────
 function SuccessToast({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed top-6 right-6 z-[999] flex items-center gap-2.5 bg-white rounded-xl px-4.5 py-3.5 shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-[#e8f5e9] animate-[slideIn_0.25s_ease]">
+    <div className="fixed top-6 right-6 z-999 flex items-center gap-2.5 bg-white rounded-xl px-4.5 py-3.5 shadow-[0_6px_24px_rgba(0,0,0,0.12)] border border-[#e8f5e9] animate-[slideIn_0.25s_ease]">
       <CheckCircle2 size={18} color="#27ae60" />
       <span className="text-sm font-semibold text-[#1d1d1d]">
         Payment model saved successfully!
@@ -56,7 +56,7 @@ export default function PaymentModel() {
           >
             <div className="flex items-start gap-3">
               <div
-                className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                className={`w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
                   selected === "direct"
                     ? "border-[#C05621]"
                     : "border-[#D1D5DB]"
@@ -95,7 +95,7 @@ export default function PaymentModel() {
           >
             <div className="flex items-start gap-3">
               <div
-                className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                className={`w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
                   selected === "platform"
                     ? "border-[#C05621]"
                     : "border-[#D1D5DB]"

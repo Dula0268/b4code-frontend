@@ -117,8 +117,7 @@ export default function PropertiesPage() {
       p.name.toLowerCase().includes(q) ||
       p.ownerName.toLowerCase().includes(q) ||
       p.pvId.toLowerCase().includes(q);
-    const matchStatus =
-      statusFilter === "All" || p.status === statusFilter;
+    const matchStatus = statusFilter === "All" || p.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
@@ -157,7 +156,7 @@ export default function PropertiesPage() {
         {/* ── Search + Filter ── */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Search */}
-          <div className="relative flex-1 max-w-[420px]">
+          <div className="relative flex-1 max-w-105">
             <Search
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#D1D5DB] pointer-events-none"
               size={16}

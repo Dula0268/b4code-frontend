@@ -35,7 +35,7 @@ function DocumentCard({
 }) {
   return (
     <div className="rounded-xl overflow-hidden border border-[#E8DDD8]">
-      <div className="relative w-full h-[160px]">
+      <div className="relative w-full h-40">
         <Image src={image} alt={label} fill className="object-cover" />
         {/* File type badge */}
         <span className="absolute bottom-2 right-2 bg-[#1A1A1A]/70 text-white text-[10px] font-bold px-2 py-0.5 rounded">
