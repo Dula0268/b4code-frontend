@@ -1,9 +1,8 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
 import {
     CheckCircle,
     MapPin,
@@ -66,81 +65,97 @@ function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
 }
 
+function parseIsoDate(raw: string | null) {
+    if (!raw) return null
+    const parsed = new Date(`${raw}T00:00:00`)
+    return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function buildBookingFromRuntimeParams(searchParams: URLSearchParams) {
+    const propertyId = searchParams.get("propertyId")
+    const roomId = searchParams.get("roomId")
+    const guestsFromQuery = Number(searchParams.get("guests") || NaN)
+    const totalFromQuery = Number(searchParams.get("total") || NaN)
+    const paidInFullFromQuery = searchParams.get("paidInFull")
+
+    const checkInDate = parseIsoDate(searchParams.get("checkIn"))
+    const checkOutDate = parseIsoDate(searchParams.get("checkOut"))
+
+    const property = propertyId ? getPropertyById(propertyId) : undefined
+    const room = property && roomId ? property.rooms.find(r => r.id === roomId) : undefined
+
+    const guests = Number.isFinite(guestsFromQuery)
+        ? Math.max(1, guestsFromQuery)
+        : MOCK_BOOKING.guests
+
+    const nights = checkInDate && checkOutDate
+        ? Math.max(1, differenceInDays(checkOutDate, checkInDate))
+        : 1
+
+    const fallbackTotal = room
+        ? room.pricePerNight * nights
+        : MOCK_BOOKING.totalPrice
+
+    const totalPrice = Number.isFinite(totalFromQuery) && totalFromQuery > 0
+        ? totalFromQuery
+        : fallbackTotal
+
+    const paidInFull = paidInFullFromQuery == null
+        ? MOCK_BOOKING.paidInFull
+        : paidInFullFromQuery === "1" || paidInFullFromQuery === "true"
+
+    const propertyInfo = property
+        ? {
+            name: property.title,
+            address: property.fullAddress,
+            imageSrc: property.imageSrc,
+            lat: property.lat,
+            lng: property.lng,
+        }
+        : MOCK_BOOKING.property
+
+    return {
+        confirmationCode: searchParams.get("confirmationCode") || MOCK_BOOKING.confirmationCode,
+        property: propertyInfo,
+        checkIn: {
+            date: checkInDate ? format(checkInDate, "EEE, MMM d") : MOCK_BOOKING.checkIn.date,
+            time: MOCK_BOOKING.checkIn.time,
+        },
+        checkOut: {
+            date: checkOutDate ? format(checkOutDate, "EEE, MMM d") : MOCK_BOOKING.checkOut.date,
+            time: MOCK_BOOKING.checkOut.time,
+        },
+        guests,
+        roomType: room?.name || searchParams.get("roomType") || MOCK_BOOKING.roomType,
+        totalPrice,
+        paidInFull,
+        checkInInstructions: checkInDate
+            ? `This property offers self check-in via a smart keypad. Your unique access code will be sent to your email and Prime Stay messages 24 hours before your stay. The code will become active at 3:00 PM on ${format(checkInDate, "MMM d")}.`
+            : MOCK_BOOKING.checkInInstructions,
+    }
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function BookingConfirmationPage() {
-    const searchParams = useSearchParams()
     const [copied, setCopied] = useState(false)
-    const booking = useMemo(() => {
-        const propertyId = searchParams.get("propertyId")
-        const roomId = searchParams.get("roomId")
-        const guestsFromQuery = Number(searchParams.get("guests") || NaN)
-        const totalFromQuery = Number(searchParams.get("total") || NaN)
-        const paidInFullFromQuery = searchParams.get("paidInFull")
+    const [booking, setBooking] = useState(MOCK_BOOKING)
 
-        const checkInRaw = searchParams.get("checkIn")
-        const checkOutRaw = searchParams.get("checkOut")
-        const checkInDate = checkInRaw ? new Date(`${checkInRaw}T00:00:00`) : null
-        const checkOutDate = checkOutRaw ? new Date(`${checkOutRaw}T00:00:00`) : null
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        setBooking(buildBookingFromRuntimeParams(params))
+    }, [])
 
-        const property = propertyId ? getPropertyById(propertyId) : undefined
-        const room = property && roomId ? property.rooms.find(r => r.id === roomId) : undefined
-
-        const guests = Number.isFinite(guestsFromQuery)
-            ? Math.max(1, guestsFromQuery)
-            : MOCK_BOOKING.guests
-
-        const nights = checkInDate && checkOutDate
-            ? Math.max(1, differenceInDays(checkOutDate, checkInDate))
-            : 1
-
-        const fallbackTotal = room
-            ? room.pricePerNight * nights
-            : MOCK_BOOKING.totalPrice
-
-        const totalPrice = Number.isFinite(totalFromQuery) && totalFromQuery > 0
-            ? totalFromQuery
-            : fallbackTotal
-
-        const paidInFull = paidInFullFromQuery == null
-            ? MOCK_BOOKING.paidInFull
-            : paidInFullFromQuery === "1" || paidInFullFromQuery === "true"
-
-        const propertyInfo = property
-            ? {
-                name: property.title,
-                address: property.fullAddress,
-                imageSrc: property.imageSrc,
-                lat: property.lat,
-                lng: property.lng,
+    const handleCopy = async () => {
+        try {
+            const text = `#${booking.confirmationCode}`
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text)
             }
-            : MOCK_BOOKING.property
-
-        return {
-            confirmationCode: searchParams.get("confirmationCode") || MOCK_BOOKING.confirmationCode,
-            property: propertyInfo,
-            checkIn: {
-                date: checkInDate ? format(checkInDate, "EEE, MMM d") : MOCK_BOOKING.checkIn.date,
-                time: MOCK_BOOKING.checkIn.time,
-            },
-            checkOut: {
-                date: checkOutDate ? format(checkOutDate, "EEE, MMM d") : MOCK_BOOKING.checkOut.date,
-                time: MOCK_BOOKING.checkOut.time,
-            },
-            guests,
-            roomType: room?.name || searchParams.get("roomType") || MOCK_BOOKING.roomType,
-            totalPrice,
-            paidInFull,
-            checkInInstructions: checkInDate
-                ? `This property offers self check-in via a smart keypad. Your unique access code will be sent to your email and Prime Stay messages 24 hours before your stay. The code will become active at 3:00 PM on ${format(checkInDate, "MMM d")}.`
-                : MOCK_BOOKING.checkInInstructions,
-        }
-    }, [searchParams])
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(`#${booking.confirmationCode}`).then(() => {
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
-        })
+        } catch {
+            setCopied(false)
+        }
     }
 
     const handlePrint = () => window.print()
@@ -274,7 +289,8 @@ export default function BookingConfirmationPage() {
                                 key={label}
                                 className="p-4 flex flex-col gap-1"
                             >
-                                <p className="text-[10px] font-semibold text-[#828282] uppercase tracking-wider">
+                                <p className="text-[10px] font-semibold text-[#828282] uppercase tracking-wider flex items-center gap-1.5">
+                                    <Icon size={11} className="text-[#953002]" />
                                     {label}
                                 </p>
                                 <p className={`text-[14px] font-bold text-[#1d1d1d] leading-tight ${valueClass ?? ""}`}>
