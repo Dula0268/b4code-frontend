@@ -1,5 +1,5 @@
 import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
-import MessageStaffPage from "@/components/features/guest/my-room/message-staff-page"
+import MessageStaffPage from "@/components/features/guest/messages/message-staff-page"
 
 export const metadata = {
     title: "Message Staff — Prime Stay Sri Lanka",

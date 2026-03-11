@@ -8,7 +8,6 @@ import {
     CalendarDays, BadgeCheck, Lightbulb, CheckCircle2,
 } from "lucide-react"
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface Message {
     id: string
     sender: "host" | "guest"
@@ -16,7 +15,6 @@ interface Message {
     time: string
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
 const INITIAL_MESSAGES: Message[] = [
     {
         id: "m1",
@@ -42,7 +40,7 @@ const QUICK_CHIPS = [
 const BOOKING = {
     propertyName: "Sunset Peak Resort",
     imageSrc: "/images/booking/sunset-peak-resort.png",
-    reservationPeriod: "Oct 12 – Oct 15, 2023",
+    reservationPeriod: "Oct 12 - Oct 15, 2023",
     bookingId: "#BK-8829",
 }
 
@@ -51,18 +49,15 @@ const TIPS = [
     "Ask about local transit",
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function now() {
     return new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-export default function MessageHostPage() {
+export default function MessageOwnerPage() {
     const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES)
     const [input, setInput] = useState("")
     const bottomRef = useRef<HTMLDivElement>(null)
 
-    // Auto-scroll to latest message
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages])
@@ -73,13 +68,12 @@ export default function MessageHostPage() {
         setMessages(prev => [...prev, guest])
         setInput("")
 
-        // Simulated host reply after 1.5s
         setTimeout(() => {
             const replies = [
                 "Of course! We can accommodate that. Please let us know your preferred time.",
                 "Great question! I'll check availability and get back to you shortly.",
                 "Absolutely, we're happy to help with that. Our team will make it happen.",
-                "Thank you for asking. Yes, that's definitely possible — we'll arrange it for you.",
+                "Thank you for asking. Yes, that's definitely possible - we'll arrange it for you.",
             ]
             const reply = replies[Math.floor(Math.random() * replies.length)]
             setMessages(prev => [...prev, { id: Date.now().toString() + "h", sender: "host", text: reply, time: now() }])
@@ -89,8 +83,6 @@ export default function MessageHostPage() {
     return (
         <div className="min-h-screen bg-[#f4f4f4] pt-20 pb-10">
             <div className="max-w-[1020px] mx-auto px-4 pt-8">
-
-                {/* Page header */}
                 <div className="mb-7">
                     <h1 className="text-[26px] font-bold text-[#1d1d1d] leading-tight">Contact Property Owner</h1>
                     <p className="text-[14px] font-semibold text-[#953002] mt-1">Need help with your booking?</p>
@@ -100,11 +92,7 @@ export default function MessageHostPage() {
                 </div>
 
                 <div className="flex gap-6 items-start">
-
-                    {/* ── LEFT: Chat panel ───────────────────────────────────── */}
                     <div className="flex-1 min-w-0 bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] overflow-hidden flex flex-col">
-
-                        {/* Chat header */}
                         <div className="flex items-center gap-3 px-5 py-4 border-b border-[#f0f0f0]">
                             <div className="relative">
                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#953002] to-[#d4520a] flex items-center justify-center text-white font-bold text-[15px]">
@@ -118,13 +106,11 @@ export default function MessageHostPage() {
                             </div>
                         </div>
 
-                        {/* Messages area */}
                         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4 min-h-[300px] max-h-[360px]">
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`flex flex-col ${msg.sender === "guest" ? "items-end" : "items-start"}`}>
                                     {msg.sender === "host" && (
                                         <div className="flex items-end gap-2 max-w-[75%]">
-                                            {/* Host avatar */}
                                             <div className="w-7 h-7 rounded-full bg-[#f0f0f0] flex items-center justify-center flex-shrink-0 mb-4">
                                                 <span className="text-[11px] text-[#828282]">🏨</span>
                                             </div>
@@ -152,7 +138,6 @@ export default function MessageHostPage() {
                             <div ref={bottomRef} />
                         </div>
 
-                        {/* Quick suggestion chips */}
                         <div className="px-5 py-2 flex items-center gap-2 overflow-x-auto border-t border-[#f5f5f5] scrollbar-hide">
                             {QUICK_CHIPS.map(({ label, icon: Icon }) => (
                                 <button
@@ -166,7 +151,6 @@ export default function MessageHostPage() {
                             ))}
                         </div>
 
-                        {/* Input row */}
                         <div className="px-5 py-4 border-t border-[#f0f0f0]">
                             <div className="flex items-center gap-3">
                                 <button className="w-8 h-8 rounded-full border border-[#953002] text-[#953002] flex items-center justify-center hover:bg-[#fff4eb] transition-colors cursor-pointer flex-shrink-0">
@@ -196,16 +180,12 @@ export default function MessageHostPage() {
                         </div>
                     </div>
 
-                    {/* ── RIGHT: Booking Details sidebar ─────────────────────── */}
                     <div className="w-[280px] flex-shrink-0 flex flex-col gap-4">
-
-                        {/* Booking Details card */}
                         <div className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] overflow-hidden">
                             <div className="px-5 pt-4 pb-3 border-b border-[#f5f5f5]">
                                 <p className="text-[14px] font-bold text-[#1d1d1d]">Booking Details</p>
                             </div>
 
-                            {/* Property image */}
                             <div className="relative h-[150px] w-full">
                                 <Image
                                     src={BOOKING.imageSrc}
@@ -217,13 +197,11 @@ export default function MessageHostPage() {
                             </div>
 
                             <div className="px-5 py-4 flex flex-col gap-3">
-                                {/* Property name */}
                                 <div>
                                     <p className="text-[10px] font-bold text-[#953002] uppercase tracking-widest mb-0.5">Property Name</p>
                                     <p className="text-[15px] font-bold text-[#1d1d1d]">{BOOKING.propertyName}</p>
                                 </div>
 
-                                {/* Reservation period */}
                                 <div className="flex items-center gap-3 bg-[#fafafa] border border-[#f0f0f0] rounded-xl px-4 py-3">
                                     <CalendarDays size={15} className="text-[#953002] flex-shrink-0" />
                                     <div>
@@ -232,7 +210,6 @@ export default function MessageHostPage() {
                                     </div>
                                 </div>
 
-                                {/* Booking ID */}
                                 <div className="flex items-center gap-3 bg-[#fafafa] border border-[#f0f0f0] rounded-xl px-4 py-3">
                                     <BadgeCheck size={15} className="text-[#27AE60] flex-shrink-0" />
                                     <div>
@@ -241,7 +218,6 @@ export default function MessageHostPage() {
                                     </div>
                                 </div>
 
-                                {/* View booking receipt */}
                                 <Link
                                     href="/guest/booking/confirmation"
                                     className="w-full flex items-center justify-center text-[13px] font-semibold text-[#1d1d1d] border border-[#e0e0e0] hover:border-[#953002] hover:text-[#953002] rounded-xl py-2.5 transition-colors no-underline"
@@ -251,7 +227,6 @@ export default function MessageHostPage() {
                             </div>
                         </div>
 
-                        {/* Tips card */}
                         <div className="bg-[#7a2700] rounded-2xl px-5 py-4 shadow-[0_2px_12px_rgba(149,48,2,0.25)]">
                             <div className="flex items-center gap-2 mb-2">
                                 <Lightbulb size={15} className="text-[#ffd06b]" />

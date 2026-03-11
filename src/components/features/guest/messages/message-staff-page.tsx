@@ -2,16 +2,14 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import Link from "next/link"
 import {
-    Utensils, Sparkles, AlertCircle, HelpCircle, User, DoorOpen, Send, ChevronLeft
+    Utensils, Sparkles, AlertCircle, HelpCircle, User, DoorOpen, Send,
 } from "lucide-react"
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function MessageStaffPage() {
     const [message, setMessage] = useState("")
     const [messages, setMessages] = useState([
-        { id: 1, sender: "staff", text: "Welcome! Please let us know if you need anything during your stay.", timestamp: "Just now" }
+        { id: 1, sender: "staff", text: "Welcome! Please let us know if you need anything during your stay.", timestamp: "Just now" },
     ])
 
     const handleSendMessage = () => {
@@ -21,13 +19,12 @@ export default function MessageStaffPage() {
         setMessages(prev => [...prev, newMsg])
         setMessage("")
 
-        // Simulate staff auto-reply
         setTimeout(() => {
             setMessages(prev => [...prev, {
                 id: Date.now() + 1,
                 sender: "staff",
                 text: "We have received your message and our team will attend to it shortly.",
-                timestamp: "Just now"
+                timestamp: "Just now",
             }])
         }, 1500)
     }
@@ -35,8 +32,6 @@ export default function MessageStaffPage() {
     return (
         <div className="min-h-screen bg-[#f4f4f4] pt-24 pb-16">
             <div className="max-w-[1000px] mx-auto px-4 flex flex-col gap-6">
-
-                {/* ── Page Header ───────────────────────────────────────────── */}
                 <div className="mb-4">
                     <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-3">
                         Contact Property Staff
@@ -49,12 +44,8 @@ export default function MessageStaffPage() {
                     </p>
                 </div>
 
-                {/* ── Layout Grid ───────────────────────────────────────────── */}
                 <div className="flex flex-col md:flex-row gap-8">
-
-                    {/* Left Sidebar */}
                     <div className="w-full md:w-[340px] flex-shrink-0">
-                        {/* Current Stay Card */}
                         <div className="mb-7">
                             <h2 className="text-[11px] font-bold text-[#828282] uppercase tracking-widest mb-3 pl-1">
                                 CURRENT STAY
@@ -78,7 +69,6 @@ export default function MessageStaffPage() {
                             </div>
                         </div>
 
-                        {/* Quick Requests */}
                         <div>
                             <h2 className="text-[10px] font-bold text-[#828282] uppercase tracking-widest mb-3 pl-1">
                                 QUICK REQUESTS
@@ -103,10 +93,7 @@ export default function MessageStaffPage() {
                         </div>
                     </div>
 
-                    {/* Right Area - Chat Interface */}
                     <div className="flex-1 bg-white rounded-[32px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#f0f0f0] p-6 flex flex-col min-h-[580px]">
-
-                        {/* Chat Header */}
                         <div className="flex items-center gap-3 pb-6 border-b border-[#f0f0f0]">
                             <div className="w-[42px] h-[42px] rounded-full bg-[#f8efe8] flex items-center justify-center flex-shrink-0 pb-0.5">
                                 <User size={22} className="text-[#953002]" />
@@ -122,7 +109,6 @@ export default function MessageStaffPage() {
                             </div>
                         </div>
 
-                        {/* Chat Messages */}
                         <div className="flex-1 py-8 flex flex-col gap-5 overflow-y-auto">
                             {messages.map(msg => (
                                 <div key={msg.id} className={`flex items-start gap-4 flex-shrink-0 ${msg.sender === "guest" ? "flex-row-reverse pl-12" : "pr-12"}`}>
@@ -146,7 +132,6 @@ export default function MessageStaffPage() {
                             ))}
                         </div>
 
-                        {/* Chat Input ── */}
                         <div className="pt-2">
                             <div className="flex items-center gap-3">
                                 <input
@@ -168,10 +153,8 @@ export default function MessageStaffPage() {
                                 Our staff will assist you as quickly as possible.
                             </p>
                         </div>
-
                     </div>
                 </div>
-
             </div>
         </div>
     )

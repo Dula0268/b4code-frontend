@@ -182,7 +182,7 @@ function BookingCard({ booking }: { booking: Booking }) {
                     {isUpcoming && (
                         <>
                             <Link
-                                href="/guest/booking/message-host"
+                                href="/guest/messages/owner"
                                 className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
                             >
                                 <MessageSquare size={14} /> Message Host
