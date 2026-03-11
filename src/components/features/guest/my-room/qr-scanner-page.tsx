@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Camera, ExternalLink, HelpCircle, X, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react"
 
 // QR code external API URL
@@ -15,6 +16,7 @@ declare class BarcodeDetector {
 type CameraPhase = "idle" | "requesting" | "scanning" | "detected" | "error"
 
 export default function QrScannerPage() {
+    const router = useRouter()
     const videoRef = useRef<HTMLVideoElement>(null)
     const streamRef = useRef<MediaStream | null>(null)
     const rafRef = useRef<number>(0)
@@ -138,6 +140,7 @@ export default function QrScannerPage() {
 
                     {/* Visit Menu Directly */}
                     <button
+                        onClick={() => router.push("/guest/order")}
                         className="w-full max-w-[280px] flex items-center justify-center gap-2 bg-[#a03b10] hover:bg-[#852f0b] text-white font-bold text-[15px] py-[15px] rounded-xl transition-colors cursor-pointer mb-6"
                     >
                         Visit Menu Directly <ExternalLink size={17} />

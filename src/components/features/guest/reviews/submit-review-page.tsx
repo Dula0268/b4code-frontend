@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Star, X, Camera } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -45,6 +45,26 @@ export default function SubmitReviewPage() {
     const [service, setService] = useState(5)
     const [valueForMoney, setValueForMoney] = useState(4)
     const [reviewText, setReviewText] = useState("")
+    const [photos, setPhotos] = useState<{ url: string; name: string }[]>([
+        { url: "/images/room-features/resort-exterior.png", name: "photo-1" },
+        { url: "/images/room-features/food-beverage.png", name: "photo-2" },
+    ])
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files
+        if (!files) return
+        Array.from(files).forEach(file => {
+            const url = URL.createObjectURL(file)
+            setPhotos(prev => [...prev, { url, name: file.name }])
+        })
+        // Reset so same file can be picked again
+        e.target.value = ""
+    }
+
+    const removePhoto = (name: string) => {
+        setPhotos(prev => prev.filter(p => p.name !== name))
+    }
 
     return (
         <div className="min-h-screen bg-[#f4f4f4] pt-20 pb-16">
@@ -103,26 +123,40 @@ export default function SubmitReviewPage() {
                     <div className="mb-10">
                         <h3 className="text-[15px] font-bold text-[#1d1d1d] mb-3">Add Photos (Optional)</h3>
 
-                        <div className="w-full border-2 border-dashed border-[#d1d5db] bg-[#fafafa] hover:bg-[#f5f5f5] rounded-xl flex flex-col items-center justify-center py-10 transition-colors cursor-pointer mb-5">
+                        {/* Hidden file input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
+
+                        <div
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full border-2 border-dashed border-[#d1d5db] bg-[#fafafa] hover:bg-[#f5f5f5] rounded-xl flex flex-col items-center justify-center py-10 transition-colors cursor-pointer mb-5"
+                        >
                             <Camera size={28} className="text-[#a0a0a0] mb-3" />
                             <p className="text-[13px] text-[#555] font-medium mb-1">Drag and drop your photos here</p>
                             <p className="text-[11px] text-[#a0a0a0]">or click to browse from your computer</p>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                            <div className="relative w-[64px] h-[64px] rounded-lg overflow-hidden border border-[#eee]">
-                                <Image src="/images/room-features/resort-exterior.png" alt="Upload 1" fill className="object-cover" />
-                                <button className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center">
-                                    <X size={10} />
-                                </button>
+                        {photos.length > 0 && (
+                            <div className="flex items-center gap-3 flex-wrap">
+                                {photos.map(photo => (
+                                    <div key={photo.name} className="relative w-[64px] h-[64px] rounded-lg overflow-hidden border border-[#eee] flex-shrink-0">
+                                        <Image src={photo.url} alt={photo.name} fill className="object-cover" />
+                                        <button
+                                            onClick={() => removePhoto(photo.name)}
+                                            className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center"
+                                        >
+                                            <X size={10} />
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="relative w-[64px] h-[64px] rounded-lg overflow-hidden border border-[#eee]">
-                                <Image src="/images/room-features/food-beverage.png" alt="Upload 2" fill className="object-cover" />
-                                <button className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center">
-                                    <X size={10} />
-                                </button>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6 mt-4">

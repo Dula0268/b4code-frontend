@@ -351,7 +351,17 @@ export default function ModifyReservationPage() {
                             </div>
 
                             <button
-                                onClick={() => router.push("/guest/booking/confirmation")}
+                                onClick={() => {
+                                    const params = new URLSearchParams({
+                                        checkIn: checkIn,
+                                        checkOut: checkOut,
+                                        guests: String(newGuests),
+                                        total: String(newTotal + guestFeeTotal),
+                                        roomType: ROOM_OPTIONS.find(r => r.id === selectedRoom)?.name ?? "",
+                                        paidInFull: "1",
+                                    })
+                                    router.push(`/guest/booking/confirmation?${params.toString()}`)
+                                }}
                                 disabled={!dateValid || newNights === 0}
                                 className="w-full flex items-center justify-center gap-2 bg-[#953002] hover:bg-[#6d2200] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-[14px] py-3.5 rounded-xl transition-colors cursor-pointer mb-3"
                             >
