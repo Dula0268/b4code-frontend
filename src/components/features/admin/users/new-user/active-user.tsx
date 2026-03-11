@@ -1,4 +1,5 @@
 import { Camera } from "lucide-react";
+import Image from "next/image";
 
 interface ActiveUserProps {
   user: {
@@ -23,9 +24,11 @@ export default function ActiveUser({ user, onAvatarChange }: ActiveUserProps) {
       <div className="relative">
         <div className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center bg-[#4f9cf9] shadow-md">
           {user.avatarUrl ? (
-            <img
+            <Image
               src={user.avatarUrl}
               alt={user.name}
+              width={112}
+              height={112}
               className="w-full h-full object-cover"
             />
           ) : (
