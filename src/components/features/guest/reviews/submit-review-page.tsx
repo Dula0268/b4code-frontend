@@ -127,7 +127,7 @@ export default function SubmitReviewPage() {
 
                     <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6 mt-4">
                         <button
-                            onClick={() => router.push("/guest/my-room")}
+                            onClick={() => router.push("/guest/reviews/completed")}
                             className="w-full sm:w-auto bg-[#953002] hover:bg-[#7a2701] text-white font-bold text-[14px] px-10 py-3.5 rounded-xl transition-colors shadow-md"
                         >
                             Submit My Review
