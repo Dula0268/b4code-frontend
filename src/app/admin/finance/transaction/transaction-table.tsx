@@ -128,7 +128,7 @@ export default function TransactionTable() {
       {/* ── Filters ── */}
       <div className="p-5 flex items-end gap-4 flex-wrap border-b border-[#F0EBE7]">
         {/* Search */}
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-50">
           <label className="block text-xs font-semibold text-[#9E7B6A] mb-1.5">
             Search Transactions
           </label>
@@ -146,7 +146,7 @@ export default function TransactionTable() {
         </div>
 
         {/* Date Range */}
-        <div className="min-w-[180px]">
+        <div className="min-w-45">
           <label className="block text-xs font-semibold text-[#9E7B6A] mb-1.5">
             Date Range
           </label>
@@ -157,7 +157,7 @@ export default function TransactionTable() {
         </div>
 
         {/* Status */}
-        <div className="min-w-[140px]">
+        <div className="min-w-35">
           <label className="block text-xs font-semibold text-[#9E7B6A] mb-1.5">
             Status
           </label>

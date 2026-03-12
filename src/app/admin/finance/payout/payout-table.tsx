@@ -141,7 +141,7 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
     <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm overflow-hidden">
       {/* ── Search & Filter ── */}
       <div className="p-5 flex items-center justify-between gap-4 flex-wrap">
-        <div className="relative flex-1 min-w-[250px] max-w-[420px]">
+        <div className="relative flex-1 min-w-62.5 max-w-105">
           <Search
             size={16}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-[#C4B5AB]"

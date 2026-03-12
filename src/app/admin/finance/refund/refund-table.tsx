@@ -83,7 +83,7 @@ export default function RefundTable() {
       {/* ── Filters ── */}
       <div className="p-5 flex items-end gap-4 flex-wrap border-b border-[#F0EBE7]">
         {/* Search */}
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-50">
           <label className="block text-xs font-bold text-[#C05621] mb-1.5 uppercase tracking-wider">
             Search
           </label>
@@ -101,7 +101,7 @@ export default function RefundTable() {
         </div>
 
         {/* Date Range */}
-        <div className="min-w-[200px]">
+        <div className="min-w-50">
           <label className="block text-xs font-bold text-[#C05621] mb-1.5 uppercase tracking-wider">
             Date Range
           </label>
@@ -146,7 +146,7 @@ export default function RefundTable() {
                 <td className="px-6 py-4 text-sm font-bold text-[#1A1A1A]">
                   {r.amount}
                 </td>
-                <td className="px-6 py-4 text-sm text-[#6B7280] max-w-[300px] truncate">
+                <td className="px-6 py-4 text-sm text-[#6B7280] max-w-75 truncate">
                   {r.reason}
                 </td>
                 <td className="px-6 py-4 text-sm text-[#9E7B6A]">

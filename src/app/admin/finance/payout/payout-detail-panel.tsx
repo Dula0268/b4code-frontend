@@ -43,7 +43,7 @@ export default function PayoutDetailPanel({
       />
 
       {/* Panel */}
-      <div className="fixed top-0 right-0 h-full w-[420px] bg-white z-50 shadow-2xl overflow-y-auto animate-slideIn">
+      <div className="fixed top-0 right-0 h-full w-105 bg-white z-50 shadow-2xl overflow-y-auto animate-slideIn">
         {/* Toast Notification positioned within panel container */}
         <div className="absolute top-4 left-0 right-0 z-50 flex justify-center px-4">
           <Toast
