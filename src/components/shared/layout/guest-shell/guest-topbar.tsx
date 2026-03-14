@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import Logo from "@/components/shared/branding/logo"
-import SearchBar from "@/components/features/guest/booking/search/search-bar"
+import SearchBar from "@/components/features/guest/search/search-bar"
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },

@@ -29,7 +29,36 @@ const SOCIAL_LINKS = [
   { icon: Mail, href: "mailto:hello@primestay.lk", label: "Email" },
 ]
 
-export default function GuestFooter() {
+type GuestFooterProps = {
+  variant?: "full" | "compact"
+}
+
+const POLICY_LINKS = ["Privacy", "Terms", "Sitemap"]
+
+export default function GuestFooter({ variant = "compact" }: GuestFooterProps) {
+  if (variant === "compact") {
+    return (
+      <footer className="bg-[#0f1923] text-white border-t border-[#1f2d3a]">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-[#9aa3ad] text-[12px] m-0 text-center sm:text-left">
+            © 2026 PRIME STAY Sri Lanka. All rights reserved.
+          </p>
+          <div className="flex items-center gap-5">
+            {POLICY_LINKS.map(link => (
+              <Link
+                key={link}
+                href={`/${link.toLowerCase()}`}
+                className="text-[#9aa3ad] text-[12px] no-underline hover:text-white transition-colors duration-200"
+              >
+                {link}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </footer>
+    )
+  }
+
   return (
     <footer className="bg-[#0f1923] text-white">
       <div className="max-w-[1440px] mx-auto px-[30px] pt-16 pb-8">
@@ -94,7 +123,7 @@ export default function GuestFooter() {
             © 2026 PRIME STAY Sri Lanka. All rights reserved.
           </p>
           <div className="flex gap-6">
-            {["Privacy", "Terms", "Sitemap"].map(link => (
+            {POLICY_LINKS.map(link => (
               <Link
                 key={link}
                 href={`/${link.toLowerCase()}`}

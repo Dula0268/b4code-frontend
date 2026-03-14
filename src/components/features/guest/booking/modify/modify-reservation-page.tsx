@@ -130,7 +130,7 @@ export default function ModifyReservationPage() {
                 </nav>
 
                 {/* Title row */}
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                     <div>
                         <h1 className="text-[28px] font-bold text-[#1d1d1d] leading-tight">Modify Your Reservation</h1>
                         <p className="text-[13px] text-[#828282] mt-1">
@@ -139,12 +139,12 @@ export default function ModifyReservationPage() {
                             <span className="text-[#27AE60] font-semibold">Confirmed</span>
                         </p>
                     </div>
-                    <button className="inline-flex items-center gap-2 border border-[#e0e0e0] rounded-xl px-4 py-2 text-[13px] text-[#555] hover:border-[#953002] hover:text-[#953002] transition-colors bg-white shadow-sm cursor-pointer">
+                    <button className="inline-flex items-center justify-center gap-2 border border-[#e0e0e0] rounded-xl px-4 py-2 text-[13px] text-[#555] hover:border-[#953002] hover:text-[#953002] transition-colors bg-white shadow-sm cursor-pointer w-full sm:w-auto">
                         <HelpCircle size={15} /> Need assistance?
                     </button>
                 </div>
 
-                <div className="flex gap-6 items-start">
+                <div className="flex flex-col lg:flex-row gap-6 items-stretch lg:items-start">
 
                     {/* ── LEFT: Edit sections ──────────────────────────────────────── */}
                     <div className="flex-1 min-w-0 flex flex-col gap-5">
@@ -162,8 +162,8 @@ export default function ModifyReservationPage() {
                                     <p className="text-[12px] font-semibold text-[#828282] uppercase tracking-wide mb-3">Stay Dates</p>
 
                                     {/* Original row */}
-                                    <div className="grid grid-cols-2 gap-0 border border-[#e8e8e8] rounded-xl overflow-hidden mb-3">
-                                        <div className="px-4 py-3 bg-[#fafafa] border-r border-[#e8e8e8]">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border border-[#e8e8e8] rounded-xl overflow-hidden mb-3">
+                                        <div className="px-4 py-3 bg-[#fafafa] sm:border-r border-b sm:border-b-0 border-[#e8e8e8]">
                                             <p className="text-[10px] font-bold text-[#828282] uppercase tracking-widest mb-1">Original</p>
                                             <p className="text-[13px] font-semibold text-[#555]">
                                                 {fmtDate(ORIGINAL_CHECK_IN)} – {fmtDateFull(ORIGINAL_CHECK_OUT)}
@@ -178,7 +178,7 @@ export default function ModifyReservationPage() {
                                     </div>
 
                                     {/* Editable date pickers */}
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         {/* Check-in */}
                                         <div>
                                             <label className="block text-[11px] font-semibold text-[#828282] uppercase tracking-wide mb-1.5">
@@ -231,21 +231,21 @@ export default function ModifyReservationPage() {
                                 {/* Guests */}
                                 <div>
                                     <p className="text-[12px] font-semibold text-[#828282] uppercase tracking-wide mb-3">Guests</p>
-                                    <div className="grid grid-cols-2 gap-0 border border-[#e8e8e8] rounded-xl overflow-hidden">
-                                        <div className="px-4 py-3 bg-[#fafafa] border-r border-[#e8e8e8]">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border border-[#e8e8e8] rounded-xl overflow-hidden">
+                                        <div className="px-4 py-3 bg-[#fafafa] sm:border-r border-b sm:border-b-0 border-[#e8e8e8]">
                                             <p className="text-[10px] font-bold text-[#828282] uppercase tracking-widest mb-1">Original</p>
                                             <p className="text-[13px] font-semibold text-[#555]">{ORIGINAL_GUESTS} Adults</p>
                                         </div>
                                         <div className="px-4 py-3 bg-white">
                                             <p className="text-[10px] font-bold text-[#953002] uppercase tracking-widest mb-1">New Selection</p>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center justify-between sm:justify-start gap-3">
                                                 <button
                                                     onClick={() => setNewGuests(g => Math.max(1, g - 1))}
                                                     className="w-7 h-7 rounded-full border border-[#e0e0e0] flex items-center justify-center text-[#555] text-[14px] hover:border-[#953002] hover:text-[#953002] transition-colors cursor-pointer font-bold"
                                                 >
                                                     -
                                                 </button>
-                                                <span className="text-[13px] font-bold text-[#1d1d1d] min-w-[60px] text-center">{newGuests} Adults</span>
+                                                <span className="text-[13px] font-bold text-[#1d1d1d] min-w-[60px] text-center flex-1 sm:flex-none">{newGuests} Adults</span>
                                                 <button
                                                     onClick={() => setNewGuests(g => Math.min(8, g + 1))}
                                                     className="w-7 h-7 rounded-full border border-[#e0e0e0] flex items-center justify-center text-[#555] text-[14px] hover:border-[#953002] hover:text-[#953002] transition-colors cursor-pointer font-bold"
@@ -284,7 +284,7 @@ export default function ModifyReservationPage() {
                                             key={room.id}
                                             onClick={() => setSelectedRoom(room.id)}
                                             className={[
-                                                "flex items-center gap-4 p-3 rounded-xl border-2 cursor-pointer transition-all",
+                                                "flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-xl border-2 cursor-pointer transition-all",
                                                 isSelected
                                                     ? "border-[#953002] bg-[rgba(149,48,2,0.02)]"
                                                     : "border-[#e8e8e8] hover:border-[#953002]/40 bg-white",
@@ -303,7 +303,7 @@ export default function ModifyReservationPage() {
                                                     CURRENT CHOICE
                                                 </span>
                                             ) : !room.isBase ? (
-                                                <span className={`flex-shrink-0 text-[13px] font-bold ${isSelected ? "text-[#953002]" : "text-[#828282]"}`}>
+                                                <span className={`flex-shrink-0 text-[13px] font-bold self-start sm:self-auto ${isSelected ? "text-[#953002]" : "text-[#828282]"}`}>
                                                     +{formatLKR(room.extraPerNight!)} / night
                                                 </span>
                                             ) : null}
@@ -315,7 +315,7 @@ export default function ModifyReservationPage() {
                     </div>
 
                     {/* ── RIGHT: Price Adjustment + Policy ─────────────────────────── */}
-                    <div className="w-[280px] flex-shrink-0 sticky top-24 flex flex-col gap-5">
+                    <div className="w-full lg:w-[280px] flex-shrink-0 lg:sticky lg:top-24 flex flex-col gap-5">
 
                         {/* Price Adjustment */}
                         <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-5">
@@ -351,7 +351,17 @@ export default function ModifyReservationPage() {
                             </div>
 
                             <button
-                                onClick={() => router.push("/guest/booking/confirmation")}
+                                onClick={() => {
+                                    const params = new URLSearchParams({
+                                        checkIn: checkIn,
+                                        checkOut: checkOut,
+                                        guests: String(newGuests),
+                                        total: String(newTotal + guestFeeTotal),
+                                        roomType: ROOM_OPTIONS.find(r => r.id === selectedRoom)?.name ?? "",
+                                        paidInFull: "1",
+                                    })
+                                    router.push(`/guest/booking/confirmation?${params.toString()}`)
+                                }}
                                 disabled={!dateValid || newNights === 0}
                                 className="w-full flex items-center justify-center gap-2 bg-[#953002] hover:bg-[#6d2200] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-[14px] py-3.5 rounded-xl transition-colors cursor-pointer mb-3"
                             >

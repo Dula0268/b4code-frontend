@@ -92,22 +92,22 @@ export default function RefundRequestPage() {
                     </p>
                 </div>
 
-                <div className="flex gap-6 items-start">
+                <div className="flex flex-col lg:flex-row gap-6 items-stretch lg:items-start">
 
                     {/* ── LEFT: Refund card + submit ──────────────────────────── */}
                     <div className="flex-1 min-w-0 flex flex-col gap-0">
 
                         {/* Dark gradient refundable amount card */}
                         <div
-                            className="rounded-t-2xl px-8 pt-10 pb-8"
+                            className="rounded-t-2xl px-5 sm:px-8 pt-8 sm:pt-10 pb-6 sm:pb-8"
                             style={{ background: "linear-gradient(135deg, #6d2200 0%, #953002 60%, #b83c04 100%)" }}
                         >
                             <p className="text-[11px] font-bold text-white/70 uppercase tracking-widest mb-3">Refundable Amount</p>
-                            <p className="text-[42px] font-black text-white leading-none">{formatLKR(REFUNDABLE)}</p>
+                            <p className="text-[32px] sm:text-[42px] font-black text-white leading-none break-words">{formatLKR(REFUNDABLE)}</p>
                         </div>
 
                         {/* White details section */}
-                        <div className="bg-white rounded-b-2xl shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-8 py-5 flex flex-col gap-3">
+                        <div className="bg-white rounded-b-2xl shadow-[0_4px_16px_rgba(0,0,0,0.08)] px-5 sm:px-8 py-5 flex flex-col gap-3">
                             <div className="flex justify-between items-center text-[13px]">
                                 <span className="text-[#555]">Original Payment</span>
                                 <span className="font-semibold text-[#1d1d1d]">{formatLKR(ORIGINAL_PAYMENT)}</span>
@@ -153,7 +153,7 @@ export default function RefundRequestPage() {
                     </div>
 
                     {/* ── RIGHT: Refund Policy sidebar ────────────────────────── */}
-                    <div className="w-[280px] flex-shrink-0 flex flex-col gap-4">
+                    <div className="w-full lg:w-[280px] flex-shrink-0 flex flex-col gap-4">
                         <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] p-5">
                             <div className="flex items-center gap-2 mb-4">
                                 <Tag size={15} className="text-[#953002]" />

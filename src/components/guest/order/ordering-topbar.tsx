@@ -96,7 +96,7 @@ export default function OrderingTopbar() {
           {/* Logo */}
           <div className="flex items-center">
             <Image
-              src="/prime-stay-logo.svg"
+              src="/images/branding/prime-stay-logo.svg"
               alt="Prime Stay"
               width={134}
               height={50}
