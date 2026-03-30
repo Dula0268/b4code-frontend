@@ -13,18 +13,18 @@ const MapView = dynamic(() => import("./components/map-view"), { ssr: false })
 
 // ─── Mock listing data ────────────────────────────────────────────────────
 const ALL_LISTINGS: PropertyListing[] = [
-    { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg" },
-    { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg" },
-    { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg" },
-    { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg" },
-    { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg" },
-    { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg" },
-    { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg" },
-    { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg" },
-    { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg" },
-    { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg" },
-    { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg" },
-    { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg" },
+    { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, maxGuests: 2, baseGuests: 2, extraGuestFee: 5_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg" },
+    { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 7_500, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg" },
+    { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg" },
+    { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 8_500, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg" },
+    { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 12_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg" },
+    { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, maxGuests: 5, baseGuests: 3, extraGuestFee: 8_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg" },
+    { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, maxGuests: 8, baseGuests: 6, extraGuestFee: 15_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg" },
+    { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, maxGuests: 10, baseGuests: 8, extraGuestFee: 20_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg" },
+    { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg" },
+    { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 6_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg" },
+    { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 9_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg" },
+    { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, maxGuests: 7, baseGuests: 5, extraGuestFee: 12_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg" },
 ]
 
 const ITEMS_PER_PAGE = 6
