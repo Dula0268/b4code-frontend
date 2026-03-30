@@ -58,13 +58,13 @@ export default function RatePage() {
     const [weekendSun, setWeekendSun] = useState(false);
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/room" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/availability/weeklyCalendar" },
-        { label: "Pricing", icon: <DollarSign size={18} />, href: "/rate", active: true },
-        { label: "Reservations", icon: <BookOpen size={18} />, href: "/reservations" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/settings" },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
+        { label: "Pricing", icon: <DollarSign size={18} />, href: "/owner/rate", active: true },
+        { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
+        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
     ];
 
     return (

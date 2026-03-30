@@ -34,13 +34,13 @@ export default function EditRatePage() {
     const [liveOnChannels, setLiveOnChannels] = useState(true);
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/room" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/availability/weeklyCalendar" },
-        { label: "Pricing", icon: <Tag size={18} />, href: "/rate", active: true },
-        { label: "Reservations", icon: <BookOpen size={18} />, href: "/reservations" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/settings" },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
+        { label: "Pricing", icon: <Tag size={18} />, href: "/owner/rate", active: true },
+        { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
+        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
     ];
 
     return (
@@ -90,7 +90,7 @@ export default function EditRatePage() {
                 <div className="flex-1 overflow-y-auto py-6 px-10 pb-10">
                     {/* Breadcrumb */}
                     <div className="flex items-center gap-1.5 mb-3 text-[13px]">
-                        <a href="/rate" className="text-[#953002] font-semibold no-underline">Pricing</a>
+                        <a href="/owner/rate" className="text-[#953002] font-semibold no-underline">Pricing</a>
                         <span className="text-[#b0b0b0]">›</span>
                         <span className="text-[#828282]">Edit Rate Plan</span>
                     </div>
@@ -286,7 +286,7 @@ export default function EditRatePage() {
                             <Trash2 size={14} color="#eb5757" /> Delete Rate Plan
                         </button>
                         <div className="flex gap-3">
-                            <a href="/rate" className="py-2.5 px-7 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer no-underline inline-flex items-center">Cancel</a>
+                            <a href="/owner/rate" className="py-2.5 px-7 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer no-underline inline-flex items-center">Cancel</a>
                             <button className="flex items-center gap-2 py-2.5 px-6 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer">
                                 Update Rate Plan <Save size={14} />
                             </button>

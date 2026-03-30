@@ -33,13 +33,13 @@ export default function ReservationRestrictionPage() {
     const [search, setSearch] = useState("");
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/room" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/availability/weeklyCalendar" },
-        { label: "Pricing", icon: <Tag size={18} />, href: "/rate" },
-        { label: "Reservation", icon: <BookOpen size={18} />, href: "/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/setting/accountSetting", active: true },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
+        { label: "Pricing", icon: <Tag size={18} />, href: "/owner/rate" },
+        { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
+        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting", active: true },
     ];
 
     const restrictions = [

@@ -26,21 +26,21 @@ import {
 
 export default function IntegrationPage() {
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/room" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/availability/weeklyCalendar" },
-        { label: "Pricing", icon: <Tag size={18} />, href: "/rate" },
-        { label: "Reservation", icon: <BookOpen size={18} />, href: "/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/setting/accountSetting", active: true },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
+        { label: "Pricing", icon: <Tag size={18} />, href: "/owner/rate" },
+        { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
+        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting", active: true },
     ];
 
     const settingsTabs = [
-        { label: "Account Settings", icon: <User size={16} />, href: "/setting/accountSetting" },
-        { label: "Property Settings", icon: <Home size={16} />, href: "/setting/propertySetting" },
-        { label: "Notification Preferences", icon: <BellRing size={16} />, href: "/setting/notificationPreferences" },
-        { label: "Billing & Payouts", icon: <CreditCard size={16} />, href: "/setting/billing&Payout" },
-        { label: "Integrations", icon: <Puzzle size={16} />, active: true, href: "/setting/integration" },
+        { label: "Account Settings", icon: <User size={16} />, href: "/owner/setting/accountSetting" },
+        { label: "Property Settings", icon: <Home size={16} />, href: "/owner/setting/propertySetting" },
+        { label: "Notification Preferences", icon: <BellRing size={16} />, href: "/owner/setting/notificationPreferences" },
+        { label: "Billing & Payouts", icon: <CreditCard size={16} />, href: "/owner/setting/billing&Payout" },
+        { label: "Integrations", icon: <Puzzle size={16} />, active: true, href: "/owner/setting/integration" },
     ];
 
     const recommended = [

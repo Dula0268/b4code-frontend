@@ -161,13 +161,13 @@ export default function MonthlyCalendarPage() {
     }
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/properties" },
-        { label: "Room", icon: <BedDouble size={18} />, href: "/room" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/availability/monthlyCalendar", active: true },
-        { label: "Pricing", icon: <DollarSign size={18} />, href: "/pricing" },
-        { label: "Reservations", icon: <BookOpen size={18} />, href: "/reservations" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/settings" },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/monthlyCalendar", active: true },
+        { label: "Pricing", icon: <DollarSign size={18} />, href: "/owner/rate" },
+        { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
+        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
     ];
 
     return (
@@ -247,8 +247,8 @@ export default function MonthlyCalendarPage() {
                                 <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center border border-[#e0e0e0] rounded-lg bg-white cursor-pointer text-[#4f4f4f]"><ChevronRight size={18} /></button>
                             </div>
                             <div className="flex bg-[#f0f0f0] rounded-lg p-1 gap-0.5">
-                                <a href="/availability/monthlyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-bold text-white bg-[#953002] border-none cursor-pointer no-underline transition-all duration-150">Monthly</a>
-                                <a href="/availability/weeklyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-semibold text-[#828282] bg-transparent border-none cursor-pointer no-underline transition-all duration-150">Weekly</a>
+                                <a href="/owner/availability/monthlyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-bold text-white bg-[#953002] border-none cursor-pointer no-underline transition-all duration-150">Monthly</a>
+                                <a href="/owner/availability/weeklyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-semibold text-[#828282] bg-transparent border-none cursor-pointer no-underline transition-all duration-150">Weekly</a>
                             </div>
                         </div>
                     </div>

@@ -109,13 +109,13 @@ export default function WeeklyCalendarPage() {
     };
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/properties" },
-        { label: "Room", icon: <BedDouble size={18} />, href: "/room" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/availability/weeklyCalendar", active: true },
-        { label: "Pricing", icon: <DollarSign size={18} />, href: "/pricing" },
-        { label: "Reservations", icon: <BookOpen size={18} />, href: "/reservations" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/settings" },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar", active: true },
+        { label: "Pricing", icon: <DollarSign size={18} />, href: "/owner/rate" },
+        { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
+        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
     ];
 
     return (
@@ -189,8 +189,8 @@ export default function WeeklyCalendarPage() {
                     <div className="flex justify-between items-center">
                         <h2 className="text-[28px] font-extrabold text-[#1d1d1d] m-0 leading-tight">{monthYear}</h2>
                         <div className="flex bg-[#f0f0f0] rounded-lg p-1 gap-0.5">
-                            <a href="/availability/monthlyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-semibold text-[#828282] bg-transparent border-none cursor-pointer no-underline transition-all duration-150">Monthly</a>
-                            <a href="/availability/weeklyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-bold text-white bg-[#953002] border-none cursor-pointer no-underline transition-all duration-150">Weekly</a>
+                            <a href="/owner/availability/monthlyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-semibold text-[#828282] bg-transparent border-none cursor-pointer no-underline transition-all duration-150">Monthly</a>
+                            <a href="/owner/availability/weeklyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-bold text-white bg-[#953002] border-none cursor-pointer no-underline transition-all duration-150">Weekly</a>
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 mt-2.5">

@@ -71,7 +71,7 @@ export default function ReservationDetailsPage() {
             {/* ── Scrollable Body ── */}
             <div className="flex-1 py-6 px-12 pb-10 overflow-y-auto">
                 {/* Back Link */}
-                <a href="/reservation" className="inline-flex items-center gap-1.5 text-[13px] color-[#953002] no-underline font-semibold mb-4 text-[#953002]">
+                <a href="/owner/reservation" className="inline-flex items-center gap-1.5 text-[13px] color-[#953002] no-underline font-semibold mb-4 text-[#953002]">
                     <ArrowLeft size={14} /> Back to Reservations
                 </a>
 
