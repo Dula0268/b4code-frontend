@@ -4,38 +4,27 @@ import { useState, useMemo } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
-import { ResultsHeader, PropertyCard, type PropertyListing } from "./components"
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet"
+import ResultsHeader from "./components/results-header"
+import PropertyCard, { type PropertyListing } from "./components/property-card"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 // Dynamically import the map (Leaflet must not run on server)
 const MapView = dynamic(() => import("./components/map-view"), { ssr: false })
 
-function getGuestAdjustedPrice(basePrice: number, guests: number, baseGuests: number, extraGuestFee: number) {
-    const extraGuests = Math.max(0, guests - baseGuests)
-    return basePrice + extraGuests * extraGuestFee
-}
-
 // ─── Mock listing data ────────────────────────────────────────────────────
 const ALL_LISTINGS: PropertyListing[] = [
-    { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg", maxGuests: 2, baseGuests: 1, extraGuestFee: 3_500 },
-    { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg", maxGuests: 3, baseGuests: 2, extraGuestFee: 3_000 },
-    { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg", maxGuests: 6, baseGuests: 2, extraGuestFee: 5_500 },
-    { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 4_000 },
-    { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg", maxGuests: 5, baseGuests: 2, extraGuestFee: 5_000 },
-    { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 3_500 },
-    { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg", maxGuests: 8, baseGuests: 2, extraGuestFee: 6_000 },
-    { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg", maxGuests: 10, baseGuests: 2, extraGuestFee: 8_000 },
-    { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 4_500 },
-    { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg", maxGuests: 2, baseGuests: 1, extraGuestFee: 2_500 },
-    { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 4_000 },
-    { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg", maxGuests: 6, baseGuests: 2, extraGuestFee: 5_500 },
+    { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, maxGuests: 2, baseGuests: 2, extraGuestFee: 5_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg" },
+    { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 7_500, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg" },
+    { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg" },
+    { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 8_500, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg" },
+    { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 12_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg" },
+    { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, maxGuests: 5, baseGuests: 3, extraGuestFee: 8_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg" },
+    { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, maxGuests: 8, baseGuests: 6, extraGuestFee: 15_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg" },
+    { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, maxGuests: 10, baseGuests: 8, extraGuestFee: 20_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg" },
+    { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg" },
+    { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 6_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg" },
+    { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 9_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg" },
+    { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, maxGuests: 7, baseGuests: 5, extraGuestFee: 12_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg" },
 ]
 
 const ITEMS_PER_PAGE = 6
@@ -57,34 +46,24 @@ export default function SearchResultsPage() {
     const destination = searchParams.get("destination") || "Sri Lanka"
     const checkIn = searchParams.get("checkIn") || ""
     const checkOut = searchParams.get("checkOut") || ""
-    const guests = Math.max(1, Number(searchParams.get("guests") || 2) || 1)
+    const guests = Number(searchParams.get("guests") || 2)
 
     const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
     const [sortBy, setSortBy] = useState("recommended")
     const [page, setPage] = useState(1)
     const [mapOpen, setMapOpen] = useState(false)
-    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
-
-    const guestAdjustedListings = useMemo(() => {
-        return ALL_LISTINGS.map(l => ({
-            ...l,
-            pricePerNight: getGuestAdjustedPrice(l.pricePerNight, guests, l.baseGuests, l.extraGuestFee),
-        }))
-    }, [guests])
 
     // ── Filtering ────────────────────────────────────────────────────────────
     const filtered = useMemo(() => {
         const query = destination.trim().toLowerCase()
-        return guestAdjustedListings.filter(l => {
+        return ALL_LISTINGS.filter(l => {
             // Filter by destination search term (title or location match)
             if (query && query !== "sri lanka") {
                 const matchesTitle = l.title.toLowerCase().includes(query)
                 const matchesLocation = l.location.toLowerCase().includes(query)
                 if (!matchesTitle && !matchesLocation) return false
             }
-            // Filter by guest capacity
-            if (guests > l.maxGuests) return false
             // Filter by price range
             if (l.pricePerNight < filters.priceMin || l.pricePerNight > filters.priceMax) return false
             // Filter by property type
@@ -97,7 +76,7 @@ export default function SearchResultsPage() {
             }
             return true
         })
-    }, [filters, destination, guestAdjustedListings, guests])
+    }, [filters, destination])
 
     // ── Sorting ──────────────────────────────────────────────────────────────
     const sorted = useMemo(() => {
@@ -156,51 +135,18 @@ export default function SearchResultsPage() {
         <div className="min-h-screen bg-[#fafafa]">
 
             {/* ── Main Content ──────────────────────────────────────────────────── */}
-            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-10 sm:pb-16">
-                <div className="flex flex-col lg:flex-row gap-5 lg:gap-8">
+            <div className="max-w-[1440px] mx-auto px-[30px] pt-24 pb-16">
+                <div className="flex gap-8">
 
                     {/* ── Filters Sidebar ─────────────────────────────────────────── */}
-                    <div className="hidden lg:block w-[256px] flex-shrink-0">
-                        <FiltersSidebar
-                            filters={filters}
-                            onChange={handleFiltersChange}
-                            onClear={handleClearFilters}
-                        />
-                    </div>
+                    <FiltersSidebar
+                        filters={filters}
+                        onChange={handleFiltersChange}
+                        onClear={handleClearFilters}
+                    />
 
                     {/* ── Results ─────────────────────────────────────────────────── */}
                     <div className="flex-1 min-w-0">
-
-                        {/* Mobile filter controls */}
-                        <div className="lg:hidden mb-4">
-                            <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-                                <SheetTrigger asChild>
-                                    <button
-                                        className="inline-flex items-center gap-2 rounded-xl border border-[#e0e0e0] bg-white px-4 py-2.5 text-[13px] font-medium text-[#1d1d1d] shadow-sm"
-                                        aria-label="Open filters"
-                                    >
-                                        <SlidersHorizontal size={14} />
-                                        Filters
-                                        <span className="text-[#828282]">({activeFilters.length})</span>
-                                    </button>
-                                </SheetTrigger>
-                                <SheetContent side="left" className="w-[90vw] max-w-[360px] overflow-y-auto p-0">
-                                    <SheetHeader className="border-b border-[#e0e0e0]">
-                                        <SheetTitle>Filters</SheetTitle>
-                                    </SheetHeader>
-                                    <div className="px-4 pb-6 pt-2">
-                                        <FiltersSidebar
-                                            filters={filters}
-                                            onChange={handleFiltersChange}
-                                            onClear={() => {
-                                                handleClearFilters()
-                                                setMobileFiltersOpen(false)
-                                            }}
-                                        />
-                                    </div>
-                                </SheetContent>
-                            </Sheet>
-                        </div>
 
                         {/* Results header */}
                         <ResultsHeader
@@ -218,10 +164,10 @@ export default function SearchResultsPage() {
                         />
 
                         {/* Grid + optional Map split */}
-                        <div className={["flex flex-col lg:flex-row gap-4", mapOpen ? "items-start" : ""].join(" ")}>
+                        <div className={["flex gap-4", mapOpen ? "items-start" : ""].join(" ")}>
 
                             {/* ── Property grid (shrinks when map is open) ── */}
-                            <div className={mapOpen ? "w-full lg:w-[45%] lg:flex-shrink-0" : "flex-1 min-w-0"}>
+                            <div className={mapOpen ? "w-[45%] flex-shrink-0" : "flex-1 min-w-0"}>
 
                                 {paginated.length > 0 ? (
                                     <div className={[
@@ -250,7 +196,7 @@ export default function SearchResultsPage() {
                                             No properties match your filters
                                         </h3>
                                         <p className="text-[14px] text-[#828282] mb-4">
-                                            Try reducing guest count, adjusting your price range, or removing some filters.
+                                            Try adjusting your price range or removing some filters.
                                         </p>
                                         <button
                                             onClick={handleClearFilters}
@@ -265,7 +211,7 @@ export default function SearchResultsPage() {
 
                             {/* ── Map Panel ── */}
                             {mapOpen && (
-                                <div className="hidden lg:block flex-1 sticky top-20" style={{ height: "calc(100vh - 100px)" }}>
+                                <div className="flex-1 sticky top-20" style={{ height: "calc(100vh - 100px)" }}>
                                     <MapView
                                         listings={sorted}
                                         hoveredId={hoveredId}
@@ -277,14 +223,14 @@ export default function SearchResultsPage() {
 
                         {/* ── Pagination ──────────────────────────────────────────────── */}
                         {totalPages > 1 && (
-                            <div className="mt-8 sm:mt-10 flex flex-col items-center gap-3">
-                                <div className="flex items-center gap-1.5 sm:gap-2 max-w-full overflow-x-auto pb-1">
+                            <div className="mt-10 flex flex-col items-center gap-3">
+                                <div className="flex items-center gap-2">
                                     {/* Prev */}
                                     <button
                                         onClick={() => setPage(p => Math.max(1, p - 1))}
                                         disabled={page === 1}
                                         aria-label="Previous page"
-                                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer flex-shrink-0"
+                                        className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
                                     >
                                         <ChevronLeft size={16} />
                                     </button>
@@ -296,7 +242,7 @@ export default function SearchResultsPage() {
                                             id={`page-${p}`}
                                             onClick={() => setPage(p)}
                                             className={[
-                                                "w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-[13px] sm:text-[14px] font-medium transition-colors cursor-pointer border flex-shrink-0",
+                                                "w-9 h-9 rounded-xl text-[14px] font-medium transition-colors cursor-pointer border",
                                                 p === page
                                                     ? "bg-[#953002] text-white border-[#953002]"
                                                     : "bg-white text-[#333333] border-[#e0e0e0] hover:border-[#953002]/40 hover:text-[#953002]",
@@ -311,7 +257,7 @@ export default function SearchResultsPage() {
                                         onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                         disabled={page === totalPages}
                                         aria-label="Next page"
-                                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer flex-shrink-0"
+                                        className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
                                     >
                                         <ChevronRight size={16} />
                                     </button>

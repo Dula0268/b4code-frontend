@@ -258,12 +258,12 @@ export default function SettingsPage() {
 
   return (
     <AdminPageLayout>
-      <div className="max-w-225 w-full mx-auto flex flex-col gap-6">
+      <div className="max-w-[900px] w-full mx-auto flex flex-col gap-6">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-(--gray-3)">
+        <nav className="flex items-center gap-2 text-sm text-[var(--gray-3)]">
           <span>Settings</span>
-          <span className="text-(--gray-4)">›</span>
-          <span className="text-(--brand-primary) font-semibold">
+          <span className="text-[var(--gray-4)]">›</span>
+          <span className="text-[var(--brand-primary)] font-semibold">
             Role Permission
           </span>
         </nav>
@@ -271,29 +271,29 @@ export default function SettingsPage() {
         {/* Page title + action buttons */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="m-0 text-2xl font-extrabold text-(--black-2)">
+            <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">
               Light Permission Settings
             </h1>
-            <p className="m-0 mt-1.5 text-sm text-(--gray-3) max-w-110 leading-relaxed">
+            <p className="m-0 mt-[6px] text-sm text-[var(--gray-3)] max-w-[440px] leading-relaxed">
               Configure granular access control for different user roles in your
               organization. Changes take effect on the next user login.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <button
               type="button"
               onClick={() => {
                 setPermData(defaultPermissions);
                 setSaved(false);
               }}
-              className="px-5 py-2.25 rounded-[10px] border border-(--gray-5) bg-white text-sm font-semibold text-(--gray-2) cursor-pointer hover:bg-[#f9f9f9] transition-colors"
+              className="px-5 py-[9px] rounded-[10px] border border-[var(--gray-5)] bg-white text-sm font-semibold text-[var(--gray-2)] cursor-pointer hover:bg-[#f9f9f9] transition-colors"
             >
               Discard
             </button>
             <button
               type="button"
               onClick={() => setSaved(true)}
-              className="px-5 py-2.25 rounded-[10px] bg-(--brand-primary) text-white border-none text-sm font-semibold cursor-pointer shadow-[0_2px_8px_rgba(149,48,2,0.25)] hover:bg-(--primary-hover) transition-colors"
+              className="px-5 py-[9px] rounded-[10px] bg-[var(--brand-primary)] text-white border-none text-sm font-semibold cursor-pointer shadow-[0_2px_8px_rgba(149,48,2,0.25)] hover:bg-[var(--primary-hover)] transition-colors"
             >
               Save Changes
             </button>
@@ -301,7 +301,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Role tabs — no icons */}
-        <div className="flex items-center bg-white rounded-full border border-(--gray-5) p-1 shadow-sm w-full">
+        <div className="flex items-center bg-white rounded-full border border-[var(--gray-5)] p-1 shadow-sm w-full">
           {roles.map((r) => (
             <button
               key={r}
@@ -311,10 +311,10 @@ export default function SettingsPage() {
                 setSaved(false);
                 setSearch("");
               }}
-              className={`flex-1 py-2.25 rounded-full text-sm font-semibold border-none cursor-pointer transition-colors ${
+              className={`flex-1 py-[9px] rounded-full text-sm font-semibold border-none cursor-pointer transition-colors ${
                 activeRole === r
-                  ? "bg-(--brand-primary) text-white shadow-sm"
-                  : "bg-transparent text-(--gray-2) hover:bg-[#f5f5f5]"
+                  ? "bg-[var(--brand-primary)] text-white shadow-sm"
+                  : "bg-transparent text-[var(--gray-2)] hover:bg-[#f5f5f5]"
               }`}
             >
               {r}
@@ -323,25 +323,25 @@ export default function SettingsPage() {
         </div>
 
         {/* Search bar */}
-        <div className="flex items-center gap-3 px-4 py-2.75 bg-white border border-(--gray-5) rounded-xl shadow-sm">
-          <Search size={15} className="text-(--gray-4) shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-[11px] bg-white border border-[var(--gray-5)] rounded-[12px] shadow-sm">
+          <Search size={15} className="text-[var(--gray-4)] flex-shrink-0" />
           <input
             type="text"
-            placeholder="Search permissions (e.g. ‘refunds’, ‘delete’)…"
+            placeholder="Search permissions (e.g. 'refunds', 'delete')…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 border-none outline-none bg-transparent text-sm text-(--black-2) placeholder:text-(--gray-4)"
+            className="flex-1 border-none outline-none bg-transparent text-sm text-[var(--black-2)] placeholder:text-[var(--gray-4)]"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="text-(--gray-4) bg-transparent border-none cursor-pointer text-xs hover:text-(--gray-2)"
+              className="text-[var(--gray-4)] bg-transparent border-none cursor-pointer text-xs hover:text-[var(--gray-2)]"
             >
               ✕
             </button>
           )}
-          <span className="text-[11px] text-(--gray-4) bg-[#f5f5f5] border border-(--gray-5) rounded px-1.5 py-0.5 font-mono select-none shrink-0">
+          <span className="text-[11px] text-[var(--gray-4)] bg-[#f5f5f5] border border-[var(--gray-5)] rounded px-[6px] py-[2px] font-mono select-none flex-shrink-0">
             ⌘K
           </span>
         </div>
@@ -375,7 +375,7 @@ export default function SettingsPage() {
           {filter(current.user).length === 0 &&
             filter(current.financial).length === 0 &&
             filter(current.system).length === 0 && (
-              <div className="text-center py-12 text-(--gray-3) text-sm">
+              <div className="text-center py-12 text-[var(--gray-3)] text-sm">
                 No permissions match &ldquo;{search}&rdquo;
               </div>
             )}

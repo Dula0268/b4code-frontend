@@ -11,7 +11,6 @@ import {
 import type { PropertyDetail, Room } from "@/lib/mock-properties"
 import { Calendar } from "@/components/ui/calendar"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
-import { useIsMobile } from "@/hooks/use-mobile"
 import { addDays, differenceInDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 
@@ -21,7 +20,6 @@ function formatLKR(n: number) {
 
 function RoomDetailPageContent({ property, room }: { property: PropertyDetail; room: Room }) {
     const searchParams = useSearchParams()
-    const isMobile = useIsMobile()
 
     // Parse initial dates from URL
     const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : new Date(2026, 9, 10)
@@ -67,15 +65,13 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const taxes = 500
     const discount = isPromoApplied ? totalRoomPrice * 0.2 : 0 // 20% discount on room price
     const finalTotal = totalRoomPrice + serviceFee + taxes - discount
-    const checkInParam = date?.from ? format(date.from, "yyyy-MM-dd") : ""
-    const checkOutParam = date?.to ? format(date.to, "yyyy-MM-dd") : ""
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
-            <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-14 sm:pb-20">
+            <div className="max-w-[1200px] mx-auto px-6 pt-24 pb-20">
 
                 {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-                <nav className="flex items-center gap-1.5 text-[12px] sm:text-[13px] mb-5 overflow-x-auto whitespace-nowrap pb-1">
+                <nav className="flex items-center gap-1.5 text-[13px] mb-5">
                     <Link href="/" aria-label="Home" className="text-[#828282] hover:text-[#953002] transition-colors flex items-center">
                         <Home size={15} />
                     </Link>
@@ -101,10 +97,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="currentColor" strokeWidth={0} />)}
                         </div>
                     </div>
-                    <h1 className="text-[clamp(26px,6.5vw,32px)] font-bold text-[#1d1d1d] leading-tight mb-2">
+                    <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">
                         {room.name}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] sm:text-[14px] text-[#555]">
+                    <div className="flex items-center gap-4 text-[14px] text-[#555]">
                         <span className="flex items-center gap-1.5"><MapPin size={15} className="text-[#953002]" /> {property.location}, Sri Lanka</span>
                         <span className="flex items-center gap-1.5"><SquareDot size={15} /> {room.sqft} sq ft</span>
                         <span className="flex items-center gap-1.5"><Users size={15} /> Up to {room.maxGuests} Guests</span>
@@ -112,10 +108,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                 </div>
 
                 {/* ── Photo Gallery Grid ──────────────────────────────────────────────── */}
-                <div className="relative mb-8 sm:mb-10 h-[260px] sm:h-[460px] rounded-2xl overflow-hidden flex gap-2">
+                <div className="relative mb-10 h-[460px] rounded-2xl overflow-hidden flex gap-2">
                     {/* Left primary image */}
                     <div
-                        className="w-full sm:w-[50%] h-full relative cursor-pointer group"
+                        className="w-[50%] h-full relative cursor-pointer group"
                         onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }}
                     >
                         <Image
@@ -129,7 +125,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                     </div>
 
                     {/* Right 4 smaller images */}
-                    <div className="hidden sm:grid w-[50%] grid-cols-2 grid-rows-2 gap-2 h-full">
+                    <div className="w-[50%] grid grid-cols-2 grid-rows-2 gap-2 h-full">
                         {property.galleryImages.slice(0, 4).map((img, i) => (
                             <div
                                 key={i}
@@ -157,10 +153,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                 </div>
 
                 {/* ── Main Layout ────────────────────────────────────────────────────── */}
-                <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
+                <div className="flex gap-10 items-start">
 
                     {/* ── LEFT COLUMN ─────────────────────────────────────────────────── */}
-                    <div className="flex-1 min-w-0 flex flex-col gap-8 sm:gap-10">
+                    <div className="flex-1 min-w-0 flex flex-col gap-10">
 
                         {/* About this room */}
                         <div>
@@ -179,7 +175,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                         {/* Room Amenities */}
                         <div>
                             <h2 className="text-[22px] font-bold text-[#1d1d1d] mb-5">Room Amenities</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 sm:gap-y-6 gap-x-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                                 {/* Merge property base amenities and room features mentally */}
                                 <div className="flex items-center gap-3 text-[14px] font-medium text-[#333]">
                                     <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
@@ -222,9 +218,9 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
                         {/* Availability */}
                         <div>
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
+                            <div className="flex items-center justify-between mb-5">
                                 <h2 className="text-[22px] font-bold text-[#1d1d1d]">Availability</h2>
-                                <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[12px] sm:text-[13px] font-medium text-[#555]">
+                                <div className="flex items-center gap-4 text-[13px] font-medium text-[#555]">
                                     <span className="flex items-center gap-1.5">
                                         <span className="w-3 h-3 rounded-full bg-[#953002]"></span> Selected
                                     </span>
@@ -236,13 +232,13 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
                             {/* Calendar Block */}
                             <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-sm w-full overflow-x-auto">
-                                <div className="min-w-0 sm:min-w-[550px] flex justify-center [&_[data-selected-single=true]]:!bg-[#953002] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[#953002] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[#953002] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[#953002]">
+                                <div className="min-w-[550px] flex justify-center [&_[data-selected-single=true]]:!bg-[#953002] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[#953002] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[#953002] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[#953002]">
                                     <Calendar
                                         mode="range"
                                         defaultMonth={date?.from || new Date(2026, 9, 1)}
                                         selected={date}
                                         onSelect={setDate}
-                                        numberOfMonths={isMobile ? 1 : 2}
+                                        numberOfMonths={2}
                                         disabled={bgBooked}
                                         modifiers={{ booked: bgBooked }}
                                         modifiersClassNames={{ booked: "line-through !text-[#E07070] opacity-70 !bg-[#E07070]/10" }}
@@ -254,7 +250,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                     </div>
 
                     {/* ── RIGHT COLUMN (Sidebar) ──────────────────────────────────────── */}
-                    <div className="w-full lg:w-[360px] flex-shrink-0 lg:sticky lg:top-24 flex flex-col gap-6">
+                    <div className="w-[360px] flex-shrink-0 sticky top-24 flex flex-col gap-6">
 
                         {/* Payment Options */}
                         <div className="flex flex-col gap-3">
@@ -292,7 +288,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                         </div>
 
                         {/* Price Summary Card */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-xl shadow-black/[0.03]">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-xl shadow-black/[0.03]">
                             <div className="flex items-baseline gap-1 mb-5">
                                 <span className="text-[24px] font-bold text-[#1d1d1d]">{formatLKR(room.pricePerNight)}</span>
                                 <span className="text-[14px] text-[#828282] font-medium">/ night</span>
@@ -323,7 +319,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
                                     {guestOpen && (
                                         <div
-                                            className="absolute top-full left-0 right-0 sm:right-auto mt-2 bg-white rounded-xl z-50 shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]"
+                                            className="absolute top-full left-0 mt-2 bg-white rounded-xl z-50 shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]"
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <GuestPicker value={guests} onChange={setGuests} />
@@ -357,7 +353,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 <button className="text-[14px] font-semibold text-[#953002] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between">
                                     <span>Have a promo code? {isPromoApplied && "✅ Applied"}</span>
                                 </button>
-                                <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                                <div className="mt-3 flex gap-2">
                                     <input
                                         type="text"
                                         placeholder="Enter code"
@@ -386,20 +382,8 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             </div>
 
                             <Link
-                                href={{
-                                    pathname: "/guest/booking/confirmation",
-                                    query: {
-                                        propertyId: property.id,
-                                        roomId: room.id,
-                                        roomType: room.name,
-                                        checkIn: checkInParam,
-                                        checkOut: checkOutParam,
-                                        guests: guests.adults + guests.children,
-                                        total: Math.round(finalTotal),
-                                        paidInFull: payNow ? "1" : "0",
-                                    },
-                                }}
-                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-3.5 sm:py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
+                                href="/guest/booking/confirmation"
+                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
                             >
                                 Confirm & Book <ArrowRight size={18} />
                             </Link>
@@ -426,7 +410,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
             {/* ── Fullscreen Gallery Modal ─────────────────────────────────────────── */}
             {galleryOpen && (
                 <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
-                    <div className="flex items-center justify-between px-4 sm:px-6 py-4 flex-shrink-0">
+                    <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
                         <p className="text-white text-[14px] font-semibold">
                             {activeGalleryIdx + 1} / {allImages.length}
                         </p>
@@ -449,7 +433,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             />
                         </div>
                     </div>
-                    <div className="flex-shrink-0 px-4 sm:px-6 py-4 flex gap-2 overflow-x-auto justify-start sm:justify-center">
+                    <div className="flex-shrink-0 px-6 py-4 flex gap-2 overflow-x-auto justify-center">
                         {allImages.map((img, i) => (
                             <button
                                 key={i}

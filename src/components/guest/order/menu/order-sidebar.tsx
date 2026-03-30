@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/store/guest/order/cart-store";
 
 export default function OrderSidebar({ formatLkr }: { formatLkr: (n: number) => string }) {
