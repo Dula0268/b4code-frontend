@@ -17,6 +17,7 @@ export default function StaffPage() {
         searchPlaceholder="Search order #, room, or item..."
       />
       <main className="mt-[72px] flex-1">
+        //staff dashboard 
         <StaffDashboard />
       </main>
     </StaffPageLayout>
