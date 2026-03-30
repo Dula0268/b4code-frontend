@@ -26,13 +26,13 @@ import {
 /* ───────────────────── data ───────────────────── */
 
 const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard", active: false },
-    { icon: Building2, label: "Properties", active: false },
-    { icon: DoorOpen, label: "Rooms", active: false },
-    { icon: CalendarCheck, label: "Availability", active: false },
-    { icon: DollarSign, label: "Pricing", active: false },
-    { icon: ClipboardList, label: "Reservation", active: false },
-    { icon: Settings, label: "Settings", active: false },
+    { icon: LayoutDashboard, label: "Dashboard", active: false, href: "/owner/ownerDashboard" },
+    { icon: Building2, label: "Properties", active: false, href: "/owner/properties" },
+    { icon: DoorOpen, label: "Rooms", active: false, href: "#" },
+    { icon: CalendarCheck, label: "Availability", active: false, href: "/owner/availability/weeklyCalendar" },
+    { icon: DollarSign, label: "Pricing", active: false, href: "/owner/rate" },
+    { icon: ClipboardList, label: "Reservation", active: false, href: "/owner/reservation" },
+    { icon: Settings, label: "Settings", active: false, href: "/owner/setting/propertySetting" },
 ];
 
 interface Conversation {
@@ -167,7 +167,7 @@ export default function MessagePage() {
                         return (
                             <a
                                 key={item.label}
-                                href="#"
+                                href={item.href}
                                 className={`flex items-center gap-2 py-2 px-3 text-[12px] font-medium no-underline border-l-[3px] transition-all duration-150 ${
                                     item.active
                                         ? "text-[#953002] bg-[#fef5ef] border-[#953002] font-semibold"
