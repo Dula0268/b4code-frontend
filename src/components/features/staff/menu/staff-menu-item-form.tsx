@@ -16,7 +16,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 
 let variantUid = 1000;
 let modifierUid = 2000;
-let optionUid = 3000;
 
 export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; itemId?: string }) {
   const router = useRouter();
