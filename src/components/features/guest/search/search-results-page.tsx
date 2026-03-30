@@ -4,12 +4,12 @@ import { useState, useMemo } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
-import ResultsHeader from "./results-header"
-import PropertyCard, { type PropertyListing } from "./property-card"
+import ResultsHeader from "./components/results-header"
+import PropertyCard, { type PropertyListing } from "./components/property-card"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 // Dynamically import the map (Leaflet must not run on server)
-const MapView = dynamic(() => import("./map-view"), { ssr: false })
+const MapView = dynamic(() => import("./components/map-view"), { ssr: false })
 
 // ─── Mock listing data ────────────────────────────────────────────────────
 const ALL_LISTINGS: PropertyListing[] = [
