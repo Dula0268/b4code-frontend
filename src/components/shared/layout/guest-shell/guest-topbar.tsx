@@ -131,13 +131,6 @@ export default function GuestTopbar() {
                   </div>
 
                   <Link
-                    href="/guest/booking/my-bookings"
-                    onClick={() => setAccountMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#4f4f4f] hover:bg-[#f8f8f8] hover:text-[#953002] transition-colors no-underline"
-                  >
-                    <CalendarCheck size={15} /> My Bookings
-                  </Link>
-                  <Link
                     href="/guest/account"
                     onClick={() => setAccountMenuOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#4f4f4f] hover:bg-[#f8f8f8] hover:text-[#953002] transition-colors no-underline"

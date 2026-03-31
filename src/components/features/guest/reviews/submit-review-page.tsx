@@ -4,7 +4,7 @@ import { useState, useRef } from "react"
 import { Star, X, Camera } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -54,6 +54,9 @@ function SmallStarRating({ value, onChange }: { value: number; onChange: (r: num
 
 export default function SubmitReviewPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const ratingParam = Number(searchParams.get('rating')) || 5
+
     const [photos, setPhotos] = useState<{ url: string; name: string }[]>([
         { url: "/images/room-features/resort-exterior.png", name: "photo-1" },
         { url: "/images/room-features/food-beverage.png", name: "photo-2" },
@@ -68,7 +71,7 @@ export default function SubmitReviewPage() {
     } = useForm<ReviewFormValues>({
         resolver: zodResolver(reviewSchema),
         defaultValues: {
-            overallRating: 0,
+            overallRating: ratingParam,
             cleanliness: 4,
             service: 5,
             valueForMoney: 4,
@@ -114,24 +117,7 @@ export default function SubmitReviewPage() {
                 {/* Form Container */}
                 <form onSubmit={handleSubmit(onSubmit)} className="ps-card p-6 md:p-10 mb-8">
                     
-                    {/* Overall Rating */}
-                    <div className="flex flex-col items-center mb-10">
-                        <h2 className="text-[16px] font-bold text-[var(--fg)] mb-4">How was your overall experience?</h2>
-                        <Controller
-                            name="overallRating"
-                            control={control}
-                            render={({ field }) => (
-                                <StarRating value={field.value} onChange={field.onChange} size={36} />
-                            )}
-                        />
-                        {errors.overallRating ? (
-                            <span className="text-[12px] text-[var(--state-error)] mt-3 font-semibold">{errors.overallRating.message}</span>
-                        ) : (
-                            <span className="text-[12px] text-[var(--muted)] mt-3">Select a star to rate</span>
-                        )}
-                    </div>
-
-                    <div className="w-full h-px bg-[var(--border)] mb-8" />
+                    {/* We no longer ask for Overall Rating because it's captured previously */}
 
                     {/* Detailed Ratings */}
                     <div className="mb-10">
