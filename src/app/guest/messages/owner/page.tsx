@@ -1,4 +1,4 @@
-import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import MessageOwnerPage from "@/components/features/guest/messages/message-owner-page"
 
 export const metadata = {
@@ -9,7 +9,7 @@ export const metadata = {
 export default function MessageOwnerRoute() {
     return (
         <>
-            <BookingTopbar />
+            <GuestTopbar />
             <main>
                 <MessageOwnerPage />
             </main>

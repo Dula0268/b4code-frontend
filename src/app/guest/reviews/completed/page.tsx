@@ -1,4 +1,4 @@
-import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import ReviewCompletedPage from "@/components/features/guest/reviews/review-completed-page"
 
 export const metadata = {
@@ -9,7 +9,7 @@ export const metadata = {
 export default function ReviewCompletedRoute() {
     return (
         <div className="min-h-screen flex flex-col bg-[#f4f4f4]">
-            <BookingTopbar />
+            <GuestTopbar />
             <main className="flex-1">
                 <ReviewCompletedPage />
             </main>

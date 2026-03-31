@@ -2,12 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { CalendarCheck, BedDouble, User } from "lucide-react"
+import { CalendarCheck, User } from "lucide-react"
 import Logo from "@/components/shared/branding/logo"
 
 const NAV_ITEMS = [
     { label: "My Bookings", href: "/guest/booking/my-bookings", icon: CalendarCheck },
-    { label: "My Room", href: "/guest/my-room", icon: BedDouble },
 ]
 
 export default function BookingTopbar() {

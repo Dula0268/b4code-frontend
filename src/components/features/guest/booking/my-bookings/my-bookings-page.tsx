@@ -16,6 +16,7 @@ import {
     ChevronRight,
     RefreshCw,
     FileText,
+    BedDouble,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -183,6 +184,12 @@ function BookingCard({ booking }: { booking: Booking }) {
                 <div className="flex items-center gap-2.5 flex-wrap mt-1">
                     {isUpcoming && (
                         <>
+                            <Link
+                                href="/guest/my-room"
+                                className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
+                            >
+                                <BedDouble size={14} /> My Room
+                            </Link>
                             <Link
                                 href="/guest/messages/owner"
                                 className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
