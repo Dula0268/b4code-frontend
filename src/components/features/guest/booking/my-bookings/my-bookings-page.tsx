@@ -6,8 +6,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
     MapPin,
-    CalendarDays,
-    Users,
     MessageSquare,
     Pencil,
     XCircle,
@@ -304,7 +302,7 @@ export default function MyBookingsPage() {
                         </div>
                         <div className="flex-1">
                             <h3 className="text-[14px] font-bold text-[#1d1d1d]">Reminder: Upcoming stay in 3 days!</h3>
-                            <p className="text-[12px] text-[#666] mt-0.5">Your trip to <strong>Oceanview Luxury Retreat</strong> starts soon. Don't forget to pack your essentials and check in online.</p>
+                            <p className="text-[12px] text-[#666] mt-0.5">Your trip to <strong>Oceanview Luxury Retreat</strong> starts soon. Don&apos;t forget to pack your essentials and check in online.</p>
                         </div>
                         <Link href="/guest/booking/modify" className="hidden sm:inline-flex text-[12px] font-bold text-[#953002] hover:underline whitespace-nowrap">View Details →</Link>
                     </div>

@@ -78,7 +78,7 @@ export const useGuestBookingSearchStore = create<
   removeFilter: (id) =>
     set((state) => {
       const { filters } = state;
-      let newFilters = { ...filters };
+      const newFilters = { ...filters };
       if (id === "price") {
         newFilters.priceMin = 10_000;
         newFilters.priceMax = 500_000;

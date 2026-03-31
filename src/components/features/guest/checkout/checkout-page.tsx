@@ -33,6 +33,24 @@ const checkoutSchema = z.object({
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>
 
+type BookingDetails = {
+  property: {
+    title: string
+    roomInfo: string
+    rating: number
+    reviews: number
+    imageSrc: string
+  }
+  dates: string
+  price: {
+    base: number
+    taxes: number
+    serviceFee: number
+    discount: number
+  }
+  originalParams: string
+}
+
 function parseIsoDate(raw: string | null) {
   if (!raw) return null
   const parsed = new Date(`${raw}T00:00:00`)
@@ -43,7 +61,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [bookingDetails, setBookingDetails] = useState<any>(null)
+  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null)
 
   // ─── Auth state ──────────────────────────────────────────────────────────
   const { user, checkEmailExists, logout } = useAuthStore()

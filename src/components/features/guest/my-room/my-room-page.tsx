@@ -4,7 +4,14 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Zap, Compass, Star, QrCode, MessageSquare, Send, MapPin, CheckCircle, XCircle, FileText, ChevronRight, Loader2, Wifi, Wind, Tv, Lock, Coffee, Sparkles } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { Zap, Compass, Star, QrCode, MessageSquare, MapPin, CheckCircle, XCircle, FileText, ChevronRight, Loader2, Wifi, Wind, Tv, Lock, Coffee, Sparkles } from "lucide-react"
+
+type Cta = {
+    label: string
+    icon: LucideIcon
+    href: string
+}
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const GUEST = { name: "Mr. Smith", room: "Room 402", type: "Deluxe Ocean Suite", wifi: "LuxeHorizon_Guest (5G)" }
@@ -149,7 +156,7 @@ export default function MyRoomPage() {
                                 <CheckCircle size={40} className="text-[#27AE60]" />
                             </div>
                             <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2 mx-auto">Location Confirmed!</h2>
-                            <p className="text-[14px] text-[#555] mb-6 mx-auto">We've verified you are at {HOTEL_NAME}. Please select your payment method and provide your receipt to access My Room.</p>
+                            <p className="text-[14px] text-[#555] mb-6 mx-auto">We&apos;ve verified you are at {HOTEL_NAME}. Please select your payment method and provide your receipt to access My Room.</p>
 
                             {!paymentType ? (
                                 <div className="space-y-3">
@@ -274,7 +281,7 @@ export default function MyRoomPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         {QUICK_ACTIONS.map(action => {
                             // Render standard card content
-                            const renderCardContent = (ctaObj: any) => (
+                            const renderCardContent = (ctaObj: Cta) => (
                                 <>
                                     <Image
                                         src={action.imageSrc}
@@ -408,7 +415,7 @@ export default function MyRoomPage() {
                             How is your stay at <span className="text-[#f0a500]">{HOTEL_NAME}?</span>
                         </h2>
                         <p className="text-[14px] sm:text-[15px] text-gray-300 leading-relaxed mb-8 max-w-[480px] mx-auto">
-                            Hi {GUEST_FIRST}, we want to make sure your experience is nothing short of perfect. Let us know how we're doing by leaving a quick review!
+                            Hi {GUEST_FIRST}, we want to make sure your experience is nothing short of perfect. Let us know how we&apos;re doing by leaving a quick review!
                         </p>
                         
                         <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl w-full max-w-sm mx-auto border border-white/20">
