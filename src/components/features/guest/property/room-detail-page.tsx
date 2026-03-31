@@ -34,9 +34,6 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
     const [descExpanded, setDescExpanded] = useState(false)
 
-    // Default checked payment option
-    const [payNow, setPayNow] = useState(true)
-
     const allImages = [room.imageSrc, ...(property.galleryImages || [])]
 
     // Calendar & Booking State setup
@@ -63,10 +60,21 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
     const nights = date?.from && date?.to ? Math.max(1, differenceInDays(date.to, date.from)) : 1
     const totalRoomPrice = room.pricePerNight * nights
+    
+    // Guest calculations
+    const BASE_GUESTS = 2;
+    const EXTRA_GUEST_FEE_PER_NIGHT = 5000;
+    const totalGuests = guests.adults + guests.children;
+    const isGuestLimitExceeded = totalGuests > room.maxGuests;
+    
+    const extraGuests = Math.max(0, totalGuests - BASE_GUESTS);
+    const extraGuestFeeTotal = extraGuests * EXTRA_GUEST_FEE_PER_NIGHT * nights;
+
+    const baseSubtotal = totalRoomPrice + extraGuestFeeTotal;
     const serviceFee = 1000
     const taxes = 500
-    const discount = isPromoApplied ? totalRoomPrice * 0.2 : 0 // 20% discount on room price
-    const finalTotal = totalRoomPrice + serviceFee + taxes - discount
+    const discount = isPromoApplied ? baseSubtotal * 0.2 : 0 // 20% discount on base subtotal
+    const finalTotal = baseSubtotal + serviceFee + taxes - discount
     const checkInParam = date?.from ? format(date.from, "yyyy-MM-dd") : ""
     const checkOutParam = date?.to ? format(date.to, "yyyy-MM-dd") : ""
 
@@ -256,41 +264,6 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                     {/* ── RIGHT COLUMN (Sidebar) ──────────────────────────────────────── */}
                     <div className="w-full lg:w-[360px] flex-shrink-0 lg:sticky lg:top-24 flex flex-col gap-6">
 
-                        {/* Payment Options */}
-                        <div className="flex flex-col gap-3">
-                            <label
-                                className={`flex items-start gap-4 p-4 border rounded-2xl cursor-pointer transition-all ${payNow ? "border-[#953002] bg-[#fffcfb]" : "border-[#e0e0e0] bg-white hover:border-[#bbb]"}`}
-                                onClick={() => setPayNow(true)}
-                            >
-                                <div className="mt-0.5 relative flex items-center justify-center w-5 h-5 rounded-full border-2 border-[#953002]">
-                                    {payNow && <div className="w-2.5 h-2.5 rounded-full bg-[#953002]" />}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#953002" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
-                                        <span className="font-bold text-[#1d1d1d]">Pay Now</span>
-                                    </div>
-                                    <p className="text-[12px] text-[#555] leading-snug">Safe and secure digital payment. Includes 5% discount.</p>
-                                </div>
-                            </label>
-
-                            <label
-                                className={`flex items-start gap-4 p-4 border rounded-2xl cursor-pointer transition-all ${!payNow ? "border-[#953002] bg-[#fffcfb]" : "border-[#e0e0e0] bg-white hover:border-[#bbb]"}`}
-                                onClick={() => setPayNow(false)}
-                            >
-                                <div className="mt-0.5 relative flex items-center justify-center w-5 h-5 rounded-full border-2 border-[#bbb]">
-                                    {!payNow && <div className="w-2.5 h-2.5 rounded-full bg-[#953002]" />}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="12" rx="2" /><path d="M7 8v-2a5 5 0 0 1 10 0v2" /></svg>
-                                        <span className="font-bold text-[#1d1d1d]">Pay at Property</span>
-                                    </div>
-                                    <p className="text-[12px] text-[#555] leading-snug">No charge today. Pay directly when you arrive.</p>
-                                </div>
-                            </label>
-                        </div>
-
                         {/* Price Summary Card */}
                         <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-xl shadow-black/[0.03]">
                             <div className="flex items-baseline gap-1 mb-5">
@@ -330,6 +303,11 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                         </div>
                                     )}
                                 </div>
+                                {isGuestLimitExceeded && (
+                                    <div className="p-3 bg-red-50 text-red-600 text-xs sm:text-sm text-center border-t border-[#e0e0e0] font-medium rounded-b-xl">
+                                        Maximum {room.maxGuests} guests allowed for this room.
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex flex-col gap-3 mb-5 border-b border-[#f0f0f0] pb-5">
@@ -337,6 +315,12 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                     <span>{formatLKR(room.pricePerNight)} x {nights} nights</span>
                                     <span className="font-semibold text-[#1d1d1d]">{formatLKR(totalRoomPrice)}</span>
                                 </div>
+                                {extraGuestFeeTotal > 0 && (
+                                    <div className="flex justify-between text-[14px] text-[#555]">
+                                        <span>Extra guest fee ({extraGuests}x LKR 5,000 x {nights} nights)</span>
+                                        <span className="font-semibold text-[#1d1d1d]">{formatLKR(extraGuestFeeTotal)}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-[14px] text-[#555]">
                                     <span>Service Fee</span>
                                     <span className="font-semibold text-[#1d1d1d]">{formatLKR(serviceFee)}</span>
@@ -385,24 +369,33 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 <span className="text-[20px] font-bold text-[#953002]">{formatLKR(finalTotal)}</span>
                             </div>
 
-                            <Link
-                                href={{
-                                    pathname: "/guest/booking/confirmation",
-                                    query: {
-                                        propertyId: property.id,
-                                        roomId: room.id,
-                                        roomType: room.name,
-                                        checkIn: checkInParam,
-                                        checkOut: checkOutParam,
-                                        guests: guests.adults + guests.children,
-                                        total: Math.round(finalTotal),
-                                        paidInFull: payNow ? "1" : "0",
-                                    },
-                                }}
-                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-3.5 sm:py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
-                            >
-                                Confirm & Book <ArrowRight size={18} />
-                            </Link>
+                            {isGuestLimitExceeded ? (
+                                <button
+                                    disabled
+                                    className="w-full bg-gray-400 text-white font-bold text-[15px] py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2 mb-4 cursor-not-allowed"
+                                >
+                                    Guest Limit Exceeded <ArrowRight size={18} strokeWidth={2.5} />
+                                </button>
+                            ) : (
+                                <Link
+                                    href={{
+                                        pathname: "/guest/checkout",
+                                        query: {
+                                            propertyId: property.id,
+                                            roomId: room.id,
+                                            roomType: room.name,
+                                            checkIn: checkInParam,
+                                            checkOut: checkOutParam,
+                                            guests: guests.adults + guests.children,
+                                            total: Math.round(finalTotal),
+                                            paidInFull: "1",
+                                        },
+                                    }}
+                                    className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-3.5 sm:py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
+                                >
+                                    Confirm & Book <ArrowRight size={18} strokeWidth={2.5} />
+                                </Link>
+                            )}
 
                             <div className="text-center text-[13px] text-[#828282] mb-6">You won&apos;t be charged yet</div>
 

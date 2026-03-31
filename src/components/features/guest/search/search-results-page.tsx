@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
+import { useGuestBookingSearchStore } from "@/store/guest/booking/search.store"
 import { ResultsHeader, PropertyCard, type PropertyListing } from "./components"
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
 import {
@@ -17,26 +18,31 @@ import {
 // Dynamically import the map (Leaflet must not run on server)
 const MapView = dynamic(() => import("./components/map-view"), { ssr: false })
 
+import { ALL_PROPERTIES } from "@/lib/mock-properties"
+
 function getGuestAdjustedPrice(basePrice: number, guests: number, baseGuests: number, extraGuestFee: number) {
     const extraGuests = Math.max(0, guests - baseGuests)
     return basePrice + extraGuests * extraGuestFee
 }
 
-// ─── Mock listing data ────────────────────────────────────────────────────
-const ALL_LISTINGS: PropertyListing[] = [
-    { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg", maxGuests: 2, baseGuests: 1, extraGuestFee: 3_500 },
-    { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg", maxGuests: 3, baseGuests: 2, extraGuestFee: 3_000 },
-    { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg", maxGuests: 6, baseGuests: 2, extraGuestFee: 5_500 },
-    { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 4_000 },
-    { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg", maxGuests: 5, baseGuests: 2, extraGuestFee: 5_000 },
-    { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 3_500 },
-    { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg", maxGuests: 8, baseGuests: 2, extraGuestFee: 6_000 },
-    { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg", maxGuests: 10, baseGuests: 2, extraGuestFee: 8_000 },
-    { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 4_500 },
-    { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg", maxGuests: 2, baseGuests: 1, extraGuestFee: 2_500 },
-    { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg", maxGuests: 4, baseGuests: 2, extraGuestFee: 4_000 },
-    { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg", maxGuests: 6, baseGuests: 2, extraGuestFee: 5_500 },
-]
+// ─── Map listing data dynamically to match real Room boundaries ────────
+const ALL_LISTINGS: PropertyListing[] = ALL_PROPERTIES.map(p => {
+    const validMaxGuests = Math.max(...p.rooms.map(r => r.maxGuests))
+    return {
+        id: p.id,
+        title: p.title,
+        location: p.location,
+        propertyType: p.propertyType,
+        pricePerNight: p.pricePerNight,
+        rating: p.rating,
+        reviewCount: p.reviewCount,
+        badge: p.badge,
+        imageSrc: p.imageSrc,
+        maxGuests: validMaxGuests,
+        baseGuests: 2,
+        extraGuestFee: 5000
+    }
+})
 
 const ITEMS_PER_PAGE = 6
 
@@ -59,12 +65,22 @@ export default function SearchResultsPage() {
     const checkOut = searchParams.get("checkOut") || ""
     const guests = Math.max(1, Number(searchParams.get("guests") || 2) || 1)
 
-    const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
-    const [sortBy, setSortBy] = useState("recommended")
-    const [page, setPage] = useState(1)
-    const [mapOpen, setMapOpen] = useState(false)
-    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-    const [hoveredId, setHoveredId] = useState<string | null>(null)
+    const {
+        filters,
+        sortBy,
+        page,
+        mapOpen,
+        mobileFiltersOpen,
+        hoveredId,
+        setFilters,
+        setSortBy,
+        setPage,
+        setMapOpen,
+        setMobileFiltersOpen,
+        setHoveredId,
+        clearFilters,
+        removeFilter
+    } = useGuestBookingSearchStore()
 
     const guestAdjustedListings = useMemo(() => {
         return ALL_LISTINGS.map(l => ({
@@ -115,14 +131,10 @@ export default function SearchResultsPage() {
     const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE)
     const paginated = sorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
-    const handleClearFilters = () => {
-        setFilters(DEFAULT_FILTERS)
-        setPage(1)
-    }
+    const handleClearFilters = clearFilters
 
     const handleFiltersChange = (next: FilterState) => {
         setFilters(next)
-        setPage(1)
     }
 
     // ── Build active filter chips ────────────────────────────────────────────
@@ -140,16 +152,7 @@ export default function SearchResultsPage() {
         activeFilters.push({ id: "amenity-kitchen", label: "Kitchen" })
     }
 
-    const handleRemoveFilter = (id: string) => {
-        if (id === "price") {
-            setFilters(f => ({ ...f, priceMin: 10_000, priceMax: 500_000 }))
-        } else if (id.startsWith("type-")) {
-            const pt = id.replace("type-", "")
-            setFilters(f => ({ ...f, propertyTypes: f.propertyTypes.filter(t => t !== pt) }))
-        } else if (id === "amenity-kitchen") {
-            setFilters(f => ({ ...f, amenities: f.amenities.filter(a => a !== "Kitchen") }))
-        }
-    }
+    const handleRemoveFilter = removeFilter
 
 
     return (

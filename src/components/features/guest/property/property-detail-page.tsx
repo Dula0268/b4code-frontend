@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import {
     MapPin, Share2, Heart, Star, ChevronRight, Home, Wifi, Wind, Waves,
     Dumbbell, Car, Utensils, ShieldCheck, Coffee, Leaf, Bike, BookOpen,
@@ -43,6 +44,9 @@ function RatingBar({ label, score }: { label: string; score: number }) {
 
 // ─── Room Card ────────────────────────────────────────────────────────────────
 function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
+    const searchParams = useSearchParams()
+    const query = searchParams && searchParams.toString() ? `?${searchParams.toString()}` : ""
+
     const tagStyle =
         room.tag === "Refundable"
             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
@@ -95,7 +99,7 @@ function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
                     <p className="text-[11px] text-[#828282]">per night</p>
                 </div>
                 <Link
-                    href={`/guest/property/${propertyId}/room/${room.id}`}
+                    href={`/guest/property/${propertyId}/room/${room.id}${query}`}
                     id={`select-room-${room.id}`}
                     className="px-4 py-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap block w-full sm:w-auto text-center"
                 >
