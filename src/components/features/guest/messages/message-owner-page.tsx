@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import {
-    Send, Plus, Clock, CalendarCheck, ParkingCircle, Building2,
+    Send, Paperclip, Clock, CalendarCheck, ParkingCircle, Building2,
     CalendarDays, BadgeCheck, Lightbulb, CheckCircle2,
 } from "lucide-react"
 
@@ -159,8 +159,8 @@ export default function MessageOwnerPage() {
                         {/* Message Input */}
                         <div className="px-5 py-4 border-t border-[var(--border)] bg-[var(--bg)]/50">
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                                <button className="w-8 h-8 rounded-full border border-[var(--brand-primary)] text-[var(--brand-primary)] flex items-center justify-center hover:bg-[var(--brand-primary)]/5 transition-colors cursor-pointer flex-shrink-0">
-                                    <Plus size={16} />
+                                <button className="w-9 h-9 rounded-full border border-[var(--border)] text-[var(--muted)] flex items-center justify-center hover:bg-[var(--gray-5)] transition-colors cursor-pointer flex-shrink-0" title="Attach file">
+                                    <Paperclip size={16} />
                                 </button>
                                 <input
                                     id="host-message-input"

@@ -17,6 +17,7 @@ import {
     RefreshCw,
     FileText,
     BedDouble,
+    Bell,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -294,6 +295,20 @@ export default function MyBookingsPage() {
                         </button>
                     ))}
                 </div>
+
+                {/* Reminders / Notifications */}
+                {(activeTab === "ALL" || activeTab === "UPCOMING") && (
+                    <div className="mb-6 bg-[#fff4eb] border border-[#f0a500]/30 rounded-2xl p-4 sm:p-5 flex items-start sm:items-center gap-4 shadow-[0_2px_12px_rgba(240,165,0,0.06)]">
+                        <div className="w-10 h-10 rounded-full bg-[#f0a500]/20 flex items-center justify-center text-[#953002] flex-shrink-0">
+                            <Bell size={18} className="animate-pulse" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-[14px] font-bold text-[#1d1d1d]">Reminder: Upcoming stay in 3 days!</h3>
+                            <p className="text-[12px] text-[#666] mt-0.5">Your trip to <strong>Oceanview Luxury Retreat</strong> starts soon. Don't forget to pack your essentials and check in online.</p>
+                        </div>
+                        <Link href="/guest/booking/modify" className="hidden sm:inline-flex text-[12px] font-bold text-[#953002] hover:underline whitespace-nowrap">View Details →</Link>
+                    </div>
+                )}
 
                 {/* Cards */}
                 <div className="flex flex-col gap-5">
