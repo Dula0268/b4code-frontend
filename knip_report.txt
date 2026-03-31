@@ -1,0 +1,161 @@
+﻿[93m[4mUnused files[24m[39m (111)
+src/lib/axios.ts                                                       
+src/components/ui/accordion.tsx                                        
+src/components/ui/badge.tsx                                            
+src/components/ui/command.tsx                                          
+src/components/ui/dialog.tsx                                           
+src/components/ui/dropdown-menu.tsx                                    
+src/components/ui/form.tsx                                             
+src/components/ui/popover.tsx                                          
+src/components/ui/select.tsx                                           
+src/components/ui/skeleton.tsx                                         
+src/components/ui/sonner.tsx                                           
+src/components/ui/switch.tsx                                           
+src/components/ui/table.tsx                                            
+src/components/ui/tabs.tsx                                             
+src/components/ui/textarea.tsx                                         
+src/store/auth/rbac.store.ts                                           
+src/store/core/app.store.ts                                            
+src/store/core/ui.store.ts                                             
+src/components/features/auth/auth-layout.tsx                           
+src/components/features/auth/forgot-password-form.tsx                  
+src/components/features/auth/login-form.tsx                            
+src/components/features/auth/register-form.tsx                         
+src/components/shared/auth/protected-route.tsx                         
+src/components/shared/auth/role-guard.tsx                              
+src/components/shared/data-display/badge.tsx                           
+src/components/shared/data-display/empty-state.tsx                     
+src/components/shared/data-display/stat-card.tsx                       
+src/components/shared/branding/avatar-menu.tsx                         
+src/components/shared/feedback/confirm-dialog.tsx                      
+src/components/shared/feedback/error-boundary.tsx                      
+src/components/shared/feedback/loading.tsx                             
+src/components/shared/feedback/toast-provider.tsx                      
+src/components/shared/forms/checkbox.tsx                               
+src/components/shared/forms/date-picker.tsx                            
+src/components/shared/forms/file-upload.tsx                            
+src/components/shared/forms/input.tsx                                  
+src/components/shared/forms/select.tsx                                 
+src/components/shared/forms/switch.tsx                                 
+src/components/shared/forms/textarea.tsx                               
+src/components/shared/layout/page-container.tsx                        
+src/components/shared/navigation/breadcrumbs.tsx                       
+src/components/shared/navigation/filter-bar.tsx                        
+src/components/shared/navigation/pagination.tsx                        
+src/components/shared/navigation/tabs.tsx                              
+src/store/admin/analytics/admin-analytics.store.ts                     
+src/store/admin/audit/admin-audit.store.ts                             
+src/store/admin/disputes/admin-disputes.store.ts                       
+src/store/admin/users/admin-users.store.ts                             
+src/store/guest/messaging/chat.store.ts                                
+src/store/guest/messaging/threads.store.ts                             
+src/store/guest/booking/booking.store.ts                               
+src/store/guest/ordering/cart.store.ts                                 
+src/store/guest/ordering/menu.store.ts                                 
+src/store/guest/ordering/order-context.store.ts                        
+src/store/guest/ordering/orders.store.ts                               
+src/store/owner/availability/owner-availability.store.ts               
+src/store/owner/listings/owner-listings.store.ts                       
+src/store/owner/payouts/owner-payouts.store.ts                         
+src/store/staff/messages/staff-chat.store.ts                           
+src/store/staff/messages/staff-inbox.store.ts                          
+src/store/staff/menu/staff-menu.store.ts                               
+src/store/staff/qr/staff-qr.store.ts                                   
+src/store/staff/orders/staff-order-detail.store.ts                     
+src/store/staff/orders/staff-orders.store.ts                           
+src/components/features/admin/analytics/filters.tsx                    
+src/components/features/admin/analytics/kpi-cards.tsx                  
+src/components/features/admin/analytics/occupancy-chart.tsx            
+src/components/features/admin/audit-logs/audit-table.tsx               
+src/components/features/admin/audit-logs/export-actions.tsx            
+src/components/features/admin/disputes/dispute-details.tsx             
+src/components/features/admin/disputes/disputes-table.tsx              
+src/components/features/staff/guest-messages/inbox-list.tsx            
+src/components/features/staff/guest-messages/thread-panel.tsx          
+src/components/features/staff/menu-management/category-manager.tsx     
+src/components/features/staff/menu-management/menu-item-form.tsx       
+src/components/features/staff/menu-management/menu-item-table.tsx      
+src/components/features/staff/order-management/order-details-drawer.tsx
+src/components/features/staff/order-management/order-table.tsx         
+src/components/features/staff/order-management/status-actions.tsx      
+src/components/features/staff/qr-management/qr-generate-modal.tsx      
+src/components/features/staff/qr-management/qr-list.tsx                
+src/components/features/staff/qr-management/qr-print-card.tsx          
+src/components/features/owner/availability/calendar-grid.tsx           
+src/components/features/owner/availability/rate-editor.tsx             
+src/components/features/owner/listings/listing-form.tsx                
+src/components/features/owner/listings/listing-table.tsx               
+src/components/features/owner/listings/media-uploader.tsx              
+src/components/features/owner/payouts/payout-summary.tsx               
+src/components/features/owner/payouts/transactions-table.tsx           
+src/components/guest/order/item-details/index.ts                       
+src/components/guest/order/menu/index.ts                               
+src/components/shared/data-display/data-table/columns.tsx              
+src/components/shared/data-display/data-table/data-table.tsx           
+src/components/shared/data-display/data-table/table-toolbar.tsx        
+src/components/shared/layout/app-shell/app-shell.tsx                   
+src/components/shared/layout/app-shell/nav-item.tsx                    
+src/components/shared/layout/app-shell/sidebar.tsx                     
+src/components/shared/layout/app-shell/topbar.tsx                      
+src/components/features/guest/ordering/cart/cart-item.tsx              
+src/components/features/guest/ordering/cart/cart-sidebar.tsx           
+src/components/features/guest/ordering/cart/cart-summary.tsx           
+src/components/features/guest/ordering/help/contact-staff-card.tsx     
+src/components/features/guest/ordering/help/faq.tsx                    
+src/components/features/guest/ordering/menu/category-tabs.tsx          
+src/components/features/guest/ordering/menu/dish-card.tsx              
+src/components/features/guest/ordering/menu/dish-grid.tsx              
+src/components/features/guest/ordering/menu/menu-screen.tsx            
+src/components/features/guest/ordering/menu/menu-toolbar.tsx           
+src/components/features/guest/ordering/orders/my-orders-list.tsx       
+src/components/features/guest/ordering/orders/order-card.tsx           
+src/components/features/guest/ordering/orders/order-status-pill.tsx    
+[93m[4mUnused dependencies[24m[39m (15)
+@radix-ui/react-accordion      package.json:21:6
+@radix-ui/react-collapsible    package.json:23:6
+@radix-ui/react-dropdown-menu  package.json:25:6
+@radix-ui/react-label          package.json:26:6
+@radix-ui/react-popover        package.json:27:6
+@radix-ui/react-select         package.json:29:6
+@radix-ui/react-switch         package.json:32:6
+@radix-ui/react-tabs           package.json:33:6
+@radix-ui/react-tooltip        package.json:34:6
+@tanstack/react-table          package.json:35:6
+axios                          package.json:37:6
+cmdk                           package.json:40:6
+next-themes                    package.json:45:6
+react-leaflet                  package.json:50:6
+sonner                         package.json:52:6
+[93m[4mUnused devDependencies[24m[39m (4)
+eslint              package.json:63:6
+eslint-config-next  package.json:64:6
+jest                package.json:65:6
+tw-animate-css      package.json:67:6
+[93m[4mUnlisted dependencies[24m[39m (1)
+postcss  postcss.config.mjs
+[93m[4mUnused exports[24m[39m (14)
+CardHeader           src/components/ui/card.tsx:86:3                              
+CardFooter           src/components/ui/card.tsx:87:3                              
+CardTitle            src/components/ui/card.tsx:88:3                              
+CardAction           src/components/ui/card.tsx:89:3                              
+CardDescription      src/components/ui/card.tsx:90:3                              
+CardContent          src/components/ui/card.tsx:91:3                              
+ScrollBar            src/components/ui/scroll-area.tsx:58:22                      
+DEFAULT_FILTERS      src/store/guest/booking/search.store.ts:11:14                
+MapView              src/components/features/guest/search/components/index.ts:5:21
+SheetClose           src/components/ui/sheet.tsx:137:3                            
+SheetFooter          src/components/ui/sheet.tsx:140:3                            
+SheetDescription     src/components/ui/sheet.tsx:142:3                            
+CalendarDayButton    src/components/ui/calendar.tsx:221:20                        
+SRI_LANKA_LOCATIONS  src/components/shared/forms/location-picker.tsx:6:14         
+[93m[4mUnused exported types[24m[39m (9)
+LabelProps           type       src/components/ui/label.tsx:11:13                               
+UserProfile          type       src/store/auth/auth.store.ts:5:13                               
+ToastNotification    interface  src/store/admin/moderation/admin-moderation.store.ts:53:18      
+ActionType           type       src/components/features/admin/users/user-activity-log.tsx:174:33
+FilterState          interface  src/store/guest/booking/search.store.ts:3:18                    
+ItemReview           type       src/store/guest/reviews/reviews.store.ts:5:13                   
+GuestPickerProps     interface  src/components/shared/forms/guest-picker.tsx:11:18              
+CalendarPickerProps  interface  src/components/shared/forms/calendar-picker.tsx:36:18           
+LocationPickerProps  interface  src/components/shared/forms/location-picker.tsx:25:18           
+[33m[4mConfiguration hints[24m (1)[39m
