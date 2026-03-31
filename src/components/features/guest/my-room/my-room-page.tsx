@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { LucideIcon } from "lucide-react"
-import { Zap, Compass, Star, QrCode, MessageSquare, MapPin, CheckCircle, XCircle, FileText, ChevronRight, Loader2, Wifi, Wind, Tv, Lock, Coffee, Sparkles } from "lucide-react"
+import { Zap, Compass, Star, QrCode, MessageSquare, MapPin, CheckCircle, XCircle, FileText, ChevronRight, Loader2, Wifi, Wind, Tv, Lock, Coffee, Sparkles, Send } from "lucide-react"
 
 type Cta = {
     label: string
@@ -26,6 +26,7 @@ const QUICK_ACTIONS = [
         title: "Food & Beverage",
         imageSrc: "/images/room/food-beverage.png",
         cta: { label: "Scan QR Code", icon: QrCode, href: "/guest/my-room/qr-scanner" },
+        desktopCta: { label: "Order Online", icon: QrCode, href: "/guest/order" },
     },
     {
         id: "service",
@@ -94,6 +95,20 @@ function StarRating({ rating, onRate }: { rating: number; onRate: (r: number) =>
 export default function MyRoomPage() {
     const router = useRouter()
     const [rating, setRating] = useState(0)
+    const [verificationStatus, setVerificationStatus] = useState<'checking' | 'verified' | 'location_verified' | 'location_failed'>('checking')
+    const [paymentType, setPaymentType] = useState<string>('')
+    const [receiptNumber, setReceiptNumber] = useState('')
+    const [error, setError] = useState('')
+
+    const handleVerifyReceipt = () => {
+        if (!receiptNumber) {
+            setError("Please enter a receipt number.")
+            return
+        }
+        setError("")
+        setVerificationStatus('verified')
+        sessionStorage.setItem('my_room_verified', 'true')
+    }
 
     const handleWriteReview = () => {
         if (rating > 0) {
@@ -104,10 +119,7 @@ export default function MyRoomPage() {
         sessionStorage.setItem('my_room_verified', 'true')
     }
 
-    const handleReviewSubmit = (selectedRating: number) => {
-        setRating(selectedRating)
-        router.push(`/guest/reviews/submit?rating=${selectedRating}`)
-    }
+
 
     if (verificationStatus !== 'verified') {
         return (
@@ -189,7 +201,7 @@ export default function MyRoomPage() {
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                setPaymentType(null)
+                                                setPaymentType('')
                                                 setReceiptNumber('')
                                                 setError('')
                                             }}
