@@ -144,7 +144,7 @@ function RegisterForm() {
                     <div className="relative h-52 md:h-auto md:block">
                         <div className="absolute inset-0 bg-[#1a0a05]" />
                         <Image
-                            src="/images/auth/login-cover.jpg"
+                            src="/login-cover.jpg"
                             alt="PrimeStay registration cover"
                             fill
                             className="object-cover opacity-100"

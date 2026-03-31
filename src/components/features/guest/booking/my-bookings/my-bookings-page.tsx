@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import {
     MapPin,
     MessageSquare,
@@ -109,7 +108,6 @@ function StatusBadge({ status }: { status: BookingStatus }) {
 
 // ─── Booking Card ─────────────────────────────────────────────────────────────
 function BookingCard({ booking }: { booking: Booking }) {
-    const router = useRouter()
     const isCancelled = booking.status === "CANCELLED"
     const isCompleted = booking.status === "COMPLETED"
     const isUpcoming = booking.status === "UPCOMING"
@@ -184,13 +182,7 @@ function BookingCard({ booking }: { booking: Booking }) {
                     {isUpcoming && (
                         <>
                             <Link
-                                href="/guest/my-room"
-                                className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
-                            >
-                                <BedDouble size={14} /> My Room
-                            </Link>
-                            <Link
-                                href="/guest/messages/owner"
+                                href="/guest/booking/message-host"
                                 className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
                             >
                                 <MessageSquare size={14} /> Message Host
@@ -212,22 +204,13 @@ function BookingCard({ booking }: { booking: Booking }) {
 
                     {isCompleted && (
                         <>
-                            <button
-                                onClick={() => window.print()}
-                                className="inline-flex items-center gap-2 border border-[#e0e0e0] hover:border-[#953002] hover:text-[#953002] text-[#555] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer"
-                            >
+                            <button className="inline-flex items-center gap-2 border border-[#e0e0e0] hover:border-[#953002] hover:text-[#953002] text-[#555] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer">
                                 <Download size={13} /> Download Invoice
                             </button>
-                            <button
-                                onClick={() => router.push("/guest/reviews/submit")}
-                                className="inline-flex items-center gap-2 border border-[#e0e0e0] hover:border-[#953002] hover:text-[#953002] text-[#555] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer"
-                            >
+                            <button className="inline-flex items-center gap-2 border border-[#e0e0e0] hover:border-[#953002] hover:text-[#953002] text-[#555] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer">
                                 <Star size={13} /> Rate Stay
                             </button>
-                            <button
-                                onClick={() => router.push("/guest/booking/confirmation")}
-                                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#828282] hover:text-[#953002] transition-colors cursor-pointer ml-auto"
-                            >
+                            <button className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#828282] hover:text-[#953002] transition-colors cursor-pointer ml-auto">
                                 View Details <ChevronRight size={14} />
                             </button>
                         </>
@@ -235,19 +218,13 @@ function BookingCard({ booking }: { booking: Booking }) {
 
                     {isCancelled && (
                         <>
-                            <button
-                                onClick={() => router.push("/guest/search")}
-                                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#953002] hover:underline cursor-pointer"
-                            >
+                            <button className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#953002] hover:underline cursor-pointer">
                                 Rebook Property <RefreshCw size={13} />
                             </button>
                             <span className="text-[#e0e0e0]">|</span>
-                            <Link
-                                href="/guest/booking/cancel"
-                                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#828282] hover:text-[#1d1d1d] cursor-pointer no-underline"
-                            >
+                            <button className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#828282] hover:text-[#1d1d1d] cursor-pointer">
                                 <FileText size={13} /> Cancellation Policy
-                            </Link>
+                            </button>
                         </>
                     )}
                 </div>

@@ -1,0 +1,272 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import {
+  X,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  CircleCheck,
+  XCircle,
+  PauseCircle,
+} from "lucide-react";
+import Toast from "@/components/ui/toast";
+
+interface PayoutDetailPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function PayoutDetailPanel({
+  isOpen,
+  onClose,
+}: PayoutDetailPanelProps) {
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleApprove = () => {
+    setToastMessage("Payout approved successfully.");
+    setTimeout(() => {
+      setToastMessage(null);
+      onClose();
+    }, 2000);
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/20 z-40 transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <div className="fixed top-0 right-0 h-full w-105 bg-white z-50 shadow-2xl overflow-y-auto animate-slideIn">
+        {/* Toast Notification positioned within panel container */}
+        <div className="absolute top-4 left-0 right-0 z-50 flex justify-center px-4">
+          <Toast
+            message={toastMessage || ""}
+            type="success"
+            isVisible={!!toastMessage}
+            onClose={() => setToastMessage(null)}
+          />
+        </div>
+
+        {/* ── Header ── */}
+        <div className="sticky top-0 bg-white px-6 pt-6 pb-4 border-b border-[#F0EBE7] flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-bold text-[#1A1A1A] uppercase tracking-wider">
+              Payout Request
+            </h2>
+            <span className="text-xs text-[#9E7B6A] font-medium">#PR-8821</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg hover:bg-[#F3F4F6] flex items-center justify-center transition"
+          >
+            <X size={18} className="text-[#6B7280]" />
+          </button>
+        </div>
+
+        <div className="px-6 py-5 flex flex-col gap-6">
+          {/* ── Owner Info ── */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-[#C05621] flex items-center justify-center text-white text-sm font-bold">
+                MC
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#1A1A1A]">Michael Chen</p>
+                <p className="text-[11px] text-[#9E7B6A]">Owner since 2021</p>
+              </div>
+            </div>
+            {/* View Profile Link */}
+            <Link
+              href="/admin/users/1"
+              className="text-xs font-semibold text-[#C05621] flex items-center gap-1 hover:underline"
+            >
+              View Profile
+              <ExternalLink size={12} />
+            </Link>
+          </div>
+
+          {/* ── Request Status Timeline ── */}
+          <div>
+            <h3 className="text-sm font-bold text-[#1A1A1A] mb-4">
+              Request Status
+            </h3>
+            <div className="flex flex-col gap-0 relative">
+              {/* Step 1 - Completed */}
+              <div className="flex items-start gap-3 pb-4 relative">
+                <div className="flex flex-col items-center z-10">
+                  <CheckCircle2 size={20} className="text-[#16A34A] shrink-0" />
+                  <div className="w-px h-full bg-[#E5E7EB] absolute top-5 left-[9.5px]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#1A1A1A]">
+                    Request Received
+                  </p>
+                  <p className="text-[11px] text-[#9E7B6A]">Today, 10:23 AM</p>
+                </div>
+              </div>
+
+              {/* Step 2 - Completed */}
+              <div className="flex items-start gap-3 pb-4 relative">
+                <div className="flex flex-col items-center z-10">
+                  <CheckCircle2 size={20} className="text-[#16A34A] shrink-0" />
+                  <div className="w-px h-full bg-[#E5E7EB] absolute top-5 left-[9.5px]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#1A1A1A]">
+                    Balance Validated
+                  </p>
+                  <p className="text-[11px] text-[#9E7B6A]">Today, 10:25 AM</p>
+                </div>
+              </div>
+
+              {/* Step 3 - Pending */}
+              <div className="flex items-start gap-3">
+                <Clock size={20} className="text-[#D97706] shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-[#1A1A1A]">
+                    Awaiting Admin Approval
+                  </p>
+                  <p className="text-[11px] text-[#16A34A] font-medium">
+                    Pending Action
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Financial Breakdown ── */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-5 h-5 rounded bg-[#F3F4F6] flex items-center justify-center">
+                <span className="text-[10px]">📄</span>
+              </div>
+              <h3 className="text-sm font-bold text-[#1A1A1A]">
+                Financial Breakdown
+              </h3>
+            </div>
+
+            <div className="border border-[#F0EBE7] rounded-xl overflow-hidden">
+              {/* Table header */}
+              <div className="flex items-center px-4 py-3 bg-[#FDFAF8] border-b border-[#F0EBE7]">
+                <span className="flex-1 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
+                  Description
+                </span>
+                <span className="text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
+                  Amount
+                </span>
+              </div>
+
+              {/* Booking 1 */}
+              <div className="flex items-center px-4 py-3 border-b border-[#F0EBE7]">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[#1A1A1A]">
+                    Booking #BK-102
+                  </p>
+                  <p className="text-[11px] text-[#9E7B6A]">
+                    Oct 12 – Oct 15, 2023
+                  </p>
+                </div>
+                <span className="text-sm font-medium text-[#1A1A1A]">
+                  LKR 1,200.00
+                </span>
+              </div>
+
+              {/* Booking 2 */}
+              <div className="flex items-center px-4 py-3 border-b border-[#F0EBE7]">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[#1A1A1A]">
+                    Booking #BK-105
+                  </p>
+                  <p className="text-[11px] text-[#9E7B6A]">
+                    Oct 18 – Oct 20, 2023
+                  </p>
+                </div>
+                <span className="text-sm font-medium text-[#1A1A1A]">
+                  LKR 1,800.00
+                </span>
+              </div>
+
+              {/* Gross Amount */}
+              <div className="flex items-center px-4 py-3 border-b border-[#F0EBE7] bg-[#FDFAF8]">
+                <span className="flex-1 text-sm text-[#6B7280]">
+                  Gross Amount
+                </span>
+                <span className="text-sm font-medium text-[#1A1A1A]">
+                  LKR 3,000.00
+                </span>
+              </div>
+
+              {/* Platform Commission */}
+              <div className="flex items-center px-4 py-3 border-b border-[#F0EBE7]">
+                <div className="flex-1">
+                  <p className="text-sm text-[#1A1A1A]">Platform Commission</p>
+                  <p className="text-[11px] text-[#C05621] font-medium">
+                    15% Standard Rate Deduction
+                  </p>
+                </div>
+                <span className="text-sm font-bold text-[#DC2626]">
+                  -LKR 450.00
+                </span>
+              </div>
+
+              {/* Separator */}
+              <div className="px-4 py-1">
+                <div className="border-t-2 border-dashed border-[#E8DDD8]" />
+              </div>
+
+              {/* Net Payout */}
+              <div className="flex items-center px-4 py-3">
+                <span className="flex-1 text-sm font-bold text-[#1A1A1A]">
+                  NET PAYOUT
+                </span>
+                <span className="text-lg font-bold text-[#C05621]">
+                  LKR 2,550.00
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Action Buttons ── */}
+          <div className="flex flex-col gap-3 pt-2">
+            <button
+              onClick={handleApprove}
+              className="w-full py-3.5 rounded-xl bg-[#C05621] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#A04A1C] transition-colors shadow-sm"
+            >
+              <CircleCheck size={18} />
+              Approve Payout
+            </button>
+            <button className="w-full py-3.5 rounded-xl border border-[#E8DDD8] text-[#1A1A1A] text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#FEF2F2] transition-colors">
+              <XCircle size={18} className="text-[#DC2626]" />
+              Reject Payout
+            </button>
+            <button className="w-full py-3.5 rounded-xl border border-[#E8DDD8] text-[#1A1A1A] text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#FFFBEB] transition-colors">
+              <PauseCircle size={18} className="text-[#D97706]" />
+              Hold
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
+        }
+      `}</style>
+    </>
+  );
+}

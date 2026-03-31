@@ -24,16 +24,15 @@ const QUICK_ACTIONS = [
         id: "food",
         badge: "Order Now",
         title: "Food & Beverage",
-        imageSrc: "https://images.unsplash.com/photo-1541544741938-0af808871cc0?q=80&w=800&auto=format&fit=crop",
-        cta: { label: "Scan QR", icon: QrCode, href: "/guest/my-room/qr-scanner" },
-        desktopCta: { label: "View Menu", icon: Zap, href: "/guest/order" },
+        imageSrc: "/images/room/food-beverage.png",
+        cta: { label: "Scan QR Code", icon: QrCode, href: "/guest/my-room/qr-scanner" },
     },
     {
         id: "service",
-        badge: "Request Service",
-        title: "Message Staff",
-        imageSrc: "https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=800&auto=format&fit=crop",
-        cta: { label: "Chat Now", icon: MessageSquare, href: "/guest/messages/staff" },
+        badge: "Gourmet Selection",
+        title: "Room Service",
+        imageSrc: "/images/room/room-service.png",
+        cta: { label: "Message Staff", icon: MessageSquare, href: "/guest/my-room/message-staff" },
     },
 ]
 
@@ -42,19 +41,19 @@ const HOTEL_FACILITIES = [
         id: "pool",
         name: "Pool & Spa",
         desc: "Heated indoor pool & luxury massage treatments.",
-        imageSrc: "https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=600&auto=format&fit=crop",
+        imageSrc: "/images/room/pool-spa.png",
     },
     {
         id: "gym",
         name: "Gym",
         desc: "State-of-the-art equipment available 24/7.",
-        imageSrc: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=600&auto=format&fit=crop",
+        imageSrc: "/images/room/gym.png",
     },
     {
         id: "biz",
         name: "Business Center",
         desc: "Quiet coworking spaces and meeting rooms.",
-        imageSrc: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=600&auto=format&fit=crop",
+        imageSrc: "/images/room/business-center.png",
     },
 ]
 
@@ -96,30 +95,9 @@ export default function MyRoomPage() {
     const router = useRouter()
     const [rating, setRating] = useState(0)
 
-    const [verificationStatus, setVerificationStatus] = useState<'checking' | 'location_verified' | 'location_failed' | 'verified'>('checking')
-    const [paymentType, setPaymentType] = useState<'online' | 'physical' | null>(null)
-    const [receiptNumber, setReceiptNumber] = useState("")
-    const [error, setError] = useState("")
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            if (sessionStorage.getItem('my_room_verified') === 'true') {
-                setVerificationStatus('verified')
-                return
-            }
-        }
-        // Mocking location check that takes 2.5 seconds
-        const timer = setTimeout(() => {
-            setVerificationStatus('location_verified')
-        }, 2500)
-        return () => clearTimeout(timer)
-    }, [])
-
-    const handleVerifyReceipt = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!receiptNumber.trim()) {
-            setError("Please enter a valid receipt number.")
-            return
+    const handleWriteReview = () => {
+        if (rating > 0) {
+            router.push(`/guest/my-room/submit-review?rating=${rating}`)
         }
         setError("")
         setVerificationStatus('verified')
@@ -257,7 +235,7 @@ export default function MyRoomPage() {
 
                 {/* ── Welcome Header ────────────────────────────────────────── */}
                 <div className="mb-8">
-                    <h1 className="text-[28px] sm:text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">
+                    <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">
                         Welcome, {GUEST.name}
                     </h1>
                     <div className="flex flex-wrap items-center gap-3 text-[13px] text-[#555]">
@@ -344,7 +322,7 @@ export default function MyRoomPage() {
                         <h2 className="text-[18px] font-bold text-[#1d1d1d]">Explore the Hotel</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                         {HOTEL_FACILITIES.map(facility => (
                             <div key={facility.id} className="group cursor-pointer">
                                 {/* Image card */}
@@ -354,7 +332,7 @@ export default function MyRoomPage() {
                                         alt={facility.name}
                                         fill
                                         className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                        sizes="33vw"
                                     />
                                     {/* Label overlay */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -396,36 +374,27 @@ export default function MyRoomPage() {
                 </section>
 
                 {/* ── Review Section ────────────────────────────────────────── */}
-                <section className="relative rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12)] p-8 sm:p-12 text-center">
-                    <div className="absolute inset-0">
-                        <Image
-                            src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?q=80&w=1200&auto=format&fit=crop"
-                            alt="Hotel Feedback Background"
-                            fill
-                            className="object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-gray-900/60" />
-                    </div>
-
-                    <div className="relative z-10">
-                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-md text-[#f0a500] mb-4">
-                            <Star size={24} className="fill-[#f0a500]" />
-                        </div>
-                        <h2 className="text-[24px] sm:text-[28px] font-bold text-white mb-2">
-                            How is your stay at <span className="text-[#f0a500]">{HOTEL_NAME}?</span>
-                        </h2>
-                        <p className="text-[14px] sm:text-[15px] text-gray-300 leading-relaxed mb-8 max-w-[480px] mx-auto">
-                            Hi {GUEST_FIRST}, we want to make sure your experience is nothing short of perfect. Let us know how we&apos;re doing by leaving a quick review!
-                        </p>
-                        
-                        <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl w-full max-w-sm mx-auto border border-white/20">
-                            <StarRating rating={rating} onRate={handleReviewSubmit} />
-                        </div>
-                        
-                        <p className="mt-4 text-[13px] text-gray-300 font-medium animate-pulse">
-                            Tap a star to begin your review
-                        </p>
-                    </div>
+                <section className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.07)] p-8 text-center">
+                    <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-2">
+                        How was your stay at{" "}
+                        <span className="text-[#953002]">{HOTEL_NAME}?</span>
+                    </h2>
+                    <p className="text-[13px] text-[#828282] leading-relaxed mb-6 max-w-[420px] mx-auto">
+                        Hi {GUEST_FIRST}, we hope you&apos;re settling back in. Your feedback helps us improve
+                        and helps future travelers find their perfect stay.
+                    </p>
+                    <StarRating rating={rating} onRate={setRating} />
+                    <button
+                        id="write-review-btn"
+                        onClick={handleWriteReview}
+                        disabled={rating === 0}
+                        className="mt-6 inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-[14px] px-8 py-3.5 rounded-xl transition-colors cursor-pointer"
+                    >
+                        Write a Review <Send size={15} />
+                    </button>
+                    {rating === 0 && (
+                        <p className="mt-3 text-[12px] text-[#bbb]">Click a star above to rate your stay first</p>
+                    )}
                 </section>
             </div>
         </div>

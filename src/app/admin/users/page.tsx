@@ -130,7 +130,7 @@ function RoleBadge({ role }: { role: UserRole }) {
   };
   return (
     <span
-      className={`inline-block px-3 py-0.75 rounded-full text-xs font-semibold ${cfg[role]}`}
+      className={`inline-block px-3 py-[3px] rounded-full text-xs font-semibold ${cfg[role]}`}
     >
       {role}
     </span>
@@ -152,10 +152,10 @@ function StatusBadge({ status }: { status: UserStatus }) {
   const { class: classNames, dot } = cfg[status];
   return (
     <span
-      className={`inline-flex items-center gap-1.25 px-3 py-0.75 rounded-full text-xs font-semibold ${classNames}`}
+      className={`inline-flex items-center gap-[5px] px-3 py-[3px] rounded-full text-xs font-semibold ${classNames}`}
     >
       <span
-        className="w-1.5 h-1.5 rounded-full shrink-0"
+        className="w-[6px] h-[6px] rounded-full flex-shrink-0"
         style={{ backgroundColor: dot }}
       />
       {status}
@@ -167,7 +167,7 @@ function StatusBadge({ status }: { status: UserStatus }) {
 function UserAvatar({ user }: { user: User }) {
   return (
     <div
-      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-sm"
+      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
       style={{ backgroundColor: user.avatarColor }}
     >
       {user.avatarInitial}
@@ -207,17 +207,14 @@ export default function UsersManagementPage() {
         {/* ── Page Header ── */}
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="m-0 text-2xl font-extrabold text-(--black-2)">
+            <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">
               User Management
             </h1>
-            <p className="mt-1.5 mb-0 text-sm text-(--gray-3)">
+            <p className="mt-[6px] mb-0 text-sm text-[var(--gray-3)]">
               Manage platform access, roles, and account statuses.
             </p>
           </div>
-          <button
-            onClick={() => router.push("/admin/users/new-user")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-(--brand-primary) text-white border-none cursor-pointer text-sm font-semibold shadow-[0_2px_8px_rgba(149,48,2,0.25)] transition-colors hover:bg-(--primary-hover)"
-          >
+          <button className="flex items-center gap-2 px-5 py-[10px] rounded-[10px] bg-[var(--brand-primary)] text-white border-none cursor-pointer text-sm font-semibold shadow-[0_2px_8px_rgba(149,48,2,0.25)] transition-colors hover:bg-[var(--primary-hover)]">
             <UserPlus size={16} />
             Add New User
           </button>
@@ -226,12 +223,12 @@ export default function UsersManagementPage() {
         {/* ── Table Card ── */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           {/* ── Toolbar ── */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-(--gray-5)">
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--gray-5)]">
             {/* Search */}
-            <div className="relative flex-1 max-w-85">
+            <div className="relative flex-1 max-w-[340px]">
               <Search
                 size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-(--gray-4) pointer-events-none"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-4)] pointer-events-none"
               />
               <input
                 placeholder="Search by name, email, or role..."
@@ -240,7 +237,7 @@ export default function UsersManagementPage() {
                   setSearch(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full py-2.25 pr-3 pl-9 rounded-lg border border-(--gray-5) text-[13px] text-(--black-2) bg-white outline-none box-border"
+                className="w-full py-[9px] pr-3 pl-9 rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] bg-white outline-none box-border"
               />
             </div>
 
@@ -251,7 +248,7 @@ export default function UsersManagementPage() {
             <div className="relative">
               <button
                 onClick={() => setRoleOpen(!roleOpen)}
-                className="flex items-center gap-1.75 px-3.5 py-2 rounded-lg border border-(--gray-5) bg-white text-[13px] text-(--gray-2) cursor-pointer"
+                className="flex items-center gap-[7px] px-[14px] py-2 rounded-lg border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] cursor-pointer"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path
@@ -265,7 +262,7 @@ export default function UsersManagementPage() {
                 <ChevronDown size={13} />
               </button>
               {roleOpen && (
-                <div className="absolute top-[calc(100%+6px)] right-0 bg-white border border-(--gray-5) rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.10)] z-100 min-w-35 overflow-hidden">
+                <div className="absolute top-[calc(100%+6px)] right-0 bg-white border border-[var(--gray-5)] rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.10)] z-[100] min-w-[140px] overflow-hidden">
                   {roles.map((r) => (
                     <button
                       key={r}
@@ -274,10 +271,10 @@ export default function UsersManagementPage() {
                         setRoleOpen(false);
                         setCurrentPage(1);
                       }}
-                      className={`block w-full text-left px-4 py-2.25 border-none text-[13px] cursor-pointer ${
+                      className={`block w-full text-left px-4 py-[9px] border-none text-[13px] cursor-pointer ${
                         roleFilter === r
-                          ? "bg-[rgba(149,48,2,0.07)] text-(--brand-primary) font-semibold"
-                          : "bg-white text-(--gray-2) font-normal"
+                          ? "bg-[rgba(149,48,2,0.07)] text-[var(--brand-primary)] font-semibold"
+                          : "bg-white text-[var(--gray-2)] font-normal"
                       }`}
                     >
                       {r}
@@ -296,7 +293,7 @@ export default function UsersManagementPage() {
                   {["USER", "ROLE", "STATUS", "LAST LOGIN", ""].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-2.75 text-left text-[11.5px] font-bold text-(--gray-3) tracking-[0.06em] uppercase whitespace-nowrap"
+                      className="px-4 py-[11px] text-left text-[11.5px] font-bold text-[var(--gray-3)] tracking-[0.06em] uppercase whitespace-nowrap"
                     >
                       {h}
                     </th>
@@ -308,7 +305,7 @@ export default function UsersManagementPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="py-10 text-center text-(--gray-3) text-sm"
+                      className="py-10 text-center text-[var(--gray-3)] text-sm"
                     >
                       No users found.
                     </td>
@@ -318,44 +315,44 @@ export default function UsersManagementPage() {
                     <tr
                       key={user.id}
                       onClick={() => router.push(`/admin/users/${user.id}`)}
-                      className={`border-t border-(--gray-5) transition-colors cursor-pointer ${
+                      className={`border-t border-[var(--gray-5)] transition-colors cursor-pointer ${
                         idx % 2 === 0 ? "bg-white" : "bg-[#fafafa]"
                       } hover:bg-[#f5efec]`}
                     >
                       {/* User */}
-                      <td className="px-4 py-3.5 min-w-55">
+                      <td className="px-4 py-[14px] min-w-[220px]">
                         <div className="flex items-center gap-3">
                           <UserAvatar user={user} />
                           <div>
-                            <p className="m-0 font-semibold text-(--black-2)">
+                            <p className="m-0 font-semibold text-[var(--black-2)]">
                               {user.name}
                             </p>
-                            <p className="m-0 text-xs text-(--gray-3)">
+                            <p className="m-0 text-xs text-[var(--gray-3)]">
                               {user.email}
                             </p>
                           </div>
                         </div>
                       </td>
                       {/* Role */}
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-[14px]">
                         <RoleBadge role={user.role} />
                       </td>
                       {/* Status */}
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-[14px]">
                         <StatusBadge status={user.status} />
                       </td>
                       {/* Last Login */}
-                      <td className="px-4 py-3.5 whitespace-nowrap">
-                        <span className="text-(--black-2) font-medium">
+                      <td className="px-4 py-[14px] whitespace-nowrap">
+                        <span className="text-[var(--black-2)] font-medium">
                           {user.lastLogin}
                         </span>
-                        <span className="text-(--gray-3) ml-2 text-[13px]">
+                        <span className="text-[var(--gray-3)] ml-2 text-[13px]">
                           {user.lastLoginTime}
                         </span>
                       </td>
                       {/* Actions */}
-                      <td className="px-4 py-3.5 w-10">
-                        <button className="bg-transparent border-none cursor-pointer text-(--gray-4) flex items-center justify-center p-1 rounded-md hover:bg-(--gray-5) hover:text-(--gray-2)">
+                      <td className="px-4 py-[14px] w-10">
+                        <button className="bg-transparent border-none cursor-pointer text-[var(--gray-4)] flex items-center justify-center p-1 rounded-md hover:bg-[var(--gray-5)] hover:text-[var(--gray-2)]">
                           <MoreVertical size={16} />
                         </button>
                       </td>
@@ -367,17 +364,20 @@ export default function UsersManagementPage() {
           </div>
 
           {/* ── Pagination ── */}
-          <div className="flex justify-between items-center px-5 py-3.5 border-t border-(--gray-5)">
-            <span className="text-[13px] text-(--gray-3)">
+          <div className="flex justify-between items-center px-5 py-[14px] border-t border-[var(--gray-5)]">
+            <span className="text-[13px] text-[var(--gray-3)]">
               Showing{" "}
-              <strong className="text-(--black-2)">
+              <strong className="text-[var(--black-2)]">
                 {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
               </strong>{" "}
               to{" "}
-              <strong className="text-(--black-2)">
+              <strong className="text-[var(--black-2)]">
                 {Math.min(currentPage * PAGE_SIZE, filtered.length)}
               </strong>{" "}
-              of <strong className="text-(--black-2)">{filtered.length}</strong>{" "}
+              of{" "}
+              <strong className="text-[var(--black-2)]">
+                {filtered.length}
+              </strong>{" "}
               results
             </span>
 
@@ -386,10 +386,10 @@ export default function UsersManagementPage() {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className={`w-8 h-8 rounded-md border border-(--gray-5) bg-white flex items-center justify-center ${
+                className={`w-8 h-8 rounded-md border border-[var(--gray-5)] bg-white flex items-center justify-center ${
                   currentPage === 1
-                    ? "cursor-not-allowed text-(--gray-4)"
-                    : "cursor-pointer text-(--gray-2)"
+                    ? "cursor-not-allowed text-[var(--gray-4)]"
+                    : "cursor-pointer text-[var(--gray-2)]"
                 }`}
               >
                 <ChevronLeft size={15} />
@@ -402,8 +402,8 @@ export default function UsersManagementPage() {
                   onClick={() => setCurrentPage(p)}
                   className={`w-8 h-8 rounded-md border cursor-pointer text-[13px] ${
                     currentPage === p
-                      ? "border-(--brand-secondary) bg-(--brand-secondary) text-white font-bold"
-                      : "border-(--gray-5) bg-white text-(--gray-2) font-normal"
+                      ? "border-[var(--brand-secondary)] bg-[var(--brand-secondary)] text-white font-bold"
+                      : "border-[var(--gray-5)] bg-white text-[var(--gray-2)] font-normal"
                   }`}
                 >
                   {p}
@@ -416,10 +416,10 @@ export default function UsersManagementPage() {
                   setCurrentPage((p) => Math.min(totalPages, p + 1))
                 }
                 disabled={currentPage === totalPages || totalPages === 0}
-                className={`w-8 h-8 rounded-md border border-(--gray-5) bg-white flex items-center justify-center ${
+                className={`w-8 h-8 rounded-md border border-[var(--gray-5)] bg-white flex items-center justify-center ${
                   currentPage === totalPages
-                    ? "cursor-not-allowed text-(--gray-4)"
-                    : "cursor-pointer text-(--gray-2)"
+                    ? "cursor-not-allowed text-[var(--gray-4)]"
+                    : "cursor-pointer text-[var(--gray-2)]"
                 }`}
               >
                 <ChevronRight size={15} />

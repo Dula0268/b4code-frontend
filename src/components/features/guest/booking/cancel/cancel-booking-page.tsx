@@ -77,15 +77,15 @@ export default function CancelBookingPage() {
                 </p>
 
                 {/* ── Current Booking card ─────────────────────────────────────── */}
-                <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col sm:flex-row gap-0 mb-5">
+                <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden flex gap-0 mb-5">
                     {/* Image */}
-                    <div className="relative w-full sm:w-[140px] h-[180px] sm:h-[105px] flex-shrink-0">
+                    <div className="relative w-[140px] h-[105px] flex-shrink-0">
                         <Image
                             src={BOOKING.imageSrc}
                             alt={BOOKING.property}
                             fill
                             className="object-cover"
-                            sizes="(max-width: 640px) 100vw, 140px"
+                            sizes="140px"
                         />
                     </div>
                     {/* Info */}
