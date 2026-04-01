@@ -3,15 +3,19 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useAuthStore } from "@/store/auth/auth.store"
 import {
     Utensils, Sparkles, AlertCircle, HelpCircle, User, DoorOpen, Send, ChevronLeft
 } from "lucide-react"
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function MessageStaffPage() {
+    const user = useAuthStore((state) => state.user)
+    const guestFirst = user?.profile?.firstName || "Guest"
+
     const [message, setMessage] = useState("")
     const [messages, setMessages] = useState([
-        { id: 1, sender: "staff", text: "Welcome! Please let us know if you need anything during your stay.", timestamp: "Just now" }
+        { id: 1, sender: "staff", text: `Welcome ${guestFirst}! Please let us know if you need anything during your stay.`, timestamp: "Just now" }
     ])
 
     const handleSendMessage = () => {
@@ -33,18 +37,21 @@ export default function MessageStaffPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#f4f4f4] pt-24 pb-16">
+        <div className="min-h-screen bg-[var(--gray-5)]/10 pt-24 pb-16">
             <div className="max-w-[1000px] mx-auto px-4 flex flex-col gap-6">
 
                 {/* ── Page Header ───────────────────────────────────────────── */}
                 <div className="mb-4">
-                    <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-3">
+                    <Link href="/guest/my-room" className="inline-flex items-center gap-1 text-[var(--gray-3)] hover:text-[var(--fg)] text-[14px] font-bold mb-6 no-underline transition-colors">
+                        <ChevronLeft size={16} /> Back to My Room
+                    </Link>
+                    <h1 className="text-[32px] font-bold text-[var(--fg)] leading-tight mb-3">
                         Contact Property Staff
                     </h1>
-                    <p className="text-[17px] font-semibold text-[#953002] leading-snug mb-2">
+                    <p className="text-[17px] font-semibold text-[var(--brand-primary)] leading-snug mb-2">
                         Need help during your stay?
                     </p>
-                    <p className="text-[14px] text-[#828282] max-w-[500px] leading-relaxed">
+                    <p className="text-[14px] text-[var(--gray-2)] max-w-[500px] leading-relaxed">
                         You can message the staff for room service, cleaning, maintenance, or any assistance during your stay.
                     </p>
                 </div>
@@ -56,11 +63,11 @@ export default function MessageStaffPage() {
                     <div className="w-full md:w-[340px] flex-shrink-0">
                         {/* Current Stay Card */}
                         <div className="mb-7">
-                            <h2 className="text-[11px] font-bold text-[#828282] uppercase tracking-widest mb-3 pl-1">
+                            <h2 className="text-[11px] font-bold text-[var(--gray-3)] uppercase tracking-widest mb-3 pl-1">
                                 CURRENT STAY
                             </h2>
-                            <div className="bg-white rounded-[28px] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-                                <div className="relative w-full h-[140px] rounded-2xl overflow-hidden mb-4 bg-[#f0f0f0]">
+                            <div className="bg-[var(--white)] rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-soft)] border border-[var(--border)]">
+                                <div className="relative w-full h-[140px] rounded-[var(--radius-lg)] overflow-hidden mb-4 bg-[var(--gray-5)]/30">
                                     <Image
                                         src="/images/room/resort-exterior.png"
                                         alt="Grand Horizon Resort"
@@ -68,19 +75,19 @@ export default function MessageStaffPage() {
                                         className="object-cover"
                                     />
                                 </div>
-                                <h3 className="text-[18px] font-bold text-[#1d1d1d] mb-1.5 leading-snug">
-                                    Grand Horizon Resort
+                                <h3 className="text-[18px] font-bold text-[var(--fg)] mb-1.5 leading-snug">
+                                    Luxe Horizon Resort
                                 </h3>
-                                <div className="flex items-center gap-2 text-[13px] text-[#828282] font-medium">
-                                    <DoorOpen size={15} className="text-[#a0a0a0]" />
-                                    Room Number: Suite 402
+                                <div className="flex items-center gap-2 text-[13px] text-[var(--gray-2)] font-medium">
+                                    <DoorOpen size={15} className="text-[var(--gray-4)]" />
+                                    Room: Suite 402
                                 </div>
                             </div>
                         </div>
 
                         {/* Quick Requests */}
                         <div>
-                            <h2 className="text-[10px] font-bold text-[#828282] uppercase tracking-widest mb-3 pl-1">
+                            <h2 className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-widest mb-3 pl-1">
                                 QUICK REQUESTS
                             </h2>
                             <div className="flex flex-col gap-2.5">
@@ -93,10 +100,10 @@ export default function MessageStaffPage() {
                                     <button
                                         key={label}
                                         onClick={() => setMessage(label)}
-                                        className="w-full bg-white rounded-full py-4 px-5 flex items-center gap-3 shadow-[0_2px_8px_rgba(0,0,0,0.02)] border border-[#ffffff] hover:border-[#f0a500]/30 transition-colors cursor-pointer"
+                                        className="w-full bg-[var(--white)] rounded-full py-4 px-5 flex items-center gap-3 shadow-[var(--shadow-soft)] border border-[var(--border)] hover:border-[var(--brand-secondary)]/50 transition-colors cursor-pointer"
                                     >
-                                        <Icon size={18} className="text-[#f0a500]" strokeWidth={2.5} />
-                                        <span className="text-[14px] font-bold text-[#1d1d1d]">{label}</span>
+                                        <Icon size={18} className="text-[var(--brand-secondary)]" strokeWidth={2.5} />
+                                        <span className="text-[14px] font-bold text-[var(--fg)]">{label}</span>
                                     </button>
                                 ))}
                             </div>
@@ -104,41 +111,41 @@ export default function MessageStaffPage() {
                     </div>
 
                     {/* Right Area - Chat Interface */}
-                    <div className="flex-1 bg-white rounded-[32px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#f0f0f0] p-6 flex flex-col min-h-[580px]">
+                    <div className="flex-1 bg-[var(--white)] rounded-[24px] shadow-[var(--shadow-card)] border border-[var(--border)] p-6 flex flex-col min-h-[580px]">
 
                         {/* Chat Header */}
-                        <div className="flex items-center gap-3 pb-6 border-b border-[#f0f0f0]">
-                            <div className="w-[42px] h-[42px] rounded-full bg-[#f8efe8] flex items-center justify-center flex-shrink-0 pb-0.5">
-                                <User size={22} className="text-[#953002]" />
+                        <div className="flex items-center gap-3 pb-6 border-b border-[var(--border)]">
+                            <div className="w-[42px] h-[42px] rounded-full bg-[var(--brand-primary)]/10 flex items-center justify-center flex-shrink-0 pb-0.5">
+                                <User size={22} className="text-[var(--brand-primary)]" />
                             </div>
                             <div className="flex flex-col justify-center">
-                                <h2 className="text-[16px] font-bold text-[#1d1d1d] leading-snug">
+                                <h2 className="text-[16px] font-bold text-[var(--fg)] leading-snug">
                                     Chat with Staff
                                 </h2>
-                                <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#27AE60]">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#27AE60]" />
+                                <div className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--state-success)]">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--state-success)]" />
                                     Staff Online
                                 </div>
                             </div>
                         </div>
 
                         {/* Chat Messages */}
-                        <div className="flex-1 py-8 flex flex-col gap-5 overflow-y-auto">
+                        <div className="flex-1 py-8 flex flex-col gap-5 overflow-y-auto pr-2">
                             {messages.map(msg => (
-                                <div key={msg.id} className={`flex items-start gap-4 flex-shrink-0 ${msg.sender === "guest" ? "flex-row-reverse pl-12" : "pr-12"}`}>
+                                <div key={msg.id} className={`flex items-start gap-4 flex-shrink-0 ${msg.sender === "guest" ? "flex-row-reverse" : ""}`}>
                                     {msg.sender === "staff" && (
-                                        <div className="w-[36px] h-[36px] rounded-full bg-[#f8efe8] flex items-center justify-center flex-shrink-0 mt-1 pb-0.5 shadow-sm border border-[#f5ede4]">
-                                            <User size={18} className="text-[#953002]" />
+                                        <div className="w-[36px] h-[36px] rounded-full bg-[var(--black-2)] flex items-center justify-center flex-shrink-0 mt-1 pb-0.5 shadow-sm">
+                                            <User size={18} className="text-[var(--brand-secondary)]" />
                                         </div>
                                     )}
-                                    <div className={`flex flex-col gap-1.5 max-w-[85%] ${msg.sender === "guest" ? "items-end" : ""}`}>
+                                    <div className={`flex flex-col gap-1.5 max-w-[80%] ${msg.sender === "guest" ? "items-end" : ""}`}>
                                         <div className={`shadow-sm px-5 py-4 text-[14px] leading-relaxed ${msg.sender === "guest"
-                                                ? "bg-[#953002] text-white rounded-[20px] rounded-tr-none"
-                                                : "bg-white border border-[#eaeaea] text-[#333] rounded-[20px] rounded-tl-none"
+                                                ? "bg-[var(--black-2)] text-[var(--white)] rounded-[20px] rounded-tr-none"
+                                                : "bg-[var(--gray-5)]/20 border border-[var(--border)] text-[var(--black-3)] rounded-[20px] rounded-tl-none"
                                             }`}>
                                             {msg.text}
                                         </div>
-                                        <span className={`text-[10px] text-[#a0a0a0] font-medium ${msg.sender === "staff" ? "ml-1" : "mr-1"}`}>
+                                        <span className={`text-[10px] text-[var(--gray-4)] font-bold uppercase tracking-wider ${msg.sender === "staff" ? "ml-1" : "mr-1"}`}>
                                             {msg.timestamp}
                                         </span>
                                     </div>
@@ -155,17 +162,17 @@ export default function MessageStaffPage() {
                                     onChange={(e) => setMessage(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                                     placeholder="Type your message to the staff..."
-                                    className="flex-1 bg-[#fafafa] border border-[#ebebeb] hover:border-[#ddd] focus:border-[#953002] focus:ring-1 focus:ring-[#953002] transition-colors rounded-full px-6 py-[15px] text-[14px] text-[#1d1d1d] placeholder:text-[#a0a0a0] outline-none"
+                                    className="flex-1 bg-[var(--gray-5)]/20 border border-[var(--border)] hover:border-[var(--gray-4)] focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] transition-colors rounded-full px-6 py-[15px] text-[14px] text-[var(--fg)] placeholder:text-[var(--gray-4)] outline-none"
                                 />
                                 <button
                                     onClick={handleSendMessage}
-                                    className="bg-[#953002] hover:bg-[#6d2200] text-white rounded-full px-7 py-[15px] flex items-center justify-center gap-2 text-[14px] font-bold transition-colors cursor-pointer shadow-md"
+                                    className="bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)] text-white rounded-full px-7 py-[15px] flex items-center justify-center gap-2 text-[14px] font-bold transition-colors cursor-pointer shadow-[var(--shadow-soft)]"
                                 >
-                                    Send Message <Send size={15} />
+                                    Send <Send size={15} />
                                 </button>
                             </div>
-                            <p className="text-[11px] text-[#a0a0a0] text-center mt-3 font-medium">
-                                Our staff will assist you as quickly as possible.
+                            <p className="text-[11px] text-[var(--gray-4)] text-center mt-3 font-medium">
+                                Our staff will assist you directly to your digital suite terminal.
                             </p>
                         </div>
 

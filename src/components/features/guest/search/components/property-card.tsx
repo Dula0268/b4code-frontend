@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Heart, Star } from "lucide-react"
 
 // ─── Type ─────────────────────────────────────────────────────────────────────
@@ -29,17 +30,19 @@ function formatLKR(amount: number) {
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function PropertyCard({ listing }: { listing: PropertyListing }) {
     const [liked, setLiked] = useState(false)
+    const searchParams = useSearchParams()
+    const query = searchParams && searchParams.toString() ? `?${searchParams.toString()}` : ""
 
     return (
         <Link
-            href={`/guest/property/${listing.id}`}
+            href={`/guest/property/${listing.id}${query}`}
             className="group block no-underline text-inherit"
             aria-label={`View ${listing.title}`}
         >
-            <article className="bg-white rounded-2xl overflow-hidden shadow-[0_2px_16px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95 sm:active:scale-100">
+            <article className="bg-[var(--bg)] rounded-[var(--radius-lg)] overflow-hidden border border-[var(--border)] shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95 sm:active:scale-100">
 
                 {/* ── Image ─────────────────────────────────────────────────── */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-[#f3ede8]">
+                <div className="relative aspect-[4/3] overflow-hidden bg-[var(--gray-5)]">
                     <Image
                         src={listing.imageSrc}
                         alt={listing.title}
@@ -50,7 +53,7 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
 
                     {/* Badge */}
                     {listing.badge && (
-                        <span className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-white text-[#1d1d1d] text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">
+                        <span className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-[var(--bg)] text-[var(--fg)] text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">
                             {listing.badge}
                         </span>
                     )}
@@ -64,8 +67,8 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                             "absolute top-2 sm:top-3 right-2 sm:right-3 w-8 h-8 rounded-full flex items-center justify-center",
                             "transition-all duration-200 cursor-pointer",
                             liked
-                                ? "bg-[#953002] text-white shadow-md"
-                                : "bg-white/80 text-[#333] hover:bg-white hover:text-[#953002] shadow-sm",
+                                ? "bg-[var(--brand-primary)] text-[var(--white)] shadow-md"
+                                : "bg-[var(--white)]/90 text-[var(--gray-2)] hover:bg-[var(--white)] hover:text-[var(--brand-primary)] shadow-sm",
                         ].join(" ")}
                     >
                         <Heart size={15} fill={liked ? "currentColor" : "none"} />
@@ -76,42 +79,39 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                 <div className="p-3 sm:p-4 flex flex-col gap-1.5">
 
                     {/* Property type */}
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-[#953002] uppercase tracking-wider">
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-[var(--brand-primary)] uppercase tracking-wider">
                         {listing.propertyType}
                     </span>
 
                     {/* Name + Rating on same row */}
                     <div className="flex items-start justify-between gap-2">
-                        <h3
-                            className="text-[14px] sm:text-[15px] font-semibold text-[#1d1d1d] leading-snug line-clamp-2 sm:line-clamp-1"
-                            style={{ lineHeight: "1.3" }}
-                        >
+                        <h3 className="text-[14px] sm:text-[15px] font-semibold text-[var(--fg)] leading-snug line-clamp-2 sm:line-clamp-1">
                             {listing.title}
                         </h3>
                         <div className="flex items-center gap-0.5 flex-shrink-0">
-                            <Star size={12} className="text-[#ffb401]" fill="#ffb401" />
-                            <span className="text-[12px] sm:text-[13px] font-semibold text-[#1d1d1d]">
+                            <Star size={12} className="text-[var(--brand-secondary)]" fill="currentColor" />
+                            <span className="text-[12px] sm:text-[13px] font-semibold text-[var(--fg)]">
                                 {listing.rating.toFixed(2)}
                             </span>
                         </div>
                     </div>
 
-                    {/* Review count */}
-                    <p className="text-[11px] sm:text-[12px] text-[#828282]">
+                    {/* Review count & Guests */}
+                    <p className="text-[11px] sm:text-[12px] text-[var(--muted)]">
                         {listing.reviewCount.toLocaleString()} reviews
                     </p>
-                    <p className="text-[11px] sm:text-[12px] text-[#828282]">
+                    <p className="text-[11px] sm:text-[12px] text-[var(--muted)]">
                         Up to {listing.maxGuests} guest{listing.maxGuests !== 1 ? "s" : ""}
                     </p>
 
                     {/* Divider + Starting price */}
-                    <div className="border-t border-[#f0f0f0] mt-1 pt-2">
-                        <p className="text-[12px] sm:text-[13px] text-[#828282]">
+                    <div className="border-t border-[var(--border)] mt-1 pt-2">
+                        <p className="text-[12px] sm:text-[13px] text-[var(--muted)]">
                             Starting from{" "}
-                            <span className="text-[14px] sm:text-[15px] font-bold text-[#1d1d1d]">
+                            <span className="text-[14px] sm:text-[15px] font-bold text-[var(--fg)]">
                                 {formatLKR(listing.pricePerNight)}
                             </span>
-                            <span className="text-[11px] sm:text-[12px] font-normal text-[#828282]"> / night</span>
+                            <span className="text-[11px] sm:text-[12px] font-normal text-[var(--muted)]"> / night</span>
                         </p>
                     </div>
 

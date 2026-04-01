@@ -1,4 +1,4 @@
-import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import SubmitReviewPage from "@/components/features/guest/my-room/submit-review-page"
 
 export const metadata = {
@@ -9,7 +9,7 @@ export const metadata = {
 export default function SubmitReviewRoute() {
     return (
         <div className="min-h-screen flex flex-col bg-[#f4f4f4]">
-            <BookingTopbar />
+            <GuestTopbar />
             <main className="flex-1">
                 <SubmitReviewPage />
             </main>
