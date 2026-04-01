@@ -29,6 +29,11 @@ function RegisterForm() {
 
     const [role, setRole] = useState<Role>("guest");
 
+    // Clear any previous global auth errors on mount
+    useEffect(() => {
+        setError(null);
+    }, [setError]);
+
     // Initialize role from query params
     useEffect(() => {
         const roleParam = searchParams.get("role") as Role;

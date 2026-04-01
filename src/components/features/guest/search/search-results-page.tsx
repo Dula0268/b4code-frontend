@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
@@ -94,7 +94,7 @@ export default function SearchResultsPage() {
     const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE)
     const paginated = sorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
-    const handleClearFilters = clearFilters
+    const handleClearFilters = () => setFilters(DEFAULT_FILTERS)
 
     const handleFiltersChange = (next: FilterState) => {
         setFilters(next)
@@ -115,7 +115,23 @@ export default function SearchResultsPage() {
         activeFilters.push({ id: "amenity-kitchen", label: "Kitchen" })
     }
 
-    const handleRemoveFilter = removeFilter
+    const handleRemoveFilter = (filterId: string) => {
+        setFilters(prev => {
+            if (filterId === "price") {
+                return { ...prev, priceMin: DEFAULT_FILTERS.priceMin, priceMax: DEFAULT_FILTERS.priceMax }
+            }
+            if (filterId.startsWith("type-")) {
+                const pType = filterId.replace("type-", "")
+                return { ...prev, propertyTypes: prev.propertyTypes.filter(t => t !== pType) }
+            }
+            if (filterId.startsWith("amenity-")) {
+                const am = filterId.replace("amenity-", "")
+                // Basic cleanup, this is hardcoded for kitchen but expands easily
+                return { ...prev, amenities: prev.amenities.filter(a => a.toLowerCase() !== am) }
+            }
+            return prev
+        })
+    }
 
 
     return (
