@@ -287,21 +287,25 @@ export default function MyRoomPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-                    {/* 3) QR Food Ordering Card — with Scan QR camera button */}
-                    <div className="bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--secondary-active)] rounded-[28px] relative overflow-hidden shadow-[var(--shadow-card)] text-white group hover:shadow-[0_16px_40px_rgba(255,180,1,0.35)] transition-shadow">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/4 pointer-events-none transition-transform group-hover:scale-110 duration-700"></div>
+                    {/* 3) QR Food Ordering Card — with hero image */}
+                    <div className="bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--secondary-active)] rounded-[28px] relative overflow-hidden shadow-[var(--shadow-card)] text-white group hover:shadow-[0_16px_40px_rgba(255,180,1,0.35)] transition-shadow flex flex-col">
+                        {/* Hero Image */}
+                        <div className="relative w-full h-[180px]">
+                            <Image src="/images/room/restaurant-menu-hero.png" alt="Restaurant dining" fill className="object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-secondary)] via-[var(--brand-secondary)]/40 to-transparent"></div>
+                            <div className="absolute top-4 left-4 inline-flex items-center gap-2 px-3 py-1 bg-black/20 backdrop-blur-sm rounded-full text-[12px] font-bold uppercase tracking-widest text-white">
+                                <Utensils size={14} /> Restaurant Menu
+                            </div>
+                        </div>
                         
-                        <div className="relative z-10 flex flex-col h-full justify-between">
-                            <div className="p-8 pb-0">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-black/10 backdrop-blur-sm rounded-full text-[12px] font-bold uppercase tracking-widest mb-4 text-[var(--black-2)]">
-                                    <Utensils size={14} /> Restaurant Menu
-                                </div>
+                        <div className="relative z-10 flex flex-col flex-1 justify-between">
+                            <div className="px-8 pt-5 pb-0">
                                 <h3 className="text-[28px] font-bold leading-tight mb-2 text-[var(--black-2)]">Craving<br/>something special?</h3>
                                 <p className="text-[var(--black-2)]/80 text-[15px] max-w-[260px] leading-relaxed font-semibold">
                                     Browse our digital menu or scan the QR code in your room.
                                 </p>
                             </div>
-                            <div className="p-8 pt-6 flex flex-col gap-3">
+                            <div className="p-8 pt-5 flex flex-col gap-3">
                                 {/* Mobile only — Scan QR Code */}
                                 <button 
                                     onClick={startCamera}

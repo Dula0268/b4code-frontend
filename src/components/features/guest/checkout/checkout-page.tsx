@@ -9,6 +9,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { getPropertyById } from "@/lib/mock-properties"
 import { differenceInDays, format } from "date-fns"
 import { useAuthStore } from "@/store/auth/auth.store"
+import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 
 // ─── Zod Validation Schema ────────────────────────────────────────────────────
 const checkoutSchema = z.object({
@@ -138,9 +139,58 @@ export default function CheckoutPage() {
   const completeBooking = async (data: CheckoutFormValues) => {
     setIsSubmitting(true)
     await new Promise(resolve => setTimeout(resolve, 1500))
+
+    const confirmationCode = 'B4C-' + Math.floor(Math.random() * 1000000)
+    const bookingId = 'bk-' + Date.now()
+    const paidInFull = data.paymentMethod === 'online'
+
+    // Parse dates from search params
+    const checkInRaw = searchParams?.get('checkIn') || ''
+    const checkOutRaw = searchParams?.get('checkOut') || ''
+    const checkInDate = checkInRaw ? new Date(`${checkInRaw}T00:00:00`) : new Date()
+    const checkOutDate = checkOutRaw ? new Date(`${checkOutRaw}T00:00:00`) : new Date()
+    const propertyId = searchParams?.get('propertyId') || ''
+    const roomId = searchParams?.get('roomId') || ''
+    const guestCount = parseInt(searchParams?.get('guests') || '2', 10)
+    const nights = Math.max(1, differenceInDays(checkOutDate, checkInDate))
+
+    const property = propertyId ? getPropertyById(propertyId) : null
+    const room = property && roomId ? property.rooms.find(r => r.id === roomId) : null
+
+    // Save to booking store
+    useGuestBookingStore.getState().addBooking({
+      id: bookingId,
+      confirmationCode,
+      status: 'UPCOMING',
+      property: bookingDetails.property.title,
+      propertyId,
+      location: property?.location || 'Sri Lanka',
+      imageSrc: bookingDetails.property.imageSrc,
+      roomName: room?.name || 'Premium Room',
+      roomId,
+      checkIn: checkInRaw,
+      checkOut: checkOutRaw,
+      checkInFormatted: format(checkInDate, 'MMM d'),
+      checkOutFormatted: format(checkOutDate, 'MMM d, yyyy'),
+      guests: guestCount,
+      guestsLabel: `${guestCount} Guest${guestCount > 1 ? 's' : ''}`,
+      nights,
+      nightsLabel: `Total for ${nights} night${nights > 1 ? 's' : ''}`,
+      totalPrice: Math.round(total),
+      basePrice: bookingDetails.price.base,
+      taxes: Math.round(bookingDetails.price.taxes),
+      serviceFee: bookingDetails.price.serviceFee,
+      discount: Math.round(discountAmount),
+      paymentMethod: data.paymentMethod,
+      paidInFull,
+      nationalId: data.nationalId || undefined,
+      bookedAt: new Date().toISOString(),
+      userEmail: user?.email || '',
+    })
+
     const returnParams = new URLSearchParams(bookingDetails.originalParams)
-    returnParams.set('confirmationCode', 'B4C-' + Math.floor(Math.random() * 1000000))
-    returnParams.set('paidInFull', data.paymentMethod === 'online' ? '1' : '0')
+    returnParams.set('confirmationCode', confirmationCode)
+    returnParams.set('paidInFull', paidInFull ? '1' : '0')
     router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
   }
 
