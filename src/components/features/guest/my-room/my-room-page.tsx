@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -95,19 +95,30 @@ function StarRating({ rating, onRate }: { rating: number; onRate: (r: number) =>
 export default function MyRoomPage() {
     const router = useRouter()
     const [rating, setRating] = useState(0)
-    const [verificationStatus, setVerificationStatus] = useState<'checking' | 'verified' | 'location_verified' | 'location_failed'>('checking')
-    const [paymentType, setPaymentType] = useState<string>('')
-    const [receiptNumber, setReceiptNumber] = useState('')
+    const [verificationStatus, setVerificationStatus] = useState<'otp_entry' | 'verifying' | 'verified'>('otp_entry')
+    const [otp, setOtp] = useState('')
     const [error, setError] = useState('')
 
-    const handleVerifyReceipt = () => {
-        if (!receiptNumber) {
-            setError("Please enter a receipt number.")
+    // Effect to check if already verified in session
+    useEffect(() => {
+        if (typeof window !== 'undefined' && sessionStorage.getItem('my_room_verified') === 'true') {
+            setVerificationStatus('verified')
+        }
+    }, [])
+
+    const handleVerifyOtp = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (otp.length < 4) {
+            setError("Please enter a valid 4-digit PIN.")
             return
         }
         setError("")
-        setVerificationStatus('verified')
-        sessionStorage.setItem('my_room_verified', 'true')
+        setVerificationStatus('verifying')
+        
+        setTimeout(() => {
+            setVerificationStatus('verified')
+            sessionStorage.setItem('my_room_verified', 'true')
+        }, 1500)
     }
 
     const handleWriteReview = () => {
@@ -126,114 +137,57 @@ export default function MyRoomPage() {
             <div className="min-h-screen bg-[#f4f4f4] flex items-center justify-center p-4 pt-20">
                 <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] max-w-md w-full p-8 text-center border border-[#e8e8e8] animate-in slide-in-from-bottom-4 duration-500">
 
-                    {verificationStatus === 'checking' && (
-                        <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
+                    {verificationStatus === 'verifying' ? (
+                        <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300 py-8">
                             <div className="w-20 h-20 bg-[#953002]/10 rounded-full flex items-center justify-center mb-6 relative">
-                                <MapPin size={36} className="text-[#953002]" />
+                                <Lock size={36} className="text-[#953002]" />
                                 <span className="absolute inset-0 rounded-full border-4 border-[#953002] animate-ping opacity-20" />
                             </div>
-                            <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2">Verifying Location</h2>
-                            <p className="text-[14px] text-[#555] mb-6">Please wait while we trace your location to confirm your presence at {HOTEL_NAME}...</p>
+                            <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2">Verifying PIN</h2>
+                            <p className="text-[14px] text-[#555] mb-6">Confirming your arrival with reception...</p>
                             <div className="flex items-center justify-center gap-2 text-[#953002] font-semibold text-[14px]">
-                                <Loader2 size={18} className="animate-spin" /> Tracing Location...
+                                <Loader2 size={18} className="animate-spin" /> Verifying...
                             </div>
                         </div>
-                    )}
-
-                    {verificationStatus === 'location_verified' && (
+                    ) : (
                         <div className="flex flex-col animate-in fade-in zoom-in duration-300">
-                            <div className="w-20 h-20 bg-[#27AE60]/10 rounded-full flex items-center justify-center mb-4 mx-auto">
-                                <CheckCircle size={40} className="text-[#27AE60]" />
+                            <div className="w-20 h-20 bg-[#953002]/10 rounded-full flex items-center justify-center mb-4 mx-auto">
+                                <QrCode size={40} className="text-[#953002]" />
                             </div>
-                            <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2 mx-auto">Location Confirmed!</h2>
-                            <p className="text-[14px] text-[#555] mb-6 mx-auto">We&apos;ve verified you are at {HOTEL_NAME}. Please select your payment method and provide your receipt to access My Room.</p>
+                            <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2 mx-auto">Welcome to {HOTEL_NAME}</h2>
+                            <p className="text-[14px] text-[#555] mb-6 mx-auto">
+                                To access your room details and smart keys, please enter the 4-digit <strong>Arrival PIN</strong> provided by the receptionist.
+                            </p>
 
-                            {!paymentType ? (
-                                <div className="space-y-3">
+                            <form onSubmit={handleVerifyOtp} className="space-y-4 text-left animate-in slide-in-from-bottom-4 duration-300">
+                                <div>
+                                    <label className="block text-[14px] font-bold text-[#4f4f4f] mb-2">
+                                        Arrival PIN (OTP)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        maxLength={4}
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                                        placeholder="e.g. 1234"
+                                        className="w-full px-4 py-3.5 bg-[#f8f8f8] border border-[#e0e0e0] rounded-xl text-[20px] tracking-[0.5em] text-center font-bold focus:outline-none focus:ring-2 focus:ring-[#953002]/20 focus:border-[#953002] transition-all"
+                                        autoFocus
+                                    />
+                                    {error && <p className="text-red-500 text-[13px] font-medium mt-2 flex items-center gap-1.5"><XCircle size={14} /> {error}</p>}
+                                </div>
+                                <div className="pt-4">
                                     <button
-                                        onClick={() => setPaymentType('online')}
-                                        className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-[#e0e0e0] hover:border-[#953002] hover:bg-[#953002]/5 transition-all group cursor-pointer"
+                                        type="submit"
+                                        className="w-full px-4 py-3.5 bg-[#953002] text-white text-[15px] font-bold rounded-xl hover:bg-[#6d2200] transition-colors shadow-[0_4px_14px_rgba(149,48,2,0.3)] cursor-pointer"
                                     >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-white shadow-sm border border-[#e8e8e8] group-hover:border-[#953002]/30 rounded-lg flex items-center justify-center transition-colors">
-                                                <FileText size={22} className="text-[#4f4f4f] group-hover:text-[#953002]" />
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="font-bold text-[#1d1d1d] text-[16px] leading-tight">Paid Online</p>
-                                                <p className="text-[#828282] text-[13px] mt-0.5">I have an online receipt number</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={20} className="text-[#bbb] group-hover:text-[#953002] transform group-hover:translate-x-1 transition-transform" />
-                                    </button>
-                                    <button
-                                        onClick={() => setPaymentType('physical')}
-                                        className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-[#e0e0e0] hover:border-[#953002] hover:bg-[#953002]/5 transition-all group cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-white shadow-sm border border-[#e8e8e8] group-hover:border-[#953002]/30 rounded-lg flex items-center justify-center transition-colors">
-                                                <FileText size={22} className="text-[#4f4f4f] group-hover:text-[#953002]" />
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="font-bold text-[#1d1d1d] text-[16px] leading-tight">Pay at Property</p>
-                                                <p className="text-[#828282] text-[13px] mt-0.5">I have a physical receipt from hotel</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={20} className="text-[#bbb] group-hover:text-[#953002] transform group-hover:translate-x-1 transition-transform" />
+                                        Unlock My Room
                                     </button>
                                 </div>
-                            ) : (
-                                <form onSubmit={handleVerifyReceipt} className="space-y-4 text-left animate-in slide-in-from-bottom-4 duration-300">
-                                    <div>
-                                        <label className="block text-[14px] font-bold text-[#4f4f4f] mb-2">
-                                            {paymentType === 'online' ? 'Online Receipt Number' : 'Physical Receipt Number'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={receiptNumber}
-                                            onChange={(e) => setReceiptNumber(e.target.value)}
-                                            placeholder={paymentType === 'online' ? 'e.g. REC-12345678' : 'e.g. 008923'}
-                                            className="w-full px-4 py-3.5 bg-[#f8f8f8] border border-[#e0e0e0] rounded-xl text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-[#953002]/20 focus:border-[#953002] transition-all"
-                                            autoFocus
-                                        />
-                                        {error && <p className="text-red-500 text-[13px] font-medium mt-2 flex items-center gap-1.5"><XCircle size={14} /> {error}</p>}
-                                    </div>
-                                    <div className="flex gap-3 pt-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setPaymentType('')
-                                                setReceiptNumber('')
-                                                setError('')
-                                            }}
-                                            className="flex-1 px-4 py-3.5 bg-white border-2 border-[#e0e0e0] text-[#4f4f4f] text-[15px] font-bold rounded-xl hover:bg-[#f8f8f8] hover:border-[#d0d0d0] transition-colors cursor-pointer"
-                                        >
-                                            Back
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="flex-[2] px-4 py-3.5 bg-[#953002] text-white text-[15px] font-bold rounded-xl hover:bg-[#6d2200] transition-colors shadow-[0_4px_14px_rgba(149,48,2,0.3)] cursor-pointer"
-                                        >
-                                            Verify & Access
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                        </div>
-                    )}
-
-                    {verificationStatus === 'location_failed' && (
-                        <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
-                            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
-                                <XCircle size={40} className="text-red-500" />
-                            </div>
-                            <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2">Verification Failed</h2>
-                            <p className="text-[14px] text-[#555] mb-8">We could not verify that you are currently at {HOTEL_NAME}. Please ensure your location services are enabled and you are on the property.</p>
-                            <button
-                                onClick={() => setVerificationStatus('checking')}
-                                className="w-full py-4 bg-[#953002] text-white text-[15px] font-bold rounded-xl hover:bg-[#6d2200] transition-colors shadow-[0_4px_14px_rgba(149,48,2,0.3)] cursor-pointer"
-                            >
-                                Try Locating Again
-                            </button>
+                            </form>
+                            
+                            <p className="text-[12px] text-[#828282] mt-6 leading-relaxed">
+                                Haven't checked in yet? Please visit the front desk to complete your payment or confirm your online booking to receive your PIN.
+                            </p>
                         </div>
                     )}
                 </div>
