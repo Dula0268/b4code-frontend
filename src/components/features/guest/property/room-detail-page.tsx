@@ -13,7 +13,6 @@ import { Calendar } from "@/components/ui/calendar"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
 import { addDays, differenceInDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
-import { useAuthStore } from "@/store/auth/auth.store"
 
 function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
@@ -22,7 +21,6 @@ function formatLKR(n: number) {
 function RoomDetailPageContent({ property, room }: { property: PropertyDetail; room: Room }) {
     const searchParams = useSearchParams()
     const router = useRouter()
-    const isLoggedIn = useAuthStore((s) => !!s.user)
 
     // Parse initial dates from URL
     const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : new Date(2026, 9, 10)
@@ -371,13 +369,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             <button
                                 onClick={() => {
                                     const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}`;
-                                    if (!isLoggedIn) {
-                                        // Build the current room page URL with all booking params preserved
-                                        const currentRoomUrl = `/guest/property/${property.id}/room/${room.id}?checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}`;
-                                        router.push(`/auth/register?role=guest&redirect=${encodeURIComponent(currentRoomUrl)}`);
-                                    } else {
-                                        router.push(checkoutUrl);
-                                    }
+                                    router.push(checkoutUrl);
                                 }}
                                 className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 cursor-pointer"
                             >
