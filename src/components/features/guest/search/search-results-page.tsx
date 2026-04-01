@@ -138,15 +138,23 @@ export default function SearchResultsPage() {
         <div className="min-h-screen bg-[#fafafa]">
 
             {/* ── Main Content ──────────────────────────────────────────────────── */}
-            <div className="max-w-[1440px] mx-auto px-[30px] pt-24 pb-16">
-                <div className="flex gap-8">
+            <div className="w-full px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
                     {/* ── Filters Sidebar ─────────────────────────────────────────── */}
-                    <FiltersSidebar
-                        filters={filters}
-                        onChange={handleFiltersChange}
-                        onClear={handleClearFilters}
-                    />
+                    <div className="w-full lg:w-[260px] xl:w-[280px] flex-shrink-0">
+                        <div className="sticky top-24">
+                            <FiltersSidebar
+                                filters={filters}
+                                onChange={handleFiltersChange}
+                                onClear={handleClearFilters}
+                                sortBy={sortBy}
+                                onSortChange={setSortBy}
+                                mapOpen={mapOpen}
+                                onToggleMap={() => setMapOpen(o => !o)}
+                            />
+                        </div>
+                    </div>
 
                     {/* ── Results ─────────────────────────────────────────────────── */}
                     <div className="flex-1 min-w-0">
@@ -160,10 +168,6 @@ export default function SearchResultsPage() {
                             guests={guests}
                             activeFilters={activeFilters}
                             onRemoveFilter={handleRemoveFilter}
-                            sortBy={sortBy}
-                            onSortChange={setSortBy}
-                            mapOpen={mapOpen}
-                            onToggleMap={() => setMapOpen(o => !o)}
                         />
 
                         {/* Grid + optional Map split */}

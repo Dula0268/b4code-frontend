@@ -9,15 +9,9 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { getPropertyById } from "@/lib/mock-properties"
 import { differenceInDays, format } from "date-fns"
 import { useAuthStore } from "@/store/auth/auth.store"
-import CheckoutAuthModal from "./checkout-auth-modal"
 
 // ─── Zod Validation Schema ────────────────────────────────────────────────────
 const checkoutSchema = z.object({
-  firstName: z.string().min(2, "First name is required"),
-  lastName: z.string().min(2, "Last name is required"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
-  specialRequests: z.string().optional(),
   promoCode: z.string().optional(),
   paymentMethod: z.enum(["online", "property"]),
   nationalId: z.string().optional(),
@@ -64,13 +58,14 @@ export default function CheckoutPage() {
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null)
 
   // ─── Auth state ──────────────────────────────────────────────────────────
-  const { user, checkEmailExists, logout } = useAuthStore()
+  const { user, logout } = useAuthStore()
   const isLoggedIn = !!user
 
-  // Auth modal state
-  const [showAuthModal, setShowAuthModal] = useState(false)
-  const [authModalMode, setAuthModalMode] = useState<"login" | "register">("login")
-  const [pendingFormData, setPendingFormData] = useState<CheckoutFormValues | null>(null)
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.push(`/auth/login?role=guest&redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`)
+    }
+  }, [isLoggedIn, router])
 
   useEffect(() => {
     if (!searchParams) return
@@ -121,18 +116,10 @@ export default function CheckoutPage() {
   // Initialize React Hook Form with Zod schema
   const { register, handleSubmit, watch, formState: { errors }, setValue, reset: resetForm } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { paymentMethod: "online", specialRequests: "", promoCode: "", nationalId: "" }
+    defaultValues: { paymentMethod: "online", promoCode: "", nationalId: "" }
   })
 
-  // ─── Auto-fill when user is logged in ───────────────────────────────────
-  useEffect(() => {
-    if (user?.profile) {
-      setValue("firstName", user.profile.firstName)
-      setValue("lastName", user.profile.lastName)
-      setValue("email", user.email)
-      setValue("phone", user.profile.phone)
-    }
-  }, [user, setValue])
+
 
   const paymentMethod = watch("paymentMethod")
 
@@ -145,26 +132,7 @@ export default function CheckoutPage() {
 
   // ─── Smart submit handler ───────────────────────────────────────────────
   const onSubmit = async (data: CheckoutFormValues) => {
-    // If already logged in → proceed directly
-    if (isLoggedIn) {
-      await completeBooking(data)
-      return
-    }
-
-    // Not logged in → check if email exists
-    const emailExists = checkEmailExists(data.email)
-
-    if (emailExists) {
-      // Existing user → ask to login
-      setPendingFormData(data)
-      setAuthModalMode("login")
-      setShowAuthModal(true)
-    } else {
-      // New user → ask to create password (auto-register)
-      setPendingFormData(data)
-      setAuthModalMode("register")
-      setShowAuthModal(true)
-    }
+    await completeBooking(data)
   }
 
   const completeBooking = async (data: CheckoutFormValues) => {
@@ -176,13 +144,7 @@ export default function CheckoutPage() {
     router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
   }
 
-  // Called after successful auth from the modal
-  const handleAuthSuccess = () => {
-    setShowAuthModal(false)
-    if (pendingFormData) {
-      completeBooking(pendingFormData)
-    }
-  }
+
 
   return (
     <div className="min-h-screen bg-[var(--gray-5)]/20 pb-20 pt-28">
@@ -221,7 +183,7 @@ export default function CheckoutPage() {
                   type="button"
                   onClick={() => {
                     logout()
-                    resetForm({ paymentMethod: "online", specialRequests: "", promoCode: "", nationalId: "", firstName: "", lastName: "", email: "", phone: "" })
+                    resetForm({ paymentMethod: "online", promoCode: "", nationalId: "" })
                   }}
                   className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--state-error)] transition-colors bg-transparent border-none cursor-pointer px-3 py-1.5 rounded-md hover:bg-[var(--state-error)]/5"
                 >
@@ -246,83 +208,14 @@ export default function CheckoutPage() {
 
             <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8">
               
-              {/* 1. Guest Details */}
-              <section className="ps-card p-6 sm:p-8">
-                <h2 className="text-xl font-bold text-[var(--fg)] mb-6 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center text-sm">1</span>
-                  Guest Information
-                  {isLoggedIn && (
-                    <span className="ml-auto text-xs font-medium text-[var(--state-success)] bg-[var(--state-success)]/10 px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <Check size={12} /> Auto-filled
-                    </span>
-                  )}
-                </h2>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-[var(--fg)] block">First Name <span className="text-[var(--state-error)]">*</span></label>
-                    <input
-                      {...register("firstName")}
-                      type="text"
-                      readOnly={isLoggedIn}
-                      className={`w-full h-11 px-4 rounded-[var(--radius)] border ${errors.firstName ? 'border-[var(--state-error)] ring-1 ring-[var(--state-error)]/20' : 'border-[var(--border)] focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)]'} outline-none transition-all ${isLoggedIn ? 'bg-[var(--gray-5)]/50 cursor-not-allowed text-[var(--muted)]' : 'bg-[var(--white)]'}`}
-                      placeholder="e.g. John"
-                    />
-                    {errors.firstName && <span className="text-[12px] text-[var(--state-error)]">{errors.firstName.message}</span>}
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-[var(--fg)] block">Last Name <span className="text-[var(--state-error)]">*</span></label>
-                    <input
-                      {...register("lastName")}
-                      type="text"
-                      readOnly={isLoggedIn}
-                      className={`w-full h-11 px-4 rounded-[var(--radius)] border ${errors.lastName ? 'border-[var(--state-error)] ring-1 ring-[var(--state-error)]/20' : 'border-[var(--border)] focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)]'} outline-none transition-all ${isLoggedIn ? 'bg-[var(--gray-5)]/50 cursor-not-allowed text-[var(--muted)]' : 'bg-[var(--white)]'}`}
-                      placeholder="e.g. Doe"
-                    />
-                    {errors.lastName && <span className="text-[12px] text-[var(--state-error)]">{errors.lastName.message}</span>}
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-[var(--fg)] block">Email Address <span className="text-[var(--state-error)]">*</span></label>
-                    <input
-                      {...register("email")}
-                      type="email"
-                      readOnly={isLoggedIn}
-                      className={`w-full h-11 px-4 rounded-[var(--radius)] border ${errors.email ? 'border-[var(--state-error)] ring-1 ring-[var(--state-error)]/20' : 'border-[var(--border)] focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)]'} outline-none transition-all ${isLoggedIn ? 'bg-[var(--gray-5)]/50 cursor-not-allowed text-[var(--muted)]' : 'bg-[var(--white)]'}`}
-                      placeholder="john@example.com"
-                    />
-                    {errors.email && <span className="text-[12px] text-[var(--state-error)]">{errors.email.message}</span>}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-[var(--fg)] block">Phone Number <span className="text-[var(--state-error)]">*</span></label>
-                    <input
-                      {...register("phone")}
-                      type="tel"
-                      readOnly={isLoggedIn}
-                      className={`w-full h-11 px-4 rounded-[var(--radius)] border ${errors.phone ? 'border-[var(--state-error)] ring-1 ring-[var(--state-error)]/20' : 'border-[var(--border)] focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)]'} outline-none transition-all ${isLoggedIn ? 'bg-[var(--gray-5)]/50 cursor-not-allowed text-[var(--muted)]' : 'bg-[var(--white)]'}`}
-                      placeholder="+94 77 123 4567"
-                    />
-                    {errors.phone && <span className="text-[12px] text-[var(--state-error)]">{errors.phone.message}</span>}
-                  </div>
-                </div>
-
-                <div className="mt-5 space-y-1.5">
-                  <label className="text-sm font-medium text-[var(--fg)] block">Special Requests (Optional)</label>
-                  <textarea
-                    {...register("specialRequests")}
-                    rows={3}
-                    className="w-full p-4 rounded-[var(--radius)] border border-[var(--border)] focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none transition-all bg-[var(--white)] resize-none"
-                    placeholder="e.g. Late check-in, dietary requirements..."
-                  />
-                </div>
-              </section>
 
               {/* 2. Payment Rules */}
               <section className="ps-card p-6 sm:p-8">
                 <h2 className="text-xl font-bold text-[var(--fg)] mb-6 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center text-sm">2</span>
+                  <span className="w-8 h-8 rounded-full bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center text-sm">
+                    1
+                  </span>
                   How would you like to pay?
                 </h2>
 
@@ -522,18 +415,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* ── Auth Modal ───────────────────────────────────────────────────────── */}
-      {showAuthModal && pendingFormData && (
-        <CheckoutAuthModal
-          email={pendingFormData.email}
-          firstName={pendingFormData.firstName}
-          lastName={pendingFormData.lastName}
-          phone={pendingFormData.phone}
-          initialMode={authModalMode}
-          onSuccess={handleAuthSuccess}
-          onClose={() => setShowAuthModal(false)}
-        />
-      )}
+
     </div>
   )
 }

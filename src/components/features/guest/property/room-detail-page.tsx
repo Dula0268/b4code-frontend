@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import {
     ChevronRight, Home, Users, BedDouble, SquareDot, CheckCircle2,
     Star, ArrowRight, Grid2X2, MapPin
@@ -13,6 +13,7 @@ import { Calendar } from "@/components/ui/calendar"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
 import { addDays, differenceInDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
+import { useAuthStore } from "@/store/auth/auth.store"
 
 function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
@@ -20,6 +21,8 @@ function formatLKR(n: number) {
 
 function RoomDetailPageContent({ property, room }: { property: PropertyDetail; room: Room }) {
     const searchParams = useSearchParams()
+    const router = useRouter()
+    const isLoggedIn = useAuthStore((s) => !!s.user)
 
     // Parse initial dates from URL
     const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : new Date(2026, 9, 10)
@@ -365,12 +368,19 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 <span className="text-[20px] font-bold text-[#953002]">{formatLKR(finalTotal)}</span>
                             </div>
 
-                            <Link
-                                href={`/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}`}
-                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
+                            <button
+                                onClick={() => {
+                                    const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}`;
+                                    if (!isLoggedIn) {
+                                        router.push(`/auth/register?role=guest&redirect=${encodeURIComponent(checkoutUrl)}`);
+                                    } else {
+                                        router.push(checkoutUrl);
+                                    }
+                                }}
+                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 cursor-pointer"
                             >
                                 Confirm & Book <ArrowRight size={18} />
-                            </Link>
+                            </button>
 
                             <div className="text-center text-[13px] text-[#828282] mb-6">You won&apos;t be charged yet</div>
 

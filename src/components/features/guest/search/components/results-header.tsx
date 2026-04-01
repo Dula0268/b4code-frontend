@@ -16,10 +16,6 @@ interface ResultsHeaderProps {
     guests?: number
     activeFilters?: ActiveFilter[]
     onRemoveFilter?: (id: string) => void
-    sortBy: string
-    onSortChange: (sort: string) => void
-    mapOpen: boolean
-    onToggleMap: () => void
 }
 
 const SORT_OPTIONS = [
@@ -37,14 +33,7 @@ export default function ResultsHeader({
     guests,
     activeFilters = [],
     onRemoveFilter,
-    sortBy,
-    onSortChange,
-    mapOpen,
-    onToggleMap,
 }: ResultsHeaderProps) {
-    const [sortOpen, setSortOpen] = useState(false)
-
-    const sortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label ?? "Recommended"
 
     const subtitle = [
         `${totalCount} stays`,
@@ -70,55 +59,6 @@ export default function ResultsHeader({
                     )}
                 </div>
 
-                {/* Sort + Map controls */}
-                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                    {/* Sort dropdown */}
-                    <div className="relative flex-1 sm:flex-none">
-                        <button
-                            id="sort-by-btn"
-                            onClick={() => setSortOpen(o => !o)}
-                            className="flex items-center gap-1 sm:gap-1.5 bg-[var(--bg)] border border-[var(--border)] rounded-xl px-2.5 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] font-medium text-[var(--fg)] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)] transition-colors shadow-sm cursor-pointer w-full sm:w-auto justify-between sm:justify-start"
-                        >
-                            <span className="text-[var(--muted)] font-normal hidden sm:inline">Sort:</span>
-                            <span className="truncate">{sortLabel}</span>
-                            <ChevronDown size={14} className={`transition-transform flex-shrink-0 ${sortOpen ? "rotate-180" : ""}`} />
-                        </button>
-
-                        {sortOpen && (
-                            <div className="absolute top-full right-0 mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] z-20 w-48 sm:w-52 overflow-hidden">
-                                {SORT_OPTIONS.map(opt => (
-                                    <button
-                                        key={opt.value}
-                                        onClick={() => { onSortChange(opt.value); setSortOpen(false) }}
-                                        className={[
-                                            "w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-[12px] sm:text-[13px] transition-colors cursor-pointer border-none",
-                                            sortBy === opt.value
-                                                ? "bg-[var(--brand-primary)]/5 text-[var(--brand-primary)] font-medium"
-                                                : "text-[var(--fg)] hover:bg-[var(--gray-5)]/30",
-                                        ].join(" ")}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Show / Hide map - hidden on mobile */}
-                    <button
-                        id="show-map-btn"
-                        onClick={onToggleMap}
-                        className={[
-                            "hidden sm:flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[13px] font-medium transition-all shadow-sm cursor-pointer whitespace-nowrap border-2",
-                            mapOpen
-                                ? "bg-[var(--brand-primary)] text-[var(--white)] border-[var(--brand-primary)] hover:bg-[var(--primary-hover)]"
-                                : "bg-[var(--bg)] text-[var(--fg)] border-[var(--border)] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)]",
-                        ].join(" ")}
-                    >
-                        <Map size={14} />
-                        {mapOpen ? "Hide" : "Show"} map
-                    </button>
-                </div>
             </div>
 
             {/* Active filter chips */}

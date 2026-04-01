@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
@@ -14,6 +14,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, loading, error, setError } = useAuthStore();
 
   const [email, setEmail] = useState("");
@@ -30,7 +31,8 @@ export default function LoginPage() {
     setError(null);
     try {
       const path = await login(email, password);
-      router.push(path);
+      const redirect = searchParams?.get("redirect");
+      router.push(redirect || path);
     } catch {
 
     }
