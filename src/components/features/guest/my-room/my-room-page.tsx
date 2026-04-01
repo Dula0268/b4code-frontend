@@ -302,14 +302,16 @@ export default function MyRoomPage() {
                                 </p>
                             </div>
                             <div className="p-8 pt-6 flex flex-col gap-3">
+                                {/* Mobile only — Scan QR Code */}
                                 <button 
                                     onClick={startCamera}
-                                    className="flex items-center justify-between w-full bg-[var(--black-2)] text-[var(--brand-secondary)] px-6 py-4 rounded-[var(--radius-lg)] font-bold text-[15px] hover:bg-[var(--black-3)] transition-all cursor-pointer"
+                                    className="flex lg:hidden items-center justify-between w-full bg-[var(--black-2)] text-[var(--brand-secondary)] px-6 py-4 rounded-[var(--radius-lg)] font-bold text-[15px] hover:bg-[var(--black-3)] transition-all cursor-pointer"
                                 >
                                     <span className="flex items-center gap-3"><Camera size={20} /> Scan QR Code</span>
                                     <ChevronRight size={20} />
                                 </button>
-                                <Link href="/guest/order" className="flex items-center justify-between w-full bg-white text-[var(--secondary-active)] px-6 py-4 rounded-[var(--radius-lg)] font-bold text-[15px] hover:shadow-[var(--shadow-soft)] transition-all no-underline">
+                                {/* Desktop only — Browse Menu */}
+                                <Link href="/guest/order" className="hidden lg:flex items-center justify-between w-full bg-white text-[var(--secondary-active)] px-6 py-4 rounded-[var(--radius-lg)] font-bold text-[15px] hover:shadow-[var(--shadow-soft)] transition-all no-underline">
                                     <span className="flex items-center gap-3"><QrCode size={20} /> Browse Menu</span>
                                     <ChevronRight size={20} />
                                 </Link>
@@ -376,11 +378,7 @@ export default function MyRoomPage() {
                         <div className="relative w-full h-[160px]">
                             <Image src="/images/room/staff-concierge.png" alt="Our concierge team" fill className="object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent"></div>
-                            <div className="absolute top-4 right-4">
-                                <span className="w-7 h-7 rounded-full bg-[var(--state-error)] text-white text-[12px] font-bold flex items-center justify-center ring-4 ring-white shadow-lg">
-                                    1
-                                </span>
-                            </div>
+                
                         </div>
 
                         <div className="p-8 pt-4 flex flex-col flex-1 justify-between">
@@ -389,20 +387,7 @@ export default function MyRoomPage() {
                                     <MessageSquare size={18} className="text-[var(--fg)]"/> Messages
                                 </h3>
 
-                                <div className="bg-[var(--gray-5)]/20 rounded-2xl p-5 border border-[var(--border)] mb-6">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-9 h-9 rounded-full bg-[var(--black-2)] flex items-center justify-center">
-                                            <Phone size={14} className="text-[var(--brand-secondary)]" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[13px] font-bold text-[var(--fg)]">Reception Desk</p>
-                                            <p className="text-[11px] text-[var(--gray-3)] font-medium">2 mins ago</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-[14px] text-[var(--gray-1)] leading-relaxed">
-                                        &ldquo;Hi {guestFirst}, your extra towels have been delivered to your room. Let us know if you need anything else!&rdquo;
-                                    </p>
-                                </div>
+                                
                             </div>
 
                             <button onClick={() => router.push('/guest/my-room/message-staff')} className="w-full bg-[var(--black-2)] hover:bg-[var(--black-3)] text-[var(--white)] px-5 py-3.5 rounded-[var(--radius-lg)] font-bold text-[14px] flex items-center justify-center gap-2 transition-colors shadow-[var(--shadow-soft)] cursor-pointer">
@@ -425,17 +410,13 @@ export default function MyRoomPage() {
                                 <p className="text-[var(--gray-3)] text-[14px] mb-6 leading-relaxed max-w-[320px]">
                                     We strive for excellence. Share your experience and help us improve for future guests.
                                 </p>
-
-                                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[var(--radius-lg)] p-5 mb-6 inline-block">
-                                    <StarRating rating={rating} onRate={setRating} />
-                                </div>
                             </div>
 
                             <button 
                                 onClick={() => router.push(`/guest/my-room/submit-review${rating > 0 ? `?rating=${rating}` : ''}`)}
                                 className="w-full bg-[var(--brand-secondary)] hover:bg-[var(--secondary-hover)] text-[var(--black-2)] font-bold text-[15px] py-4 rounded-[var(--radius-lg)] transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2"
                             >
-                                <Star size={18} /> Submit Review
+                                Add Review
                             </button>
                         </div>
                     </div>
