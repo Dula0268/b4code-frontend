@@ -152,13 +152,13 @@ export default function GuestTopbar() {
           ) : (
             <div className="flex items-center gap-3">
               <Link
-                href="/auth/register?role=guest"
+                href={`/auth/register?role=guest&redirect=${encodeURIComponent(pathname)}`}
                 className="px-4 py-2 text-sm font-semibold text-[#953002] border-2 border-[#953002] rounded-lg hover:bg-[#953002]/5 transition-colors no-underline whitespace-nowrap"
               >
                 Register
               </Link>
               <Link
-                href="/auth/login"
+                href={`/auth/login?redirect=${encodeURIComponent(pathname)}`}
                 className="px-4 py-2 text-sm font-semibold text-white bg-[#953002] rounded-lg hover:bg-[#6d2200] transition-colors no-underline whitespace-nowrap"
               >
                 Login
@@ -226,10 +226,10 @@ export default function GuestTopbar() {
             </div>
           ) : (
             <div className="flex flex-col gap-2 pt-2 border-t border-[#e0e0e0]">
-              <Link href="/auth/register?role=guest" className="px-4 py-2 text-sm font-semibold text-center text-[#953002] border-2 border-[#953002] rounded-lg no-underline">
+              <Link href={`/auth/register?role=guest&redirect=${encodeURIComponent(pathname)}`} className="px-4 py-2 text-sm font-semibold text-center text-[#953002] border-2 border-[#953002] rounded-lg no-underline">
                 Register
               </Link>
-              <Link href="/auth/login" className="px-4 py-2 text-sm font-semibold text-center text-white bg-[#953002] rounded-lg no-underline">
+              <Link href={`/auth/login?redirect=${encodeURIComponent(pathname)}`} className="px-4 py-2 text-sm font-semibold text-center text-white bg-[#953002] rounded-lg no-underline">
                 Login
               </Link>
             </div>

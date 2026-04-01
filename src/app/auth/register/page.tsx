@@ -449,7 +449,7 @@ function RegisterForm() {
                                 <div className="mt-4 text-center text-[13px] font-medium text-neutral-600 pb-2">
                                     Already have an account?{" "}
                                     <Link
-                                        href="/auth/login"
+                                        href={searchParams.get("redirect") ? `/auth/login?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "/auth/login"}
                                         className="font-extrabold text-[#953002] hover:underline"
                                     >
                                         Log in

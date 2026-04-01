@@ -372,7 +372,9 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 onClick={() => {
                                     const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}`;
                                     if (!isLoggedIn) {
-                                        router.push(`/auth/register?role=guest&redirect=${encodeURIComponent(checkoutUrl)}`);
+                                        // Build the current room page URL with all booking params preserved
+                                        const currentRoomUrl = `/guest/property/${property.id}/room/${room.id}?checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}`;
+                                        router.push(`/auth/register?role=guest&redirect=${encodeURIComponent(currentRoomUrl)}`);
                                     } else {
                                         router.push(checkoutUrl);
                                     }

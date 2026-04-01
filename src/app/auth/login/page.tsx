@@ -150,9 +150,9 @@ export default function LoginPage() {
 
 
                 <div className="text-center text-sm text-neutral-700">
-                  Don’t have an account yet?{" "}
+                  Don&apos;t have an account yet?{" "}
                   <Link
-                    href="/auth/register"
+                    href={searchParams?.get("redirect") ? `/auth/register?role=guest&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "/auth/register"}
                     className="font-extrabold text-[var(--brand-primary)] hover:underline"
                   >
                     Register for an account
