@@ -5,7 +5,7 @@ import PropertyDetailPage from "@/components/features/guest/property/property-de
 import { getPropertyById, ALL_PROPERTIES } from "@/lib/mock-properties"
 
 interface Props {
-    params: Promise<{ id: string }>
+    params: { id: string }
 }
 
 export async function generateStaticParams() {
@@ -13,7 +13,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props) {
-    const { id } = await params
+    const { id } = params
     const property = getPropertyById(id)
     if (!property) return {}
     return {
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function PropertyPage({ params }: Props) {
-    const { id } = await params
+    const { id } = params
     const property = getPropertyById(id)
     if (!property) notFound()
 

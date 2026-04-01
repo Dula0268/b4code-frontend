@@ -5,7 +5,7 @@ import RoomDetailPage from "@/components/features/guest/property/room-detail-pag
 import { getPropertyById, ALL_PROPERTIES } from "@/lib/mock-properties"
 
 interface Props {
-    params: Promise<{ id: string; roomId: string }>
+    params: { id: string; roomId: string }
 }
 
 export async function generateStaticParams() {
@@ -19,7 +19,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props) {
-    const { id, roomId } = await params
+    const { id, roomId } = params
     const property = getPropertyById(id)
     if (!property) return {}
     const room = property.rooms.find(r => r.id === roomId)
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function RoomPage({ params }: Props) {
-    const { id, roomId } = await params
+    const { id, roomId } = params
     const property = getPropertyById(id)
     if (!property) notFound()
     const room = property.rooms.find(r => r.id === roomId)
