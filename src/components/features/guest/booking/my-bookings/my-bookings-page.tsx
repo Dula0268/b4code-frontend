@@ -24,6 +24,7 @@ import { useGuestBookingStore, type StoredBooking, type BookingStatus } from "@/
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DisplayBooking {
     id: string
+    propertyId?: string
     orderNumber: string
     status: BookingStatus
     property: string
@@ -49,6 +50,7 @@ interface DisplayBooking {
 const MOCK_BOOKINGS: DisplayBooking[] = [
     {
         id: "bk-mock-1",
+        propertyId: "1",
         orderNumber: "BK-88291",
         status: "UPCOMING",
         property: "Oceanview Luxury Retreat",
@@ -64,6 +66,7 @@ const MOCK_BOOKINGS: DisplayBooking[] = [
     },
     {
         id: "bk-mock-2",
+        propertyId: "2",
         orderNumber: "BK-77210",
         status: "COMPLETED",
         property: "Mountain Peaks Chalet",
@@ -80,6 +83,7 @@ const MOCK_BOOKINGS: DisplayBooking[] = [
     },
     {
         id: "bk-mock-3",
+        propertyId: "3",
         orderNumber: "BK-10293",
         status: "CANCELLED",
         property: "Skyline Loft Apartments",
@@ -140,13 +144,12 @@ function BookingCard({ booking }: { booking: DisplayBooking }) {
     const isCancelled = booking.status === "CANCELLED"
     const isCompleted = booking.status === "COMPLETED"
     const isUpcoming = booking.status === "UPCOMING"
-    const cancelBooking = useGuestBookingStore((s) => s.cancelBooking)
-
-    const handleCancel = () => {
-        if (booking.isFromStore && confirm("Are you sure you want to cancel this booking?")) {
-            cancelBooking(booking.id)
-        }
-    }
+    const cancelHref = booking.isFromStore
+        ? `/guest/booking/cancel?bookingId=${encodeURIComponent(booking.id)}`
+        : "/guest/booking/cancel"
+    const rebookHref = booking.propertyId
+        ? `/guest/property/${encodeURIComponent(booking.propertyId)}`
+        : `/guest/search?property=${encodeURIComponent(booking.property)}&location=${encodeURIComponent(booking.location)}`
 
     return (
         <div className={`bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col sm:flex-row transition-shadow hover:shadow-[0_4px_24px_rgba(0,0,0,0.10)]`}>
@@ -241,21 +244,12 @@ function BookingCard({ booking }: { booking: DisplayBooking }) {
                             >
                                 <Pencil size={13} /> Modify
                             </Link>
-                            {booking.isFromStore ? (
-                                <button
-                                    onClick={handleCancel}
-                                    className="inline-flex items-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
-                                >
-                                    <XCircle size={14} /> Cancel
-                                </button>
-                            ) : (
-                                <Link
-                                    href="/guest/booking/cancel"
-                                    className="inline-flex items-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
-                                >
-                                    <XCircle size={14} /> Cancel
-                                </Link>
-                            )}
+                            <Link
+                                href={cancelHref}
+                                className="inline-flex items-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
+                            >
+                                <XCircle size={14} /> Cancel
+                            </Link>
                         </>
                     )}
 
@@ -275,9 +269,12 @@ function BookingCard({ booking }: { booking: DisplayBooking }) {
 
                     {isCancelled && (
                         <>
-                            <button className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#953002] hover:underline cursor-pointer">
+                            <Link
+                                href={rebookHref}
+                                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#953002] hover:underline cursor-pointer no-underline"
+                            >
                                 Rebook Property <RefreshCw size={13} />
-                            </button>
+                            </Link>
                             <span className="text-[#e0e0e0]">|</span>
                             <button className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#828282] hover:text-[#1d1d1d] cursor-pointer">
                                 <FileText size={13} /> Cancellation Policy
@@ -294,6 +291,7 @@ function BookingCard({ booking }: { booking: DisplayBooking }) {
 function storeToDisplay(b: StoredBooking): DisplayBooking {
     return {
         id: b.id,
+        propertyId: b.propertyId,
         orderNumber: b.confirmationCode,
         status: b.status,
         property: b.property,

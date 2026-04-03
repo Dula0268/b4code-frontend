@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
     CalendarDays, Hash, ChevronRight, Info,
     ChevronDown,
 } from "lucide-react"
+import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const BOOKING = {
@@ -37,6 +38,28 @@ function formatLKR(n: number) {
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function CancelBookingPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const bookingId = searchParams.get("bookingId")
+    const bookings = useGuestBookingStore((s) => s.bookings)
+    const cancelBooking = useGuestBookingStore((s) => s.cancelBooking)
+
+    const selectedBooking = useMemo(
+        () => (bookingId ? bookings.find((b) => b.id === bookingId) : undefined),
+        [bookings, bookingId]
+    )
+
+    const bookingDetails = selectedBooking
+        ? {
+            id: selectedBooking.confirmationCode,
+            property: selectedBooking.property,
+            imageSrc: selectedBooking.imageSrc,
+            checkIn: selectedBooking.checkInFormatted,
+            checkOut: selectedBooking.checkOutFormatted,
+            totalPaid: selectedBooking.totalPrice,
+            cancellationPctFee: 10,
+            cardLast4: "4242",
+        }
+        : BOOKING
 
     const [reason, setReason] = useState("")
     const [comments, setComments] = useState("")
@@ -44,17 +67,22 @@ export default function CancelBookingPage() {
     const [submitting, setSubmitting] = useState(false)
 
     // Price calc
-    const cancellationFee = Math.round(BOOKING.totalPaid * (BOOKING.cancellationPctFee / 100))
-    const refundableAmount = BOOKING.totalPaid - cancellationFee
+    const cancellationFee = Math.round(bookingDetails.totalPaid * (bookingDetails.cancellationPctFee / 100))
+    const refundableAmount = bookingDetails.totalPaid - cancellationFee
 
-    const canSubmit = reason !== "" && agreed && !submitting
+    const canSubmit = reason !== "" && agreed && !submitting && (!bookingId || !!selectedBooking)
 
     const handleCancel = async () => {
         if (!canSubmit) return
         setSubmitting(true)
         await new Promise(r => setTimeout(r, 1200))
+
+        if (selectedBooking) {
+            cancelBooking(selectedBooking.id)
+        }
+
         setSubmitting(false)
-        router.push("/guest/booking/refund")
+        router.push(bookingId ? `/guest/booking/refund?bookingId=${encodeURIComponent(bookingId)}` : "/guest/booking/refund")
     }
 
     return (
@@ -75,14 +103,19 @@ export default function CancelBookingPage() {
                 <p className="text-[13px] text-[#828282] mb-7 leading-relaxed">
                     We&apos;re sorry to see you go. Please review the details and policy before confirming your cancellation.
                 </p>
+                {bookingId && !selectedBooking && (
+                    <p className="text-[12px] text-red-500 mb-5">
+                        Selected booking could not be found. Please return to My Bookings and try again.
+                    </p>
+                )}
 
                 {/* ── Current Booking card ─────────────────────────────────────── */}
                 <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden flex gap-0 mb-5">
                     {/* Image */}
                     <div className="relative w-[140px] h-[105px] flex-shrink-0">
                         <Image
-                            src={BOOKING.imageSrc}
-                            alt={BOOKING.property}
+                            src={bookingDetails.imageSrc}
+                            alt={bookingDetails.property}
                             fill
                             className="object-cover"
                             sizes="140px"
@@ -91,15 +124,15 @@ export default function CancelBookingPage() {
                     {/* Info */}
                     <div className="flex-1 px-5 py-4">
                         <p className="text-[10px] font-bold text-[#953002] uppercase tracking-widest mb-1">Current Booking</p>
-                        <p className="text-[16px] font-bold text-[#1d1d1d] leading-snug mb-2">{BOOKING.property}</p>
+                        <p className="text-[16px] font-bold text-[#1d1d1d] leading-snug mb-2">{bookingDetails.property}</p>
                         <div className="flex flex-wrap items-center gap-4 text-[12px] text-[#828282]">
                             <span className="flex items-center gap-1.5">
                                 <CalendarDays size={13} className="text-[#953002]" />
-                                {BOOKING.checkIn} – {BOOKING.checkOut}
+                                {bookingDetails.checkIn} – {bookingDetails.checkOut}
                             </span>
                             <span className="flex items-center gap-1.5">
                                 <Hash size={13} className="text-[#953002]" />
-                                ID: {BOOKING.id}
+                                ID: {bookingDetails.id}
                             </span>
                         </div>
                     </div>
@@ -115,10 +148,10 @@ export default function CancelBookingPage() {
                     <div className="flex flex-col gap-2.5">
                         <div className="flex justify-between text-[13px]">
                             <span className="text-[#555]">Total amount paid</span>
-                            <span className="font-semibold text-[#1d1d1d]">{formatLKR(BOOKING.totalPaid)}</span>
+                            <span className="font-semibold text-[#1d1d1d]">{formatLKR(bookingDetails.totalPaid)}</span>
                         </div>
                         <div className="flex justify-between text-[13px]">
-                            <span className="text-[#555]">Cancellation fee ({BOOKING.cancellationPctFee}%)</span>
+                            <span className="text-[#555]">Cancellation fee ({bookingDetails.cancellationPctFee}%)</span>
                             <span className="font-semibold text-red-500">−{formatLKR(cancellationFee)}</span>
                         </div>
 
@@ -131,7 +164,7 @@ export default function CancelBookingPage() {
                     </div>
 
                     <p className="text-[11px] text-[#aaa] mt-3 leading-relaxed">
-                        * Refund will be processed back to your original payment method (Visa ending in {BOOKING.cardLast4}) within 5–7 business days.
+                        * Refund will be processed back to your original payment method (Visa ending in {bookingDetails.cardLast4}) within 5–7 business days.
                     </p>
                 </div>
 
