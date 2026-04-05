@@ -25,8 +25,8 @@ export const SRI_LANKA_LOCATIONS = [
 export interface LocationPickerProps {
   /** Current controlled value of the text input */
   value: string;
-  /** Called on every keystroke */
-  onChange: (value: string) => void;
+  /** Called when the input value changes (optional) */
+  onChange?: (value: string) => void;
   /** Called when the user picks a suggestion */
   onSelect: (location: string) => void;
   /** Whether the suggestions dropdown is visible */
@@ -38,7 +38,7 @@ export interface LocationPickerProps {
 // ─── Component ────────────────────────────────────────────────────────────
 export default function LocationPicker({
   value,
-  onChange: _onChange,
+
   onSelect,
   open,
   maxSuggestions = 7,

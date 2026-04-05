@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import {
     MapPin, Share2, Heart, Star, ChevronRight, Home, Wifi, Wind, Waves,
     Dumbbell, Car, Utensils, ShieldCheck, Coffee, Leaf, Bike, BookOpen,
@@ -43,6 +44,9 @@ function RatingBar({ label, score }: { label: string; score: number }) {
 
 // ─── Room Card ────────────────────────────────────────────────────────────────
 function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
+    const searchParams = useSearchParams()
+    const query = searchParams && searchParams.toString() ? `?${searchParams.toString()}` : ""
+
     const tagStyle =
         room.tag === "Refundable"
             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
@@ -51,9 +55,9 @@ function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
                 : "bg-red-50 text-red-700 border-red-200"
 
     return (
-        <div className="flex flex-col sm:flex-row gap-4 p-4 border border-[#e8e8e8] rounded-2xl hover:border-[#953002]/30 hover:shadow-md transition-all bg-white">
+        <div className="flex gap-4 p-4 border border-[#e8e8e8] rounded-2xl hover:border-[#953002]/30 hover:shadow-md transition-all bg-white">
             {/* Room image */}
-            <div className="relative w-full sm:w-[140px] h-[190px] sm:h-[100px] flex-shrink-0 rounded-xl overflow-hidden bg-[#f3ede8]">
+            <div className="relative w-[140px] h-[100px] flex-shrink-0 rounded-xl overflow-hidden bg-[#f3ede8]">
                 <Image src={room.imageSrc} alt={room.name} fill className="object-cover" sizes="140px" />
             </div>
 
@@ -86,8 +90,8 @@ function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
             </div>
 
             {/* Price + CTA */}
-            <div className="flex-shrink-0 flex flex-row sm:flex-col items-center sm:items-end justify-between gap-2">
-                <div className="text-left sm:text-right">
+            <div className="flex-shrink-0 flex flex-col items-end justify-between gap-2">
+                <div className="text-right">
                     {room.originalPrice && (
                         <p className="text-[12px] text-[#aaa] line-through">{formatLKR(room.originalPrice)}</p>
                     )}
@@ -95,9 +99,9 @@ function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
                     <p className="text-[11px] text-[#828282]">per night</p>
                 </div>
                 <Link
-                    href={`/guest/property/${propertyId}/room/${room.id}`}
+                    href={`/guest/property/${propertyId}/room/${room.id}${query}`}
                     id={`select-room-${room.id}`}
-                    className="px-4 py-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap block w-full sm:w-auto text-center"
+                    className="px-4 py-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap block"
                 >
                     Select Room
                 </Link>
@@ -144,7 +148,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
             {/* ── Share toast ───────────────────────────────────────────────── */}
             <div
                 className={[
-                    "fixed top-20 right-4 sm:right-6 z-[60] flex items-center gap-2.5 bg-[#1d1d1d] text-white text-[12px] sm:text-[13px] font-medium max-w-[calc(100vw-2rem)]",
+                    "fixed top-20 right-6 z-[60] flex items-center gap-2.5 bg-[#1d1d1d] text-white text-[13px] font-medium",
                     "px-4 py-3 rounded-xl shadow-xl transition-all duration-300",
                     shareToast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none",
                 ].join(" ")}
@@ -152,10 +156,10 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                 <span className="text-[16px]">{shareToast === "shared" ? "🎉" : "🔗"}</span>
                 {shareToast === "shared" ? "Shared successfully!" : "Link copied to clipboard"}
             </div>
-            <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-14 sm:pb-20">
+            <div className="max-w-[1200px] mx-auto px-6 pt-24 pb-20">
 
                 {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-                <nav className="flex items-center gap-1.5 text-[12px] sm:text-[13px] mb-5 overflow-x-auto whitespace-nowrap pb-1">
+                <nav className="flex items-center gap-1.5 text-[13px] mb-5">
                     <Link
                         href="/"
                         aria-label="Home"
@@ -175,11 +179,11 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                 </nav>
 
                 {/* ── Photo Gallery Grid ──────────────────────────────────────────────── */}
-                <div className="relative mb-6 sm:mb-8">
-                    <div className="grid grid-cols-1 sm:grid-cols-4 sm:grid-rows-2 gap-2 h-[260px] sm:h-[460px] rounded-2xl overflow-hidden">
+                <div className="relative mb-8">
+                    <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[460px] rounded-2xl overflow-hidden">
                         {/* Primary large image */}
                         <div
-                            className="relative cursor-pointer group sm:col-span-2 sm:row-span-2"
+                            className="col-span-2 row-span-2 relative cursor-pointer group"
                             onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }}
                         >
                             <Image
@@ -196,7 +200,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                         {property.galleryImages.slice(0, 4).map((img, i) => (
                             <div
                                 key={i}
-                                className="relative cursor-pointer group hidden sm:block"
+                                className="relative cursor-pointer group"
                                 onClick={() => { setActiveGalleryIdx(i + 1); setGalleryOpen(true) }}
                             >
                                 <Image
@@ -213,7 +217,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                     {/* Show all photos button */}
                     <button
                         onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }}
-                        className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 flex items-center gap-1.5 sm:gap-2 bg-white/90 backdrop-blur-sm border border-[#e0e0e0] rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-[12px] sm:text-[13px] font-semibold text-[#1d1d1d] shadow-sm hover:bg-white transition-colors cursor-pointer"
+                        className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#e0e0e0] rounded-xl px-4 py-2 text-[13px] font-semibold text-[#1d1d1d] shadow-sm hover:bg-white transition-colors cursor-pointer"
                     >
                         <Grid2X2 size={14} />
                         Show all photos
@@ -221,32 +225,32 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
 
                     {/* Badge */}
                     {property.badge && (
-                        <span className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white text-[#1d1d1d] text-[11px] sm:text-[12px] font-semibold px-2.5 sm:px-3 py-1 rounded-full shadow-sm">
+                        <span className="absolute top-4 left-4 bg-white text-[#1d1d1d] text-[12px] font-semibold px-3 py-1 rounded-full shadow-sm">
                             {property.badge}
                         </span>
                     )}
                 </div>
 
                 {/* ── Title Row ──────────────────────────────────────────────────────── */}
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                <div className="flex items-start justify-between gap-4 mb-6">
                     <div>
                         <p className="text-[12px] font-semibold text-[#953002] uppercase tracking-wider mb-1">
                             {property.propertyType}
                         </p>
-                        <h1 className="text-[clamp(26px,6.5vw,32px)] font-bold text-[#1d1d1d] leading-tight mb-2">
+                        <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">
                             {property.title}
                         </h1>
-                        <div className="flex items-start sm:items-center gap-1.5 text-[13px] sm:text-[14px] text-[#555]">
+                        <div className="flex items-center gap-1.5 text-[14px] text-[#555]">
                             <MapPin size={15} className="text-[#953002]" />
-                            <span className="leading-relaxed">{property.fullAddress}</span>
+                            <span>{property.fullAddress}</span>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 w-full sm:w-auto">
+                    <div className="flex items-center gap-3 flex-shrink-0">
                         <button
                             id="share-property"
                             onClick={handleShare}
-                            className="flex items-center justify-center gap-2 px-4 py-2 border border-[#e0e0e0] rounded-xl text-[13px] font-medium text-[#333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors bg-white shadow-sm cursor-pointer flex-1 sm:flex-none"
+                            className="flex items-center gap-2 px-4 py-2 border border-[#e0e0e0] rounded-xl text-[13px] font-medium text-[#333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors bg-white shadow-sm cursor-pointer"
                         >
                             <Share2 size={15} />
                             Share
@@ -255,7 +259,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                             id="save-property"
                             onClick={() => setSaved(s => !s)}
                             className={[
-                                "flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium transition-all shadow-sm cursor-pointer border-2 flex-1 sm:flex-none",
+                                "flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium transition-all shadow-sm cursor-pointer border-2",
                                 saved
                                     ? "bg-[#953002] text-white border-[#953002]"
                                     : "bg-white text-[#333] border-[#e0e0e0] hover:border-[#953002]/40",
@@ -268,13 +272,13 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                 </div>
 
                 {/* ── Two-column layout ───────────────────────────────────────────────── */}
-                <div className="flex flex-col lg:flex-row gap-8 items-start">
+                <div className="flex gap-8 items-start">
 
                     {/* ── LEFT COLUMN ─────────────────────────────────────────────────── */}
                     <div className="flex-1 min-w-0 flex flex-col gap-8">
 
                         {/* Host */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 sm:p-5 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm">
+                        <div className="flex items-center gap-4 p-5 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm">
                             <div
                                 className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-[16px] flex-shrink-0"
                                 style={{ background: "linear-gradient(135deg, #953002, #d4520a)" }}
@@ -288,7 +292,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                                 <p className="text-[13px] text-[#828282]">{property.hostBio}</p>
                             </div>
                             {property.hostSuperhost && (
-                                <span className="sm:ml-auto w-fit text-[11px] font-semibold bg-[#953002]/10 text-[#953002] px-3 py-1 rounded-full">
+                                <span className="ml-auto text-[11px] font-semibold bg-[#953002]/10 text-[#953002] px-3 py-1 rounded-full">
                                     Superhost
                                 </span>
                             )}
@@ -311,7 +315,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                         {/* Amenities */}
                         <div>
                             <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">What this place offers</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {property.amenities.map(a => (
                                     <div key={a.label} className="flex items-center gap-2.5 text-[13px] text-[#333]">
                                         <AmenityIcon name={a.icon} />
@@ -323,7 +327,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
 
                         {/* Reviews summary */}
                         <div>
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-5">
+                            <div className="flex items-center gap-3 mb-5">
                                 <Star size={20} className="text-[#ffb401]" fill="#ffb401" />
                                 <span className="text-[22px] font-bold text-[#1d1d1d]">{property.rating.toFixed(1)}</span>
                                 <span className="text-[14px] text-[#828282]">{property.reviewCount.toLocaleString()} Reviews</span>
@@ -368,7 +372,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
 
                         {/* Available Rooms */}
                         <div>
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-4">
+                            <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-[20px] font-bold text-[#1d1d1d]">Available Rooms</h2>
                                 <p className="text-[12px] text-[#828282]">☑ Prices include taxes and fees</p>
                             </div>
@@ -382,7 +386,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                     </div>
 
                     {/* ── RIGHT COLUMN — Map + Location ───────────────────────────────── */}
-                    <div className="w-full lg:w-[300px] flex-shrink-0 lg:sticky lg:top-24">
+                    <div className="w-[300px] flex-shrink-0 sticky top-24">
                         {/* Map embed */}
                         <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-sm overflow-hidden">
                             <div className="relative h-[200px] bg-[#e8f4f8]">
@@ -415,7 +419,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
             {galleryOpen && (
                 <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 sm:px-6 py-4 flex-shrink-0">
+                    <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
                         <p className="text-white text-[14px] font-semibold">
                             {activeGalleryIdx + 1} / {allImages.length}
                         </p>
@@ -442,7 +446,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                     </div>
 
                     {/* Thumbnails */}
-                    <div className="flex-shrink-0 px-4 sm:px-6 py-4 flex gap-2 overflow-x-auto justify-start sm:justify-center">
+                    <div className="flex-shrink-0 px-6 py-4 flex gap-2 overflow-x-auto justify-center">
                         {allImages.map((img, i) => (
                             <button
                                 key={i}
