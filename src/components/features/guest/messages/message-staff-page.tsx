@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import {
-    Utensils, Sparkles, AlertCircle, HelpCircle, User, DoorOpen, Send,
+    Utensils, Sparkles, AlertCircle, HelpCircle, User, DoorOpen, Send, Paperclip
 } from "lucide-react"
 
 export default function MessageStaffPage() {
@@ -133,20 +133,24 @@ export default function MessageStaffPage() {
                         </div>
 
                         <div className="pt-2">
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <button className="w-[46px] h-[46px] sm:w-[50px] sm:h-[50px] rounded-full bg-white border border-[#ebebeb] text-[#828282] flex items-center justify-center hover:bg-[#fafafa] hover:text-[#1d1d1d] transition-colors cursor-pointer flex-shrink-0 shadow-sm" title="Add attachment">
+                                    <Paperclip size={20} />
+                                </button>
                                 <input
                                     type="text"
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                                    placeholder="Type your message to the staff..."
-                                    className="flex-1 bg-[#fafafa] border border-[#ebebeb] hover:border-[#ddd] focus:border-[#953002] focus:ring-1 focus:ring-[#953002] transition-colors rounded-full px-6 py-[15px] text-[14px] text-[#1d1d1d] placeholder:text-[#a0a0a0] outline-none"
+                                    placeholder="Type your message to the staff... (Attach files using the clip icon)"
+                                    className="flex-1 min-w-0 bg-[#fafafa] border border-[#ebebeb] hover:border-[#ddd] focus:border-[#953002] focus:ring-1 focus:ring-[#953002] transition-colors rounded-full px-5 sm:px-6 py-[13px] sm:py-[15px] text-[14px] text-[#1d1d1d] placeholder:text-[#a0a0a0] outline-none"
                                 />
                                 <button
                                     onClick={handleSendMessage}
-                                    className="bg-[#953002] hover:bg-[#6d2200] text-white rounded-full px-7 py-[15px] flex items-center justify-center gap-2 text-[14px] font-bold transition-colors cursor-pointer shadow-md"
+                                    disabled={!message.trim()}
+                                    className="bg-[#953002] hover:bg-[#6d2200] disabled:bg-[#ccc] disabled:cursor-not-allowed text-white rounded-full px-5 sm:px-7 py-[13px] sm:py-[15px] flex items-center justify-center gap-2 text-[14px] font-bold transition-colors cursor-pointer shadow-md flex-shrink-0"
                                 >
-                                    Send Message <Send size={15} />
+                                    <span className="hidden sm:inline">Send Message</span> <Send size={16} />
                                 </button>
                             </div>
                             <p className="text-[11px] text-[#a0a0a0] text-center mt-3 font-medium">

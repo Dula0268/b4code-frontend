@@ -1,4 +1,4 @@
-import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import RefundRequestPage from "@/components/features/guest/booking/refund/refund-request-page"
 
 export const metadata = {
@@ -9,7 +9,7 @@ export const metadata = {
 export default function RefundRequestRoute() {
     return (
         <>
-            <BookingTopbar />
+            <GuestTopbar />
             <main>
                 <RefundRequestPage />
             </main>

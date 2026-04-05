@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import {
     ChevronRight, Home, Users, BedDouble, SquareDot, CheckCircle2,
     Star, ArrowRight, Grid2X2, MapPin
@@ -11,7 +11,6 @@ import {
 import type { PropertyDetail, Room } from "@/lib/mock-properties"
 import { Calendar } from "@/components/ui/calendar"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
-import { useIsMobile } from "@/hooks/use-mobile"
 import { addDays, differenceInDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 
@@ -21,7 +20,7 @@ function formatLKR(n: number) {
 
 function RoomDetailPageContent({ property, room }: { property: PropertyDetail; room: Room }) {
     const searchParams = useSearchParams()
-    const isMobile = useIsMobile()
+    const router = useRouter()
 
     // Parse initial dates from URL
     const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : new Date(2026, 9, 10)
@@ -33,9 +32,6 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const [galleryOpen, setGalleryOpen] = useState(false)
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
     const [descExpanded, setDescExpanded] = useState(false)
-
-    // Default checked payment option
-    const [payNow, setPayNow] = useState(true)
 
     const allImages = [room.imageSrc, ...(property.galleryImages || [])]
 
@@ -63,19 +59,28 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
     const nights = date?.from && date?.to ? Math.max(1, differenceInDays(date.to, date.from)) : 1
     const totalRoomPrice = room.pricePerNight * nights
+    
+    // Guest calculations
+    const BASE_GUESTS = 2;
+    const EXTRA_GUEST_FEE_PER_NIGHT = 5000;
+    const totalGuests = guests.adults + guests.children;
+    const isGuestLimitExceeded = totalGuests > room.maxGuests;
+    
+    const extraGuests = Math.max(0, totalGuests - BASE_GUESTS);
+    const extraGuestFeeTotal = extraGuests * EXTRA_GUEST_FEE_PER_NIGHT * nights;
+
+    const baseSubtotal = totalRoomPrice + extraGuestFeeTotal;
     const serviceFee = 1000
     const taxes = 500
     const discount = isPromoApplied ? totalRoomPrice * 0.2 : 0 // 20% discount on room price
     const finalTotal = totalRoomPrice + serviceFee + taxes - discount
-    const checkInParam = date?.from ? format(date.from, "yyyy-MM-dd") : ""
-    const checkOutParam = date?.to ? format(date.to, "yyyy-MM-dd") : ""
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
-            <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-14 sm:pb-20">
+            <div className="max-w-[1200px] mx-auto px-6 pt-24 pb-20">
 
                 {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-                <nav className="flex items-center gap-1.5 text-[12px] sm:text-[13px] mb-5 overflow-x-auto whitespace-nowrap pb-1">
+                <nav className="flex items-center gap-1.5 text-[13px] mb-5">
                     <Link href="/" aria-label="Home" className="text-[#828282] hover:text-[#953002] transition-colors flex items-center">
                         <Home size={15} />
                     </Link>
@@ -101,10 +106,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="currentColor" strokeWidth={0} />)}
                         </div>
                     </div>
-                    <h1 className="text-[clamp(26px,6.5vw,32px)] font-bold text-[#1d1d1d] leading-tight mb-2">
+                    <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">
                         {room.name}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] sm:text-[14px] text-[#555]">
+                    <div className="flex items-center gap-4 text-[14px] text-[#555]">
                         <span className="flex items-center gap-1.5"><MapPin size={15} className="text-[#953002]" /> {property.location}, Sri Lanka</span>
                         <span className="flex items-center gap-1.5"><SquareDot size={15} /> {room.sqft} sq ft</span>
                         <span className="flex items-center gap-1.5"><Users size={15} /> Up to {room.maxGuests} Guests</span>
@@ -112,10 +117,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                 </div>
 
                 {/* ── Photo Gallery Grid ──────────────────────────────────────────────── */}
-                <div className="relative mb-8 sm:mb-10 h-[260px] sm:h-[460px] rounded-2xl overflow-hidden flex gap-2">
+                <div className="relative mb-10 h-[460px] rounded-2xl overflow-hidden flex gap-2">
                     {/* Left primary image */}
                     <div
-                        className="w-full sm:w-[50%] h-full relative cursor-pointer group"
+                        className="w-[50%] h-full relative cursor-pointer group"
                         onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }}
                     >
                         <Image
@@ -129,7 +134,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                     </div>
 
                     {/* Right 4 smaller images */}
-                    <div className="hidden sm:grid w-[50%] grid-cols-2 grid-rows-2 gap-2 h-full">
+                    <div className="w-[50%] grid grid-cols-2 grid-rows-2 gap-2 h-full">
                         {property.galleryImages.slice(0, 4).map((img, i) => (
                             <div
                                 key={i}
@@ -157,10 +162,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                 </div>
 
                 {/* ── Main Layout ────────────────────────────────────────────────────── */}
-                <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
+                <div className="flex gap-10 items-start">
 
                     {/* ── LEFT COLUMN ─────────────────────────────────────────────────── */}
-                    <div className="flex-1 min-w-0 flex flex-col gap-8 sm:gap-10">
+                    <div className="flex-1 min-w-0 flex flex-col gap-10">
 
                         {/* About this room */}
                         <div>
@@ -179,7 +184,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                         {/* Room Amenities */}
                         <div>
                             <h2 className="text-[22px] font-bold text-[#1d1d1d] mb-5">Room Amenities</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 sm:gap-y-6 gap-x-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                                 {/* Merge property base amenities and room features mentally */}
                                 <div className="flex items-center gap-3 text-[14px] font-medium text-[#333]">
                                     <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
@@ -222,9 +227,9 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
                         {/* Availability */}
                         <div>
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
+                            <div className="flex items-center justify-between mb-5">
                                 <h2 className="text-[22px] font-bold text-[#1d1d1d]">Availability</h2>
-                                <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[12px] sm:text-[13px] font-medium text-[#555]">
+                                <div className="flex items-center gap-4 text-[13px] font-medium text-[#555]">
                                     <span className="flex items-center gap-1.5">
                                         <span className="w-3 h-3 rounded-full bg-[#953002]"></span> Selected
                                     </span>
@@ -236,13 +241,13 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
                             {/* Calendar Block */}
                             <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-sm w-full overflow-x-auto">
-                                <div className="min-w-0 sm:min-w-[550px] flex justify-center [&_[data-selected-single=true]]:!bg-[#953002] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[#953002] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[#953002] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[#953002]">
+                                <div className="min-w-[550px] flex justify-center [&_[data-selected-single=true]]:!bg-[#953002] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[#953002] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[#953002] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[#953002]">
                                     <Calendar
                                         mode="range"
                                         defaultMonth={date?.from || new Date(2026, 9, 1)}
                                         selected={date}
                                         onSelect={setDate}
-                                        numberOfMonths={isMobile ? 1 : 2}
+                                        numberOfMonths={2}
                                         disabled={bgBooked}
                                         modifiers={{ booked: bgBooked }}
                                         modifiersClassNames={{ booked: "line-through !text-[#E07070] opacity-70 !bg-[#E07070]/10" }}
@@ -254,45 +259,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                     </div>
 
                     {/* ── RIGHT COLUMN (Sidebar) ──────────────────────────────────────── */}
-                    <div className="w-full lg:w-[360px] flex-shrink-0 lg:sticky lg:top-24 flex flex-col gap-6">
-
-                        {/* Payment Options */}
-                        <div className="flex flex-col gap-3">
-                            <label
-                                className={`flex items-start gap-4 p-4 border rounded-2xl cursor-pointer transition-all ${payNow ? "border-[#953002] bg-[#fffcfb]" : "border-[#e0e0e0] bg-white hover:border-[#bbb]"}`}
-                                onClick={() => setPayNow(true)}
-                            >
-                                <div className="mt-0.5 relative flex items-center justify-center w-5 h-5 rounded-full border-2 border-[#953002]">
-                                    {payNow && <div className="w-2.5 h-2.5 rounded-full bg-[#953002]" />}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#953002" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
-                                        <span className="font-bold text-[#1d1d1d]">Pay Now</span>
-                                    </div>
-                                    <p className="text-[12px] text-[#555] leading-snug">Safe and secure digital payment. Includes 5% discount.</p>
-                                </div>
-                            </label>
-
-                            <label
-                                className={`flex items-start gap-4 p-4 border rounded-2xl cursor-pointer transition-all ${!payNow ? "border-[#953002] bg-[#fffcfb]" : "border-[#e0e0e0] bg-white hover:border-[#bbb]"}`}
-                                onClick={() => setPayNow(false)}
-                            >
-                                <div className="mt-0.5 relative flex items-center justify-center w-5 h-5 rounded-full border-2 border-[#bbb]">
-                                    {!payNow && <div className="w-2.5 h-2.5 rounded-full bg-[#953002]" />}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="12" rx="2" /><path d="M7 8v-2a5 5 0 0 1 10 0v2" /></svg>
-                                        <span className="font-bold text-[#1d1d1d]">Pay at Property</span>
-                                    </div>
-                                    <p className="text-[12px] text-[#555] leading-snug">No charge today. Pay directly when you arrive.</p>
-                                </div>
-                            </label>
-                        </div>
+                    <div className="w-[360px] flex-shrink-0 sticky top-24 flex flex-col gap-6">
 
                         {/* Price Summary Card */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-xl shadow-black/[0.03]">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-xl shadow-black/[0.03]">
                             <div className="flex items-baseline gap-1 mb-5">
                                 <span className="text-[24px] font-bold text-[#1d1d1d]">{formatLKR(room.pricePerNight)}</span>
                                 <span className="text-[14px] text-[#828282] font-medium">/ night</span>
@@ -323,13 +293,18 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
                                     {guestOpen && (
                                         <div
-                                            className="absolute top-full left-0 right-0 sm:right-auto mt-2 bg-white rounded-xl z-50 shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]"
+                                            className="absolute top-full left-0 mt-2 bg-white rounded-xl z-50 shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]"
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <GuestPicker value={guests} onChange={setGuests} />
                                         </div>
                                     )}
                                 </div>
+                                {isGuestLimitExceeded && (
+                                    <div className="p-3 bg-red-50 text-red-600 text-xs sm:text-sm text-center border-t border-[#e0e0e0] font-medium rounded-b-xl">
+                                        Maximum {room.maxGuests} guests allowed for this room.
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex flex-col gap-3 mb-5 border-b border-[#f0f0f0] pb-5">
@@ -337,6 +312,12 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                     <span>{formatLKR(room.pricePerNight)} x {nights} nights</span>
                                     <span className="font-semibold text-[#1d1d1d]">{formatLKR(totalRoomPrice)}</span>
                                 </div>
+                                {extraGuestFeeTotal > 0 && (
+                                    <div className="flex justify-between text-[14px] text-[#555]">
+                                        <span>Extra guest fee ({extraGuests}x LKR 5,000 x {nights} nights)</span>
+                                        <span className="font-semibold text-[#1d1d1d]">{formatLKR(extraGuestFeeTotal)}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-[14px] text-[#555]">
                                     <span>Service Fee</span>
                                     <span className="font-semibold text-[#1d1d1d]">{formatLKR(serviceFee)}</span>
@@ -357,7 +338,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 <button className="text-[14px] font-semibold text-[#953002] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between">
                                     <span>Have a promo code? {isPromoApplied && "✅ Applied"}</span>
                                 </button>
-                                <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                                <div className="mt-3 flex gap-2">
                                     <input
                                         type="text"
                                         placeholder="Enter code"
@@ -385,24 +366,15 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 <span className="text-[20px] font-bold text-[#953002]">{formatLKR(finalTotal)}</span>
                             </div>
 
-                            <Link
-                                href={{
-                                    pathname: "/guest/booking/confirmation",
-                                    query: {
-                                        propertyId: property.id,
-                                        roomId: room.id,
-                                        roomType: room.name,
-                                        checkIn: checkInParam,
-                                        checkOut: checkOutParam,
-                                        guests: guests.adults + guests.children,
-                                        total: Math.round(finalTotal),
-                                        paidInFull: payNow ? "1" : "0",
-                                    },
+                            <button
+                                onClick={() => {
+                                    const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}`;
+                                    router.push(checkoutUrl);
                                 }}
-                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-3.5 sm:py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
+                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 cursor-pointer"
                             >
                                 Confirm & Book <ArrowRight size={18} />
-                            </Link>
+                            </button>
 
                             <div className="text-center text-[13px] text-[#828282] mb-6">You won&apos;t be charged yet</div>
 
@@ -426,7 +398,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
             {/* ── Fullscreen Gallery Modal ─────────────────────────────────────────── */}
             {galleryOpen && (
                 <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
-                    <div className="flex items-center justify-between px-4 sm:px-6 py-4 flex-shrink-0">
+                    <div className="flex items-center justify-between px-6 py-4 flex-shrink-0">
                         <p className="text-white text-[14px] font-semibold">
                             {activeGalleryIdx + 1} / {allImages.length}
                         </p>
@@ -449,7 +421,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             />
                         </div>
                     </div>
-                    <div className="flex-shrink-0 px-4 sm:px-6 py-4 flex gap-2 overflow-x-auto justify-start sm:justify-center">
+                    <div className="flex-shrink-0 px-6 py-4 flex gap-2 overflow-x-auto justify-center">
                         {allImages.map((img, i) => (
                             <button
                                 key={i}
