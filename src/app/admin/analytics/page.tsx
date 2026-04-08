@@ -58,7 +58,7 @@ function CustomTooltip({ active, payload }: TooltipProps) {
           {payload[0].payload.month}
         </p>
         <p className="text-[13px] font-medium text-[#C05621]">
-          ${payload[0].value.toLocaleString()}
+          LKR {payload[0].value.toLocaleString()}
         </p>
       </div>
     );
@@ -120,7 +120,7 @@ export default function PlatformAnalyticsPage() {
                   Gross Booking Value
                 </p>
                 <p className="text-[34px] font-bold text-[#C05621] leading-none m-0">
-                  $1,284,500
+                  LKR 1,284,500
                 </p>
               </div>
               <span className="px-3 py-1 rounded-lg text-[12px] font-semibold bg-[#E6F5EF] text-[#2D7D5C]">
@@ -181,8 +181,8 @@ export default function PlatformAnalyticsPage() {
             <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">
               Net Revenue
             </p>
-            <p className="text-[32px] font-bold text-[#1A1A1A] leading-none m-0">
-              $342,120
+            <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0">
+              LKR 342,120
             </p>
             <div className="flex items-center gap-1.5">
               <TrendingUp size={14} color="#27ae60" />
@@ -217,7 +217,7 @@ export default function PlatformAnalyticsPage() {
               </p>
             </div>
             <p className="text-[36px] font-bold text-[#1A1A1A] leading-none m-0">
-              $420
+              LKR 420
             </p>
             <div>
               <div className="h-2 rounded-full bg-[#F0EBE7] overflow-hidden mb-1.5">
@@ -226,7 +226,7 @@ export default function PlatformAnalyticsPage() {
                   style={{ width: "93%" }}
                 />
               </div>
-              <p className="text-[12px] text-[#9E7B6A]">Goal: $450/night</p>
+              <p className="text-[12px] text-[#9E7B6A]">Goal: LKR 450/night</p>
             </div>
           </div>
 
@@ -239,8 +239,8 @@ export default function PlatformAnalyticsPage() {
               <p className="text-[11px] font-semibold tracking-widest text-[rgba(255,255,255,0.7)] uppercase m-0">
                 RevPAR
               </p>
-              <p className="text-[40px] font-bold text-white leading-none mt-2 mb-0">
-                $327.60
+              <p className="text-[36px] font-bold text-white leading-none mt-2 mb-0">
+                LKR 327.60
               </p>
             </div>
             <div className="flex items-center justify-between mt-6">
@@ -360,7 +360,7 @@ export default function PlatformAnalyticsPage() {
               </p>
             </div>
             <p className="text-[34px] font-bold text-white leading-none m-0 mt-3">
-              $68,424
+              LKR 68,424
             </p>
             <div className="mt-4 flex items-center gap-2 bg-[rgba(255,255,255,0.12)] rounded-lg px-3 py-2 w-fit">
               <span className="w-4 h-4 rounded-full bg-[#4CAF50] flex items-center justify-center flex-shrink-0">

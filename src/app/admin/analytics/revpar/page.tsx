@@ -91,7 +91,6 @@ const ROOMS = [
 ];
 
 const ITEMS_PER_PAGE = 3;
-const TOTAL_PAGES = Math.ceil(ROOMS.length / ITEMS_PER_PAGE);
 
 const ROOM_CATEGORIES = [
   "All Categories",
@@ -155,7 +154,7 @@ function RoomCard({ room }: { room: (typeof ROOMS)[0] }) {
               ADR
             </p>
             <p className="text-[22px] font-bold text-[#1A1A1A] leading-none m-0">
-              ${room.adr.toFixed(2)}
+              LKR {room.adr.toFixed(2)}
             </p>
           </div>
           <div>
@@ -163,7 +162,7 @@ function RoomCard({ room }: { room: (typeof ROOMS)[0] }) {
               RevPAR (Calculated)
             </p>
             <p className="text-[26px] font-bold text-[#1A1A1A] leading-none m-0">
-              ${room.revpar.toFixed(2)}
+              LKR {room.revpar.toFixed(2)}
             </p>
           </div>
 
@@ -184,7 +183,6 @@ export default function RevparDetailPage() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [categoryOpen, setCategoryOpen] = useState(false);
 
-  // Filter by category
   const filtered =
     selectedCategory === "All Categories"
       ? ROOMS
@@ -291,12 +289,12 @@ export default function RevparDetailPage() {
             Showing {pageRooms.length} of {filtered.length} high-yield units
           </p>
 
-          {/* Pagination */}
-          <div className="flex items-center gap-1">
+          {/* Pagination — amber active style matching finance pages */}
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="w-9 h-9 rounded-lg border border-[#E8DDD8] flex items-center justify-center bg-white disabled:opacity-40 hover:bg-[#FAF5F2] transition-colors"
+              className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center bg-white disabled:opacity-40 hover:bg-[#FAF5F2] transition-colors"
             >
               <ChevronLeft size={16} color="#6B4A3A" />
             </button>
@@ -305,9 +303,9 @@ export default function RevparDetailPage() {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`w-9 h-9 rounded-lg text-[13px] font-semibold border transition-colors ${
+                className={`w-9 h-9 rounded-xl text-[13px] font-semibold border transition-colors ${
                   currentPage === page
-                    ? "bg-[#7B2504] text-white border-[#7B2504]"
+                    ? "bg-[#F59E0B] text-white border-[#F59E0B]"
                     : "bg-white text-[#1A1A1A] border-[#E8DDD8] hover:bg-[#FAF5F2]"
                 }`}
               >
@@ -318,7 +316,7 @@ export default function RevparDetailPage() {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="w-9 h-9 rounded-lg border border-[#E8DDD8] flex items-center justify-center bg-white disabled:opacity-40 hover:bg-[#FAF5F2] transition-colors"
+              className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center bg-white disabled:opacity-40 hover:bg-[#FAF5F2] transition-colors"
             >
               <ChevronRight size={16} color="#6B4A3A" />
             </button>
