@@ -34,7 +34,7 @@ export default function FiltersSidebar(filtersSidebarProps: FiltersSidebarProps)
                 <button
                     id="clear-all-filters"
                     onClick={onClear}
-                    className="text-[12px] sm:text-[13px] text-[#953002] font-medium hover:underline cursor-pointer bg-transparent border-none p-0"
+                    className="text-[12px] sm:text-[13px] text-[var(--brand-primary)] font-medium hover:underline cursor-pointer bg-transparent border-none p-0"
                 >
                     Clear all
                 </button>
@@ -47,7 +47,7 @@ export default function FiltersSidebar(filtersSidebarProps: FiltersSidebarProps)
                     <select 
                         value={filtersSidebarProps.sortBy}
                         onChange={(e) => filtersSidebarProps.onSortChange(e.target.value)}
-                        className="w-full text-[14px] bg-white border border-[#e0e0e0] rounded-xl px-3 py-2.5 outline-none text-[#1d1d1d] font-medium cursor-pointer hover:border-[#953002]/40 transition-colors"
+                        className="w-full text-[14px] bg-white border border-[#e0e0e0] rounded-xl px-3 py-2.5 outline-none text-[#1d1d1d] font-medium cursor-pointer hover:border-[var(--brand-primary)]/40 transition-colors"
                     >
                         <option value="recommended">Recommended</option>
                         <option value="price_asc">Price: Low to High</option>
@@ -61,8 +61,8 @@ export default function FiltersSidebar(filtersSidebarProps: FiltersSidebarProps)
                     className={[
                         "flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[14px] font-bold transition-all shadow-sm cursor-pointer whitespace-nowrap border-2 w-full",
                         filtersSidebarProps.mapOpen
-                            ? "bg-[#953002] text-white border-[#953002] hover:bg-[#6d2200]"
-                            : "bg-[#fff4eb] text-[#953002] border-transparent hover:border-[#953002]/20",
+                            ? "bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] hover:bg-[#6d2200]"
+                            : "bg-[#fff4eb] text-[var(--brand-primary)] border-transparent hover:border-[var(--brand-primary)]/20",
                     ].join(" ")}
                 >
                     <Map size={18} />

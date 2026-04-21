@@ -45,15 +45,15 @@ export default function PropertyTypeFilter({ selected, onChange }: PropertyTypeF
                             className={[
                                 "flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer text-left",
                                 active
-                                    ? "border-[#953002] bg-[#953002]/5"
-                                    : "border-[#e0e0e0] bg-white hover:border-[#953002]/40",
+                                    ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5"
+                                    : "border-[#e0e0e0] bg-white hover:border-[var(--brand-primary)]/40",
                             ].join(" ")}
                         >
                             <Icon
                                 size={20}
-                                className={active ? "text-[#953002]" : "text-[#828282]"}
+                                className={active ? "text-[var(--brand-primary)]" : "text-[#828282]"}
                             />
-                            <span className={`text-[13px] font-medium ${active ? "text-[#953002]" : "text-[#333333]"}`}>
+                            <span className={`text-[13px] font-medium ${active ? "text-[var(--brand-primary)]" : "text-[#333333]"}`}>
                                 {label}
                             </span>
                         </button>

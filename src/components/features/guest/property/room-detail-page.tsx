@@ -81,28 +81,28 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
                 {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
                 <nav className="flex items-center gap-1.5 text-[13px] mb-5">
-                    <Link href="/" aria-label="Home" className="text-[#828282] hover:text-[#953002] transition-colors flex items-center">
+                    <Link href="/" aria-label="Home" className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors flex items-center">
                         <Home size={15} />
                     </Link>
                     <ChevronRight size={13} className="text-[#bbb]" />
-                    <Link href="/guest/search" className="text-[#828282] hover:text-[#953002] transition-colors">
+                    <Link href="/guest/search" className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors">
                         Search
                     </Link>
                     <ChevronRight size={13} className="text-[#bbb]" />
-                    <Link href={`/guest/property/${property.id}`} className="text-[#828282] hover:text-[#953002] transition-colors truncate max-w-[200px]">
+                    <Link href={`/guest/property/${property.id}`} className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors truncate max-w-[200px]">
                         {property.title}
                     </Link>
                     <ChevronRight size={13} className="text-[#bbb]" />
-                    <span className="text-[#953002] font-medium truncate max-w-[240px]">{room.name}</span>
+                    <span className="text-[var(--brand-primary)] font-medium truncate max-w-[240px]">{room.name}</span>
                 </nav>
 
                 {/* ── Title & Meta ────────────────────────────────────────────────────── */}
                 <div className="mb-6">
                     <div className="flex items-center gap-3 mb-2">
-                        <span className="bg-[#fff4eb] text-[#953002] text-[11px] font-bold px-2 py-0.5 rounded-sm tracking-widest uppercase">
+                        <span className="bg-[#fff4eb] text-[var(--brand-primary)] text-[11px] font-bold px-2 py-0.5 rounded-sm tracking-widest uppercase">
                             Premium Selection
                         </span>
-                        <div className="flex items-center text-[#ffb401]">
+                        <div className="flex items-center text-[var(--brand-secondary)]">
                             {[...Array(5)].map((_, i) => <Star key={i} size={13} fill="currentColor" strokeWidth={0} />)}
                         </div>
                     </div>
@@ -110,7 +110,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                         {room.name}
                     </h1>
                     <div className="flex items-center gap-4 text-[14px] text-[#555]">
-                        <span className="flex items-center gap-1.5"><MapPin size={15} className="text-[#953002]" /> {property.location}, Sri Lanka</span>
+                        <span className="flex items-center gap-1.5"><MapPin size={15} className="text-[var(--brand-primary)]" /> {property.location}, Sri Lanka</span>
                         <span className="flex items-center gap-1.5"><SquareDot size={15} /> {room.sqft} sq ft</span>
                         <span className="flex items-center gap-1.5"><Users size={15} /> Up to {room.maxGuests} Guests</span>
                     </div>
@@ -175,7 +175,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             </p>
                             <button
                                 onClick={() => setDescExpanded(!descExpanded)}
-                                className="mt-3 text-[14px] font-bold text-[#953002] inline-flex items-center gap-1 hover:underline cursor-pointer bg-transparent border-none p-0"
+                                className="mt-3 text-[14px] font-bold text-[var(--brand-primary)] inline-flex items-center gap-1 hover:underline cursor-pointer bg-transparent border-none p-0"
                             >
                                 Read more description <ChevronRight size={14} className={descExpanded ? "-rotate-90 transition-transform" : "rotate-90 transition-transform"} />
                             </button>
@@ -187,37 +187,37 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                                 {/* Merge property base amenities and room features mentally */}
                                 <div className="flex items-center gap-3 text-[14px] font-medium text-[#333]">
-                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
+                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[var(--brand-primary)]">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></svg>
                                     </div>
                                     Free High-speed Wi-Fi
                                 </div>
                                 <div className="flex items-center gap-3 text-[14px] font-medium text-[#333]">
-                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
+                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[var(--brand-primary)]">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v2" /><path d="M12 20v2" /><path d="M5 5l1.5 1.5" /><path d="M17.5 17.5L19 19" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="M5 19l1.5-1.5" /><path d="M17.5 6.5L19 5" /><circle cx="12" cy="12" r="3" /></svg>
                                     </div>
                                     Climate Control
                                 </div>
                                 <div className="flex items-center gap-3 text-[14px] font-medium text-[#333]">
-                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
+                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[var(--brand-primary)]">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
                                     </div>
                                     55&quot; Smart TV
                                 </div>
                                 <div className="flex items-center gap-3 text-[14px] font-medium text-[#333]">
-                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
+                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[var(--brand-primary)]">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /><line x1="9" y1="2" x2="9" y2="4" /><line x1="15" y1="2" x2="15" y2="4" /></svg>
                                     </div>
                                     Nespresso Machine
                                 </div>
                                 <div className="flex items-center gap-3 text-[14px] font-medium text-[#333]">
-                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
+                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[var(--brand-primary)]">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 2v20" /><path d="M19 2v20" /><path d="M5 8h14" /><path d="M5 14h14" /><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" /></svg>
                                     </div>
                                     Mini Bar
                                 </div>
                                 <div className="flex items-center gap-3 text-[14px] font-medium text-[#333]">
-                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[#953002]">
+                                    <div className="w-10 h-10 rounded-xl bg-[#fff4eb] flex items-center justify-center text-[var(--brand-primary)]">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                                     </div>
                                     Digital Safe
@@ -231,7 +231,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 <h2 className="text-[22px] font-bold text-[#1d1d1d]">Availability</h2>
                                 <div className="flex items-center gap-4 text-[13px] font-medium text-[#555]">
                                     <span className="flex items-center gap-1.5">
-                                        <span className="w-3 h-3 rounded-full bg-[#953002]"></span> Selected
+                                        <span className="w-3 h-3 rounded-full bg-[var(--brand-primary)]"></span> Selected
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <span className="w-3 h-3 rounded-full bg-[#E07070]"></span> Booked
@@ -241,7 +241,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
                             {/* Calendar Block */}
                             <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-sm w-full overflow-x-auto">
-                                <div className="min-w-[550px] flex justify-center [&_[data-selected-single=true]]:!bg-[#953002] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[#953002] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[#953002] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[#953002]">
+                                <div className="min-w-[550px] flex justify-center [&_[data-selected-single=true]]:!bg-[var(--brand-primary)] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[var(--brand-primary)] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[var(--brand-primary)] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[var(--brand-primary)]">
                                     <Calendar
                                         mode="range"
                                         defaultMonth={date?.from || new Date(2026, 9, 1)}
@@ -327,7 +327,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                     <span className="font-semibold text-[#1d1d1d]">{formatLKR(taxes)}</span>
                                 </div>
                                 {isPromoApplied && (
-                                    <div className="flex justify-between text-[14px] text-[#953002] font-semibold mt-1">
+                                    <div className="flex justify-between text-[14px] text-[var(--brand-primary)] font-semibold mt-1">
                                         <span>Promo Code Discount (20%)</span>
                                         <span>-{formatLKR(discount)}</span>
                                     </div>
@@ -335,7 +335,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             </div>
 
                             <div className="mb-5 pb-5 border-b border-[#f0f0f0]">
-                                <button className="text-[14px] font-semibold text-[#953002] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between">
+                                <button className="text-[14px] font-semibold text-[var(--brand-primary)] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between">
                                     <span>Have a promo code? {isPromoApplied && "✅ Applied"}</span>
                                 </button>
                                 <div className="mt-3 flex gap-2">
@@ -344,7 +344,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                         placeholder="Enter code"
                                         value={promoCode}
                                         onChange={(e) => setPromoCode(e.target.value)}
-                                        className="flex-1 w-full px-3 py-2 border border-[#e0e0e0] rounded-xl text-[14px] outline-none focus:border-[#953002] transition-colors bg-[#fafafa]"
+                                        className="flex-1 w-full px-3 py-2 border border-[#e0e0e0] rounded-xl text-[14px] outline-none focus:border-[var(--brand-primary)] transition-colors bg-[#fafafa]"
                                     />
                                     <button
                                         onClick={() => {
@@ -363,7 +363,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
 
                             <div className="flex justify-between items-center mb-6">
                                 <span className="text-[18px] font-bold text-[#1d1d1d]">Total</span>
-                                <span className="text-[20px] font-bold text-[#953002]">{formatLKR(finalTotal)}</span>
+                                <span className="text-[20px] font-bold text-[var(--brand-primary)]">{formatLKR(finalTotal)}</span>
                             </div>
 
                             <button
@@ -371,7 +371,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                     const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}`;
                                     router.push(checkoutUrl);
                                 }}
-                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 cursor-pointer"
+                                className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 cursor-pointer"
                             >
                                 Confirm & Book <ArrowRight size={18} />
                             </button>
@@ -428,7 +428,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 onClick={() => setActiveGalleryIdx(i)}
                                 className={
                                     `relative w-16 h-12 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ` +
-                                    (i === activeGalleryIdx ? "border-[#953002]" : "border-transparent opacity-60 hover:opacity-100")
+                                    (i === activeGalleryIdx ? "border-[var(--brand-primary)]" : "border-transparent opacity-60 hover:opacity-100")
                                 }
                             >
                                 <Image src={img} alt={`thumbnail ${i + 1}`} fill className="object-cover" sizes="64px" />

@@ -48,7 +48,7 @@ export default function TestimonialsSection() {
   return (
     <section ref={sectionRef} className="relative py-12 sm:py-16 md:py-24 px-4 sm:px-5 bg-[#faf8f5] overflow-hidden">
       {/* Decorative - hidden on mobile */}
-      <div className="hidden sm:block absolute top-10 sm:top-20 left-5 sm:left-10 text-[#953002]/5">
+      <div className="hidden sm:block absolute top-10 sm:top-20 left-5 sm:left-10 text-[var(--brand-primary)]/5">
         <Quote size={120} className="sm:size-[200px]" />
       </div>
 
@@ -58,12 +58,12 @@ export default function TestimonialsSection() {
           className={`text-center mb-10 sm:mb-12 md:mb-16 transition-all duration-700 px-2 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
             }`}
         >
-          <span className="inline-block text-[#953002] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
+          <span className="inline-block text-[var(--brand-primary)] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
             Guest Stories
           </span>
           <h2 className="text-[clamp(22px,5vw,44px)] font-black text-[#1d1d1d] leading-[1.1] tracking-tight mb-3 sm:mb-4">
             Loved by Travelers{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#953002] to-[#c84a15]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-primary)] to-[#c84a15]">
               Worldwide
             </span>
           </h2>
@@ -84,7 +84,7 @@ export default function TestimonialsSection() {
               style={{ transitionDelay: `${i * 150 + 200}ms` }}
             >
               {/* Quote icon */}
-              <div className="absolute -top-3 right-4 sm:right-6 w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-gradient-to-br from-[#953002] to-[#c84a15] flex items-center justify-center flex-shrink-0">
+              <div className="absolute -top-3 right-4 sm:right-6 w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[#c84a15] flex items-center justify-center flex-shrink-0">
                 <Quote size={13} className="text-white sm:size-[14px]" />
               </div>
 
@@ -94,7 +94,7 @@ export default function TestimonialsSection() {
                   <Star
                     key={j}
                     size={13}
-                    className="text-[#ffb401] fill-[#ffb401] sm:size-[14px]"
+                    className="text-[var(--brand-secondary)] fill-[var(--brand-secondary)] sm:size-[14px]"
                   />
                 ))}
               </div>
@@ -105,13 +105,13 @@ export default function TestimonialsSection() {
               </p>
 
               {/* Property tag */}
-              <div className="inline-block px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#953002]/5 text-[#953002] text-[10px] sm:text-[11px] font-semibold mb-4 sm:mb-5">
+              <div className="inline-block px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[var(--brand-primary)]/5 text-[var(--brand-primary)] text-[10px] sm:text-[11px] font-semibold mb-4 sm:mb-5">
                 {t.property}
               </div>
 
               {/* Author */}
               <div className="flex items-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-[#f0f0f0]">
-                <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-gradient-to-br from-[#953002] to-[#c84a15] flex items-center justify-center text-white text-[11px] sm:text-[13px] font-bold flex-shrink-0">
+                <div className="w-9 sm:w-10 h-9 sm:h-10 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[#c84a15] flex items-center justify-center text-white text-[11px] sm:text-[13px] font-bold flex-shrink-0">
                   {t.avatar}
                 </div>
                 <div className="min-w-0">

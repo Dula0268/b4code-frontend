@@ -333,7 +333,7 @@ function Dashboard() {
               </div>
               <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
                 <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${stayProgress}%`, background: "linear-gradient(to right, var(--brand-secondary), #ffd060)" }} />
+                  style={{ width: `${stayProgress}%`, background: "linear-gradient(to right, var(--brand-secondary), var(--brand-primary))" }} />
               </div>
             </div>
           </div>
@@ -576,7 +576,7 @@ function Dashboard() {
                 </p>
                 <Link href="/guest/my-room/submit-review"
                   className="w-full py-3 rounded-xl text-[0.8125rem] font-bold flex items-center justify-center gap-2 no-underline transition-colors"
-                  style={{ background: "#7c3aed", color: "white" }}>
+                  style={{ background: "var(--brand-primary)", color: "white" }}>
                   <Pencil size={14} /> Write a Review
                 </Link>
               </div>

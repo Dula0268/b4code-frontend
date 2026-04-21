@@ -48,13 +48,13 @@ export default function StaffCtaSection() {
         className={`relative z-10 text-center px-4 sm:px-5 max-w-[750px] transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
       >
-        <span className="inline-block text-[#ffb401] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-3 sm:mb-4">
+        <span className="inline-block text-[var(--brand-secondary)] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-3 sm:mb-4">
           For Hotel Staff
         </span>
 
         <h2 className="text-white font-black text-[clamp(24px,5vw,44px)] leading-[1.08] tracking-tight mb-3 sm:mb-4">
           Deliver Exceptional Service,{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffb401] via-[#ffc940] to-[#ffb401]">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-secondary)] via-[#ffc940] to-[var(--brand-secondary)]">
             Every Day
           </span>
         </h2>
@@ -76,7 +76,7 @@ export default function StaffCtaSection() {
                   }`}
                 style={{ transitionDelay: `${i * 100 + 400}ms` }}
               >
-                <Icon size={13} className="text-[#ffb401] flex-shrink-0 sm:size-[14px]" />
+                <Icon size={13} className="text-[var(--brand-secondary)] flex-shrink-0 sm:size-[14px]" />
                 <span className="hidden sm:inline">{perk.text}</span>
                 <span className="sm:hidden">{perk.text.split(' ').slice(0, 2).join(' ')}</span>
               </div>
@@ -86,7 +86,7 @@ export default function StaffCtaSection() {
 
         <Link
           href="/auth/register?role=staff"
-          className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3.5 bg-gradient-to-r from-[#953002] to-[#b84010] hover:from-[#6d2200] hover:to-[#953002] text-white font-semibold text-[14px] sm:text-[15px] rounded-xl transition-all duration-300 no-underline shadow-lg shadow-[#953002]/30 hover:shadow-xl hover:shadow-[#953002]/40 hover:-translate-y-0.5 group active:scale-95"
+          className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3.5 bg-gradient-to-r from-[var(--brand-primary)] to-[#b84010] hover:from-[#6d2200] hover:to-[var(--brand-primary)] text-white font-semibold text-[14px] sm:text-[15px] rounded-xl transition-all duration-300 no-underline shadow-lg shadow-[var(--brand-primary)]/30 hover:shadow-xl hover:shadow-[var(--brand-primary)]/40 hover:-translate-y-0.5 group active:scale-95"
         >
           <span className="hidden sm:inline">Continue as Staff</span>
           <span className="sm:hidden">Get Started</span>

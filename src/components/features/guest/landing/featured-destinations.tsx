@@ -57,8 +57,8 @@ export default function FeaturedDestinations() {
       className="relative py-12 sm:py-16 md:py-24 px-4 sm:px-5 bg-[#faf8f5] overflow-hidden"
     >
       {/* Decorative background elements - hidden on mobile for performance */}
-      <div className="hidden sm:block absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-gradient-radial from-[#953002]/5 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-      <div className="hidden sm:block absolute bottom-0 left-0 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] bg-gradient-radial from-[#ffb401]/5 to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+      <div className="hidden sm:block absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-gradient-radial from-[var(--brand-primary)]/5 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="hidden sm:block absolute bottom-0 left-0 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] bg-gradient-radial from-[var(--brand-secondary)]/5 to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
       <div className="relative max-w-[1200px] mx-auto">
         {/* Section header */}
@@ -66,12 +66,12 @@ export default function FeaturedDestinations() {
           className={`text-center mb-10 sm:mb-12 md:mb-16 transition-all duration-700 px-2 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
             }`}
         >
-          <span className="inline-block text-[#953002] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
+          <span className="inline-block text-[var(--brand-primary)] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
             Popular Destinations
           </span>
           <h2 className="text-[clamp(22px,5vw,44px)] font-black text-[#1d1d1d] leading-[1.1] tracking-tight mb-3 sm:mb-4">
             Explore Sri Lanka&apos;s{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#953002] to-[#c84a15]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-primary)] to-[#c84a15]">
               Finest Stays
             </span>
           </h2>
@@ -115,7 +115,7 @@ export default function FeaturedDestinations() {
                 <p className="text-white/70 text-[12px] sm:text-[13px] mb-2 sm:mb-3">
                   {dest.tagline}
                 </p>
-                <div className="flex items-center gap-1.5 text-[#ffb401] text-[12px] sm:text-[13px] font-semibold group-hover:gap-3 transition-all duration-300">
+                <div className="flex items-center gap-1.5 text-[var(--brand-secondary)] text-[12px] sm:text-[13px] font-semibold group-hover:gap-3 transition-all duration-300">
                   Explore
                   <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1 flex-shrink-0" />
                 </div>

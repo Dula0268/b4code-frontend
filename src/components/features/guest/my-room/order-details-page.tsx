@@ -91,7 +91,7 @@ export default function OrderDetailsPage() {
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[var(--brand-secondary)] to-amber-300 rounded-full transition-all duration-1000"
+                  className="h-full bg-gradient-to-r from-[var(--brand-secondary)] to-[var(--brand-primary)] rounded-full transition-all duration-1000"
                   style={{ width: `${statusInfo.progress}%` }}
                 />
               </div>

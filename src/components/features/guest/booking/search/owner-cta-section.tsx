@@ -29,7 +29,7 @@ export default function OwnerCtaSection() {
         </p>
         <Link
           href="/auth/register?role=owner"
-          className="inline-flex items-center justify-center px-8 py-3 bg-[#953002] hover:bg-[#6d2200] text-white font-semibold text-[15px] rounded-xl transition-colors no-underline"
+          className="inline-flex items-center justify-center px-8 py-3 bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-semibold text-[15px] rounded-xl transition-colors no-underline"
         >
           Continue as Owner
         </Link>
