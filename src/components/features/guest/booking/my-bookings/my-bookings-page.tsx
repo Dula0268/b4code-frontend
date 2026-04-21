@@ -135,9 +135,9 @@ function PaymentBadge({ paidInFull }: { paidInFull: boolean }) {
 // ─────────────────────────────────────────────────────────────────────────────
 const btnPrimary = "inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer no-underline"
 const btnHost    = "inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer no-underline"
-const btnOutline = "inline-flex items-center gap-2 border border-[var(--border)] hover:border-[var(--black-2)] text-[var(--gray-2)] hover:text-[var(--black-2)] text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
+const btnOutline = "inline-flex items-center gap-2 border border-[var(--border)] hover:border-[var(--brand-primary)] text-[var(--gray-2)] hover:text-[var(--brand-primary)] text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
 const btnDanger  = "inline-flex items-center gap-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
-const btnGhost   = "inline-flex items-center gap-1.5 text-xs font-bold text-[var(--gray-3)] hover:text-[var(--black-2)] transition-colors cursor-pointer ml-auto"
+const btnGhost   = "inline-flex items-center gap-1.5 text-xs font-bold text-[var(--gray-3)] hover:text-[var(--brand-primary)] transition-colors cursor-pointer ml-auto"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Booking card
@@ -225,7 +225,7 @@ function BookingCard({ booking }: { booking: Booking }) {
 
         {/* Dates + status (hidden for cancelled — shown in the note above) */}
         {!isCancelled && (
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-4 sm:gap-6">
             <div>
               <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-0.5" style={{ color: "var(--gray-4)" }}>
                 Stay Dates
@@ -250,13 +250,13 @@ function BookingCard({ booking }: { booking: Booking }) {
 
           {isUpcoming && (
             <>
-              <Link href="/guest/my-room" className={btnPrimary} style={{ background: "var(--black-2)" }}>
+              <Link href="/guest/my-room" className={btnPrimary} style={{ background: "var(--brand-primary)" }}>
                 <BedDouble size={13} /> My Room
               </Link>
               {/* Amber accent on Message Host to visually distinguish it from the plain primary action */}
               <Link href="/guest/booking/message-host"
                 className={`${btnHost}`}
-                style={{ background: "var(--black-2)", color: "var(--brand-secondary)" }}>
+                style={{ background: "var(--brand-primary)", color: "var(--brand-secondary)" }}>
                 <MessageSquare size={13} /> Message Host
               </Link>
               <Link href="/guest/booking/modify" className={btnOutline}>
@@ -284,7 +284,7 @@ function BookingCard({ booking }: { booking: Booking }) {
 
           {isCancelled && (
             <>
-              <Link href={rebookHref} className={btnPrimary} style={{ background: "var(--black-2)" }}>
+              <Link href={rebookHref} className={btnPrimary} style={{ background: "var(--brand-primary)" }}>
                 <RefreshCw size={13} /> Rebook Property
               </Link>
               <Link href="/guest/booking/cancel" className={btnOutline}>
@@ -344,7 +344,7 @@ export default function MyBookingsPage() {
   const nextUpcoming    = bookings.find(b => b.status === "UPCOMING") ?? null
 
   return (
-    <div className="min-h-screen pt-20 pb-16" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+    <div className="min-h-screen pt-20 pb-16" style={{ background: "transparent" }}>
       <div className="max-w-[860px] mx-auto px-4">
 
         {/* Header */}
@@ -358,12 +358,12 @@ export default function MyBookingsPage() {
         </div>
 
         {/* Tab toggle — pill style keeps it compact on mobile */}
-        <div className="flex items-center gap-1 mb-6 ps-card w-fit p-1">
+        <div className="flex items-center gap-1 mb-6 ps-card w-full sm:w-fit p-1 overflow-x-auto no-scrollbar">
           {TABS.map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className="px-5 py-2 text-[0.75rem] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+              className="px-4 sm:px-5 py-2 text-[0.75rem] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer whitespace-nowrap"
               style={{
-                background: activeTab === tab ? "var(--black-2)" : "transparent",
+                background: activeTab === tab ? "var(--brand-primary)" : "transparent",
                 color:      activeTab === tab ? "white"          : "var(--gray-3)",
               }}>
               {tab}

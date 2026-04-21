@@ -59,7 +59,7 @@ export default function HeroSection() {
 
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-[10px] sm:text-[12px] font-medium tracking-wider uppercase">
-          <span className="w-2 h-2 rounded-full bg-[#ffb401] animate-pulse flex-shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-[var(--brand-secondary)] animate-pulse flex-shrink-0" />
           <span className="hidden xs:inline">Sri Lanka&apos;s Premier Booking Platform</span>
           <span className="inline xs:hidden">Premier Booking Platform</span>
         </div>
@@ -67,7 +67,7 @@ export default function HeroSection() {
         <h1 className="text-white font-black text-[clamp(28px,6.5vw,60px)] leading-[1.1] sm:leading-[1.05] tracking-tight drop-shadow-lg">
           Find, Book, and Stay
           <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffb401] via-[#ffc940] to-[#ffb401]">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-secondary)] via-[#ffc940] to-[var(--brand-secondary)]">
             with Confidence
           </span>
         </h1>

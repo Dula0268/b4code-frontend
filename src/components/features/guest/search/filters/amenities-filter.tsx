@@ -47,8 +47,8 @@ export default function AmenitiesFilter({ selected, onChange }: AmenitiesFilterP
                                 className={[
                                     "w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors",
                                     checked
-                                        ? "bg-[#953002] border-2 border-[#953002]"
-                                        : "border-2 border-[#b0b0b0] bg-white group-hover:border-[#953002]",
+                                        ? "bg-[var(--brand-primary)] border-2 border-[var(--brand-primary)]"
+                                        : "border-2 border-[#b0b0b0] bg-white group-hover:border-[var(--brand-primary)]",
                                 ].join(" ")}
                                 onClick={() => toggle(am)}
                             >
@@ -74,7 +74,7 @@ export default function AmenitiesFilter({ selected, onChange }: AmenitiesFilterP
             {/* Show more / less */}
             <button
                 onClick={() => setShowAll(s => !s)}
-                className="flex items-center gap-1 mt-3 text-[13px] font-medium text-[#333333] hover:text-[#953002] transition-colors bg-transparent border-none p-0 cursor-pointer"
+                className="flex items-center gap-1 mt-3 text-[13px] font-medium text-[#333333] hover:text-[var(--brand-primary)] transition-colors bg-transparent border-none p-0 cursor-pointer"
             >
                 {showAll
                     ? <><ChevronUp size={14} /> Show less</>

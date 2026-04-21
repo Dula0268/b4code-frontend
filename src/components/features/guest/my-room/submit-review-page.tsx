@@ -120,7 +120,7 @@ export default function SubmitReviewPage() {
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 pt-20"
-        style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+        style={{ background: "transparent" }}>
         <div className="ps-card max-w-md w-full p-10 text-center">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
             style={{ background: "color-mix(in srgb, var(--state-success) 12%, white)", border: "1px solid color-mix(in srgb, var(--state-success) 25%, transparent)" }}>
@@ -140,7 +140,7 @@ export default function SubmitReviewPage() {
           <div className="flex flex-col gap-3">
             <Link href="/guest/my-room"
               className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 no-underline"
-              style={{ background: "var(--black-2)", color: "white" }}>
+              style={{ background: "var(--brand-primary)", color: "white" }}>
               Back to Dashboard
             </Link>
             <button
@@ -157,7 +157,7 @@ export default function SubmitReviewPage() {
 
   // ── Review form ──
   return (
-    <div className="min-h-screen pt-20 pb-16" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+    <div className="min-h-screen pt-20 pb-16" style={{ background: "transparent" }}>
       <div className="max-w-[820px] mx-auto px-4 pt-6">
 
         <Link href="/guest/my-room"
@@ -327,7 +327,7 @@ export default function SubmitReviewPage() {
               type="submit"
               disabled={!isFormValid}
               className="w-full py-4 rounded-xl text-[0.9375rem] font-black text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: "var(--black-2)" }}>
+              style={{ background: "var(--brand-primary)" }}>
               Submit Review
             </button>
             <p className="text-[0.6875rem] text-center mt-3 leading-relaxed" style={{ color: "var(--gray-4)" }}>

@@ -37,7 +37,7 @@ export default function GuestRatingFilter({ selected, onChange }: GuestRatingFil
                             className="flex items-center justify-between cursor-pointer select-none group"
                         >
                             <div className="flex items-center gap-2">
-                                <span className="text-[#ffb401] text-sm">★</span>
+                                <span className="text-[var(--brand-secondary)] text-sm">★</span>
                                 <span className="text-[14px] text-[#333333]">{label}</span>
                             </div>
 
@@ -47,8 +47,8 @@ export default function GuestRatingFilter({ selected, onChange }: GuestRatingFil
                                 className={[
                                     "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors",
                                     active
-                                        ? "border-[#953002] bg-[#953002]"
-                                        : "border-[#b0b0b0] bg-white group-hover:border-[#953002]/60",
+                                        ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]"
+                                        : "border-[#b0b0b0] bg-white group-hover:border-[var(--brand-primary)]/60",
                                 ].join(" ")}
                             >
                                 {active && <div className="w-1.5 h-1.5 rounded-full bg-white" />}

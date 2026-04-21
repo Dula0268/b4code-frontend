@@ -58,13 +58,13 @@ function OtpGate({ onVerified }: { onVerified: () => void }) {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 pt-20"
-      style={{ background: "linear-gradient(135deg, var(--black-1) 0%, var(--black-2) 100%)" }}
+      style={{ background: "var(--bg)" }}
     >
       {/* Ambient glow — purely decorative */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none"
         style={{ background: "color-mix(in srgb, var(--brand-secondary) 8%, transparent)" }} />
 
-      <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-10 text-center shadow-2xl">
+      <div className="relative w-full max-w-md bg-[var(--brand-primary)] border border-white/10 rounded-[2rem] p-10 text-center shadow-2xl">
         {phase === "verifying" ? (
           <div className="flex flex-col items-center gap-5 py-10">
             <div className="w-20 h-20 rounded-full border-2 border-t-[var(--brand-secondary)] border-white/10 animate-spin" />
@@ -105,7 +105,7 @@ function OtpGate({ onVerified }: { onVerified: () => void }) {
               </div>
               <button type="submit"
                 className="w-full py-4 font-black text-[0.9375rem] rounded-2xl transition-all cursor-pointer tracking-wide"
-                style={{ background: "var(--brand-secondary)", color: "var(--black-2)" }}>
+                style={{ background: "var(--brand-secondary)", color: "var(--brand-primary)" }}>
                 Unlock My Suite
               </button>
             </form>
@@ -281,7 +281,7 @@ function Dashboard() {
 
           {/* ── Hero banner ── */}
           <div className="relative rounded-[1.5rem] px-6 sm:px-10 py-7 mb-5 overflow-hidden"
-            style={{ background: "var(--black-2)" }}>
+            style={{ background: "var(--brand-primary)" }}>
             {/* Decorative ambient blur — not interactive */}
             <div className="pointer-events-none absolute -top-20 -right-20 w-80 h-80 rounded-full blur-[80px]"
               style={{ background: "color-mix(in srgb, var(--brand-secondary) 12%, transparent)" }} />
@@ -333,7 +333,7 @@ function Dashboard() {
               </div>
               <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
                 <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${stayProgress}%`, background: "linear-gradient(to right, var(--brand-secondary), #ffd060)" }} />
+                  style={{ width: `${stayProgress}%`, background: "linear-gradient(to right, var(--brand-secondary), var(--brand-primary))" }} />
               </div>
             </div>
           </div>
@@ -362,7 +362,7 @@ function Dashboard() {
                         <Icon size={20} className={iconCls} />
                       </div>
                       <div>
-                        <p className="text-[0.8125rem] font-black" style={{ color: "var(--black-2)" }}>{label}</p>
+                        <p className="text-[0.8125rem] font-black" style={{ color: "var(--brand-primary)" }}>{label}</p>
                         <p className="text-[0.6875rem] mt-0.5" style={{ color: "var(--gray-4)" }}>{sub}</p>
                       </div>
                     </Link>
@@ -416,8 +416,8 @@ function Dashboard() {
                           background: done || active ? "var(--brand-secondary)" : "white",
                           borderColor: done || active ? "var(--brand-secondary)" : "var(--gray-5)",
                         }}>
-                          {done   && <CheckCircle2 size={11} color="var(--black-2)" />}
-                          {active && <CircleDot    size={11} color="var(--black-2)" />}
+                          {done   && <CheckCircle2 size={11} color="var(--brand-primary)" />}
+                          {active && <CircleDot    size={11} color="var(--brand-primary)" />}
                         </div>
                         {i < arr.length - 1 && (
                           <div className="flex-1 h-0.5"
@@ -443,7 +443,7 @@ function Dashboard() {
 
                 <Link href="/guest/my-room/order-details"
                   className="w-full py-3 rounded-xl text-[0.8125rem] font-bold flex items-center justify-center gap-2 no-underline transition-colors"
-                  style={{ background: "var(--black-2)", color: "white" }}>
+                  style={{ background: "var(--brand-primary)", color: "white" }}>
                   <PackageCheck size={15} /> View Full Order Details
                 </Link>
               </div>
@@ -493,7 +493,7 @@ function Dashboard() {
             <div className="flex flex-col gap-5">
 
               {/* Room detail chip list */}
-              <div className="rounded-[1.25rem] p-5 text-white" style={{ background: "var(--black-2)" }}>
+              <div className="rounded-[1.25rem] p-5 text-white" style={{ background: "var(--brand-primary)" }}>
                 <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-4 text-white/35">Room Details</p>
                 <div className="space-y-3">
                   {[
@@ -548,7 +548,7 @@ function Dashboard() {
                 </p>
                 <div className="flex gap-2">
                   <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer"
-                    style={{ background: "var(--black-2)" }}>
+                    style={{ background: "var(--brand-primary)" }}>
                     <Phone size={14} /> Call Ext. 0
                   </button>
                   <Link href="/guest/my-room/message-staff"
@@ -576,7 +576,7 @@ function Dashboard() {
                 </p>
                 <Link href="/guest/my-room/submit-review"
                   className="w-full py-3 rounded-xl text-[0.8125rem] font-bold flex items-center justify-center gap-2 no-underline transition-colors"
-                  style={{ background: "#7c3aed", color: "white" }}>
+                  style={{ background: "var(--brand-primary)", color: "white" }}>
                   <Pencil size={14} /> Write a Review
                 </Link>
               </div>

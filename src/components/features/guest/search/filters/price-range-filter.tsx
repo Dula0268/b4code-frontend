@@ -90,7 +90,7 @@ export default function PriceRangeFilter({ priceMin, priceMax, onChange }: Price
                         <div
                             key={i}
                             className="flex-1 rounded-sm transition-colors duration-200"
-                            style={{ height: `${h}px`, backgroundColor: inRange ? "#953002" : "#e0e0e0" }}
+                            style={{ height: `${h}px`, backgroundColor: inRange ? "var(--brand-primary)" : "#e0e0e0" }}
                         />
                     )
                 })}
@@ -109,7 +109,7 @@ export default function PriceRangeFilter({ priceMin, priceMax, onChange }: Price
                 <div className="absolute left-0 right-0 h-1 rounded bg-[#e0e0e0]" />
                 {/* Active track */}
                 <div
-                    className="absolute h-1 rounded bg-[#953002]"
+                    className="absolute h-1 rounded bg-[var(--brand-primary)]"
                     style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }}
                 />
                 {/* Min input */}
@@ -138,14 +138,14 @@ export default function PriceRangeFilter({ priceMin, priceMax, onChange }: Price
                 />
                 {/* Visual thumb – min */}
                 <div
-                    className="absolute w-5 h-5 rounded-full bg-white border-2 border-[#953002] shadow-md -translate-x-1/2"
+                    className="absolute w-5 h-5 rounded-full bg-white border-2 border-[var(--brand-primary)] shadow-md -translate-x-1/2"
                     style={{ left: `${leftPct}%`, zIndex: 2, pointerEvents: "none" }}
                 >
-                    <div className="w-2 h-2 rounded-full bg-[#953002] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    <div className="w-2 h-2 rounded-full bg-[var(--brand-primary)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
                 {/* Visual thumb – max */}
                 <div
-                    className="absolute w-5 h-5 rounded-full bg-white border-2 border-[#953002] shadow-md -translate-x-1/2"
+                    className="absolute w-5 h-5 rounded-full bg-white border-2 border-[var(--brand-primary)] shadow-md -translate-x-1/2"
                     style={{ left: `${rightPct}%`, zIndex: 2, pointerEvents: "none" }}
                 />
             </div>
@@ -154,7 +154,7 @@ export default function PriceRangeFilter({ priceMin, priceMax, onChange }: Price
             <div className="flex gap-3">
                 <div className="flex-1">
                     <label className="block text-[10px] font-medium text-[#828282] uppercase tracking-wide mb-1">Min</label>
-                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[#953002] transition-colors">
+                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[var(--brand-primary)] transition-colors">
                         <span className="text-[13px] text-[#828282]">LKR</span>
                         <input
                             type="text"
@@ -168,7 +168,7 @@ export default function PriceRangeFilter({ priceMin, priceMax, onChange }: Price
                 </div>
                 <div className="flex-1">
                     <label className="block text-[10px] font-medium text-[#828282] uppercase tracking-wide mb-1">Max</label>
-                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[#953002] transition-colors">
+                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[var(--brand-primary)] transition-colors">
                         <span className="text-[13px] text-[#828282]">LKR</span>
                         <input
                             type="text"

@@ -54,11 +54,11 @@ export default function OrderDetailsPage() {
   const statusInfo = STATUS_MAP[status]
 
   return (
-    <div className="min-h-screen pt-20 pb-16" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+    <div className="min-h-screen pt-20 pb-16" style={{ background: "transparent" }}>
       <div className="max-w-[900px] mx-auto px-4 pt-6">
 
         {/* ── Hero status bar ───────────────────────────────────────────── */}
-        <div className="bg-[var(--black-2)] rounded-[28px] overflow-hidden mb-6 shadow-lg">
+        <div className="bg-[var(--brand-primary)] rounded-[28px] overflow-hidden mb-6 shadow-lg">
           <div className="p-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
@@ -74,7 +74,7 @@ export default function OrderDetailsPage() {
                   <span className="flex items-center gap-1.5"><MapPin size={12} /> {ORDER.room}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 bg-[var(--brand-secondary)] text-[var(--black-2)] px-5 py-3 rounded-2xl w-fit">
+              <div className="flex items-center gap-3 bg-[var(--brand-secondary)] text-[var(--brand-primary)] px-5 py-3 rounded-2xl w-fit">
                 <Clock size={18} />
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider opacity-70">ETA</p>
@@ -91,7 +91,7 @@ export default function OrderDetailsPage() {
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[var(--brand-secondary)] to-amber-300 rounded-full transition-all duration-1000"
+                  className="h-full bg-gradient-to-r from-[var(--brand-secondary)] to-[var(--brand-primary)] rounded-full transition-all duration-1000"
                   style={{ width: `${statusInfo.progress}%` }}
                 />
               </div>
@@ -172,7 +172,7 @@ export default function OrderDetailsPage() {
                 <div className="h-px bg-[var(--border)] my-1" />
                 <div className="flex justify-between">
                   <span className="text-[16px] font-black text-[var(--fg)]">Total</span>
-                  <span className="text-[18px] font-black text-[var(--black-2)]">LKR {ORDER.total.toLocaleString()}</span>
+                  <span className="text-[18px] font-black text-[var(--brand-primary)]">LKR {ORDER.total.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center gap-2 pt-2">
                   <div className="flex-1 h-px bg-[var(--border)]" />
@@ -185,10 +185,10 @@ export default function OrderDetailsPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link href="/guest/my-room/message-staff?tab=staff&q=Question about my order #4029"
                 className="flex items-center gap-3 p-5 bg-white rounded-2xl border border-[var(--border)] shadow-sm hover:shadow-md transition-shadow no-underline group">
-                <div className="w-10 h-10 rounded-xl bg-[var(--black-2)] flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)] flex items-center justify-center flex-shrink-0">
                   <MessageSquare size={18} className="text-[var(--brand-secondary)]" />
                 </div>
                 <div>
@@ -212,8 +212,8 @@ export default function OrderDetailsPage() {
           </div>
 
           {/* ── Right: Timeline ─────────────────────────────────────────── */}
-          <div className="lg:col-span-1 space-y-5">
-            <div className="ps-card rounded-[24px] p-7 sticky top-24">
+          <div className="lg:col-span-1 space-y-5 sticky top-24 self-start">
+            <div className="ps-card rounded-[24px] p-7">
               <h2 className="text-[16px] font-black text-[var(--fg)] mb-7">Order Progress</h2>
 
               <div className="relative">
@@ -233,7 +233,7 @@ export default function OrderDetailsPage() {
                             ? "bg-[var(--brand-secondary)] border-[var(--brand-secondary)]"
                             : "bg-white border-[var(--border)]"
                           }`}>
-                          <Icon size={13} className={step.done || step.active ? "text-[var(--black-2)]" : "text-[var(--gray-4)]"} />
+                          <Icon size={13} className={step.done || step.active ? "text-[var(--brand-primary)]" : "text-[var(--gray-4)]"} />
                           {step.active && <span className="absolute inset-0 rounded-full bg-[var(--brand-secondary)]/30 animate-ping" />}
                         </div>
                         <div className="flex-1 pt-1">
@@ -242,7 +242,7 @@ export default function OrderDetailsPage() {
                           </p>
                           <p className="text-[11px] text-[var(--gray-4)] mt-0.5">{step.time}</p>
                           {step.assignee && (
-                            <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-[var(--brand-secondary)]/10 rounded-lg text-[10px] font-black text-[var(--black-2)] uppercase tracking-wide">
+                            <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-[var(--brand-secondary)]/10 rounded-lg text-[10px] font-black text-[var(--brand-primary)] uppercase tracking-wide">
                               <ChefHat size={10} /> {step.assignee}
                             </div>
                           )}
@@ -258,14 +258,14 @@ export default function OrderDetailsPage() {
                   <RefreshCw size={13} /> Refresh Status
                 </button>
                 <Link href="/guest/my-room"
-                  className="w-full py-3 bg-[var(--black-2)] hover:bg-[var(--black-3)] text-white rounded-xl text-[13px] font-bold transition-colors flex items-center justify-center gap-2 no-underline">
+                  className="w-full py-3 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)] text-white rounded-xl text-[13px] font-bold transition-colors flex items-center justify-center gap-2 no-underline">
                   Back to Dashboard
                 </Link>
               </div>
             </div>
 
             {/* Rate after delivery */}
-            <div className="bg-[var(--black-2)] rounded-[24px] p-6 text-white">
+            <div className="bg-[var(--brand-primary)] rounded-[24px] p-6 text-white">
               <p className="text-[12px] font-black text-white/40 uppercase tracking-widest mb-3">After your meal</p>
               <h3 className="text-[16px] font-black mb-1">Enjoyed it?</h3>
               <p className="text-[12px] text-white/50 mb-4 leading-relaxed">Leave a review and help other guests discover our best dishes.</p>

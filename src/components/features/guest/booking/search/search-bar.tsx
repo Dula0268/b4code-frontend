@@ -21,7 +21,7 @@ export default function SearchBar() {
       <div className="flex items-center gap-2 p-4 sm:p-3">
         {/* Location Input */}
         <div className="flex-1 flex items-center gap-2 border-r pr-3">
-          <MapPin size={18} className="text-[#953002] flex-shrink-0" />
+          <MapPin size={18} className="text-[var(--brand-primary)] flex-shrink-0" />
           <input
             type="text"
             placeholder="Where to?"
@@ -33,7 +33,7 @@ export default function SearchBar() {
 
         {/* Check-in Date */}
         <div className="flex items-center gap-2 border-r pr-3">
-          <Calendar size={18} className="text-[#953002] flex-shrink-0" />
+          <Calendar size={18} className="text-[var(--brand-primary)] flex-shrink-0" />
           <input
             type="date"
             value={checkIn}
@@ -44,7 +44,7 @@ export default function SearchBar() {
 
         {/* Check-out Date */}
         <div className="flex items-center gap-2 border-r pr-3">
-          <Calendar size={18} className="text-[#953002] flex-shrink-0" />
+          <Calendar size={18} className="text-[var(--brand-primary)] flex-shrink-0" />
           <input
             type="date"
             value={checkOut}
@@ -56,7 +56,7 @@ export default function SearchBar() {
         {/* Search Button */}
         <button
           type="submit"
-          className="flex items-center justify-center gap-2 bg-[#953002] text-white px-4 py-2 rounded-lg hover:bg-[#7d2600] transition-colors flex-shrink-0"
+          className="flex items-center justify-center gap-2 bg-[var(--brand-primary)] text-white px-4 py-2 rounded-lg hover:bg-[#7d2600] transition-colors flex-shrink-0"
         >
           <Search size={18} />
           <span className="hidden sm:inline text-sm font-medium">Search</span>
