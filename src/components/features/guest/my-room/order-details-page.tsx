@@ -1,13 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import {
   Clock, ChefHat, CheckCircle2, Receipt,
   Phone, MessageSquare, Star, Package, Truck,
-  ArrowRight, RefreshCw, AlertCircle, Utensils
+  ArrowRight, RefreshCw, AlertCircle, Utensils, MapPin
 } from "lucide-react"
 
 
@@ -52,7 +50,6 @@ const STATUS_MAP: Record<OrderStatus, { label: string; color: string; bg: string
 }
 
 export default function OrderDetailsPage() {
-  const router = useRouter()
   const status = ORDER.status
   const statusInfo = STATUS_MAP[status]
 
