@@ -6,28 +6,64 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+interface UploadedPhoto {
+  id: string
+  url: string    // object URL — revoked on unmount
+  name: string
+}
 
+interface RatingCategory {
+  key: string
+  label: string
+  description: string
+}
 
-// ─── Star Rating ──────────────────────────────────────────────────────────────
-function StarRating({ rating, setRating, size = 32 }: { rating: number; setRating: (r: number) => void; size?: number }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Review categories — structured so adding a new one only needs an array entry
+// ─────────────────────────────────────────────────────────────────────────────
+const RATING_CATEGORIES: RatingCategory[] = [
+  { key: "cleanliness", label: "Cleanliness",       description: "How clean was the room and property?" },
+  { key: "comfort",     label: "Comfort & Sleep",   description: "Bed, pillows and overall rest quality."  },
+  { key: "service",     label: "Staff & Service",   description: "Helpfulness and responsiveness of staff." },
+  { key: "dining",      label: "Dining & Food",     description: "Quality of in-room dining and restaurants." },
+  { key: "location",    label: "Location & Access", description: "Proximity to local attractions and transport." },
+  { key: "value",       label: "Value for Money",   description: "Did the stay meet your expectations for the price?" },
+]
+
+const MAX_REVIEW_LENGTH = 1000
+const MAX_PHOTOS        = 6
+
+// ─────────────────────────────────────────────────────────────────────────────
+// StarRating sub-component
+// ─────────────────────────────────────────────────────────────────────────────
+function StarRating({
+  rating, onChange, size = 32, id,
+}: {
+  rating: number
+  onChange: (r: number) => void
+  size?: number
+  id: string
+}) {
   const [hover, setHover] = useState(0)
+
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map(star => (
         <button
           key={star}
+          id={`${id}-star-${star}`}
           type="button"
-          onClick={() => setRating(star)}
+          onClick={() => onChange(star)}
           onMouseEnter={() => setHover(star)}
           onMouseLeave={() => setHover(0)}
-          className="transition-all hover:scale-115 cursor-pointer active:scale-95"
+          className="cursor-pointer transition-transform hover:scale-110 active:scale-95"
         >
           <Star
             size={size}
-            className={`transition-colors ${star <= (hover || rating)
-              ? "text-[var(--brand-secondary)] fill-[var(--brand-secondary)]"
-              : "text-[var(--border)] fill-[var(--border)]"
-              }`}
+            className={`transition-colors ${(hover || rating) >= star ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"}`}
           />
         </button>
       ))}
@@ -35,88 +71,85 @@ function StarRating({ rating, setRating, size = 32 }: { rating: number; setRatin
   )
 }
 
-const RATING_LABELS = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"]
-
-// ─── Category Rating Row ──────────────────────────────────────────────────────
-function RatingRow({ label, rating, setRating, emoji }: { label: string; rating: number; setRating: (r: number) => void; emoji: string }) {
-  return (
-    <div className="flex items-center justify-between py-3.5 border-b border-[var(--border)] last:border-0">
-      <div className="flex items-center gap-2.5">
-        <span className="text-[18px]">{emoji}</span>
-        <span className="text-[14px] font-semibold text-[var(--fg)]">{label}</span>
-      </div>
-      <div className="flex items-center gap-3">
-        {rating > 0 && (
-          <span className="text-[12px] font-bold text-[var(--brand-secondary)] hidden sm:block">
-            {RATING_LABELS[rating]}
-          </span>
-        )}
-        <StarRating rating={rating} setRating={setRating} size={20} />
-      </div>
-    </div>
-  )
-}
-
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
 export default function SubmitReviewPage() {
   const router = useRouter()
+
+  const [overallRating, setOverallRating]         = useState(0)
+  const [categoryRatings, setCategoryRatings]     = useState<Record<string, number>>({})
+  const [reviewText, setReviewText]               = useState("")
+  const [photos, setPhotos]                       = useState<UploadedPhoto[]>([])
+  const [submitted, setSubmitted]                 = useState(false)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [overallRating, setOverallRating] = useState(0)
-  const [cleanliness, setCleanliness] = useState(0)
-  const [service, setService] = useState(0)
-  const [valueForMoney, setValueForMoney] = useState(0)
-  const [location, setLocation] = useState(0)
-  const [amenities, setAmenities] = useState(0)
-  const [reviewTitle, setReviewTitle] = useState("")
-  const [reviewText, setReviewText] = useState("")
-  const [images, setImages] = useState<{ file: File; url: string }[]>([])
-  const [submitted, setSubmitted] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+  const isFormValid = overallRating > 0 && reviewText.trim().length >= 20
 
-  // Highlights
-  const [highlights, setHighlights] = useState<string[]>([])
-  const HIGHLIGHT_OPTIONS = ["Great view", "Comfortable bed", "Friendly staff", "Clean room", "Perfect location", "Excellent food", "Quiet & peaceful", "Great value"]
+  const setCategoryRating = (key: string, value: number) =>
+    setCategoryRatings(prev => ({ ...prev, [key]: value }))
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newImages = Array.from(e.target.files).map(file => ({ file, url: URL.createObjectURL(file) }))
-      setImages(prev => [...prev, ...newImages])
-    }
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    const remaining = MAX_PHOTOS - photos.length
+    if (remaining <= 0) return
+
+    const newPhotos: UploadedPhoto[] = files.slice(0, remaining).map(file => ({
+      id:   `${Date.now()}-${file.name}`,
+      url:  URL.createObjectURL(file),
+      name: file.name,
+    }))
+    setPhotos(prev => [...prev, ...newPhotos])
+  }
+
+  // Release object URLs to avoid memory leaks
+  const removePhoto = (id: string) => {
+    setPhotos(prev => {
+      const target = prev.find(p => p.id === id)
+      if (target) URL.revokeObjectURL(target.url)
+      return prev.filter(p => p.id !== id)
+    })
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (overallRating === 0) return
-    setSubmitting(true)
-    setTimeout(() => {
-      setSubmitting(false)
-      setSubmitted(true)
-    }, 1800)
+    if (!isFormValid) return
+    // TODO: POST { overallRating, categoryRatings, reviewText, photos } to API
+    setSubmitted(true)
   }
 
-  // ── Success Screen ──────────────────────────────────────────────────────────
+  // ── Confirmation screen ──
   if (submitted) {
     return (
-      <div className="min-h-screen bg-[#f8f7f5] flex items-center justify-center p-4 pt-20 font-sans">
-        <div className="bg-white rounded-[32px] border border-[var(--border)] shadow-lg max-w-md w-full p-10 text-center">
-          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 size={40} className="text-green-600" />
+      <div className="min-h-screen flex items-center justify-center px-4 pt-20"
+        style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+        <div className="ps-card max-w-md w-full p-10 text-center">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: "color-mix(in srgb, var(--state-success) 12%, white)", border: "1px solid color-mix(in srgb, var(--state-success) 25%, transparent)" }}>
+            <CheckCircle2 size={38} style={{ color: "var(--state-success)" }} />
           </div>
-          <div className="flex justify-center mb-4">
+          <h2 className="text-2xl font-black mb-2" style={{ color: "var(--fg)" }}>Review Submitted!</h2>
+          <div className="flex justify-center gap-0.5 mb-4">
             {[1, 2, 3, 4, 5].map(s => (
-              <Star key={s} size={26} className={s <= overallRating ? "text-[var(--brand-secondary)] fill-[var(--brand-secondary)]" : "text-[var(--border)] fill-[var(--border)]"} />
+              <Star key={s} size={24}
+                className={s <= overallRating ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"} />
             ))}
           </div>
-          <h2 className="text-[26px] font-black text-[var(--fg)] mb-2 tracking-tight">Thank You!</h2>
-          <p className="text-[14px] text-[var(--gray-3)] mb-8 leading-relaxed max-w-[280px] mx-auto">
-            Your review has been submitted. It helps thousands of travelers make better decisions.
+          <p className="text-sm leading-relaxed mb-8" style={{ color: "var(--gray-3)" }}>
+            Thank you for your feedback! Your review has been submitted and will be published after a brief review.
           </p>
+
           <div className="flex flex-col gap-3">
-            <Link href="/guest/my-room" className="w-full py-4 bg-[var(--black-2)] hover:bg-[var(--black-3)] text-white font-black text-[15px] rounded-2xl transition-colors no-underline flex items-center justify-center">
-              Back to My Room
+            <Link href="/guest/my-room"
+              className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 no-underline"
+              style={{ background: "var(--black-2)", color: "white" }}>
+              Back to Dashboard
             </Link>
-            <button onClick={() => { setSubmitted(false); setOverallRating(0); setReviewText(""); setImages([]) }}
-              className="text-[13px] text-[var(--gray-3)] hover:text-[var(--fg)] font-semibold transition-colors cursor-pointer">
+            <button
+              onClick={() => { setSubmitted(false); setOverallRating(0); setCategoryRatings({}); setReviewText(""); setPhotos([]) }}
+              className="text-sm font-bold cursor-pointer transition-colors"
+              style={{ color: "var(--gray-3)" }}>
               Submit another review
             </button>
           </div>
@@ -125,155 +158,186 @@ export default function SubmitReviewPage() {
     )
   }
 
+  // ── Review form ──
   return (
-    <div className="min-h-screen bg-[#f8f7f5] pt-20 pb-16 font-sans">
+    <div className="min-h-screen pt-20 pb-16" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
       <div className="max-w-[820px] mx-auto px-4 pt-6">
 
-        {/* ── Hero banner ───────────────────────────────────────────────── */}
-        <div className="relative rounded-[28px] overflow-hidden mb-8 h-[200px]">
+        <Link href="/guest/my-room"
+          className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline"
+          style={{ color: "var(--gray-3)" }}>
+          <ChevronLeft size={16} /> Back to Dashboard
+        </Link>
+
+        {/* Hero banner */}
+        <div className="relative rounded-[1.5rem] overflow-hidden mb-8 h-[180px] sm:h-[200px]">
           <Image src="/images/room/review-stay.png" alt="Your stay" fill className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-          <div className="absolute inset-0 p-8 flex flex-col justify-end">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--brand-secondary)]/20 border border-[var(--brand-secondary)]/30 rounded-full text-[11px] font-bold text-[var(--brand-secondary)] uppercase tracking-wide mb-3 w-fit">
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.8), transparent)" }} />
+          <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[0.6875rem] font-bold uppercase tracking-wide mb-3 w-fit border"
+              style={{
+                background:  "color-mix(in srgb, var(--brand-secondary) 20%, transparent)",
+                borderColor: "color-mix(in srgb, var(--brand-secondary) 30%, transparent)",
+                color:       "var(--brand-secondary)",
+              }}>
               <ThumbsUp size={11} /> Post-Stay Review
             </div>
-            <h1 className="text-[28px] font-black text-white mb-1 tracking-tight">How was your stay?</h1>
-            <p className="text-[13px] text-white/60">Luxe Horizon Resort · Suite 402 · Oct 12–16, 2024</p>
+            <h1 className="text-[1.75rem] font-black text-white mb-1 tracking-tight" style={{ fontSize: "clamp(1.25rem, 4vw, 1.75rem)" }}>
+              How was your stay?
+            </h1>
+            <p className="text-sm text-white/60">Luxe Horizon Resort · Suite 402 · Oct 12–16, 2024</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
-          {/* ── Overall Rating ────────────────────────────────────────── */}
-          <div className="bg-white rounded-[24px] border border-[var(--border)] shadow-sm p-8 mb-5 text-center">
-            <h2 className="text-[18px] font-black text-[var(--fg)] mb-1">Overall Experience</h2>
-            <p className="text-[13px] text-[var(--gray-3)] mb-6">Tap a star to rate your stay</p>
-            <div className="flex justify-center mb-3">
-              <StarRating rating={overallRating} setRating={setOverallRating} size={44} />
-            </div>
-            {overallRating > 0 && (
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[var(--brand-secondary)]/10 rounded-full text-[14px] font-black text-[var(--brand-secondary)] mt-2">
-                <Star size={14} className="fill-[var(--brand-secondary)]" />
-                {RATING_LABELS[overallRating]}
+          {/* Overall rating — the most important field, shown first */}
+          <div className="ps-card p-5 sm:p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: "color-mix(in srgb, var(--brand-secondary) 15%, white)", border: "1px solid color-mix(in srgb, var(--brand-secondary) 20%, transparent)" }}>
+                <Star size={18} style={{ color: "var(--brand-secondary)" }} />
               </div>
-            )}
-          </div>
+              <div>
+                <h2 className="text-[0.9375rem] font-black" style={{ color: "var(--fg)" }}>Overall Rating</h2>
+                <p className="text-xs" style={{ color: "var(--gray-3)" }}>How would you rate your overall experience?</p>
+              </div>
+            </div>
 
-          {/* ── Detailed Ratings ─────────────────────────────────────── */}
-          <div className="bg-white rounded-[24px] border border-[var(--border)] shadow-sm p-8 mb-5">
-            <h2 className="text-[16px] font-black text-[var(--fg)] mb-4">Detailed Ratings</h2>
-            <RatingRow label="Cleanliness" rating={cleanliness} setRating={setCleanliness} emoji="✨" />
-            <RatingRow label="Service" rating={service} setRating={setService} emoji="🛎️" />
-            <RatingRow label="Value for Money" rating={valueForMoney} setRating={setValueForMoney} emoji="💰" />
-            <RatingRow label="Location" rating={location} setRating={setLocation} emoji="📍" />
-            <RatingRow label="Amenities" rating={amenities} setRating={setAmenities} emoji="🏊" />
-          </div>
-
-          {/* ── Highlights ───────────────────────────────────────────── */}
-          <div className="bg-white rounded-[24px] border border-[var(--border)] shadow-sm p-8 mb-5">
-            <h2 className="text-[16px] font-black text-[var(--fg)] mb-1">Highlights</h2>
-            <p className="text-[12px] text-[var(--gray-3)] mb-4">Select all that apply</p>
-            <div className="flex flex-wrap gap-2.5">
-              {HIGHLIGHT_OPTIONS.map(h => {
-                const selected = highlights.includes(h)
-                return (
-                  <button
-                    key={h}
-                    type="button"
-                    onClick={() => setHighlights(prev => selected ? prev.filter(x => x !== h) : [...prev, h])}
-                    className={`px-4 py-2 rounded-full text-[13px] font-semibold border transition-all cursor-pointer ${selected
-                      ? "bg-[var(--black-2)] border-[var(--black-2)] text-white"
-                      : "bg-white border-[var(--border)] text-[var(--fg)] hover:border-[var(--gray-3)]"
-                      }`}
-                  >
-                    {h}
-                  </button>
-                )
-              })}
+            <div className="flex flex-col items-center py-4">
+              <StarRating id="overall" rating={overallRating} onChange={setOverallRating} size={40} />
+              {overallRating > 0 && (
+                <p className="text-sm font-bold mt-3" style={{ color: "var(--brand-secondary)" }}>
+                  {["", "Poor", "Fair", "Good", "Very Good", "Excellent"][overallRating]}
+                </p>
+              )}
+              {overallRating === 0 && (
+                <p className="text-xs mt-3" style={{ color: "var(--gray-4)" }}>Tap a star to rate</p>
+              )}
             </div>
           </div>
 
-          {/* ── Written Review ────────────────────────────────────────── */}
-          <div className="bg-white rounded-[24px] border border-[var(--border)] shadow-sm p-8 mb-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[16px] font-black text-[var(--fg)]">Your Review</h2>
-              <span className={`text-[12px] font-bold ${reviewText.length >= 50 ? "text-green-600" : "text-[var(--gray-4)]"}`}>
-                {reviewText.length}/50 min.
+          {/* Category ratings — grouped so the form feels structured rather than overwhelming */}
+          <div className="ps-card p-5 sm:p-6">
+            <h2 className="text-[0.9375rem] font-black mb-1" style={{ color: "var(--fg)" }}>Rate Categories</h2>
+            <p className="text-xs mb-5" style={{ color: "var(--gray-3)" }}>Help future guests with detailed ratings.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {RATING_CATEGORIES.map(({ key, label, description }) => (
+                <div key={key}>
+                  <p className="text-[0.8125rem] font-black mb-0.5" style={{ color: "var(--fg)" }}>{label}</p>
+                  <p className="text-[0.625rem] mb-2" style={{ color: "var(--gray-4)" }}>{description}</p>
+                  <StarRating id={key} rating={categoryRatings[key] ?? 0} onChange={v => setCategoryRating(key, v)} size={22} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Written review */}
+          <div className="ps-card p-5 sm:p-6">
+            <h2 className="text-[0.9375rem] font-black mb-1" style={{ color: "var(--fg)" }}>Your Review</h2>
+            <p className="text-xs mb-4" style={{ color: "var(--gray-3)" }}>
+              Share what made your stay special (or areas to improve). Minimum 20 characters.
+            </p>
+            <textarea
+              id="review-text"
+              value={reviewText}
+              onChange={e => setReviewText(e.target.value.slice(0, MAX_REVIEW_LENGTH))}
+              placeholder="Describe your experience: the room, the service, the ambiance…"
+              rows={5}
+              className="w-full rounded-xl border text-sm resize-none p-4 outline-none transition focus:border-[var(--fg)]"
+              style={{ background: "color-mix(in srgb, var(--gray-5) 40%, white)", borderColor: "var(--border)", color: "var(--fg)" }}
+            />
+            <div className="flex justify-between items-center mt-2">
+              {reviewText.length > 0 && reviewText.length < 20 && (
+                <p className="text-[0.625rem] font-semibold" style={{ color: "var(--state-warning)" }}>
+                  {20 - reviewText.length} more characters needed
+                </p>
+              )}
+              <span className="text-[0.625rem] ml-auto font-medium" style={{ color: "var(--gray-4)" }}>
+                {reviewText.length} / {MAX_REVIEW_LENGTH}
               </span>
             </div>
-            <input
-              type="text"
-              value={reviewTitle}
-              onChange={e => setReviewTitle(e.target.value)}
-              placeholder="Review title (e.g. 'Perfect romantic getaway')"
-              className="w-full px-4 py-3 border border-[var(--border)] rounded-xl text-[14px] text-[var(--fg)] placeholder:text-[var(--gray-4)] focus:border-[var(--black-2)] focus:outline-none transition-colors mb-3 font-semibold"
-            />
-            <textarea
-              value={reviewText}
-              onChange={e => setReviewText(e.target.value)}
-              placeholder="Tell us about your stay — the bed, the view, the food, the staff. Your honest opinion helps future guests!"
-              className="w-full h-[140px] resize-none border border-[var(--border)] rounded-xl p-4 text-[14px] text-[var(--fg)] placeholder:text-[var(--gray-4)] focus:border-[var(--black-2)] focus:outline-none transition-colors leading-relaxed"
-            />
           </div>
 
-          {/* ── Add Photos ──────────────────────────────────────────── */}
-          <div className="bg-white rounded-[24px] border border-[var(--border)] shadow-sm p-8 mb-8">
-            <h2 className="text-[16px] font-black text-[var(--fg)] mb-1">Add Photos</h2>
-            <p className="text-[12px] text-[var(--gray-3)] mb-5">Optional — reviews with photos get 3× more views</p>
+          {/* Photo upload */}
+          <div className="ps-card p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-[0.9375rem] font-black" style={{ color: "var(--fg)" }}>Add Photos</h2>
+                <p className="text-xs mt-0.5" style={{ color: "var(--gray-3)" }}>
+                  Up to {MAX_PHOTOS} photos (optional — photos boost your review&apos;s helpfulness)
+                </p>
+              </div>
+              <span className="text-[0.625rem] font-black px-2.5 py-1 rounded-full border"
+                style={{ background: "color-mix(in srgb, var(--gray-5) 40%, white)", borderColor: "var(--border)", color: "var(--gray-3)" }}>
+                {photos.length} / {MAX_PHOTOS}
+              </span>
+            </div>
 
-            <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageUpload} />
-
-            <div className="flex flex-wrap gap-3">
-              {images.map((img, i) => (
-                <div key={i} className="relative w-[90px] h-[90px] rounded-2xl overflow-hidden border border-[var(--border)] group shadow-sm">
-                  <Image src={img.url} alt={`Upload ${i + 1}`} fill className="object-cover" />
-                  <button type="button" onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
-                    className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500">
-                    <X size={11} />
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {photos.map(photo => (
+                <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden border group"
+                  style={{ borderColor: "var(--border)" }}>
+                  <Image src={photo.url} alt={photo.name} fill className="object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(photo.id)}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    style={{ background: "rgba(0,0,0,0.6)" }}>
+                    <X size={12} className="text-white" />
                   </button>
                 </div>
               ))}
-              {images.length < 8 && (
+
+              {/* Upload button — only shown when under the limit */}
+              {photos.length < MAX_PHOTOS && (
                 <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className={`w-[90px] h-[90px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer group ${images.length === 0 ? "border-[var(--border)] hover:border-[var(--brand-secondary)]" : "border-[var(--border)] hover:border-[var(--brand-secondary)]"}`}>
-                  {images.length === 0 ? (
-                    <>
-                      <Camera size={22} className="text-[var(--gray-4)] group-hover:text-[var(--brand-secondary)] transition-colors" />
-                      <span className="text-[10px] font-bold text-[var(--gray-4)] group-hover:text-[var(--brand-secondary)] transition-colors text-center leading-tight">Add<br />Photos</span>
-                    </>
-                  ) : (
-                    <ImagePlus size={22} className="text-[var(--gray-4)] group-hover:text-[var(--brand-secondary)] transition-colors" />
-                  )}
+                  className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors"
+                  style={{ borderColor: "var(--border)" }}>
+                  <ImagePlus size={20} style={{ color: "var(--gray-4)" }} />
+                  <span className="text-[0.5625rem] font-bold" style={{ color: "var(--gray-4)" }}>Add</span>
                 </button>
               )}
             </div>
+
+            {/* Hidden inputs — Camera and file picker */}
+            <div className="flex gap-2 mt-3">
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                style={{ borderColor: "var(--border)", color: "var(--gray-2)", background: "color-mix(in srgb, var(--gray-5) 40%, white)" }}>
+                <Camera size={14} /> Take Photo
+              </button>
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                style={{ borderColor: "var(--border)", color: "var(--gray-2)", background: "color-mix(in srgb, var(--gray-5) 40%, white)" }}>
+                <ImagePlus size={14} /> Upload Photos
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
           </div>
 
-          {/* ── Actions ──────────────────────────────────────────────── */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          {/* Submit */}
+          <div className="pb-4">
             <button
               type="submit"
-              disabled={overallRating === 0 || submitting}
-              className="flex-1 py-4 bg-[var(--black-2)] hover:bg-[var(--black-3)] disabled:opacity-40 text-[var(--brand-secondary)] font-black text-[15px] rounded-2xl transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2"
-            >
-              {submitting ? (
-                <><div className="w-4 h-4 border-2 border-[var(--brand-secondary)]/30 border-t-[var(--brand-secondary)] rounded-full animate-spin" /> Submitting…</>
-              ) : (
-                "Submit My Review"
-              )}
+              disabled={!isFormValid}
+              className="w-full py-4 rounded-xl text-[0.9375rem] font-black text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "var(--black-2)" }}>
+              Submit Review
             </button>
-            <Link href="/guest/my-room" className="sm:w-auto px-8 py-4 border border-[var(--border)] hover:bg-[var(--gray-5)]/30 text-[var(--gray-2)] font-bold text-[14px] rounded-2xl transition-colors text-center no-underline">
-              Cancel
-            </Link>
+            <p className="text-[0.6875rem] text-center mt-3 leading-relaxed" style={{ color: "var(--gray-4)" }}>
+              By submitting, you certify this review is based on your genuine experience at this property.
+            </p>
           </div>
 
-          {overallRating === 0 && (
-            <p className="text-[12px] text-[var(--gray-4)] text-center mt-3">Please select an overall star rating to submit.</p>
-          )}
-
-          <p className="text-[11px] text-[var(--gray-4)] text-center mt-4 leading-relaxed max-w-[440px] mx-auto">
-            By submitting, you certify this review is based on your genuine experience at this property.
-          </p>
         </form>
       </div>
     </div>

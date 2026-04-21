@@ -5,8 +5,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import {
-  ChevronLeft, Clock, ChefHat, CheckCircle2, Receipt,
-  Phone, MapPin, MessageSquare, Star, Package, Truck,
+  Clock, ChefHat, CheckCircle2, Receipt,
+  Phone, MessageSquare, Star, Package, Truck,
   ArrowRight, RefreshCw, AlertCircle, Utensils
 } from "lucide-react"
 
@@ -57,7 +57,7 @@ export default function OrderDetailsPage() {
   const statusInfo = STATUS_MAP[status]
 
   return (
-    <div className="min-h-screen bg-[#f8f7f5] pt-20 pb-16 font-sans">
+    <div className="min-h-screen pt-20 pb-16" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
       <div className="max-w-[900px] mx-auto px-4 pt-6">
 
         {/* ── Hero status bar ───────────────────────────────────────────── */}
@@ -123,7 +123,7 @@ export default function OrderDetailsPage() {
           <div className="lg:col-span-2 space-y-5">
 
             {/* Ordered Items */}
-            <div className="bg-white rounded-[24px] border border-[var(--border)] shadow-sm p-7">
+            <div className="ps-card rounded-[24px] p-7">
               <h2 className="text-[16px] font-black text-[var(--fg)] mb-6 flex items-center gap-2">
                 <Utensils size={16} className="text-[var(--brand-secondary)]" /> Ordered Items
               </h2>
@@ -143,7 +143,7 @@ export default function OrderDetailsPage() {
                         <p className="text-[15px] font-black text-[var(--fg)] flex-shrink-0">LKR {item.price.toLocaleString()}</p>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#f8f7f5] border border-[var(--border)] rounded-full text-[11px] font-bold text-[var(--gray-2)]">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 border rounded-full text-[11px] font-bold" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)", borderColor: "var(--border)", color: "var(--gray-2)" }}>
                           Qty: {item.qty}
                         </span>
                       </div>
@@ -154,7 +154,7 @@ export default function OrderDetailsPage() {
             </div>
 
             {/* Bill Breakdown */}
-            <div className="bg-white rounded-[24px] border border-[var(--border)] shadow-sm p-7">
+            <div className="ps-card rounded-[24px] p-7">
               <h2 className="text-[16px] font-black text-[var(--fg)] mb-5 flex items-center gap-2">
                 <Receipt size={16} className="text-[var(--brand-secondary)]" /> Bill Summary
               </h2>
@@ -216,7 +216,7 @@ export default function OrderDetailsPage() {
 
           {/* ── Right: Timeline ─────────────────────────────────────────── */}
           <div className="lg:col-span-1 space-y-5">
-            <div className="bg-white rounded-[24px] border border-[var(--border)] shadow-sm p-7 sticky top-24">
+            <div className="ps-card rounded-[24px] p-7 sticky top-24">
               <h2 className="text-[16px] font-black text-[var(--fg)] mb-7">Order Progress</h2>
 
               <div className="relative">
