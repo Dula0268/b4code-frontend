@@ -109,7 +109,7 @@ function StaffChatInner() {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-10" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+    <div className="min-h-screen pt-20 pb-10" style={{ background: "transparent" }}>
       <div className="max-w-[1100px] mx-auto px-4 lg:px-6 pt-6">
 
         <Link href="/guest/my-room"
@@ -137,7 +137,7 @@ function StaffChatInner() {
               <div className="flex items-center gap-3 mb-4">
                 {/* Gradient avatar instead of a real photo — avoids image dependency */}
                 <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-sm"
-                  style={{ background: "linear-gradient(135deg, var(--black-2), var(--black-3))" }}>
+                  style={{ background: "linear-gradient(135deg, var(--brand-primary), var(--brand-primary))" }}>
                   <User size={22} className="text-white" />
                 </div>
                 <div className="flex-1">
@@ -215,7 +215,7 @@ function StaffChatInner() {
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg, var(--black-2), var(--black-3))" }}>
+                    style={{ background: "linear-gradient(135deg, var(--brand-primary), var(--brand-primary))" }}>
                     <User size={18} className="text-white" />
                   </div>
                   <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-400 border-2 border-white" />
@@ -237,7 +237,7 @@ function StaffChatInner() {
 
                   {msg.sender === "staff" && (
                     <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mb-1"
-                      style={{ background: "linear-gradient(135deg, var(--black-2), var(--black-3))" }}>
+                      style={{ background: "linear-gradient(135deg, var(--brand-primary), var(--brand-primary))" }}>
                       <User size={14} className="text-white" />
                     </div>
                   )}
@@ -246,7 +246,7 @@ function StaffChatInner() {
                     <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
                       msg.sender === "guest" ? "rounded-br-md" : "rounded-bl-md border"
                     }`} style={{
-                      background:  msg.sender === "guest" ? "var(--black-2)" : "white",
+                      background:  msg.sender === "guest" ? "var(--brand-primary)" : "white",
                       color:       msg.sender === "guest" ? "white" : "var(--fg)",
                       borderColor: msg.sender === "staff" ? "var(--border)" : undefined,
                     }}>
@@ -267,7 +267,7 @@ function StaffChatInner() {
               {isTyping && (
                 <div className="flex items-end gap-2.5">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg, var(--black-2), var(--black-3))" }}>
+                    style={{ background: "linear-gradient(135deg, var(--brand-primary), var(--brand-primary))" }}>
                     <User size={14} className="text-white" />
                   </div>
                   <div className="px-4 py-3 rounded-2xl rounded-bl-md border shadow-sm" style={{ background: "white", borderColor: "var(--border)" }}>
@@ -308,7 +308,7 @@ function StaffChatInner() {
                   onClick={() => sendMessage(input)}
                   disabled={!input.trim()}
                   className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer disabled:opacity-30"
-                  style={{ background: "var(--black-2)" }}>
+                  style={{ background: "var(--brand-primary)" }}>
                   <Send size={15} className="text-white" />
                 </button>
               </div>
@@ -329,7 +329,7 @@ function StaffChatInner() {
 export default function MessageStaffPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "transparent" }}>
         <div className="w-10 h-10 border-4 border-t-[var(--brand-secondary)] border-white/20 rounded-full animate-spin" />
       </div>
     }>

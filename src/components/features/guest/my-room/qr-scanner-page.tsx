@@ -93,7 +93,7 @@ export default function QrScannerPage() {
     <>
       {/* ── Page ────────────────────────────────────────────────────── */}
       <div className="min-h-screen pt-24 pb-16 flex flex-col items-center justify-center px-4"
-        style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+        style={{ background: "transparent" }}>
         <div className="w-full max-w-[420px] flex flex-col items-center text-center">
 
           {/* Brand accent */}
@@ -123,7 +123,7 @@ export default function QrScannerPage() {
               onClick={startCamera}
               aria-label="Open camera to scan QR code"
               className="absolute -top-3 -right-3 w-[46px] h-[46px] rounded-xl flex items-center justify-center shadow-lg transition-colors cursor-pointer text-white"
-              style={{ background: "var(--black-2)" }}>
+              style={{ background: "var(--brand-primary)" }}>
               <Camera size={22} />
             </button>
           </div>
