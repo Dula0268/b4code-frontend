@@ -1,185 +1,339 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/store/auth/auth.store"
 import {
-    Utensils, Sparkles, AlertCircle, HelpCircle, User, DoorOpen, Send, ChevronLeft
+  Utensils, Sparkles, AlertCircle, HelpCircle,
+  Send, Paperclip, Clock, CheckCircle2, Smile,
+  Phone, Video, Info, User, DoorOpen, ChevronLeft,
 } from "lucide-react"
 
-// ─── Component ────────────────────────────────────────────────────────────────
-export default function MessageStaffPage() {
-    const user = useAuthStore((state) => state.user)
-    const guestFirst = user?.profile?.firstName || "Guest"
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+interface Message {
+  id: string
+  sender: "staff" | "guest"
+  text: string
+  time: string
+  read: boolean
+}
 
-    const [message, setMessage] = useState("")
-    const [messages, setMessages] = useState([
-        { id: 1, sender: "staff", text: `Welcome ${guestFirst}! Please let us know if you need anything during your stay.`, timestamp: "Just now" }
-    ])
+// ─────────────────────────────────────────────────────────────────────────────
+// Demo data — swap auto-replies for a WebSocket event handler in production
+// ─────────────────────────────────────────────────────────────────────────────
+const INITIAL_MESSAGES: Message[] = [
+  {
+    id: "s1",
+    sender: "staff",
+    text: "Hello! Welcome to Luxe Horizon Resort, Suite 402. I'm the duty manager. How can I assist you today? 😊",
+    time: "9:00 AM",
+    read: true,
+  },
+]
 
-    const handleSendMessage = () => {
-        if (!message.trim()) return
+const AUTO_REPLIES = [
+  "Of course! We'll take care of that right away. Anything else?",
+  "Understood. I'll send someone to your suite in about 10 minutes.",
+  "Happy to help! Our team will sort that out for you immediately.",
+  "Great question — I'll check and get back to you shortly. 👍",
+  "That's been noted. Is there anything else you need while we arrange that?",
+]
 
-        const newMsg = { id: Date.now(), sender: "guest", text: message.trim(), timestamp: "Just now" }
-        setMessages(prev => [...prev, newMsg])
-        setMessage("")
+// Quick-request shortcuts that pre-fill the input with a common request
+const QUICK_REQUESTS = [
+  { icon: Utensils,     label: "Room Service", message: "I'd like to order room service, please." },
+  { icon: Sparkles,     label: "Housekeeping", message: "Could you arrange room cleaning?" },
+  { icon: AlertCircle, label: "Report Issue",  message: "I need to report an issue in my room." },
+  { icon: HelpCircle,  label: "Assistance",   message: "I need general assistance, please." },
+]
 
-        // Simulate staff auto-reply
-        setTimeout(() => {
-            setMessages(prev => [...prev, {
-                id: Date.now() + 1,
-                sender: "staff",
-                text: "We have received your message and our team will attend to it shortly.",
-                timestamp: "Just now"
-            }])
-        }, 1500)
-    }
+const STAFF_SERVICES = [
+  { icon: Utensils,     label: "In-Room Dining", desc: "24-hour room service"  },
+  { icon: Sparkles,     label: "Housekeeping",   desc: "Cleaning & turndown"   },
+  { icon: DoorOpen,     label: "Concierge",      desc: "Tours & reservations"  },
+  { icon: Info,         label: "Guest Services", desc: "General assistance"    },
+]
 
-    return (
-        <div className="min-h-screen bg-[var(--gray-5)]/10 pt-24 pb-16">
-            <div className="max-w-[1000px] mx-auto px-4 flex flex-col gap-6">
+function getTime() {
+  return new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+}
 
-                {/* ── Page Header ───────────────────────────────────────────── */}
-                <div className="mb-4">
-                    <Link href="/guest/my-room" className="inline-flex items-center gap-1 text-[var(--gray-3)] hover:text-[var(--fg)] text-[14px] font-bold mb-6 no-underline transition-colors">
-                        <ChevronLeft size={16} /> Back to My Room
-                    </Link>
-                    <h1 className="text-[32px] font-bold text-[var(--fg)] leading-tight mb-3">
-                        Contact Property Staff
-                    </h1>
-                    <p className="text-[17px] font-semibold text-[var(--brand-primary)] leading-snug mb-2">
-                        Need help during your stay?
-                    </p>
-                    <p className="text-[14px] text-[var(--gray-2)] max-w-[500px] leading-relaxed">
-                        You can message the staff for room service, cleaning, maintenance, or any assistance during your stay.
-                    </p>
-                </div>
+// ─────────────────────────────────────────────────────────────────────────────
+// Inner component — needs Suspense because it calls useSearchParams
+// ─────────────────────────────────────────────────────────────────────────────
+function StaffChatInner() {
+  const searchParams = useSearchParams()
+  const user = useAuthStore(s => s.user)
+  const guestName = user?.profile?.firstName ?? "Guest"
 
-                {/* ── Layout Grid ───────────────────────────────────────────── */}
-                <div className="flex flex-col md:flex-row gap-8">
+  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES)
+  const [input,    setInput]    = useState(searchParams.get("q") ?? "")
+  const [isTyping, setIsTyping] = useState(false)
 
-                    {/* Left Sidebar */}
-                    <div className="w-full md:w-[340px] flex-shrink-0">
-                        {/* Current Stay Card */}
-                        <div className="mb-7">
-                            <h2 className="text-[11px] font-bold text-[var(--gray-3)] uppercase tracking-widest mb-3 pl-1">
-                                CURRENT STAY
-                            </h2>
-                            <div className="bg-[var(--white)] rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-soft)] border border-[var(--border)]">
-                                <div className="relative w-full h-[140px] rounded-[var(--radius-lg)] overflow-hidden mb-4 bg-[var(--gray-5)]/30">
-                                    <Image
-                                        src="/images/room/resort-exterior.png"
-                                        alt="Grand Horizon Resort"
-                                        fill
-                                        className="object-cover"
-                                    />
-                                </div>
-                                <h3 className="text-[18px] font-bold text-[var(--fg)] mb-1.5 leading-snug">
-                                    Luxe Horizon Resort
-                                </h3>
-                                <div className="flex items-center gap-2 text-[13px] text-[var(--gray-2)] font-medium">
-                                    <DoorOpen size={15} className="text-[var(--gray-4)]" />
-                                    Room: Suite 402
-                                </div>
-                            </div>
-                        </div>
+  const bottomRef = useRef<HTMLDivElement>(null)
 
-                        {/* Quick Requests */}
-                        <div>
-                            <h2 className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-widest mb-3 pl-1">
-                                QUICK REQUESTS
-                            </h2>
-                            <div className="flex flex-col gap-2.5">
-                                {[
-                                    { icon: Utensils, label: "Request room service" },
-                                    { icon: Sparkles, label: "Request room cleaning" },
-                                    { icon: AlertCircle, label: "Report a problem" },
-                                    { icon: HelpCircle, label: "Ask for assistance" },
-                                ].map(({ icon: Icon, label }) => (
-                                    <button
-                                        key={label}
-                                        onClick={() => setMessage(label)}
-                                        className="w-full bg-[var(--white)] rounded-full py-4 px-5 flex items-center gap-3 shadow-[var(--shadow-soft)] border border-[var(--border)] hover:border-[var(--brand-secondary)]/50 transition-colors cursor-pointer"
-                                    >
-                                        <Icon size={18} className="text-[var(--brand-secondary)]" strokeWidth={2.5} />
-                                        <span className="text-[14px] font-bold text-[var(--fg)]">{label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+  // Scroll to the bottom on every new message or typing change
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages, isTyping])
 
-                    {/* Right Area - Chat Interface */}
-                    <div className="flex-1 bg-[var(--white)] rounded-[24px] shadow-[var(--shadow-card)] border border-[var(--border)] p-6 flex flex-col min-h-[580px]">
+  const sendMessage = (text: string) => {
+    if (!text.trim()) return
 
-                        {/* Chat Header */}
-                        <div className="flex items-center gap-3 pb-6 border-b border-[var(--border)]">
-                            <div className="w-[42px] h-[42px] rounded-full bg-[var(--brand-primary)]/10 flex items-center justify-center flex-shrink-0 pb-0.5">
-                                <User size={22} className="text-[var(--brand-primary)]" />
-                            </div>
-                            <div className="flex flex-col justify-center">
-                                <h2 className="text-[16px] font-bold text-[var(--fg)] leading-snug">
-                                    Chat with Staff
-                                </h2>
-                                <div className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--state-success)]">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--state-success)]" />
-                                    Staff Online
-                                </div>
-                            </div>
-                        </div>
+    setMessages(prev => [...prev, {
+      id:     Date.now().toString(),
+      sender: "guest",
+      text:   text.trim(),
+      time:   getTime(),
+      read:   false,
+    }])
+    setInput("")
+    setIsTyping(true)
 
-                        {/* Chat Messages */}
-                        <div className="flex-1 py-8 flex flex-col gap-5 overflow-y-auto pr-2">
-                            {messages.map(msg => (
-                                <div key={msg.id} className={`flex items-start gap-4 flex-shrink-0 ${msg.sender === "guest" ? "flex-row-reverse" : ""}`}>
-                                    {msg.sender === "staff" && (
-                                        <div className="w-[36px] h-[36px] rounded-full bg-[var(--black-2)] flex items-center justify-center flex-shrink-0 mt-1 pb-0.5 shadow-sm">
-                                            <User size={18} className="text-[var(--brand-secondary)]" />
-                                        </div>
-                                    )}
-                                    <div className={`flex flex-col gap-1.5 max-w-[80%] ${msg.sender === "guest" ? "items-end" : ""}`}>
-                                        <div className={`shadow-sm px-5 py-4 text-[14px] leading-relaxed ${msg.sender === "guest"
-                                                ? "bg-[var(--black-2)] text-[var(--white)] rounded-[20px] rounded-tr-none"
-                                                : "bg-[var(--gray-5)]/20 border border-[var(--border)] text-[var(--black-3)] rounded-[20px] rounded-tl-none"
-                                            }`}>
-                                            {msg.text}
-                                        </div>
-                                        <span className={`text-[10px] text-[var(--gray-4)] font-bold uppercase tracking-wider ${msg.sender === "staff" ? "ml-1" : "mr-1"}`}>
-                                            {msg.timestamp}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+    // Simulated reply delay — replace with real WebSocket message handler
+    setTimeout(() => {
+      setIsTyping(false)
+      const reply = AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)]
+      setMessages(prev => [...prev, {
+        id:     Date.now().toString() + "-staff",
+        sender: "staff",
+        text:   reply,
+        time:   getTime(),
+        read:   true,
+      }])
+    }, 1400 + Math.random() * 600)
+  }
 
-                        {/* Chat Input ── */}
-                        <div className="pt-2">
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="text"
-                                    value={message}
-                                    onChange={(e) => setMessage(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                                    placeholder="Type your message to the staff..."
-                                    className="flex-1 bg-[var(--gray-5)]/20 border border-[var(--border)] hover:border-[var(--gray-4)] focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] transition-colors rounded-full px-6 py-[15px] text-[14px] text-[var(--fg)] placeholder:text-[var(--gray-4)] outline-none"
-                                />
-                                <button
-                                    onClick={handleSendMessage}
-                                    className="bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)] text-white rounded-full px-7 py-[15px] flex items-center justify-center gap-2 text-[14px] font-bold transition-colors cursor-pointer shadow-[var(--shadow-soft)]"
-                                >
-                                    Send <Send size={15} />
-                                </button>
-                            </div>
-                            <p className="text-[11px] text-[var(--gray-4)] text-center mt-3 font-medium">
-                                Our staff will assist you directly to your digital suite terminal.
-                            </p>
-                        </div>
+  return (
+    <div className="min-h-screen pt-20 pb-10" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+      <div className="max-w-[1100px] mx-auto px-4 lg:px-6 pt-6">
 
-                    </div>
-                </div>
+        <Link href="/guest/my-room"
+          className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline"
+          style={{ color: "var(--gray-3)" }}>
+          <ChevronLeft size={16} /> Back to Dashboard
+        </Link>
 
-            </div>
+        <div className="mb-5">
+          <h1 className="text-[1.75rem] font-black leading-tight" style={{ color: "var(--fg)", fontSize: "1.75rem" }}>
+            Contact Hotel Staff
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "var(--gray-3)" }}>
+            Message our team for room service, cleaning, maintenance or any assistance — available 24/7.
+          </p>
         </div>
-    )
+
+        <div className="flex flex-col lg:flex-row gap-5 lg:h-[calc(100vh-280px)] lg:min-h-[600px]">
+
+          {/* ── Sidebar ─────────────────────────────────────────────── */}
+          <div className="w-full lg:w-[280px] flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
+
+            {/* Staff info card */}
+            <div className="ps-card p-5">
+              <div className="flex items-center gap-3 mb-4">
+                {/* Gradient avatar instead of a real photo — avoids image dependency */}
+                <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-sm"
+                  style={{ background: "linear-gradient(135deg, var(--black-2), var(--black-3))" }}>
+                  <User size={22} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[0.9375rem] font-black" style={{ color: "var(--fg)" }}>Hotel Staff</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    <p className="text-[0.6875rem] font-semibold text-green-600">Online — Available 24/7</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xs font-semibold p-3 rounded-xl mb-4 border"
+                style={{ background: "color-mix(in srgb, var(--gray-5) 40%, white)", borderColor: "var(--border)", color: "var(--gray-2)" }}>
+                Hi, <strong>{guestName}</strong>! We&apos;re here to serve you. What can we do for you today?
+              </div>
+
+              <div className="flex gap-2">
+                {[{ icon: Phone, label: "Call" }, { icon: Video, label: "Video" }].map(({ icon: Icon, label }) => (
+                  <button key={label}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold border cursor-pointer transition-colors"
+                    style={{ background: "color-mix(in srgb, var(--gray-5) 40%, white)", borderColor: "var(--border)", color: "var(--gray-2)" }}>
+                    <Icon size={13} /> {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick request tiles */}
+            <div className="ps-card p-4">
+              <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-3" style={{ color: "var(--gray-4)" }}>
+                Quick Requests
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {QUICK_REQUESTS.map(({ icon: Icon, label, message }) => (
+                  <button key={label} onClick={() => sendMessage(message)}
+                    className="flex flex-col items-center gap-1.5 p-3 border rounded-xl transition-colors cursor-pointer group"
+                    style={{ borderColor: "var(--border)", background: "color-mix(in srgb, var(--gray-5) 30%, white)" }}>
+                    <Icon size={18} style={{ color: "var(--gray-2)" }} />
+                    <span className="text-[0.625rem] font-bold text-center leading-tight" style={{ color: "var(--gray-2)" }}>
+                      {label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Services grid — informational, not interactive */}
+            <div className="ps-card p-4">
+              <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-3" style={{ color: "var(--gray-4)" }}>
+                Available Services
+              </p>
+              <div className="space-y-2.5">
+                {STAFF_SERVICES.map(({ icon: Icon, label, desc }) => (
+                  <div key={label} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)", borderColor: "var(--border)" }}>
+                      <Icon size={14} style={{ color: "var(--gray-2)" }} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold" style={{ color: "var(--fg)" }}>{label}</p>
+                      <p className="text-[0.625rem]" style={{ color: "var(--gray-3)" }}>{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Chat panel ──────────────────────────────────────────── */}
+          <div className="flex-1 ps-card flex flex-col overflow-hidden min-h-0">
+
+            {/* Chat header */}
+            <div className="px-5 sm:px-6 py-4 border-b flex items-center justify-between flex-shrink-0"
+              style={{ borderColor: "var(--border)" }}>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ background: "linear-gradient(135deg, var(--black-2), var(--black-3))" }}>
+                    <User size={18} className="text-white" />
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-400 border-2 border-white" />
+                </div>
+                <div>
+                  <p className="text-[0.9375rem] font-black" style={{ color: "var(--fg)" }}>Hotel Staff</p>
+                  <p className="text-[0.6875rem] font-semibold text-green-500">Online · instantly</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Message list */}
+            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-6 flex flex-col gap-4 min-h-0"
+              style={{ background: "color-mix(in srgb, var(--gray-5) 30%, white)" }}>
+
+              {messages.map(msg => (
+                <div key={msg.id}
+                  className={`flex items-end gap-2.5 ${msg.sender === "guest" ? "flex-row-reverse" : ""}`}>
+
+                  {msg.sender === "staff" && (
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mb-1"
+                      style={{ background: "linear-gradient(135deg, var(--black-2), var(--black-3))" }}>
+                      <User size={14} className="text-white" />
+                    </div>
+                  )}
+
+                  <div className={`flex flex-col gap-1 max-w-[70%] ${msg.sender === "guest" ? "items-end" : "items-start"}`}>
+                    <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                      msg.sender === "guest" ? "rounded-br-md" : "rounded-bl-md border"
+                    }`} style={{
+                      background:  msg.sender === "guest" ? "var(--black-2)" : "white",
+                      color:       msg.sender === "guest" ? "white" : "var(--fg)",
+                      borderColor: msg.sender === "staff" ? "var(--border)" : undefined,
+                    }}>
+                      {msg.text}
+                    </div>
+
+                    <div className={`flex items-center gap-1.5 text-[0.625rem] font-medium ${msg.sender === "guest" ? "flex-row-reverse" : ""}`}
+                      style={{ color: "var(--gray-4)" }}>
+                      <Clock size={9} /> {msg.time}
+                      {msg.sender === "guest" && msg.read && (
+                        <CheckCircle2 size={11} style={{ color: "var(--state-success)" }} />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {isTyping && (
+                <div className="flex items-end gap-2.5">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg, var(--black-2), var(--black-3))" }}>
+                    <User size={14} className="text-white" />
+                  </div>
+                  <div className="px-4 py-3 rounded-2xl rounded-bl-md border shadow-sm" style={{ background: "white", borderColor: "var(--border)" }}>
+                    <div className="flex gap-1 items-center h-4">
+                      {[0, 120, 240].map(d => (
+                        <div key={d} className="w-1.5 h-1.5 rounded-full bg-gray-300 animate-bounce"
+                          style={{ animationDelay: `${d}ms` }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-4 py-4 border-t flex-shrink-0" style={{ borderColor: "var(--border)" }}>
+              <div className="flex items-center gap-2 rounded-2xl border px-2 py-1 transition-colors focus-within:border-[var(--fg)]"
+                style={{ background: "color-mix(in srgb, var(--gray-5) 50%, white)", borderColor: "var(--border)" }}>
+                <button className="p-2 rounded-xl cursor-pointer" style={{ color: "var(--gray-4)" }}>
+                  <Smile size={18} />
+                </button>
+                <input
+                  id="staff-message-input"
+                  type="text"
+                  placeholder="Type your request…"
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && sendMessage(input)}
+                  className="flex-1 bg-transparent text-sm outline-none py-2"
+                  style={{ color: "var(--fg)" }}
+                />
+                <button className="p-2 rounded-xl cursor-pointer" style={{ color: "var(--gray-4)" }}>
+                  <Paperclip size={16} />
+                </button>
+                <button
+                  id="send-staff-btn"
+                  onClick={() => sendMessage(input)}
+                  disabled={!input.trim()}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer disabled:opacity-30"
+                  style={{ background: "var(--black-2)" }}>
+                  <Send size={15} className="text-white" />
+                </button>
+              </div>
+              <p className="text-[0.625rem] text-center mt-2 font-medium" style={{ color: "var(--gray-4)" }}>
+                Our staff will assist you directly to your suite terminal.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Export — Suspense boundary required by useSearchParams
+// ─────────────────────────────────────────────────────────────────────────────
+export default function MessageStaffPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
+        <div className="w-10 h-10 border-4 border-t-[var(--brand-secondary)] border-white/20 rounded-full animate-spin" />
+      </div>
+    }>
+      <StaffChatInner />
+    </Suspense>
+  )
 }
