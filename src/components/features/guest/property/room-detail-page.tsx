@@ -382,10 +382,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             </div>
 
                             <Link
-                                href="/guest/booking/confirmation"
+                                href={payNow ? "/payment" : "/guest/booking/confirmation"}
                                 className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
                             >
-                                Confirm & Book <ArrowRight size={18} />
+                                {payNow ? "Confirm & Pay" : "Confirm & Book"} <ArrowRight size={18} />
                             </Link>
 
                             <div className="text-center text-[13px] text-[#828282] mb-6">You won&apos;t be charged yet</div>

@@ -144,7 +144,7 @@ function RegisterForm() {
                     <div className="relative h-52 md:h-auto md:block">
                         <div className="absolute inset-0 bg-[#1a0a05]" />
                         <Image
-                            src="/login-cover.jpg"
+                            src="/images/auth/login-cover.jpg"
                             alt="PrimeStay registration cover"
                             fill
                             className="object-cover opacity-100"
@@ -179,7 +179,7 @@ function RegisterForm() {
                                 <h2 className="text-[28px] font-extrabold text-[#953002] md:text-[32px] leading-tight">
                                     Create your account
                                 </h2>
-                                <p className="mt-2 text-[14px] text-neutral-500 font-medium">
+                                <p className="mt-2 text-[14px] text-[#953002]/80 font-medium">
                                     Join our hospitality community today.
                                 </p>
                             </div>
@@ -187,7 +187,7 @@ function RegisterForm() {
                             {/* ROLE DISPLAY (HIDDEN TOGGLE) */}
                             <div className="mb-6">
                                 <div className="flex items-center justify-between mb-2">
-                                    <Label className="text-[12px] font-extrabold text-neutral-800 uppercase tracking-wider block">Joining as</Label>
+                                    <Label className="text-[12px] font-extrabold text-[#282828] uppercase tracking-wider block">JOIN AS A</Label>
                                     <button
                                         type="button"
                                         onClick={handleFillMockData}
@@ -286,7 +286,7 @@ function RegisterForm() {
                                                     className="h-[48px] w-full rounded-full bg-transparent pl-[40px] pr-[12px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
                                                     required
                                                 />
-                                                <Lock className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                <svg className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
                                             </div>
                                         </div>
                                     </div>

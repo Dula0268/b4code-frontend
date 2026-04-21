@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { useAuthStore } from "@/store/auth/auth.store";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/staff", icon: LayoutDashboard },
@@ -26,6 +27,12 @@ const NAV_ITEMS = [
 export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useAuthStore();
+  
+  const displayName = user?.name || "Alex Moore";
+  const names = displayName.split(" ");
+  const initials = names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
+  const shortName = names.length > 1 ? `${names[0]} ${names[names.length - 1][0]}.` : names[0];
 
   return (
     <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
@@ -33,7 +40,7 @@ export default function StaffSidebar() {
       <div className="px-5 pb-6">
         <Logo href="/staff" variant="default" width={140} height={48} />
         <p className="mt-1.5 text-[15px] font-medium text-[rgba(241, 90, 20, 0.7)] tracking-[0.01em]">
-        Staff Portal
+          Staff Portal
         </p>
       </div>
 
@@ -52,17 +59,15 @@ export default function StaffSidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${
-                    isActive
+                  className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
                       ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
                       : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
-                  }`}
+                    }`}
                 >
                   <Icon
                     size={18}
-                    className={`flex-shrink-0 ${
-                      isActive ? "text-[var(--brand-primary)]" : "text-[var(--black-1)]"
-                    }`}
+                    className={`flex-shrink-0 ${isActive ? "text-[var(--brand-primary)]" : "text-[var(--black-1)]"
+                      }`}
                   />
                   <span className="flex-1">{item.label}</span>
                   {item.badge && (
@@ -93,16 +98,19 @@ export default function StaffSidebar() {
         </div>
 
         {/* User Profile */}
-        <div className="px-4 pt-2 pb-1">
-          <div className="flex items-center gap-3 p-2 rounded-[10px]">
-            <div className="w-10 h-10 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-sm">
-              AM
+        <div className="px-3 pt-2 pb-1">
+          <Link
+            href="/staff/profile"
+            className="flex items-center gap-3 p-2 rounded-[10px] hover:bg-[rgba(109,34,0,0.08)] transition-colors cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-sm uppercase">
+              {initials}
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-[#1c1917]">Alex M.</span>
-              <span className="text-xs text-[#78716c]">Main Staff</span>
+            <div className="flex flex-col flex-1 truncate">
+              <span className="text-sm font-medium text-[#1c1917] truncate">{shortName}</span>
+              <span className="text-xs text-[#78716c]">Staff</span>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </aside>

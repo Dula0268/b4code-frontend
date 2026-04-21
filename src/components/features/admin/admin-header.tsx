@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import Link from "next/link";
 import UserIcon from "@/components/features/admin/user-icon";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -58,7 +59,8 @@ export default function AdminHeader({
       </div>
 
       {/* ── User Avatar ── */}
-      <div
+      <Link
+        href="/admin/profile"
         title={adminName}
         className="relative w-[42px] h-[42px] flex-shrink-0 cursor-pointer"
       >
@@ -78,7 +80,7 @@ export default function AdminHeader({
 
         {/* Green online indicator dot */}
         <span className="absolute bottom-[1px] right-[1px] w-[11px] h-[11px] rounded-full bg-[var(--state-success)] border-2 border-[var(--white)]" />
-      </div>
+      </Link>
     </header>
   );
 }
