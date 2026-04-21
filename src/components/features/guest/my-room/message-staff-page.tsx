@@ -127,7 +127,7 @@ function StaffChatInner() {
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-5 lg:h-[calc(100vh-280px)] lg:min-h-[600px]">
+        <div className="flex flex-col-reverse lg:flex-row gap-5 lg:h-[calc(100vh-280px)] lg:min-h-[600px]">
 
           {/* ── Sidebar ─────────────────────────────────────────────── */}
           <div className="w-full lg:w-[280px] flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
@@ -207,7 +207,7 @@ function StaffChatInner() {
           </div>
 
           {/* ── Chat panel ──────────────────────────────────────────── */}
-          <div className="flex-1 ps-card flex flex-col overflow-hidden min-h-0">
+          <div className="flex-1 ps-card flex flex-col overflow-hidden min-h-[500px] h-[65vh] lg:min-h-0 lg:h-auto">
 
             {/* Chat header */}
             <div className="px-5 sm:px-6 py-4 border-b flex items-center justify-between flex-shrink-0"

@@ -225,7 +225,7 @@ function BookingCard({ booking }: { booking: Booking }) {
 
         {/* Dates + status (hidden for cancelled — shown in the note above) */}
         {!isCancelled && (
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-4 sm:gap-6">
             <div>
               <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-0.5" style={{ color: "var(--gray-4)" }}>
                 Stay Dates
@@ -358,10 +358,10 @@ export default function MyBookingsPage() {
         </div>
 
         {/* Tab toggle — pill style keeps it compact on mobile */}
-        <div className="flex items-center gap-1 mb-6 ps-card w-fit p-1">
+        <div className="flex items-center gap-1 mb-6 ps-card w-full sm:w-fit p-1 overflow-x-auto no-scrollbar">
           {TABS.map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className="px-5 py-2 text-[0.75rem] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer"
+              className="px-4 sm:px-5 py-2 text-[0.75rem] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer whitespace-nowrap"
               style={{
                 background: activeTab === tab ? "var(--brand-primary)" : "transparent",
                 color:      activeTab === tab ? "white"          : "var(--gray-3)",

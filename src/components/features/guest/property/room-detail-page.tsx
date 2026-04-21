@@ -13,6 +13,7 @@ import { Calendar } from "@/components/ui/calendar"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
 import { addDays, differenceInDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
@@ -109,7 +110,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                     <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">
                         {room.name}
                     </h1>
-                    <div className="flex items-center gap-4 text-[14px] text-[#555]">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[14px] text-[#555]">
                         <span className="flex items-center gap-1.5"><MapPin size={15} className="text-[var(--brand-primary)]" /> {property.location}, Sri Lanka</span>
                         <span className="flex items-center gap-1.5"><SquareDot size={15} /> {room.sqft} sq ft</span>
                         <span className="flex items-center gap-1.5"><Users size={15} /> Up to {room.maxGuests} Guests</span>
@@ -117,10 +118,10 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                 </div>
 
                 {/* ── Photo Gallery Grid ──────────────────────────────────────────────── */}
-                <div className="relative mb-10 h-[460px] rounded-2xl overflow-hidden flex gap-2">
+                <div className="relative mb-10 h-[260px] sm:h-[460px] rounded-2xl overflow-hidden flex flex-col sm:flex-row gap-2">
                     {/* Left primary image */}
                     <div
-                        className="w-[50%] h-full relative cursor-pointer group"
+                        className="w-full sm:w-[50%] h-full relative cursor-pointer group"
                         onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }}
                     >
                         <Image
@@ -131,10 +132,16 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             priority
                             sizes="(max-width: 768px) 100vw, 600px"
                         />
+                        {/* Mobile Overlay button */}
+                        <div className="sm:hidden absolute bottom-3 right-3">
+                            <button className="flex items-center gap-2 text-[#1d1d1d] font-semibold text-[13px] bg-white/90 border border-[#e0e0e0] px-4 py-2 rounded-xl backdrop-blur-sm shadow-sm">
+                                <Grid2X2 size={14} /> {allImages.length} photos
+                            </button>
+                        </div>
                     </div>
 
                     {/* Right 4 smaller images */}
-                    <div className="w-[50%] grid grid-cols-2 grid-rows-2 gap-2 h-full">
+                    <div className="hidden sm:grid w-[50%] grid-cols-2 grid-rows-2 gap-2 h-full">
                         {property.galleryImages.slice(0, 4).map((img, i) => (
                             <div
                                 key={i}
@@ -162,7 +169,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                 </div>
 
                 {/* ── Main Layout ────────────────────────────────────────────────────── */}
-                <div className="flex gap-10 items-start">
+                <div className="flex flex-col lg:flex-row gap-10 items-start w-full">
 
                     {/* ── LEFT COLUMN ─────────────────────────────────────────────────── */}
                     <div className="flex-1 min-w-0 flex flex-col gap-10">
@@ -240,18 +247,21 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             </div>
 
                             {/* Calendar Block */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-4 sm:p-6 shadow-sm w-full overflow-x-auto">
-                                <div className="min-w-[550px] flex justify-center [&_[data-selected-single=true]]:!bg-[var(--brand-primary)] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[var(--brand-primary)] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[var(--brand-primary)] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[var(--brand-primary)]">
+                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-5 sm:p-8 shadow-sm flex flex-col items-center w-full">
+                                <div 
+                                    className="w-full flex justify-center [&_[data-slot=calendar]]:w-full [&_[data-slot=calendar]]:max-w-[400px] [&_[data-selected-single=true]]:!bg-[var(--brand-primary)] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[var(--brand-primary)] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[var(--brand-primary)] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[var(--brand-primary)]"
+                                    style={{ "--cell-size": "3rem" } as React.CSSProperties}
+                                >
                                     <Calendar
                                         mode="range"
                                         defaultMonth={date?.from || new Date(2026, 9, 1)}
                                         selected={date}
                                         onSelect={setDate}
-                                        numberOfMonths={2}
+                                        numberOfMonths={1}
                                         disabled={bgBooked}
                                         modifiers={{ booked: bgBooked }}
-                                        modifiersClassNames={{ booked: "line-through !text-[#E07070] opacity-70 !bg-[#E07070]/10" }}
-                                        className="p-0"
+                                        modifiersClassNames={{ booked: "line-through !text-[#E07070] !bg-[#E07070]/10 !opacity-100 hover:!bg-[#E07070]/20 font-semibold" }}
+                                        className="p-0 w-full"
                                     />
                                 </div>
                             </div>
@@ -259,7 +269,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                     </div>
 
                     {/* ── RIGHT COLUMN (Sidebar) ──────────────────────────────────────── */}
-                    <div className="w-[360px] flex-shrink-0 sticky top-24 flex flex-col gap-6">
+                    <div className="w-full lg:w-[360px] flex-shrink-0 lg:sticky lg:top-24 flex flex-col gap-6">
 
                         {/* Price Summary Card */}
                         <div className="bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-xl shadow-black/[0.03]">
@@ -269,16 +279,35 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             </div>
 
                             <div className="border border-[#e0e0e0] rounded-xl overflow-visible mb-5 bg-white relative z-10">
-                                <div className="flex border-b border-[#e0e0e0]">
-                                    <div className="flex-1 p-3 border-r border-[#e0e0e0]">
-                                        <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Check-in</div>
-                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">{date?.from ? format(date.from, "MMM d, yyyy") : "Select date"}</div>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <div className="flex border-b border-[#e0e0e0] cursor-pointer hover:bg-gray-50 transition-colors">
+                                        <div className="flex-1 p-3 border-r border-[#e0e0e0]">
+                                            <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Check-in</div>
+                                            <div className="text-[14px] font-semibold text-[#1d1d1d]">{date?.from ? format(date.from, "MMM d, yyyy") : "Select date"}</div>
+                                        </div>
+                                        <div className="flex-1 p-3">
+                                            <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Check-out</div>
+                                            <div className="text-[14px] font-semibold text-[#1d1d1d]">{date?.to ? format(date.to, "MMM d, yyyy") : "Select date"}</div>
+                                        </div>
                                     </div>
-                                    <div className="flex-1 p-3">
-                                        <div className="text-[10px] font-bold text-[#828282] uppercase mb-1">Check-out</div>
-                                        <div className="text-[14px] font-semibold text-[#1d1d1d]">{date?.to ? format(date.to, "MMM d, yyyy") : "Select date"}</div>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <div className="[&_[data-selected-single=true]]:!bg-[var(--brand-primary)] [&_[data-selected-single=true]]:!text-white [&_[data-range-start=true]]:!bg-[var(--brand-primary)] [&_[data-range-start=true]]:!text-white [&_[data-range-end=true]]:!bg-[var(--brand-primary)] [&_[data-range-end=true]]:!text-white [&_[data-range-middle=true]]:!bg-[#fff4eb] [&_[data-range-middle=true]]:!text-[var(--brand-primary)]">
+                                        <Calendar
+                                            mode="range"
+                                            defaultMonth={date?.from || new Date(2026, 9, 1)}
+                                            selected={date}
+                                            onSelect={setDate}
+                                            numberOfMonths={1}
+                                            disabled={bgBooked}
+                                            modifiers={{ booked: bgBooked }}
+                                            modifiersClassNames={{ booked: "line-through !text-[#E07070] opacity-70 !bg-[#E07070]/10" }}
+                                            className="p-3"
+                                        />
                                     </div>
-                                </div>
+                                </PopoverContent>
+                            </Popover>
                                 <div
                                     className="p-3 relative cursor-pointer hover:bg-gray-50 transition-colors rounded-b-xl"
                                     onClick={() => setGuestOpen(!guestOpen)}

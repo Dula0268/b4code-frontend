@@ -185,7 +185,7 @@ export default function OrderDetailsPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link href="/guest/my-room/message-staff?tab=staff&q=Question about my order #4029"
                 className="flex items-center gap-3 p-5 bg-white rounded-2xl border border-[var(--border)] shadow-sm hover:shadow-md transition-shadow no-underline group">
                 <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)] flex items-center justify-center flex-shrink-0">
@@ -212,8 +212,8 @@ export default function OrderDetailsPage() {
           </div>
 
           {/* ── Right: Timeline ─────────────────────────────────────────── */}
-          <div className="lg:col-span-1 space-y-5">
-            <div className="ps-card rounded-[24px] p-7 sticky top-24">
+          <div className="lg:col-span-1 space-y-5 sticky top-24 self-start">
+            <div className="ps-card rounded-[24px] p-7">
               <h2 className="text-[16px] font-black text-[var(--fg)] mb-7">Order Progress</h2>
 
               <div className="relative">

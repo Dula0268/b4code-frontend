@@ -55,9 +55,9 @@ function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
                 : "bg-red-50 text-red-700 border-red-200"
 
     return (
-        <div className="flex gap-4 p-4 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white">
+        <div className="flex flex-col sm:flex-row gap-4 p-4 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white">
             {/* Room image */}
-            <div className="relative w-[140px] h-[100px] flex-shrink-0 rounded-xl overflow-hidden bg-[#f3ede8]">
+            <div className="relative w-full sm:w-[140px] h-[180px] sm:h-[100px] flex-shrink-0 rounded-xl overflow-hidden bg-[#f3ede8]">
                 <Image src={room.imageSrc} alt={room.name} fill className="object-cover" sizes="140px" />
             </div>
 
@@ -90,8 +90,8 @@ function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
             </div>
 
             {/* Price + CTA */}
-            <div className="flex-shrink-0 flex flex-col items-end justify-between gap-2">
-                <div className="text-right">
+            <div className="flex-shrink-0 flex sm:flex-col items-center sm:items-end justify-between gap-2 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#e8e8e8]">
+                <div className="text-left sm:text-right">
                     {room.originalPrice && (
                         <p className="text-[12px] text-[#aaa] line-through">{formatLKR(room.originalPrice)}</p>
                     )}
@@ -180,7 +180,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
 
                 {/* ── Photo Gallery Grid ──────────────────────────────────────────────── */}
                 <div className="relative mb-8">
-                    <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[460px] rounded-2xl overflow-hidden">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 grid-rows-2 gap-2 h-[300px] sm:h-[460px] rounded-2xl overflow-hidden">
                         {/* Primary large image */}
                         <div
                             className="col-span-2 row-span-2 relative cursor-pointer group"
@@ -232,7 +232,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                 </div>
 
                 {/* ── Title Row ──────────────────────────────────────────────────────── */}
-                <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
                     <div>
                         <p className="text-[12px] font-semibold text-[var(--brand-primary)] uppercase tracking-wider mb-1">
                             {property.propertyType}
@@ -272,7 +272,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                 </div>
 
                 {/* ── Two-column layout ───────────────────────────────────────────────── */}
-                <div className="flex gap-8 items-start">
+                <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
 
                     {/* ── LEFT COLUMN ─────────────────────────────────────────────────── */}
                     <div className="flex-1 min-w-0 flex flex-col gap-8">
@@ -386,7 +386,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                     </div>
 
                     {/* ── RIGHT COLUMN — Map + Location ───────────────────────────────── */}
-                    <div className="w-[300px] flex-shrink-0 sticky top-24">
+                    <div className="w-full lg:w-[300px] flex-shrink-0 lg:sticky lg:top-24">
                         {/* Map embed */}
                         <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-sm overflow-hidden">
                             <div className="relative h-[200px] bg-[#e8f4f8]">
