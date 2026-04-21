@@ -24,15 +24,15 @@ export default function OwnerSecurityPage() {
     e.preventDefault();
     setIsSaving(true);
     setErrorMsg("");
-    
+
     try {
       const emailToUse = user?.email || "owner@primestay.com";
       await updatePassword(emailToUse, formData.currentPassword, formData.newPassword);
       setIsSaving(false);
       setShowModal(true);
-    } catch (err: any) {
+    } catch (error) {
       setIsSaving(false);
-      setErrorMsg(err.message || "Failed to update password");
+      setErrorMsg(error instanceof Error ? error.message : "Failed to update password");
     }
   };
 
@@ -69,40 +69,40 @@ export default function OwnerSecurityPage() {
           )}
           <div className="space-y-2">
             <label className="text-sm font-medium text-[#44403c]">Current Password</label>
-            <Input 
-              name="currentPassword" 
+            <Input
+              name="currentPassword"
               type="password"
               placeholder="••••••••"
               value={formData.currentPassword}
               onChange={handleChange}
               required
-              className="h-11 bg-white border-[#e7e5e4] focus-visible:ring-[#953002]/20 max-w-md" 
+              className="h-11 bg-white border-[#e7e5e4] focus-visible:ring-[#953002]/20 max-w-md"
             />
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[#f3f4f6]">
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#44403c]">New Password</label>
-              <Input 
-                name="newPassword" 
+              <Input
+                name="newPassword"
                 type="password"
                 placeholder="••••••••"
                 value={formData.newPassword}
                 onChange={handleChange}
                 required
-                className="h-11 bg-white border-[#e7e5e4] focus-visible:ring-[#953002]/20" 
+                className="h-11 bg-white border-[#e7e5e4] focus-visible:ring-[#953002]/20"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#44403c]">Confirm New Password</label>
-              <Input 
-                name="confirmPassword" 
+              <Input
+                name="confirmPassword"
                 type="password"
                 placeholder="••••••••"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="h-11 bg-white border-[#e7e5e4] focus-visible:ring-[#953002]/20" 
+                className="h-11 bg-white border-[#e7e5e4] focus-visible:ring-[#953002]/20"
               />
             </div>
           </div>
@@ -112,8 +112,8 @@ export default function OwnerSecurityPage() {
           </div>
 
           <div className="pt-6 flex justify-end">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="bg-[#953002] hover:bg-[#7a2702] text-white px-8 transition-colors h-11"
               disabled={isSaving || !formData.currentPassword || !formData.newPassword || formData.newPassword !== formData.confirmPassword}
             >
@@ -130,16 +130,16 @@ export default function OwnerSecurityPage() {
             <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-6 text-green-500">
               <CheckCircle2 size={32} />
             </div>
-            
+
             <h2 className="text-xl font-bold text-[#1c1917] mb-2">
               Password Reset Successful!
             </h2>
-            
+
             <p className="text-[#78716c] text-sm mb-8 leading-relaxed">
               Your password has been changed successfully. You can now use your new password to log in.
             </p>
-            
-            <Button 
+
+            <Button
               className="w-full h-12 rounded-full bg-[#953002] hover:bg-[#7a2702] text-white font-medium text-[15px] transition-colors"
               onClick={() => {
                 setShowModal(false);
