@@ -38,15 +38,12 @@ interface DisplayBooking {
     paymentMethod?: "online" | "property"
     paidInFull?: boolean
     roomName?: string
-    // completed specific
     bookingStatus?: string
-    // cancelled specific
     cancellationNote?: string
-    // source tracking
     isFromStore?: boolean
 }
 
-// ─── Mock data (static/demo bookings) ─────────────────────────────────────────
+// ─── Mock data ────────────────────────────────────────────────────────────────
 const MOCK_BOOKINGS: DisplayBooking[] = [
     {
         id: "bk-mock-1",
@@ -101,7 +98,8 @@ const MOCK_BOOKINGS: DisplayBooking[] = [
     },
 ]
 
-const TABS = ["ALL", "UPCOMING", "COMPLETED", "CANCELLED"] as const
+// ─── Tabs — NO "ALL" tab ──────────────────────────────────────────────────────
+const TABS = ["UPCOMING", "COMPLETED", "CANCELLED"] as const
 type Tab = (typeof TABS)[number]
 
 function formatLKR(n: number) {
@@ -110,14 +108,14 @@ function formatLKR(n: number) {
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 const STATUS_STYLES: Record<BookingStatus, string> = {
-    UPCOMING: "bg-[#e8f5e9] text-[#2E7D32]",
-    COMPLETED: "bg-[#e0f2f1] text-[#00796b]",
-    CANCELLED: "bg-[#f5f5f5] text-[#757575]",
+    UPCOMING: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    COMPLETED: "bg-blue-50 text-blue-700 border border-blue-200",
+    CANCELLED: "bg-[#f5f5f5] text-[#757575] border border-[#e0e0e0]",
 }
 
 function StatusBadge({ status }: { status: BookingStatus }) {
     return (
-        <span className={`inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${STATUS_STYLES[status]}`}>
+        <span className={`inline-block text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest ${STATUS_STYLES[status]}`}>
             {status}
         </span>
     )
@@ -127,158 +125,172 @@ function StatusBadge({ status }: { status: BookingStatus }) {
 function PaymentBadge({ paidInFull }: { paidInFull: boolean }) {
     if (paidInFull) {
         return (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e8f5e9] text-[#27AE60] uppercase tracking-wide">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
                 <CreditCard size={10} /> Paid
             </span>
         )
     }
     return (
-        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fff8e1] text-[#c97c2e] uppercase tracking-wide">
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wide">
             <Wallet size={10} /> Pay at Property
         </span>
     )
 }
 
+// ─── Shared button styles ─────────────────────────────────────────────────────
+const BTN_PRIMARY   = "inline-flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white text-[12px] font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
+const BTN_OUTLINE   = "inline-flex items-center gap-2 border border-[#d0d0d0] hover:border-[#1a1a1a] text-[#444] hover:text-[#1a1a1a] text-[12px] font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
+const BTN_HOST      = "inline-flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-amber-400 text-[12px] font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
+const BTN_RED       = "inline-flex items-center gap-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-[12px] font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
+const BTN_GHOST     = "inline-flex items-center gap-1.5 text-[12px] font-bold text-[#888] hover:text-[#1a1a1a] transition-colors cursor-pointer ml-auto"
+
 // ─── Booking Card ─────────────────────────────────────────────────────────────
 function BookingCard({ booking }: { booking: DisplayBooking }) {
     const isCancelled = booking.status === "CANCELLED"
     const isCompleted = booking.status === "COMPLETED"
-    const isUpcoming = booking.status === "UPCOMING"
+    const isUpcoming  = booking.status === "UPCOMING"
+
     const cancelHref = booking.isFromStore
         ? `/guest/booking/cancel?bookingId=${encodeURIComponent(booking.id)}`
         : "/guest/booking/cancel"
+
     const rebookHref = booking.propertyId
         ? `/guest/property/${encodeURIComponent(booking.propertyId)}`
         : `/guest/search?property=${encodeURIComponent(booking.property)}&location=${encodeURIComponent(booking.location)}`
 
     return (
-        <div className={`bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col sm:flex-row transition-shadow hover:shadow-[0_4px_24px_rgba(0,0,0,0.10)]`}>
+        <div className="bg-white rounded-[20px] border border-[#ebebeb] shadow-sm overflow-hidden flex flex-col sm:flex-row hover:shadow-md transition-shadow">
+
             {/* Image */}
-            <div className="relative w-full sm:w-[220px] h-[180px] sm:h-auto flex-shrink-0">
+            <div className="relative w-full sm:w-[210px] h-[170px] sm:h-auto flex-shrink-0">
                 <Image
                     src={booking.imageSrc}
                     alt={booking.property}
                     fill
-                    className={`object-cover ${isCancelled ? "grayscale opacity-70" : ""}`}
-                    sizes="(max-width: 640px) 100vw, 220px"
+                    className={`object-cover ${isCancelled ? "grayscale opacity-60" : ""}`}
+                    sizes="(max-width: 640px) 100vw, 210px"
                 />
+                {/* Status pill over image */}
+                <div className="absolute top-3 left-3">
+                    <StatusBadge status={booking.status} />
+                </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 p-5 flex flex-col gap-3">
-                {/* Top row: badge + order + price */}
+
+                {/* Order + price row */}
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <StatusBadge status={booking.status} />
                         {booking.paidInFull !== undefined && !isCancelled && (
                             <PaymentBadge paidInFull={booking.paidInFull} />
                         )}
-                        <span className="text-[12px] text-[#828282]">Order #{booking.orderNumber}</span>
+                        <span className="text-[11px] text-[#aaa] font-semibold">#{booking.orderNumber}</span>
                     </div>
                     <div className="text-right flex-shrink-0">
-                        <p className={`text-[20px] font-bold leading-tight ${isCancelled ? "text-[#828282]" : "text-[#953002]"}`}>
+                        <p className={`text-[19px] font-black leading-tight ${isCancelled ? "text-[#aaa]" : "text-[#1a1a1a]"}`}>
                             {formatLKR(booking.totalPrice)}
                         </p>
-                        <p className="text-[11px] text-[#828282]">{booking.nightsLabel}</p>
+                        <p className="text-[10px] text-[#bbb] font-semibold">{booking.nightsLabel}</p>
                     </div>
                 </div>
 
                 {/* Property name + location */}
                 <div>
-                    <h3 className="text-[17px] font-bold text-[#1d1d1d] leading-snug">{booking.property}</h3>
+                    <h3 className="text-[16px] font-black text-[#1a1a1a] leading-snug">{booking.property}</h3>
                     {booking.roomName && (
-                        <p className="text-[13px] font-medium text-[#555] mt-0.5">{booking.roomName}</p>
+                        <p className="text-[12px] font-semibold text-[#666] mt-0.5">{booking.roomName}</p>
                     )}
-                    <div className="flex items-center gap-1 mt-0.5">
-                        <MapPin size={12} className="text-[#828282] flex-shrink-0" />
-                        <p className="text-[13px] text-[#828282]">{booking.location}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                        <MapPin size={11} className="text-[#bbb] flex-shrink-0" />
+                        <p className="text-[12px] text-[#888]">{booking.location}</p>
                     </div>
                 </div>
 
-                {/* Cancelled note */}
+                {/* Cancellation note */}
                 {isCancelled && booking.cancellationNote && (
-                    <p className="text-[13px] text-[#828282] leading-relaxed bg-[#fafafa] rounded-xl px-3 py-2.5 border border-[#f0f0f0]">
+                    <p className="text-[12px] text-[#888] leading-relaxed bg-[#f8f7f5] rounded-xl px-3 py-2.5 border border-[#ebebeb]">
                         {booking.cancellationNote}
                     </p>
                 )}
 
-                {/* Details grid (upcoming & completed) */}
+                {/* Dates + guests (upcoming & completed) */}
                 {!isCancelled && (
-                    <div className="flex gap-8">
+                    <div className="flex gap-6">
                         <div>
-                            <p className="text-[11px] font-semibold text-[#828282] uppercase tracking-wide mb-0.5">Stay Dates</p>
-                            <p className="text-[13px] font-semibold text-[#1d1d1d]">
+                            <p className="text-[10px] font-black text-[#bbb] uppercase tracking-widest mb-0.5">Stay Dates</p>
+                            <p className="text-[12px] font-bold text-[#1a1a1a]">
                                 {booking.checkIn} – {booking.checkOut}
                             </p>
                         </div>
                         <div>
-                            <p className="text-[11px] font-semibold text-[#828282] uppercase tracking-wide mb-0.5">
+                            <p className="text-[10px] font-black text-[#bbb] uppercase tracking-widest mb-0.5">
                                 {isCompleted ? "Status" : "Guests"}
                             </p>
-                            <p className={`text-[13px] font-semibold ${isCompleted ? "text-[#27AE60]" : "text-[#1d1d1d]"}`}>
+                            <p className={`text-[12px] font-bold ${isCompleted ? "text-emerald-600" : "text-[#1a1a1a]"}`}>
                                 {isCompleted ? booking.bookingStatus : booking.guests}
                             </p>
                         </div>
                     </div>
                 )}
 
-                {/* Actions */}
-                <div className="flex items-center gap-2.5 flex-wrap mt-1">
+                {/* ── Action buttons ────────────────────────────────────── */}
+                <div className="flex items-center gap-2 flex-wrap mt-auto pt-1">
+
                     {isUpcoming && (
                         <>
-                            <Link
-                                href="/guest/my-room"
-                                className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
-                            >
-                                <BedDouble size={14} /> My Room
+                            {/* My Room — black filled */}
+                            <Link href="/guest/my-room" className={BTN_PRIMARY}>
+                                <BedDouble size={13} /> My Room
                             </Link>
-                            <Link
-                                href="/guest/booking/message-host"
-                                className="inline-flex items-center gap-2 border border-[#953002] text-[#953002] hover:bg-[#fff4eb] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
-                            >
+
+                            {/* Message Host — black with amber accent */}
+                            <Link href="/guest/booking/message-host" className={BTN_HOST}>
                                 <MessageSquare size={13} /> Message Host
                             </Link>
-                            <Link
-                                href="/guest/booking/modify"
-                                className="inline-flex items-center gap-2 border border-[#953002] text-[#953002] hover:bg-[#fff4eb] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
-                            >
-                                <Pencil size={13} /> Modify
+
+                            {/* Modify — clean outline */}
+                            <Link href="/guest/booking/modify" className={BTN_OUTLINE}>
+                                <Pencil size={12} /> Modify
                             </Link>
-                            <Link
-                                href={cancelHref}
-                                className="inline-flex items-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
-                            >
-                                <XCircle size={14} /> Cancel
+
+                            {/* Cancel — soft red */}
+                            <Link href={cancelHref} className={BTN_RED}>
+                                <XCircle size={13} /> Cancel
                             </Link>
                         </>
                     )}
 
                     {isCompleted && (
                         <>
-                            <button className="inline-flex items-center gap-2 border border-[#e0e0e0] hover:border-[#953002] hover:text-[#953002] text-[#555] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                            {/* Download Invoice */}
+                            <Link href="/guest/booking/confirmation" className={BTN_OUTLINE}>
                                 <Download size={13} /> Download Invoice
-                            </button>
-                            <button className="inline-flex items-center gap-2 border border-[#e0e0e0] hover:border-[#953002] hover:text-[#953002] text-[#555] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                            </Link>
+
+                            {/* Rate Stay */}
+                            <Link href="/guest/my-room/submit-review" className={BTN_OUTLINE}>
                                 <Star size={13} /> Rate Stay
-                            </button>
-                            <button className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#828282] hover:text-[#953002] transition-colors cursor-pointer ml-auto">
-                                View Details <ChevronRight size={14} />
-                            </button>
+                            </Link>
+
+                            {/* View Details ghost */}
+                            <Link href="/guest/booking/confirmation" className={BTN_GHOST}>
+                                View Details <ChevronRight size={13} />
+                            </Link>
                         </>
                     )}
 
                     {isCancelled && (
                         <>
-                            <Link
-                                href={rebookHref}
-                                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#953002] hover:underline cursor-pointer no-underline"
-                            >
-                                Rebook Property <RefreshCw size={13} />
+                            {/* Rebook */}
+                            <Link href={rebookHref} className={BTN_PRIMARY}>
+                                <RefreshCw size={13} /> Rebook Property
                             </Link>
-                            <span className="text-[#e0e0e0]">|</span>
-                            <button className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#828282] hover:text-[#1d1d1d] cursor-pointer">
+
+                            {/* Cancellation Policy */}
+                            <Link href="/guest/booking/cancel" className={BTN_OUTLINE}>
                                 <FileText size={13} /> Cancellation Policy
-                            </button>
+                            </Link>
                         </>
                     )}
                 </div>
@@ -287,7 +299,7 @@ function BookingCard({ booking }: { booking: DisplayBooking }) {
     )
 }
 
-// ─── Convert store booking to display format ──────────────────────────────────
+// ─── Convert store booking → display ─────────────────────────────────────────
 function storeToDisplay(b: StoredBooking): DisplayBooking {
     return {
         id: b.id,
@@ -311,55 +323,48 @@ function storeToDisplay(b: StoredBooking): DisplayBooking {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function MyBookingsPage() {
-    const [activeTab, setActiveTab] = useState<Tab>("ALL")
+    const [activeTab, setActiveTab] = useState<Tab>("UPCOMING")
     const user = useAuthStore((s) => s.user)
     const storeBookings = useGuestBookingStore((s) => s.bookings)
 
-    // Merge store bookings (real) with mock bookings
     const [allBookings, setAllBookings] = useState<DisplayBooking[]>(MOCK_BOOKINGS)
 
     useEffect(() => {
-        // Get bookings for the current user
         const userBookings = user?.email
             ? storeBookings.filter((b) => b.userEmail.toLowerCase() === user.email.toLowerCase())
             : storeBookings
-
         const converted = userBookings.map(storeToDisplay)
-        // Real bookings first, then mocks
         setAllBookings([...converted, ...MOCK_BOOKINGS])
     }, [storeBookings, user])
 
-    const filtered = activeTab === "ALL"
-        ? allBookings
-        : allBookings.filter((b) => b.status === activeTab)
+    const filtered = allBookings.filter((b) => b.status === activeTab)
 
-    // Count the nearest upcoming booking for reminder
     const upcomingBookings = allBookings.filter((b) => b.status === "UPCOMING")
-    const nearestUpcoming = upcomingBookings.length > 0 ? upcomingBookings[0] : null
+    const nearestUpcoming  = upcomingBookings.length > 0 ? upcomingBookings[0] : null
 
     return (
-        <div className="min-h-screen bg-[#f4f4f4] pt-20 pb-16">
+        <div className="min-h-screen bg-[#f4f4f2] pt-20 pb-16 font-sans">
             <div className="max-w-[860px] mx-auto px-4">
 
                 {/* Page header */}
                 <div className="pt-8 pb-6">
-                    <h1 className="text-[28px] font-bold text-[#1d1d1d] leading-tight">My Bookings</h1>
-                    <p className="text-[14px] text-[#828282] mt-1">
-                        Keep track of your stays and manage your upcoming travel plans.
+                    <h1 className="text-[30px] font-black text-[#1a1a1a] leading-tight">My Bookings</h1>
+                    <p className="text-[14px] text-[#888] mt-1 font-medium">
+                        Track your stays and manage upcoming travel plans.
                     </p>
                 </div>
 
                 {/* Tab bar */}
-                <div className="flex items-center gap-0 border-b border-[#e0e0e0] mb-6">
+                <div className="flex items-center gap-1 mb-6 bg-white rounded-2xl border border-[#ebebeb] p-1 shadow-sm w-fit">
                     {TABS.map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={[
-                                "px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest transition-colors cursor-pointer border-b-2 -mb-px",
+                                "px-5 py-2 text-[12px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer",
                                 activeTab === tab
-                                    ? "text-[#953002] border-[#953002]"
-                                    : "text-[#828282] border-transparent hover:text-[#1d1d1d]",
+                                    ? "bg-[#1a1a1a] text-white shadow-sm"
+                                    : "text-[#888] hover:text-[#1a1a1a]",
                             ].join(" ")}
                         >
                             {tab}
@@ -367,30 +372,33 @@ export default function MyBookingsPage() {
                     ))}
                 </div>
 
-                {/* Reminders / Notifications */}
-                {(activeTab === "ALL" || activeTab === "UPCOMING") && nearestUpcoming && (
-                    <div className="mb-6 bg-[#fff4eb] border border-[#f0a500]/30 rounded-2xl p-4 sm:p-5 flex items-start sm:items-center gap-4 shadow-[0_2px_12px_rgba(240,165,0,0.06)]">
-                        <div className="w-10 h-10 rounded-full bg-[#f0a500]/20 flex items-center justify-center text-[#953002] flex-shrink-0">
-                            <Bell size={18} className="animate-pulse" />
+                {/* Upcoming reminder banner */}
+                {activeTab === "UPCOMING" && nearestUpcoming && (
+                    <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5 flex items-start sm:items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                            <Bell size={17} className="text-amber-600 animate-pulse" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-[14px] font-bold text-[#1d1d1d]">Upcoming stay!</h3>
-                            <p className="text-[12px] text-[#666] mt-0.5">
-                                Your trip to <strong>{nearestUpcoming.property}</strong> is coming up ({nearestUpcoming.checkIn} – {nearestUpcoming.checkOut}). Don&apos;t forget to pack your essentials
-                                {nearestUpcoming.paidInFull === false && " and bring a valid ID for payment at check-in"}.
+                            <h3 className="text-[14px] font-black text-[#1a1a1a]">Upcoming stay!</h3>
+                            <p className="text-[12px] text-[#666] mt-0.5 leading-relaxed">
+                                Your trip to <strong>{nearestUpcoming.property}</strong> is coming up ({nearestUpcoming.checkIn} – {nearestUpcoming.checkOut}).
+                                {nearestUpcoming.paidInFull === false && " Bring a valid ID for payment at check-in."}
                             </p>
                         </div>
-                        <Link href="/guest/booking/modify" className="hidden sm:inline-flex text-[12px] font-bold text-[#953002] hover:underline whitespace-nowrap">View Details →</Link>
+                        <Link href="/guest/my-room" className="hidden sm:inline-flex text-[12px] font-black text-[#1a1a1a] hover:text-amber-600 whitespace-nowrap transition-colors no-underline">
+                            View Room →
+                        </Link>
                     </div>
                 )}
 
-                {/* Cards */}
-                <div className="flex flex-col gap-5">
+                {/* Booking cards */}
+                <div className="flex flex-col gap-4">
                     {filtered.length === 0 ? (
-                        <div className="bg-white rounded-2xl border border-[#e8e8e8] p-10 text-center">
-                            <p className="text-[#828282] text-[15px]">No bookings found in this category.</p>
-                            <Link href="/guest/search" className="mt-4 inline-block text-[13px] font-semibold text-[#953002] hover:underline">
-                                Browse Properties →
+                        <div className="bg-white rounded-[20px] border border-[#ebebeb] p-12 text-center">
+                            <p className="text-[#aaa] text-[15px] font-semibold mb-3">No {activeTab.toLowerCase()} bookings.</p>
+                            <Link href="/guest/search"
+                                className="inline-flex items-center gap-1.5 text-[13px] font-bold text-[#1a1a1a] hover:text-amber-600 transition-colors no-underline">
+                                Browse Properties <ChevronRight size={13} />
                             </Link>
                         </div>
                     ) : (
@@ -399,6 +407,7 @@ export default function MyBookingsPage() {
                         ))
                     )}
                 </div>
+
             </div>
         </div>
     )

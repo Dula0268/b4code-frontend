@@ -411,43 +411,6 @@ export default function BookingConfirmationPage() {
                         </Link>
                     </div>
                 </div>
-
-                {/* ── Popular things nearby ─────────────────────────────────── */}
-                <div>
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[17px] font-bold text-[#1d1d1d]">
-                            Popular things to do nearby
-                        </h3>
-                        <button className="text-[13px] font-semibold text-[#953002] hover:text-[#6d2200] transition-colors flex items-center gap-0.5 cursor-pointer">
-                            See all <ChevronRight size={14} />
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                        {NEARBY_ACTIVITIES.map((activity) => (
-                            <div
-                                key={activity.id}
-                                className="group cursor-pointer rounded-xl overflow-hidden bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5"
-                            >
-                                <div className="relative aspect-[4/3] overflow-hidden bg-[#f3ede8]">
-                                    <Image
-                                        src={activity.imageSrc}
-                                        alt={activity.title}
-                                        fill
-                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                    />
-                                </div>
-                                <div className="p-2.5">
-                                    <p className="text-[13px] font-semibold text-[#1d1d1d] leading-tight">
-                                        {activity.title}
-                                    </p>
-                                    <p className="text-[11px] text-[#828282] mt-0.5">
-                                        {activity.subtitle}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </div>
         </div>
     )

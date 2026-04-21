@@ -1,165 +1,236 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import {
-    Utensils, Sparkles, AlertCircle, HelpCircle, User, DoorOpen, Send, Paperclip
+  Utensils, Sparkles, AlertCircle, HelpCircle,
+  Send, Paperclip, Clock, CheckCircle2, ChevronLeft,
+  Smile, Phone, Video, Info, DoorOpen, User
 } from "lucide-react"
+import Link from "next/link"
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Message {
+  id: number
+  sender: "staff" | "guest"
+  text: string
+  time: string
+}
+
+const QUICK_REQUESTS = [
+  { icon: Utensils, label: "Room service", msg: "I'd like to order room service please." },
+  { icon: Sparkles, label: "Room cleaning", msg: "Could you arrange room cleaning?" },
+  { icon: AlertCircle, label: "Report a problem", msg: "I'd like to report an issue in my room." },
+  { icon: HelpCircle, label: "Ask for assistance", msg: "I need some general assistance please." },
+]
+
+const STAFF_REPLIES = [
+  "Of course! We'll attend to that right away.",
+  "Thank you for letting us know. Our team is on it!",
+  "We've received your request and will be with you shortly.",
+  "No problem at all — we'll send someone to your suite immediately.",
+  "Noted! Is there anything else we can assist you with?",
+]
+
+function getTime() {
+  return new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+}
 
 export default function MessageStaffPage() {
-    const [message, setMessage] = useState("")
-    const [messages, setMessages] = useState([
-        { id: 1, sender: "staff", text: "Welcome! Please let us know if you need anything during your stay.", timestamp: "Just now" },
-    ])
+  const [message, setMessage] = useState("")
+  const [messages, setMessages] = useState<Message[]>([
+    { id: 1, sender: "staff", text: "Welcome! I'm Amal from the front desk. Please let us know if you need anything during your stay.", time: "12:00 PM" },
+  ])
+  const [isTyping, setIsTyping] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
 
-    const handleSendMessage = () => {
-        if (!message.trim()) return
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages, isTyping])
 
-        const newMsg = { id: Date.now(), sender: "guest", text: message.trim(), timestamp: "Just now" }
-        setMessages(prev => [...prev, newMsg])
-        setMessage("")
+  const handleSend = (text?: string) => {
+    const msg = (text || message).trim()
+    if (!msg) return
 
-        setTimeout(() => {
-            setMessages(prev => [...prev, {
-                id: Date.now() + 1,
-                sender: "staff",
-                text: "We have received your message and our team will attend to it shortly.",
-                timestamp: "Just now",
-            }])
-        }, 1500)
-    }
+    setMessages(prev => [...prev, { id: Date.now(), sender: "guest", text: msg, time: getTime() }])
+    setMessage("")
+    setIsTyping(true)
 
-    return (
-        <div className="min-h-screen bg-[#f4f4f4] pt-24 pb-16">
-            <div className="max-w-[1000px] mx-auto px-4 flex flex-col gap-6">
-                <div className="mb-4">
-                    <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-3">
-                        Contact Property Staff
-                    </h1>
-                    <p className="text-[17px] font-semibold text-[#953002] leading-snug mb-2">
-                        Need help during your stay?
-                    </p>
-                    <p className="text-[14px] text-[#828282] max-w-[500px] leading-relaxed">
-                        You can message the staff for room service, cleaning, maintenance, or any assistance during your stay.
-                    </p>
-                </div>
+    setTimeout(() => {
+      setIsTyping(false)
+      const reply = STAFF_REPLIES[Math.floor(Math.random() * STAFF_REPLIES.length)]
+      setMessages(prev => [...prev, { id: Date.now() + 1, sender: "staff", text: reply, time: getTime() }])
+    }, 1400 + Math.random() * 600)
+  }
 
-                <div className="flex flex-col md:flex-row gap-8">
-                    <div className="w-full md:w-[340px] flex-shrink-0">
-                        <div className="mb-7">
-                            <h2 className="text-[11px] font-bold text-[#828282] uppercase tracking-widest mb-3 pl-1">
-                                CURRENT STAY
-                            </h2>
-                            <div className="bg-white rounded-[28px] p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-                                <div className="relative w-full h-[140px] rounded-2xl overflow-hidden mb-4 bg-[#f0f0f0]">
-                                    <Image
-                                        src="/images/room-features/resort-exterior.png"
-                                        alt="Grand Horizon Resort"
-                                        fill
-                                        className="object-cover"
-                                    />
-                                </div>
-                                <h3 className="text-[18px] font-bold text-[#1d1d1d] mb-1.5 leading-snug">
-                                    Grand Horizon Resort
-                                </h3>
-                                <div className="flex items-center gap-2 text-[13px] text-[#828282] font-medium">
-                                    <DoorOpen size={15} className="text-[#a0a0a0]" />
-                                    Room Number: Suite 402
-                                </div>
-                            </div>
-                        </div>
+  return (
+    <div className="min-h-screen bg-[#f8f7f5] pt-20 pb-10 font-sans">
+      <div className="max-w-[1100px] mx-auto px-4 lg:px-6 pt-6">
 
-                        <div>
-                            <h2 className="text-[10px] font-bold text-[#828282] uppercase tracking-widest mb-3 pl-1">
-                                QUICK REQUESTS
-                            </h2>
-                            <div className="flex flex-col gap-2.5">
-                                {[
-                                    { icon: Utensils, label: "Request room service" },
-                                    { icon: Sparkles, label: "Request room cleaning" },
-                                    { icon: AlertCircle, label: "Report a problem" },
-                                    { icon: HelpCircle, label: "Ask for assistance" },
-                                ].map(({ icon: Icon, label }) => (
-                                    <button
-                                        key={label}
-                                        onClick={() => setMessage(label)}
-                                        className="w-full bg-white rounded-full py-4 px-5 flex items-center gap-3 shadow-[0_2px_8px_rgba(0,0,0,0.02)] border border-[#ffffff] hover:border-[#f0a500]/30 transition-colors cursor-pointer"
-                                    >
-                                        <Icon size={18} className="text-[#f0a500]" strokeWidth={2.5} />
-                                        <span className="text-[14px] font-bold text-[#1d1d1d]">{label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+        {/* Back */}
+        <Link href="/guest/my-room" className="inline-flex items-center gap-2 text-[#888] hover:text-[#1a1a1a] text-[13px] font-bold mb-6 no-underline transition-colors">
+          <ChevronLeft size={16} /> Back to My Room
+        </Link>
 
-                    <div className="flex-1 bg-white rounded-[32px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#f0f0f0] p-6 flex flex-col min-h-[580px]">
-                        <div className="flex items-center gap-3 pb-6 border-b border-[#f0f0f0]">
-                            <div className="w-[42px] h-[42px] rounded-full bg-[#f8efe8] flex items-center justify-center flex-shrink-0 pb-0.5">
-                                <User size={22} className="text-[#953002]" />
-                            </div>
-                            <div className="flex flex-col justify-center">
-                                <h2 className="text-[16px] font-bold text-[#1d1d1d] leading-snug">
-                                    Chat with Staff
-                                </h2>
-                                <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#27AE60]">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#27AE60]" />
-                                    Staff Online
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 py-8 flex flex-col gap-5 overflow-y-auto">
-                            {messages.map(msg => (
-                                <div key={msg.id} className={`flex items-start gap-4 flex-shrink-0 ${msg.sender === "guest" ? "flex-row-reverse pl-12" : "pr-12"}`}>
-                                    {msg.sender === "staff" && (
-                                        <div className="w-[36px] h-[36px] rounded-full bg-[#f8efe8] flex items-center justify-center flex-shrink-0 mt-1 pb-0.5 shadow-sm border border-[#f5ede4]">
-                                            <User size={18} className="text-[#953002]" />
-                                        </div>
-                                    )}
-                                    <div className={`flex flex-col gap-1.5 max-w-[85%] ${msg.sender === "guest" ? "items-end" : ""}`}>
-                                        <div className={`shadow-sm px-5 py-4 text-[14px] leading-relaxed ${msg.sender === "guest"
-                                                ? "bg-[#953002] text-white rounded-[20px] rounded-tr-none"
-                                                : "bg-white border border-[#eaeaea] text-[#333] rounded-[20px] rounded-tl-none"
-                                            }`}>
-                                            {msg.text}
-                                        </div>
-                                        <span className={`text-[10px] text-[#a0a0a0] font-medium ${msg.sender === "staff" ? "ml-1" : "mr-1"}`}>
-                                            {msg.timestamp}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="pt-2">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                                <button className="w-[46px] h-[46px] sm:w-[50px] sm:h-[50px] rounded-full bg-white border border-[#ebebeb] text-[#828282] flex items-center justify-center hover:bg-[#fafafa] hover:text-[#1d1d1d] transition-colors cursor-pointer flex-shrink-0 shadow-sm" title="Add attachment">
-                                    <Paperclip size={20} />
-                                </button>
-                                <input
-                                    type="text"
-                                    value={message}
-                                    onChange={(e) => setMessage(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                                    placeholder="Type your message to the staff... (Attach files using the clip icon)"
-                                    className="flex-1 min-w-0 bg-[#fafafa] border border-[#ebebeb] hover:border-[#ddd] focus:border-[#953002] focus:ring-1 focus:ring-[#953002] transition-colors rounded-full px-5 sm:px-6 py-[13px] sm:py-[15px] text-[14px] text-[#1d1d1d] placeholder:text-[#a0a0a0] outline-none"
-                                />
-                                <button
-                                    onClick={handleSendMessage}
-                                    disabled={!message.trim()}
-                                    className="bg-[#953002] hover:bg-[#6d2200] disabled:bg-[#ccc] disabled:cursor-not-allowed text-white rounded-full px-5 sm:px-7 py-[13px] sm:py-[15px] flex items-center justify-center gap-2 text-[14px] font-bold transition-colors cursor-pointer shadow-md flex-shrink-0"
-                                >
-                                    <span className="hidden sm:inline">Send Message</span> <Send size={16} />
-                                </button>
-                            </div>
-                            <p className="text-[11px] text-[#a0a0a0] text-center mt-3 font-medium">
-                                Our staff will assist you as quickly as possible.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div className="mb-6">
+          <h1 className="text-[28px] font-black text-[#1a1a1a] leading-tight mb-1">Contact Hotel Staff</h1>
+          <p className="text-[14px] text-[#888]">Message our team for room service, cleaning, maintenance or any assistance — available 24/7.</p>
         </div>
-    )
+
+        <div className="flex flex-col lg:flex-row gap-5 h-[calc(100vh-280px)] min-h-[600px]">
+
+          {/* ── LEFT SIDEBAR ────────────────────────────────────────────── */}
+          <div className="w-full lg:w-[280px] flex-shrink-0 flex flex-col gap-4">
+
+            {/* Current Stay */}
+            <div className="bg-white rounded-[20px] border border-[#ebebeb] shadow-sm overflow-hidden">
+              <div className="relative h-[120px]">
+                <Image src="/images/room/resort-exterior.png" alt="Luxe Horizon Resort" fill className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
+                <div className="absolute bottom-3 left-4 flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-[11px] font-bold text-white">Staff Online</span>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="text-[15px] font-black text-[#1a1a1a] mb-0.5">Luxe Horizon Resort</h3>
+                <div className="flex items-center gap-1.5 text-[12px] text-[#888] mb-4">
+                  <DoorOpen size={13} className="text-[#bbb]" /> Suite 402
+                </div>
+                <div className="flex gap-2">
+                  <button className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#f8f7f5] hover:bg-[#f0f0f0] border border-[#ebebeb] rounded-xl text-[12px] font-bold text-[#444] transition-colors cursor-pointer">
+                    <Phone size={13} /> Call
+                  </button>
+                  <button className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#f8f7f5] hover:bg-[#f0f0f0] border border-[#ebebeb] rounded-xl text-[12px] font-bold text-[#444] transition-colors cursor-pointer">
+                    <Video size={13} /> Video
+                  </button>
+                  <button className="flex items-center justify-center py-2 px-3 bg-[#f8f7f5] hover:bg-[#f0f0f0] border border-[#ebebeb] rounded-xl transition-colors cursor-pointer">
+                    <Info size={13} className="text-[#aaa]" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Requests */}
+            <div className="bg-white rounded-[20px] border border-[#ebebeb] shadow-sm p-4">
+              <p className="text-[10px] font-black text-[#aaa] uppercase tracking-widest mb-3">Quick Requests</p>
+              <div className="flex flex-col gap-2">
+                {QUICK_REQUESTS.map(({ icon: Icon, label, msg }) => (
+                  <button key={label} onClick={() => handleSend(msg)}
+                    className="flex items-center gap-3 py-2.5 px-3 rounded-xl border border-[#ebebeb] hover:border-[var(--brand-secondary)]/50 hover:bg-[var(--brand-secondary)]/5 transition-all cursor-pointer text-left">
+                    <Icon size={15} className="text-[var(--brand-secondary)] flex-shrink-0" />
+                    <span className="text-[13px] font-semibold text-[#1a1a1a]">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Stay summary */}
+            <div className="bg-[#1a1a1a] rounded-[20px] p-4 text-white hidden lg:block">
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3">Your Stay</p>
+              <div className="space-y-2">
+                {[["Check-in", "Oct 12, 2024"], ["Check-out", "Oct 16, 2024"], ["Balance", "LKR 5,400"]].map(([key, val]) => (
+                  <div key={key} className="flex justify-between text-[12px]">
+                    <span className="text-white/50">{key}</span>
+                    <span className="font-bold text-white">{val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── CHAT AREA ───────────────────────────────────────────────── */}
+          <div className="flex-1 bg-white rounded-[20px] border border-[#ebebeb] shadow-sm flex flex-col overflow-hidden min-h-0">
+
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-[#ebebeb] flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center relative">
+                  <User size={18} className="text-[var(--brand-secondary)]" />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-400 border-2 border-white" />
+                </div>
+                <div>
+                  <p className="text-[15px] font-black text-[#1a1a1a]">Amal — Front Desk</p>
+                  <p className="text-[11px] text-green-500 font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" /> Online · replies instantly
+                  </p>
+                </div>
+              </div>
+              <span className="text-[12px] text-[#aaa] font-medium">{messages.length} messages</span>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-4 min-h-0"
+              style={{ background: "linear-gradient(to bottom, #f8f7f5, #ffffff)" }}>
+              <div className="flex items-center gap-3 my-1">
+                <div className="flex-1 h-px bg-[#ebebeb]" />
+                <span className="text-[10px] font-bold text-[#bbb] uppercase tracking-wider px-2">Today</span>
+                <div className="flex-1 h-px bg-[#ebebeb]" />
+              </div>
+
+              {messages.map(msg => (
+                <div key={msg.id} className={`flex items-end gap-2.5 ${msg.sender === "guest" ? "flex-row-reverse" : ""}`}>
+                  {msg.sender === "staff" && (
+                    <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0 mb-1">
+                      <User size={15} className="text-[var(--brand-secondary)]" />
+                    </div>
+                  )}
+                  <div className={`flex flex-col gap-1 max-w-[72%] ${msg.sender === "guest" ? "items-end" : "items-start"}`}>
+                    <div className={`px-4 py-3 rounded-2xl text-[14px] leading-relaxed shadow-sm ${msg.sender === "guest"
+                      ? "bg-[#1a1a1a] text-white rounded-br-md"
+                      : "bg-white border border-[#ebebeb] text-[#1a1a1a] rounded-bl-md"
+                      }`}>
+                      {msg.text}
+                    </div>
+                    <div className={`flex items-center gap-1.5 text-[10px] text-[#bbb] font-medium ${msg.sender === "guest" ? "flex-row-reverse" : ""}`}>
+                      <Clock size={9} /> {msg.time}
+                      {msg.sender === "guest" && <CheckCircle2 size={11} className="text-green-500" />}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {isTyping && (
+                <div className="flex items-end gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
+                    <User size={15} className="text-[var(--brand-secondary)]" />
+                  </div>
+                  <div className="bg-white border border-[#ebebeb] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                    <div className="flex gap-1 items-center h-4">
+                      {[0, 120, 240].map(d => <div key={d} className="w-1.5 h-1.5 rounded-full bg-[#bbb] animate-bounce" style={{ animationDelay: `${d}ms` }} />)}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-4 py-4 border-t border-[#ebebeb] bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 bg-[#f8f7f5] rounded-2xl border border-[#ebebeb] focus-within:border-[#1a1a1a] transition-colors px-2 py-1">
+                <button className="p-2 rounded-xl text-[#bbb] hover:text-[#666] transition-colors cursor-pointer"><Smile size={18} /></button>
+                <input
+                  type="text"
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleSend()}
+                  placeholder="Type your message to the staff…"
+                  className="flex-1 bg-transparent text-[14px] text-[#1a1a1a] placeholder:text-[#bbb] outline-none py-2"
+                />
+                <button className="p-2 rounded-xl text-[#bbb] hover:text-[#666] transition-colors cursor-pointer"><Paperclip size={16} /></button>
+                <button
+                  onClick={() => handleSend()}
+                  disabled={!message.trim()}
+                  className="w-9 h-9 rounded-xl bg-[#1a1a1a] hover:bg-[#2a2a2a] disabled:opacity-30 flex items-center justify-center transition-all cursor-pointer">
+                  <Send size={15} className="text-white" />
+                </button>
+              </div>
+              <p className="text-[10px] text-[#bbb] text-center mt-2 font-medium">Our staff will assist you directly to your suite terminal.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  )
 }
