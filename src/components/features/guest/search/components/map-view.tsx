@@ -82,7 +82,7 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
                     className: "",
                     html: `
             <div style="
-              background: #953002;
+              background: var(--brand-primary);
               color: white;
               font-size: 11px;
               font-weight: 700;
@@ -117,8 +117,8 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
             />
             <p style="font-size:13px;font-weight:700;color:#1d1d1d;margin:0 0 2px 0;line-height:1.3;">${listing.title}</p>
             <p style="font-size:11px;color:#828282;margin:0 0 6px 0;">${listing.propertyType} · ${listing.reviewCount} reviews</p>
-            <p style="font-size:13px;font-weight:700;color:#953002;margin:0;">${formatLKR(listing.pricePerNight)} <span style="font-weight:400;color:#828282;font-size:11px;">/ night</span></p>
-            ${listing.rating ? `<p style="font-size:11px;color:#ffb401;margin:4px 0 0 0;">★ ${listing.rating.toFixed(2)}</p>` : ""}
+            <p style="font-size:13px;font-weight:700;color:var(--brand-primary);margin:0;">${formatLKR(listing.pricePerNight)} <span style="font-weight:400;color:#828282;font-size:11px;">/ night</span></p>
+            ${listing.rating ? `<p style="font-size:11px;color:var(--brand-secondary);margin:4px 0 0 0;">★ ${listing.rating.toFixed(2)}</p>` : ""}
           </div>
         `, { maxWidth: 230 })
 
@@ -156,7 +156,7 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
                     className: "",
                     html: `
             <div style="
-              background: ${isHovered ? "#1d1d1d" : "#953002"};
+              background: ${isHovered ? "#1d1d1d" : "var(--brand-primary)"};
               color: white;
               font-size: 11px;
               font-weight: 700;

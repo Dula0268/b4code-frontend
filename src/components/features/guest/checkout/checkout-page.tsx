@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Check, ShieldCheck, CreditCard, Hotel, ChevronRight, LogIn, User } from "lucide-react"
+import { Check, ShieldCheck, CreditCard, Hotel, ChevronRight, LogIn, User, Home } from "lucide-react"
 import { useSearchParams, useRouter } from "next/navigation"
+import Link from "next/link"
 import { getPropertyById } from "@/lib/mock-properties"
 import { differenceInDays, format } from "date-fns"
 import { useAuthStore } from "@/store/auth/auth.store"
@@ -75,7 +76,7 @@ export default function CheckoutPage() {
     const checkInDate = parseIsoDate(searchParams.get("checkIn"))
     const checkOutDate = parseIsoDate(searchParams.get("checkOut"))
     const guests = searchParams.get("guests") || "2"
-    
+
     // Total from query if previously computed
     const totalFromQuery = Number(searchParams.get("total") || "0")
 
@@ -199,18 +200,43 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-[var(--gray-5)]/20 pb-20 pt-28">
       <div className="ps-container-md">
-        
+
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-2 text-[13px] text-[var(--muted)] mb-8">
-          <a href="#" className="hover:text-[var(--brand-primary)] transition-colors">Search Results</a>
-          <ChevronRight size={14} />
-          <a href="#" className="hover:text-[var(--brand-primary)] transition-colors">{bookingDetails.property.title}</a>
-          <ChevronRight size={14} />
-          <span className="text-[var(--fg)] font-medium">Checkout</span>
-        </div>
+        <nav className="flex items-center flex-wrap gap-1.5 text-[13px] mb-8">
+            <Link
+                href="/"
+                aria-label="Home"
+                className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors flex items-center"
+            >
+                <Home size={15} />
+            </Link>
+            <ChevronRight size={13} className="text-[#bbb]" />
+            <Link
+                href="/guest/search"
+                className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors"
+            >
+                Search
+            </Link>
+            <ChevronRight size={13} className="text-[#bbb]" />
+            <Link
+                href={`/guest/property/${searchParams?.get("propertyId")}`}
+                className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors truncate max-w-[200px]"
+            >
+                {bookingDetails.property.title}
+            </Link>
+            <ChevronRight size={13} className="text-[#bbb]" />
+            <Link
+                href={`/guest/property/${searchParams?.get("propertyId")}/room/${searchParams?.get("roomId")}`}
+                className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors truncate max-w-[200px]"
+            >
+                {bookingDetails.property.roomInfo.split(" • ")[0]}
+            </Link>
+            <ChevronRight size={13} className="text-[#bbb]" />
+            <span className="text-[var(--brand-primary)] font-medium">Checkout</span>
+        </nav>
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-          
+
           {/* ── Left Column: Form ──────────────────────────────────────────────── */}
           <div className="flex-1 min-w-0">
             <h1 className="text-3xl font-bold text-[var(--fg)] mb-8">Secure your booking</h1>
@@ -257,7 +283,7 @@ export default function CheckoutPage() {
             )}
 
             <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-              
+
 
 
               {/* 2. Payment Rules */}
@@ -314,7 +340,7 @@ export default function CheckoutPage() {
                         <p className="text-sm text-[var(--muted)]">Your room is held, and you settle the bill upon arrival. Free cancellation policies apply.</p>
                       </div>
                     </div>
-                    
+
                     {/* Expandable NIC Field for Pay at Property */}
                     <div className={`grid transition-all duration-300 ${paymentMethod === 'property' ? 'grid-rows-[1fr] mt-4 opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                       <div className="overflow-hidden">
@@ -365,14 +391,14 @@ export default function CheckoutPage() {
 
             </form>
           </div>
-          
+
           {/* ── Right Column: Booking Summary ────────────────────────────────────── */}
           <div className="lg:w-[420px] flex-shrink-0">
             <div className="sticky top-28 space-y-6">
-              
+
               {/* Summary Card */}
               <div className="ps-card p-6">
-                
+
                 {/* Property Header */}
                 <div className="flex gap-4 mb-6 pb-6 border-b border-[var(--border)]">
                   <div className="w-[100px] h-[100px] rounded-[var(--radius)] overflow-hidden bg-[var(--gray-5)] flex-shrink-0 relative">
