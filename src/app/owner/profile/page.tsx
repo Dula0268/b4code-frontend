@@ -25,12 +25,12 @@ export default function OwnerProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    
+
     try {
       const emailToUse = user?.email || "owner@primestay.com";
-      const newName = formData.businessName.trim() || user?.name || "Owner";
+      const newName = formData.businessName.trim() || "Owner";
       await updateProfile(emailToUse, { name: newName });
-      
+
       setIsSaving(false);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
@@ -64,23 +64,23 @@ export default function OwnerProfilePage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Owner / Business Name</label>
-          <Input 
-            name="businessName" 
+          <Input
+            name="businessName"
             value={formData.businessName}
             onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
+            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full"
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Email Address</label>
           <div className="relative">
-            <Input 
-              name="email" 
-              type="email" 
+            <Input
+              name="email"
+              type="email"
               value={formData.email}
               disabled
-              className="h-11 bg-[#fcfcfc] border-[#e7e5e4] pr-10 text-[#78716c]" 
+              className="h-11 bg-[#fcfcfc] border-[#e7e5e4] pr-10 text-[#78716c]"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <Lock size={16} className="text-[#a8a29e]" />
@@ -91,61 +91,61 @@ export default function OwnerProfilePage() {
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Phone Number</label>
-          <Input 
-            name="phone" 
+          <Input
+            name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
+            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full"
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Staff Role</label>
-          <Input 
-            name="staffRole" 
+          <Input
+            name="staffRole"
             value={formData.staffRole}
             onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
+            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full"
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Assigned Property</label>
-          <Input 
-            name="assignedProperty" 
+          <Input
+            name="assignedProperty"
             value={formData.assignedProperty}
             onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
+            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full"
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Property Address</label>
-          <Input 
-            name="propertyAddress" 
+          <Input
+            name="propertyAddress"
             value={formData.propertyAddress}
             onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
+            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full"
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Country</label>
-          <Input 
-            name="country" 
+          <Input
+            name="country"
             value={formData.country}
             onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
+            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full"
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Registration ID/ Tax ID</label>
-          <Input 
-            name="taxId" 
+          <Input
+            name="taxId"
             value={formData.taxId}
             onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
+            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full"
           />
         </div>
 
@@ -164,8 +164,8 @@ export default function OwnerProfilePage() {
           <p className="text-xs text-[#9ca3af] max-w-sm leading-relaxed">
             Your personal data is encrypted and secure. We only share necessary details with host partners upon confirmed bookings.
           </p>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="bg-[#d97706] hover:bg-[#b45309] text-white px-8 transition-colors h-11 font-medium rounded-xl"
             disabled={isSaving}
           >
