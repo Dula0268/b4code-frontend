@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { Suspense } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,20 +13,27 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth/auth.store";
 
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, loading, error, setError } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
 
+  // Clear any previous global auth errors on mount
+  useEffect(() => {
+    setError(null);
+  }, [setError]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     try {
       const path = await login(email, password);
-      router.push(path);
+      const redirect = searchParams?.get("redirect");
+      router.push(redirect || path);
     } catch {
 
     }
@@ -143,9 +151,9 @@ export default function LoginPage() {
 
 
                 <div className="text-center text-sm text-neutral-700">
-                  Don’t have an account yet?{" "}
+                  Don&apos;t have an account yet?{" "}
                   <Link
-                    href="/auth/register"
+                    href={searchParams?.get("redirect") ? `/auth/register?role=guest&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "/auth/register"}
                     className="font-extrabold text-[var(--brand-primary)] hover:underline"
                   >
                     Register for an account
@@ -166,5 +174,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading login...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

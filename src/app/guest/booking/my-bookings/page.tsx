@@ -1,4 +1,4 @@
-import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import MyBookingsPage from "@/components/features/guest/booking/my-bookings/my-bookings-page"
 
 export const metadata = {
@@ -9,7 +9,7 @@ export const metadata = {
 export default function MyBookingsRoute() {
     return (
         <>
-            <BookingTopbar />
+            <GuestTopbar />
             <main>
                 <MyBookingsPage />
             </main>

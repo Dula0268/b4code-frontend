@@ -2,12 +2,12 @@ import StaffPageLayout from "@/components/features/staff/layout/staff-page-layou
 import StaffOrderDetail from "@/components/features/staff/orders/staff-order-detail";
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 
 export default async function StaffOrderDetailPage({ params }: PageProps) {
-  const { id } = await params;
+  const { id } = params;
 
   return (
     <StaffPageLayout>

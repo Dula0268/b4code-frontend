@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
@@ -94,14 +94,10 @@ export default function SearchResultsPage() {
     const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE)
     const paginated = sorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
-    const handleClearFilters = () => {
-        setFilters(DEFAULT_FILTERS)
-        setPage(1)
-    }
+    const handleClearFilters = () => setFilters(DEFAULT_FILTERS)
 
     const handleFiltersChange = (next: FilterState) => {
         setFilters(next)
-        setPage(1)
     }
 
     // ── Build active filter chips ────────────────────────────────────────────
@@ -119,15 +115,22 @@ export default function SearchResultsPage() {
         activeFilters.push({ id: "amenity-kitchen", label: "Kitchen" })
     }
 
-    const handleRemoveFilter = (id: string) => {
-        if (id === "price") {
-            setFilters(f => ({ ...f, priceMin: 10_000, priceMax: 500_000 }))
-        } else if (id.startsWith("type-")) {
-            const pt = id.replace("type-", "")
-            setFilters(f => ({ ...f, propertyTypes: f.propertyTypes.filter(t => t !== pt) }))
-        } else if (id === "amenity-kitchen") {
-            setFilters(f => ({ ...f, amenities: f.amenities.filter(a => a !== "Kitchen") }))
-        }
+    const handleRemoveFilter = (filterId: string) => {
+        setFilters(prev => {
+            if (filterId === "price") {
+                return { ...prev, priceMin: DEFAULT_FILTERS.priceMin, priceMax: DEFAULT_FILTERS.priceMax }
+            }
+            if (filterId.startsWith("type-")) {
+                const pType = filterId.replace("type-", "")
+                return { ...prev, propertyTypes: prev.propertyTypes.filter(t => t !== pType) }
+            }
+            if (filterId.startsWith("amenity-")) {
+                const am = filterId.replace("amenity-", "")
+                // Basic cleanup, this is hardcoded for kitchen but expands easily
+                return { ...prev, amenities: prev.amenities.filter(a => a.toLowerCase() !== am) }
+            }
+            return prev
+        })
     }
 
 
@@ -135,15 +138,23 @@ export default function SearchResultsPage() {
         <div className="min-h-screen bg-[#fafafa]">
 
             {/* ── Main Content ──────────────────────────────────────────────────── */}
-            <div className="max-w-[1440px] mx-auto px-[30px] pt-24 pb-16">
-                <div className="flex gap-8">
+            <div className="w-full px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
                     {/* ── Filters Sidebar ─────────────────────────────────────────── */}
-                    <FiltersSidebar
-                        filters={filters}
-                        onChange={handleFiltersChange}
-                        onClear={handleClearFilters}
-                    />
+                    <div className="w-full lg:w-[260px] xl:w-[280px] flex-shrink-0">
+                        <div className="sticky top-24">
+                            <FiltersSidebar
+                                filters={filters}
+                                onChange={handleFiltersChange}
+                                onClear={handleClearFilters}
+                                sortBy={sortBy}
+                                onSortChange={setSortBy}
+                                mapOpen={mapOpen}
+                                onToggleMap={() => setMapOpen(o => !o)}
+                            />
+                        </div>
+                    </div>
 
                     {/* ── Results ─────────────────────────────────────────────────── */}
                     <div className="flex-1 min-w-0">
@@ -157,10 +168,6 @@ export default function SearchResultsPage() {
                             guests={guests}
                             activeFilters={activeFilters}
                             onRemoveFilter={handleRemoveFilter}
-                            sortBy={sortBy}
-                            onSortChange={setSortBy}
-                            mapOpen={mapOpen}
-                            onToggleMap={() => setMapOpen(o => !o)}
                         />
 
                         {/* Grid + optional Map split */}

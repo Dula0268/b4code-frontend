@@ -2,27 +2,51 @@ import { create } from "zustand";
 
 type Role = "guest" | "owner" | "admin" | "staff";
 
+export type UserProfile = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+};
+
 type AuthUser = {
   email: string;
   role: Role;
-  name?: string;
+  profile?: UserProfile;
+};
+
+type MockUserRecord = {
+  password: string;
+  role: Role;
+  profile?: UserProfile;
 };
 
 // Initial mock data
-const INITIAL_MOCK_USERS: Record<string, { password: string; role: Role; name?: string }> = {
-  "guest@primestay.com": { password: "guest123", role: "guest", name: "Alex Moore" },
-  "owner@primestay.com": { password: "owner123", role: "owner", name: "Alex Moore" },
-  "staff@primestay.com": { password: "staff123", role: "staff", name: "Alex Moore" },
-  "admin@primestay.com": { password: "admin123", role: "admin", name: "Admin" },
+const INITIAL_MOCK_USERS: Record<string, MockUserRecord> = {
+  "guest@primestay.com": {
+    password: "guest123",
+    role: "guest",
+    profile: { firstName: "John", lastName: "Doe", phone: "+94 77 123 4567" },
+  },
+  "owner@primestay.com": { password: "owner123", role: "owner" },
+  "staff@primestay.com": { password: "staff123", role: "staff" },
+  "admin@primestay.com": { password: "admin123", role: "admin" },
 };
 
-const getMockUsers = (): Record<string, { password: string; role: Role; name?: string }> => {
+const getMockUsers = (): Record<string, MockUserRecord> => {
   if (typeof window === "undefined") return INITIAL_MOCK_USERS;
   try {
     const stored = localStorage.getItem("MOCK_USERS_DB");
-    return stored ? { ...INITIAL_MOCK_USERS, ...JSON.parse(stored) } : INITIAL_MOCK_USERS;
+    return stored
+      ? { ...INITIAL_MOCK_USERS, ...JSON.parse(stored) }
+      : INITIAL_MOCK_USERS;
   } catch {
     return INITIAL_MOCK_USERS;
+  }
+};
+
+const saveMockUsers = (users: Record<string, MockUserRecord>) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("MOCK_USERS_DB", JSON.stringify(users));
   }
 };
 
@@ -33,7 +57,6 @@ const REDIRECT_MAP: Record<Role, string> = {
   admin: "/admin",
 };
 
-//State & actions
 type AuthState = {
   user: AuthUser | null;
   loading: boolean;
@@ -42,7 +65,10 @@ type AuthState = {
 
 type AuthActions = {
   login: (email: string, password: string) => Promise<string>;
+  loginForCheckout: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, role: Role) => Promise<void>;
+  registerFromCheckout: (email: string, password: string, profile: UserProfile) => Promise<void>;
+  checkEmailExists: (email: string) => boolean;
   logout: () => void;
   setError: (message: string | null) => void;
   reset: () => void;
@@ -57,7 +83,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
   login: async (email, password) => {
     set({ loading: true, error: null });
-
     await new Promise((r) => setTimeout(r, 600));
 
     const users = getMockUsers();
@@ -67,14 +92,33 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       throw new Error("Invalid credentials");
     }
 
-    set({ loading: false, user: { email, role: match.role, name: match.name } });
+    set({
+      loading: false,
+      user: { email, role: match.role, profile: match.profile },
+    });
     return REDIRECT_MAP[match.role];
+  },
+
+  loginForCheckout: async (email, password) => {
+    set({ loading: true, error: null });
+    await new Promise((r) => setTimeout(r, 600));
+
+    const users = getMockUsers();
+    const match = users[email.toLowerCase()];
+    if (!match || match.password !== password) {
+      set({ loading: false, error: "Invalid email or password." });
+      throw new Error("Invalid credentials");
+    }
+
+    set({
+      loading: false,
+      error: null,
+      user: { email, role: match.role, profile: match.profile },
+    });
   },
 
   register: async (email, password, role) => {
     set({ loading: true, error: null });
-
-    // Simulate network delay
     await new Promise((r) => setTimeout(r, 800));
 
     const lowerEmail = email.toLowerCase();
@@ -84,12 +128,35 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       throw new Error("Email exists");
     }
 
-    // Add to our mock database
     users[lowerEmail] = { password, role };
-    if (typeof window !== "undefined") {
-      localStorage.setItem("MOCK_USERS_DB", JSON.stringify(users));
-    }
+    saveMockUsers(users);
     set({ loading: false });
+  },
+
+  registerFromCheckout: async (email, password, profile) => {
+    set({ loading: true, error: null });
+    await new Promise((r) => setTimeout(r, 800));
+
+    const lowerEmail = email.toLowerCase();
+    const users = getMockUsers();
+    if (users[lowerEmail]) {
+      set({ loading: false, error: "An account with this email already exists." });
+      throw new Error("Email exists");
+    }
+
+    users[lowerEmail] = { password, role: "guest", profile };
+    saveMockUsers(users);
+
+    set({
+      loading: false,
+      error: null,
+      user: { email: lowerEmail, role: "guest", profile },
+    });
+  },
+
+  checkEmailExists: (email) => {
+    const users = getMockUsers();
+    return !!users[email.toLowerCase()];
   },
 
   logout: () => set({ user: null, error: null }),
@@ -98,7 +165,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
   updatePassword: async (email, currentPassword, newPassword) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 600)); // Simulate delay
+    await new Promise((r) => setTimeout(r, 600));
 
     const users = getMockUsers();
     const lowerEmail = email.toLowerCase();
@@ -133,8 +200,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     if (typeof window !== "undefined") {
       localStorage.setItem("MOCK_USERS_DB", JSON.stringify(users));
     }
-    
-    // Also update the active user if it's the current one (or if there's no active user in dev mode)
+
     set((state) => {
       if (!state.user || state.user.email.toLowerCase() === lowerEmail) {
         return { loading: false, user: { email: lowerEmail, ...match, ...updates } };
@@ -143,4 +209,3 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     });
   },
 }));
-

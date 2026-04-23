@@ -29,6 +29,11 @@ function RegisterForm() {
 
     const [role, setRole] = useState<Role>("guest");
 
+    // Clear any previous global auth errors on mount
+    useEffect(() => {
+        setError(null);
+    }, [setError]);
+
     // Initialize role from query params
     useEffect(() => {
         const roleParam = searchParams.get("role") as Role;
@@ -127,7 +132,8 @@ function RegisterForm() {
                 setCountdown((prev) => prev - 1);
             }, 1000);
         } else if (showSuccessModal && countdown === 0) {
-            router.push("/auth/login");
+            const redirectParams = searchParams.get("redirect") ? `?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
+            router.push(`/auth/login${redirectParams}`);
         }
         return () => clearTimeout(timer);
     }, [showSuccessModal, countdown, router]);
@@ -443,7 +449,7 @@ function RegisterForm() {
                                 <div className="mt-4 text-center text-[13px] font-medium text-neutral-600 pb-2">
                                     Already have an account?{" "}
                                     <Link
-                                        href="/auth/login"
+                                        href={searchParams.get("redirect") ? `/auth/login?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "/auth/login"}
                                         className="font-extrabold text-[#953002] hover:underline"
                                     >
                                         Log in
@@ -500,14 +506,20 @@ function RegisterForm() {
                             </div>
 
                             <Button
-                                onClick={() => router.push("/auth/login")}
+                                onClick={() => {
+                                    const redirectParams = searchParams.get("redirect") ? `?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
+                                    router.push(`/auth/login${redirectParams}`);
+                                }}
                                 className="w-full h-[52px] rounded-full bg-[#953002] hover:bg-[#7a2600] text-white font-extrabold text-[15px] mb-4"
                             >
                                 Go to Login Now
                             </Button>
 
                             <p className="text-[12px] text-neutral-500 font-medium pb-2">
-                                If you are not redirected, <button onClick={() => router.push("/auth/login")} className="text-[#953002] font-bold hover:underline cursor-pointer">click here</button>
+                                If you are not redirected, <button onClick={() => {
+                                    const redirectParams = searchParams.get("redirect") ? `?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
+                                    router.push(`/auth/login${redirectParams}`);
+                                }} className="text-[#953002] font-bold hover:underline cursor-pointer">click here</button>
                             </p>
                         </div>
                     </div>

@@ -1,12 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import {
     MapPin,
-    CalendarDays,
-    Users,
     MessageSquare,
     Pencil,
     XCircle,
@@ -15,12 +13,16 @@ import {
     ChevronRight,
     RefreshCw,
     FileText,
+    BedDouble,
+    Bell,
+    CreditCard,
+    Wallet,
 } from "lucide-react"
+import { useAuthStore } from "@/store/auth/auth.store"
+import { useGuestBookingStore, type StoredBooking, type BookingStatus } from "@/store/guest/booking/booking.store"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type BookingStatus = "UPCOMING" | "COMPLETED" | "CANCELLED"
-
-interface Booking {
+interface DisplayBooking {
     id: string
     orderNumber: string
     status: BookingStatus
@@ -32,16 +34,21 @@ interface Booking {
     guests: string
     totalPrice: number
     nightsLabel: string
+    paymentMethod?: "online" | "property"
+    paidInFull?: boolean
+    roomName?: string
     // completed specific
     bookingStatus?: string
     // cancelled specific
     cancellationNote?: string
+    // source tracking
+    isFromStore?: boolean
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const BOOKINGS: Booking[] = [
+// ─── Mock data (static/demo bookings) ─────────────────────────────────────────
+const MOCK_BOOKINGS: DisplayBooking[] = [
     {
-        id: "bk1",
+        id: "bk-mock-1",
         orderNumber: "BK-88291",
         status: "UPCOMING",
         property: "Oceanview Luxury Retreat",
@@ -52,9 +59,11 @@ const BOOKINGS: Booking[] = [
         guests: "2 Adults, 1 Child",
         totalPrice: 25_000,
         nightsLabel: "Total for 3 nights",
+        paymentMethod: "online",
+        paidInFull: true,
     },
     {
-        id: "bk2",
+        id: "bk-mock-2",
         orderNumber: "BK-77210",
         status: "COMPLETED",
         property: "Mountain Peaks Chalet",
@@ -66,9 +75,11 @@ const BOOKINGS: Booking[] = [
         totalPrice: 30_000,
         nightsLabel: "Total for 3 nights",
         bookingStatus: "Checked Out",
+        paymentMethod: "online",
+        paidInFull: true,
     },
     {
-        id: "bk3",
+        id: "bk-mock-3",
         orderNumber: "BK-10293",
         status: "CANCELLED",
         property: "Skyline Loft Apartments",
@@ -81,6 +92,8 @@ const BOOKINGS: Booking[] = [
         nightsLabel: "Total for 4 nights",
         cancellationNote:
             "Booking was cancelled on Aug 20, 2023. Refund of $450.00 processed to original payment method.",
+        paymentMethod: "property",
+        paidInFull: false,
     },
 ]
 
@@ -106,11 +119,34 @@ function StatusBadge({ status }: { status: BookingStatus }) {
     )
 }
 
+// ─── Payment badge ────────────────────────────────────────────────────────────
+function PaymentBadge({ paidInFull }: { paidInFull: boolean }) {
+    if (paidInFull) {
+        return (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e8f5e9] text-[#27AE60] uppercase tracking-wide">
+                <CreditCard size={10} /> Paid
+            </span>
+        )
+    }
+    return (
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fff8e1] text-[#c97c2e] uppercase tracking-wide">
+            <Wallet size={10} /> Pay at Property
+        </span>
+    )
+}
+
 // ─── Booking Card ─────────────────────────────────────────────────────────────
-function BookingCard({ booking }: { booking: Booking }) {
+function BookingCard({ booking }: { booking: DisplayBooking }) {
     const isCancelled = booking.status === "CANCELLED"
     const isCompleted = booking.status === "COMPLETED"
     const isUpcoming = booking.status === "UPCOMING"
+    const cancelBooking = useGuestBookingStore((s) => s.cancelBooking)
+
+    const handleCancel = () => {
+        if (booking.isFromStore && confirm("Are you sure you want to cancel this booking?")) {
+            cancelBooking(booking.id)
+        }
+    }
 
     return (
         <div className={`bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col sm:flex-row transition-shadow hover:shadow-[0_4px_24px_rgba(0,0,0,0.10)]`}>
@@ -129,8 +165,11 @@ function BookingCard({ booking }: { booking: Booking }) {
             <div className="flex-1 p-5 flex flex-col gap-3">
                 {/* Top row: badge + order + price */}
                 <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <StatusBadge status={booking.status} />
+                        {booking.paidInFull !== undefined && !isCancelled && (
+                            <PaymentBadge paidInFull={booking.paidInFull} />
+                        )}
                         <span className="text-[12px] text-[#828282]">Order #{booking.orderNumber}</span>
                     </div>
                     <div className="text-right flex-shrink-0">
@@ -144,6 +183,9 @@ function BookingCard({ booking }: { booking: Booking }) {
                 {/* Property name + location */}
                 <div>
                     <h3 className="text-[17px] font-bold text-[#1d1d1d] leading-snug">{booking.property}</h3>
+                    {booking.roomName && (
+                        <p className="text-[13px] font-medium text-[#555] mt-0.5">{booking.roomName}</p>
+                    )}
                     <div className="flex items-center gap-1 mt-0.5">
                         <MapPin size={12} className="text-[#828282] flex-shrink-0" />
                         <p className="text-[13px] text-[#828282]">{booking.location}</p>
@@ -182,10 +224,16 @@ function BookingCard({ booking }: { booking: Booking }) {
                     {isUpcoming && (
                         <>
                             <Link
-                                href="/guest/booking/message-host"
+                                href="/guest/my-room"
                                 className="inline-flex items-center gap-2 bg-[#953002] hover:bg-[#6d2200] text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
                             >
-                                <MessageSquare size={14} /> Message Host
+                                <BedDouble size={14} /> My Room
+                            </Link>
+                            <Link
+                                href="/guest/booking/message-host"
+                                className="inline-flex items-center gap-2 border border-[#953002] text-[#953002] hover:bg-[#fff4eb] text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
+                            >
+                                <MessageSquare size={13} /> Message Host
                             </Link>
                             <Link
                                 href="/guest/booking/modify"
@@ -193,12 +241,21 @@ function BookingCard({ booking }: { booking: Booking }) {
                             >
                                 <Pencil size={13} /> Modify
                             </Link>
-                            <Link
-                                href="/guest/booking/cancel"
-                                className="inline-flex items-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
-                            >
-                                <XCircle size={14} /> Cancel
-                            </Link>
+                            {booking.isFromStore ? (
+                                <button
+                                    onClick={handleCancel}
+                                    className="inline-flex items-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
+                                >
+                                    <XCircle size={14} /> Cancel
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/guest/booking/cancel"
+                                    className="inline-flex items-center gap-2 border border-red-400 text-red-500 hover:bg-red-50 text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer no-underline"
+                                >
+                                    <XCircle size={14} /> Cancel
+                                </Link>
+                            )}
                         </>
                     )}
 
@@ -233,13 +290,54 @@ function BookingCard({ booking }: { booking: Booking }) {
     )
 }
 
+// ─── Convert store booking to display format ──────────────────────────────────
+function storeToDisplay(b: StoredBooking): DisplayBooking {
+    return {
+        id: b.id,
+        orderNumber: b.confirmationCode,
+        status: b.status,
+        property: b.property,
+        location: b.location ? `${b.location}, Sri Lanka` : "Sri Lanka",
+        imageSrc: b.imageSrc,
+        checkIn: b.checkInFormatted,
+        checkOut: b.checkOutFormatted,
+        guests: b.guestsLabel,
+        totalPrice: b.totalPrice,
+        nightsLabel: b.nightsLabel,
+        paymentMethod: b.paymentMethod,
+        paidInFull: b.paidInFull,
+        roomName: b.roomName,
+        isFromStore: true,
+    }
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function MyBookingsPage() {
     const [activeTab, setActiveTab] = useState<Tab>("ALL")
+    const user = useAuthStore((s) => s.user)
+    const storeBookings = useGuestBookingStore((s) => s.bookings)
+
+    // Merge store bookings (real) with mock bookings
+    const [allBookings, setAllBookings] = useState<DisplayBooking[]>(MOCK_BOOKINGS)
+
+    useEffect(() => {
+        // Get bookings for the current user
+        const userBookings = user?.email
+            ? storeBookings.filter((b) => b.userEmail.toLowerCase() === user.email.toLowerCase())
+            : storeBookings
+
+        const converted = userBookings.map(storeToDisplay)
+        // Real bookings first, then mocks
+        setAllBookings([...converted, ...MOCK_BOOKINGS])
+    }, [storeBookings, user])
 
     const filtered = activeTab === "ALL"
-        ? BOOKINGS
-        : BOOKINGS.filter((b) => b.status === activeTab)
+        ? allBookings
+        : allBookings.filter((b) => b.status === activeTab)
+
+    // Count the nearest upcoming booking for reminder
+    const upcomingBookings = allBookings.filter((b) => b.status === "UPCOMING")
+    const nearestUpcoming = upcomingBookings.length > 0 ? upcomingBookings[0] : null
 
     return (
         <div className="min-h-screen bg-[#f4f4f4] pt-20 pb-16">
@@ -270,6 +368,23 @@ export default function MyBookingsPage() {
                         </button>
                     ))}
                 </div>
+
+                {/* Reminders / Notifications */}
+                {(activeTab === "ALL" || activeTab === "UPCOMING") && nearestUpcoming && (
+                    <div className="mb-6 bg-[#fff4eb] border border-[#f0a500]/30 rounded-2xl p-4 sm:p-5 flex items-start sm:items-center gap-4 shadow-[0_2px_12px_rgba(240,165,0,0.06)]">
+                        <div className="w-10 h-10 rounded-full bg-[#f0a500]/20 flex items-center justify-center text-[#953002] flex-shrink-0">
+                            <Bell size={18} className="animate-pulse" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-[14px] font-bold text-[#1d1d1d]">Upcoming stay!</h3>
+                            <p className="text-[12px] text-[#666] mt-0.5">
+                                Your trip to <strong>{nearestUpcoming.property}</strong> is coming up ({nearestUpcoming.checkIn} – {nearestUpcoming.checkOut}). Don&apos;t forget to pack your essentials
+                                {nearestUpcoming.paidInFull === false && " and bring a valid ID for payment at check-in"}.
+                            </p>
+                        </div>
+                        <Link href="/guest/booking/modify" className="hidden sm:inline-flex text-[12px] font-bold text-[#953002] hover:underline whitespace-nowrap">View Details →</Link>
+                    </div>
+                )}
 
                 {/* Cards */}
                 <div className="flex flex-col gap-5">

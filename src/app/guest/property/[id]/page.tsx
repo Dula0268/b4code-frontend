@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation"
+import { Suspense } from "react"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 import PropertyDetailPage from "@/components/features/guest/property/property-detail-page"
 import { getPropertyById, ALL_PROPERTIES } from "@/lib/mock-properties"
 
 interface Props {
-    params: Promise<{ id: string }>
+    params: { id: string }
 }
 
 export async function generateStaticParams() {
@@ -13,7 +14,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props) {
-    const { id } = await params
+    const { id } = params
     const property = getPropertyById(id)
     if (!property) return {}
     return {
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function PropertyPage({ params }: Props) {
-    const { id } = await params
+    const { id } = params
     const property = getPropertyById(id)
     if (!property) notFound()
 
@@ -31,7 +32,9 @@ export default async function PropertyPage({ params }: Props) {
         <>
             <GuestTopbar />
             <main>
-                <PropertyDetailPage property={property} />
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading property details...</div>}>
+                    <PropertyDetailPage property={property} />
+                </Suspense>
             </main>
             <GuestFooter />
         </>
