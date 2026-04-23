@@ -366,14 +366,6 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 <span className="text-[20px] font-bold text-[#953002]">{formatLKR(finalTotal)}</span>
                             </div>
 
-<<<<<<< HEAD
-                            <Link
-                                href={payNow ? "/payment" : "/guest/booking/confirmation"}
-                                className="w-full bg-[#953002] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 no-underline"
-                            >
-                                {payNow ? "Confirm & Pay" : "Confirm & Book"} <ArrowRight size={18} />
-                            </Link>
-=======
                             <button
                                 onClick={() => {
                                     const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}`;
@@ -383,7 +375,6 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             >
                                 Confirm & Book <ArrowRight size={18} />
                             </button>
->>>>>>> origin/dev
 
                             <div className="text-center text-[13px] text-[#828282] mb-6">You won&apos;t be charged yet</div>
 
