@@ -28,8 +28,8 @@ export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuthStore();
-  
-  const displayName = user?.name || "Alex Moore";
+
+  const displayName = user?.email?.split("@")[0] || "Alex Moore";
   const names = displayName.split(" ");
   const initials = names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
   const shortName = names.length > 1 ? `${names[0]} ${names[names.length - 1][0]}.` : names[0];
@@ -60,8 +60,8 @@ export default function StaffSidebar() {
                 <Link
                   href={item.href}
                   className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
-                      ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
-                      : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
+                    ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
+                    : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
                     }`}
                 >
                   <Icon

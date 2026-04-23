@@ -20,8 +20,8 @@ const ADMIN_PROFILE_NAV_ITEMS = [
 export default function AdminProfileLayout({ children }: AdminProfileLayoutProps) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const displayName = user?.name || "Admin User";
-  
+  const displayName = user?.email?.split("@")[0] || "Admin User";
+
   const names = displayName.split(" ");
   const initials = names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
 
@@ -51,11 +51,10 @@ export default function AdminProfileLayout({ children }: AdminProfileLayoutProps
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium text-sm ${
-                    isActive
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium text-sm ${isActive
                       ? "bg-[#953002]/10 text-[#953002]"
                       : "text-[#78716c] hover:bg-gray-100 hover:text-[#1c1917]"
-                  }`}
+                    }`}
                 >
                   <Icon size={18} className={isActive ? "text-[#953002]" : "text-[#a8a29e]"} />
                   {item.label}
@@ -89,7 +88,7 @@ export default function AdminProfileLayout({ children }: AdminProfileLayoutProps
           {children}
         </main>
       </div>
-      
+
       <AdminLogoutModal />
     </div>
   );

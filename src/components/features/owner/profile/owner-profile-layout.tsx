@@ -20,7 +20,7 @@ export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps
   const pathname = usePathname();
   const { user } = useAuthStore();
   const ownerEmail = user?.email || "owner@primestay.com";
-  const ownerName = user?.name || "Alex Moore";
+  const ownerName = user?.email?.split("@")[0] || "Alex Moore"
 
   return (
     <div className="w-full mx-auto flex flex-col bg-white rounded-2xl shadow-sm border border-[#f3f4f6] overflow-hidden min-h-[700px]">
@@ -48,11 +48,10 @@ export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium text-sm ${
-                    isActive
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium text-sm ${isActive
                       ? "bg-[#953002]/10 text-[#953002]"
                       : "text-[#78716c] hover:bg-gray-100 hover:text-[#1c1917]"
-                  }`}
+                    }`}
                 >
                   <Icon size={18} className={isActive ? "text-[#953002]" : "text-[#a8a29e]"} />
                   {item.label}
@@ -86,7 +85,7 @@ export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps
           {children}
         </main>
       </div>
-      
+
       <OwnerLogoutModal />
     </div>
   );
