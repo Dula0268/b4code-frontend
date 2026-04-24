@@ -33,7 +33,7 @@ export default function PropertyDetailsPage() {
         postalCode: "90265",
     };
 
-    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Settings"];
+    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
@@ -50,18 +50,17 @@ export default function PropertyDetailsPage() {
                 <div className="flex justify-between items-center py-1.5">
                     <div />
                     <div className="flex items-center gap-3">
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002]">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
                         </div>
                     </div>
                 </div>
 
-                {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
-                    <span className="text-[#828282]">Properties</span>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
                     <span className="text-[#953002] font-semibold">Downtown Luxury Loft</span>
                 </div>
@@ -90,8 +89,10 @@ export default function PropertyDetailsPage() {
                             </div>
                         </div>
                         <div className="flex gap-2.5">
-                            <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer"><Eye size={14} /> View Live</button>
-                            <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer"><Edit size={14} /> Edit Property</button>
+                            <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-gray-50"><Eye size={14} /> View Live</button>
+                            <a href="/owner/properties/editPropertyDetails" className="no-underline">
+                                <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02]"><Edit size={14} /> Edit Property</button>
+                            </a>
                         </div>
                     </div>
 
@@ -100,9 +101,19 @@ export default function PropertyDetailsPage() {
                         {tabs.map((t) => (
                             <button
                                 key={t}
-                                onClick={() => setActiveTab(t)}
+                                onClick={() => {
+                                    if (t === "Overview") setActiveTab(t);
+                                    else if (t === "Rooms") window.location.href = "/owner/properties/propertyRoomInventry";
+                                    else if (t === "Availability") window.location.href = "/owner/properties/Availability";
+                                    else if (t === "Rates") window.location.href = "/owner/properties/Rate";
+                                    else if (t === "Reservations") window.location.href = "/owner/properties/Reservation";
+                                    else if (t === "Media") window.location.href = "/owner/properties/Media";
+                                    else if (t === "Staff") window.location.href = "/owner/properties/Staff";
+                                    else if (t === "Settings") window.location.href = "/owner/properties/Setting";
+                                    else setActiveTab(t);
+                                }}
                                 className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative ${
-                                    activeTab === t ? "text-[#953002] font-bold border-b-2 border-[#953002]" : "text-[#828282] font-medium border-b-2 border-transparent"
+                                    activeTab === t ? "text-[#953002] font-bold border-b-2 border-[#953002]" : "text-[#828282] font-medium border-b-2 border-transparent hover:text-[#4f4f4f]"
                                 }`}
                             >
                                 {t}

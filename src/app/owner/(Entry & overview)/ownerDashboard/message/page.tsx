@@ -28,9 +28,9 @@ import {
 const sidebarItems = [
     { icon: LayoutDashboard, label: "Dashboard", active: false, href: "/owner/ownerDashboard" },
     { icon: Building2, label: "Properties", active: false, href: "/owner/properties" },
-    { icon: DoorOpen, label: "Rooms", active: false, href: "#" },
+    { icon: DoorOpen, label: "Rooms", active: false, href: "/owner/roomManagement" },
     { icon: CalendarCheck, label: "Availability", active: false, href: "/owner/availability/weeklyCalendar" },
-    { icon: DollarSign, label: "Pricing", active: false, href: "/owner/rate" },
+    { icon: DollarSign, label: "Rate", active: false, href: "/owner/rate" },
     { icon: ClipboardList, label: "Reservation", active: false, href: "/owner/reservation" },
     { icon: Settings, label: "Settings", active: false, href: "/owner/setting/propertySetting" },
 ];

@@ -71,18 +71,17 @@ export default function CreateNewPropertyPage() {
                 <div className="flex justify-between items-center py-1.5">
                     <div />
                     <div className="flex items-center gap-3">
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002]">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
                         </div>
                     </div>
                 </div>
 
-                {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-[12px] mb-1">
-                    <span className="text-[#828282]">Properties</span>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
                     <span className="text-[#953002] font-semibold">Add New property</span>
                 </div>
@@ -222,8 +221,12 @@ export default function CreateNewPropertyPage() {
 
                     {/* ── Action Buttons ── */}
                     <div className="flex gap-3 pt-2 pb-3">
-                        <button className="py-2.5 px-7 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer">Save Property Listing</button>
-                        <button className="py-2.5 px-7 bg-[#e8e8e8] text-[#4f4f4f] border-none rounded-lg text-[13px] font-semibold cursor-pointer">Cancel</button>
+                        <a href="/owner/properties" className="no-underline">
+                            <button className="py-2.5 px-7 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">Save Property Listing</button>
+                        </a>
+                        <a href="/owner/properties" className="no-underline">
+                            <button className="py-2.5 px-7 bg-[#e8e8e8] text-[#4f4f4f] border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#d0d0d0] transition-colors">Cancel</button>
+                        </a>
                     </div>
                 </div>
             </main>

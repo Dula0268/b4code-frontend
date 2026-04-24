@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
@@ -29,6 +30,7 @@ const roomTypes = [
 /* ───────────────────── component ───────────────────── */
 
 export default function AddRoomPage() {
+    const router = useRouter();
     const [roomName, setRoomName] = useState("");
     const [roomType, setRoomType] = useState("King Suite");
     const [maxAdults, setMaxAdults] = useState("2");
@@ -44,9 +46,9 @@ export default function AddRoomPage() {
             <header className="flex items-center justify-between py-3 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
                 <Logo width={120} height={36} />
                 <div className="flex items-center gap-3.5">
-                    <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center hover:bg-[#f5f5f5] transition-colors">
+                    <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                         <Bell size={18} color="#4f4f4f" />
-                    </button>
+                    </a>
                     <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
                         <img
                             src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
@@ -70,7 +72,7 @@ export default function AddRoomPage() {
                         </a>
                         <span className="text-[#d0d0d0]">›</span>
                         <a
-                            href="/owner/properties"
+                            href="/owner/properties/propertyDetails"
                             className="text-[#828282] no-underline hover:text-[#953002] transition-colors"
                         >
                             Downtown Luxury Loft
@@ -275,13 +277,16 @@ export default function AddRoomPage() {
 
                         {/* ── Actions ── */}
                         <div className="flex justify-end items-center gap-4">
-                            <a
-                                href="/owner/roomManagement"
-                                className="py-2.5 px-7 bg-white text-[#4f4f4f] border-none rounded-lg text-[13px] font-semibold cursor-pointer no-underline hover:bg-[#f5f5f5] transition-colors"
+                            <button
+                                onClick={() => router.back()}
+                                className="py-2.5 px-7 bg-white text-[#4f4f4f] border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors"
                             >
                                 Cancel
-                            </a>
-                            <button className="flex items-center gap-2 py-2.5 px-7 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#a63602] transition-colors">
+                            </button>
+                            <button 
+                                onClick={() => router.back()}
+                                className="flex items-center gap-2 py-2.5 px-7 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#a63602] transition-colors"
+                            >
                                 <Save size={15} />
                                 Save Room
                             </button>

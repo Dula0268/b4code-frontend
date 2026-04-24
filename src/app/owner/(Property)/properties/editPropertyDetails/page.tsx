@@ -49,13 +49,7 @@ export default function EditPropertyDetailsPage() {
     const update = (key: string, val: string) => setForm((p) => ({ ...p, [key]: val }));
     const toggleAmenity = (a: string) => setAmenities((p) => ({ ...p, [a]: !p[a] }));
 
-    const [editing, setEditing] = useState<Record<string, boolean>>({});
-    const startEditing = (key: string) => {
-        if (!editing[key]) {
-            setEditing((p) => ({ ...p, [key]: true }));
-            setForm((p) => ({ ...p, [key]: "" }));
-        }
-    };
+
 
     const photos = [
         "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=200&h=160&fit=crop",
@@ -79,20 +73,19 @@ export default function EditPropertyDetailsPage() {
                 <div className="flex justify-between items-center py-1.5">
                     <div />
                     <div className="flex items-center gap-3">
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002]">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
                         </div>
                     </div>
                 </div>
 
-                {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-[12px] mb-0.5">
-                    <span className="text-[#828282]">Properties</span>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#828282]">Downtown Luxury Loft</span>
+                    <a href="/owner/properties/propertyDetails" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Downtown Luxury Loft</a>
                     <ChevronRight size={14} color="#b0b0b0" />
                     <span className="text-[#953002] font-semibold">Edit property details</span>
                 </div>
@@ -113,11 +106,11 @@ export default function EditPropertyDetailsPage() {
                                     <span className="text-[15px] font-bold text-[#1d1d1d]">Basic Information</span>
                                 </div>
                                 <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Property Name</label>
-                                <input type="text" value={form.name} readOnly={!editing.name} onClick={() => startEditing("name")} onChange={(e) => update("name", e.target.value)} className={`w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border cursor-pointer ${editing.name ? "bg-white text-[#1d1d1d]" : "bg-[#fafafa] text-[#828282]"}`} placeholder="Enter property name" />
+                                <input type="text" value={form.name} onChange={(e) => update("name", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="Enter property name" />
                                 <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Description</label>
-                                <textarea value={form.description} readOnly={!editing.description} onClick={() => startEditing("description")} onChange={(e) => update("description", e.target.value)} rows={3} className={`w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border cursor-pointer resize-y min-h-[70px] ${editing.description ? "bg-white text-[#1d1d1d]" : "bg-[#fafafa] text-[#828282]"}`} placeholder="Enter description" />
+                                <textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={3} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border resize-y min-h-[70px] focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="Enter description" />
                                 <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Address</label>
-                                <input type="text" value={form.address} readOnly={!editing.address} onClick={() => startEditing("address")} onChange={(e) => update("address", e.target.value)} className={`w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border cursor-pointer ${editing.address ? "bg-white text-[#1d1d1d]" : "bg-[#fafafa] text-[#828282]"}`} placeholder="Enter address" />
+                                <input type="text" value={form.address} onChange={(e) => update("address", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="Enter address" />
                             </div>
 
                             {/* Property Photos */}
@@ -127,7 +120,12 @@ export default function EditPropertyDetailsPage() {
                                         <Camera size={16} color="#953002" />
                                         <span className="text-[15px] font-bold text-[#1d1d1d]">Property Photos</span>
                                     </div>
-                                    <button className="flex items-center gap-1 bg-transparent border-none text-[#953002] text-[12px] font-semibold cursor-pointer">Manage All Photos <ArrowRight size={13} /></button>
+                                    <button 
+                                        onClick={() => window.location.href = "/owner/properties/Media"}
+                                        className="flex items-center gap-1 bg-transparent border-none text-[#953002] text-[12px] font-semibold cursor-pointer hover:underline"
+                                    >
+                                        Manage All Photos <ArrowRight size={13} />
+                                    </button>
                                 </div>
                                 <div className="flex gap-2.5 overflow-x-auto">
                                     {/* Add Photo */}
@@ -156,23 +154,23 @@ export default function EditPropertyDetailsPage() {
                                 <div className="grid grid-cols-3 gap-3">
                                     <div>
                                         <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Bedrooms</label>
-                                        <div className="flex items-center gap-2 py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-white">
+                                        <div className="flex items-center gap-2 py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-white focus-within:border-[#953002]">
                                             <Bed size={14} color="#828282" />
-                                            <span>{form.bedrooms}</span>
+                                            <input type="text" value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)} className="w-full border-none outline-none bg-transparent" />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Bathrooms</label>
-                                        <div className="flex items-center gap-2 py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-white">
+                                        <div className="flex items-center gap-2 py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-white focus-within:border-[#953002]">
                                             <Bath size={14} color="#828282" />
-                                            <span>{form.bathrooms}</span>
+                                            <input type="text" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} className="w-full border-none outline-none bg-transparent" />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Guest Capacity</label>
-                                        <div className="flex items-center gap-2 py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-white">
+                                        <div className="flex items-center gap-2 py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-white focus-within:border-[#953002]">
                                             <Users size={14} color="#828282" />
-                                            <span>{form.guestCapacity}</span>
+                                            <input type="text" value={form.guestCapacity} onChange={(e) => update("guestCapacity", e.target.value)} className="w-full border-none outline-none bg-transparent" />
                                         </div>
                                     </div>
                                 </div>
@@ -186,7 +184,7 @@ export default function EditPropertyDetailsPage() {
                                 </div>
                                 <div className="grid grid-cols-4 gap-2">
                                     {Object.entries(amenities).map(([name, checked]) => (
-                                        <button key={name} onClick={() => toggleAmenity(name)} className={`flex items-center gap-1.5 py-1.5 px-2.5 border rounded-lg text-[12px] cursor-pointer font-medium ${checked ? "border-[#953002] bg-[#fef8f4] text-[#4f4f4f]" : "border-[#e0e0e0] bg-white text-[#4f4f4f]"}`}>
+                                        <button key={name}  className={`flex items-center gap-1.5 py-1.5 px-2.5 border rounded-lg text-[12px] cursor-pointer font-medium ${checked ? "border-[#953002] bg-[#fef8f4] text-[#4f4f4f]" : "border-[#e0e0e0] bg-white text-[#4f4f4f]"}`}>
                                             {checked ? <CheckCircle2 size={14} color="#953002" /> : <Circle size={14} color="#b0b0b0" />}
                                             <span>{name}</span>
                                         </button>
@@ -203,14 +201,18 @@ export default function EditPropertyDetailsPage() {
                                 <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Base Nightly Rate ($)</label>
                                 <div className="relative max-w-[240px]">
                                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[13px] text-[#828282]">Rs</span>
-                                    <input type="text" value={form.baseRate} readOnly={!editing.baseRate} onClick={() => startEditing("baseRate")} onChange={(e) => update("baseRate", e.target.value)} className={`w-full py-2 px-3 pl-7 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border cursor-pointer max-w-[240px] ${editing.baseRate ? "bg-white text-[#1d1d1d]" : "bg-[#fafafa] text-[#828282]"}`} placeholder="Enter rate" />
+                                    <input type="text" value={form.baseRate} onChange={(e) => update("baseRate", e.target.value)} className="w-full py-2 px-3 pl-7 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border max-w-[240px] focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="Enter rate" />
                                 </div>
                             </div>
 
                             {/* Bottom Buttons */}
                             <div className="flex justify-center gap-3 pt-2 pb-1">
-                                <button className="py-2 px-5 bg-white text-[#4f4f4f] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer">Cancel Changes</button>
-                                <button className="py-2 px-6 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer">Save Changes</button>
+                                <a href="/owner/properties" className="no-underline">
+                                    <button className="py-2 px-5 bg-white text-[#4f4f4f] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">Cancel Changes</button>
+                                </a>
+                                <a href="/owner/properties" className="no-underline">
+                                    <button className="py-2 px-6 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">Save Changes</button>
+                                </a>
                             </div>
                         </div>
 

@@ -36,9 +36,9 @@ export default function EditRatePage() {
     const navItems = [
         { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Pricing", icon: <Tag size={18} />, href: "/owner/rate", active: true },
+        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate", active: true },
         { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
         { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
     ];
@@ -74,9 +74,9 @@ export default function EditRatePage() {
                 <header className="flex justify-between items-center py-2.5 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
                     <div />
                     <div className="flex items-center gap-3.5">
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
                                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
@@ -90,7 +90,7 @@ export default function EditRatePage() {
                 <div className="flex-1 overflow-y-auto py-6 px-10 pb-10">
                     {/* Breadcrumb */}
                     <div className="flex items-center gap-1.5 mb-3 text-[13px]">
-                        <a href="/owner/rate" className="text-[#953002] font-semibold no-underline">Pricing</a>
+                        <a href="/owner/rate" className="text-[#953002] font-semibold no-underline">Rate</a>
                         <span className="text-[#b0b0b0]">›</span>
                         <span className="text-[#828282]">Edit Rate Plan</span>
                     </div>

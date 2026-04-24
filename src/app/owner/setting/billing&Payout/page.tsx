@@ -19,19 +19,18 @@ import {
     Landmark,
     Plus,
     Save,
+    Download,
 } from "lucide-react";
 
 /* ───────────────────── component ───────────────────── */
 
 export default function BillingPayoutPage() {
-    const [taxId, setTaxId] = useState("98-7654321");
-
     const navItems = [
         { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Pricing", icon: <Tag size={18} />, href: "/owner/rate" },
+        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
         { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
         { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting", active: true },
     ];
@@ -44,10 +43,9 @@ export default function BillingPayoutPage() {
         { label: "Integrations", icon: <Puzzle size={16} />, href: "/owner/setting/integration" },
     ];
 
-    const payouts = [
-        { date: "Oct 24, 2023", amount: "Rs 1,450.00", method: "Bank Transfer", status: "Completed" },
-        { date: "Oct 17, 2023", amount: "Rs 890.00", method: "Bank Transfer", status: "Completed" },
-        { date: "Oct 10, 2023", amount: "Rs 2,100.50", method: "Bank Transfer", status: "Completed" },
+    const invoices = [
+        { date: "Oct 01, 2023", amount: "Rs 1,240.00", status: "Paid" },
+        { date: "Sep 01, 2023", amount: "Rs 1,150.00", status: "Paid" },
     ];
 
     return (
@@ -80,9 +78,9 @@ export default function BillingPayoutPage() {
                 {/* Top Bar */}
                 <div className="flex justify-end items-center py-2 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
                         </div>
@@ -98,16 +96,8 @@ export default function BillingPayoutPage() {
                         <span className="text-[12px] font-semibold text-[#953002]">Billing & Payouts</span>
                     </div>
 
-                    {/* Page Header */}
-                    <div className="flex justify-between items-start mb-5">
-                        <div>
-                            <h1 className="text-[26px] font-black text-[#1d1d1d] m-0 mb-1 tracking-wide">BILLING & PAYOUTS</h1>
-                            <p className="text-[13px] text-[#828282] m-0">Manage your payment methods and bank details for earnings.</p>
-                        </div>
-                        <button className="flex items-center gap-1.5 py-2.5 px-5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer">
-                            <Plus size={14} /> Add Payout Method
-                        </button>
-                    </div>
+                    <h1 className="text-[26px] font-black text-[#1d1d1d] m-0 mb-1">Settings</h1>
+                    <p className="text-[13px] text-[#828282] m-0 mb-5">Manage your account preferences and property configurations.</p>
 
                     {/* Content Area */}
                     <div className="flex gap-6 items-start">
@@ -131,83 +121,62 @@ export default function BillingPayoutPage() {
 
                         {/* Main Panel */}
                         <div className="flex-1 flex flex-col gap-4 min-w-0">
-                            {/* ─── Payout Method ─── */}
+                            {/* ─── Billing & Payouts ─── */}
                             <div className="bg-white border border-[#e8e8e8] rounded-xl p-5.5 px-6.5">
-                                <h3 className="text-[18px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Payout Method</h3>
-                                <p className="text-[12px] text-[#828282] m-0 mb-4.5">Primary method where your earnings will be deposited.</p>
+                                <div className="flex justify-between items-start mb-4.5">
+                                    <div>
+                                        <h3 className="text-[18px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Billing & Payouts</h3>
+                                        <p className="text-[12px] text-[#828282] m-0">Manage bank details and view invoices.</p>
+                                    </div>
+                                    <a href="/owner/setting/accountSetting/addNewBankAccount" className="no-underline">
+                                        <button className="bg-white border border-[#e0e0e0] text-[#1d1d1d] text-[12px] font-bold py-1.5 px-3 rounded-lg cursor-pointer hover:bg-[#f5f5f5] transition-colors whitespace-nowrap">
+                                            Add New Bank Account
+                                        </button>
+                                    </a>
+                                </div>
 
-                                <div className="flex justify-between items-center bg-[#fafafa] border border-[#e8e8e8] rounded-[10px] py-4 px-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-[44px] h-[44px] rounded-[10px] bg-[#fef0e7] flex items-center justify-center">
-                                            <Landmark size={20} color="#953002" />
+                                <div className="flex justify-between items-center bg-[#fef5ef] rounded-[10px] py-3.5 px-4.5">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center">
+                                            <Landmark size={18} color="#953002" />
                                         </div>
                                         <div>
-                                            <div className="text-[14px] font-bold text-[#1d1d1d]">Bank of Ceylon</div>
-                                            <div className="text-[12px] text-[#828282] font-mono">Checking Account •••• 1234</div>
-                                            <span className="inline-block mt-1 text-[10px] font-bold text-[#27ae60] bg-[#e8f8ef] rounded px-2 py-0.5">Primary</span>
+                                            <div className="text-[13px] font-bold text-[#1d1d1d]">Chase Bank **** 4829</div>
+                                            <div className="text-[11px] text-[#828282]">Primary Payout Method</div>
                                         </div>
                                     </div>
-                                    <button className="py-1.5 px-4.5 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer">Edit</button>
-                                </div>
-                            </div>
-
-                            {/* ─── Tax Information ─── */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl p-5.5 px-6.5">
-                                <h3 className="text-[18px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Tax Information</h3>
-                                <p className="text-[12px] text-[#828282] m-0 mb-4.5">Required for compliance and tax reporting.</p>
-
-                                <div>
-                                    <label className="block text-[12px] font-bold text-[#1d1d1d] mb-1.5">Tax ID Number</label>
-                                    <input
-                                        type="text"
-                                        value={taxId}
-                                        onChange={(e) => setTaxId(e.target.value)}
-                                        className="w-[320px] py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border"
-                                    />
-                                    <span className="block text-[11px] text-[#b0b0b0] mt-1.5">Enter your business EIN or personal Social Security Number.</span>
-                                </div>
-                            </div>
-
-                            {/* ─── Payout History ─── */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl p-5.5 px-6.5">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 className="text-[18px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Payout History</h3>
-                                        <p className="text-[12px] text-[#828282] m-0">Your recent transactions and earnings transfers.</p>
-                                    </div>
-                                    <button className="bg-transparent border-none text-[12px] font-semibold text-[#953002] cursor-pointer p-0">View All</button>
+                                    <a href="/owner/setting/accountSetting/Billing&Payout" className="bg-transparent border-none text-[12px] font-semibold text-[#953002] cursor-pointer p-0 no-underline hover:underline">Edit</a>
                                 </div>
 
-                                <table className="w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            <th className="text-[10px] font-bold text-[#828282] tracking-wide py-2.5 px-2 text-left border-b border-[#f0f0f0]">DATE</th>
-                                            <th className="text-[10px] font-bold text-[#828282] tracking-wide py-2.5 px-2 text-left border-b border-[#f0f0f0]">AMOUNT</th>
-                                            <th className="text-[10px] font-bold text-[#828282] tracking-wide py-2.5 px-2 text-left border-b border-[#f0f0f0]">METHOD</th>
-                                            <th className="text-[10px] font-bold text-[#828282] tracking-wide py-2.5 px-2 text-left border-b border-[#f0f0f0]">STATUS</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {payouts.map((p, i) => (
-                                            <tr key={i} className="border-b border-[#f5f5f5]">
-                                                <td className="text-[13px] text-[#4f4f4f] py-3 px-2">{p.date}</td>
-                                                <td className="text-[13px] text-[#1d1d1d] font-bold py-3 px-2">{p.amount}</td>
-                                                <td className="text-[13px] text-[#828282] py-3 px-2">{p.method}</td>
-                                                <td className="text-[13px] py-3 px-2">
-                                                    <span className="text-[11px] font-semibold text-[#27ae60] bg-[#e8f8ef] rounded px-2.5 py-0.5">{p.status}</span>
-                                                </td>
+                                <div className="mt-4">
+                                    <div className="text-[13px] font-bold text-[#1d1d1d] mb-2.5">Recent Invoices</div>
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr>
+                                                <th className="text-[10px] font-semibold text-[#828282] py-2 px-2 text-left border-b border-[#f0f0f0]">Date</th>
+                                                <th className="text-[10px] font-semibold text-[#828282] py-2 px-2 text-left border-b border-[#f0f0f0]">Amount</th>
+                                                <th className="text-[10px] font-semibold text-[#828282] py-2 px-2 text-left border-b border-[#f0f0f0]">Status</th>
+                                                <th className="text-[10px] font-semibold text-[#828282] py-2 px-2 text-left border-b border-[#f0f0f0]">Action</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* ─── Bottom Actions ─── */}
-                            <div className="flex justify-end gap-3 mt-1 pt-4">
-                                <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer">Cancel</button>
-                                <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer">
-                                    <Save size={14} /> Save Changes
-                                </button>
+                                        </thead>
+                                        <tbody>
+                                            {invoices.map((inv, i) => (
+                                                <tr key={i}>
+                                                    <td className="text-[12px] text-[#4f4f4f] py-2.5 px-2 border-b border-[#f5f5f5]">{inv.date}</td>
+                                                    <td className="text-[12px] text-[#4f4f4f] py-2.5 px-2 border-b border-[#f5f5f5]">{inv.amount}</td>
+                                                    <td className="py-2.5 px-2 border-b border-[#f5f5f5]">
+                                                        <span className="text-[11px] font-bold text-[#27ae60]">{inv.status}</span>
+                                                    </td>
+                                                    <td className="py-2.5 px-2 border-b border-[#f5f5f5]">
+                                                        <button className="bg-transparent border-none cursor-pointer flex items-center justify-center p-1 hover:bg-[#f5f5f5] rounded transition-colors">
+                                                            <Download size={14} color="#828282" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>

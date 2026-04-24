@@ -25,9 +25,9 @@ import {
 const sidebarItems = [
     { icon: LayoutDashboard, label: "Dashboard", active: true, href: "/owner/ownerDashboard" },
     { icon: Building2, label: "Properties", active: false, href: "/owner/properties" },
-    { icon: DoorOpen, label: "Rooms", active: false, href: "#" },
+    { icon: DoorOpen, label: "Rooms", active: false, href: "/owner/roomManagement" },
     { icon: CalendarCheck, label: "Availability", active: false, href: "/owner/availability/weeklyCalendar" },
-    { icon: DollarSign, label: "Pricing", active: false, href: "/owner/rate" },
+    { icon: DollarSign, label: "Rate", active: false, href: "/owner/rate" },
     { icon: ClipboardList, label: "Reservations", active: false, href: "/owner/reservation" },
     { icon: Settings, label: "Settings", active: false, href: "/owner/setting/propertySetting" },
 ];
@@ -188,9 +188,9 @@ export default function OwnerDashboardPage() {
                                 className="border-none bg-transparent outline-none text-[13px] text-[#1d1d1d] w-[160px]"
                             />
                         </div>
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center" aria-label="Notifications">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center hover:bg-[#f5f5f5] transition-colors" aria-label="Notifications">
                             <Bell size={20} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-[34px] h-[34px] rounded-full overflow-hidden border-2 border-[#953002]">
                             <img
                                 src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"

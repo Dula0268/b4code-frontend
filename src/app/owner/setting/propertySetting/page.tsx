@@ -45,9 +45,9 @@ export default function PropertySettingPage() {
     const navItems = [
         { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Pricing", icon: <Tag size={18} />, href: "/owner/rate" },
+        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
         { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
         { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting", active: true },
     ];
@@ -90,9 +90,9 @@ export default function PropertySettingPage() {
                 {/* Top Bar */}
                 <div className="flex justify-end items-center py-2 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
                         </div>
@@ -242,38 +242,29 @@ export default function PropertySettingPage() {
 
                                 <div className="flex flex-col gap-0 border-t border-[rgba(0,0,0,0.05)] pt-1">
                                     {properties.map((p, i) => (
-                                        <div key={i} className="flex items-center justify-between py-3 border-b border-[#f5f5f5]">
-                                            <div className="flex items-center gap-3">
+                                        <div key={i} className="flex items-center justify-between py-3 border-b border-[#f5f5f5] group">
+                                            <a 
+                                                href="/owner/setting/propertySetting/reservationRestriction/createRestriction" 
+                                                className="flex items-center gap-3 flex-1 no-underline p-1.5 -ml-1.5 rounded-xl hover:bg-[#fafafa] transition-colors cursor-pointer"
+                                            >
                                                 <img src={p.img} alt={p.name} className="w-12 h-12 rounded-lg object-cover" />
                                                 <div>
-                                                    <div className="text-[13px] font-bold text-[#1d1d1d]">{p.name}</div>
+                                                    <div className="text-[13px] font-bold text-[#1d1d1d] group-hover:text-[#953002] transition-colors">{p.name}</div>
                                                     <div className="text-[11px] text-[#828282] flex items-center gap-1 mt-0.5">
                                                         <MapPin size={11} color="#b0b0b0" /> {p.address}
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* ─── Inventory & Overbooking ─── */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl p-5.5 px-6.5">
-                                <h3 className="text-[16px] font-black text-[#1d1d1d] m-0 mb-0.5 tracking-[0.8px]">INVENTRY & OVERBOOKING</h3>
-                                <p className="text-[12px] text-[#828282] m-0 mb-4.5">Property Reservation & restriction details.</p>
-
-                                <div className="flex flex-col gap-0 border-t border-[rgba(0,0,0,0.05)] pt-1">
-                                    {properties.map((p, i) => (
-                                        <div key={i} className="flex items-center justify-between py-3 border-b border-[#f5f5f5]">
-                                            <div className="flex items-center gap-3">
-                                                <img src={p.img} alt={p.name} className="w-12 h-12 rounded-lg object-cover" />
-                                                <div>
-                                                    <div className="text-[13px] font-bold text-[#1d1d1d]">{p.name}</div>
-                                                    <div className="text-[11px] text-[#828282] flex items-center gap-1 mt-0.5">
-                                                        <MapPin size={11} color="#b0b0b0" /> {p.address}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            </a>
+                                            <a 
+                                                href="/owner/setting/propertySetting/reservationRestriction/editRestriction" 
+                                                className="w-8 h-8 rounded-full flex items-center justify-center border border-[#e8e8e8] bg-white cursor-pointer hover:border-[#953002] hover:text-[#953002] text-[#828282] transition-colors ml-4 shrink-0 shadow-sm"
+                                                title="Edit Restriction"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M12 20h9"></path>
+                                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                                </svg>
+                                            </a>
                                         </div>
                                     ))}
                                 </div>
@@ -281,10 +272,14 @@ export default function PropertySettingPage() {
 
                             {/* ─── Bottom Actions ─── */}
                             <div className="flex justify-end gap-3 mt-1 pt-4">
-                                <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer">Cancel</button>
-                                <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer">
-                                    <Save size={14} /> Save Changes
-                                </button>
+                                <a href="/owner/ownerDashboard" className="no-underline">
+                                    <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">Cancel</button>
+                                </a>
+                                <a href="/owner/ownerDashboard" className="no-underline">
+                                    <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#b03a02] transition-colors">
+                                        <Save size={14} /> Save Changes
+                                    </button>
+                                </a>
                             </div>
                         </div>
                     </div>

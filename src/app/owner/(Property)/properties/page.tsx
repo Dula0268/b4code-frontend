@@ -80,13 +80,13 @@ const properties = [
 ];
 
 const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard", active: false },
-    { icon: Building2, label: "Properties", active: true },
-    { icon: DoorOpen, label: "Rooms", active: false },
-    { icon: CalendarCheck, label: "Availability", active: false },
-    { icon: DollarSign, label: "Pricing", active: false },
-    { icon: ClipboardList, label: "Reservations", active: false },
-    { icon: Settings, label: "Settings", active: false },
+    { icon: LayoutDashboard, label: "Dashboard", href: "/owner/ownerDashboard", active: false },
+    { icon: Building2, label: "Properties", href: "/owner/properties", active: true },
+    { icon: DoorOpen, label: "Rooms", href: "/owner/roomManagement", active: false },
+    { icon: CalendarCheck, label: "Availability", href: "/owner/availability/weeklyCalendar", active: false },
+    { icon: DollarSign, label: "Rate", href: "/owner/rate", active: false },
+    { icon: ClipboardList, label: "Reservations", href: "/owner/reservation", active: false },
+    { icon: Settings, label: "Settings", href: "/owner/setting/accountSetting", active: false },
 ];
 
 /* ───────────────────── component ───────────────────── */
@@ -130,7 +130,7 @@ export default function PropertiesPage() {
                         return (
                             <a
                                 key={item.label}
-                                href="#"
+                                href={item.href}
                                 className={`flex items-center gap-2.5 py-2 px-3.5 text-[13px] font-medium no-underline border-l-[3px] transition-all duration-150 ${
                                     item.active
                                         ? "text-[#953002] bg-[#fef5ef] border-[#953002] font-semibold"
@@ -159,9 +159,9 @@ export default function PropertiesPage() {
                                 className="border-none bg-transparent outline-none text-[13px] text-[#1d1d1d] w-[160px]"
                             />
                         </div>
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center" aria-label="Notifications">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={20} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-[34px] h-[34px] rounded-full overflow-hidden border-2 border-[#953002]">
                             <img
                                 src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
@@ -178,11 +178,13 @@ export default function PropertiesPage() {
                         <h1 className="text-[22px] font-bold text-[#1d1d1d] m-0 leading-tight">My Properties</h1>
                         <p className="text-[13px] text-[#828282] mt-1">Manage your listings, update availability, and track performance.</p>
                     </div>
-                    <button className="flex items-center gap-2 py-2 px-4 bg-[#953002] text-white border-none rounded-xl text-[13px] font-semibold cursor-pointer whitespace-nowrap">
-                        <Building2 size={18} color="#fff" />
-                        <span>Add New Property</span>
-                        <ChevronRight size={16} color="#fff" />
-                    </button>
+                    <a href="/owner/properties/createNewProperty" className="no-underline">
+                        <button className="flex items-center gap-2 py-2 px-4 bg-[#953002] text-white border-none rounded-xl text-[13px] font-semibold cursor-pointer whitespace-nowrap hover:bg-[#b03a02] transition-colors">
+                            <Building2 size={18} color="#fff" />
+                            <span>Add New Property</span>
+                            <ChevronRight size={16} color="#fff" />
+                        </button>
+                    </a>
                 </div>
 
                 {/* Search & Filters */}
@@ -286,8 +288,10 @@ export default function PropertiesPage() {
                                         {/* Actions */}
                                         <td className="py-1.5 px-3.5 align-middle">
                                             <div className="flex items-center gap-2">
-                                                <button className="py-1.5 px-4 bg-white border border-[#e0e0e0] rounded-lg text-[13px] font-medium text-[#4f4f4f] cursor-pointer">Edit</button>
-                                                <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center" aria-label="More">
+                                                <a href="/owner/properties/propertyDetails" className="no-underline">
+                                                    <button className="py-1.5 px-4 bg-white border border-[#e0e0e0] rounded-lg text-[13px] font-medium text-[#4f4f4f] cursor-pointer hover:bg-gray-50">View Details</button>
+                                                </a>
+                                                <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center hover:bg-gray-100" aria-label="More">
                                                     <MoreVertical size={16} color="#828282" />
                                                 </button>
                                             </div>

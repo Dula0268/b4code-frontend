@@ -60,9 +60,9 @@ export default function RatePage() {
     const navItems = [
         { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Pricing", icon: <DollarSign size={18} />, href: "/owner/rate", active: true },
+        { label: "Rate", icon: <DollarSign size={18} />, href: "/owner/rate", active: true },
         { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
         { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
     ];
@@ -105,9 +105,9 @@ export default function RatePage() {
                 {/* Top Bar */}
                 <div className="flex justify-end items-center py-2 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-8 h-8 rounded-full" />
                         </div>
@@ -199,7 +199,9 @@ export default function RatePage() {
                             <div className="bg-white border border-[#e8e8e8] rounded-xl py-5 px-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-[18px] font-extrabold text-[#1d1d1d] m-0">Special Discounts</h3>
-                                    <button className="py-2 px-4.5 bg-[#953002] text-white border-none rounded-full text-[10px] font-bold cursor-pointer tracking-wider">CREATE NEW DISCOUNT</button>
+                                    <a href="/owner/rate/discount" className="no-underline">
+                                        <button className="py-2 px-4.5 bg-[#953002] text-white border-none rounded-full text-[10px] font-bold cursor-pointer tracking-wider hover:bg-[#b03a02] transition-colors">CREATE NEW DISCOUNT</button>
+                                    </a>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3.5">
                                     {discounts.map((d, i) => (
@@ -221,7 +223,9 @@ export default function RatePage() {
                                                     <span className="w-1.5 h-1.5 rounded-full bg-[#27ae60] inline-block" />
                                                     <span className="text-[10px] font-bold text-[#27ae60] tracking-wider">ACTIVE</span>
                                                 </span>
-                                                <button className="bg-transparent border-none text-[#828282] text-[12px] font-medium cursor-pointer">Configure</button>
+                                                <a href="/owner/rate/discount" className="no-underline">
+                                                    <button className="bg-transparent border-none text-[#828282] text-[12px] font-medium cursor-pointer hover:text-[#1d1d1d] hover:font-semibold transition-colors">Configure</button>
+                                                </a>
                                             </div>
                                         </div>
                                     ))}

@@ -32,7 +32,7 @@ const navItems = [
     { label: "Properties", icon: Building2, href: "/owner/properties" },
     { label: "Rooms", icon: BedDouble, href: "/owner/roomManagement", active: true },
     { label: "Availability", icon: Calendar, href: "/owner/availability/weeklyCalendar" },
-    { label: "Pricing", icon: DollarSign, href: "/owner/rate" },
+    { label: "Rate", icon: DollarSign, href: "/owner/rate" },
     { label: "Reservations", icon: BookOpen, href: "/owner/reservation" },
     { label: "Settings", icon: Settings, href: "/owner/setting/propertySetting" },
 ];
@@ -200,9 +200,9 @@ export default function RoomManagementPage() {
                 {/* Top Bar */}
                 <div className="flex justify-end items-center py-2.5 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center hover:bg-[#f5f5f5] transition-colors">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
                             <img
                                 src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
@@ -216,13 +216,19 @@ export default function RoomManagementPage() {
                 {/* Scrollable Body */}
                 <div className="flex-1 overflow-y-auto px-8 pb-10">
                     {/* Page Title */}
-                    <div className="mb-5">
-                        <h1 className="text-[28px] font-extrabold text-[#1d1d1d] m-0 leading-tight">
-                            Rooms Management
-                        </h1>
-                        <p className="text-[13px] text-[#828282] mt-1 m-0">
-                            Efficiently manage all units and occupancy status for Mountain View Resort
-                        </p>
+                    <div className="mb-5 flex justify-between items-center">
+                        <div>
+                            <h1 className="text-[28px] font-extrabold text-[#1d1d1d] m-0 leading-tight">
+                                Rooms Management
+                            </h1>
+                            <p className="text-[13px] text-[#828282] mt-1 m-0">
+                                Efficiently manage all units and occupancy status for Mountain View Resort
+                            </p>
+                        </div>
+                        <a href="/owner/roomManagement/addRoom" className="bg-[#953002] text-white px-4 py-2.5 rounded-lg font-bold text-[14px] flex items-center gap-2 hover:bg-[#7a2702] transition-colors no-underline">
+                            <Plus size={18} />
+                            Add New Room
+                        </a>
                     </div>
 
                     {/* ── KPI Cards ── */}

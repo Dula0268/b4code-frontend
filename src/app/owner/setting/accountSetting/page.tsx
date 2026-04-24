@@ -19,8 +19,6 @@ import {
     Clock,
     Mail,
     MessageSquare,
-    Landmark,
-    Download,
     PlusCircle,
     ChevronDown,
     Save,
@@ -43,9 +41,9 @@ export default function AccountSettingPage() {
     const navItems = [
         { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Pricing", icon: <Tag size={18} />, href: "/owner/rate" },
+        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
         { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
         { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting", active: true },
     ];
@@ -56,11 +54,6 @@ export default function AccountSettingPage() {
         { label: "Notification Preferences", icon: <BellRing size={16} />, href: "/owner/setting/notificationPreferences" },
         { label: "Billing & Payouts", icon: <CreditCard size={16} />, href: "/owner/setting/billing&Payout" },
         { label: "Integrations", icon: <Puzzle size={16} />, href: "/owner/setting/integration" },
-    ];
-
-    const invoices = [
-        { date: "Oct 01, 2023", amount: "Rs 1,240.00", status: "Paid" },
-        { date: "Sep 01, 2023", amount: "Rs 1,150.00", status: "Paid" },
     ];
 
     return (
@@ -93,9 +86,9 @@ export default function AccountSettingPage() {
                 {/* Top Bar */}
                 <div className="flex justify-end items-center py-2 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
-                        <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center">
+                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
-                        </button>
+                        </a>
                         <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
                         </div>
@@ -146,7 +139,7 @@ export default function AccountSettingPage() {
                                         <div className="w-[90px] h-[90px] rounded-xl bg-[#f5f0ed] flex items-center justify-center overflow-hidden">
                                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=kasun" alt="" className="w-[80px] h-[80px] rounded-[10px]" />
                                         </div>
-                                        <button className="bg-transparent border-none text-[12px] font-semibold text-[#953002] cursor-pointer">Change Photo</button>
+                                        <a href="/owner/setting/accountSetting/changePhoto" className="bg-transparent border-none text-[12px] font-semibold text-[#953002] cursor-pointer no-underline hover:underline">Change Photo</a>
                                     </div>
                                     <div className="flex-1 flex flex-col gap-3">
                                         <div className="grid grid-cols-2 gap-3">
@@ -168,7 +161,7 @@ export default function AccountSettingPage() {
 
                                 <div className="mt-4">
                                     <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Password</label>
-                                    <button className="bg-transparent border-none p-0 mt-0.5 text-[12px] font-semibold text-[#953002] cursor-pointer">Change Password</button>
+                                    <a href="/owner/setting/accountSetting/changePassword" className="bg-transparent border-none p-0 mt-0.5 text-[12px] font-semibold text-[#953002] cursor-pointer no-underline hover:underline">Change Password</a>
                                 </div>
                             </div>
 
@@ -260,53 +253,6 @@ export default function AccountSettingPage() {
                                 </div>
                             </div>
 
-                            {/* ─── Billing & Payouts ─── */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl p-5.5 px-6.5">
-                                <h3 className="text-[18px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Billing & Payouts</h3>
-                                <p className="text-[12px] text-[#828282] m-0 mb-4.5">Manage bank details and view invoices.</p>
-
-                                <div className="flex justify-between items-center bg-[#fef5ef] rounded-[10px] py-3.5 px-4.5">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center">
-                                            <Landmark size={18} color="#953002" />
-                                        </div>
-                                        <div>
-                                            <div className="text-[13px] font-bold text-[#1d1d1d]">Chase Bank **** 4829</div>
-                                            <div className="text-[11px] text-[#828282]">Primary Payout Method</div>
-                                        </div>
-                                    </div>
-                                    <button className="bg-transparent border-none text-[12px] font-semibold text-[#953002] cursor-pointer p-0">Edit</button>
-                                </div>
-
-                                <div className="mt-4">
-                                    <div className="text-[13px] font-bold text-[#1d1d1d] mb-2.5">Recent Invoices</div>
-                                    <table className="w-full border-collapse">
-                                        <thead>
-                                            <tr>
-                                                <th className="text-[10px] font-semibold text-[#828282] py-2 px-2 text-left border-b border-[#f0f0f0]">Date</th>
-                                                <th className="text-[10px] font-semibold text-[#828282] py-2 px-2 text-left border-b border-[#f0f0f0]">Amount</th>
-                                                <th className="text-[10px] font-semibold text-[#828282] py-2 px-2 text-left border-b border-[#f0f0f0]">Status</th>
-                                                <th className="text-[10px] font-semibold text-[#828282] py-2 px-2 text-left border-b border-[#f0f0f0]">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {invoices.map((inv, i) => (
-                                                <tr key={i}>
-                                                    <td className="text-[12px] text-[#4f4f4f] py-2.5 px-2">{inv.date}</td>
-                                                    <td className="text-[12px] text-[#4f4f4f] py-2.5 px-2">{inv.amount}</td>
-                                                    <td className="text-[12px] text-[#4f4f4f] py-2.5 px-2">
-                                                        <span className="text-[#27ae60] text-[11px] font-semibold">{inv.status}</span>
-                                                    </td>
-                                                    <td className="text-[12px] text-[#4f4f4f] py-2.5 px-2">
-                                                        <button className="bg-transparent border-none cursor-pointer p-0.5"><Download size={13} color="#828282" /></button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
                             {/* ─── Integrations ─── */}
                             <div className="bg-white border border-[#e8e8e8] rounded-xl p-5.5 px-6.5">
                                 <h3 className="text-[18px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Integrations</h3>
@@ -342,10 +288,14 @@ export default function AccountSettingPage() {
 
                             {/* ─── Bottom Actions ─── */}
                             <div className="flex justify-end gap-3 mt-1 pt-4">
-                                <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer">Cancel</button>
-                                <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer">
-                                    <Save size={14} /> Save Changes
-                                </button>
+                                <a href="/owner/ownerDashboard" className="no-underline">
+                                    <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">Cancel</button>
+                                </a>
+                                <a href="/owner/ownerDashboard" className="no-underline">
+                                    <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#b03a02] transition-colors">
+                                        <Save size={14} /> Save Changes
+                                    </button>
+                                </a>
                             </div>
                         </div>
                     </div>

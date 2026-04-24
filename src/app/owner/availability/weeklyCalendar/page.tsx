@@ -111,9 +111,9 @@ export default function WeeklyCalendarPage() {
     const navItems = [
         { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "#" },
+        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar", active: true },
-        { label: "Pricing", icon: <DollarSign size={18} />, href: "/owner/rate" },
+        { label: "Rate", icon: <DollarSign size={18} />, href: "/owner/rate" },
         { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
         { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
     ];
@@ -153,10 +153,10 @@ export default function WeeklyCalendarPage() {
                             key={p.id}
                             onClick={() => setActiveProperty(p.id)}
                             className={`flex items-center gap-2.5 w-full py-2.5 px-3.5 rounded-xl cursor-pointer mb-1.5 transition-all duration-150 text-left ${
-                                isActive ? "bg-[#953002] text-white border-none" : "bg-white text-[#1d1d1d] border border-[#e8e8e8]"
+                                isActive ? "bg-white text-[#953002] border border-[#953002] shadow-sm" : "bg-white text-[#1d1d1d] border border-[#e8e8e8]"
                             }`}
                         >
-                            {propertyIcon(p.icon, isActive ? "#fff" : "#953002")}
+                            {propertyIcon(p.icon, "#953002")}
                             <span className={`text-[13px] ${isActive ? "font-bold" : "font-medium"}`}>{p.name}</span>
                         </button>
                     );
@@ -268,11 +268,11 @@ export default function WeeklyCalendarPage() {
 
                     {/* Selection */}
                     <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-2">SELECTION</div>
-                    <div className="flex items-center gap-2.5 bg-[#953002] rounded-xl py-2.5 px-3.5 text-white mb-4.5">
+                    <div className="flex items-center gap-2.5 bg-white border border-[#953002] shadow-sm rounded-xl py-2.5 px-3.5 mb-4.5">
                         <Calendar size={16} color="#953002" />
                         <div>
-                            <div className="text-[13px] font-bold text-[#1d1d1d]">{selectionLabel}</div>
-                            <div className="text-[11px] text-[#953002]">{selectedDates.length} nights selected</div>
+                            <div className="text-[13px] font-bold text-[#953002]">{selectionLabel}</div>
+                            <div className="text-[11px] font-medium text-[#c44103]">{selectedDates.length} nights selected</div>
                         </div>
                     </div>
 
