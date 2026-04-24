@@ -6,16 +6,16 @@ export const metadata = {
     description: "View and manage all your property bookings. Track upcoming stays, completed trips, and cancellations.",
 }
 
+import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+
 export default function MyBookingsRoute() {
     return (
-        <>
+        <div className="min-h-screen flex flex-col bg-[var(--bg)]">
             <GuestTopbar />
-            <main>
+            <main className="flex-1">
                 <MyBookingsPage />
             </main>
-            <footer className="bg-[#f4f4f4] border-t border-[#e0e0e0] py-5 text-center text-[13px] text-[#828282]">
-                © 2026 PRIME STAY. All Rights Reserved.
-            </footer>
-        </>
+            <GuestFooter />
+        </div>
     )
 }
