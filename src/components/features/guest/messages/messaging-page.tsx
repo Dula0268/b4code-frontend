@@ -44,8 +44,10 @@ const MESSAGING_CONFIG = {
     STAFF_REPLIES: ["Of course! We'll attend to that right away.", "Thank you for letting us know. Our team is on it!", "No problem at all — we'll send someone immediately."]
 } as const;
 
+import { useAuthStore } from "@/store/auth/auth.store"
+
 function useMessagingLogic(initialMessages: Message[], replies: readonly string[]) {
-    const [messages, setMessages] = useState<Message[]>(initialMessages)
+    const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
     const [isTyping, setIsTyping] = useState(false)
     const bottomRef = useRef<HTMLDivElement>(null)
@@ -53,24 +55,82 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
     const getTime = () => new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
 
     useEffect(() => {
+        async function loadMessages() {
+            try {
+                const guestId = (useAuthStore.getState().user as any)?.id || 1;
+                const res = await fetch(`http://localhost:8080/api/guest/messages?guestId=${guestId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const apiMsgs = data.map((m: any) => ({
+                        id: String(m.id),
+                        sender: String(m.senderId) === String(guestId) ? "guest" : "agent",
+                        text: m.content,
+                        time: new Date(m.sentAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+                    }));
+                    if (apiMsgs.length > 0) {
+                        setMessages(apiMsgs);
+                    } else {
+                        setMessages(initialMessages);
+                    }
+                } else {
+                    setMessages(initialMessages);
+                }
+            } catch(e) {
+                setMessages(initialMessages);
+            }
+        }
+        loadMessages();
+    }, [initialMessages]);
+
+    useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages, isTyping])
 
-    const sendMessage = (text: string) => {
+    const sendMessage = async (text: string) => {
         if (!text.trim()) return
-        setMessages(prev => [...prev, { id: Date.now().toString(), sender: "guest", text: text.trim(), time: getTime() }])
+        const guestId = (useAuthStore.getState().user as any)?.id || 1;
+        const newMsg = { id: Date.now().toString(), sender: "guest" as const, text: text.trim(), time: getTime() };
+        setMessages(prev => [...prev, newMsg]);
         setInput("")
         setIsTyping(true)
 
-        setTimeout(() => {
+        try {
+            await fetch("http://localhost:8080/api/guest/messages", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    senderId: guestId,
+                    receiverId: 2, 
+                    propertyId: 1, 
+                    content: text.trim()
+                })
+            });
+        } catch (e) {}
+
+        setTimeout(async () => {
             setIsTyping(false)
             const reply = replies[Math.floor(Math.random() * replies.length)]
-            setMessages(prev => [...prev, { id: Date.now().toString() + "a", sender: "agent", text: reply, time: getTime() }])
+            const agentMsg = { id: Date.now().toString() + "a", sender: "agent" as const, text: reply, time: getTime() };
+            setMessages(prev => [...prev, agentMsg])
+
+            try {
+                await fetch("http://localhost:8080/api/guest/messages", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        senderId: 2, 
+                        receiverId: guestId,
+                        propertyId: 1,
+                        content: reply
+                    })
+                });
+            } catch(e) {}
         }, 1500 + Math.random() * 700)
     }
 
     return { messages, input, setInput, isTyping, bottomRef, sendMessage }
 }
+
 
 export default function MessagingPage() {
     // Determine variant from searchParams

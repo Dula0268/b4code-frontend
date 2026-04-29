@@ -331,23 +331,53 @@ function useMyBookingsLogic() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const user = useAuthStore(s => s.user)
-  const storeBookings = useGuestBookingStore(s => s.bookings)
 
   useEffect(() => {
     let active = true
-    try {
-      const userBookings = user?.email
-        ? storeBookings.filter(b => b.userEmail.toLowerCase() === user.email.toLowerCase())
-        : storeBookings
-      if (active) setBookings([...userBookings.map(fromStore), ...DEMO_BOOKINGS])
-    } catch(err) {
-      if (active) setErrorMsg("Failed to synchronize bookings. Try again.")
+    async function loadBookings() {
+        try {
+            const guestId = (user as any)?.id || 1;
+            const res = await fetch(`http://localhost:8080/api/guest/bookings?guestId=${guestId}`, { cache: "no-store" });
+            if (!res.ok) throw new Error("Failed to fetch bookings");
+            const data = await res.json();
+            
+            if (active) {
+                const apiBookings = data.map((b: any) => ({
+                    id: String(b.id),
+                    propertyId: String(b.propertyId),
+                    orderNumber: `BK-${b.id}88${b.propertyId}`,
+                    status: b.status,
+                    property: b.propertyName || "Prime Stay Property",
+                    location: b.location ? `${b.location}, Sri Lanka` : "Sri Lanka",
+                    imageSrc: b.imageSrc || "/images/properties/property-1.jpg",
+                    checkIn: b.checkInDate,
+                    checkOut: b.checkOutDate,
+                    guests: "Guests",
+                    totalPrice: b.totalPrice,
+                    nightsLabel: "Total for stay",
+                    paymentMethod: "online",
+                    paidInFull: true,
+                    isFromStore: true,
+                }));
+                // We show API bookings first, then the DEMO ones
+                setBookings([...apiBookings, ...DEMO_BOOKINGS])
+            }
+        } catch(err) {
+            if (active) setErrorMsg("Failed to synchronize bookings. Try again.")
+        }
     }
-    return () => { active = false }
-  }, [storeBookings, user])
 
-  const visible = bookings.filter(b => b.status === activeTab)
-  const nextUpcoming = bookings.find(b => b.status === "UPCOMING") ?? null
+    if (user) {
+        loadBookings();
+    } else {
+        setBookings(DEMO_BOOKINGS);
+    }
+    
+    return () => { active = false }
+  }, [user])
+
+  const visible = bookings.filter(b => b.status === activeTab || (activeTab === "UPCOMING" && b.status === "PENDING"))
+  const nextUpcoming = bookings.find(b => b.status === "UPCOMING" || b.status === "PENDING") ?? null
 
   return { activeTab, setActiveTab, bookings, errorMsg, visible, nextUpcoming }
 }
