@@ -1,11 +1,11 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ChevronLeft, ChevronRight, X, Heart, Star } from "lucide-react"
+import { ChevronLeft, ChevronRight, X, Heart, Star, Loader2 } from "lucide-react"
 
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
 
@@ -141,34 +141,55 @@ function ResultsHeader({ destination, totalCount, checkIn, checkOut, guests, act
 const SEARCH_RESULTS_CONFIG = {
     ITEMS_PER_PAGE: 6,
     DEFAULT_FILTERS: { priceMin: 10_000, priceMax: 500_000, amenities: [], propertyTypes: [], guestRating: null } as FilterState,
-    ALL_LISTINGS: [
-        { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, maxGuests: 2, baseGuests: 2, extraGuestFee: 5_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg" },
-        { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 7_500, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg" },
-        { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg" },
-        { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 8_500, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg" },
-        { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 12_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg" },
-        { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, maxGuests: 5, baseGuests: 3, extraGuestFee: 8_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg" },
-        { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, maxGuests: 8, baseGuests: 6, extraGuestFee: 15_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg" },
-        { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, maxGuests: 10, baseGuests: 8, extraGuestFee: 20_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg" },
-        { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg" },
-        { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 6_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg" },
-        { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 9_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg" },
-        { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, maxGuests: 7, baseGuests: 5, extraGuestFee: 12_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg" },
-    ] as PropertyListing[]
 } as const;
 
 // ─── Business Logic Hook ──────────────────────────────────────────────────────
-function useSearchResultsLogic(destination: string) {
+function useSearchResultsLogic(destination: string, checkIn: string, checkOut: string, guests: number) {
+    const [listings, setListings] = useState<PropertyListing[]>([])
+    const [loading, setLoading] = useState(true)
     const [filters, setFilters] = useState<FilterState>(SEARCH_RESULTS_CONFIG.DEFAULT_FILTERS)
     const [sortBy, setSortBy] = useState("recommended")
     const [page, setPage] = useState(1)
     const [mapOpen, setMapOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
 
+    useEffect(() => {
+        let isMounted = true;
+        const fetchListings = async () => {
+            try {
+                setLoading(true);
+                const query = new URLSearchParams();
+                if (destination && destination !== "Sri Lanka") query.append("destination", destination);
+                if (checkIn) query.append("checkIn", checkIn);
+                if (checkOut) query.append("checkOut", checkOut);
+                if (guests) query.append("guests", guests.toString());
+                
+                const res = await fetch(`http://localhost:8080/api/guest/search?${query.toString()}`);
+                if (!res.ok) throw new Error("Failed to fetch listings");
+                const data = await res.json();
+                if (isMounted) {
+                    setListings(data);
+                }
+            } catch (err) {
+                console.error("Error fetching properties:", err);
+                // Removed mock data fallback
+                if (isMounted) {
+                    setListings([]);
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+        fetchListings();
+        return () => { isMounted = false; };
+    }, [destination, checkIn, checkOut, guests]);
+
     // Filtering
     const filtered = useMemo(() => {
         const query = destination.trim().toLowerCase()
-        return SEARCH_RESULTS_CONFIG.ALL_LISTINGS.filter(l => {
+        return listings.filter(l => {
             if (query && query !== "sri lanka") {
                 const matchesTitle = l.title.toLowerCase().includes(query)
                 const matchesLocation = l.location.toLowerCase().includes(query)
@@ -217,7 +238,7 @@ function useSearchResultsLogic(destination: string) {
         })
     }
     
-    return { filters, setFilters, sortBy, setSortBy, page, setPage, mapOpen, setMapOpen, hoveredId, setHoveredId, sorted, paginated, totalPages, activeFilters, handleRemoveFilter }
+    return { listings, loading, filters, setFilters, sortBy, setSortBy, page, setPage, mapOpen, setMapOpen, hoveredId, setHoveredId, sorted, paginated, totalPages, activeFilters, handleRemoveFilter }
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -228,8 +249,19 @@ export default function SearchResultsPage() {
     const checkOut = searchParams.get("checkOut") || ""
     const guests = Number(searchParams.get("guests") || 2)
 
-    const logic = useSearchResultsLogic(destination);
-    const { filters, setFilters, sortBy, setSortBy, page, setPage, mapOpen, setMapOpen, hoveredId, setHoveredId, sorted, paginated, totalPages, activeFilters, handleRemoveFilter } = logic;
+    const logic = useSearchResultsLogic(destination, checkIn, checkOut, guests);
+    const { loading, filters, setFilters, sortBy, setSortBy, page, setPage, mapOpen, setMapOpen, hoveredId, setHoveredId, sorted, paginated, totalPages, activeFilters, handleRemoveFilter } = logic;
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 text-[#953002] animate-spin" />
+                    <p className="text-[14px] text-[#828282]">Finding the perfect stays…</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
