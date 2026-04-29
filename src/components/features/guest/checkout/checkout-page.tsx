@@ -53,13 +53,21 @@ function parseIsoDate(raw: string | null) {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
-export default function CheckoutPage() {
+const CHECKOUT_CONFIG = {
+  taxRate: 0.11,
+  serviceFee: 3500,
+  onlineDiscountPercent: 0.05,
+} as const;
+
+import { Suspense } from "react"
+
+function useCheckoutLogic() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  // ─── Auth state ──────────────────────────────────────────────────────────
   const { user, logout } = useAuthStore()
   const isLoggedIn = !!user
 
@@ -76,19 +84,15 @@ export default function CheckoutPage() {
     const checkInDate = parseIsoDate(searchParams.get("checkIn"))
     const checkOutDate = parseIsoDate(searchParams.get("checkOut"))
     const guests = searchParams.get("guests") || "2"
-
-    // Total from query if previously computed
     const totalFromQuery = Number(searchParams.get("total") || "0")
 
     const property = propertyId ? getPropertyById(propertyId) : null
     const room = property && roomId ? property.rooms.find(r => r.id === roomId) : null
-
     const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
     const basePrice = room ? room.pricePerNight * nights : 0
 
-    // Try to get taxes/fees from total
-    const computedTotal = totalFromQuery > 0 ? totalFromQuery : (basePrice + basePrice * 0.11 + 3500)
-    const taxes = totalFromQuery > 0 ? (totalFromQuery - basePrice - 3500) : (basePrice * 0.11)
+    const computedTotal = totalFromQuery > 0 ? totalFromQuery : (basePrice + basePrice * CHECKOUT_CONFIG.taxRate + CHECKOUT_CONFIG.serviceFee)
+    const taxes = totalFromQuery > 0 ? (totalFromQuery - basePrice - CHECKOUT_CONFIG.serviceFee) : (basePrice * CHECKOUT_CONFIG.taxRate)
 
     setBookingDetails({
       property: property ? {
@@ -108,91 +112,100 @@ export default function CheckoutPage() {
       price: {
         base: basePrice,
         taxes: taxes > 0 ? taxes : 0,
-        serviceFee: 3500,
+        serviceFee: CHECKOUT_CONFIG.serviceFee,
         discount: 0,
       },
       originalParams: searchParams.toString()
     })
   }, [searchParams])
 
-  // Initialize React Hook Form with Zod schema
   const { register, handleSubmit, watch, formState: { errors }, setValue, reset: resetForm } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { paymentMethod: "online", promoCode: "", nationalId: "" }
   })
 
-
-
   const paymentMethod = watch("paymentMethod")
+  const discountAmount = bookingDetails && paymentMethod === 'online' ? bookingDetails.price.base * CHECKOUT_CONFIG.onlineDiscountPercent : 0
+  const total = bookingDetails ? (bookingDetails.price.base + bookingDetails.price.taxes + bookingDetails.price.serviceFee - discountAmount) : 0
 
+  const onSubmit = async (data: CheckoutFormValues) => {
+    if (!bookingDetails) return;
+    setIsSubmitting(true);
+    setErrorMsg(null);
+    try {
+      await new Promise((resolve, reject) => {
+         setTimeout(() => resolve(true), 1500)
+      })
+
+      const confirmationCode = 'B4C-' + Math.floor(Math.random() * 1000000)
+      const bookingId = 'bk-' + Date.now()
+      const paidInFull = data.paymentMethod === 'online'
+
+      const checkInRaw = searchParams?.get('checkIn') || ''
+      const checkOutRaw = searchParams?.get('checkOut') || ''
+      const checkInDate = checkInRaw ? new Date(`${checkInRaw}T00:00:00`) : new Date()
+      const checkOutDate = checkOutRaw ? new Date(`${checkOutRaw}T00:00:00`) : new Date()
+      const propertyId = searchParams?.get('propertyId') || ''
+      const roomId = searchParams?.get('roomId') || ''
+      const guestCount = parseInt(searchParams?.get('guests') || '2', 10)
+      const nights = Math.max(1, differenceInDays(checkOutDate, checkInDate))
+
+      const property = propertyId ? getPropertyById(propertyId) : null
+      const room = property && roomId ? property.rooms.find(r => r.id === roomId) : null
+
+      useGuestBookingStore.getState().addBooking({
+        id: bookingId,
+        confirmationCode,
+        status: 'UPCOMING',
+        property: bookingDetails.property.title,
+        propertyId,
+        location: property?.location || 'Sri Lanka',
+        imageSrc: bookingDetails.property.imageSrc,
+        roomName: room?.name || 'Premium Room',
+        roomId,
+        checkIn: checkInRaw,
+        checkOut: checkOutRaw,
+        checkInFormatted: format(checkInDate, 'MMM d'),
+        checkOutFormatted: format(checkOutDate, 'MMM d, yyyy'),
+        guests: guestCount,
+        guestsLabel: `${guestCount} Guest${guestCount > 1 ? 's' : ''}`,
+        nights,
+        nightsLabel: `Total for ${nights} night${nights > 1 ? 's' : ''}`,
+        totalPrice: Math.round(total),
+        basePrice: bookingDetails.price.base,
+        taxes: Math.round(bookingDetails.price.taxes),
+        serviceFee: bookingDetails.price.serviceFee,
+        discount: Math.round(discountAmount),
+        paymentMethod: data.paymentMethod,
+        paidInFull,
+        nationalId: data.nationalId || undefined,
+        bookedAt: new Date().toISOString(),
+        userEmail: user?.email || '',
+      })
+
+      const returnParams = new URLSearchParams(bookingDetails.originalParams)
+      returnParams.set('confirmationCode', confirmationCode)
+      returnParams.set('paidInFull', paidInFull ? '1' : '0')
+      router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
+    } catch (e: any) {
+      setErrorMsg("Failed to process booking. Please try again.")
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return {
+    isSubmitting, bookingDetails, errorMsg, isLoggedIn, user, logout,
+    register, handleSubmit, errors, resetForm, paymentMethod, discountAmount, total, onSubmit, searchParams
+  };
+}
+
+function CheckoutUI() {
+  const logic = useCheckoutLogic();
+  const { isSubmitting, bookingDetails, errorMsg, isLoggedIn, user, logout, register, handleSubmit, errors, resetForm, paymentMethod, discountAmount, total, onSubmit, searchParams } = logic;
+  
   if (!bookingDetails) {
     return <div className="min-h-screen flex items-center justify-center">Loading booking details...</div>
-  }
-
-  const discountAmount = paymentMethod === 'online' ? bookingDetails.price.base * 0.05 : 0
-  const total = bookingDetails.price.base + bookingDetails.price.taxes + bookingDetails.price.serviceFee - discountAmount
-
-  // ─── Smart submit handler ───────────────────────────────────────────────
-  const onSubmit = async (data: CheckoutFormValues) => {
-    await completeBooking(data)
-  }
-
-  const completeBooking = async (data: CheckoutFormValues) => {
-    setIsSubmitting(true)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    const confirmationCode = 'B4C-' + Math.floor(Math.random() * 1000000)
-    const bookingId = 'bk-' + Date.now()
-    const paidInFull = data.paymentMethod === 'online'
-
-    // Parse dates from search params
-    const checkInRaw = searchParams?.get('checkIn') || ''
-    const checkOutRaw = searchParams?.get('checkOut') || ''
-    const checkInDate = checkInRaw ? new Date(`${checkInRaw}T00:00:00`) : new Date()
-    const checkOutDate = checkOutRaw ? new Date(`${checkOutRaw}T00:00:00`) : new Date()
-    const propertyId = searchParams?.get('propertyId') || ''
-    const roomId = searchParams?.get('roomId') || ''
-    const guestCount = parseInt(searchParams?.get('guests') || '2', 10)
-    const nights = Math.max(1, differenceInDays(checkOutDate, checkInDate))
-
-    const property = propertyId ? getPropertyById(propertyId) : null
-    const room = property && roomId ? property.rooms.find(r => r.id === roomId) : null
-
-    // Save to booking store
-    useGuestBookingStore.getState().addBooking({
-      id: bookingId,
-      confirmationCode,
-      status: 'UPCOMING',
-      property: bookingDetails.property.title,
-      propertyId,
-      location: property?.location || 'Sri Lanka',
-      imageSrc: bookingDetails.property.imageSrc,
-      roomName: room?.name || 'Premium Room',
-      roomId,
-      checkIn: checkInRaw,
-      checkOut: checkOutRaw,
-      checkInFormatted: format(checkInDate, 'MMM d'),
-      checkOutFormatted: format(checkOutDate, 'MMM d, yyyy'),
-      guests: guestCount,
-      guestsLabel: `${guestCount} Guest${guestCount > 1 ? 's' : ''}`,
-      nights,
-      nightsLabel: `Total for ${nights} night${nights > 1 ? 's' : ''}`,
-      totalPrice: Math.round(total),
-      basePrice: bookingDetails.price.base,
-      taxes: Math.round(bookingDetails.price.taxes),
-      serviceFee: bookingDetails.price.serviceFee,
-      discount: Math.round(discountAmount),
-      paymentMethod: data.paymentMethod,
-      paidInFull,
-      nationalId: data.nationalId || undefined,
-      bookedAt: new Date().toISOString(),
-      userEmail: user?.email || '',
-    })
-
-    const returnParams = new URLSearchParams(bookingDetails.originalParams)
-    returnParams.set('confirmationCode', confirmationCode)
-    returnParams.set('paidInFull', paidInFull ? '1' : '0')
-    router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
   }
 
 
@@ -493,5 +506,17 @@ export default function CheckoutPage() {
 
 
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-t-[var(--brand-secondary)] border-[var(--border)] rounded-full animate-spin" />
+      </div>
+    }>
+      <CheckoutUI />
+    </Suspense>
   )
 }

@@ -41,57 +41,67 @@ function parseIsoDate(raw: string | null) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inner component — separated so Suspense can wrap useSearchParams
+// Business Logic Hook
 // ─────────────────────────────────────────────────────────────────────────────
-function BookingConfirmationInner() {
+function useBookingConfirmationLogic() {
   const searchParams = useSearchParams()
   const [copied,       setCopied]      = useState(false)
   const [booking,      setBooking]     = useState<StoredBooking | null>(null)
   const [fallback,     setFallback]    = useState<FallbackData | null>(null)
+  const [errorMsg,     setErrorMsg]    = useState<string | null>(null)
 
   useEffect(() => {
     if (!searchParams) return
-    const code = searchParams.get("confirmationCode") ?? ""
+    try {
+      const code = searchParams.get("confirmationCode") ?? ""
 
-    // Prefer data from the booking store (authoritative post-checkout source)
-    const stored = useGuestBookingStore.getState().getBookingByCode(code)
-    if (stored) { setBooking(stored); return }
+      // Prefer data from the booking store (authoritative post-checkout source)
+      const stored = useGuestBookingStore.getState().getBookingByCode(code)
+      if (stored) { setBooking(stored); return }
 
-    // Fall back to URL query params for deep-linked or shared confirmation pages
-    const propertyId    = searchParams.get("propertyId") ?? ""
-    const roomId        = searchParams.get("roomId")     ?? ""
-    const paidInFull    = searchParams.get("paidInFull") === "1"
-    const checkInDate   = parseIsoDate(searchParams.get("checkIn"))
-    const checkOutDate  = parseIsoDate(searchParams.get("checkOut"))
-    const guestCount    = parseInt(searchParams.get("guests") ?? "2", 10)
-    const totalFromUrl  = Number(searchParams.get("total") ?? "0")
-    const nights        = checkInDate && checkOutDate
-      ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
+      // Fall back to URL query params for deep-linked or shared confirmation pages
+      const propertyId    = searchParams.get("propertyId") ?? ""
+      const roomId        = searchParams.get("roomId")     ?? ""
+      const paidInFull    = searchParams.get("paidInFull") === "1"
+      const checkInDate   = parseIsoDate(searchParams.get("checkIn"))
+      const checkOutDate  = parseIsoDate(searchParams.get("checkOut"))
+      const guestCount    = parseInt(searchParams.get("guests") ?? "2", 10)
+      const totalFromUrl  = Number(searchParams.get("total") ?? "0")
+      const nights        = checkInDate && checkOutDate
+        ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
 
-    const property = propertyId ? getPropertyById(propertyId) : null
-    const room     = property && roomId ? property.rooms.find(r => r.id === roomId) : null
+      const property = propertyId ? getPropertyById(propertyId) : null
+      const room     = property && roomId ? property.rooms.find(r => r.id === roomId) : null
 
-    setFallback({
-      confirmationCode: code,
-      paidInFull,
-      propertyName:     property?.title        ?? "Your Property",
-      propertyLocation: property ? `${property.location}, Sri Lanka` : "Sri Lanka",
-      propertyImage:    property?.imageSrc     ?? "/images/properties/property-1.jpg",
-      roomName:         room?.name             ?? "Premium Room",
-      checkIn:          checkInDate  ? format(checkInDate,  "EEE, MMM d") : "—",
-      checkOut:         checkOutDate ? format(checkOutDate, "EEE, MMM d") : "—",
-      guests:           guestCount,
-      nights,
-      totalPrice:       totalFromUrl > 0 ? totalFromUrl : (room ? room.pricePerNight * nights : 0),
-    })
+      setFallback({
+        confirmationCode: code,
+        paidInFull,
+        propertyName:     property?.title        ?? "Your Property",
+        propertyLocation: property ? `${property.location}, Sri Lanka` : "Sri Lanka",
+        propertyImage:    property?.imageSrc     ?? "/images/properties/property-1.jpg",
+        roomName:         room?.name             ?? "Premium Room",
+        checkIn:          checkInDate  ? format(checkInDate,  "EEE, MMM d") : "—",
+        checkOut:         checkOutDate ? format(checkOutDate, "EEE, MMM d") : "—",
+        guests:           guestCount,
+        nights,
+        totalPrice:       totalFromUrl > 0 ? totalFromUrl : (room ? room.pricePerNight * nights : 0),
+      })
+    } catch(err) {
+      setErrorMsg("Failed to read confirmation data.");
+    }
   }, [searchParams])
 
   const handleCopy = () => {
     const code = booking?.confirmationCode ?? fallback?.confirmationCode ?? ""
-    navigator.clipboard.writeText(`#${code}`).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
+    try {
+        navigator.clipboard.writeText(`#${code}`).then(() => {
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        })
+    } catch(err) {
+        // Fallback for older browsers
+        console.error("Clipboard write failed", err)
+    }
   }
 
   // Derived display values — store data takes priority over URL fallback
@@ -106,6 +116,19 @@ function BookingConfirmationInner() {
   const guestCount       = booking?.guests           ?? fallback?.guests           ?? 2
   const totalPrice       = booking?.totalPrice       ?? fallback?.totalPrice       ?? 0
   const nights           = booking?.nights           ?? fallback?.nights           ?? 1
+
+  return {
+    booking, fallback, code, paidInFull, propertyName, propertyLocation, propertyImage, roomName,
+    checkInDisplay, checkOutDisplay, guestCount, totalPrice, nights, copied, handleCopy, errorMsg
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inner component — separated so Suspense can wrap useSearchParams
+// ─────────────────────────────────────────────────────────────────────────────
+function BookingConfirmationInner() {
+  const logic = useBookingConfirmationLogic()
+  const { booking, fallback, code, paidInFull, propertyName, propertyLocation, propertyImage, roomName, checkInDisplay, checkOutDisplay, guestCount, totalPrice, nights, copied, handleCopy, errorMsg } = logic
 
   if (!booking && !fallback) {
     return (

@@ -13,18 +13,25 @@ import {
 } from "lucide-react"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Stay constants — replace with API data in production
+// Stay constants — extracted to config object
 // ─────────────────────────────────────────────────────────────────────────────
-const HOTEL_NAME   = "Luxe Horizon Resort"
-const ROOM_NUMBER  = "Suite 402"
-const STAY_DATES   = "Oct 12 – Oct 16, 2024"
-const CHECK_IN     = "Oct 12"
-const CHECK_OUT    = "Oct 16"
-const NIGHTS_TOTAL = 4
-const NIGHTS_DONE  = 1
-const BALANCE_DUE  = "LKR 5,400.00"
-const WIFI_NETWORK = "LuxeHorizon_VIP"
-const WIFI_PASS    = "LuxeSuite2024"
+const MY_ROOM_CONFIG = {
+  HOTEL_NAME: "Luxe Horizon Resort",
+  ROOM_NUMBER: "Suite 402",
+  STAY_DATES: "Oct 12 – Oct 16, 2024",
+  CHECK_IN: "Oct 12",
+  CHECK_OUT: "Oct 16",
+  NIGHTS_TOTAL: 4,
+  NIGHTS_DONE: 1,
+  BALANCE_DUE: "LKR 5,400.00",
+  WIFI_NETWORK: "LuxeHorizon_VIP",
+  WIFI_PASS: "LuxeSuite2024"
+} as const;
+
+const {
+  HOTEL_NAME, ROOM_NUMBER, STAY_DATES, CHECK_IN, CHECK_OUT, 
+  NIGHTS_TOTAL, NIGHTS_DONE, BALANCE_DUE, WIFI_NETWORK, WIFI_PASS
+} = MY_ROOM_CONFIG;
 
 // BarcodeDetector is a browser API not in TypeScript's lib — declare minimally
 declare class BarcodeDetector {
@@ -36,24 +43,36 @@ type CameraPhase = "idle" | "requesting" | "scanning" | "detected" | "error"
 type VerifyPhase = "otp_entry" | "verifying" | "verified"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// OTP gate — keeps dashboard private until a 4-digit PIN is entered
+// Business Logic Hook
 // ─────────────────────────────────────────────────────────────────────────────
-function OtpGate({ onVerified }: { onVerified: () => void }) {
+function useOtpGateLogic(onVerified: () => void) {
   const [otp, setOtp]     = useState("")
   const [phase, setPhase] = useState<VerifyPhase>("otp_entry")
   const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (otp.length < 4) { setError("Please enter a valid 4-digit PIN."); return }
     setError("")
     setPhase("verifying")
-    // Simulate front-desk verification — swap for real API call
-    setTimeout(() => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
       sessionStorage.setItem("my_room_verified", "true")
       onVerified()
-    }, 1500)
+    } catch(err) {
+      setError("Verification failed. Please try again.");
+      setPhase("otp_entry");
+    }
   }
+
+  return { otp, setOtp, phase, error, handleSubmit };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OTP gate — keeps dashboard private until a 4-digit PIN is entered
+// ─────────────────────────────────────────────────────────────────────────────
+function OtpGate({ onVerified }: { onVerified: () => void }) {
+  const { otp, setOtp, phase, error, handleSubmit } = useOtpGateLogic(onVerified);
 
   return (
     <div

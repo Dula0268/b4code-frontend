@@ -110,8 +110,7 @@ function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
     )
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-export default function PropertyDetailPage({ property }: { property: PropertyDetail }) {
+function usePropertyDetailLogic(property: PropertyDetail) {
     const [saved, setSaved] = useState(false)
     const [galleryOpen, setGalleryOpen] = useState(false)
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
@@ -126,7 +125,6 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                 await navigator.share({ title: text, text: `Check out ${text} on Prime Stay`, url })
                 setShareToast("shared")
             } catch {
-                // user cancelled — no toast
                 return
             }
         } else {
@@ -141,6 +139,14 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
     const cheapestRoomId = property.rooms.length > 0
         ? property.rooms.reduce((min, room) => room.pricePerNight < min.pricePerNight ? room : min).id
         : ""
+
+    return { saved, setSaved, galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, shareToast, handleShare, allImages, cheapestRoomId }
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function PropertyDetailPage({ property }: { property: PropertyDetail }) {
+    const logic = usePropertyDetailLogic(property)
+    const { saved, setSaved, galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, shareToast, handleShare, allImages } = logic;
 
     return (
         <div className="min-h-screen bg-[#fafafa]">

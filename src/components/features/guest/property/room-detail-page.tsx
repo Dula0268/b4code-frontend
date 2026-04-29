@@ -19,13 +19,27 @@ function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
 }
 
-function RoomDetailPageContent({ property, room }: { property: PropertyDetail; room: Room }) {
-    const searchParams = useSearchParams()
-    const router = useRouter()
+const ROOM_DETAIL_CONFIG = {
+    serviceFee: 1000,
+    taxes: 500,
+    baseGuests: 2,
+    extraGuestFeePerNight: 5000,
+    promoCodeDiscountRate: 0.2, // 20%
+    tempDefaultDateCheckIn: new Date(2026, 9, 10),
+    tempDefaultDateCheckOut: new Date(2026, 9, 14),
+    mockBookedDates: [
+        new Date(2026, 9, 5),
+        new Date(2026, 9, 6),
+        new Date(2026, 9, 7),
+        new Date(2026, 9, 18),
+        new Date(2026, 9, 19),
+    ]
+} as const;
 
+function useRoomDetailLogic(room: Room, searchParams: any) {
     // Parse initial dates from URL
-    const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : new Date(2026, 9, 10)
-    const initialCheckOut = searchParams?.get("checkOut") ? new Date(searchParams.get("checkOut")!) : new Date(2026, 9, 14)
+    const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : ROOM_DETAIL_CONFIG.tempDefaultDateCheckIn
+    const initialCheckOut = searchParams?.get("checkOut") ? new Date(searchParams.get("checkOut")!) : ROOM_DETAIL_CONFIG.tempDefaultDateCheckOut
 
     // Parse Initial guests
     const initialGuestCount = parseInt(searchParams?.get("guests") || "2", 10)
@@ -33,8 +47,6 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const [galleryOpen, setGalleryOpen] = useState(false)
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
     const [descExpanded, setDescExpanded] = useState(false)
-
-    const allImages = [room.imageSrc, ...(property.galleryImages || [])]
 
     // Calendar & Booking State setup
     const [date, setDate] = useState<DateRange | undefined>({
@@ -49,32 +61,43 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const [promoCode, setPromoCode] = useState("")
     const [isPromoApplied, setIsPromoApplied] = useState(false)
 
-    // Mock booked dates
-    const bgBooked = [
-        new Date(2026, 9, 5),
-        new Date(2026, 9, 6),
-        new Date(2026, 9, 7),
-        new Date(2026, 9, 18),
-        new Date(2026, 9, 19),
-    ]
-
     const nights = date?.from && date?.to ? Math.max(1, differenceInDays(date.to, date.from)) : 1
     const totalRoomPrice = room.pricePerNight * nights
     
     // Guest calculations
-    const BASE_GUESTS = 2;
-    const EXTRA_GUEST_FEE_PER_NIGHT = 5000;
     const totalGuests = guests.adults + guests.children;
     const isGuestLimitExceeded = totalGuests > room.maxGuests;
     
-    const extraGuests = Math.max(0, totalGuests - BASE_GUESTS);
-    const extraGuestFeeTotal = extraGuests * EXTRA_GUEST_FEE_PER_NIGHT * nights;
+    const extraGuests = Math.max(0, totalGuests - ROOM_DETAIL_CONFIG.baseGuests);
+    const extraGuestFeeTotal = extraGuests * ROOM_DETAIL_CONFIG.extraGuestFeePerNight * nights;
 
     const baseSubtotal = totalRoomPrice + extraGuestFeeTotal;
-    const serviceFee = 1000
-    const taxes = 500
-    const discount = isPromoApplied ? totalRoomPrice * 0.2 : 0 // 20% discount on room price
-    const finalTotal = totalRoomPrice + serviceFee + taxes - discount
+    const discount = isPromoApplied ? totalRoomPrice * ROOM_DETAIL_CONFIG.promoCodeDiscountRate : 0
+    const finalTotal = totalRoomPrice + ROOM_DETAIL_CONFIG.serviceFee + ROOM_DETAIL_CONFIG.taxes - discount
+
+    const handleApplyPromo = () => {
+        if (promoCode === "1234") {
+            setIsPromoApplied(true)
+        } else {
+            setIsPromoApplied(false)
+            alert("Invalid promo code")
+        }
+    }
+
+    return { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuests, extraGuestFeeTotal, baseSubtotal, discount, finalTotal, handleApplyPromo };
+}
+
+function RoomDetailPageContent({ property, room }: { property: PropertyDetail; room: Room }) {
+    const searchParams = useSearchParams()
+    const router = useRouter()
+
+    const allImages = [room.imageSrc, ...(property.galleryImages || [])]
+    const bgBooked = ROOM_DETAIL_CONFIG.mockBookedDates
+
+    const logic = useRoomDetailLogic(room, searchParams);
+    const { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuestFeeTotal, discount, finalTotal, handleApplyPromo } = logic;
+    const serviceFee = ROOM_DETAIL_CONFIG.serviceFee;
+    const taxes = ROOM_DETAIL_CONFIG.taxes;
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -376,14 +399,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                         className="flex-1 w-full px-3 py-2 border border-[#e0e0e0] rounded-xl text-[14px] outline-none focus:border-[var(--brand-primary)] transition-colors bg-[#fafafa]"
                                     />
                                     <button
-                                        onClick={() => {
-                                            if (promoCode === "1234") {
-                                                setIsPromoApplied(true)
-                                            } else {
-                                                setIsPromoApplied(false)
-                                                alert("Invalid promo code")
-                                            }
-                                        }}
+                                        onClick={handleApplyPromo}
                                         className="px-4 py-2 bg-[#1d1d1d] hover:bg-[#333] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap">
                                         Apply
                                     </button>

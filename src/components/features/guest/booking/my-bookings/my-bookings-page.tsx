@@ -323,29 +323,54 @@ function fromStore(b: StoredBooking): Booking {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Business Logic Hook
+// ─────────────────────────────────────────────────────────────────────────────
+function useMyBookingsLogic() {
+  const [activeTab, setActiveTab] = useState<Tab>("UPCOMING")
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const user = useAuthStore(s => s.user)
+  const storeBookings = useGuestBookingStore(s => s.bookings)
+
+  useEffect(() => {
+    let active = true
+    try {
+      const userBookings = user?.email
+        ? storeBookings.filter(b => b.userEmail.toLowerCase() === user.email.toLowerCase())
+        : storeBookings
+      if (active) setBookings([...userBookings.map(fromStore), ...DEMO_BOOKINGS])
+    } catch(err) {
+      if (active) setErrorMsg("Failed to synchronize bookings. Try again.")
+    }
+    return () => { active = false }
+  }, [storeBookings, user])
+
+  const visible = bookings.filter(b => b.status === activeTab)
+  const nextUpcoming = bookings.find(b => b.status === "UPCOMING") ?? null
+
+  return { activeTab, setActiveTab, bookings, errorMsg, visible, nextUpcoming }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function MyBookingsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("UPCOMING")
-
-  const user          = useAuthStore(s => s.user)
-  const storeBookings = useGuestBookingStore(s => s.bookings)
-  const [bookings, setBookings] = useState<Booking[]>(DEMO_BOOKINGS)
-
-  // Merge real bookings (front of list) with demo data on user/store change
-  useEffect(() => {
-    const userBookings = user?.email
-      ? storeBookings.filter(b => b.userEmail.toLowerCase() === user.email.toLowerCase())
-      : storeBookings
-    setBookings([...userBookings.map(fromStore), ...DEMO_BOOKINGS])
-  }, [storeBookings, user])
-
-  const visible         = bookings.filter(b => b.status === activeTab)
-  const nextUpcoming    = bookings.find(b => b.status === "UPCOMING") ?? null
+  const logic = useMyBookingsLogic()
+  const { activeTab, setActiveTab, errorMsg, visible, nextUpcoming } = logic
 
   return (
     <div className="min-h-screen pt-20 pb-16" style={{ background: "transparent" }}>
       <div className="max-w-[860px] mx-auto px-4">
+
+        {errorMsg && (
+          <div className="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded-2xl flex items-center justify-between border border-red-200 shadow-sm">
+             <div className="flex items-center gap-2">
+                <XCircle size={16} />
+                <p className="text-sm font-semibold">{errorMsg}</p>
+             </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="pt-8 pb-6">

@@ -137,33 +137,29 @@ function ResultsHeader({ destination, totalCount, checkIn, checkOut, guests, act
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
-const ALL_LISTINGS: PropertyListing[] = [
-    { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, maxGuests: 2, baseGuests: 2, extraGuestFee: 5_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg" },
-    { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 7_500, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg" },
-    { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg" },
-    { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 8_500, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg" },
-    { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 12_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg" },
-    { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, maxGuests: 5, baseGuests: 3, extraGuestFee: 8_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg" },
-    { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, maxGuests: 8, baseGuests: 6, extraGuestFee: 15_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg" },
-    { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, maxGuests: 10, baseGuests: 8, extraGuestFee: 20_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg" },
-    { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg" },
-    { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 6_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg" },
-    { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 9_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg" },
-    { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, maxGuests: 7, baseGuests: 5, extraGuestFee: 12_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg" },
-]
+// ─── Constants & Configuration ──────────────────────────────────────────────────
+const SEARCH_RESULTS_CONFIG = {
+    ITEMS_PER_PAGE: 6,
+    DEFAULT_FILTERS: { priceMin: 10_000, priceMax: 500_000, amenities: [], propertyTypes: [], guestRating: null } as FilterState,
+    ALL_LISTINGS: [
+        { id: "1", title: "Colombo Sky Residency", location: "Colombo 3", propertyType: "Apartment", pricePerNight: 25_000, maxGuests: 2, baseGuests: 2, extraGuestFee: 5_000, rating: 4.92, reviewCount: 148, badge: "Superhost", imageSrc: "/images/properties/property-1.jpg" },
+        { id: "2", title: "Galle Fort Heritage Cottage", location: "Galle Fort", propertyType: "Guesthouse", pricePerNight: 35_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 7_500, rating: 4.85, reviewCount: 92, imageSrc: "/images/properties/property-2.jpg" },
+        { id: "3", title: "Kandy Hilltop Luxury Villa", location: "Kandy", propertyType: "Villa", pricePerNight: 75_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 5.0, reviewCount: 67, badge: "Guest favorite", imageSrc: "/images/properties/property-3.jpg" },
+        { id: "4", title: "Colombo Boutique Business Suite", location: "Colombo 7", propertyType: "Apartment", pricePerNight: 85_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 8_500, rating: 4.75, reviewCount: 53, imageSrc: "/images/properties/property-4.jpg" },
+        { id: "5", title: "Negombo Beachside Retreat", location: "Negombo", propertyType: "Hotel", pricePerNight: 95_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 12_000, rating: 4.98, reviewCount: 211, badge: "Superhost", imageSrc: "/images/properties/property-5.jpg" },
+        { id: "6", title: "Ella Mountain Eco Cabin", location: "Ella", propertyType: "Villa", pricePerNight: 45_000, maxGuests: 5, baseGuests: 3, extraGuestFee: 8_000, rating: 4.88, reviewCount: 134, imageSrc: "/images/properties/property-6.jpg" },
+        { id: "7", title: "Mirissa Oceanfront Villa", location: "Mirissa", propertyType: "Villa", pricePerNight: 120_000, maxGuests: 8, baseGuests: 6, extraGuestFee: 15_000, rating: 4.96, reviewCount: 88, badge: "Guest favorite", imageSrc: "/images/properties/property-7.jpg" },
+        { id: "8", title: "Galle Dutch Period Mansion", location: "Galle Fort", propertyType: "Villa", pricePerNight: 180_000, maxGuests: 10, baseGuests: 8, extraGuestFee: 20_000, rating: 4.91, reviewCount: 45, badge: "Superhost", imageSrc: "/images/properties/property-8.jpg" },
+        { id: "9", title: "Nuwara Eliya Tea Planter's Bungalow", location: "Nuwara Eliya", propertyType: "Guesthouse", pricePerNight: 65_000, maxGuests: 6, baseGuests: 4, extraGuestFee: 10_000, rating: 4.82, reviewCount: 109, imageSrc: "/images/properties/property-9.jpg" },
+        { id: "10", title: "Arugam Bay Surf House", location: "Arugam Bay", propertyType: "Guesthouse", pricePerNight: 28_000, maxGuests: 3, baseGuests: 2, extraGuestFee: 6_000, rating: 4.79, reviewCount: 176, imageSrc: "/images/properties/property-10.jpg" },
+        { id: "11", title: "Sigiriya Rock View Lodge", location: "Sigiriya", propertyType: "Hotel", pricePerNight: 55_000, maxGuests: 4, baseGuests: 2, extraGuestFee: 9_000, rating: 4.94, reviewCount: 203, badge: "Guest favorite", imageSrc: "/images/properties/property-11.jpg" },
+        { id: "12", title: "Bentota Lagoon Water Villa", location: "Bentota", propertyType: "Villa", pricePerNight: 90_000, maxGuests: 7, baseGuests: 5, extraGuestFee: 12_000, rating: 4.87, reviewCount: 61, imageSrc: "/images/properties/property-12.jpg" },
+    ] as PropertyListing[]
+} as const;
 
-const ITEMS_PER_PAGE = 6
-const DEFAULT_FILTERS: FilterState = { priceMin: 10_000, priceMax: 500_000, amenities: [], propertyTypes: [], guestRating: null }
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-export default function SearchResultsPage() {
-    const searchParams = useSearchParams()
-    const destination = searchParams.get("destination") || "Sri Lanka"
-    const checkIn = searchParams.get("checkIn") || ""
-    const checkOut = searchParams.get("checkOut") || ""
-    const guests = Number(searchParams.get("guests") || 2)
-
-    const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
+// ─── Business Logic Hook ──────────────────────────────────────────────────────
+function useSearchResultsLogic(destination: string) {
+    const [filters, setFilters] = useState<FilterState>(SEARCH_RESULTS_CONFIG.DEFAULT_FILTERS)
     const [sortBy, setSortBy] = useState("recommended")
     const [page, setPage] = useState(1)
     const [mapOpen, setMapOpen] = useState(false)
@@ -172,7 +168,7 @@ export default function SearchResultsPage() {
     // Filtering
     const filtered = useMemo(() => {
         const query = destination.trim().toLowerCase()
-        return ALL_LISTINGS.filter(l => {
+        return SEARCH_RESULTS_CONFIG.ALL_LISTINGS.filter(l => {
             if (query && query !== "sri lanka") {
                 const matchesTitle = l.title.toLowerCase().includes(query)
                 const matchesLocation = l.location.toLowerCase().includes(query)
@@ -198,8 +194,8 @@ export default function SearchResultsPage() {
     }, [filtered, sortBy])
 
     // Pagination
-    const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE)
-    const paginated = sorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
+    const totalPages = Math.ceil(sorted.length / SEARCH_RESULTS_CONFIG.ITEMS_PER_PAGE)
+    const paginated = sorted.slice((page - 1) * SEARCH_RESULTS_CONFIG.ITEMS_PER_PAGE, page * SEARCH_RESULTS_CONFIG.ITEMS_PER_PAGE)
 
     const activeFilters: { id: string; label: string }[] = []
     if (filters.priceMax < 500_000 || filters.priceMin > 10_000) activeFilters.push({ id: "price", label: `Price: ${formatLKR(filters.priceMin)} - ${formatLKR(filters.priceMax)}${filters.priceMax === 500_000 ? "+" : ""}` })
@@ -208,7 +204,7 @@ export default function SearchResultsPage() {
 
     const handleRemoveFilter = (filterId: string) => {
         setFilters(prev => {
-            if (filterId === "price") return { ...prev, priceMin: DEFAULT_FILTERS.priceMin, priceMax: DEFAULT_FILTERS.priceMax }
+            if (filterId === "price") return { ...prev, priceMin: SEARCH_RESULTS_CONFIG.DEFAULT_FILTERS.priceMin, priceMax: SEARCH_RESULTS_CONFIG.DEFAULT_FILTERS.priceMax }
             if (filterId.startsWith("type-")) {
                 const pType = filterId.replace("type-", "")
                 return { ...prev, propertyTypes: prev.propertyTypes.filter(t => t !== pType) }
@@ -220,6 +216,20 @@ export default function SearchResultsPage() {
             return prev
         })
     }
+    
+    return { filters, setFilters, sortBy, setSortBy, page, setPage, mapOpen, setMapOpen, hoveredId, setHoveredId, sorted, paginated, totalPages, activeFilters, handleRemoveFilter }
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function SearchResultsPage() {
+    const searchParams = useSearchParams()
+    const destination = searchParams.get("destination") || "Sri Lanka"
+    const checkIn = searchParams.get("checkIn") || ""
+    const checkOut = searchParams.get("checkOut") || ""
+    const guests = Number(searchParams.get("guests") || 2)
+
+    const logic = useSearchResultsLogic(destination);
+    const { filters, setFilters, sortBy, setSortBy, page, setPage, mapOpen, setMapOpen, hoveredId, setHoveredId, sorted, paginated, totalPages, activeFilters, handleRemoveFilter } = logic;
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -231,7 +241,7 @@ export default function SearchResultsPage() {
                             <FiltersSidebar
                                 filters={filters}
                                 onChange={setFilters}
-                                onClear={() => setFilters(DEFAULT_FILTERS)}
+                                onClear={() => setFilters(SEARCH_RESULTS_CONFIG.DEFAULT_FILTERS)}
                                 sortBy={sortBy}
                                 onSortChange={setSortBy}
                                 mapOpen={mapOpen}
@@ -267,7 +277,7 @@ export default function SearchResultsPage() {
                                         <div className="text-5xl mb-4">🏡</div>
                                         <h3 className="text-[18px] font-semibold text-[#1d1d1d] mb-2">No properties match your filters</h3>
                                         <p className="text-[14px] text-[#828282] mb-4">Try adjusting your price range or removing some filters.</p>
-                                        <button onClick={() => setFilters(DEFAULT_FILTERS)} className="px-5 py-2.5 text-sm font-semibold bg-[var(--brand-primary)] text-white rounded-xl hover:bg-[#6d2200] transition-colors">
+                                        <button onClick={() => setFilters(SEARCH_RESULTS_CONFIG.DEFAULT_FILTERS)} className="px-5 py-2.5 text-sm font-semibold bg-[var(--brand-primary)] text-white rounded-xl hover:bg-[#6d2200] transition-colors">
                                             Clear all filters
                                         </button>
                                     </div>
@@ -290,7 +300,7 @@ export default function SearchResultsPage() {
                                     ))}
                                     <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"><ChevronRight size={16} /></button>
                                 </div>
-                                <p className="text-[12px] text-[#828282]">{(page - 1) * ITEMS_PER_PAGE + 1}–{Math.min(page * ITEMS_PER_PAGE, sorted.length)} of {sorted.length} stays</p>
+                                <p className="text-[12px] text-[#828282]">{(page - 1) * SEARCH_RESULTS_CONFIG.ITEMS_PER_PAGE + 1}–{Math.min(page * SEARCH_RESULTS_CONFIG.ITEMS_PER_PAGE, sorted.length)} of {sorted.length} stays</p>
                             </div>
                         )}
                     </div>

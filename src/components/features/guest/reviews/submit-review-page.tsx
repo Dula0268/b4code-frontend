@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Star, X, Camera, ImagePlus, ChevronLeft, CheckCircle2, ThumbsUp } from "lucide-react"
+import { Star, X, Camera, ImagePlus, ChevronLeft, CheckCircle2, ThumbsUp, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -71,16 +71,16 @@ function StarRating({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Page
+// Business Logic Hook
 // ─────────────────────────────────────────────────────────────────────────────
-export default function SubmitReviewPage() {
+function useReviewLogic() {
   const [overallRating, setOverallRating]         = useState(0)
   const [categoryRatings, setCategoryRatings]     = useState<Record<string, number>>({})
   const [reviewText, setReviewText]               = useState("")
   const [photos, setPhotos]                       = useState<UploadedPhoto[]>([])
   const [submitted, setSubmitted]                 = useState(false)
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isSubmitting, setIsSubmitting]           = useState(false)
+  const [errorMsg, setErrorMsg]                   = useState<string | null>(null)
 
   const isFormValid = overallRating > 0 && reviewText.trim().length >= 20
 
@@ -109,12 +109,36 @@ export default function SubmitReviewPage() {
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isFormValid) return
-    // TODO: POST { overallRating, categoryRatings, reviewText, photos } to API
-    setSubmitted(true)
+    setIsSubmitting(true)
+    setErrorMsg(null)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setSubmitted(true)
+    } catch(err) {
+      setErrorMsg("Failed to submit review.");
+    } finally {
+      setIsSubmitting(false)
+    }
   }
+
+  const resetForm = () => {
+    setSubmitted(false); setOverallRating(0); setCategoryRatings({}); setReviewText(""); setPhotos([]);
+  }
+
+  return { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
+export default function SubmitReviewPage() {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  const logic = useReviewLogic()
+  const { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm } = logic
 
   // ── Confirmation screen ──
   if (submitted) {
@@ -144,7 +168,7 @@ export default function SubmitReviewPage() {
               Back to Dashboard
             </Link>
             <button
-              onClick={() => { setSubmitted(false); setOverallRating(0); setCategoryRatings({}); setReviewText(""); setPhotos([]) }}
+              onClick={resetForm}
               className="text-sm font-bold cursor-pointer transition-colors"
               style={{ color: "var(--gray-3)" }}>
               Submit another review
@@ -323,12 +347,17 @@ export default function SubmitReviewPage() {
 
           {/* Submit */}
           <div className="pb-4">
+            {errorMsg && (
+              <div className="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded-xl border border-red-200">
+                 <p className="text-sm font-semibold">{errorMsg}</p>
+              </div>
+            )}
             <button
               type="submit"
-              disabled={!isFormValid}
-              className="w-full py-4 rounded-xl text-[0.9375rem] font-black text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={!isFormValid || isSubmitting}
+              className="w-full py-4 rounded-xl text-[0.9375rem] font-black text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               style={{ background: "var(--brand-primary)" }}>
-              Submit Review
+              {isSubmitting ? <><RefreshCw size={16} className="animate-spin" /> Submitting...</> : "Submit Review"}
             </button>
             <p className="text-[0.6875rem] text-center mt-3 leading-relaxed" style={{ color: "var(--gray-4)" }}>
               By submitting, you certify this review is based on your genuine experience at this property.

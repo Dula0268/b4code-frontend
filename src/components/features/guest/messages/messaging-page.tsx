@@ -19,83 +19,38 @@ interface Message {
     time: string
 }
 
-function getTime() {
-    return new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-}
+const MESSAGING_CONFIG = {
+    HOST_INITIAL: [
+        { id: "m1", sender: "agent" as const, text: "Hello! Thank you for your booking at Sunset Peak Resort. How can we assist you?", time: "10:00 AM" },
+        { id: "m2", sender: "guest" as const, text: "Hi! I'm wondering if there's any flexibility with the check-in time?", time: "10:02 AM" },
+        { id: "m3", sender: "agent" as const, text: "Of course! We can accommodate early check-in from 11 AM onwards, subject to availability. Please let us know your arrival time.", time: "10:04 AM" },
+    ],
+    HOST_QUICK: [
+        { label: "Check-in time", icon: Clock, msg: "Ask about check-in time" },
+        { label: "Early check-in", icon: CalendarCheck, msg: "Request early check-in" },
+        { label: "Parking", icon: ParkingCircle, msg: "Ask about parking" },
+        { label: "Facilities", icon: Building2, msg: "Ask about facilities" },
+    ],
+    HOST_REPLIES: ["Of course, we can accommodate that.", "I'll check availability and get back to you shortly.", "Sure thing, we'll arrange it for you."],
+    STAFF_INITIAL: [
+        { id: "n1", sender: "agent" as const, text: "Welcome! I'm Amal from the front desk. Please let us know if you need anything during your stay.", time: "12:00 PM" },
+    ],
+    STAFF_QUICK: [
+        { icon: Utensils, label: "Room service", msg: "I'd like to order room service please." },
+        { icon: Sparkles, label: "Room cleaning", msg: "Could you arrange room cleaning?" },
+        { icon: AlertCircle, label: "Report problem", msg: "I'd like to report an issue in my room." },
+        { icon: HelpCircle, label: "Assistance", msg: "I need some general assistance please." },
+    ],
+    STAFF_REPLIES: ["Of course! We'll attend to that right away.", "Thank you for letting us know. Our team is on it!", "No problem at all — we'll send someone immediately."]
+} as const;
 
-// Host Variant Data
-const HOST_INITIAL: Message[] = [
-    { id: "m1", sender: "agent", text: "Hello! Thank you for your booking at Sunset Peak Resort. How can we assist you?", time: "10:00 AM" },
-    { id: "m2", sender: "guest", text: "Hi! I'm wondering if there's any flexibility with the check-in time?", time: "10:02 AM" },
-    { id: "m3", sender: "agent", text: "Of course! We can accommodate early check-in from 11 AM onwards, subject to availability. Please let us know your arrival time.", time: "10:04 AM" },
-]
-const HOST_QUICK = [
-    { label: "Check-in time", icon: Clock, msg: "Ask about check-in time" },
-    { label: "Early check-in", icon: CalendarCheck, msg: "Request early check-in" },
-    { label: "Parking", icon: ParkingCircle, msg: "Ask about parking" },
-    { label: "Facilities", icon: Building2, msg: "Ask about facilities" },
-]
-const HOST_REPLIES = ["Of course, we can accommodate that.", "I'll check availability and get back to you shortly.", "Sure thing, we'll arrange it for you."]
-
-// Staff Variant Data
-const STAFF_INITIAL: Message[] = [
-    { id: "n1", sender: "agent", text: "Welcome! I'm Amal from the front desk. Please let us know if you need anything during your stay.", time: "12:00 PM" },
-]
-const STAFF_QUICK = [
-    { icon: Utensils, label: "Room service", msg: "I'd like to order room service please." },
-    { icon: Sparkles, label: "Room cleaning", msg: "Could you arrange room cleaning?" },
-    { icon: AlertCircle, label: "Report problem", msg: "I'd like to report an issue in my room." },
-    { icon: HelpCircle, label: "Assistance", msg: "I need some general assistance please." },
-]
-const STAFF_REPLIES = ["Of course! We'll attend to that right away.", "Thank you for letting us know. Our team is on it!", "No problem at all — we'll send someone immediately."]
-
-export default function MessagingPage() {
-    // Determine variant from searchParams
-    const searchParams = useSearchParams()
-    const isStaff = searchParams.get("type") === "staff"
-
-    const data = isStaff ? {
-        title: "Contact Hotel Staff",
-        desc: "Message our team for room service, cleaning, maintenance or any assistance.",
-        backHref: "/guest/my-room",
-        backText: "Back to My Room",
-        initial: STAFF_INITIAL,
-        img: "/images/room/resort-exterior.png",
-        status: "Staff Online",
-        agentName: "Amal — Front Desk",
-        replies: STAFF_REPLIES,
-        quick: STAFF_QUICK,
-        agentIcon: () => <User size={18} className="text-[var(--brand-secondary)]" />,
-        agentAvatarBg: "bg-[#1a1a1a]",
-        bubbleBg: "bg-white border border-[#ebebeb] text-[#1a1a1a] rounded-bl-md",
-        guestBubbleBg: "bg-[#1a1a1a] text-white rounded-br-md",
-        sendBtnBg: "bg-[#1a1a1a] hover:bg-[#2a2a2a]",
-        inputPlaceholder: "Type your message to the staff…",
-        hint: "Our staff will assist you directly to your suite terminal."
-    } : {
-        title: "Contact Property Owner",
-        desc: "Message the host directly about your booking or any pre-arrival requests.",
-        backHref: "/guest/booking/my-bookings",
-        backText: "Back to Bookings",
-        initial: HOST_INITIAL,
-        img: "/images/booking/sunset-peak-resort.png",
-        status: "Online now",
-        agentName: "Property Owner",
-        replies: HOST_REPLIES,
-        quick: HOST_QUICK,
-        agentIcon: () => <span className="text-white font-black text-[15px]">P</span>,
-        agentAvatarBg: "bg-gradient-to-br from-[var(--brand-primary)] to-orange-600",
-        bubbleBg: "bg-white border border-[#ebebeb] text-[#1a1a1a] rounded-bl-md",
-        guestBubbleBg: "bg-[var(--brand-primary)] text-white rounded-br-md",
-        sendBtnBg: "bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)]",
-        inputPlaceholder: "Type your message to the property owner…",
-        hint: "The property owner will reply as soon as possible."
-    }
-
-    const [messages, setMessages] = useState<Message[]>(data.initial)
+function useMessagingLogic(initialMessages: Message[], replies: readonly string[]) {
+    const [messages, setMessages] = useState<Message[]>(initialMessages)
     const [input, setInput] = useState("")
     const [isTyping, setIsTyping] = useState(false)
     const bottomRef = useRef<HTMLDivElement>(null)
+
+    const getTime = () => new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -109,10 +64,58 @@ export default function MessagingPage() {
 
         setTimeout(() => {
             setIsTyping(false)
-            const reply = data.replies[Math.floor(Math.random() * data.replies.length)]
+            const reply = replies[Math.floor(Math.random() * replies.length)]
             setMessages(prev => [...prev, { id: Date.now().toString() + "a", sender: "agent", text: reply, time: getTime() }])
         }, 1500 + Math.random() * 700)
     }
+
+    return { messages, input, setInput, isTyping, bottomRef, sendMessage }
+}
+
+export default function MessagingPage() {
+    // Determine variant from searchParams
+    const searchParams = useSearchParams()
+    const isStaff = searchParams.get("type") === "staff"
+
+    const data = isStaff ? {
+        title: "Contact Hotel Staff",
+        desc: "Message our team for room service, cleaning, maintenance or any assistance.",
+        backHref: "/guest/my-room",
+        backText: "Back to My Room",
+        initial: [...MESSAGING_CONFIG.STAFF_INITIAL],
+        img: "/images/room/resort-exterior.png",
+        status: "Staff Online",
+        agentName: "Amal — Front Desk",
+        replies: MESSAGING_CONFIG.STAFF_REPLIES,
+        quick: MESSAGING_CONFIG.STAFF_QUICK,
+        agentIcon: () => <User size={18} className="text-[var(--brand-secondary)]" />,
+        agentAvatarBg: "bg-[#1a1a1a]",
+        bubbleBg: "bg-white border border-[#ebebeb] text-[#1a1a1a] rounded-bl-md",
+        guestBubbleBg: "bg-[#1a1a1a] text-white rounded-br-md",
+        sendBtnBg: "bg-[#1a1a1a] hover:bg-[#2a2a2a]",
+        inputPlaceholder: "Type your message to the staff…",
+        hint: "Our staff will assist you directly to your suite terminal."
+    } : {
+        title: "Contact Property Owner",
+        desc: "Message the host directly about your booking or any pre-arrival requests.",
+        backHref: "/guest/booking/my-bookings",
+        backText: "Back to Bookings",
+        initial: [...MESSAGING_CONFIG.HOST_INITIAL],
+        img: "/images/booking/sunset-peak-resort.png",
+        status: "Online now",
+        agentName: "Property Owner",
+        replies: MESSAGING_CONFIG.HOST_REPLIES,
+        quick: MESSAGING_CONFIG.HOST_QUICK,
+        agentIcon: () => <span className="text-white font-black text-[15px]">P</span>,
+        agentAvatarBg: "bg-gradient-to-br from-[var(--brand-primary)] to-orange-600",
+        bubbleBg: "bg-white border border-[#ebebeb] text-[#1a1a1a] rounded-bl-md",
+        guestBubbleBg: "bg-[var(--brand-primary)] text-white rounded-br-md",
+        sendBtnBg: "bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)]",
+        inputPlaceholder: "Type your message to the property owner…",
+        hint: "The property owner will reply as soon as possible."
+    }
+
+    const { messages, input, setInput, isTyping, bottomRef, sendMessage } = useMessagingLogic(data.initial, data.replies);
 
     return (
         <div className="min-h-screen bg-[#f8f7f5] pb-10 font-sans">
