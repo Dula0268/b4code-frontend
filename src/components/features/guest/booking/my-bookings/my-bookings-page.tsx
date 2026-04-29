@@ -37,62 +37,7 @@ interface Booking {
 
 type Tab = BookingStatus   // reuse the same union — no separate type needed
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Demo data — replace with API response when backend is ready
-// ─────────────────────────────────────────────────────────────────────────────
-const DEMO_BOOKINGS: Booking[] = [
-  {
-    id: "demo-1",
-    propertyId: "1",
-    orderNumber: "BK-88291",
-    status: "UPCOMING",
-    property: "Oceanview Luxury Retreat",
-    location: "Maui, Hawaii",
-    imageSrc: "/images/booking/resort-maui.png",
-    checkIn: "Oct 12",
-    checkOut: "Oct 15, 2023",
-    guests: "2 Adults, 1 Child",
-    totalPrice: 25_000,
-    nightsLabel: "Total for 3 nights",
-    paymentMethod: "online",
-    paidInFull: true,
-  },
-  {
-    id: "demo-2",
-    propertyId: "2",
-    orderNumber: "BK-77210",
-    status: "COMPLETED",
-    property: "Mountain Peaks Chalet",
-    location: "Aspen, Colorado",
-    imageSrc: "/images/booking/mountain-chalet.png",
-    checkIn: "Sep 05",
-    checkOut: "Sep 08, 2023",
-    guests: "2 Adults",
-    totalPrice: 30_000,
-    nightsLabel: "Total for 3 nights",
-    bookingStatus: "Checked Out",
-    paymentMethod: "online",
-    paidInFull: true,
-  },
-  {
-    id: "demo-3",
-    propertyId: "3",
-    orderNumber: "BK-10293",
-    status: "CANCELLED",
-    property: "Skyline Loft Apartments",
-    location: "New York, NY",
-    imageSrc: "/images/booking/city-apartment.png",
-    checkIn: "Nov 01",
-    checkOut: "Nov 05, 2023",
-    guests: "2 Adults",
-    totalPrice: 45_000,
-    nightsLabel: "Total for 4 nights",
-    cancellationNote:
-      "Cancelled on Aug 20, 2023. Refund of $450.00 processed to your original payment method.",
-    paymentMethod: "property",
-    paidInFull: false,
-  },
-]
+// Mock bookings completely removed; purely relying on database data.
 
 const TABS: Tab[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
@@ -359,8 +304,8 @@ function useMyBookingsLogic() {
                     paidInFull: true,
                     isFromStore: true,
                 }));
-                // We show API bookings first, then the DEMO ones
-                setBookings([...apiBookings, ...DEMO_BOOKINGS])
+                // We show API bookings directly
+                setBookings(apiBookings)
             }
         } catch(err) {
             if (active) setErrorMsg("Failed to synchronize bookings. Try again.")
@@ -370,7 +315,7 @@ function useMyBookingsLogic() {
     if (user) {
         loadBookings();
     } else {
-        setBookings(DEMO_BOOKINGS);
+        setBookings([]);
     }
     
     return () => { active = false }
