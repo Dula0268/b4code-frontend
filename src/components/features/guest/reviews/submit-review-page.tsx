@@ -1,218 +1,342 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Star, X, Camera } from "lucide-react"
+import { Star, X, Camera, ImagePlus, ChevronLeft, CheckCircle2, ThumbsUp } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
 
-// ─── Zod Schema ───────────────────────────────────────────────────────────────
-const reviewSchema = z.object({
-    overallRating: z.number().min(1, "Please select an overall rating"),
-    cleanliness: z.number().min(1),
-    service: z.number().min(1),
-    valueForMoney: z.number().min(1),
-    reviewText: z.string().min(50, "Review must be at least 50 characters long").max(1000, "Review text is too long"),
-})
-
-type ReviewFormValues = z.infer<typeof reviewSchema>
-
-// ─── Shared Components ────────────────────────────────────────────────────────
-function StarRating({ value, onChange, size = 32 }: { value: number; onChange: (r: number) => void; size?: number }) {
-    const [hover, setHover] = useState(0)
-
-    return (
-        <div className="flex items-center gap-1.5">
-            {[1, 2, 3, 4, 5].map(star => (
-                <button
-                    key={star}
-                    type="button"
-                    onClick={() => onChange(star)}
-                    onMouseEnter={() => setHover(star)}
-                    onMouseLeave={() => setHover(0)}
-                    className="transition-transform hover:scale-110 cursor-pointer"
-                >
-                    <Star
-                        size={size}
-                        className={`${star <= (hover || value)
-                            ? "text-[var(--brand-secondary)] fill-[var(--brand-secondary)]"
-                            : "text-[var(--gray-5)] fill-[var(--gray-5)]"
-                        } transition-colors`}
-                    />
-                </button>
-            ))}
-        </div>
-    )
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+interface UploadedPhoto {
+  id: string
+  url: string    // object URL — revoked on unmount
+  name: string
 }
 
-function SmallStarRating({ value, onChange }: { value: number; onChange: (r: number) => void }) {
-    return <StarRating value={value} onChange={onChange} size={18} />
+interface RatingCategory {
+  key: string
+  label: string
+  description: string
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Review categories — structured so adding a new one only needs an array entry
+// ─────────────────────────────────────────────────────────────────────────────
+const RATING_CATEGORIES: RatingCategory[] = [
+  { key: "cleanliness", label: "Cleanliness",       description: "How clean was the room and property?" },
+  { key: "comfort",     label: "Comfort & Sleep",   description: "Bed, pillows and overall rest quality."  },
+  { key: "service",     label: "Staff & Service",   description: "Helpfulness and responsiveness of staff." },
+  { key: "dining",      label: "Dining & Food",     description: "Quality of in-room dining and restaurants." },
+  { key: "location",    label: "Location & Access", description: "Proximity to local attractions and transport." },
+  { key: "value",       label: "Value for Money",   description: "Did the stay meet your expectations for the price?" },
+]
+
+const MAX_REVIEW_LENGTH = 1000
+const MAX_PHOTOS        = 6
+
+// ─────────────────────────────────────────────────────────────────────────────
+// StarRating sub-component
+// ─────────────────────────────────────────────────────────────────────────────
+function StarRating({
+  rating, onChange, size = 32, id,
+}: {
+  rating: number
+  onChange: (r: number) => void
+  size?: number
+  id: string
+}) {
+  const [hover, setHover] = useState(0)
+
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          id={`${id}-star-${star}`}
+          type="button"
+          onClick={() => onChange(star)}
+          onMouseEnter={() => setHover(star)}
+          onMouseLeave={() => setHover(0)}
+          className="cursor-pointer transition-transform hover:scale-110 active:scale-95"
+        >
+          <Star
+            size={size}
+            className={`transition-colors ${(hover || rating) >= star ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"}`}
+          />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
 export default function SubmitReviewPage() {
-    const router = useRouter()
-    const searchParams = useSearchParams()
-    const ratingParam = Number(searchParams.get('rating')) || 5
+  const [overallRating, setOverallRating]         = useState(0)
+  const [categoryRatings, setCategoryRatings]     = useState<Record<string, number>>({})
+  const [reviewText, setReviewText]               = useState("")
+  const [photos, setPhotos]                       = useState<UploadedPhoto[]>([])
+  const [submitted, setSubmitted]                 = useState(false)
 
-    const [photos, setPhotos] = useState<{ url: string; name: string }[]>([
-        { url: "/images/room-features/resort-exterior.png", name: "photo-1" },
-        { url: "/images/room-features/food-beverage.png", name: "photo-2" },
-    ])
-    const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const {
-        control,
-        register,
-        handleSubmit,
-        formState: { errors, isSubmitting }
-    } = useForm<ReviewFormValues>({
-        resolver: zodResolver(reviewSchema),
-        defaultValues: {
-            overallRating: ratingParam,
-            cleanliness: 4,
-            service: 5,
-            valueForMoney: 4,
-            reviewText: ""
-        }
+  const isFormValid = overallRating > 0 && reviewText.trim().length >= 20
+
+  const setCategoryRating = (key: string, value: number) =>
+    setCategoryRatings(prev => ({ ...prev, [key]: value }))
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    const remaining = MAX_PHOTOS - photos.length
+    if (remaining <= 0) return
+
+    const newPhotos: UploadedPhoto[] = files.slice(0, remaining).map(file => ({
+      id:   `${Date.now()}-${file.name}`,
+      url:  URL.createObjectURL(file),
+      name: file.name,
+    }))
+    setPhotos(prev => [...prev, ...newPhotos])
+  }
+
+  // Release object URLs to avoid memory leaks
+  const removePhoto = (id: string) => {
+    setPhotos(prev => {
+      const target = prev.find(p => p.id === id)
+      if (target) URL.revokeObjectURL(target.url)
+      return prev.filter(p => p.id !== id)
     })
+  }
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files
-        if (!files) return
-        Array.from(files).forEach(file => {
-            const url = URL.createObjectURL(file)
-            setPhotos(prev => [...prev, { url, name: file.name }])
-        })
-        e.target.value = ""
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!isFormValid) return
+    // TODO: POST { overallRating, categoryRatings, reviewText, photos } to API
+    setSubmitted(true)
+  }
 
-    const removePhoto = (name: string) => {
-        setPhotos(prev => prev.filter(p => p.name !== name))
-    }
-
-    const onSubmit = async (data: ReviewFormValues) => {
-        // Simulate API call
-        await new Promise(r => setTimeout(r, 1500))
-        console.log("Review Submitted", { data, photos })
-        router.push("/guest/reviews/completed")
-    }
-
+  // ── Confirmation screen ──
+  if (submitted) {
     return (
-        <div className="min-h-screen bg-[var(--gray-5)]/20 pt-20 pb-16">
-            <div className="max-w-[800px] mx-auto px-4 pt-4">
-                
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-[28px] md:text-[32px] font-bold text-[var(--fg)] leading-tight mb-2">
-                        Submit Property Review
-                    </h1>
-                    <p className="text-[14px] text-[var(--muted)] max-w-[500px] mx-auto leading-relaxed">
-                        Your feedback helps thousands of travelers make better choices. Tell us about your stay at <span className="font-bold text-[var(--fg)]">Grand Ocean Resort</span>.
-                    </p>
-                </div>
+      <div className="min-h-screen flex items-center justify-center px-4 pt-20"
+        style={{ background: "transparent" }}>
+        <div className="ps-card max-w-md w-full p-10 text-center">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: "color-mix(in srgb, var(--state-success) 12%, white)", border: "1px solid color-mix(in srgb, var(--state-success) 25%, transparent)" }}>
+            <CheckCircle2 size={38} style={{ color: "var(--state-success)" }} />
+          </div>
+          <h2 className="text-2xl font-black mb-2" style={{ color: "var(--fg)" }}>Review Submitted!</h2>
+          <div className="flex justify-center gap-0.5 mb-4">
+            {[1, 2, 3, 4, 5].map(s => (
+              <Star key={s} size={24}
+                className={s <= overallRating ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"} />
+            ))}
+          </div>
+          <p className="text-sm leading-relaxed mb-8" style={{ color: "var(--gray-3)" }}>
+            Thank you for your feedback! Your review has been submitted and will be published after a brief review.
+          </p>
 
-                {/* Form Container */}
-                <form onSubmit={handleSubmit(onSubmit)} className="ps-card p-6 md:p-10 mb-8">
-                    
-                    {/* We no longer ask for Overall Rating because it's captured previously */}
-
-                    {/* Detailed Ratings */}
-                    <div className="mb-10">
-                        <h3 className="text-[15px] font-bold text-[var(--fg)] mb-5">Detailed Ratings</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4">
-                            <div>
-                                <p className="text-[13px] font-semibold text-[var(--black-3)] mb-2">Cleanliness</p>
-                                <Controller name="cleanliness" control={control} render={({ field }) => <SmallStarRating value={field.value} onChange={field.onChange} />} />
-                            </div>
-                            <div>
-                                <p className="text-[13px] font-semibold text-[var(--black-3)] mb-2">Service</p>
-                                <Controller name="service" control={control} render={({ field }) => <SmallStarRating value={field.value} onChange={field.onChange} />} />
-                            </div>
-                            <div>
-                                <p className="text-[13px] font-semibold text-[var(--black-3)] mb-2">Value for Money</p>
-                                <Controller name="valueForMoney" control={control} render={({ field }) => <SmallStarRating value={field.value} onChange={field.onChange} />} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="w-full h-px bg-[var(--border)] mb-8" />
-
-                    {/* Written Review */}
-                    <div className="mb-10">
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-[15px] font-bold text-[var(--fg)]">Your Written Review <span className="text-[var(--state-error)]">*</span></h3>
-                            <span className="text-[11px] text-[var(--gray-4)]">Min. 50 characters</span>
-                        </div>
-                        <textarea
-                            {...register("reviewText")}
-                            placeholder="Tell us what you liked or didn't like. Was the bed comfortable? How was the location?"
-                            className={`w-full h-[140px] resize-none border rounded-[var(--radius)] p-4 text-[14px] text-[var(--fg)] placeholder:text-[var(--gray-4)] outline-none transition-colors ${errors.reviewText ? 'border-[var(--state-error)] ring-1 ring-[var(--state-error)]/20' : 'border-[var(--border)] focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)]'}`}
-                        />
-                        {errors.reviewText && <span className="text-[12px] text-[var(--state-error)] mt-1 block font-medium">{errors.reviewText.message}</span>}
-                    </div>
-
-                    {/* Photo Upload */}
-                    <div className="mb-10">
-                        <h3 className="text-[15px] font-bold text-[var(--fg)] mb-3">Add Photos (Optional)</h3>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            className="hidden"
-                            onChange={handleFileChange}
-                        />
-                        <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-full border-2 border-dashed border-[var(--gray-4)] bg-[var(--gray-5)]/20 hover:bg-[var(--gray-5)]/40 rounded-[var(--radius)] flex flex-col items-center justify-center py-10 transition-colors cursor-pointer mb-5 text-[var(--gray-3)] hover:text-[var(--fg)]"
-                        >
-                            <Camera size={28} className="mb-3" />
-                            <p className="text-[13px] font-medium mb-1">Drag and drop your photos here</p>
-                            <p className="text-[11px]">or click to browse from your computer</p>
-                        </div>
-                        {photos.length > 0 && (
-                            <div className="flex items-center gap-3 flex-wrap">
-                                {photos.map(photo => (
-                                    <div key={photo.name} className="relative w-[64px] h-[64px] rounded-lg overflow-hidden border border-[var(--border)] flex-shrink-0">
-                                        <Image src={photo.url} alt={photo.name} fill className="object-cover" />
-                                        <button
-                                            type="button"
-                                            onClick={() => removePhoto(photo.name)}
-                                            className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-colors"
-                                        >
-                                            <X size={10} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6 mt-4">
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full sm:w-auto bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)] disabled:bg-[var(--disabled-bg)] disabled:text-[var(--disabled-fg)] text-white font-bold text-[14px] px-10 py-3.5 rounded-[var(--radius)] transition-colors shadow-md flex justify-center items-center gap-2"
-                        >
-                            {isSubmitting ? "Submitting..." : "Submit My Review"}
-                        </button>
-                        <Link
-                            href="/guest/my-room"
-                            className="text-[14px] font-semibold text-[var(--muted)] hover:text-[var(--fg)] transition-colors"
-                        >
-                            Cancel
-                        </Link>
-                    </div>
-                </form>
-
-                <p className="text-[11px] text-[var(--gray-4)] text-center max-w-[420px] mx-auto leading-relaxed">
-                    By submitting this review, you certify that this review is based on your own experience and is your genuine opinion of this property.
-                </p>
-            </div>
+          <div className="flex flex-col gap-3">
+            <Link href="/guest/my-room"
+              className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 no-underline"
+              style={{ background: "var(--brand-primary)", color: "white" }}>
+              Back to Dashboard
+            </Link>
+            <button
+              onClick={() => { setSubmitted(false); setOverallRating(0); setCategoryRatings({}); setReviewText(""); setPhotos([]) }}
+              className="text-sm font-bold cursor-pointer transition-colors"
+              style={{ color: "var(--gray-3)" }}>
+              Submit another review
+            </button>
+          </div>
         </div>
+      </div>
     )
+  }
+
+  // ── Review form ──
+  return (
+    <div className="min-h-screen pt-20 pb-16" style={{ background: "transparent" }}>
+      <div className="max-w-[820px] mx-auto px-4 pt-6">
+
+        <Link href="/guest/my-room"
+          className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline"
+          style={{ color: "var(--gray-3)" }}>
+          <ChevronLeft size={16} /> Back to Dashboard
+        </Link>
+
+        {/* Hero banner */}
+        <div className="relative rounded-[1.5rem] overflow-hidden mb-8 h-[180px] sm:h-[200px]">
+          <Image src="/images/room/review-stay.png" alt="Your stay" fill className="object-cover" />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.8), transparent)" }} />
+          <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[0.6875rem] font-bold uppercase tracking-wide mb-3 w-fit border"
+              style={{
+                background:  "color-mix(in srgb, var(--brand-secondary) 20%, transparent)",
+                borderColor: "color-mix(in srgb, var(--brand-secondary) 30%, transparent)",
+                color:       "var(--brand-secondary)",
+              }}>
+              <ThumbsUp size={11} /> Post-Stay Review
+            </div>
+            <h1 className="text-[1.75rem] font-black text-white mb-1 tracking-tight" style={{ fontSize: "clamp(1.25rem, 4vw, 1.75rem)" }}>
+              How was your stay?
+            </h1>
+            <p className="text-sm text-white/60">Luxe Horizon Resort · Suite 402 · Oct 12–16, 2024</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
+          {/* Overall rating — the most important field, shown first */}
+          <div className="ps-card p-5 sm:p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: "color-mix(in srgb, var(--brand-secondary) 15%, white)", border: "1px solid color-mix(in srgb, var(--brand-secondary) 20%, transparent)" }}>
+                <Star size={18} style={{ color: "var(--brand-secondary)" }} />
+              </div>
+              <div>
+                <h2 className="text-[0.9375rem] font-black" style={{ color: "var(--fg)" }}>Overall Rating</h2>
+                <p className="text-xs" style={{ color: "var(--gray-3)" }}>How would you rate your overall experience?</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center py-4">
+              <StarRating id="overall" rating={overallRating} onChange={setOverallRating} size={40} />
+              {overallRating > 0 && (
+                <p className="text-sm font-bold mt-3" style={{ color: "var(--brand-secondary)" }}>
+                  {["", "Poor", "Fair", "Good", "Very Good", "Excellent"][overallRating]}
+                </p>
+              )}
+              {overallRating === 0 && (
+                <p className="text-xs mt-3" style={{ color: "var(--gray-4)" }}>Tap a star to rate</p>
+              )}
+            </div>
+          </div>
+
+          {/* Category ratings — grouped so the form feels structured rather than overwhelming */}
+          <div className="ps-card p-5 sm:p-6">
+            <h2 className="text-[0.9375rem] font-black mb-1" style={{ color: "var(--fg)" }}>Rate Categories</h2>
+            <p className="text-xs mb-5" style={{ color: "var(--gray-3)" }}>Help future guests with detailed ratings.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {RATING_CATEGORIES.map(({ key, label, description }) => (
+                <div key={key}>
+                  <p className="text-[0.8125rem] font-black mb-0.5" style={{ color: "var(--fg)" }}>{label}</p>
+                  <p className="text-[0.625rem] mb-2" style={{ color: "var(--gray-4)" }}>{description}</p>
+                  <StarRating id={key} rating={categoryRatings[key] ?? 0} onChange={v => setCategoryRating(key, v)} size={22} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Written review */}
+          <div className="ps-card p-5 sm:p-6">
+            <h2 className="text-[0.9375rem] font-black mb-1" style={{ color: "var(--fg)" }}>Your Review</h2>
+            <p className="text-xs mb-4" style={{ color: "var(--gray-3)" }}>
+              Share what made your stay special (or areas to improve). Minimum 20 characters.
+            </p>
+            <textarea
+              id="review-text"
+              value={reviewText}
+              onChange={e => setReviewText(e.target.value.slice(0, MAX_REVIEW_LENGTH))}
+              placeholder="Describe your experience: the room, the service, the ambiance…"
+              rows={5}
+              className="w-full rounded-xl border text-sm resize-none p-4 outline-none transition focus:border-[var(--fg)]"
+              style={{ background: "color-mix(in srgb, var(--gray-5) 40%, white)", borderColor: "var(--border)", color: "var(--fg)" }}
+            />
+            <div className="flex justify-between items-center mt-2">
+              {reviewText.length > 0 && reviewText.length < 20 && (
+                <p className="text-[0.625rem] font-semibold" style={{ color: "var(--state-warning)" }}>
+                  {20 - reviewText.length} more characters needed
+                </p>
+              )}
+              <span className="text-[0.625rem] ml-auto font-medium" style={{ color: "var(--gray-4)" }}>
+                {reviewText.length} / {MAX_REVIEW_LENGTH}
+              </span>
+            </div>
+          </div>
+
+          {/* Photo upload */}
+          <div className="ps-card p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-[0.9375rem] font-black" style={{ color: "var(--fg)" }}>Add Photos</h2>
+                <p className="text-xs mt-0.5" style={{ color: "var(--gray-3)" }}>
+                  Up to {MAX_PHOTOS} photos (optional — photos boost your review&apos;s helpfulness)
+                </p>
+              </div>
+              <span className="text-[0.625rem] font-black px-2.5 py-1 rounded-full border"
+                style={{ background: "color-mix(in srgb, var(--gray-5) 40%, white)", borderColor: "var(--border)", color: "var(--gray-3)" }}>
+                {photos.length} / {MAX_PHOTOS}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {photos.map(photo => (
+                <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden border group"
+                  style={{ borderColor: "var(--border)" }}>
+                  <Image src={photo.url} alt={photo.name} fill className="object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(photo.id)}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    style={{ background: "rgba(0,0,0,0.6)" }}>
+                    <X size={12} className="text-white" />
+                  </button>
+                </div>
+              ))}
+
+              {/* Upload button — only shown when under the limit */}
+              {photos.length < MAX_PHOTOS && (
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors"
+                  style={{ borderColor: "var(--border)" }}>
+                  <ImagePlus size={20} style={{ color: "var(--gray-4)" }} />
+                  <span className="text-[0.5625rem] font-bold" style={{ color: "var(--gray-4)" }}>Add</span>
+                </button>
+              )}
+            </div>
+
+            {/* Hidden inputs — Camera and file picker */}
+            <div className="flex gap-2 mt-3">
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                style={{ borderColor: "var(--border)", color: "var(--gray-2)", background: "color-mix(in srgb, var(--gray-5) 40%, white)" }}>
+                <Camera size={14} /> Take Photo
+              </button>
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                style={{ borderColor: "var(--border)", color: "var(--gray-2)", background: "color-mix(in srgb, var(--gray-5) 40%, white)" }}>
+                <ImagePlus size={14} /> Upload Photos
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
+          </div>
+
+          {/* Submit */}
+          <div className="pb-4">
+            <button
+              type="submit"
+              disabled={!isFormValid}
+              className="w-full py-4 rounded-xl text-[0.9375rem] font-black text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "var(--brand-primary)" }}>
+              Submit Review
+            </button>
+            <p className="text-[0.6875rem] text-center mt-3 leading-relaxed" style={{ color: "var(--gray-4)" }}>
+              By submitting, you certify this review is based on your genuine experience at this property.
+            </p>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  )
 }

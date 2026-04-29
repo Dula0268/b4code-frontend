@@ -254,7 +254,7 @@ function BookingCard({ booking }: { booking: Booking }) {
                 <BedDouble size={13} /> My Room
               </Link>
               {/* Amber accent on Message Host to visually distinguish it from the plain primary action */}
-              <Link href="/guest/booking/message-host"
+              <Link href="/guest/messages?type=host"
                 className={`${btnHost}`}
                 style={{ background: "var(--brand-primary)", color: "var(--brand-secondary)" }}>
                 <MessageSquare size={13} /> Message Host
@@ -273,7 +273,7 @@ function BookingCard({ booking }: { booking: Booking }) {
               <Link href="/guest/booking/confirmation" className={btnOutline}>
                 <Download size={13} /> Download Invoice
               </Link>
-              <Link href="/guest/my-room/submit-review" className={btnOutline}>
+              <Link href="/guest/reviews" className={btnOutline}>
                 <Star size={13} /> Rate Stay
               </Link>
               <Link href="/guest/booking/confirmation" className={btnGhost}>

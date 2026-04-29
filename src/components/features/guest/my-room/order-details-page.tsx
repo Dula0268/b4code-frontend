@@ -186,7 +186,7 @@ export default function OrderDetailsPage() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link href="/guest/my-room/message-staff?tab=staff&q=Question about my order #4029"
+              <Link href="/guest/messages?type=staff?tab=staff&q=Question about my order #4029"
                 className="flex items-center gap-3 p-5 bg-white rounded-2xl border border-[var(--border)] shadow-sm hover:shadow-md transition-shadow no-underline group">
                 <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)] flex items-center justify-center flex-shrink-0">
                   <MessageSquare size={18} className="text-[var(--brand-secondary)]" />
@@ -269,7 +269,7 @@ export default function OrderDetailsPage() {
               <p className="text-[12px] font-black text-white/40 uppercase tracking-widest mb-3">After your meal</p>
               <h3 className="text-[16px] font-black mb-1">Enjoyed it?</h3>
               <p className="text-[12px] text-white/50 mb-4 leading-relaxed">Leave a review and help other guests discover our best dishes.</p>
-              <Link href="/guest/my-room/submit-review"
+              <Link href="/guest/reviews"
                 className="flex items-center gap-2 text-[var(--brand-secondary)] font-bold text-[13px] no-underline hover:gap-3 transition-all">
                 <Star size={14} className="fill-[var(--brand-secondary)]" />
                 Write a Review <ArrowRight size={13} />

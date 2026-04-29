@@ -1,12 +1,11 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
-import SubmitReviewPage from "@/components/features/guest/my-room/submit-review-page"
+import SubmitReviewPage from "@/components/features/guest/reviews/submit-review-page"
+import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 
 export const metadata = {
-    title: "Submit Property Review — Prime Stay Sri Lanka",
+    title: "Submit Property Review — Prime Stay",
     description: "Submit a review of your recent stay.",
 }
-
-import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 
 export default function SubmitReviewRoute() {
     return (

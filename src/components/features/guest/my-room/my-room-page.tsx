@@ -352,9 +352,9 @@ function Dashboard() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { icon: Utensils,      label: "Order Food",   sub: "Browse menu",   href: "/guest/order/menu",            bg: "bg-amber-50",  border: "border-amber-100",  iconCls: "text-amber-600"  },
-                    { icon: MessageSquare, label: "Staff Chat",   sub: "We reply fast", href: "/guest/my-room/message-staff",  bg: "bg-blue-50",   border: "border-blue-100",   iconCls: "text-blue-600"   },
+                    { icon: MessageSquare, label: "Staff Chat",   sub: "We reply fast", href: "/guest/messages?type=staff",  bg: "bg-blue-50",   border: "border-blue-100",   iconCls: "text-blue-600"   },
                     { icon: ClipboardList, label: "Order Status", sub: "Track your order", href: "/guest/my-room/order-details", bg: "bg-green-50",  border: "border-green-100",  iconCls: "text-green-600"  },
-                    { icon: Pencil,        label: "Write Review", sub: "Share feedback", href: "/guest/my-room/submit-review", bg: "bg-purple-50", border: "border-purple-100", iconCls: "text-purple-600" },
+                    { icon: Pencil,        label: "Write Review", sub: "Share feedback", href: "/guest/reviews", bg: "bg-purple-50", border: "border-purple-100", iconCls: "text-purple-600" },
                   ].map(({ icon: Icon, label, sub, href, bg, border, iconCls }) => (
                     <Link key={label} href={href}
                       className={`flex flex-col items-center text-center gap-2.5 p-4 rounded-2xl border ${bg} ${border} hover:shadow-md transition-all no-underline group`}>
@@ -469,7 +469,7 @@ function Dashboard() {
                     { icon: Bell,        label: "Assistance",   q: "I need general assistance, please." },
                   ].map(({ icon: Icon, label, q }) => (
                     <Link key={label}
-                      href={`/guest/my-room/message-staff?q=${encodeURIComponent(q)}`}
+                      href={`/guest/messages?type=staff?q=${encodeURIComponent(q)}`}
                       className="flex flex-col items-center gap-2 p-3.5 border rounded-xl transition-all no-underline text-center group"
                       style={{ borderColor: "var(--border)" }}>
                       <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
@@ -481,7 +481,7 @@ function Dashboard() {
                   ))}
                 </div>
 
-                <Link href="/guest/my-room/message-staff"
+                <Link href="/guest/messages?type=staff"
                   className="mt-4 w-full py-3 border rounded-xl text-[0.8125rem] font-bold flex items-center justify-center gap-2 no-underline transition-all"
                   style={{ borderColor: "var(--border)", color: "var(--gray-2)" }}>
                   <MessageSquare size={14} /> Open Staff Chat <ArrowRight size={13} className="ml-auto" />
@@ -551,7 +551,7 @@ function Dashboard() {
                     style={{ background: "var(--brand-primary)" }}>
                     <Phone size={14} /> Call Ext. 0
                   </button>
-                  <Link href="/guest/my-room/message-staff"
+                  <Link href="/guest/messages?type=staff"
                     className="flex-1 flex items-center justify-center gap-2 py-3 border rounded-xl text-xs font-bold transition-all no-underline"
                     style={{ borderColor: "var(--border)", color: "var(--gray-2)" }}>
                     <MessageSquare size={14} /> Message
@@ -574,7 +574,7 @@ function Dashboard() {
                 <p className="text-xs leading-relaxed mb-4" style={{ color: "var(--gray-3)" }}>
                   Share your experience. Your feedback helps us improve for every guest.
                 </p>
-                <Link href="/guest/my-room/submit-review"
+                <Link href="/guest/reviews"
                   className="w-full py-3 rounded-xl text-[0.8125rem] font-bold flex items-center justify-center gap-2 no-underline transition-colors"
                   style={{ background: "var(--brand-primary)", color: "white" }}>
                   <Pencil size={14} /> Write a Review

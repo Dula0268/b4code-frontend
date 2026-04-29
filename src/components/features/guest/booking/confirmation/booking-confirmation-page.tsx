@@ -312,7 +312,7 @@ function BookingConfirmationInner() {
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: "View My Room",   href: "/guest/my-room",                   icon: ChevronRight },
-                { label: "Message Host",   href: "/guest/booking/message-host",       icon: ChevronRight },
+                { label: "Message Host",   href: "/guest/messages?type=host",       icon: ChevronRight },
               ].map(({ label, href, icon: Icon }) => (
                 <Link key={label} href={href}
                   className="flex items-center justify-between px-4 py-3 border rounded-xl text-sm font-semibold no-underline transition-colors"
