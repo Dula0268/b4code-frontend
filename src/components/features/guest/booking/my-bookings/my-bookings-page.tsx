@@ -273,7 +273,7 @@ function BookingCard({ booking }: { booking: Booking }) {
               <Link href="/guest/booking/confirmation" className={btnOutline}>
                 <Download size={13} /> Download Invoice
               </Link>
-              <Link href="/guest/reviews" className={btnOutline}>
+              <Link href={`/guest/reviews?propertyId=${booking.propertyId}`} className={btnOutline}>
                 <Star size={13} /> Rate Stay
               </Link>
               <Link href="/guest/booking/confirmation" className={btnGhost}>

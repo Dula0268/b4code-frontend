@@ -4,6 +4,8 @@ import { useState, useRef } from "react"
 import { Star, X, Camera, ImagePlus, ChevronLeft, CheckCircle2, ThumbsUp, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { useSearchParams } from "next/navigation"
+import { useAuthStore } from "@/store/auth/auth.store"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -109,13 +111,33 @@ function useReviewLogic() {
     })
   }
 
+  const searchParams = useSearchParams()
+  const propertyId = searchParams?.get("propertyId") || "1"
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isFormValid) return
     setIsSubmitting(true)
     setErrorMsg(null)
+    
+    const guest = useAuthStore.getState().user;
+    const authorName = guest?.profile?.firstName ? `${guest.profile.firstName} ${guest.profile.lastName}` : "Guest";
+    const initials = authorName.substring(0, 2).toUpperCase();
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const res = await fetch(`http://localhost:8080/api/guest/properties/${propertyId}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          author: authorName,
+          avatarInitials: initials,
+          avatarColor: "bg-emerald-500",
+          date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+          text: reviewText,
+          rating: overallRating
+        })
+      });
+      if (!res.ok) throw new Error("Failed");
       setSubmitted(true)
     } catch(err) {
       setErrorMsg("Failed to submit review.");
