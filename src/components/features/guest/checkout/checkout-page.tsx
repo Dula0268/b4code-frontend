@@ -7,7 +7,6 @@ import * as z from "zod"
 import { Check, ShieldCheck, CreditCard, Hotel, ChevronRight, LogIn, User, Home } from "lucide-react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { getPropertyById } from "@/lib/mock-properties"
 import { differenceInDays, format } from "date-fns"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
@@ -86,37 +85,56 @@ function useCheckoutLogic() {
     const guests = searchParams.get("guests") || "2"
     const totalFromQuery = Number(searchParams.get("total") || "0")
 
-    const property = propertyId ? getPropertyById(propertyId) : null
-    const room = property && roomId ? property.rooms.find(r => r.id === roomId) : null
-    const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
-    const basePrice = room ? room.pricePerNight * nights : 0
+    async function loadData() {
+        let property = null;
+        let room = null;
+        if (propertyId) {
+            try {
+                const res = await fetch(`http://localhost:8080/api/guest/properties/${propertyId}`);
+                if (res.ok) {
+                    property = await res.json();
+                }
+            } catch (e) {
+                console.error("Failed to fetch property", e);
+            }
+        }
 
-    const computedTotal = totalFromQuery > 0 ? totalFromQuery : (basePrice + basePrice * CHECKOUT_CONFIG.taxRate + CHECKOUT_CONFIG.serviceFee)
-    const taxes = totalFromQuery > 0 ? (totalFromQuery - basePrice - CHECKOUT_CONFIG.serviceFee) : (basePrice * CHECKOUT_CONFIG.taxRate)
+        if (property && roomId) {
+            room = property.rooms?.find((r: any) => r.id === roomId) || null;
+        }
 
-    setBookingDetails({
-      property: property ? {
-        title: property.title,
-        roomInfo: `${room ? room.name : "Premium Room"} • ${guests} Guests`,
-        rating: property.rating,
-        reviews: property.reviewCount,
-        imageSrc: property.imageSrc
-      } : {
-        title: "Unknown Property",
-        roomInfo: "Unknown Room • 2 Guests",
-        rating: 0,
-        reviews: 0,
-        imageSrc: "/images/properties/property-1.jpg"
-      },
-      dates: checkInDate && checkOutDate ? `${format(checkInDate, 'MMM d')} - ${format(checkOutDate, 'MMM d')} (${nights} nights)` : "Select dates",
-      price: {
-        base: basePrice,
-        taxes: taxes > 0 ? taxes : 0,
-        serviceFee: CHECKOUT_CONFIG.serviceFee,
-        discount: 0,
-      },
-      originalParams: searchParams.toString()
-    })
+        const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
+        const basePrice = room ? room.pricePerNight * nights : 0
+
+        const computedTotal = totalFromQuery > 0 ? totalFromQuery : (basePrice + basePrice * CHECKOUT_CONFIG.taxRate + CHECKOUT_CONFIG.serviceFee)
+        const taxes = totalFromQuery > 0 ? (totalFromQuery - basePrice - CHECKOUT_CONFIG.serviceFee) : (basePrice * CHECKOUT_CONFIG.taxRate)
+
+        setBookingDetails({
+          property: property ? {
+            title: property.title,
+            roomInfo: `${room ? room.name : "Premium Room"} • ${guests} Guests`,
+            rating: property.rating,
+            reviews: property.reviewCount,
+            imageSrc: property.imageSrc
+          } : {
+            title: "Unknown Property",
+            roomInfo: "Unknown Room • 2 Guests",
+            rating: 0,
+            reviews: 0,
+            imageSrc: "/images/properties/property-1.jpg"
+          },
+          dates: checkInDate && checkOutDate ? `${format(checkInDate, 'MMM d')} - ${format(checkOutDate, 'MMM d')} (${nights} nights)` : "Select dates",
+          price: {
+            base: basePrice,
+            taxes: taxes > 0 ? taxes : 0,
+            serviceFee: CHECKOUT_CONFIG.serviceFee,
+            discount: 0,
+          },
+          originalParams: searchParams.toString()
+        })
+    }
+
+    loadData()
   }, [searchParams])
 
   const { register, handleSubmit, watch, formState: { errors }, setValue, reset: resetForm } = useForm<CheckoutFormValues>({
@@ -150,18 +168,41 @@ function useCheckoutLogic() {
       const guestCount = parseInt(searchParams?.get('guests') || '2', 10)
       const nights = Math.max(1, differenceInDays(checkOutDate, checkInDate))
 
-      const property = propertyId ? getPropertyById(propertyId) : null
-      const room = property && roomId ? property.rooms.find(r => r.id === roomId) : null
+      let serverBookingId = bookingId;
+
+      try {
+        const guestIdToUse = (user as any)?.id || 1;
+        const res = await fetch("http://localhost:8080/api/guest/bookings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                propertyId: propertyId,
+                guestId: guestIdToUse,
+                checkInDate: checkInRaw,
+                checkOutDate: checkOutRaw,
+                totalPrice: total
+            })
+        });
+        
+        if (res.ok) {
+            const serverBooking = await res.json();
+            serverBookingId = serverBooking.id.toString();
+        } else {
+            console.warn("Backend booking failed, falling back to local store for demo");
+        }
+      } catch (e) {
+          console.warn("Backend booking API not reachable, falling back to local store for demo");
+      }
 
       useGuestBookingStore.getState().addBooking({
-        id: bookingId,
+        id: serverBookingId,
         confirmationCode,
         status: 'UPCOMING',
         property: bookingDetails.property.title,
         propertyId,
-        location: property?.location || 'Sri Lanka',
+        location: 'Sri Lanka',
         imageSrc: bookingDetails.property.imageSrc,
-        roomName: room?.name || 'Premium Room',
+        roomName: bookingDetails.property.roomInfo.split(" • ")[0],
         roomId,
         checkIn: checkInRaw,
         checkOut: checkOutRaw,
