@@ -24,7 +24,7 @@ export interface PropertyListing {
     extraGuestFee: number
     rating: number
     reviewCount: number
-    badge?: "Superhost" | "Guest favorite"
+    badge?: string
     imageSrc: string
 }
 
@@ -200,7 +200,7 @@ function useSearchResultsLogic(destination: string, checkIn: string, checkOut: s
             if (filters.guestRating && l.rating < Number(filters.guestRating)) return false
             return true
         })
-    }, [filters, destination])
+    }, [listings, filters, destination])
 
     // Sorting
     const sorted = useMemo(() => {
