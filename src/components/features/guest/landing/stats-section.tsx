@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import { Building2, Users, Globe, Award } from "lucide-react"
 
 const STATS = [
-  { icon: Building2, value: "1,200+", label: "Verified Properties", color: "from-[#953002] to-[#c84a15]" },
-  { icon: Users, value: "50,000+", label: "Happy Guests", color: "from-[#ffb401] to-[#ffc940]" },
+  { icon: Building2, value: "1,200+", label: "Verified Properties", color: "from-[var(--brand-primary)] to-[#c84a15]" },
+  { icon: Users, value: "50,000+", label: "Happy Guests", color: "from-[var(--brand-secondary)] to-[#ffc940]" },
   { icon: Globe, value: "120+", label: "Destinations", color: "from-emerald-500 to-teal-500" },
   { icon: Award, value: "4.9/5", label: "Average Rating", color: "from-purple-500 to-indigo-500" },
 ]
@@ -31,8 +31,8 @@ export default function StatsSection() {
       className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-5 bg-gradient-to-br from-[#0f1923] via-[#1a2a3a] to-[#0f1923] overflow-hidden"
     >
       {/* Decorative glowing orbs - hidden on mobile for performance */}
-      <div className="hidden sm:block absolute top-1/2 left-1/4 w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] bg-[#953002]/10 rounded-full blur-[80px] sm:blur-[100px] -translate-y-1/2" />
-      <div className="hidden sm:block absolute top-1/2 right-1/4 w-[150px] sm:w-[250px] h-[150px] sm:h-[250px] bg-[#ffb401]/8 rounded-full blur-[60px] sm:blur-[80px] -translate-y-1/2" />
+      <div className="hidden sm:block absolute top-1/2 left-1/4 w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] bg-[var(--brand-primary)]/10 rounded-full blur-[80px] sm:blur-[100px] -translate-y-1/2" />
+      <div className="hidden sm:block absolute top-1/2 right-1/4 w-[150px] sm:w-[250px] h-[150px] sm:h-[250px] bg-[var(--brand-secondary)]/8 rounded-full blur-[60px] sm:blur-[80px] -translate-y-1/2" />
 
       <div className="relative max-w-[1100px] mx-auto">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 lg:gap-12">

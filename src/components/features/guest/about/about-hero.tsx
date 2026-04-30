@@ -33,13 +33,13 @@ export default function AboutHero() {
       >
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-[10px] sm:text-[12px] font-medium tracking-wider uppercase">
-          <span className="w-2 h-2 rounded-full bg-[#ffb401] animate-pulse flex-shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-[var(--brand-secondary)] animate-pulse flex-shrink-0" />
           Our Story
         </div>
 
         <h1 className="text-white font-black text-[clamp(28px,6vw,52px)] leading-[1.1] tracking-tight drop-shadow-lg">
           Building Trust in{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffb401] via-[#ffc940] to-[#ffb401]">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-secondary)] via-[#ffc940] to-[var(--brand-secondary)]">
             Sri Lankan Hospitality
           </span>
         </h1>

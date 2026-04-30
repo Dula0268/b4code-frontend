@@ -9,16 +9,16 @@ const VALUES = [
     title: "Our Mission",
     description:
       "To make finding and booking quality accommodation in Sri Lanka effortless, transparent, and trustworthy for every traveler.",
-    gradient: "from-[#953002]/15 to-[#c84a15]/15",
-    iconBg: "from-[#953002] to-[#c84a15]",
+    gradient: "from-[var(--brand-primary)]/15 to-[#c84a15]/15",
+    iconBg: "from-[var(--brand-primary)] to-[#c84a15]",
   },
   {
     icon: Eye,
     title: "Our Vision",
     description:
       "To become South Asia's most trusted hospitality marketplace — where guests feel at home and property owners thrive.",
-    gradient: "from-[#ffb401]/15 to-[#ffc940]/15",
-    iconBg: "from-[#ffb401] to-[#ffc940]",
+    gradient: "from-[var(--brand-secondary)]/15 to-[#ffc940]/15",
+    iconBg: "from-[var(--brand-secondary)] to-[#ffc940]",
   },
   {
     icon: Heart,
@@ -51,7 +51,7 @@ export default function MissionVision() {
       className="relative py-16 sm:py-20 md:py-28 px-4 sm:px-6 bg-[#faf9f7] overflow-hidden"
     >
       {/* Decorative top accent line */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-gradient-to-r from-[#953002] to-[#ffb401] rounded-full" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)] rounded-full" />
 
       <div className="relative max-w-[1100px] mx-auto">
         {/* Section header */}
@@ -60,12 +60,12 @@ export default function MissionVision() {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
         >
-          <span className="inline-block text-[#953002] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
+          <span className="inline-block text-[var(--brand-primary)] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
             What Drives Us
           </span>
           <h2 className="text-[clamp(24px,4.5vw,40px)] font-black text-[#1d1d1d] leading-[1.1] tracking-tight mb-3 sm:mb-4">
             Purpose Beyond{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#953002] to-[#c84a15]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-primary)] to-[#c84a15]">
               Bookings
             </span>
           </h2>

@@ -146,7 +146,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { closeAll(); setLocationOpen(true) }}
         >
-          <MapPin size={16} className="text-[#953002] flex-shrink-0" />
+          <MapPin size={16} className="text-[var(--brand-primary)] flex-shrink-0" />
           <input
             type="text"
             value={destination}
@@ -173,7 +173,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { closeAll(); setCalOpen(o => !o) }}
         >
-          <Calendar size={16} className="text-[#953002] flex-shrink-0" />
+          <Calendar size={16} className="text-[var(--brand-primary)] flex-shrink-0" />
           <span className={`text-sm truncate ${dateLabel ? "text-[#333333]" : "text-[#828282]"}`}>
             {dateLabel || "Dates"}
           </span>
@@ -223,7 +223,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { closeAll(); setGuestOpen(o => !o) }}
         >
-          <Users size={16} className="text-[#953002] flex-shrink-0" />
+          <Users size={16} className="text-[var(--brand-primary)] flex-shrink-0" />
           <span className="text-sm text-[#333333]">{guestLabel}</span>
         </div>
 
@@ -239,7 +239,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       <button
         onClick={handleSearch}
         aria-label="Search"
-        className="bg-[#953002] hover:bg-[#6d2200] text-white rounded-lg w-11 h-11 flex items-center
+        className="bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white rounded-lg w-11 h-11 flex items-center
                    justify-center flex-shrink-0 transition-colors self-center"
       >
         <Search size={18} />

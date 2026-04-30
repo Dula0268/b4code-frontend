@@ -9,14 +9,14 @@ const MILESTONES = [
     title: "The Beginning",
     description: "Prime Stay launched in Colombo with just 15 verified properties and a dream to change Sri Lankan hospitality.",
     icon: Calendar,
-    color: "from-[#953002] to-[#c84a15]",
+    color: "from-[var(--brand-primary)] to-[#c84a15]",
   },
   {
     year: "2022",
     title: "Rapid Growth",
     description: "Expanded to 200+ properties across 30 destinations. Launched our mobile-first platform with instant booking.",
     icon: Building2,
-    color: "from-[#ffb401] to-[#ffc940]",
+    color: "from-[var(--brand-secondary)] to-[#ffc940]",
   },
   {
     year: "2023",
@@ -69,8 +69,8 @@ export default function Timeline() {
       className="relative py-16 sm:py-20 md:py-28 px-4 sm:px-6 bg-gradient-to-br from-[#0f1923] via-[#1a2a3a] to-[#0f1923] overflow-hidden"
     >
       {/* Decorative glowing orbs */}
-      <div className="hidden sm:block absolute top-1/4 left-[10%] w-[200px] h-[200px] bg-[#953002]/10 rounded-full blur-[100px]" />
-      <div className="hidden sm:block absolute bottom-1/4 right-[10%] w-[180px] h-[180px] bg-[#ffb401]/8 rounded-full blur-[80px]" />
+      <div className="hidden sm:block absolute top-1/4 left-[10%] w-[200px] h-[200px] bg-[var(--brand-primary)]/10 rounded-full blur-[100px]" />
+      <div className="hidden sm:block absolute bottom-1/4 right-[10%] w-[180px] h-[180px] bg-[var(--brand-secondary)]/8 rounded-full blur-[80px]" />
 
       <div className="relative max-w-[900px] mx-auto">
         {/* Section header */}
@@ -79,12 +79,12 @@ export default function Timeline() {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
         >
-          <span className="inline-block text-[#ffb401] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
+          <span className="inline-block text-[var(--brand-secondary)] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
             Our Journey
           </span>
           <h2 className="text-[clamp(24px,4.5vw,40px)] font-black text-white leading-[1.1] tracking-tight mb-3 sm:mb-4">
             From Humble Roots to{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffb401] to-[#ffc940]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-secondary)] to-[#ffc940]">
               Island-Wide Trust
             </span>
           </h2>
@@ -93,7 +93,7 @@ export default function Timeline() {
         {/* Timeline */}
         <div className="relative">
           {/* Vertical line - center on desktop, left on mobile */}
-          <div className="absolute left-4 sm:left-6 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-[2px] bg-gradient-to-b from-[#953002] via-[#ffb401] to-[#953002]/30" />
+          <div className="absolute left-4 sm:left-6 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-[2px] bg-gradient-to-b from-[var(--brand-primary)] via-[var(--brand-secondary)] to-[var(--brand-primary)]/30" />
 
           <div className="space-y-8 sm:space-y-10 md:space-y-12">
             {MILESTONES.map((milestone, i) => {

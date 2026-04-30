@@ -207,7 +207,7 @@ export default function SearchResultsPage() {
                                         </p>
                                         <button
                                             onClick={handleClearFilters}
-                                            className="px-5 py-2.5 text-sm font-semibold bg-[#953002] text-white rounded-xl hover:bg-[#6d2200] transition-colors"
+                                            className="px-5 py-2.5 text-sm font-semibold bg-[var(--brand-primary)] text-white rounded-xl hover:bg-[#6d2200] transition-colors"
                                         >
                                             Clear all filters
                                         </button>
@@ -237,7 +237,7 @@ export default function SearchResultsPage() {
                                         onClick={() => setPage(p => Math.max(1, p - 1))}
                                         disabled={page === 1}
                                         aria-label="Previous page"
-                                        className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
+                                        className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
                                     >
                                         <ChevronLeft size={16} />
                                     </button>
@@ -251,8 +251,8 @@ export default function SearchResultsPage() {
                                             className={[
                                                 "w-9 h-9 rounded-xl text-[14px] font-medium transition-colors cursor-pointer border",
                                                 p === page
-                                                    ? "bg-[#953002] text-white border-[#953002]"
-                                                    : "bg-white text-[#333333] border-[#e0e0e0] hover:border-[#953002]/40 hover:text-[#953002]",
+                                                    ? "bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]"
+                                                    : "bg-white text-[#333333] border-[#e0e0e0] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)]",
                                             ].join(" ")}
                                         >
                                             {p}
@@ -264,7 +264,7 @@ export default function SearchResultsPage() {
                                         onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                         disabled={page === totalPages}
                                         aria-label="Next page"
-                                        className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[#953002]/40 hover:text-[#953002] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
+                                        className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
                                     >
                                         <ChevronRight size={16} />
                                     </button>

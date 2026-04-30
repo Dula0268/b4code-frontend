@@ -24,7 +24,7 @@ export default function OurStory() {
       <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, #953002 1px, transparent 0)`,
+          backgroundImage: `radial-gradient(circle at 1px 1px, var(--brand-primary) 1px, transparent 0)`,
           backgroundSize: "40px 40px",
         }}
       />
@@ -45,17 +45,17 @@ export default function OurStory() {
                 className="object-cover"
               />
               {/* Gradient overlay on image */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#953002]/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-[var(--brand-primary)]/20 to-transparent" />
             </div>
 
             {/* Floating stat card */}
             <div className="absolute -bottom-5 -right-3 sm:-right-5 bg-white rounded-xl shadow-xl p-3 sm:p-4 border border-[#f0f0f0]">
-              <p className="text-[#953002] text-[24px] sm:text-[32px] font-black leading-none">2021</p>
+              <p className="text-[var(--brand-primary)] text-[24px] sm:text-[32px] font-black leading-none">2021</p>
               <p className="text-[#828282] text-[11px] sm:text-[12px] font-medium mt-1">Founded in Colombo</p>
             </div>
 
             {/* Decorative accent */}
-            <div className="hidden md:block absolute -top-4 -left-4 w-20 h-20 border-t-4 border-l-4 border-[#ffb401]/40 rounded-tl-2xl" />
+            <div className="hidden md:block absolute -top-4 -left-4 w-20 h-20 border-t-4 border-l-4 border-[var(--brand-secondary)]/40 rounded-tl-2xl" />
           </div>
 
           {/* Text side */}
@@ -64,12 +64,12 @@ export default function OurStory() {
               isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
             }`}
           >
-            <span className="inline-block text-[#953002] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
+            <span className="inline-block text-[var(--brand-primary)] text-[10px] sm:text-[12px] font-bold tracking-[0.2em] uppercase mb-2 sm:mb-3">
               Our Story
             </span>
             <h2 className="text-[clamp(24px,4.5vw,40px)] font-black text-[#1d1d1d] leading-[1.1] tracking-tight mb-4 sm:mb-6">
               Born From a{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#953002] to-[#c84a15]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-primary)] to-[#c84a15]">
                 Love for Sri Lanka
               </span>
             </h2>
@@ -99,7 +99,7 @@ export default function OurStory() {
                 { value: "120+", label: "Destinations" },
               ].map(({ value, label }) => (
                 <div key={label}>
-                  <p className="text-[#953002] text-[20px] sm:text-[24px] font-black leading-none">{value}</p>
+                  <p className="text-[var(--brand-primary)] text-[20px] sm:text-[24px] font-black leading-none">{value}</p>
                   <p className="text-[#828282] text-[11px] sm:text-[12px] font-medium mt-1">{label}</p>
                 </div>
               ))}

@@ -263,11 +263,11 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
           entries
         </p>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="w-9 h-9 rounded-lg border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors"
+            className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
@@ -275,9 +275,9 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
           {/* Page number buttons */}
           <button
             onClick={() => setCurrentPage(1)}
-            className={`w-9 h-9 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors ${
+            className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors ${
               currentPage === 1
-                ? "bg-[#F59E0B] text-white"
+                ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
                 : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
             }`}
           >
@@ -286,9 +286,9 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
 
           <button
             onClick={() => setCurrentPage(2)}
-            className={`w-9 h-9 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors ${
+            className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors ${
               currentPage === 2
-                ? "bg-[#F59E0B] text-white"
+                ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
                 : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
             }`}
           >
@@ -301,9 +301,9 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
 
           <button
             onClick={() => setCurrentPage(totalPages)}
-            className={`w-9 h-9 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors ${
+            className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors ${
               currentPage === totalPages
-                ? "bg-[#F59E0B] text-white"
+                ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
                 : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
             }`}
           >
@@ -313,7 +313,7 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="w-9 h-9 rounded-lg border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors"
+            className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors"
           >
             <ChevronRight size={16} />
           </button>
