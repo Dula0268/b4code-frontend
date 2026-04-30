@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CalendarDays, Hash, ChevronRight, Info, ChevronDown } from "lucide-react"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
+import { useAuthStore } from "@/store/auth/auth.store"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration & Constants
@@ -95,14 +96,15 @@ function useCancelBookingLogic() {
     setSubmitting(true)
 
     try {
-      // Simulate API request with success/fail validation
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Add dummy validation logic to prevent hardcoding errors
-          if (!reason) reject(new Error("Reason is required"))
-          resolve(true)
-        }, 1200)
-      })
+      if (storeBooking && !storeBooking.id.startsWith("bk-")) {
+        const guestIdToUse = (useAuthStore.getState().user as any)?.id || 1;
+        const res = await fetch(`http://localhost:8080/api/guest/bookings/${storeBooking.id}/cancel?guestId=${guestIdToUse}`, {
+            method: "PATCH"
+        });
+        if (!res.ok) {
+            throw new Error("Failed to cancel booking on server.");
+        }
+      }
 
       if (storeBooking) {
         cancelBooking(storeBooking.id)

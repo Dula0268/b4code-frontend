@@ -370,7 +370,13 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                                                 ))}
                                             </div>
                                         </div>
-                                        <p className="text-[13px] text-[#555] leading-relaxed">&quot;{rev.text}&quot;</p>
+                                        <p className="text-[13px] text-[#555] leading-relaxed mb-3">&quot;{rev.text}&quot;</p>
+                                        {rev.ownerReply && (
+                                            <div className="mt-2 p-3 bg-[#f8f8f8] rounded-xl border border-[#ebebeb]">
+                                                <p className="text-[11px] font-bold text-[#1d1d1d] mb-1">Response from {property.hostName.split(' ')[0]}</p>
+                                                <p className="text-[12px] text-[#666] leading-relaxed">{rev.ownerReply}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

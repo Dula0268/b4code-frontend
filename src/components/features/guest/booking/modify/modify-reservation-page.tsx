@@ -85,12 +85,33 @@ function nightsBetween(from: string, to: string) {
 // Custom Hook for State & Business Logic 
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
+import { useAuthStore } from "@/store/auth/auth.store"
+import { useSearchParams } from "next/navigation"
+
 function useModifyReservationLogic() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const bookingIdParam = searchParams.get("bookingId")
 
-  const [checkIn, setCheckIn] = useState("2024-06-14")
-  const [checkOut, setCheckOut] = useState("2024-06-18")
-  const [guests, setGuests] = useState(3)
+  const bookings = useGuestBookingStore((s) => s.bookings)
+  const storeBooking = useMemo(
+    () => (bookingIdParam ? bookings.find((b) => b.id === bookingIdParam) : undefined),
+    [bookings, bookingIdParam]
+  )
+
+  const originalData = storeBooking ? {
+    bookingId: storeBooking.confirmationCode,
+    checkIn: storeBooking.checkIn,
+    checkOut: storeBooking.checkOut,
+    nights: storeBooking.nights,
+    total: storeBooking.totalPrice,
+    guests: storeBooking.guests,
+  } : ORIGINAL_DATA
+
+  const [checkIn, setCheckIn] = useState(originalData.checkIn || "2024-06-14")
+  const [checkOut, setCheckOut] = useState(originalData.checkOut || "2024-06-18")
+  const [guests, setGuests] = useState(originalData.guests || 3)
   const [roomId, setRoomId] = useState("deluxe")
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -100,8 +121,8 @@ function useModifyReservationLogic() {
 
   const roomUpgrade = roomId === "executive" ? APP_CONFIG.executiveExtra * newNights : 0
   const newTotal = APP_CONFIG.pricePerNight * newNights + roomUpgrade
-  const guestFeeTotal = guests > ORIGINAL_DATA.guests ? APP_CONFIG.guestFee * (guests - ORIGINAL_DATA.guests) : 0
-  const additionalDue = Math.max(0, newTotal - ORIGINAL_DATA.total + guestFeeTotal)
+  const guestFeeTotal = guests > originalData.guests ? APP_CONFIG.guestFee * (guests - originalData.guests) : 0
+  const additionalDue = Math.max(0, newTotal - originalData.total + guestFeeTotal)
 
   const handleCheckIn = (val: string) => {
     setCheckIn(val)
@@ -121,13 +142,33 @@ function useModifyReservationLogic() {
     setSubmitting(true)
     
     try {
-      // Simulate backend API modification procedure
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (!checkIn || !checkOut) reject(new Error("Invalid Dates"))
-          resolve(true)
-        }, 1200)
-      })
+      if (storeBooking && !storeBooking.id.startsWith("bk-")) {
+        const guestIdToUse = (useAuthStore.getState().user as any)?.id || 1;
+        
+        const payload = {
+            propertyId: parseInt(storeBooking.propertyId) || 1,
+            roomId: parseInt(roomId) || 1, // Fallback if roomId is string
+            checkInDate: checkIn,
+            checkOutDate: checkOut,
+            guests: guests,
+            specialRequests: "Modified booking",
+            paymentMethod: "CARD",
+            totalPrice: newTotal
+        };
+
+        const res = await fetch(`http://localhost:8080/api/guest/bookings/${storeBooking.id}?guestId=${guestIdToUse}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!res.ok) {
+            throw new Error("Failed to modify booking on server.");
+        }
+      }
+
       router.push("/guest/booking/confirmation")
     } catch (e: any) {
       setErrorMsg(e?.message || "Failed to modify the reservation. Please try again.")
@@ -141,6 +182,7 @@ function useModifyReservationLogic() {
   }
 
   return {
+    originalData,
     checkIn, handleCheckIn,
     checkOut, setCheckOut,
     guests, handleIncrementGuests, handleDecrementGuests,
@@ -190,7 +232,7 @@ function ModifyReservationUI() {
               Modify Your Reservation
             </h1>
             <p className="text-sm mt-1" style={{ color: "var(--gray-3)" }}>
-              Booking {ORIGINAL_DATA.bookingId} ·{" "}
+              Booking {logic.originalData.bookingId} ·{" "}
               <span className="font-semibold" style={{ color: "var(--state-success)" }}>Confirmed</span>
             </p>
           </div>
@@ -222,7 +264,7 @@ function ModifyReservationUI() {
                     <div className="px-4 py-3 border-r" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)", borderColor: "var(--border)" }}>
                       <p className="text-[0.625rem] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--gray-4)" }}>Original</p>
                       <p className="text-sm font-semibold" style={{ color: "var(--gray-2)" }}>
-                        {fmtShort(ORIGINAL_DATA.checkIn)} – {fmtLong(ORIGINAL_DATA.checkOut)}
+                        {fmtShort(logic.originalData.checkIn)} – {fmtLong(logic.originalData.checkOut)}
                       </p>
                     </div>
                     <div className="px-4 py-3 bg-white">
@@ -236,7 +278,7 @@ function ModifyReservationUI() {
                   {/* Date pickers */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
-                      { id: "modify-checkin",  label: "Check-in",  value: logic.checkIn,  min: ORIGINAL_DATA.checkIn, onChange: logic.handleCheckIn },
+                      { id: "modify-checkin",  label: "Check-in",  value: logic.checkIn,  min: logic.originalData.checkIn, onChange: logic.handleCheckIn },
                       { id: "modify-checkout", label: "Check-out", value: logic.checkOut, min: logic.checkIn,         onChange: logic.setCheckOut },
                     ].map(({ id, label, value, min, onChange }) => (
                       <div key={id}>
@@ -279,7 +321,7 @@ function ModifyReservationUI() {
                   <div className="grid grid-cols-2 gap-0 border rounded-xl overflow-hidden" style={{ borderColor: "var(--border)" }}>
                     <div className="px-4 py-3 border-r" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)", borderColor: "var(--border)" }}>
                       <p className="text-[0.625rem] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--gray-4)" }}>Original</p>
-                      <p className="text-sm font-semibold" style={{ color: "var(--gray-2)" }}>{ORIGINAL_DATA.guests} Adults</p>
+                      <p className="text-sm font-semibold" style={{ color: "var(--gray-2)" }}>{logic.originalData.guests} Adults</p>
                     </div>
                     <div className="px-4 py-3 bg-white flex items-center gap-3">
                       <div>
@@ -361,7 +403,7 @@ function ModifyReservationUI() {
 
               <div className="flex flex-col gap-2.5 mb-4">
                 {[
-                  { label: `Original (${ORIGINAL_DATA.nights} nights)`, value: formatCurrency(ORIGINAL_DATA.total),  muted: true  },
+                  { label: `Original (${logic.originalData.nights} nights)`, value: formatCurrency(logic.originalData.total),  muted: true  },
                   { label: `New (${logic.newNights} night${logic.newNights !== 1 ? "s" : ""})`, value: formatCurrency(logic.newTotal), muted: false },
                   ...(logic.roomUpgrade > 0   ? [{ label: "Room Upgrade",       value: formatCurrency(logic.roomUpgrade),   muted: false }] : []),
                   ...(logic.guestFeeTotal > 0 ? [{ label: "Guest Addition Fee", value: formatCurrency(logic.guestFeeTotal), muted: false }] : []),
