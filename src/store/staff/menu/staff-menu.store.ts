@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import api from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -55,9 +56,13 @@ export interface Menu {
 interface StaffMenuState {
   menus: Menu[];
   successMsg: string | null;
+  errorMsg: string | null;
+  isLoading: boolean;
 }
 
 interface StaffMenuActions {
+  fetchMenus: (propertyId: number) => Promise<void>;
+  fetchMenuItems: (propertyId: number) => Promise<void>;
   getMenu: (id: string) => Menu | undefined;
   addMenu: (menu: Omit<Menu, "id" | "itemCount" | "priceRange" | "items">, items?: Omit<MenuItem, "id">[]) => string;
   updateMenu: (id: string, data: Partial<Menu>) => void;
@@ -68,6 +73,7 @@ interface StaffMenuActions {
   deleteItem: (menuId: string, itemId: string) => void;
   toggleItemStatus: (menuId: string, itemId: string) => void;
   setSuccess: (msg: string | null) => void;
+  setError: (msg: string | null) => void;
 }
 
 function calcPriceRange(items: MenuItem[]): string {
@@ -81,89 +87,91 @@ function calcPriceRange(items: MenuItem[]): string {
 let nextMenuId = 5;
 let nextItemId = 100;
 
-const MOCK_MENUS: Menu[] = [
-  {
-    id: "1",
-    name: "Breakfast Delight",
-    description: "Traditional string hoppers, dhal curry, and pol sambol.",
-    type: "Sri Lankan",
-    status: "active",
-    isVisible: true,
-    isNew: true,
-    priceRange: "LKR 1,500 - 2,200",
-    itemCount: 12,
-    items: [
-      {
-        id: "1", name: "Margherita Pizza", price: 3000, description: "Classic tomato sauce, fresh mozzarella, basil.", category: "Main", status: "active", calories: 450,
-        availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
-        variants: [{ id: "v1", label: "Small", price: 2000 }, { id: "v2", label: "Large", price: 3500 }],
-        modifiers: [{ id: "m1", name: "Spice Level", options: [{ label: "Mild", price: 0 }, { label: "Hot", price: 50 }] }],
-      },
-      {
-        id: "2", name: "Classic Beef Burger", price: 1200, description: "Angus beef patty, cheddar, lettuce, tomato.", category: "Main", status: "active", calories: 620,
-        availability: { startTime: "11:00", endTime: "23:00", allDays: true, days: [] },
-        variants: [], modifiers: [],
-      },
-      {
-        id: "3", name: "Tropical Smoothie", price: 400, description: "Mango, pineapple, coconut milk blend.", category: "Drink", status: "draft", tag: "Drink",
-        availability: { startTime: "08:00", endTime: "18:00", allDays: true, days: [] },
-        variants: [], modifiers: [],
-      },
-      {
-        id: "4", name: "Caesar Salad", price: 600, description: "Romaine, parmesan, croutons, caesar dressing.", category: "Starter", status: "active", calories: 320,
-        availability: { startTime: "11:00", endTime: "22:00", allDays: true, days: [] },
-        variants: [], modifiers: [],
-      },
-      {
-        id: "5", name: "Spaghetti Carbonara", price: 900, description: "Pancetta, egg, parmesan, black pepper.", category: "Main", status: "active", calories: 550,
-        availability: { startTime: "11:00", endTime: "22:00", allDays: true, days: [] },
-        variants: [], modifiers: [],
-      },
-      {
-        id: "6", name: "Tiramisu", price: 850, description: "Mascarpone, espresso soaked ladyfingers.", category: "Dessert", status: "active", calories: 300, tag: "Seasonal",
-        availability: { startTime: "11:00", endTime: "22:00", allDays: true, days: [] },
-        variants: [], modifiers: [],
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Standard Lunch Buffet",
-    description: "Red rice, 5 vegetable curries, fish/chicken options.",
-    type: "Buffet",
-    status: "active",
-    isVisible: true,
-    priceRange: "LKR 2,500 pp",
-    itemCount: 25,
-    items: [],
-  },
-  {
-    id: "3",
-    name: "Western Start",
-    description: "Toast, eggs benedict, sausages, and fresh fruit.",
-    type: "Western",
-    status: "draft",
-    isVisible: false,
-    priceRange: "LKR 1,800",
-    itemCount: 8,
-    items: [],
-  },
-  {
-    id: "4",
-    name: "High Tea Platter",
-    description: "Scones, mini sandwiches, Ceylon tea pot.",
-    type: "Snacks",
-    status: "active",
-    isVisible: true,
-    priceRange: "LKR 3,000 for 2",
-    itemCount: 6,
-    items: [],
-  },
-];
+// Start with empty array - menus will be fetched from API
+const MOCK_MENUS: Menu[] = [];
 
 export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set, get) => ({
   menus: MOCK_MENUS,
   successMsg: null,
+  errorMsg: null,
+  isLoading: false,
+
+  fetchMenus: async (propertyId: number) => {
+    try {
+      set({ isLoading: true, errorMsg: null });
+      const response = await api.get(`/menu-items/property/${propertyId}`);
+      const menuItems = response.data;
+      
+      // Convert backend menu items to frontend format
+      const menuItemMap = menuItems.reduce((acc: Record<string, MenuItem[]>, item: any) => {
+        const menuKey = item.category || "General";
+        if (!acc[menuKey]) acc[menuKey] = [];
+        acc[menuKey].push({
+          id: String(item.id),
+          name: item.name,
+          price: item.price,
+          description: item.description || "",
+          category: item.category || "General",
+          status: item.isAvailable ? "active" : "draft",
+          availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
+          variants: [],
+          modifiers: [],
+        });
+        return acc;
+      }, {});
+
+      // Create frontend menus from grouped items
+      const menus: Menu[] = Object.entries(menuItemMap).map(([category, items], idx) => ({
+        id: String(idx),
+        name: category,
+        description: `${category} items`,
+        type: category,
+        status: "active",
+        isVisible: true,
+        priceRange: calcPriceRange(items as MenuItem[]),
+        itemCount: (items as MenuItem[]).length,
+        items: items as MenuItem[],
+      }));
+
+      set({ menus, isLoading: false });
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || "Failed to fetch menus";
+      set({ errorMsg, isLoading: false });
+      console.error("Failed to fetch menus:", error);
+    }
+  },
+
+  fetchMenuItems: async (propertyId: number) => {
+    try {
+      set({ isLoading: true, errorMsg: null });
+      const response = await api.get(`/menu-items/property/${propertyId}`);
+      const backendItems = response.data;
+      
+      set((state) => ({
+        menus: state.menus.map((menu) => ({
+          ...menu,
+          items: backendItems
+            .filter((item: any) => item.category === menu.type || menu.type === item.category)
+            .map((item: any) => ({
+              id: String(item.id),
+              name: item.name,
+              price: item.price,
+              description: item.description || "",
+              category: item.category || "General",
+              status: item.isAvailable ? "active" : "draft",
+              availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
+              variants: [],
+              modifiers: [],
+            })),
+        })),
+        isLoading: false,
+      }));
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || "Failed to fetch menu items";
+      set({ errorMsg, isLoading: false });
+      console.error("Failed to fetch menu items:", error);
+    }
+  },
 
   getMenu: (id) => get().menus.find((m) => m.id === id),
 
@@ -231,4 +239,5 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     })),
 
   setSuccess: (msg) => set({ successMsg: msg }),
+  setError: (msg) => set({ errorMsg: msg }),
 }));
