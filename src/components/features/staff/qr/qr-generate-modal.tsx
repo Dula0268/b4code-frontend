@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Save, Info, QrCode } from "lucide-react";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
 import type { QRType, QRTab } from "@/store/staff/qr/staff-qr.store";
@@ -20,12 +20,16 @@ const TYPE_TAB: Record<QRType, QRTab> = {
   Room: "Room",
 };
 
-export default function QrCreateForm({ qrId }: { qrId?: string }) {
+export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrId?: string; propertyId?: number }) {
+  const searchParams = useSearchParams();
+  const propertyId = propPropertyId || (searchParams?.get("propertyId") ? parseInt(searchParams.get("propertyId")!) : 1);
   const router = useRouter();
   const existingQR = useStaffQRStore((s) => (qrId ? s.getQR(qrId) : undefined));
   const addQR = useStaffQRStore((s) => s.addQR);
   const updateQR = useStaffQRStore((s) => s.updateQR);
   const setSuccess = useStaffQRStore((s) => s.setSuccess);
+  const loading = useStaffQRStore((s) => s.loading);
+  const error = useStaffQRStore((s) => s.error);
 
   const isEdit = !!qrId;
 
@@ -36,26 +40,31 @@ export default function QrCreateForm({ qrId }: { qrId?: string }) {
   const [isActive, setIsActive] = useState(existingQR?.status === "active" || !existingQR);
   const [nameError, setNameError] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) { setNameError(true); return; }
-    if (isEdit && qrId) {
-      updateQR(qrId, { type, name, location, description, status: isActive ? "active" : "inactive", tab: TYPE_TAB[type] });
-      setSuccess(`QR "${name}" updated successfully.`);
-      router.push("/staff/qr");
-    } else {
-      const id = addQR({
-        type,
-        name,
-        location,
-        description,
-        status: isActive ? "active" : "inactive",
-        tab: TYPE_TAB[type],
-        instructionText: "Scan to Order Food",
-        showRoomNumber: true,
-        showLogo: true,
-      });
-      setSuccess(`QR "${name}" has been added to your QR management.`);
-      router.push(`/staff/qr/${id}`);
+    try {
+      if (isEdit && qrId) {
+        await updateQR(qrId, { type, name, location, description, status: isActive ? "active" : "inactive", tab: TYPE_TAB[type] });
+        setSuccess(`QR "${name}" updated successfully.`);
+        router.push("/staff/qr");
+      } else {
+        const id = await addQR({
+          type,
+          name,
+          location,
+          description,
+          status: isActive ? "active" : "inactive",
+          tab: TYPE_TAB[type],
+          instructionText: "Scan to Order Food",
+          showRoomNumber: true,
+          showLogo: true,
+        }, propertyId);
+        setSuccess(`QR "${name}" has been added to your QR management.`);
+        router.push(`/staff/qr/${id}`);
+      }
+    } catch (error: unknown) {
+      console.error("Error saving QR:", error);
+      // Error is already set in the store
     }
   };
 
@@ -73,14 +82,19 @@ export default function QrCreateForm({ qrId }: { qrId?: string }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => router.push("/staff/qr")}>Cancel</Button>
-          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave}>
-            <Save size={12} /> Save QR
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => router.push("/staff/qr")} disabled={loading}>Cancel</Button>
+          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1 disabled:opacity-50" onClick={handleSave} disabled={loading}>
+            <Save size={12} /> {loading ? "Saving..." : "Save QR"}
           </Button>
         </div>
       </div>
 
-      {/* Body — 2 column */}
+      {/* Error message */}
+      {error && (
+        <div className="flex-none bg-[rgba(220,38,38,0.1)] border border-[rgba(220,38,38,0.3)] rounded-lg px-3 py-2 text-xs text-[#991b1b]">
+          {error}
+        </div>
+      )}
       <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
         {/* Left: Form */}
         <div className="flex-1 overflow-y-auto">
