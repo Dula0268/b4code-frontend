@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useCartStore } from "@/store/guest/order/cart-store";
+import { useCartStore, type MenuItem } from "@/store/guest/order/cart-store";
 import { useGuestReviewsStore } from "@/store/guest/reviews/reviews.store";
 import type { MenuItemDetail } from "@/data/menu-items";
 
@@ -22,9 +22,9 @@ function formatLkr(n: number) {
 
 export default function ItemDetailsClient({
   item,
-  roomNumber = "304",
+  roomNumber,
 }: {
-  item: MenuItemDetail;
+  item: MenuItem | MenuItemDetail;
   roomNumber?: string;
 }) {
   const [qty, setQty] = React.useState(1);
@@ -60,6 +60,8 @@ export default function ItemDetailsClient({
   const addOns = React.useMemo(() => item.addOns ?? [], [item.addOns]);
   const gallery = item.gallery ?? (item.imageUrl ? [item.imageUrl] : []);
   const heroSrc = gallery[activeImage] ?? item.imageUrl;
+  const itemTitle = (item as { title?: string }).title ?? item.name ?? "Item";
+  const itemPrice = (item as { priceLkr?: number }).priceLkr ?? item.price ?? 0;
 
   const addOnPrice = React.useMemo(() => {
     return addOns.reduce((sum, addon) => {
@@ -67,7 +69,7 @@ export default function ItemDetailsClient({
     }, 0);
   }, [selectedAddOns, addOns]);
 
-  const totalPrice = item.priceLkr * qty + addOnPrice;
+  const totalPrice = itemPrice * qty + addOnPrice;
 
   const handleAddToCart = () => {
     for (let i = 0; i < qty; i++) {
@@ -97,7 +99,7 @@ export default function ItemDetailsClient({
           Menu
         </Link>
         <ChevronRight />
-        <span className="text-[#953002] font-medium">{item.title}</span>
+        <span className="text-[#953002] font-medium">{itemTitle}</span>
       </nav>
 
       <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-start">
@@ -109,7 +111,7 @@ export default function ItemDetailsClient({
               {heroSrc ? (
                 <Image
                   src={heroSrc}
-                  alt={item.title}
+                  alt={itemTitle}
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 66vw"
@@ -143,7 +145,7 @@ export default function ItemDetailsClient({
                 >
                   <Image
                     src={src}
-                    alt={`${item.title} ${idx + 1}`}
+                    alt={`${itemTitle} ${idx + 1}`}
                     fill
                     className="object-cover"
                     sizes="96px"
@@ -157,10 +159,10 @@ export default function ItemDetailsClient({
           <div className="border-b border-[rgba(146,48,2,0.1)] pb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 md:gap-4 mb-2">
               <h1 className="text-2xl md:text-4xl font-bold text-[#111827] leading-tight">
-                {item.title}
+                {itemTitle}
               </h1>
               <span className="text-xl md:text-3xl font-bold text-[#923002] leading-7 md:leading-9 whitespace-nowrap">
-                {formatLkr(item.priceLkr)}
+                {formatLkr(itemPrice)}
               </span>
             </div>
 
