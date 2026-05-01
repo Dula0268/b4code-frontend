@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Camera, ExternalLink, HelpCircle, X, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react"
+import { useOrderContextStore } from "@/store/guest/ordering/order-context.store"
+import api from "@/lib/axios"
 
 // QR code external API URL
 const QR_IMAGE_URL = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=16&data=${encodeURIComponent("https://primestay.lk/guest/my-room/menu")}&color=000000&bgcolor=ffffff`
@@ -12,12 +15,17 @@ declare class BarcodeDetector {
     detect(src: HTMLVideoElement): Promise<Array<{ rawValue: string }>>
 }
 
-type CameraPhase = "idle" | "requesting" | "scanning" | "detected" | "error"
+type CameraPhase = "idle" | "requesting" | "scanning" | "detected" | "validating" | "error"
 
 export default function QrScannerPage() {
     const videoRef = useRef<HTMLVideoElement>(null)
     const streamRef = useRef<MediaStream | null>(null)
     const rafRef = useRef<number>(0)
+    const router = useRouter()
+
+    const setQRContext = useOrderContextStore((s) => s.setQRContext)
+    const setLoading = useOrderContextStore((s) => s.setLoading)
+    const setError = useOrderContextStore((s) => s.setError)
 
     const [showCamera, setShowCamera] = useState(false)
     const [cameraPhase, setCameraPhase] = useState<CameraPhase>("idle")
@@ -33,6 +41,44 @@ export default function QrScannerPage() {
         if (videoRef.current) videoRef.current.srcObject = null
     }, [])
 
+    // ── Handle scanned QR code ─────────────────────────────────────────────────
+    const handleScannedQR = useCallback(async (qrId: string) => {
+        setCameraPhase("validating")
+        setLoading(true)
+        try {
+            const response = await api.post("/qr/validate", {}, {
+                params: { qrId }
+            })
+            const data = response.data
+            
+            // Store QR context
+            setQRContext({
+                qrId: data.qrId,
+                propertyName: data.propertyName,
+                locationLabel: data.locationLabel,
+                type: data.type,
+                name: data.name,
+                status: data.status,
+            })
+            
+            setLoading(false)
+            stopCamera()
+            
+            // Navigate to order page after a short delay
+            setTimeout(() => {
+                setShowCamera(false)
+                setCameraPhase("idle")
+                router.push("/guest/order")
+            }, 1500)
+        } catch (err: unknown) {
+            setLoading(false)
+            setCameraPhase("error")
+            const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to validate QR code. Please try again."
+            setErrorMsg(errorMessage)
+            setError(errorMessage)
+        }
+    }, [stopCamera, setQRContext, setLoading, setError, router])
+
     // ── BarcodeDetector scan loop ─────────────────────────────────────────────
     const startScanLoop = useCallback(() => {
         if (!("BarcodeDetector" in window)) return
@@ -45,18 +91,16 @@ export default function QrScannerPage() {
                 if (codes.length > 0) {
                     setCameraPhase("detected")
                     stopCamera()
-                    setTimeout(() => {
-                        setShowCamera(false)
-                        setCameraPhase("idle")
-                        alert("Scanned QR code: " + codes[0].rawValue)
-                    }, 1000)
+                    // Extract QR value and validate
+                    const qrValue = codes[0].rawValue
+                    await handleScannedQR(qrValue)
                     return
                 }
             } catch { /* ignore */ }
             rafRef.current = requestAnimationFrame(loop)
         }
         rafRef.current = requestAnimationFrame(loop)
-    }, [stopCamera])
+    }, [stopCamera, handleScannedQR])
 
     // ── Start camera ──────────────────────────────────────────────────────────
     const startCamera = useCallback(async () => {
@@ -90,6 +134,7 @@ export default function QrScannerPage() {
         stopCamera()
         setShowCamera(false)
         setCameraPhase("idle")
+        setErrorMsg("")
     }
 
     return (
@@ -137,11 +182,13 @@ export default function QrScannerPage() {
                     </div>
 
                     {/* Visit Menu Directly */}
-                    <button
-                        className="w-[280px] flex items-center justify-center gap-2 bg-[#a03b10] hover:bg-[#852f0b] text-white font-bold text-[15px] py-[15px] rounded-xl transition-colors cursor-pointer mb-6"
-                    >
-                        Visit Menu Directly <ExternalLink size={17} />
-                    </button>
+                    <Link href="/guest/order">
+                        <button
+                            className="w-[280px] flex items-center justify-center gap-2 bg-[#a03b10] hover:bg-[#852f0b] text-white font-bold text-[15px] py-[15px] rounded-xl transition-colors cursor-pointer mb-6"
+                        >
+                            Visit Menu Directly <ExternalLink size={17} />
+                        </button>
+                    </Link>
 
                     {/* Help text */}
                     <div className="w-[280px] border border-[#e5dfd5] rounded-full py-2.5 flex items-center justify-center gap-2">
@@ -159,7 +206,8 @@ export default function QrScannerPage() {
                     <div className="flex items-center justify-between px-5 py-4 bg-black/60">
                         <button
                             onClick={closeCamera}
-                            className="flex items-center gap-1.5 text-white/70 hover:text-white text-[14px] cursor-pointer transition-colors"
+                            className="flex items-center gap-1.5 text-white/70 hover:text-white text-[14px] cursor-pointer transition-colors disabled:opacity-50"
+                            disabled={cameraPhase === "validating"}
                         >
                             <X size={18} /> Close
                         </button>
@@ -206,17 +254,26 @@ export default function QrScannerPage() {
                             </div>
                         )}
 
+                        {cameraPhase === "validating" && (
+                            <div className="flex flex-col items-center gap-4 text-center">
+                                <div className="w-14 h-14 border-4 border-[#4CAF50]/30 border-t-[#4CAF50] rounded-full animate-spin" />
+                                <p className="text-white/70 text-[14px]">Validating QR code…</p>
+                            </div>
+                        )}
+
                         {cameraPhase === "error" && (
                             <div className="w-full max-w-[340px] flex flex-col items-center gap-5 text-center">
                                 <div className="w-14 h-14 rounded-full bg-red-900/30 flex items-center justify-center">
                                     <AlertCircle size={28} className="text-red-400" />
                                 </div>
                                 <div>
-                                    <p className="text-white font-bold text-[16px] mb-1.5">Camera Unavailable</p>
+                                    <p className="text-white font-bold text-[16px] mb-1.5">
+                                        {cameraPhase === "validating" ? "Validation Failed" : "Camera Unavailable"}
+                                    </p>
                                     <p className="text-white/50 text-[13px] leading-relaxed">{errorMsg}</p>
                                 </div>
                                 <button
-                                    onClick={() => { setCameraPhase("idle"); startCamera() }}
+                                    onClick={() => { setCameraPhase("idle"); setErrorMsg(""); startCamera() }}
                                     className="flex items-center justify-center gap-2 border border-white/20 hover:border-white/40 text-white/70 hover:text-white text-[13px] font-semibold py-2.5 rounded-xl transition-colors cursor-pointer"
                                 >
                                     <RefreshCw size={14} /> Try Again
