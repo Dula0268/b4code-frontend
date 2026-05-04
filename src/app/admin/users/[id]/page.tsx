@@ -17,17 +17,41 @@ import UserActivityLog, {
   type ActivityLogEntry,
 } from "@/components/features/admin/users/user-activity-log";
 
+// ─── User Type ───────────────────────────────
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  avatarColor: string;
+  avatarInitial: string;
+  role: string;
+  status: string;
+  lastLogin: string;
+  phone: string;
+  joined: string;
+  timezone: string;
+};
+
 // Helper to generate consistent avatar colors
 function stringToColor(str: string) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const colors = ["#f4a261", "#2f80ed", "#953002", "#27ae60", "#e67e22", "#e84393", "#16a085", "#8e44ad"];
+  const colors = [
+    "#f4a261",
+    "#2f80ed",
+    "#953002",
+    "#27ae60",
+    "#e67e22",
+    "#e84393",
+    "#16a085",
+    "#8e44ad",
+  ];
   return colors[Math.abs(hash) % colors.length];
 }
 
-// ─── Mock activity log ────────────────────────────────────────────────────────
+// ─── Mock activity log ───────────────────────────────────────────────
 const ACTIVITY_LOG: ActivityLogEntry[] = [
   {
     action: "update",
@@ -66,7 +90,7 @@ const ACTIVITY_LOG: ActivityLogEntry[] = [
   },
 ];
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
+// ─── Toast ───────────────────────────────────────────────────────────
 function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3500);
@@ -83,12 +107,11 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
       >
         <X size={15} />
       </button>
-      <style>{`@keyframes slideIn { from { opacity:0; transform:translateY(-12px) } to { opacity:1; transform:translateY(0) } }`}</style>
     </div>
   );
 }
 
-// ─── Reset Password Modal ─────────────────────────────────────────────────────
+// ─── Reset Password Modal ────────────────────────────────────────────
 function ResetPasswordModal({
   email,
   onClose,
@@ -107,28 +130,31 @@ function ResetPasswordModal({
         className="bg-white rounded-2xl px-8 py-9 w-105 shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Icon */}
         <div className="w-13 h-13 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center mb-4.5">
           <RotateCcw size={22} color="var(--brand-primary)" />
         </div>
+
         <h2 className="m-0 mb-2 text-xl font-bold text-(--black-2)">
           Reset Password?
         </h2>
+
         <p className="m-0 mb-7 text-sm text-(--gray-3) leading-relaxed">
           A secure reset link will be sent to
           <br />
           <strong className="text-(--black-2)">{email}</strong>
         </p>
+
         <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-5.5 py-2.5 rounded-[10px] border border-(--gray-5) bg-white text-sm font-semibold text-(--gray-2) cursor-pointer"
+            className="px-5.5 py-2.5 rounded-[10px] border border-(--gray-5) bg-white text-sm font-semibold text-(--gray-2)"
           >
             Cancel
           </button>
+
           <button
             onClick={onSend}
-            className="px-5.5 py-2.5 rounded-[10px] border-none bg-(--brand-primary) text-white text-sm font-bold cursor-pointer shadow-[0_2px_8px_rgba(149,48,2,0.25)] hover:bg-(--primary-hover)"
+            className="px-5.5 py-2.5 rounded-[10px] bg-(--brand-primary) text-white text-sm font-bold"
           >
             Send Reset Link
           </button>
@@ -138,15 +164,15 @@ function ResetPasswordModal({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Page ───────────────────────────────────────────────────────
 export default function UserDetailPage() {
   const params = useParams();
   const router = useRouter();
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [suspended, setSuspended] = useState(false);
-  const [currentRole, setCurrentRole] = useState("Staff");
+  const [currentRole, setCurrentRole] = useState<string>("Staff");
   const [toast, setToast] = useState<string | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
 
@@ -155,12 +181,17 @@ export default function UserDetailPage() {
       try {
         const id = parseInt(params.id as string);
         if (isNaN(id)) return;
-        
+
         const u = await userApi.getUserById(id);
-        const name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Unknown User";
-        const formattedRole = u.role ? (u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase()) : "Staff";
-        
-        const formattedUser = {
+
+        const name =
+          `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Unknown User";
+
+        const formattedRole = u.role
+          ? u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase()
+          : "Staff";
+
+        const formattedUser: User = {
           id: u.id.toString(),
           name,
           email: u.email,
@@ -168,12 +199,26 @@ export default function UserDetailPage() {
           avatarInitial: name.charAt(0).toUpperCase(),
           role: formattedRole,
           status: "Active",
-          lastLogin: new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + " at " + new Date(u.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-          phone: "+1 (555) 000-0000", // Backend missing
-          joined: new Date(u.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-          timezone: "(GMT+00:00) Default Timezone", // Backend missing
+          lastLogin:
+            new Date(u.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }) +
+            " at " +
+            new Date(u.createdAt).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          phone: "+1 (555) 000-0000",
+          joined: new Date(u.createdAt).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }),
+          timezone: "(GMT+00:00) Default Timezone",
         };
-        
+
         setUser(formattedUser);
         setCurrentRole(formattedUser.role);
         setSuspended(formattedUser.status === "Suspended");
@@ -183,26 +228,16 @@ export default function UserDetailPage() {
         setLoading(false);
       }
     }
+
     fetchUser();
   }, [params.id]);
 
-  const handleSuspendToggle = () => {
-    const next = !suspended;
-    setSuspended(next);
-    setToast(
-      next ? "User Suspended Successfully" : "Account Reactivated Successfully",
-    );
-  };
-
-  const handleSendReset = () => {
-    setShowResetModal(false);
-    setToast("Password Reset Link Sent!");
-  };
-
   const handleRoleChange = async (newRole: string) => {
     try {
-      await userApi.updateUserRole(parseInt(user.id), newRole);
-      setCurrentRole(newRole as any);
+      if (!user) return;
+
+      await userApi.updateUserRole(Number(user.id), newRole);
+      setCurrentRole(newRole);
       setToast(`Role updated to ${newRole}`);
     } catch (err) {
       console.error("Failed to update role:", err);
@@ -210,10 +245,23 @@ export default function UserDetailPage() {
     }
   };
 
+  const handleSuspendToggle = () => {
+    const next = !suspended;
+    setSuspended(next);
+    setToast(next ? "User Suspended Successfully" : "Account Reactivated Successfully");
+  };
+
+  const handleSendReset = () => {
+    setShowResetModal(false);
+    setToast("Password Reset Link Sent!");
+  };
+
   if (loading) {
     return (
       <AdminPageLayout>
-        <div className="flex items-center justify-center h-64 text-(--gray-3)">Loading user details...</div>
+        <div className="flex items-center justify-center h-64 text-(--gray-3)">
+          Loading user details...
+        </div>
       </AdminPageLayout>
     );
   }
@@ -221,17 +269,17 @@ export default function UserDetailPage() {
   if (!user) {
     return (
       <AdminPageLayout>
-        <div className="flex items-center justify-center h-64 text-(--gray-3)">User not found.</div>
+        <div className="flex items-center justify-center h-64 text-(--gray-3)">
+          User not found.
+        </div>
       </AdminPageLayout>
     );
   }
 
   return (
     <>
-      {/* ── Toast ── */}
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      {/* ── Reset Password Modal ── */}
       {showResetModal && (
         <ResetPasswordModal
           email={user.email}
@@ -242,22 +290,21 @@ export default function UserDetailPage() {
 
       <AdminPageLayout>
         <div className="flex flex-col gap-6">
-          {/* ── Breadcrumb ── */}
           <div className="flex items-center gap-1.5 text-sm">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-(--gray-3) text-sm p-0 hover:text-(--black-2)"
+              className="flex items-center gap-1 text-(--gray-3)"
             >
               <ArrowLeft size={14} />
               User Management
             </button>
-            <ChevronRight size={14} color="var(--gray-4)" />
+
+            <ChevronRight size={14} />
             <span className="text-(--brand-primary) font-semibold">
               Account Details
             </span>
           </div>
 
-          {/* ── Profile Header Card ── */}
           <UserProfileHeader
             user={{ ...user, role: currentRole }}
             suspended={suspended}
@@ -266,12 +313,8 @@ export default function UserDetailPage() {
             onRoleChange={handleRoleChange}
           />
 
-          {/* ── Two-column body ── */}
           <div className="grid grid-cols-[1fr_1.7fr] gap-5 items-start">
-            {/* ── Account Information ── */}
             <UserAccountInformation user={user} />
-
-            {/* ── Activity Log ── */}
             <UserActivityLog activities={ACTIVITY_LOG} />
           </div>
         </div>
