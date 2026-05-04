@@ -2,25 +2,20 @@ import { notFound } from "next/navigation"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 import RoomDetailPage from "@/components/features/guest/property/room-detail-page"
+import type { PropertyDetail } from "@/lib/mock-properties"
 
 interface Props {
     params: { id: string; roomId: string }
 }
 
-type PropertyRoom = { id: string; name?: string; pricePerNight?: number }
-type PropertyApi = {
-  title?: string
-  rooms?: PropertyRoom[]
-}
-
-async function fetchProperty(id: string) {
+async function fetchProperty(id: string): Promise<PropertyDetail | null> {
     try {
         const res = await fetch(`http://localhost:8080/api/guest/properties/${id}`, { cache: "no-store" });
         if (!res.ok) {
             if (res.status === 404) return null;
             throw new Error("Failed to fetch property");
         }
-        return await res.json();
+        return (await res.json()) as PropertyDetail;
     } catch (error) {
         console.error("Failed to fetch property", error);
         return null;
@@ -29,7 +24,7 @@ async function fetchProperty(id: string) {
 
 export async function generateMetadata({ params }: Props) {
     const { id, roomId } = params
-    const property = (await fetchProperty(id)) as PropertyApi | null
+    const property = await fetchProperty(id)
     if (!property) return {}
     const room = property.rooms?.find((r) => r.id === roomId)
     if (!room) return {}
@@ -41,7 +36,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function RoomPage({ params }: Props) {
     const { id, roomId } = params
-    const property = (await fetchProperty(id)) as PropertyApi | null
+    const property = await fetchProperty(id)
     if (!property) notFound()
     const room = property.rooms?.find((r) => r.id === roomId)
     if (!room) notFound()
