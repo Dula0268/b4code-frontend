@@ -3,23 +3,14 @@ import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 import RoomDetailPage from "@/components/features/guest/property/room-detail-page"
 import type { PropertyDetail } from "@/lib/mock-properties"
+import { getPropertyById } from "@/lib/mock-properties"
 
 interface Props {
     params: { id: string; roomId: string }
 }
 
 async function fetchProperty(id: string): Promise<PropertyDetail | null> {
-    try {
-        const res = await fetch(`http://localhost:8080/api/guest/properties/${id}`, { cache: "no-store" });
-        if (!res.ok) {
-            if (res.status === 404) return null;
-            throw new Error("Failed to fetch property");
-        }
-        return (await res.json()) as PropertyDetail;
-    } catch (error) {
-        console.error("Failed to fetch property", error);
-        return null;
-    }
+    return getPropertyById(id) ?? null
 }
 
 export async function generateMetadata({ params }: Props) {

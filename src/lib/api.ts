@@ -1,5 +1,74 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
+const DEFAULT_PROPERTY_IMAGE = "/images/properties/property-1.jpg";
+const DEFAULT_ROOM_IMAGE = "/images/rooms/room-ocean-king.jpg";
+
+const toNumber = (value: unknown, fallback = 0) => {
+    const numericValue = typeof value === "string" ? Number(value) : Number(value);
+    return Number.isFinite(numericValue) ? numericValue : fallback;
+};
+
+const normalizeList = (value: unknown) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string" && value.trim()) {
+        return value.split(",").map(part => part.trim()).filter(Boolean);
+    }
+    return [];
+};
+
+const normalizeRoom = (room: any) => ({
+    ...room,
+    id: String(room?.id ?? ""),
+    maxGuests: toNumber(room?.maxGuests),
+    sqft: toNumber(room?.sqft),
+    pricePerNight: toNumber(room?.pricePerNight),
+    originalPrice: room?.originalPrice == null ? undefined : toNumber(room.originalPrice),
+    features: normalizeList(room?.features),
+    imageSrc: room?.imageSrc || room?.imageUrl || DEFAULT_ROOM_IMAGE,
+});
+
+const normalizePropertyListing = (property: any) => ({
+    ...property,
+    id: String(property?.id ?? ""),
+    title: property?.title ?? property?.name ?? "Untitled property",
+    location: property?.location ?? "Sri Lanka",
+    propertyType: property?.propertyType ?? "Property",
+    pricePerNight: toNumber(property?.pricePerNight),
+    maxGuests: toNumber(property?.maxGuests, 2),
+    baseGuests: toNumber(property?.baseGuests, 2),
+    extraGuestFee: toNumber(property?.extraGuestFee),
+    rating: toNumber(property?.rating),
+    reviewCount: toNumber(property?.reviewCount),
+    badge: property?.badge ?? undefined,
+    imageSrc: property?.imageSrc || property?.imageUrl || DEFAULT_PROPERTY_IMAGE,
+});
+
+const normalizePropertyDetail = (property: any) => ({
+    ...property,
+    id: String(property?.id ?? ""),
+    title: property?.title ?? property?.name ?? "Untitled property",
+    location: property?.location ?? "Sri Lanka",
+    fullAddress: property?.fullAddress ?? property?.location ?? "Sri Lanka",
+    propertyType: property?.propertyType ?? "Property",
+    pricePerNight: toNumber(property?.pricePerNight),
+    rating: toNumber(property?.rating),
+    reviewCount: toNumber(property?.reviewCount),
+    badge: property?.badge ?? undefined,
+    imageSrc: property?.imageSrc || property?.imageUrl || DEFAULT_PROPERTY_IMAGE,
+    galleryImages: normalizeList(property?.galleryImages),
+    hostName: property?.hostName ?? property?.ownerName ?? "",
+    hostBio: property?.hostBio ?? "",
+    hostYears: property?.hostYears == null ? undefined : toNumber(property.hostYears),
+    hostSuperhost: Boolean(property?.hostSuperhost),
+    description: property?.description ?? "",
+    amenities: Array.isArray(property?.amenities) ? property.amenities : [],
+    reviewBreakdown: Array.isArray(property?.reviewBreakdown) ? property.reviewBreakdown : [],
+    reviews: Array.isArray(property?.reviews) ? property.reviews : [],
+    rooms: Array.isArray(property?.rooms) ? property.rooms.map(normalizeRoom) : [],
+    lat: property?.lat == null ? undefined : toNumber(property.lat),
+    lng: property?.lng == null ? undefined : toNumber(property.lng),
+});
+
 // Store token in localStorage
 export const getToken = (): string | null => {
     if (typeof window === "undefined") return null;
@@ -159,13 +228,15 @@ export const guestApi = {
     getAllProperties: async () => {
         const response = await apiFetch("/api/guest/properties");
         if (!response.ok) throw new Error("Failed to fetch properties");
-        return response.json();
+        const data = await response.json();
+        return Array.isArray(data) ? data.map(normalizePropertyListing) : [];
     },
 
-    getPropertyDetail: async (propertyId: number) => {
+    getPropertyDetail: async (propertyId: number | string) => {
         const response = await apiFetch(`/api/guest/properties/${propertyId}`);
         if (!response.ok) throw new Error("Failed to fetch property details");
-        return response.json();
+        const data = await response.json();
+        return normalizePropertyDetail(data);
     },
 
     // Booking Methods

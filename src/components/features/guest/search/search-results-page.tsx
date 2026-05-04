@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import Image from "next/image"
 import Link from "next/link"
@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight, X, Heart, Star, Loader2 } from "lucide-react"
 
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
-import { guestApi } from "@/lib/api"
+import { ALL_PROPERTIES, type PropertyDetail } from "@/lib/mock-properties"
 
 // Dynamically import the map (Leaflet must not run on server)
 const MapView = dynamic(() => import("./map-view"), { ssr: false })
@@ -149,47 +149,38 @@ function ResultsHeader({ destination, totalCount, checkIn, checkOut, guests, act
     )
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+function toPropertyListing(property: PropertyDetail): PropertyListing {
+    return {
+        id: property.id,
+        title: property.title,
+        location: property.location,
+        propertyType: property.propertyType,
+        pricePerNight: property.pricePerNight,
+        maxGuests: property.rooms.reduce((max, room) => Math.max(max, room.maxGuests), 0),
+        baseGuests: 2,
+        extraGuestFee: 5_000,
+        rating: property.rating,
+        reviewCount: property.reviewCount,
+        badge: property.badge,
+        imageSrc: property.imageSrc,
+    }
+}
+
 // ─── Constants & Configuration ──────────────────────────────────────────────────
 const SEARCH_RESULTS_CONFIG = {
     ITEMS_PER_PAGE: 6,
     DEFAULT_FILTERS: { priceMin: 10_000, priceMax: 500_000, amenities: [], propertyTypes: [], guestRating: null } as FilterState,
-    API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 } as const;
 
 // ─── Business Logic Hook ──────────────────────────────────────────────────────
 function useSearchResultsLogic(destination: string, checkIn: string, checkOut: string, guests: number) {
-    const [listings, setListings] = useState<PropertyListing[]>([])
-    const [loading, setLoading] = useState(true)
+    const [listings] = useState<PropertyListing[]>(() => ALL_PROPERTIES.map(toPropertyListing))
+    const [loading] = useState(false)
     const [filters, setFilters] = useState<FilterState>(SEARCH_RESULTS_CONFIG.DEFAULT_FILTERS)
     const [sortBy, setSortBy] = useState("recommended")
     const [page, setPage] = useState(1)
     const [mapOpen, setMapOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
-
-    useEffect(() => {
-        let isMounted = true;
-        const fetchListings = async () => {
-            try {
-                setLoading(true);
-                const data = await guestApi.getAllProperties();
-                if (isMounted) {
-                    setListings(data);
-                }
-            } catch (err) {
-                console.error("Error fetching properties:", err);
-                if (isMounted) {
-                    setListings([]);
-                }
-            } finally {
-                if (isMounted) {
-                    setLoading(false);
-                }
-            }
-        };
-        fetchListings();
-        return () => { isMounted = false; };
-    }, [destination, checkIn, checkOut, guests]);
 
     // Filtering
     const filtered = useMemo(() => {
