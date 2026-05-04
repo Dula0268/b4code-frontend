@@ -96,7 +96,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const bgBooked = ROOM_DETAIL_CONFIG.mockBookedDates
 
     const logic = useRoomDetailLogic(room, searchParams);
-    const { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuestFeeTotal, discount, finalTotal, handleApplyPromo } = logic;
+    const { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuests, extraGuestFeeTotal, discount, finalTotal, handleApplyPromo } = logic;
     const serviceFee = ROOM_DETAIL_CONFIG.serviceFee;
     const taxes = ROOM_DETAIL_CONFIG.taxes;
 
