@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import type { LatLngBoundsExpression, Map as LeafletMap, Marker } from "leaflet"
-import type { PropertyListing } from "./property-card"
+import type { PropertyListing } from "./search-results-page"
 
 // ─── Sri Lanka coordinates for each location ──────────────────────────────
 const LOCATION_COORDS: Record<string, [number, number]> = {
@@ -28,7 +28,6 @@ function getCoords(location: string): [number, number] {
 }
 
 function formatLKR(v: number) {
-    if (v >= 100_000) return `LKR ${(v / 1000).toFixed(0)}K`
     return `LKR ${(v / 1000).toFixed(0)}K`
 }
 
@@ -128,8 +127,8 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
 
             // Fit map to all markers
             if (listings.length > 0) {
-                const bounds = listings.map(l => getCoords(l.location))
-                map.fitBounds(bounds as LatLngBoundsExpression, { padding: [40, 40], maxZoom: 10 })
+                const bounds = listings.map((l) => getCoords(l.location))
+                map.fitBounds(bounds as unknown as LatLngBoundsExpression, { padding: [40, 40], maxZoom: 10 })
             }
 
             mapRef.current = map
@@ -142,14 +141,14 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
             markers.clear()
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [listings])
 
     // Highlight hovered marker
     useEffect(() => {
         if (!mapRef.current) return
         import("leaflet").then(L => {
             markersRef.current.forEach((marker, id) => {
-                const listing = listings.find(l => l.id === id)
+                const listing = listings.find((l) => l.id === id)
                 if (!listing) return
                 const isHovered = id === hoveredId
                 const icon = L.divIcon({

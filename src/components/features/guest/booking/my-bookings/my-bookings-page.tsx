@@ -37,68 +37,17 @@ interface Booking {
 
 type Tab = BookingStatus   // reuse the same union — no separate type needed
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Demo data — replace with API response when backend is ready
-// ─────────────────────────────────────────────────────────────────────────────
-const DEMO_BOOKINGS: Booking[] = [
-  {
-    id: "demo-1",
-    propertyId: "1",
-    orderNumber: "BK-88291",
-    status: "UPCOMING",
-    property: "Oceanview Luxury Retreat",
-    location: "Maui, Hawaii",
-    imageSrc: "/images/booking/resort-maui.png",
-    checkIn: "Oct 12",
-    checkOut: "Oct 15, 2023",
-    guests: "2 Adults, 1 Child",
-    totalPrice: 25_000,
-    nightsLabel: "Total for 3 nights",
-    paymentMethod: "online",
-    paidInFull: true,
-  },
-  {
-    id: "demo-2",
-    propertyId: "2",
-    orderNumber: "BK-77210",
-    status: "COMPLETED",
-    property: "Mountain Peaks Chalet",
-    location: "Aspen, Colorado",
-    imageSrc: "/images/booking/mountain-chalet.png",
-    checkIn: "Sep 05",
-    checkOut: "Sep 08, 2023",
-    guests: "2 Adults",
-    totalPrice: 30_000,
-    nightsLabel: "Total for 3 nights",
-    bookingStatus: "Checked Out",
-    paymentMethod: "online",
-    paidInFull: true,
-  },
-  {
-    id: "demo-3",
-    propertyId: "3",
-    orderNumber: "BK-10293",
-    status: "CANCELLED",
-    property: "Skyline Loft Apartments",
-    location: "New York, NY",
-    imageSrc: "/images/booking/city-apartment.png",
-    checkIn: "Nov 01",
-    checkOut: "Nov 05, 2023",
-    guests: "2 Adults",
-    totalPrice: 45_000,
-    nightsLabel: "Total for 4 nights",
-    cancellationNote:
-      "Cancelled on Aug 20, 2023. Refund of $450.00 processed to your original payment method.",
-    paymentMethod: "property",
-    paidInFull: false,
-  },
-]
+// Mock bookings completely removed; purely relying on database data.
 
 const TABS: Tab[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
 function formatLKR(amount: number) {
   return `LKR ${amount.toLocaleString("en-US")}`
 }
+
+const APP_CONFIG = {
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
+} as const
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status badge — colour-coded pill matching design-system state tokens
@@ -254,7 +203,7 @@ function BookingCard({ booking }: { booking: Booking }) {
                 <BedDouble size={13} /> My Room
               </Link>
               {/* Amber accent on Message Host to visually distinguish it from the plain primary action */}
-              <Link href="/guest/booking/message-host"
+              <Link href="/guest/messages?type=host"
                 className={`${btnHost}`}
                 style={{ background: "var(--brand-primary)", color: "var(--brand-secondary)" }}>
                 <MessageSquare size={13} /> Message Host
@@ -273,7 +222,7 @@ function BookingCard({ booking }: { booking: Booking }) {
               <Link href="/guest/booking/confirmation" className={btnOutline}>
                 <Download size={13} /> Download Invoice
               </Link>
-              <Link href="/guest/my-room/submit-review" className={btnOutline}>
+              <Link href={`/guest/reviews?propertyId=${booking.propertyId}`} className={btnOutline}>
                 <Star size={13} /> Rate Stay
               </Link>
               <Link href="/guest/booking/confirmation" className={btnGhost}>
@@ -323,29 +272,104 @@ function fromStore(b: StoredBooking): Booking {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Business Logic Hook
+// ─────────────────────────────────────────────────────────────────────────────
+function useMyBookingsLogic() {
+  const [activeTab, setActiveTab] = useState<Tab>("UPCOMING")
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const user = useAuthStore(s => s.user)
+
+  useEffect(() => {
+    let active = true
+    async function loadBookings() {
+        try {
+            type AuthUserLike = { id?: number }
+            const guestId = (user as AuthUserLike | null)?.id ?? 1;
+            const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings?guestId=${guestId}`, { cache: "no-store" });
+            if (!res.ok) throw new Error("Failed to fetch bookings");
+            const data = await res.json();
+            
+            if (active) {
+                type ApiBooking = {
+                  id: number | string
+                  propertyId: number | string
+                  status: BookingStatus | "PENDING"
+                  propertyName?: string
+                  location?: string
+                  imageSrc?: string
+                  checkInDate: string
+                  checkOutDate: string
+                  totalPrice: number
+                }
+
+                // Normalize API status to UI status: PENDING → UPCOMING
+                const normalizeStatus = (s: string): BookingStatus => {
+                  if (s === "PENDING") return "UPCOMING"
+                  if (s === "UPCOMING" || s === "COMPLETED" || s === "CANCELLED") return s
+                  return "UPCOMING" // safe fallback
+                }
+
+                const apiBookings = (data as ApiBooking[]).map((b) => ({
+                    id: String(b.id),
+                    propertyId: String(b.propertyId),
+                    orderNumber: `BK-${b.id}88${b.propertyId}`,
+                    status: normalizeStatus(b.status),
+                    property: b.propertyName || "Prime Stay Property",
+                    location: b.location ? `${b.location}, Sri Lanka` : "Sri Lanka",
+                    imageSrc: b.imageSrc || "/images/properties/property-1.jpg",
+                    checkIn: b.checkInDate,
+                    checkOut: b.checkOutDate,
+                    guests: "Guests",
+                    totalPrice: b.totalPrice,
+                    nightsLabel: "Total for stay",
+                    paymentMethod: "online" as const,
+                    paidInFull: true,
+                    isFromStore: true,
+                }));
+                // We show API bookings directly
+                setBookings(apiBookings)
+            }
+        } catch(err) {
+            if (active) setErrorMsg("Failed to synchronize bookings. Try again.")
+        }
+    }
+
+    if (user) {
+        loadBookings();
+    } else {
+        setBookings([]);
+    }
+    
+    return () => { active = false }
+  }, [user])
+
+  const visible = bookings.filter(b => b.status === activeTab)
+  const nextUpcoming = bookings.find(b => b.status === "UPCOMING") ?? null
+
+  return { activeTab, setActiveTab, bookings, errorMsg, visible, nextUpcoming }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function MyBookingsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("UPCOMING")
-
-  const user          = useAuthStore(s => s.user)
-  const storeBookings = useGuestBookingStore(s => s.bookings)
-  const [bookings, setBookings] = useState<Booking[]>(DEMO_BOOKINGS)
-
-  // Merge real bookings (front of list) with demo data on user/store change
-  useEffect(() => {
-    const userBookings = user?.email
-      ? storeBookings.filter(b => b.userEmail.toLowerCase() === user.email.toLowerCase())
-      : storeBookings
-    setBookings([...userBookings.map(fromStore), ...DEMO_BOOKINGS])
-  }, [storeBookings, user])
-
-  const visible         = bookings.filter(b => b.status === activeTab)
-  const nextUpcoming    = bookings.find(b => b.status === "UPCOMING") ?? null
+  const logic = useMyBookingsLogic()
+  const { activeTab, setActiveTab, errorMsg, visible, nextUpcoming } = logic
 
   return (
     <div className="min-h-screen pt-20 pb-16" style={{ background: "transparent" }}>
       <div className="max-w-[860px] mx-auto px-4">
+
+        {errorMsg && (
+          <div className="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded-2xl flex items-center justify-between border border-red-200 shadow-sm">
+             <div className="flex items-center gap-2">
+                <XCircle size={16} />
+                <p className="text-sm font-semibold">{errorMsg}</p>
+             </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="pt-8 pb-6">

@@ -110,8 +110,7 @@ function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
     )
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-export default function PropertyDetailPage({ property }: { property: PropertyDetail }) {
+function usePropertyDetailLogic(property: PropertyDetail) {
     const [saved, setSaved] = useState(false)
     const [galleryOpen, setGalleryOpen] = useState(false)
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
@@ -126,7 +125,6 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                 await navigator.share({ title: text, text: `Check out ${text} on Prime Stay`, url })
                 setShareToast("shared")
             } catch {
-                // user cancelled — no toast
                 return
             }
         } else {
@@ -141,6 +139,14 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
     const cheapestRoomId = property.rooms.length > 0
         ? property.rooms.reduce((min, room) => room.pricePerNight < min.pricePerNight ? room : min).id
         : ""
+
+    return { saved, setSaved, galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, shareToast, handleShare, allImages, cheapestRoomId }
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function PropertyDetailPage({ property }: { property: PropertyDetail }) {
+    const logic = usePropertyDetailLogic(property)
+    const { saved, setSaved, galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, shareToast, handleShare, allImages } = logic;
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -364,7 +370,13 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                                                 ))}
                                             </div>
                                         </div>
-                                        <p className="text-[13px] text-[#555] leading-relaxed">&quot;{rev.text}&quot;</p>
+                                        <p className="text-[13px] text-[#555] leading-relaxed mb-3">&quot;{rev.text}&quot;</p>
+                                        {rev.ownerReply && (
+                                            <div className="mt-2 p-3 bg-[#f8f8f8] rounded-xl border border-[#ebebeb]">
+                                                <p className="text-[11px] font-bold text-[#1d1d1d] mb-1">Response from {property.hostName.split(' ')[0]}</p>
+                                                <p className="text-[12px] text-[#666] leading-relaxed">{rev.ownerReply}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

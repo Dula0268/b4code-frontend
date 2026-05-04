@@ -6,7 +6,9 @@ import { Camera, ExternalLink, HelpCircle, X, RefreshCw, CheckCircle2, AlertCirc
 // ─────────────────────────────────────────────────────────────────────────────
 // External QR image — generated on the fly so no asset is required at build time
 // ─────────────────────────────────────────────────────────────────────────────
-const QR_IMAGE_URL = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=16&data=${encodeURIComponent("https://primestay.lk/guest/my-room/menu")}&color=000000&bgcolor=ffffff`
+const QR_CODE_CONFIG = {
+  QR_IMAGE_URL: `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=16&data=${encodeURIComponent("https://primestay.lk/guest/my-room/menu")}&color=000000&bgcolor=ffffff`
+} as const;
 
 // BarcodeDetector is not in the standard TypeScript DOM lib yet
 declare class BarcodeDetector {
@@ -16,7 +18,7 @@ declare class BarcodeDetector {
 
 type CameraPhase = "idle" | "requesting" | "scanning" | "detected" | "error"
 
-export default function QrScannerPage() {
+function useQrScannerLogic() {
   const videoRef  = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const rafRef    = useRef<number>(0)
@@ -89,6 +91,12 @@ export default function QrScannerPage() {
 
   const closeCamera = () => { stopCamera(); setShowCamera(false); setPhase("idle") }
 
+  return { videoRef, showCamera, phase, errorMsg, startCamera, closeCamera }
+}
+
+export default function QrScannerPage() {
+  const { videoRef, showCamera, phase, errorMsg, startCamera, closeCamera } = useQrScannerLogic();
+
   return (
     <>
       {/* ── Page ────────────────────────────────────────────────────── */}
@@ -112,7 +120,7 @@ export default function QrScannerPage() {
               style={{ background: "white", boxShadow: "0 12px 40px rgba(0,0,0,0.06)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={QR_IMAGE_URL}
+                src={QR_CODE_CONFIG.QR_IMAGE_URL}
                 alt="Scan this QR code to access the digital menu"
                 className="w-full h-full object-contain"
                 onError={e => { (e.target as HTMLImageElement).style.display = "none" }}
@@ -209,7 +217,7 @@ export default function QrScannerPage() {
                   <p className="text-white/50 text-sm leading-relaxed">{errorMsg}</p>
                 </div>
                 <button
-                  onClick={() => { setPhase("idle"); startCamera() }}
+                  onClick={() => { closeCamera(); startCamera() }}
                   className="flex items-center justify-center gap-2 border border-white/20 hover:border-white/40 text-white/70 hover:text-white text-sm font-semibold py-2.5 px-6 rounded-xl transition-colors cursor-pointer">
                   <RefreshCw size={14} /> Try Again
                 </button>
