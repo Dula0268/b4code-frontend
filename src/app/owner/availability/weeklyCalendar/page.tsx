@@ -56,7 +56,8 @@ const properties = [
     { id: 3, name: "Mountain Retreat", icon: "mountain" },
 ];
 
-const mockBookings: Record<string, any> = {
+type BookingInfo = { type: string; price?: string; guest?: string; reason?: string; hasDetails?: boolean; dot?: string; };
+const mockBookings: Record<string, BookingInfo> = {
     "2024-11-03": { type: "booked", guest: "Johnson" },
     "2024-11-04": { type: "booked", guest: "Johnson" },
     "2024-11-05": { type: "booked", guest: "Johnson" },

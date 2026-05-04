@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -250,7 +251,7 @@ export default function EditPropertyDetailsPage() {
                                     <RefreshCw size={13} color="#ffd9b3" className="shrink-0 mt-0.5" />
                                     <div>
                                         <div className="text-[12px] font-bold text-white">Keep it Current</div>
-                                        <div className="text-[10px] text-[#dbb99a] leading-snug mt-px">Always update amenities if you've added new services.</div>
+                                        <div className="text-[10px] text-[#dbb99a] leading-snug mt-px">Always update amenities if you&apos;ve added new services.</div>
                                     </div>
                                 </div>
                                 <div className="flex gap-2 mb-2.5">

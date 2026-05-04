@@ -1,6 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
-
-import { useState } from "react";
 import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
@@ -17,8 +16,6 @@ import {
     CreditCard,
     Puzzle,
     Landmark,
-    Plus,
-    Save,
     Download,
 } from "lucide-react";
 

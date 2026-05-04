@@ -75,7 +75,8 @@ const properties = [
     { id: 3, name: "Mountain Retreat", icon: "mountain" },
 ];
 
-const mockBookings: Record<string, any> = {
+type BookingInfo = { type: string; price?: string; guest?: string; reason?: string; hasDetails?: boolean; dot?: string; };
+const mockBookings: Record<string, BookingInfo> = {
     // Week 1 (Oct 27 - Nov 2)
     "2024-11-01": { type: "available", price: "90,000" },
     "2024-11-02": { type: "available", price: "65,000" },
@@ -299,7 +300,7 @@ export default function MonthlyCalendarPage() {
                                                 {booking.type === "booked" && (
                                                     <div className="bg-[#953002] rounded w-full py-1 px-2.5 overflow-hidden">
                                                         <span className="text-[10px] font-bold text-white whitespace-nowrap tracking-wider">
-                                                            {booking.guest === "Johnson" ? "BOOKED:" : ""} {booking.guest.toUpperCase()}
+                                                            {booking.guest === "Johnson" ? "BOOKED:" : ""} {booking.guest ? booking.guest.toUpperCase() : "BOOKED"}
                                                         </span>
                                                     </div>
                                                 )}

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -257,7 +258,7 @@ export default function EditRatePage() {
 
                                 <div className="bg-[#fef5ef] rounded-lg py-3 px-3.5 mt-2">
                                     <p className="text-[12px] text-[#953002] italic m-0 leading-relaxed">
-                                        "Perfect for attracting early-season travelers while maintaining margin."
+                                        &quot;Perfect for attracting early-season travelers while maintaining margin.&quot;
                                     </p>
                                 </div>
                             </div>

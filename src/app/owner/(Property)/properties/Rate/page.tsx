@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -212,7 +213,7 @@ export default function RatesPage() {
                                 </div>
                                 <div className="flex items-start gap-2">
                                     <div className="w-[7px] h-[7px] rounded-full mt-1.5 shrink-0 bg-[#953002]" />
-                                    <span className="text-[12px] text-[#4f4f4f] leading-snug">Consider an "Early Bird" rate to secure bookings further in advance.</span>
+                                    <span className="text-[12px] text-[#4f4f4f] leading-snug">Consider an &quot;Early Bird&quot; rate to secure bookings further in advance.</span>
                                 </div>
                             </div>
                         </div>
