@@ -304,11 +304,18 @@ function useMyBookingsLogic() {
                   totalPrice: number
                 }
 
+                // Normalize API status to UI status: PENDING → UPCOMING
+                const normalizeStatus = (s: string): BookingStatus => {
+                  if (s === "PENDING") return "UPCOMING"
+                  if (s === "UPCOMING" || s === "COMPLETED" || s === "CANCELLED") return s
+                  return "UPCOMING" // safe fallback
+                }
+
                 const apiBookings = (data as ApiBooking[]).map((b) => ({
                     id: String(b.id),
                     propertyId: String(b.propertyId),
                     orderNumber: `BK-${b.id}88${b.propertyId}`,
-                    status: b.status as BookingStatus,
+                    status: normalizeStatus(b.status),
                     property: b.propertyName || "Prime Stay Property",
                     location: b.location ? `${b.location}, Sri Lanka` : "Sri Lanka",
                     imageSrc: b.imageSrc || "/images/properties/property-1.jpg",
@@ -338,8 +345,8 @@ function useMyBookingsLogic() {
     return () => { active = false }
   }, [user])
 
-  const visible = bookings.filter(b => b.status === activeTab || (activeTab === "UPCOMING" && b.status === "PENDING"))
-  const nextUpcoming = bookings.find(b => b.status === "UPCOMING" || b.status === "PENDING") ?? null
+  const visible = bookings.filter(b => b.status === activeTab)
+  const nextUpcoming = bookings.find(b => b.status === "UPCOMING") ?? null
 
   return { activeTab, setActiveTab, bookings, errorMsg, visible, nextUpcoming }
 }
