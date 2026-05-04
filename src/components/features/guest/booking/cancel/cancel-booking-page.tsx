@@ -17,6 +17,7 @@ const APP_CONFIG = {
   cancellationFeePercent: 10,
   defaultCardSuffix: "4242",
   defaultCurrency: "LKR",
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
 } as const
 
 const MOCK_DEMO_BOOKING = {
@@ -98,7 +99,7 @@ function useCancelBookingLogic() {
     try {
       if (storeBooking && !storeBooking.id.startsWith("bk-")) {
         const guestIdToUse = (useAuthStore.getState().user as any)?.id || 1;
-        const res = await fetch(`http://localhost:8080/api/guest/bookings/${storeBooking.id}/cancel?guestId=${guestIdToUse}`, {
+        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${storeBooking.id}/cancel?guestId=${guestIdToUse}`, {
             method: "PATCH"
         });
         if (!res.ok) {

@@ -45,6 +45,10 @@ function formatLKR(amount: number) {
   return `LKR ${amount.toLocaleString("en-US")}`
 }
 
+const APP_CONFIG = {
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
+} as const
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Status badge — colour-coded pill matching design-system state tokens
 // ─────────────────────────────────────────────────────────────────────────────
@@ -282,7 +286,7 @@ function useMyBookingsLogic() {
     async function loadBookings() {
         try {
             const guestId = (user as any)?.id || 1;
-            const res = await fetch(`http://localhost:8080/api/guest/bookings?guestId=${guestId}`, { cache: "no-store" });
+            const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings?guestId=${guestId}`, { cache: "no-store" });
             if (!res.ok) throw new Error("Failed to fetch bookings");
             const data = await res.json();
             

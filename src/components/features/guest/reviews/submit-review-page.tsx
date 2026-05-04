@@ -22,6 +22,10 @@ interface RatingCategory {
   description: string
 }
 
+const APP_CONFIG = {
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
+} as const
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Review categories — structured so adding a new one only needs an array entry
 // ─────────────────────────────────────────────────────────────────────────────
@@ -125,7 +129,7 @@ function useReviewLogic() {
     const initials = authorName.substring(0, 2).toUpperCase();
 
     try {
-      const res = await fetch(`http://localhost:8080/api/guest/properties/${propertyId}/reviews`, {
+      const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/properties/${propertyId}/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

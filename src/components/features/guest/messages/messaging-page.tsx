@@ -41,7 +41,8 @@ const MESSAGING_CONFIG = {
         { icon: AlertCircle, label: "Report problem", msg: "I'd like to report an issue in my room." },
         { icon: HelpCircle, label: "Assistance", msg: "I need some general assistance please." },
     ],
-    STAFF_REPLIES: ["Of course! We'll attend to that right away.", "Thank you for letting us know. Our team is on it!", "No problem at all — we'll send someone immediately."]
+    STAFF_REPLIES: ["Of course! We'll attend to that right away.", "Thank you for letting us know. Our team is on it!", "No problem at all — we'll send someone immediately."],
+    API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 } as const;
 
 import { useAuthStore } from "@/store/auth/auth.store"
@@ -58,7 +59,7 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
         async function loadMessages() {
             try {
                 const guestId = (useAuthStore.getState().user as any)?.id || 1;
-                const res = await fetch(`http://localhost:8080/api/guest/messages?guestId=${guestId}`);
+                const res = await fetch(`${MESSAGING_CONFIG.API_BASE_URL}/guest/messages?guestId=${guestId}`);
                 if (res.ok) {
                     const data = await res.json();
                     const apiMsgs = data.map((m: any) => ({
@@ -95,7 +96,7 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
         setIsTyping(true)
 
         try {
-            await fetch("http://localhost:8080/api/guest/messages", {
+            await fetch(`${MESSAGING_CONFIG.API_BASE_URL}/guest/messages`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -114,7 +115,7 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
             setMessages(prev => [...prev, agentMsg])
 
             try {
-                await fetch("http://localhost:8080/api/guest/messages", {
+                await fetch(`${MESSAGING_CONFIG.API_BASE_URL}/guest/messages`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

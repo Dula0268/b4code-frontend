@@ -18,6 +18,7 @@ const APP_CONFIG = {
   guestFee: 5000,
   executiveExtra: 20000,
   defaultCurrency: "LKR",
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
 } as const
 
 interface RoomOption {
@@ -156,7 +157,7 @@ function useModifyReservationLogic() {
             totalPrice: newTotal
         };
 
-        const res = await fetch(`http://localhost:8080/api/guest/bookings/${storeBooking.id}?guestId=${guestIdToUse}`, {
+        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${storeBooking.id}?guestId=${guestIdToUse}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"

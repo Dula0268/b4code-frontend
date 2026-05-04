@@ -56,6 +56,7 @@ const CHECKOUT_CONFIG = {
   taxRate: 0.11,
   serviceFee: 3500,
   onlineDiscountPercent: 0.05,
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
 } as const;
 
 import { Suspense } from "react"
@@ -90,7 +91,7 @@ function useCheckoutLogic() {
         let room = null;
         if (propertyId) {
             try {
-                const res = await fetch(`http://localhost:8080/api/guest/properties/${propertyId}`);
+                const res = await fetch(`${CHECKOUT_CONFIG.apiBaseUrl}/guest/properties/${propertyId}`);
                 if (res.ok) {
                     property = await res.json();
                 }
@@ -172,7 +173,7 @@ function useCheckoutLogic() {
 
       try {
         const guestIdToUse = (user as any)?.id || 1;
-        const res = await fetch("http://localhost:8080/api/guest/bookings", {
+        const res = await fetch(`${CHECKOUT_CONFIG.apiBaseUrl}/guest/bookings`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

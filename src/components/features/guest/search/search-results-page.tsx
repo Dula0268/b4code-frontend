@@ -141,6 +141,7 @@ function ResultsHeader({ destination, totalCount, checkIn, checkOut, guests, act
 const SEARCH_RESULTS_CONFIG = {
     ITEMS_PER_PAGE: 6,
     DEFAULT_FILTERS: { priceMin: 10_000, priceMax: 500_000, amenities: [], propertyTypes: [], guestRating: null } as FilterState,
+    API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 } as const;
 
 // ─── Business Logic Hook ──────────────────────────────────────────────────────
@@ -164,7 +165,7 @@ function useSearchResultsLogic(destination: string, checkIn: string, checkOut: s
                 if (checkOut) query.append("checkOut", checkOut);
                 if (guests) query.append("guests", guests.toString());
                 
-                const res = await fetch(`http://localhost:8080/api/guest/search?${query.toString()}`);
+                const res = await fetch(`${SEARCH_RESULTS_CONFIG.API_BASE_URL}/guest/search?${query.toString()}`);
                 if (!res.ok) throw new Error("Failed to fetch listings");
                 const data = await res.json();
                 if (isMounted) {
