@@ -76,6 +76,7 @@ type AuthActions = {
   reset: () => void;
   updatePassword: (email: string, currentPassword: string, newPassword: string) => Promise<void>;
   updateProfile: (email: string, updates: { name: string }) => Promise<void>;
+  restoreSession: (user: AuthUser) => void;
 };
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
@@ -210,6 +211,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
   setError: (message) => set({ error: message }),
   reset: () => set({ user: null, loading: false, error: null }),
+
+  // ─── Restore Session ──────────────────────────────────────────────────────
+  restoreSession: (user) => set({ user, loading: false, error: null }),
 
   // ─── Update Password ──────────────────────────────────────────────────────
   updatePassword: async (email, currentPassword, newPassword) => {

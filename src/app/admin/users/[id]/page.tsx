@@ -12,117 +12,20 @@ import {
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import UserProfileHeader from "@/components/features/admin/users/user-profile-header";
 import UserAccountInformation from "@/components/features/admin/users/user-account-information";
+import { userApi } from "@/lib/api";
 import UserActivityLog, {
   type ActivityLogEntry,
 } from "@/components/features/admin/users/user-activity-log";
 
-// ─── Shared user data (same as users list) ───────────────────────────────────
-const ALL_USERS = [
-  {
-    id: "1",
-    name: "Sarah Jenkins",
-    email: "sarah.j@primestay.com",
-    avatarColor: "#f4a261",
-    avatarInitial: "S",
-    role: "Owner" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 24, 2023 at 09:41 AM",
-    phone: "+1 (555) 123-4567",
-    joined: "August 15, 2022",
-    timezone: "(GMT-05:00) Eastern Time (US & Canada)",
-  },
-  {
-    id: "2",
-    name: "Mike Ross",
-    email: "mike.ross@primestay.com",
-    avatarColor: "#2f80ed",
-    avatarInitial: "M",
-    role: "Staff" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 23, 2023 at 02:15 PM",
-    phone: "+1 (555) 234-5678",
-    joined: "March 10, 2023",
-    timezone: "(GMT+00:00) London",
-  },
-  {
-    id: "3",
-    name: "John Doe",
-    email: "john.d@gmail.com",
-    avatarColor: "#953002",
-    avatarInitial: "J",
-    role: "Staff" as const,
-    status: "Suspended" as const,
-    lastLogin: "Sep 12, 2023 at 11:00 AM",
-    phone: "+1 (555) 345-6789",
-    joined: "June 1, 2022",
-    timezone: "(GMT+05:30) India",
-  },
-  {
-    id: "4",
-    name: "Emily Chen",
-    email: "emily.chen@primestay.com",
-    avatarColor: "#27ae60",
-    avatarInitial: "E",
-    role: "Owner" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 24, 2023 at 08:30 AM",
-    phone: "+1 (555) 456-7890",
-    joined: "January 5, 2021",
-    timezone: "(GMT-08:00) Pacific Time",
-  },
-  {
-    id: "5",
-    name: "Aisha Kumar",
-    email: "aisha.k@primestay.com",
-    avatarColor: "#e67e22",
-    avatarInitial: "A",
-    role: "Staff" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 21, 2023 at 03:40 PM",
-    phone: "+1 (555) 567-8901",
-    joined: "April 20, 2023",
-    timezone: "(GMT+05:30) India",
-  },
-  {
-    id: "6",
-    name: "Nina Patel",
-    email: "nina.patel@primestay.com",
-    avatarColor: "#e84393",
-    avatarInitial: "N",
-    role: "Owner" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 24, 2023 at 07:55 AM",
-    phone: "+1 (555) 678-9012",
-    joined: "September 3, 2020",
-    timezone: "(GMT+05:30) India",
-  },
-  {
-    id: "7",
-    name: "Daniel Osei",
-    email: "daniel.o@primestay.com",
-    avatarColor: "#16a085",
-    avatarInitial: "D",
-    role: "Staff" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 20, 2023 at 11:30 AM",
-    phone: "+1 (555) 789-0123",
-    joined: "July 12, 2022",
-    timezone: "(GMT+00:00) London",
-  },
-  {
-    id: "8",
-    name: "Priya Sharma",
-    email: "priya.s@primestay.com",
-    avatarColor: "#8e44ad",
-    avatarInitial: "P",
-    role: "Owner" as const,
-    status: "Suspended" as const,
-    lastLogin: "Oct 19, 2023 at 02:00 PM",
-    phone: "+1 (555) 890-1234",
-    joined: "February 28, 2021",
-    timezone: "(GMT+05:30) India",
-  },
-];
+// Helper to generate consistent avatar colors
+function stringToColor(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = ["#f4a261", "#2f80ed", "#953002", "#27ae60", "#e67e22", "#e84393", "#16a085", "#8e44ad"];
+  return colors[Math.abs(hash) % colors.length];
+}
 
 // ─── Mock activity log ────────────────────────────────────────────────────────
 const ACTIVITY_LOG: ActivityLogEntry[] = [
@@ -239,11 +142,49 @@ function ResetPasswordModal({
 export default function UserDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const user = ALL_USERS.find((u) => u.id === params.id) ?? ALL_USERS[0];
 
-  const [suspended, setSuspended] = useState(user.status === "Suspended");
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [suspended, setSuspended] = useState(false);
+  const [currentRole, setCurrentRole] = useState("Staff");
   const [toast, setToast] = useState<string | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const id = parseInt(params.id as string);
+        if (isNaN(id)) return;
+        
+        const u = await userApi.getUserById(id);
+        const name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Unknown User";
+        const formattedRole = u.role ? (u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase()) : "Staff";
+        
+        const formattedUser = {
+          id: u.id.toString(),
+          name,
+          email: u.email,
+          avatarColor: stringToColor(name),
+          avatarInitial: name.charAt(0).toUpperCase(),
+          role: formattedRole,
+          status: "Active",
+          lastLogin: new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + " at " + new Date(u.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+          phone: "+1 (555) 000-0000", // Backend missing
+          joined: new Date(u.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+          timezone: "(GMT+00:00) Default Timezone", // Backend missing
+        };
+        
+        setUser(formattedUser);
+        setCurrentRole(formattedUser.role);
+        setSuspended(formattedUser.status === "Suspended");
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUser();
+  }, [params.id]);
 
   const handleSuspendToggle = () => {
     const next = !suspended;
@@ -257,6 +198,33 @@ export default function UserDetailPage() {
     setShowResetModal(false);
     setToast("Password Reset Link Sent!");
   };
+
+  const handleRoleChange = async (newRole: string) => {
+    try {
+      await userApi.updateUserRole(parseInt(user.id), newRole);
+      setCurrentRole(newRole as any);
+      setToast(`Role updated to ${newRole}`);
+    } catch (err) {
+      console.error("Failed to update role:", err);
+      setToast("Failed to update user role");
+    }
+  };
+
+  if (loading) {
+    return (
+      <AdminPageLayout>
+        <div className="flex items-center justify-center h-64 text-(--gray-3)">Loading user details...</div>
+      </AdminPageLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AdminPageLayout>
+        <div className="flex items-center justify-center h-64 text-(--gray-3)">User not found.</div>
+      </AdminPageLayout>
+    );
+  }
 
   return (
     <>
@@ -291,10 +259,11 @@ export default function UserDetailPage() {
 
           {/* ── Profile Header Card ── */}
           <UserProfileHeader
-            user={user}
+            user={{ ...user, role: currentRole }}
             suspended={suspended}
             onResetPassword={() => setShowResetModal(true)}
             onSuspendToggle={handleSuspendToggle}
+            onRoleChange={handleRoleChange}
           />
 
           {/* ── Two-column body ── */}

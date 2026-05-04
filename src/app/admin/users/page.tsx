@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -11,6 +11,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
+import { userApi } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type UserRole = "Owner" | "Staff";
@@ -28,97 +29,15 @@ interface User {
   lastLoginTime: string;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const ALL_USERS: User[] = [
-  {
-    id: "1",
-    name: "Sarah Jenkins",
-    email: "sarah.j@primestay.com",
-    avatarColor: "#f4a261",
-    avatarInitial: "S",
-    role: "Owner",
-    status: "Active",
-    lastLogin: "Oct 24, 2023",
-    lastLoginTime: "09:41 AM",
-  },
-  {
-    id: "2",
-    name: "Mike Ross",
-    email: "mike.ross@primestay.com",
-    avatarColor: "#2f80ed",
-    avatarInitial: "M",
-    role: "Staff",
-    status: "Active",
-    lastLogin: "Oct 23, 2023",
-    lastLoginTime: "02:15 PM",
-  },
-  {
-    id: "3",
-    name: "John Doe",
-    email: "john.d@gmail.com",
-    avatarColor: "#953002",
-    avatarInitial: "J",
-    role: "Staff",
-    status: "Suspended",
-    lastLogin: "Sep 12, 2023",
-    lastLoginTime: "11:00 AM",
-  },
-  {
-    id: "4",
-    name: "Emily Chen",
-    email: "emily.chen@primestay.com",
-    avatarColor: "#27ae60",
-    avatarInitial: "E",
-    role: "Owner",
-    status: "Active",
-    lastLogin: "Oct 24, 2023",
-    lastLoginTime: "08:30 AM",
-  },
-  {
-    id: "5",
-    name: "Aisha Kumar",
-    email: "aisha.k@primestay.com",
-    avatarColor: "#e67e22",
-    avatarInitial: "A",
-    role: "Staff",
-    status: "Active",
-    lastLogin: "Oct 21, 2023",
-    lastLoginTime: "03:40 PM",
-  },
-  {
-    id: "6",
-    name: "Nina Patel",
-    email: "nina.patel@primestay.com",
-    avatarColor: "#e84393",
-    avatarInitial: "N",
-    role: "Owner",
-    status: "Active",
-    lastLogin: "Oct 24, 2023",
-    lastLoginTime: "07:55 AM",
-  },
-  {
-    id: "7",
-    name: "Daniel Osei",
-    email: "daniel.o@primestay.com",
-    avatarColor: "#16a085",
-    avatarInitial: "D",
-    role: "Staff",
-    status: "Active",
-    lastLogin: "Oct 20, 2023",
-    lastLoginTime: "11:30 AM",
-  },
-  {
-    id: "8",
-    name: "Priya Sharma",
-    email: "priya.s@primestay.com",
-    avatarColor: "#8e44ad",
-    avatarInitial: "P",
-    role: "Owner",
-    status: "Suspended",
-    lastLogin: "Oct 19, 2023",
-    lastLoginTime: "02:00 PM",
-  },
-];
+// Helper to generate consistent avatar colors
+function stringToColor(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = ["#f4a261", "#2f80ed", "#953002", "#27ae60", "#e67e22", "#e84393", "#16a085", "#8e44ad"];
+  return colors[Math.abs(hash) % colors.length];
+}
 
 const PAGE_SIZE = 6;
 
@@ -177,14 +96,48 @@ function UserAvatar({ user }: { user: User }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function UsersManagementPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"All" | UserRole>("All");
   const [roleOpen, setRoleOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const data = await userApi.getAllUsers();
+        // Map backend UserResponse to frontend User format
+        const formattedUsers: User[] = data.map((u: any) => {
+          const name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Unknown User";
+          // Capitalize role correctly for the UI (e.g., "STAFF" -> "Staff", "OWNER" -> "Owner")
+          const formattedRole = u.role ? (u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase()) : "Staff";
+          
+          return {
+            id: u.id.toString(),
+            name,
+            email: u.email,
+            avatarColor: stringToColor(name),
+            avatarInitial: name.charAt(0).toUpperCase(),
+            role: formattedRole as UserRole,
+            status: "Active", // Backend doesn't support status yet
+            lastLogin: new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            lastLoginTime: new Date(u.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+          };
+        });
+        setUsers(formattedUsers);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUsers();
+  }, []);
+
   // ── Filter ──
-  const filtered = ALL_USERS.filter((u) => {
+  const filtered = users.filter((u) => {
     const matchSearch =
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -301,7 +254,16 @@ export default function UsersManagementPage() {
                 </tr>
               </thead>
               <tbody>
-                {paged.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="py-10 text-center text-[var(--gray-3)] text-sm"
+                    >
+                      Loading users...
+                    </td>
+                  </tr>
+                ) : paged.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
