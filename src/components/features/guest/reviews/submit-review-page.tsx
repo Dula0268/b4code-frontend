@@ -125,19 +125,18 @@ function useReviewLogic() {
     setErrorMsg(null)
     
     const guest = useAuthStore.getState().user;
-    const authorName = guest?.profile?.firstName ? `${guest.profile.firstName} ${guest.profile.lastName}` : "Guest";
-    const initials = authorName.substring(0, 2).toUpperCase();
+    const guestName = guest?.profile?.firstName ? `${guest.profile.firstName} ${guest.profile.lastName}` : "Guest";
+    const guestId = guest?.id ?? 1;
 
     try {
-      const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/properties/${propertyId}/reviews`, {
+      const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          author: authorName,
-          avatarInitials: initials,
-          avatarColor: "bg-emerald-500",
-          date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
-          text: reviewText,
+          propertyId: Number(propertyId),
+          guestId: guestId,
+          guestName: guestName,
+          reviewText: reviewText,
           rating: overallRating
         })
       });

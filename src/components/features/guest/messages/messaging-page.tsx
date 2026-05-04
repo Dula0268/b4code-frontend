@@ -60,7 +60,7 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
             try {
                 type AuthUserLike = { id?: number }
                 const guestId = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
-                const res = await fetch(`${MESSAGING_CONFIG.API_BASE_URL}/guest/messages?guestId=${guestId}`);
+                const res = await fetch(`${MESSAGING_CONFIG.API_BASE_URL}/guest/messages?receiverId=${guestId}`);
                 if (res.ok) {
                     const data = await res.json();
                     type ApiMessage = { id: number | string; senderId: number | string; content: string; sentAt: string }

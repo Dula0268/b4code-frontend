@@ -152,3 +152,109 @@ export const paymentApi = {
     },
 
 };
+
+// Guest APIs
+export const guestApi = {
+    // Property Methods
+    getAllProperties: async () => {
+        const response = await apiFetch("/api/guest/properties");
+        if (!response.ok) throw new Error("Failed to fetch properties");
+        return response.json();
+    },
+
+    getPropertyDetail: async (propertyId: number) => {
+        const response = await apiFetch(`/api/guest/properties/${propertyId}`);
+        if (!response.ok) throw new Error("Failed to fetch property details");
+        return response.json();
+    },
+
+    // Booking Methods
+    getGuestBookings: async (guestId: number) => {
+        const response = await apiFetch(`/api/guest/bookings/${guestId}`);
+        if (!response.ok) throw new Error("Failed to fetch bookings");
+        return response.json();
+    },
+
+    getPropertyBookings: async (propertyId: number) => {
+        const response = await apiFetch(`/api/guest/properties/${propertyId}/bookings`);
+        if (!response.ok) throw new Error("Failed to fetch property bookings");
+        return response.json();
+    },
+
+    createBooking: async (bookingData: {
+        propertyId: number;
+        guestId: number;
+        checkInDate: string;
+        checkOutDate: string;
+        status: string;
+        totalPrice: number;
+    }) => {
+        const response = await apiFetch("/api/guest/bookings", {
+            method: "POST",
+            body: JSON.stringify(bookingData),
+        });
+        if (!response.ok) throw new Error("Failed to create booking");
+        return response.json();
+    },
+
+    // Review Methods
+    getPropertyReviews: async (propertyId: number) => {
+        const response = await apiFetch(`/api/guest/properties/${propertyId}/reviews`);
+        if (!response.ok) throw new Error("Failed to fetch reviews");
+        return response.json();
+    },
+
+    getGuestReviews: async (guestId: number) => {
+        const response = await apiFetch(`/api/guest/reviews/${guestId}`);
+        if (!response.ok) throw new Error("Failed to fetch guest reviews");
+        return response.json();
+    },
+
+    createReview: async (reviewData: {
+        propertyId: number;
+        guestId: number;
+        guestName: string;
+        reviewText: string;
+        rating: number;
+    }) => {
+        const response = await apiFetch("/api/guest/reviews", {
+            method: "POST",
+            body: JSON.stringify(reviewData),
+        });
+        if (!response.ok) throw new Error("Failed to create review");
+        return response.json();
+    },
+
+    // Message Methods
+    getPropertyMessages: async (propertyId: number) => {
+        const response = await apiFetch(`/api/guest/properties/${propertyId}/messages`);
+        if (!response.ok) throw new Error("Failed to fetch messages");
+        return response.json();
+    },
+
+    getReceivedMessages: async (receiverId: number) => {
+        const response = await apiFetch(`/api/guest/messages?receiverId=${receiverId}`);
+        if (!response.ok) throw new Error("Failed to fetch messages");
+        return response.json();
+    },
+
+    getConversation: async (userId1: number, userId2: number) => {
+        const response = await apiFetch(`/api/guest/messages/conversation?userId1=${userId1}&userId2=${userId2}`);
+        if (!response.ok) throw new Error("Failed to fetch conversation");
+        return response.json();
+    },
+
+    sendMessage: async (messageData: {
+        senderId: number;
+        receiverId: number;
+        propertyId: number;
+        content: string;
+    }) => {
+        const response = await apiFetch("/api/guest/messages", {
+            method: "POST",
+            body: JSON.stringify(messageData),
+        });
+        if (!response.ok) throw new Error("Failed to send message");
+        return response.json();
+    },
+};

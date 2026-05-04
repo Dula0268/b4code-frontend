@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight, X, Heart, Star, Loader2 } from "lucide-react"
 
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
+import { guestApi } from "@/lib/api"
 
 // Dynamically import the map (Leaflet must not run on server)
 const MapView = dynamic(() => import("./map-view"), { ssr: false })
@@ -171,21 +172,12 @@ function useSearchResultsLogic(destination: string, checkIn: string, checkOut: s
         const fetchListings = async () => {
             try {
                 setLoading(true);
-                const query = new URLSearchParams();
-                if (destination && destination !== "Sri Lanka") query.append("destination", destination);
-                if (checkIn) query.append("checkIn", checkIn);
-                if (checkOut) query.append("checkOut", checkOut);
-                if (guests) query.append("guests", guests.toString());
-                
-                const res = await fetch(`${SEARCH_RESULTS_CONFIG.API_BASE_URL}/guest/search?${query.toString()}`);
-                if (!res.ok) throw new Error("Failed to fetch listings");
-                const data = await res.json();
+                const data = await guestApi.getAllProperties();
                 if (isMounted) {
                     setListings(data);
                 }
             } catch (err) {
                 console.error("Error fetching properties:", err);
-                // Removed mock data fallback
                 if (isMounted) {
                     setListings([]);
                 }

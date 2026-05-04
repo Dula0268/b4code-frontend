@@ -287,7 +287,7 @@ function useMyBookingsLogic() {
         try {
             type AuthUserLike = { id?: number }
             const guestId = (user as AuthUserLike | null)?.id ?? 1;
-            const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings?guestId=${guestId}`, { cache: "no-store" });
+            const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${guestId}`, { cache: "no-store" });
             if (!res.ok) throw new Error("Failed to fetch bookings");
             const data = await res.json();
             
