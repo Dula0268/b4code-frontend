@@ -58,13 +58,15 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
     useEffect(() => {
         async function loadMessages() {
             try {
-                const guestId = (useAuthStore.getState().user as any)?.id || 1;
+                type AuthUserLike = { id?: number }
+                const guestId = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
                 const res = await fetch(`${MESSAGING_CONFIG.API_BASE_URL}/guest/messages?guestId=${guestId}`);
                 if (res.ok) {
                     const data = await res.json();
-                    const apiMsgs = data.map((m: any) => ({
+                    type ApiMessage = { id: number | string; senderId: number | string; content: string; sentAt: string }
+                    const apiMsgs = (data as ApiMessage[]).map((m) => ({
                         id: String(m.id),
-                        sender: String(m.senderId) === String(guestId) ? "guest" : "agent",
+                        sender: String(m.senderId) === String(guestId) ? "guest" as const : "agent" as const,
                         text: m.content,
                         time: new Date(m.sentAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
                     }));
@@ -89,7 +91,7 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
 
     const sendMessage = async (text: string) => {
         if (!text.trim()) return
-        const guestId = (useAuthStore.getState().user as any)?.id || 1;
+        const guestId = (useAuthStore.getState().user as { id?: number } | null)?.id ?? 1;
         const newMsg = { id: Date.now().toString(), sender: "guest" as const, text: text.trim(), time: getTime() };
         setMessages(prev => [...prev, newMsg]);
         setInput("")

@@ -101,7 +101,19 @@ function PropertyCard({ listing }: { listing: PropertyListing }) {
 }
 
 // ─── Inlined ResultsHeader ────────────────────────────────────────────────────
-function ResultsHeader({ destination, totalCount, checkIn, checkOut, guests, activeFilters = [], onRemoveFilter }: any) {
+type ActiveFilter = { id: string; label: string }
+
+interface ResultsHeaderProps {
+    destination?: string
+    totalCount: number
+    checkIn?: string
+    checkOut?: string
+    guests?: number
+    activeFilters?: ActiveFilter[]
+    onRemoveFilter?: (id: string) => void
+}
+
+function ResultsHeader({ destination, totalCount, checkIn, checkOut, guests, activeFilters = [], onRemoveFilter }: ResultsHeaderProps) {
     const subtitle = [
         `${totalCount} stays`,
         checkIn && checkOut ? `${checkIn} - ${checkOut}` : null,
@@ -120,7 +132,7 @@ function ResultsHeader({ destination, totalCount, checkIn, checkOut, guests, act
             </div>
             {activeFilters.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
-                    {activeFilters.map((f: any) => (
+                    {activeFilters.map((f) => (
                         <div key={f.id} className="flex items-center gap-1 sm:gap-1.5 bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/30 rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-[12px] font-medium text-[var(--brand-primary)]">
                             <span className="truncate">{f.label}</span>
                             {onRemoveFilter && (

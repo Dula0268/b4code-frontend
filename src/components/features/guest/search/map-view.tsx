@@ -127,7 +127,7 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
 
             // Fit map to all markers
             if (listings.length > 0) {
-                const bounds = listings.map((l: any) => getCoords(l.location))
+                const bounds = listings.map((l) => getCoords(l.location))
                 map.fitBounds(bounds as unknown as LatLngBoundsExpression, { padding: [40, 40], maxZoom: 10 })
             }
 
@@ -148,7 +148,7 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
         if (!mapRef.current) return
         import("leaflet").then(L => {
             markersRef.current.forEach((marker, id) => {
-                const listing = listings.find((l: any) => l.id === id)
+                const listing = listings.find((l) => l.id === id)
                 if (!listing) return
                 const isHovered = id === hoveredId
                 const icon = L.divIcon({

@@ -4,6 +4,7 @@ import { useState, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
+import type { ReadonlyURLSearchParams } from "next/navigation"
 import {
     ChevronRight, Home, Users, BedDouble, SquareDot, CheckCircle2,
     Star, ArrowRight, Grid2X2, MapPin
@@ -36,7 +37,7 @@ const ROOM_DETAIL_CONFIG = {
     ]
 } as const;
 
-function useRoomDetailLogic(room: Room, searchParams: any) {
+function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | null) {
     // Parse initial dates from URL
     const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : ROOM_DETAIL_CONFIG.tempDefaultDateCheckIn
     const initialCheckOut = searchParams?.get("checkOut") ? new Date(searchParams.get("checkOut")!) : ROOM_DETAIL_CONFIG.tempDefaultDateCheckOut

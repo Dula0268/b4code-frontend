@@ -144,7 +144,8 @@ function useModifyReservationLogic() {
     
     try {
       if (storeBooking && !storeBooking.id.startsWith("bk-")) {
-        const guestIdToUse = (useAuthStore.getState().user as any)?.id || 1;
+        type AuthUserLike = { id?: number }
+        const guestIdToUse = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
         
         const payload = {
             propertyId: parseInt(storeBooking.propertyId) || 1,
@@ -171,8 +172,9 @@ function useModifyReservationLogic() {
       }
 
       router.push("/guest/booking/confirmation")
-    } catch (e: any) {
-      setErrorMsg(e?.message || "Failed to modify the reservation. Please try again.")
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to modify the reservation. Please try again."
+      setErrorMsg(message)
     } finally {
       setSubmitting(false)
     }

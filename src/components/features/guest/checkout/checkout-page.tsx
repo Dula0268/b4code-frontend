@@ -100,8 +100,11 @@ function useCheckoutLogic() {
             }
         }
 
+        type ApiRoom = { id: string; name: string; pricePerNight: number }
+        type ApiProperty = { rooms?: ApiRoom[]; title: string; rating: number; reviewCount: number; imageSrc: string }
+
         if (property && roomId) {
-            room = property.rooms?.find((r: any) => r.id === roomId) || null;
+            room = (property as ApiProperty).rooms?.find((r) => r.id === roomId) || null;
         }
 
         const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
@@ -172,7 +175,7 @@ function useCheckoutLogic() {
       let serverBookingId = bookingId;
 
       try {
-        const guestIdToUse = (user as any)?.id || 1;
+        const guestIdToUse = (user as { id?: number } | null)?.id ?? 1;
         const res = await fetch(`${CHECKOUT_CONFIG.apiBaseUrl}/guest/bookings`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

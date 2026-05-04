@@ -98,7 +98,8 @@ function useCancelBookingLogic() {
 
     try {
       if (storeBooking && !storeBooking.id.startsWith("bk-")) {
-        const guestIdToUse = (useAuthStore.getState().user as any)?.id || 1;
+        type AuthUserLike = { id?: number }
+        const guestIdToUse = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
         const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${storeBooking.id}/cancel?guestId=${guestIdToUse}`, {
             method: "PATCH"
         });
@@ -117,8 +118,9 @@ function useCancelBookingLogic() {
         : "/guest/booking/refund"
         
       router.push(targetUrl)
-    } catch (error: any) {
-      setErrorMsg(error?.message || "Failed to cancel the booking. Please try again.")
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to cancel the booking. Please try again."
+      setErrorMsg(message)
     } finally {
       setSubmitting(false)
     }

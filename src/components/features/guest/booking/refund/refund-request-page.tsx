@@ -117,8 +117,9 @@ function useRefundRequestLogic() {
         }, 1800)
       })
       setSubmitted(true)
-    } catch (err: any) {
-      setErrorMsg(err?.message || "An unexpected network error occurred.")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected network error occurred."
+      setErrorMsg(message)
     } finally {
       setSubmitting(false)
     }

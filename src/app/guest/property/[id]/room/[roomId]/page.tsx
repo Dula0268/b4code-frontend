@@ -7,6 +7,12 @@ interface Props {
     params: { id: string; roomId: string }
 }
 
+type PropertyRoom = { id: string; name?: string; pricePerNight?: number }
+type PropertyApi = {
+  title?: string
+  rooms?: PropertyRoom[]
+}
+
 async function fetchProperty(id: string) {
     try {
         const res = await fetch(`http://localhost:8080/api/guest/properties/${id}`, { cache: "no-store" });
@@ -23,9 +29,9 @@ async function fetchProperty(id: string) {
 
 export async function generateMetadata({ params }: Props) {
     const { id, roomId } = params
-    const property = await fetchProperty(id)
+    const property = (await fetchProperty(id)) as PropertyApi | null
     if (!property) return {}
-    const room = property.rooms?.find((r: any) => r.id === roomId)
+    const room = property.rooms?.find((r) => r.id === roomId)
     if (!room) return {}
     return {
         title: `${room.name} · ${property.title} — Prime Stay Sri Lanka`,
@@ -35,9 +41,9 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function RoomPage({ params }: Props) {
     const { id, roomId } = params
-    const property = await fetchProperty(id)
+    const property = (await fetchProperty(id)) as PropertyApi | null
     if (!property) notFound()
-    const room = property.rooms?.find((r: any) => r.id === roomId)
+    const room = property.rooms?.find((r) => r.id === roomId)
     if (!room) notFound()
 
     return (

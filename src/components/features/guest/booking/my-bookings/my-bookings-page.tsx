@@ -285,17 +285,30 @@ function useMyBookingsLogic() {
     let active = true
     async function loadBookings() {
         try {
-            const guestId = (user as any)?.id || 1;
+            type AuthUserLike = { id?: number }
+            const guestId = (user as AuthUserLike | null)?.id ?? 1;
             const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings?guestId=${guestId}`, { cache: "no-store" });
             if (!res.ok) throw new Error("Failed to fetch bookings");
             const data = await res.json();
             
             if (active) {
-                const apiBookings = data.map((b: any) => ({
+                type ApiBooking = {
+                  id: number | string
+                  propertyId: number | string
+                  status: BookingStatus | "PENDING"
+                  propertyName?: string
+                  location?: string
+                  imageSrc?: string
+                  checkInDate: string
+                  checkOutDate: string
+                  totalPrice: number
+                }
+
+                const apiBookings = (data as ApiBooking[]).map((b) => ({
                     id: String(b.id),
                     propertyId: String(b.propertyId),
                     orderNumber: `BK-${b.id}88${b.propertyId}`,
-                    status: b.status,
+                    status: b.status as BookingStatus,
                     property: b.propertyName || "Prime Stay Property",
                     location: b.location ? `${b.location}, Sri Lanka` : "Sri Lanka",
                     imageSrc: b.imageSrc || "/images/properties/property-1.jpg",
@@ -304,7 +317,7 @@ function useMyBookingsLogic() {
                     guests: "Guests",
                     totalPrice: b.totalPrice,
                     nightsLabel: "Total for stay",
-                    paymentMethod: "online",
+                    paymentMethod: "online" as const,
                     paidInFull: true,
                     isFromStore: true,
                 }));
