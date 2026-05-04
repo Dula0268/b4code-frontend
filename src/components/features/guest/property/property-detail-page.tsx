@@ -134,9 +134,9 @@ function usePropertyDetailLogic(property: PropertyDetail) {
         setTimeout(() => setShareToast(null), 2800)
     }
 
-    const allImages = [property.imageSrc, ...property.galleryImages]
+    const allImages = [property.imageSrc, ...(property.galleryImages || [])]
 
-    const cheapestRoomId = property.rooms.length > 0
+    const cheapestRoomId = property.rooms && property.rooms.length > 0
         ? property.rooms.reduce((min, room) => room.pricePerNight < min.pricePerNight ? room : min).id
         : ""
 
@@ -203,7 +203,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                         </div>
 
                         {/* Four smaller images */}
-                        {property.galleryImages.slice(0, 4).map((img, i) => (
+                        {(property.galleryImages || []).slice(0, 4).map((img, i) => (
                             <div
                                 key={i}
                                 className="relative cursor-pointer group"
@@ -322,7 +322,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                         <div>
                             <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">What this place offers</h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {property.amenities.map(a => (
+                                {(property.amenities || []).map(a => (
                                     <div key={a.label} className="flex items-center gap-2.5 text-[13px] text-[#333]">
                                         <AmenityIcon name={a.icon} />
                                         <span>{a.label}</span>
@@ -341,14 +341,14 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
 
                             {/* Rating breakdown */}
                             <div className="flex flex-col gap-2.5 mb-6 p-4 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm">
-                                {property.reviewBreakdown.map(r => (
+                                {(property.reviewBreakdown || []).map(r => (
                                     <RatingBar key={r.label} label={r.label} score={r.score} />
                                 ))}
                             </div>
 
                             {/* Review cards */}
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {property.reviews.map(rev => (
+                                {(property.reviews || []).map(rev => (
                                     <div
                                         key={rev.id}
                                         className="p-4 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm hover:shadow-md transition-shadow"
@@ -389,7 +389,7 @@ export default function PropertyDetailPage({ property }: { property: PropertyDet
                                 <p className="text-[12px] text-[#828282]">☑ Prices include taxes and fees</p>
                             </div>
                             <div className="flex flex-col gap-3">
-                                {property.rooms.map(room => (
+                                {(property.rooms || []).map(room => (
                                     <RoomCard key={room.id} room={room} propertyId={property.id} />
                                 ))}
                             </div>
