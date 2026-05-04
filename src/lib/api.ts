@@ -15,6 +15,20 @@ export const removeToken = (): void => {
     localStorage.removeItem("auth_user");
 };
 
+export const staffApi = {
+    getAllProperties: async () => {
+        const response = await apiFetch("/api/staff/all-properties");
+        if (!response.ok) throw new Error("Failed to fetch properties");
+        return response.json();
+    },
+
+
+    getMyProperties: async (staffId: number) => {
+        const response = await apiFetch(`/api/staff/properties/${staffId}`);
+        if (!response.ok) throw new Error("Failed to fetch properties");
+        return response.json();
+    },
+};
 // Base fetch with auth header
 export const apiFetch = async (
     endpoint: string,
@@ -136,4 +150,5 @@ export const paymentApi = {
         if (!response.ok) throw new Error("Failed to fetch payments");
         return response.json();
     },
+
 };

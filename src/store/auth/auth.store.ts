@@ -54,7 +54,7 @@ const saveMockUsers = (users: Record<string, MockUserRecord>) => {
 const REDIRECT_MAP: Record<Role, string> = {
   guest: "/guest/search",
   owner: "/owner",
-  staff: "/staff",
+  staff: "/staff/select-property",
   admin: "/admin",
 };
 
