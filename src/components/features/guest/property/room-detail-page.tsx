@@ -34,7 +34,7 @@ const ROOM_DETAIL_CONFIG = {
         new Date(2026, 9, 7),
         new Date(2026, 9, 18),
         new Date(2026, 9, 19),
-    ]
+    ] as Date[],
 } as const;
 
 function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | null) {
