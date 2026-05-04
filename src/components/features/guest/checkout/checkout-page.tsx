@@ -232,7 +232,7 @@ function useCheckoutLogic() {
       returnParams.set('confirmationCode', confirmationCode)
       returnParams.set('paidInFull', paidInFull ? '1' : '0')
       router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
-    } catch (e: any) {
+    } catch (e: unknown) {
       setErrorMsg("Failed to process booking. Please try again.")
     } finally {
       setIsSubmitting(false);
