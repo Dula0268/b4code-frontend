@@ -10,6 +10,7 @@ import Link from "next/link"
 import { differenceInDays, format } from "date-fns"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
+import { guestApi } from "@/lib/api"
 
 // ─── Zod Validation Schema ────────────────────────────────────────────────────
 const checkoutSchema = z.object({
@@ -176,26 +177,23 @@ function useCheckoutLogic() {
 
       try {
         const guestIdToUse = (user as { id?: number } | null)?.id ?? 1;
-        const res = await fetch(`${CHECKOUT_CONFIG.apiBaseUrl}/guest/bookings`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                propertyId: propertyId,
-                guestId: guestIdToUse,
-                checkInDate: checkInRaw,
-                checkOutDate: checkOutRaw,
-                totalPrice: total
-            })
-        });
-        
-        if (res.ok) {
-            const serverBooking = await res.json();
+        try {
+          const serverBooking = await guestApi.createBooking({
+            propertyId: Number(propertyId) || propertyId,
+            guestId: Number(guestIdToUse) || guestIdToUse,
+            checkInDate: checkInRaw,
+            checkOutDate: checkOutRaw,
+            status: 'UPCOMING',
+            totalPrice: Math.round(total),
+          });
+          if (serverBooking && serverBooking.id) {
             serverBookingId = serverBooking.id.toString();
-        } else {
-            console.warn("Backend booking failed, falling back to local store for demo");
+          }
+        } catch (err) {
+          console.warn("Backend booking failed or unreachable, falling back to local store", err);
         }
       } catch (e) {
-          console.warn("Backend booking API not reachable, falling back to local store for demo");
+        console.warn("Booking flow error", e);
       }
 
       useGuestBookingStore.getState().addBooking({
