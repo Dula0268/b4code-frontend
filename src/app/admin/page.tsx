@@ -6,20 +6,31 @@ import TotalRevenueCard from "@/components/features/admin/dashboard/kpi-cards/to
 import OccupancyRateCard from "@/components/features/admin/dashboard/kpi-cards/occupancy-rate-card";
 import ActiveBookingsCard from "@/components/features/admin/dashboard/kpi-cards/active-bookings-card";
 import RevenueTrendChart from "@/components/features/admin/finance/revenue-trend-chart";
-import RecentVerificationRequests from "@/components/features/admin/dashboard/recent-verification-requests";
+import RecentVerificationRequests, {
+  type VerificationRequest,
+} from "@/components/features/admin/dashboard/recent-verification-requests";
 import { useAdminDashboardStore } from "@/store/admin/dashboard/admin-dashboard.store";
+import type { RecentVerification } from "@/api/admin/dashboard.api";
 import { Loader2 } from "lucide-react";
+
+// ─── Helper Functions ─────────────────────────────────────────────────────────
+const mapToVerificationRequest = (
+  v: RecentVerification,
+): VerificationRequest => ({
+  id: v.id,
+  name: v.name,
+  entityId: v.entityId,
+  type: v.type,
+  dateSubmitted: v.dateSubmitted,
+  status: (v.status as "Pending" | "Verified" | "Rejected") || "Pending",
+  action: (v.action as "Review" | "View") || "Review",
+  icon: (v.icon === "user" ? "user" : "property") as "property" | "user",
+});
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
-  const {
-    kpis,
-    revenueTrend,
-    recentVerifications,
-    loading,
-    error,
-    fetchDashboardData,
-  } = useAdminDashboardStore();
+  const { kpis, recentVerifications, loading, error, fetchDashboardData } =
+    useAdminDashboardStore();
 
   useEffect(() => {
     fetchDashboardData();
@@ -71,8 +82,9 @@ export default function AdminDashboardPage() {
             <RevenueTrendChart />
 
             {/* ── Recent Verification Requests ── */}
-            {/* The component expects VerificationRequest[], our type is RecentVerification[]. They map 1:1 */}
-            <RecentVerificationRequests requests={recentVerifications as any} />
+            <RecentVerificationRequests
+              requests={recentVerifications.map(mapToVerificationRequest)}
+            />
           </>
         )}
       </div>

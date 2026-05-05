@@ -22,7 +22,11 @@ interface PropertiesState {
   setSelectedProperty: (prop: PropertyDto | null) => void;
 }
 
-export const useAdminPropertiesStore = create<PropertiesState>((set, get) => ({
+// ─── Helper Function ─────────────────────────────────────────────────────────
+const getErrorMessage = (e: unknown): string =>
+  e instanceof Error ? e.message : "Request failed";
+
+export const useAdminPropertiesStore = create<PropertiesState>((set) => ({
   properties: [],
   propertiesTotalPages: 0,
   propertiesTotalElements: 0,
@@ -42,8 +46,8 @@ export const useAdminPropertiesStore = create<PropertiesState>((set, get) => ({
         propertiesTotalElements: data.totalElements,
         loading: false 
       });
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
+    } catch (err: unknown) {
+      set({ error: getErrorMessage(err), loading: false });
     }
   },
 
@@ -52,8 +56,8 @@ export const useAdminPropertiesStore = create<PropertiesState>((set, get) => ({
     try {
       const data = await PropertyApi.getPropertyById(id);
       set({ selectedProperty: data, loading: false });
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
+    } catch (err: unknown) {
+      set({ error: getErrorMessage(err), loading: false });
     }
   },
 
@@ -66,8 +70,8 @@ export const useAdminPropertiesStore = create<PropertiesState>((set, get) => ({
         selectedProperty: state.selectedProperty?.id === id ? updated : state.selectedProperty,
         actionLoading: false
       }));
-    } catch (err: any) {
-      set({ error: err.message, actionLoading: false });
+    } catch (err: unknown) {
+      set({ error: getErrorMessage(err), actionLoading: false });
       throw err;
     }
   },
@@ -81,8 +85,8 @@ export const useAdminPropertiesStore = create<PropertiesState>((set, get) => ({
         selectedProperty: state.selectedProperty?.id === id ? updated : state.selectedProperty,
         actionLoading: false
       }));
-    } catch (err: any) {
-      set({ error: err.message, actionLoading: false });
+    } catch (err: unknown) {
+      set({ error: getErrorMessage(err), actionLoading: false });
       throw err;
     }
   },
@@ -96,8 +100,8 @@ export const useAdminPropertiesStore = create<PropertiesState>((set, get) => ({
         selectedProperty: state.selectedProperty?.id === id ? updated : state.selectedProperty,
         actionLoading: false
       }));
-    } catch (err: any) {
-      set({ error: err.message, actionLoading: false });
+    } catch (err: unknown) {
+      set({ error: getErrorMessage(err), actionLoading: false });
       throw err;
     }
   },
