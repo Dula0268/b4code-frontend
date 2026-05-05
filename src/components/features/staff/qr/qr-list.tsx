@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 
 const TAB_ICONS: Record<QRTab, React.ReactNode> = {
   Table: <UtensilsCrossed size={13} />,
@@ -45,6 +46,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
   const [tab, setTab] = useState<QRTab>("Table");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [qrToDelete, setQrToDelete] = useState<string | null>(null);
 
   // Fetch QR codes on component mount
   useEffect(() => {
@@ -90,9 +92,14 @@ export default function QrList({ propertyId }: { propertyId: number }) {
   };
 
   const handleDeleteQR = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this QR code?")) return;
+    setQrToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!qrToDelete) return;
     try {
-      await deleteQR(id);
+      await deleteQR(qrToDelete);
+      setQrToDelete(null);
     } catch (err) {
       console.error("Failed to delete QR:", err);
     }
@@ -211,6 +218,9 @@ export default function QrList({ propertyId }: { propertyId: number }) {
                       <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-[var(--gray-3)]">
                         <Link href={`/staff/qr/${qr.id}/edit`}><Pencil size={13} /></Link>
                       </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" onClick={() => handleDeleteQR(qr.id)} disabled={loading}>
+                        <Trash2 size={13} />
+                      </Button>
                       <Switch
                         checked={qr.status === "active"}
                         onCheckedChange={() => handleToggleStatus(qr.id)}
@@ -249,6 +259,14 @@ export default function QrList({ propertyId }: { propertyId: number }) {
           </>
         )}
       </div>
+      <DeleteConfirmationDialog
+        isOpen={!!qrToDelete}
+        onClose={() => setQrToDelete(null)}
+        onConfirm={confirmDelete}
+        loading={loading}
+        title="Delete QR Context?"
+        description="This action cannot be undone. Guests will no longer be able to order using this QR code."
+      />
     </div>
   );
 }
