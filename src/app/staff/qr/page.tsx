@@ -6,11 +6,13 @@ import QrList from "@/components/features/staff/qr/qr-list";
 
 export default function QrPage() {
   const searchParams = useSearchParams();
-  const propertyId = searchParams?.get("propertyId") ? parseInt(searchParams.get("propertyId")!) : 1;
-  
+  const queryPropertyId = searchParams?.get("propertyId") ? parseInt(searchParams.get("propertyId")!, 10) : null;
+  const propertyId = queryPropertyId || (typeof window !== "undefined" ? parseInt(localStorage.getItem("selected_property_id") || "", 10) || null : null);
+
   return (
     <StaffPageLayout>
-      <QrList propertyId={propertyId} />
+      {propertyId ? <QrList propertyId={propertyId} /> : <div className="p-6 text-sm text-[var(--gray-3)]">Select a property to view QR management.</div>}
+
     </StaffPageLayout>
   );
 }
