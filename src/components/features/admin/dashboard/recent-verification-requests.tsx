@@ -113,6 +113,7 @@ export default function RecentVerificationRequests({
         </h2>
         <button
           onClick={onViewAll}
+          suppressHydrationWarning
           style={{
             background: "none",
             border: "none",
@@ -231,6 +232,7 @@ export default function RecentVerificationRequests({
                 <td style={{ padding: "14px 16px" }}>
                   <button
                     onClick={() => onActionClick?.(row)}
+                    suppressHydrationWarning
                     style={{
                       background: "none",
                       border: "none",
