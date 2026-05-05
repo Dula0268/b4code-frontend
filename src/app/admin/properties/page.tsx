@@ -1,100 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Search, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Loader2, Image as ImageIcon } from "lucide-react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
+import { useAdminPropertiesStore } from "@/store/admin/properties/properties.store";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type PropertyStatus = "Pending" | "Under Review";
-
-interface PropertyEntry {
-  id: string;
-  name: string;
-  pvId: string;
-  image: string;
-  ownerName: string;
-  ownerRole: string;
-  ownerColor: string;
-  ownerInitial: string;
-  submittedDate: string;
-  submittedTime: string;
-  status: PropertyStatus;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function getInitials(name: string) {
+  if (!name) return "??";
+  const parts = name.split(" ");
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const PROPERTIES: PropertyEntry[] = [
-  {
-    id: "1",
-    name: "City Loft, NY",
-    pvId: "#PV-2935",
-    image: "/images/properties/property-1.jpg",
-    ownerName: "Harvey Specter",
-    ownerRole: "Owner",
-    ownerColor: "#f4a261",
-    ownerInitial: "H",
-    submittedDate: "Oct 21, 2023",
-    submittedTime: "11:15 AM",
-    status: "Pending",
-  },
-  {
-    id: "2",
-    name: "Ocean View Apt",
-    pvId: "#PV-2937",
-    image: "/images/properties/property-2.jpg",
-    ownerName: "Mike Ross",
-    ownerRole: "Owner",
-    ownerColor: "#2f80ed",
-    ownerInitial: "M",
-    submittedDate: "Oct 23, 2023",
-    submittedTime: "4:15 PM",
-    status: "Under Review",
-  },
-  {
-    id: "3",
-    name: "Mountain Retreat",
-    pvId: "#PV-2936",
-    image: "/images/properties/property-3.jpg",
-    ownerName: "Jessica Pearson",
-    ownerRole: "Owner",
-    ownerColor: "#e84393",
-    ownerInitial: "J",
-    submittedDate: "Oct 22, 2023",
-    submittedTime: "09:30 AM",
-    status: "Pending",
-  },
-  {
-    id: "4",
-    name: "City Loft, NY",
-    pvId: "#PV-2935",
-    image: "/images/properties/property-4.jpg",
-    ownerName: "Harvey Specter",
-    ownerRole: "Owner",
-    ownerColor: "#f4a261",
-    ownerInitial: "H",
-    submittedDate: "Oct 21, 2023",
-    submittedTime: "11:15 AM",
-    status: "Pending",
-  },
-];
-
-const PAGE_SIZE = 4;
+function getColorForName(name: string) {
+  const colors = ["#C05621", "#2563EB", "#7C3AED", "#059669", "#DC2626", "#0891B2", "#CA8A04"];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: PropertyStatus }) {
-  const isUnderReview = status === "Under Review";
+function StatusBadge({ status }: { status: string }) {
+  const isUnderReview = status === "Under Review" || status === "UNDER_REVIEW";
+  const isPending = status === "Pending" || status === "PENDING";
+  const isApproved = status === "Approved" || status === "APPROVED";
+  const isRejected = status === "Rejected" || status === "REJECTED";
+
+  let colorClass = "text-[#F59E0B]";
+  let bgClass = "bg-[#F59E0B]";
+
+  if (isUnderReview) {
+    colorClass = "text-[#3B82F6]";
+    bgClass = "bg-[#3B82F6]";
+  } else if (isApproved) {
+    colorClass = "text-[#16A34A]";
+    bgClass = "bg-[#16A34A]";
+  } else if (isRejected) {
+    colorClass = "text-[#DC2626]";
+    bgClass = "bg-[#DC2626]";
+  }
+
   return (
     <span
-      className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
-        isUnderReview ? "text-[#16A34A]" : "text-[#F59E0B]"
-      }`}
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold ${colorClass}`}
     >
-      <span
-        className={`w-2 h-2 rounded-full ${
-          isUnderReview ? "bg-[#16A34A]" : "bg-[#F59E0B]"
-        }`}
-      />
+      <span className={`w-2 h-2 rounded-full ${bgClass}`} />
       {status}
     </span>
   );
@@ -104,41 +59,36 @@ function StatusBadge({ status }: { status: PropertyStatus }) {
 export default function PropertiesPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"All" | PropertyStatus>(
-    "Pending",
-  );
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
-  const filtered = PROPERTIES.filter((p) => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      p.name.toLowerCase().includes(q) ||
-      p.ownerName.toLowerCase().includes(q) ||
-      p.pvId.toLowerCase().includes(q);
-    const matchStatus = statusFilter === "All" || p.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const { properties, propertiesTotalElements, propertiesTotalPages, fetchProperties, loading } = useAdminPropertiesStore();
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  useEffect(() => {
+    fetchProperties({
+      page: currentPage - 1,
+      size: PAGE_SIZE,
+      search: debouncedSearch,
+      status: statusFilter === "All" ? undefined : statusFilter.toUpperCase().replace(/\s+/g, "_")
+    });
+  }, [fetchProperties, currentPage, debouncedSearch, statusFilter]);
 
   const goPage = (p: number) =>
-    setCurrentPage(Math.max(1, Math.min(totalPages, p)));
+    setCurrentPage(Math.max(1, Math.min(propertiesTotalPages, p)));
 
-  const startIndex =
-    filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const endIndex = Math.min(currentPage * PAGE_SIZE, filtered.length);
+  const startIndex = propertiesTotalElements === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const endIndex = Math.min(currentPage * PAGE_SIZE, propertiesTotalElements);
 
-  const statusOptions: ("All" | PropertyStatus)[] = [
-    "All",
-    "Pending",
-    "Under Review",
-  ];
+  const statusOptions = ["All", "Pending", "Under Review", "Approved", "Rejected"];
 
   return (
     <AdminPageLayout>
@@ -197,8 +147,13 @@ export default function PropertiesPage() {
         </div>
 
         {/* ── Property Table ── */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden relative">
+          {loading && properties.length === 0 && (
+            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+              <Loader2 className="animate-spin text-[#C05621]" size={32} />
+            </div>
+          )}
+          <div className="overflow-x-auto min-h-[300px]">
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-[#F6F8F7]">
@@ -214,8 +169,11 @@ export default function PropertiesPage() {
                   )}
                 </tr>
               </thead>
-              <tbody>
-                {paged.length === 0 ? (
+              <tbody className="relative">
+                {loading && properties.length > 0 && (
+                   <tr className="absolute inset-0 bg-white/50 z-10"><td colSpan={5}></td></tr>
+                )}
+                {properties.length === 0 && !loading ? (
                   <tr>
                     <td
                       colSpan={5}
@@ -225,28 +183,23 @@ export default function PropertiesPage() {
                     </td>
                   </tr>
                 ) : (
-                  paged.map((property) => (
+                  properties.map((property) => (
                     <tr
-                      key={property.id + property.pvId}
+                      key={property.id}
                       className="border-t border-[#F0EBE7] transition-colors hover:bg-[#f5efec]"
                     >
                       {/* Property */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                            <Image
-                              src={property.image}
-                              alt={property.name}
-                              fill
-                              className="object-cover"
-                            />
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-[#F3F4F6] flex items-center justify-center">
+                             <ImageIcon className="text-[#C4B5AB]" size={20} />
                           </div>
                           <div>
                             <p className="m-0 font-semibold text-[13px] text-[#1A1A1A]">
                               {property.name}
                             </p>
                             <p className="m-0 text-[11px] text-[#9E7B6A]">
-                              ID: {property.pvId}
+                              ID: #{property.id}
                             </p>
                           </div>
                         </div>
@@ -256,16 +209,16 @@ export default function PropertiesPage() {
                         <div className="flex items-center gap-2.5">
                           <div
                             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[12px] shrink-0"
-                            style={{ backgroundColor: property.ownerColor }}
+                            style={{ backgroundColor: getColorForName(property.hostName) }}
                           >
-                            {property.ownerInitial}
+                            {getInitials(property.hostName)}
                           </div>
                           <div>
                             <p className="m-0 font-semibold text-[13px] text-[#1A1A1A]">
-                              {property.ownerName}
+                              {property.hostName}
                             </p>
                             <p className="m-0 text-[11px] text-[#9E7B6A]">
-                              {property.ownerRole}
+                              Owner
                             </p>
                           </div>
                         </div>
@@ -273,10 +226,10 @@ export default function PropertiesPage() {
                       {/* Submitted */}
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         <p className="m-0 text-[13px] text-[#1A1A1A]">
-                          {property.submittedDate}
+                          {new Date(property.submissionDate).toLocaleDateString()}
                         </p>
                         <p className="m-0 text-[11px] text-[#9E7B6A]">
-                          {property.submittedTime}
+                          {new Date(property.submissionDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </td>
                       {/* Status */}
@@ -287,7 +240,7 @@ export default function PropertiesPage() {
                       <td className="px-5 py-3.5">
                         <button
                           onClick={() =>
-                            router.push("/admin/properties/property-details")
+                            router.push(`/admin/properties/${property.id}`)
                           }
                           className="text-[13px] font-semibold text-[#6B7280] bg-transparent border-none cursor-pointer hover:text-[#C05621] transition-colors"
                         >
@@ -302,38 +255,40 @@ export default function PropertiesPage() {
           </div>
 
           {/* ── Pagination ── */}
-          <div className="flex justify-between items-center px-5 py-3.5 border-t border-[#F0EBE7]">
-            <span className="text-[13px] text-[#9E7B6A]">
-              Showing <strong className="text-[#1A1A1A]">{startIndex}</strong>{" "}
-              to <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
-              <strong className="text-[#1A1A1A]">{filtered.length}</strong>{" "}
-              entries
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => goPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`px-3.5 py-1.5 rounded-lg border border-[#E8DDD8] bg-white text-[13px] font-medium ${
-                  currentPage === 1
-                    ? "cursor-not-allowed text-[#D1D5DB]"
-                    : "cursor-pointer text-[#6B7280] hover:border-[#C05621] hover:text-[#C05621]"
-                } transition-colors`}
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => goPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`px-3.5 py-1.5 rounded-lg border border-[#E8DDD8] bg-white text-[13px] font-medium ${
-                  currentPage === totalPages
-                    ? "cursor-not-allowed text-[#D1D5DB]"
-                    : "cursor-pointer text-[#6B7280] hover:border-[#C05621] hover:text-[#C05621]"
-                } transition-colors`}
-              >
-                Next
-              </button>
+          {propertiesTotalPages > 0 && (
+            <div className="flex justify-between items-center px-5 py-3.5 border-t border-[#F0EBE7]">
+              <span className="text-[13px] text-[#9E7B6A]">
+                Showing <strong className="text-[#1A1A1A]">{startIndex}</strong>{" "}
+                to <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
+                <strong className="text-[#1A1A1A]">{propertiesTotalElements}</strong>{" "}
+                entries
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => goPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-3.5 py-1.5 rounded-lg border border-[#E8DDD8] bg-white text-[13px] font-medium ${
+                    currentPage === 1
+                      ? "cursor-not-allowed text-[#D1D5DB]"
+                      : "cursor-pointer text-[#6B7280] hover:border-[#C05621] hover:text-[#C05621]"
+                  } transition-colors`}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => goPage(currentPage + 1)}
+                  disabled={currentPage === propertiesTotalPages}
+                  className={`px-3.5 py-1.5 rounded-lg border border-[#E8DDD8] bg-white text-[13px] font-medium ${
+                    currentPage === propertiesTotalPages
+                      ? "cursor-not-allowed text-[#D1D5DB]"
+                      : "cursor-pointer text-[#6B7280] hover:border-[#C05621] hover:text-[#C05621]"
+                  } transition-colors`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </AdminPageLayout>
