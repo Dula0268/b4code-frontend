@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "@/lib/axios";
+import api, { BASE_URL } from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,6 +20,7 @@ export interface QRContext {
   instructionText: string;
   showRoomNumber: boolean;
   showLogo: boolean;
+  qrImageUrl?: string;
 }
 
 // API Response types
@@ -57,8 +58,8 @@ interface StaffQRState {
 }
 
 interface StaffQRActions {
-  getQR: (id: string) => QRContext | undefined;
   fetchQRs: (propertyId: number, page?: number, size?: number) => Promise<void>;
+  getQR: (id: string) => QRContext | undefined;
   addQR: (data: Omit<QRContext, "id" | "qrId" | "createdAt">, propertyId: number) => Promise<string>;
   updateQR: (id: string, data: Partial<QRContext>) => Promise<void>;
   deleteQR: (id: string) => Promise<void>;
@@ -68,17 +69,26 @@ interface StaffQRActions {
   setError: (error: string | null) => void;
 }
 
-function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
+function mapQRResponseToContext(data: any, tab: QRTab): QRContext {
+  // Ensure the image URL is absolute
+  let qrImageUrl = data.qrImageUrl || data.qr_image_url;
+  
+  if (qrImageUrl && qrImageUrl.startsWith("/")) {
+    qrImageUrl = `${BASE_URL}${qrImageUrl}`;
+  }
+
+  console.log('Mapping QR Response:', { original: data.qrImageUrl || data.qr_image_url, mapped: qrImageUrl });
+
   return {
-    id: data.id.toString(),
-    name: data.name,
-    location: data.location,
-    type: data.type as QRType,
+    id: (data.id || "").toString(),
+    name: data.name || "",
+    location: data.location || "",
+    type: (data.type || "Dining Table") as QRType,
     tab,
-    status: (data.status.toLowerCase() === "active" ? "active" : "inactive") as QRStatus,
-    description: data.description,
-    qrId: data.uniqueQrId,
-    createdAt: new Date(data.createdAt).toLocaleDateString("en-US", {
+    status: (data.status?.toLowerCase() === "active" ? "active" : "inactive") as QRStatus,
+    description: data.description || "",
+    qrId: data.uniqueQrId || data.qrId || "",
+    createdAt: data.createdAt ? (new Date(data.createdAt).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -86,10 +96,11 @@ function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
-    }),
-    instructionText: data.instructionText,
-    showRoomNumber: data.showRoomNumber,
-    showLogo: data.showLogo,
+    })) : "N/A",
+    instructionText: data.instructionText || "",
+    showRoomNumber: !!data.showRoomNumber,
+    showLogo: data.showLogo !== false,
+    qrImageUrl: qrImageUrl,
   };
 }
 
@@ -102,25 +113,37 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
   pageSize: 10,
   totalItems: 0,
 
-  getQR: (id) => get().qrs.find((q) => q.id === id),
-
   fetchQRs: async (propertyId, page = 0, size = 10) => {
     set({ loading: true, error: null });
     try {
+      // Trying both common patterns observed in the codebase
       const response = await api.get("/qr/list", {
         params: { propertyId, page, size },
+      }).catch(async () => {
+        // Fallback to the other common pattern
+        return await api.get(`/staff/qr/property/${propertyId}?skip=${page * size}&limit=${size}`);
       });
+      
       const data = response.data;
-      const qrs = data.content.map((item: QRResponse) => {
+      
+      // Handle array or paginated response
+      const items = Array.isArray(data) ? data : (data.content || []);
+      const totalElements = Array.isArray(data) ? data.length : (data.totalElements || data.length);
+
+      const qrs = items.map((item: any) => {
         const tab = item.type === "ROOM" ? "Room" : "Table";
         return mapQRResponseToContext(item, tab);
       });
-      set({ qrs, currentPage: page, totalItems: data.totalElements, loading: false });
+
+      set({ qrs, currentPage: page, totalItems: totalElements, loading: false });
     } catch (error: any) {
+      console.error("Failed to fetch QRs:", error);
       const errorMsg = error.response?.data?.message || "Failed to fetch QR codes";
       set({ error: errorMsg, loading: false });
     }
   },
+
+  getQR: (id) => get().qrs.find((q) => q.id === id),
 
   addQR: async (data, propertyId) => {
     set({ loading: true, error: null });
@@ -143,9 +166,7 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         showLogo: data.showLogo,
       };
 
-      console.log("[QR Store] Creating QR with payload:", payload);
       const response = await api.post("/qr/generate", payload);
-      console.log("[QR Store] QR created successfully, response:", response.data);
       const tab = data.type === "Room" ? "Room" : "Table";
       const newQR = mapQRResponseToContext(response.data, tab);
       set((s) => ({
@@ -154,44 +175,8 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         loading: false,
       }));
       return newQR.id;
-    } catch (error: unknown) {
-      let errorMsg = "Failed to create QR code";
-      
-      console.error("[QR Store] Error caught - full error object:", error);
-      
-      // Handle Error instances
-      if (error instanceof Error) {
-        errorMsg = error.message;
-        console.error("[QR Store] Error instance message:", error.message);
-        console.error("[QR Store] Error stack:", error.stack);
-      }
-      
-      // Handle Axios errors
-      const axiosError = error as any;
-      if (axiosError?.isAxiosError) {
-        console.error("[QR Store] Axios error detected");
-        if (axiosError.response?.data?.message) {
-          errorMsg = axiosError.response.data.message;
-        } else if (axiosError.response?.data?.error) {
-          errorMsg = axiosError.response.data.error;
-        } else if (axiosError.response?.status) {
-          errorMsg = `Backend error: ${axiosError.response.status} ${axiosError.response.statusText || ''}`;
-        } else if (axiosError.message) {
-          errorMsg = axiosError.message;
-        }
-        
-        console.error("[QR Store] Axios error details:", {
-          status: axiosError.response?.status,
-          statusText: axiosError.response?.statusText,
-          responseData: axiosError.response?.data,
-          requestURL: axiosError.config?.url,
-          requestMethod: axiosError.config?.method,
-          requestData: axiosError.config?.data,
-        });
-      }
-      
-      console.error("[QR Store] Final error message:", errorMsg);
-      
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || error.message || "Failed to create QR code";
       set({ error: errorMsg, loading: false });
       throw new Error(errorMsg);
     }
@@ -270,4 +255,3 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
 }));
-
