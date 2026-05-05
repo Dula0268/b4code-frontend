@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Save, Info, QrCode } from "lucide-react";
+import { ArrowLeft, Save, Info } from "lucide-react";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
 import type { QRType, QRTab } from "@/store/staff/qr/staff-qr.store";
 import { Switch } from "@/components/ui/switch";
@@ -22,7 +22,10 @@ const TYPE_TAB: Record<QRType, QRTab> = {
 
 export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrId?: string; propertyId?: number }) {
   const searchParams = useSearchParams();
-  const propertyId = propPropertyId || (searchParams?.get("propertyId") ? parseInt(searchParams.get("propertyId")!) : 1);
+  const queryPropertyId = searchParams?.get("propertyId") ? parseInt(searchParams.get("propertyId")!, 10) : null;
+  const fallbackPropertyId = typeof window !== "undefined" ? parseInt(localStorage.getItem("selected_property_id") || "", 10) || null : null;
+  const propertyId = propPropertyId || queryPropertyId || fallbackPropertyId;
+
   const router = useRouter();
   const existingQR = useStaffQRStore((s) => (qrId ? s.getQR(qrId) : undefined));
   const addQR = useStaffQRStore((s) => s.addQR);
@@ -42,11 +45,15 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
 
   const handleSave = async () => {
     if (!name.trim()) { setNameError(true); return; }
+    if (!propertyId) return;
+    
+    localStorage.setItem("selected_property_id", String(propertyId));
+
     try {
       if (isEdit && qrId) {
         await updateQR(qrId, { type, name, location, description, status: isActive ? "active" : "inactive", tab: TYPE_TAB[type] });
         setSuccess(`QR "${name}" updated successfully.`);
-        router.push("/staff/qr");
+        router.push(`/staff/qr?propertyId=${propertyId}`);
       } else {
         const id = await addQR({
           type,
@@ -60,20 +67,24 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
           showLogo: true,
         }, propertyId);
         setSuccess(`QR "${name}" has been added to your QR management.`);
-        router.push(`/staff/qr/${id}`);
+        router.push(`/staff/qr/${id}?propertyId=${propertyId}`);
       }
     } catch (error: unknown) {
       console.error("Error saving QR:", error);
-      // Error is already set in the store
     }
   };
 
   return (
     <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
+      {!propertyId && (
+        <div className="flex-none bg-[rgba(255,180,1,0.12)] border border-[rgba(255,180,1,0.24)] rounded-lg px-3 py-2 text-xs text-[#8a5a00]">
+          Select a property before creating or editing QR codes.
+        </div>
+      )}
       {/* Header */}
       <div className="flex-none flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <button onClick={() => router.push("/staff/qr")} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors">
+          <button onClick={() => router.push(propertyId ? `/staff/qr?propertyId=${propertyId}` : "/staff/qr")} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors">
             <ArrowLeft size={16} />
           </button>
           <div>
@@ -82,8 +93,8 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => router.push("/staff/qr")} disabled={loading}>Cancel</Button>
-          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1 disabled:opacity-50" onClick={handleSave} disabled={loading}>
+          <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => router.push(propertyId ? `/staff/qr?propertyId=${propertyId}` : "/staff/qr")} disabled={loading}>Cancel</Button>
+          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1 disabled:opacity-50" onClick={handleSave} disabled={loading || !propertyId}>
             <Save size={12} /> {loading ? "Saving..." : "Save QR"}
           </Button>
         </div>
@@ -104,10 +115,10 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
               <div>
                 <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">QR Type <span className="text-[var(--state-error)]">*</span></Label>
                 <Select value={type} onValueChange={(v) => setType(v as QRType)}>
-                  <SelectTrigger className="w-full mt-1 text-xs rounded-[8px] border-[var(--gray-5)]">
+                  <SelectTrigger className="w-full mt-1 text-xs rounded-[8px] border-[var(--gray-5)] bg-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" className="bg-white border-[var(--gray-5)] z-[100]">
                     {(["Dining Table", "Room", "Outdoor", "Bar"] as QRType[]).map((t) => (
                       <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
                     ))}
@@ -165,13 +176,6 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
             </CardContent>
           </Card>
 
-          {/* QR Preview placeholder */}
-          <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex-1 bg-[var(--black-3)]">
-            <CardContent className="p-4 h-full flex flex-col items-center justify-center gap-2">
-              <QrCode size={32} className="text-[var(--gray-3)]" />
-              <p className="text-[10px] text-[var(--gray-3)] text-center">QR Preview generates after save</p>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
