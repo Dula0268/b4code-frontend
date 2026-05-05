@@ -14,11 +14,11 @@ export type ActionType =
 export interface LogEntry {
   id: string;
   userName: string;
-  userRole: UserRole;
+  userRole: string;
   avatarColor: string;
   avatarInitial: string;
   ip: string;
-  action: ActionType;
+  action: string;
   entity: string;
   entityDetail: string;
   timestamp: string;
@@ -34,8 +34,8 @@ interface AuditLogsTableProps {
 }
 
 // ─── Action Badge ──────────────────────────────────────────────────────────────
-function ActionBadge({ action }: { action: ActionType }) {
-  const cfg: Record<ActionType, string> = {
+function ActionBadge({ action }: { action: string }) {
+  const cfg: Record<string, string> = {
     Updated: "bg-yellow-100/80 text-yellow-800",
     Deleted: "bg-red-100/70 text-red-700",
     "Login Success": "bg-green-100/70 text-green-700",
@@ -43,9 +43,10 @@ function ActionBadge({ action }: { action: ActionType }) {
     "Config Change": "bg-gray-100/70 text-gray-700",
     "Login Failed": "bg-red-100/70 text-red-700",
   };
+  const color = cfg[action] || "bg-gray-100/70 text-gray-700";
   return (
     <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${cfg[action]}`}
+      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${color}`}
     >
       {action}
     </span>
