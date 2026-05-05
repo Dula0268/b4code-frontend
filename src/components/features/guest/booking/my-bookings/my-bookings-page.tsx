@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore, type StoredBooking, type BookingStatus } from "@/store/guest/booking/booking.store"
+import { guestApi } from "@/lib/api"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -285,50 +286,57 @@ function useMyBookingsLogic() {
     let active = true
     async function loadBookings() {
         try {
-            type AuthUserLike = { id?: number }
-            const guestId = (user as AuthUserLike | null)?.id ?? 1;
-            const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${guestId}`, { cache: "no-store" });
-            if (!res.ok) throw new Error("Failed to fetch bookings");
-            const data = await res.json();
-            
+            const email = user?.email
+            if (!email) {
+              if (active) setBookings([])
+              return
+            }
+
+            const data = await guestApi.getGuestBookings(email)
             if (active) {
                 type ApiBooking = {
-                  id: number | string
-                  propertyId: number | string
-                  status: BookingStatus | "PENDING"
+                  bookingId?: number | string
+                  id?: number | string
+                  confirmationNumber?: string
                   propertyName?: string
-                  location?: string
-                  imageSrc?: string
-                  checkInDate: string
-                  checkOutDate: string
-                  totalPrice: number
+                  propertyAddress?: string
+                  roomName?: string
+                  guestName?: string
+                  guestEmail?: string
+                  guestCount?: number
+                  checkIn?: string
+                  checkOut?: string
+                  nights?: number
+                  totalAmount?: number
+                  status?: string
+                  paymentMethod?: string
+                  createdAt?: string
                 }
 
-                // Normalize API status to UI status: PENDING → UPCOMING
-                const normalizeStatus = (s: string): BookingStatus => {
-                  if (s === "PENDING") return "UPCOMING"
-                  if (s === "UPCOMING" || s === "COMPLETED" || s === "CANCELLED") return s
-                  return "UPCOMING" // safe fallback
+                const normalizeStatus = (s?: string): BookingStatus => {
+                  if (s === "COMPLETED") return "COMPLETED"
+                  if (s === "CANCELLED") return "CANCELLED"
+                  return "UPCOMING"
                 }
 
                 const apiBookings = (data as ApiBooking[]).map((b) => ({
-                    id: String(b.id),
-                    propertyId: String(b.propertyId),
-                    orderNumber: `BK-${b.id}88${b.propertyId}`,
+                    id: String(b.bookingId ?? b.id ?? b.confirmationNumber ?? crypto.randomUUID()),
+                    propertyId: String(b.bookingId ?? b.id ?? ""),
+                    orderNumber: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
                     status: normalizeStatus(b.status),
                     property: b.propertyName || "Prime Stay Property",
-                    location: b.location ? `${b.location}, Sri Lanka` : "Sri Lanka",
-                    imageSrc: b.imageSrc || "/images/properties/property-1.jpg",
-                    checkIn: b.checkInDate,
-                    checkOut: b.checkOutDate,
-                    guests: "Guests",
-                    totalPrice: b.totalPrice,
-                    nightsLabel: "Total for stay",
-                    paymentMethod: "online" as const,
-                    paidInFull: true,
+                    location: b.propertyAddress || "Sri Lanka",
+                    imageSrc: "/images/properties/property-1.jpg",
+                    checkIn: b.checkIn || "",
+                    checkOut: b.checkOut || "",
+                    guests: `${b.guestCount ?? 2} Guests`,
+                    totalPrice: b.totalAmount ?? 0,
+                    nightsLabel: `${b.nights ?? 1} night${(b.nights ?? 1) > 1 ? "s" : ""}`,
+                    paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as const,
+                    paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
+                    roomName: b.roomName,
                     isFromStore: true,
-                }));
-                // We show API bookings directly
+                }))
                 setBookings(apiBookings)
             }
         } catch(err) {

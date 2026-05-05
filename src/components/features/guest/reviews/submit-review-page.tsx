@@ -6,6 +6,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/store/auth/auth.store"
+import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
+import { guestApi } from "@/lib/api"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -124,26 +126,26 @@ function useReviewLogic() {
     setIsSubmitting(true)
     setErrorMsg(null)
     
-    const guest = useAuthStore.getState().user;
-    const guestName = guest?.profile?.firstName ? `${guest.profile.firstName} ${guest.profile.lastName}` : "Guest";
-    const guestId = guest?.id ?? 1;
+    const guest = useAuthStore.getState().user
+    const guestName = guest?.profile?.firstName ? `${guest.profile.firstName} ${guest.profile.lastName}` : "Guest"
+    const bookingStore = useGuestBookingStore.getState()
+    const booking = bookingStore.bookings.find((item) => item.propertyId === propertyId) ?? bookingStore.bookings[0]
+
+    if (!booking) {
+      setErrorMsg("You need a completed booking before leaving a review.")
+      setIsSubmitting(false)
+      return
+    }
 
     try {
-      const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/reviews`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          propertyId: Number(propertyId),
-          guestId: guestId,
-          guestName: guestName,
-          reviewText: reviewText,
-          rating: overallRating
-        })
-      });
-      if (!res.ok) throw new Error("Failed");
+      await guestApi.createReview({
+        bookingId: Number(booking.id),
+        overallRating,
+        comment: reviewText,
+      })
       setSubmitted(true)
-    } catch(err) {
-      setErrorMsg("Failed to submit review.");
+    } catch (err) {
+      setErrorMsg("Failed to submit review.")
     } finally {
       setIsSubmitting(false)
     }

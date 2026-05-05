@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import Image from "next/image"
 import Link from "next/link"
@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight, X, Heart, Star, Loader2 } from "lucide-react"
 
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
+import { guestApi } from "@/lib/api"
 import { ALL_PROPERTIES, type PropertyDetail } from "@/lib/mock-properties"
 
 // Dynamically import the map (Leaflet must not run on server)
@@ -149,20 +150,29 @@ function ResultsHeader({ destination, totalCount, checkIn, checkOut, guests, act
     )
 }
 
-function toPropertyListing(property: PropertyDetail): PropertyListing {
+function toPropertyListing(property: Partial<PropertyDetail> & Record<string, any>): PropertyListing {
+    const rooms = Array.isArray(property.rooms)
+        ? property.rooms
+        : Array.isArray(property.availableRooms)
+            ? property.availableRooms
+            : []
+
+    const maxGuests = rooms.reduce((max: number, room: any) => Math.max(max, Number(room?.maxGuests ?? room?.maxOccupancy ?? 0)), 0)
+    const pricePerNight = Number(property.pricePerNight ?? property.lowestPricePerNight ?? rooms[0]?.pricePerNight ?? 0)
+
     return {
-        id: property.id,
-        title: property.title,
-        location: property.location,
-        propertyType: property.propertyType,
-        pricePerNight: property.pricePerNight,
-        maxGuests: property.rooms.reduce((max, room) => Math.max(max, room.maxGuests), 0),
-        baseGuests: 2,
-        extraGuestFee: 5_000,
-        rating: property.rating,
-        reviewCount: property.reviewCount,
+        id: String(property.id ?? property.propertyId ?? ""),
+        title: property.title ?? property.name ?? "Untitled property",
+        location: property.location ?? property.city ?? "Sri Lanka",
+        propertyType: property.propertyType ?? "Property",
+        pricePerNight,
+        maxGuests: maxGuests > 0 ? maxGuests : Number(property.maxGuests ?? 2),
+        baseGuests: Number(property.baseGuests ?? 2),
+        extraGuestFee: Number(property.extraGuestFee ?? 5_000),
+        rating: Number(property.rating ?? property.averageRating ?? 0),
+        reviewCount: Number(property.reviewCount ?? 0),
         badge: property.badge,
-        imageSrc: property.imageSrc,
+        imageSrc: property.imageSrc ?? property.imageUrl ?? "/images/properties/property-1.jpg",
     }
 }
 
@@ -174,13 +184,37 @@ const SEARCH_RESULTS_CONFIG = {
 
 // ─── Business Logic Hook ──────────────────────────────────────────────────────
 function useSearchResultsLogic(destination: string, checkIn: string, checkOut: string, guests: number) {
-    const [listings] = useState<PropertyListing[]>(() => ALL_PROPERTIES.map(toPropertyListing))
-    const [loading] = useState(false)
+    const [listings, setListings] = useState<PropertyListing[]>(() => ALL_PROPERTIES.map(toPropertyListing))
+    const [loading, setLoading] = useState(true)
     const [filters, setFilters] = useState<FilterState>(SEARCH_RESULTS_CONFIG.DEFAULT_FILTERS)
     const [sortBy, setSortBy] = useState("recommended")
     const [page, setPage] = useState(1)
     const [mapOpen, setMapOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
+
+    useEffect(() => {
+        let active = true
+        async function loadListings() {
+            try {
+                const data = await guestApi.getAllProperties()
+                if (!active) return
+                const merged = data.length > 0
+                    ? data.map((item: any) => {
+                        const fallback = ALL_PROPERTIES.find(property => property.id === String(item.id))
+                        return toPropertyListing({ ...fallback, ...item })
+                    })
+                    : ALL_PROPERTIES.map(toPropertyListing)
+                setListings(merged)
+            } catch {
+                if (active) setListings(ALL_PROPERTIES.map(toPropertyListing))
+            } finally {
+                if (active) setLoading(false)
+            }
+        }
+
+        loadListings()
+        return () => { active = false }
+    }, [])
 
     // Filtering
     const filtered = useMemo(() => {

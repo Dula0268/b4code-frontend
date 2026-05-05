@@ -46,6 +46,8 @@ const MESSAGING_CONFIG = {
 } as const;
 
 import { useAuthStore } from "@/store/auth/auth.store"
+import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
+import { guestApi } from "@/lib/api"
 
 function useMessagingLogic(initialMessages: Message[], replies: readonly string[]) {
     const [messages, setMessages] = useState<Message[]>([])
@@ -58,28 +60,27 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
     useEffect(() => {
         async function loadMessages() {
             try {
-                type AuthUserLike = { id?: number }
-                const guestId = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
-                const res = await fetch(`${MESSAGING_CONFIG.API_BASE_URL}/guest/messages?receiverId=${guestId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    type ApiMessage = { id: number | string; senderId: number | string; content: string; sentAt: string }
-                    const apiMsgs = (data as ApiMessage[]).map((m) => ({
+                const bookingStore = useGuestBookingStore.getState()
+                const latestBooking = bookingStore.bookings[0]
+                if (!latestBooking) {
+                    setMessages(initialMessages)
+                    return
+                }
+
+                const data = await guestApi.getConversation(Number(latestBooking.id))
+                type ApiMessage = { id: number | string; senderType?: string; senderName?: string; content: string; sentAt: string }
+                const apiMsgs = Array.isArray((data as { messages?: ApiMessage[] }).messages)
+                    ? (data as { messages?: ApiMessage[] }).messages!.map((m) => ({
                         id: String(m.id),
-                        sender: String(m.senderId) === String(guestId) ? "guest" as const : "agent" as const,
+                        sender: String(m.senderType) === "GUEST" ? "guest" as const : "agent" as const,
                         text: m.content,
                         time: new Date(m.sentAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-                    }));
-                    if (apiMsgs.length > 0) {
-                        setMessages(apiMsgs);
-                    } else {
-                        setMessages(initialMessages);
-                    }
-                } else {
-                    setMessages(initialMessages);
-                }
+                    }))
+                    : []
+
+                setMessages(apiMsgs.length > 0 ? apiMsgs : initialMessages)
             } catch(e) {
-                setMessages(initialMessages);
+                setMessages(initialMessages)
             }
         }
         loadMessages();
@@ -91,23 +92,23 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
 
     const sendMessage = async (text: string) => {
         if (!text.trim()) return
-        const guestId = (useAuthStore.getState().user as { id?: number } | null)?.id ?? 1;
+        const guest = useAuthStore.getState().user
+        const booking = useGuestBookingStore.getState().bookings[0]
+        if (!booking) return
+
+        const guestName = guest?.profile?.firstName ? `${guest.profile.firstName} ${guest.profile.lastName}` : guest?.email?.split("@")[0] ?? "Guest"
         const newMsg = { id: Date.now().toString(), sender: "guest" as const, text: text.trim(), time: getTime() };
         setMessages(prev => [...prev, newMsg]);
         setInput("")
         setIsTyping(true)
 
         try {
-            await fetch(`${MESSAGING_CONFIG.API_BASE_URL}/guest/messages`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    senderId: guestId,
-                    receiverId: 2, 
-                    propertyId: 1, 
-                    content: text.trim()
-                })
-            });
+            await guestApi.sendMessage({
+                bookingId: Number(booking.id),
+                senderType: "GUEST",
+                senderName: guestName,
+                content: text.trim(),
+            })
         } catch (e) {}
 
         setTimeout(async () => {
@@ -117,16 +118,12 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
             setMessages(prev => [...prev, agentMsg])
 
             try {
-                await fetch(`${MESSAGING_CONFIG.API_BASE_URL}/guest/messages`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        senderId: 2, 
-                        receiverId: guestId,
-                        propertyId: 1,
-                        content: reply
-                    })
-                });
+                await guestApi.sendMessage({
+                    bookingId: Number(booking.id),
+                    senderType: "PROPERTY",
+                    senderName: "Property Team",
+                    content: reply,
+                })
             } catch(e) {}
         }, 1500 + Math.random() * 700)
     }

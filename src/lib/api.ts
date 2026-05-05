@@ -18,26 +18,27 @@ const normalizeList = (value: unknown) => {
 
 const normalizeRoom = (room: any) => ({
     ...room,
-    id: String(room?.id ?? ""),
-    maxGuests: toNumber(room?.maxGuests),
+    id: String(room?.id ?? room?.roomId ?? ""),
+    name: room?.name ?? room?.roomName ?? "Room",
+    maxGuests: toNumber(room?.maxGuests ?? room?.maxOccupancy),
     sqft: toNumber(room?.sqft),
     pricePerNight: toNumber(room?.pricePerNight),
     originalPrice: room?.originalPrice == null ? undefined : toNumber(room.originalPrice),
-    features: normalizeList(room?.features),
+    features: normalizeList(room?.features ?? room?.amenities),
     imageSrc: room?.imageSrc || room?.imageUrl || DEFAULT_ROOM_IMAGE,
 });
 
 const normalizePropertyListing = (property: any) => ({
     ...property,
-    id: String(property?.id ?? ""),
+    id: String(property?.id ?? property?.propertyId ?? ""),
     title: property?.title ?? property?.name ?? "Untitled property",
-    location: property?.location ?? "Sri Lanka",
+    location: property?.location ?? property?.city ?? "Sri Lanka",
     propertyType: property?.propertyType ?? "Property",
-    pricePerNight: toNumber(property?.pricePerNight),
-    maxGuests: toNumber(property?.maxGuests, 2),
+    pricePerNight: toNumber(property?.pricePerNight ?? property?.lowestPricePerNight),
+    maxGuests: toNumber(property?.maxGuests ?? property?.availableRooms?.[0]?.maxOccupancy, 2),
     baseGuests: toNumber(property?.baseGuests, 2),
     extraGuestFee: toNumber(property?.extraGuestFee),
-    rating: toNumber(property?.rating),
+    rating: toNumber(property?.rating ?? property?.averageRating),
     reviewCount: toNumber(property?.reviewCount),
     badge: property?.badge ?? undefined,
     imageSrc: property?.imageSrc || property?.imageUrl || DEFAULT_PROPERTY_IMAGE,
@@ -45,13 +46,13 @@ const normalizePropertyListing = (property: any) => ({
 
 const normalizePropertyDetail = (property: any) => ({
     ...property,
-    id: String(property?.id ?? ""),
+    id: String(property?.id ?? property?.propertyId ?? ""),
     title: property?.title ?? property?.name ?? "Untitled property",
-    location: property?.location ?? "Sri Lanka",
-    fullAddress: property?.fullAddress ?? property?.location ?? "Sri Lanka",
+    location: property?.location ?? property?.city ?? "Sri Lanka",
+    fullAddress: property?.fullAddress ?? property?.address ?? property?.location ?? property?.city ?? "Sri Lanka",
     propertyType: property?.propertyType ?? "Property",
-    pricePerNight: toNumber(property?.pricePerNight),
-    rating: toNumber(property?.rating),
+    pricePerNight: toNumber(property?.pricePerNight ?? property?.lowestPricePerNight),
+    rating: toNumber(property?.rating ?? property?.averageRating),
     reviewCount: toNumber(property?.reviewCount),
     badge: property?.badge ?? undefined,
     imageSrc: property?.imageSrc || property?.imageUrl || DEFAULT_PROPERTY_IMAGE,
@@ -64,7 +65,7 @@ const normalizePropertyDetail = (property: any) => ({
     amenities: Array.isArray(property?.amenities) ? property.amenities : [],
     reviewBreakdown: Array.isArray(property?.reviewBreakdown) ? property.reviewBreakdown : [],
     reviews: Array.isArray(property?.reviews) ? property.reviews : [],
-    rooms: Array.isArray(property?.rooms) ? property.rooms.map(normalizeRoom) : [],
+    rooms: Array.isArray(property?.rooms) ? property.rooms.map(normalizeRoom) : Array.isArray(property?.availableRooms) ? property.availableRooms.map(normalizeRoom) : [],
     lat: property?.lat == null ? undefined : toNumber(property.lat),
     lng: property?.lng == null ? undefined : toNumber(property.lng),
 });
@@ -240,29 +241,36 @@ export const guestApi = {
     },
 
     // Booking Methods
-    getGuestBookings: async (guestId: number) => {
-        const response = await apiFetch(`/api/guest/bookings/${guestId}`);
+    getGuestBookings: async (email: string) => {
+        const response = await apiFetch(`/api/guest/bookings/guest?email=${encodeURIComponent(email)}`);
         if (!response.ok) throw new Error("Failed to fetch bookings");
         return response.json();
     },
 
-    getPropertyBookings: async (propertyId: number) => {
-        const response = await apiFetch(`/api/guest/properties/${propertyId}/bookings`);
-        if (!response.ok) throw new Error("Failed to fetch property bookings");
-        return response.json();
-    },
-
     createBooking: async (bookingData: {
-        propertyId: number;
-        guestId: number;
-        checkInDate: string;
-        checkOutDate: string;
-        status: string;
-        totalPrice: number;
+        roomId: number;
+        guestName: string;
+        guestEmail: string;
+        guestPhone: string;
+        checkIn: string;
+        checkOut: string;
+        guestCount: number;
+        promoCode?: string;
+        paymentMethod: "online" | "property";
     }) => {
         const response = await apiFetch("/api/guest/bookings", {
             method: "POST",
-            body: JSON.stringify(bookingData),
+            body: JSON.stringify({
+                roomId: bookingData.roomId,
+                guestName: bookingData.guestName,
+                guestEmail: bookingData.guestEmail,
+                guestPhone: bookingData.guestPhone,
+                checkIn: bookingData.checkIn,
+                checkOut: bookingData.checkOut,
+                guestCount: bookingData.guestCount,
+                promoCode: bookingData.promoCode,
+                paymentMethod: bookingData.paymentMethod === "online" ? "ONLINE_CARD" : "PAY_AT_PROPERTY",
+            }),
         });
         if (!response.ok) throw new Error("Failed to create booking");
         return response.json();
@@ -270,23 +278,21 @@ export const guestApi = {
 
     // Review Methods
     getPropertyReviews: async (propertyId: number) => {
-        const response = await apiFetch(`/api/guest/properties/${propertyId}/reviews`);
+        const response = await apiFetch(`/api/guest/reviews/property/${propertyId}`);
         if (!response.ok) throw new Error("Failed to fetch reviews");
         return response.json();
     },
 
-    getGuestReviews: async (guestId: number) => {
-        const response = await apiFetch(`/api/guest/reviews/${guestId}`);
-        if (!response.ok) throw new Error("Failed to fetch guest reviews");
-        return response.json();
-    },
-
     createReview: async (reviewData: {
-        propertyId: number;
-        guestId: number;
-        guestName: string;
-        reviewText: string;
-        rating: number;
+        bookingId: number;
+        overallRating: number;
+        cleanlinessRating?: number;
+        accuracyRating?: number;
+        communicationRating?: number;
+        locationRating?: number;
+        valueRating?: number;
+        comment?: string;
+        photoUrls?: string[];
     }) => {
         const response = await apiFetch("/api/guest/reviews", {
             method: "POST",
@@ -297,29 +303,18 @@ export const guestApi = {
     },
 
     // Message Methods
-    getPropertyMessages: async (propertyId: number) => {
-        const response = await apiFetch(`/api/guest/properties/${propertyId}/messages`);
-        if (!response.ok) throw new Error("Failed to fetch messages");
-        return response.json();
-    },
-
-    getReceivedMessages: async (receiverId: number) => {
-        const response = await apiFetch(`/api/guest/messages?receiverId=${receiverId}`);
-        if (!response.ok) throw new Error("Failed to fetch messages");
-        return response.json();
-    },
-
-    getConversation: async (userId1: number, userId2: number) => {
-        const response = await apiFetch(`/api/guest/messages/conversation?userId1=${userId1}&userId2=${userId2}`);
+    getConversation: async (bookingId: number) => {
+        const response = await apiFetch(`/api/guest/messages/conversation/${bookingId}`);
         if (!response.ok) throw new Error("Failed to fetch conversation");
         return response.json();
     },
 
     sendMessage: async (messageData: {
-        senderId: number;
-        receiverId: number;
-        propertyId: number;
+        bookingId: number;
+        senderType: "GUEST" | "PROPERTY";
+        senderName: string;
         content: string;
+        attachmentUrl?: string;
     }) => {
         const response = await apiFetch("/api/guest/messages", {
             method: "POST",

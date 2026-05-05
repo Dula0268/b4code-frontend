@@ -11,6 +11,7 @@ import { differenceInDays, format } from "date-fns"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import { guestApi } from "@/lib/api"
+import { getPropertyById } from "@/lib/mock-properties"
 
 // ─── Zod Validation Schema ────────────────────────────────────────────────────
 const checkoutSchema = z.object({
@@ -88,28 +89,49 @@ function useCheckoutLogic() {
     const totalFromQuery = Number(searchParams.get("total") || "0")
 
     async function loadData() {
-        let property = null;
-        let room = null;
+        let property = null as Awaited<ReturnType<typeof guestApi.getPropertyDetail>> | null
+        let room = null as { id: string; name: string; pricePerNight: number } | null
+
         if (propertyId) {
             try {
-                const res = await fetch(`${CHECKOUT_CONFIG.apiBaseUrl}/guest/properties/${propertyId}`);
-                if (res.ok) {
-                    property = await res.json();
-                }
+                property = await guestApi.getPropertyDetail(propertyId)
             } catch (e) {
-                console.error("Failed to fetch property", e);
+                const fallback = getPropertyById(propertyId)
+                if (fallback) {
+                    property = {
+                        id: fallback.id,
+                        title: fallback.title,
+                        location: fallback.location,
+                        fullAddress: fallback.fullAddress,
+                        propertyType: fallback.propertyType,
+                        pricePerNight: fallback.pricePerNight,
+                        rating: fallback.rating,
+                        reviewCount: fallback.reviewCount,
+                        badge: fallback.badge,
+                        imageSrc: fallback.imageSrc,
+                        galleryImages: fallback.galleryImages,
+                        hostName: fallback.hostName,
+                        hostBio: fallback.hostBio,
+                        hostYears: fallback.hostYears,
+                        hostSuperhost: fallback.hostSuperhost,
+                        description: fallback.description,
+                        amenities: fallback.amenities,
+                        reviewBreakdown: fallback.reviewBreakdown,
+                        reviews: fallback.reviews,
+                        rooms: fallback.rooms,
+                        lat: fallback.lat,
+                        lng: fallback.lng,
+                    }
+                }
             }
         }
 
-        type ApiRoom = { id: string; name: string; pricePerNight: number }
-        type ApiProperty = { rooms?: ApiRoom[]; title: string; rating: number; reviewCount: number; imageSrc: string }
-
         if (property && roomId) {
-            room = (property as ApiProperty).rooms?.find((r) => r.id === roomId) || null;
+            room = property.rooms?.find((r) => String(r.id) === String(roomId)) || null
         }
 
         const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
-        const basePrice = room ? room.pricePerNight * nights : 0
+        const basePrice = room ? room.pricePerNight * nights : (property?.pricePerNight ?? 0) * nights
 
         const computedTotal = totalFromQuery > 0 ? totalFromQuery : (basePrice + basePrice * CHECKOUT_CONFIG.taxRate + CHECKOUT_CONFIG.serviceFee)
         const taxes = totalFromQuery > 0 ? (totalFromQuery - basePrice - CHECKOUT_CONFIG.serviceFee) : (basePrice * CHECKOUT_CONFIG.taxRate)
@@ -176,24 +198,29 @@ function useCheckoutLogic() {
       let serverBookingId = bookingId;
 
       try {
-        const guestIdToUse = (user as { id?: number } | null)?.id ?? 1;
-        try {
+        const guestProfile = user?.profile
+        const guestName = guestProfile ? `${guestProfile.firstName} ${guestProfile.lastName}`.trim() : user?.email?.split("@")[0] ?? "Guest"
+        const guestPhone = guestProfile?.phone ?? "+94 77 000 0000"
+        const roomNumericId = Number(roomId)
+
+        if (Number.isFinite(roomNumericId) && roomNumericId > 0) {
           const serverBooking = await guestApi.createBooking({
-            propertyId: Number(propertyId) || propertyId,
-            guestId: Number(guestIdToUse) || guestIdToUse,
-            checkInDate: checkInRaw,
-            checkOutDate: checkOutRaw,
-            status: 'UPCOMING',
-            totalPrice: Math.round(total),
+            roomId: roomNumericId,
+            guestName,
+            guestEmail: user?.email || "guest@primestay.com",
+            guestPhone,
+            checkIn: checkInRaw,
+            checkOut: checkOutRaw,
+            guestCount,
+            promoCode: data.promoCode?.trim() || undefined,
+            paymentMethod: data.paymentMethod,
           });
-          if (serverBooking && serverBooking.id) {
-            serverBookingId = serverBooking.id.toString();
+          if (serverBooking && (serverBooking.bookingId || serverBooking.id)) {
+            serverBookingId = String(serverBooking.bookingId ?? serverBooking.id)
           }
-        } catch (err) {
-          console.warn("Backend booking failed or unreachable, falling back to local store", err);
         }
-      } catch (e) {
-        console.warn("Booking flow error", e);
+      } catch (err) {
+        console.warn("Backend booking failed or unreachable, falling back to local store", err)
       }
 
       useGuestBookingStore.getState().addBooking({
