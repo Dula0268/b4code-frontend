@@ -1,4 +1,4 @@
-import { Timer } from "lucide-react";
+import { Clock } from "lucide-react";
 
 export default function AvgTimeCard() {
   return (
@@ -8,11 +8,11 @@ export default function AvgTimeCard() {
           Avg Time
         </p>
         <div className="w-9 h-9 rounded-xl bg-[#F3F4F6] flex items-center justify-center">
-          <Timer size={16} className="text-[#6B7280]" />
+          <Clock size={16} className="text-[#6B7280]" />
         </div>
       </div>
       <p className="text-[28px] font-bold text-[#1A1A1A] leading-none tracking-tight m-0">
-        4m
+        -
       </p>
     </div>
   );
