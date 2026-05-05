@@ -80,7 +80,7 @@ function RegisterForm() {
         const randomStr = Math.random().toString(36).substring(2, 6);
         setFullName(`Mock ${role.charAt(0).toUpperCase() + role.slice(1)}`);
         setEmail(`demo_${role}_${randomStr}@primestay.com`);
-        setPhone("+1 555 010 1234");
+        setPhone("0777646946");
         setPassword("Pass1234");
         setConfirmPassword("Pass1234");
         setAgreedToTerms(true);
@@ -88,10 +88,9 @@ function RegisterForm() {
         if (role === "owner") {
             setPropertyName("Sunset Villa");
             setPropertyAddress("123 Ocean Dr, Miami, FL");
-            setNationalId("ID-987654321");
+            setNationalId("981234567V");
         } else if (role === "staff") {
-            setStaffRole("Manager");
-            setEmployeeId("EMP-1024");
+            setStaffRole("Kitchen Staff");
             setAssignedProperty("Sunset Villa");
         }
     };
@@ -115,6 +114,18 @@ function RegisterForm() {
         if (password.length < 6) {
             setLocalError("Password must be at least 6 characters.");
             return;
+        }
+
+        if (!/^\d{10}$/.test(phone)) {
+            setLocalError("Phone number must be exactly 10 digits (e.g. 0777646946).");
+            return;
+        }
+
+        if (role === "owner") {
+            if (nationalId.length !== 10 && nationalId.length !== 12) {
+                setLocalError("National ID must be exactly 10 or 12 characters long.");
+                return;
+            }
         }
 
         try {
@@ -217,6 +228,8 @@ function RegisterForm() {
                                         <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                             <Input
                                                 type="text"
+                                                name="fullName"
+                                                autoComplete="name"
                                                 placeholder="John Doe"
                                                 value={fullName}
                                                 onChange={(e) => setFullName(e.target.value)}
@@ -234,6 +247,8 @@ function RegisterForm() {
                                         <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                             <Input
                                                 type="email"
+                                                name="email"
+                                                autoComplete="email"
                                                 placeholder="john@example.com"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
@@ -251,7 +266,9 @@ function RegisterForm() {
                                         <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                             <Input
                                                 type="tel"
-                                                placeholder="+94 777 646 946"
+                                                name="phone"
+                                                autoComplete="tel"
+                                                placeholder="0777646946"
                                                 value={phone}
                                                 onChange={(e) => setPhone(e.target.value)}
                                                 className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
@@ -269,6 +286,8 @@ function RegisterForm() {
                                             <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                                 <Input
                                                     type="password"
+                                                    name="password"
+                                                    autoComplete="new-password"
                                                     placeholder="••••••••"
                                                     value={password}
                                                     onChange={(e) => setPassword(e.target.value)}
@@ -286,6 +305,8 @@ function RegisterForm() {
                                             <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                                 <Input
                                                     type="password"
+                                                    name="confirmPassword"
+                                                    autoComplete="new-password"
                                                     placeholder="••••••••"
                                                     value={confirmPassword}
                                                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -369,33 +390,21 @@ function RegisterForm() {
                                         <div className="space-y-1.5">
                                             <Label className="pl-1 text-[13px] font-bold text-[#282828]">Staff Role</Label>
                                             <div className="relative">
-                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="Manager"
+                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center relative">
+                                                    <select
+                                                        name="staffRole"
                                                         value={staffRole}
                                                         onChange={(e) => setStaffRole(e.target.value)}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] text-[#282828] border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30 appearance-none outline-none"
                                                         required={role === "staff"}
-                                                    />
+                                                    >
+                                                        <option value="" disabled>Select a role</option>
+                                                        <option value="Kitchen Staff">Kitchen Staff</option>
+                                                    </select>
                                                     <Briefcase className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                            <Label className="pl-1 text-[13px] font-bold text-[#282828]">Employee ID</Label>
-                                            <div className="relative">
-                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="EMP-0001"
-                                                        value={employeeId}
-                                                        onChange={(e) => setEmployeeId(e.target.value)}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                        required={role === "staff"}
-                                                    />
-                                                    <KeyRound className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                    <div className="absolute right-4 pointer-events-none text-[#953002]/70">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

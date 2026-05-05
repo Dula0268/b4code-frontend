@@ -39,10 +39,10 @@ export default function GuestLogoutModal() {
           className="w-full h-12 rounded-full bg-[#953002] hover:bg-[#7a2702] text-white font-medium text-[15px] transition-colors"
           onClick={() => {
             setIsOpen(false);
-            router.push("/");
+            router.push("/auth/login");
           }}
         >
-          Go to Home
+          Go to Login
         </Button>
       </div>
     </div>
