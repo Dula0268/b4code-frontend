@@ -24,10 +24,6 @@ interface RatingCategory {
   description: string
 }
 
-const APP_CONFIG = {
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
-} as const
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Review categories — structured so adding a new one only needs an array entry
 // ─────────────────────────────────────────────────────────────────────────────

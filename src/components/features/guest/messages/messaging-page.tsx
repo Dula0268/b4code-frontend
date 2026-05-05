@@ -19,37 +19,27 @@ interface Message {
     time: string
 }
 
-const MESSAGING_CONFIG = {
-    HOST_INITIAL: [
-        { id: "m1", sender: "agent" as const, text: "Hello! Thank you for your booking at Sunset Peak Resort. How can we assist you?", time: "10:00 AM" },
-        { id: "m2", sender: "guest" as const, text: "Hi! I'm wondering if there's any flexibility with the check-in time?", time: "10:02 AM" },
-        { id: "m3", sender: "agent" as const, text: "Of course! We can accommodate early check-in from 11 AM onwards, subject to availability. Please let us know your arrival time.", time: "10:04 AM" },
-    ],
-    HOST_QUICK: [
+// Quick reply buttons for UI convenience - these are UI shortcuts, not hardcoded message history
+const QUICK_REPLY_BUTTONS = {
+    HOST: [
         { label: "Check-in time", icon: Clock, msg: "Ask about check-in time" },
         { label: "Early check-in", icon: CalendarCheck, msg: "Request early check-in" },
         { label: "Parking", icon: ParkingCircle, msg: "Ask about parking" },
         { label: "Facilities", icon: Building2, msg: "Ask about facilities" },
     ],
-    HOST_REPLIES: ["Of course, we can accommodate that.", "I'll check availability and get back to you shortly.", "Sure thing, we'll arrange it for you."],
-    STAFF_INITIAL: [
-        { id: "n1", sender: "agent" as const, text: "Welcome! I'm Amal from the front desk. Please let us know if you need anything during your stay.", time: "12:00 PM" },
-    ],
-    STAFF_QUICK: [
+    STAFF: [
         { icon: Utensils, label: "Room service", msg: "I'd like to order room service please." },
         { icon: Sparkles, label: "Room cleaning", msg: "Could you arrange room cleaning?" },
         { icon: AlertCircle, label: "Report problem", msg: "I'd like to report an issue in my room." },
         { icon: HelpCircle, label: "Assistance", msg: "I need some general assistance please." },
     ],
-    STAFF_REPLIES: ["Of course! We'll attend to that right away.", "Thank you for letting us know. Our team is on it!", "No problem at all — we'll send someone immediately."],
-    API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 } as const;
 
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import { guestApi } from "@/lib/api"
 
-function useMessagingLogic(initialMessages: Message[], replies: readonly string[]) {
+function useMessagingLogic(isStaff: boolean) {
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
     const [isTyping, setIsTyping] = useState(false)
@@ -63,7 +53,7 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
                 const bookingStore = useGuestBookingStore.getState()
                 const latestBooking = bookingStore.bookings[0]
                 if (!latestBooking) {
-                    setMessages(initialMessages)
+                    setMessages([])
                     return
                 }
 
@@ -78,13 +68,13 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
                     }))
                     : []
 
-                setMessages(apiMsgs.length > 0 ? apiMsgs : initialMessages)
+                setMessages(apiMsgs.length > 0 ? apiMsgs : [])
             } catch(e) {
-                setMessages(initialMessages)
+                setMessages([])
             }
         }
         loadMessages();
-    }, [initialMessages]);
+    }, []);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -111,21 +101,10 @@ function useMessagingLogic(initialMessages: Message[], replies: readonly string[
             })
         } catch (e) {}
 
-        setTimeout(async () => {
+        // Don't generate automatic replies - wait for actual backend response
+        setTimeout(() => {
             setIsTyping(false)
-            const reply = replies[Math.floor(Math.random() * replies.length)]
-            const agentMsg = { id: Date.now().toString() + "a", sender: "agent" as const, text: reply, time: getTime() };
-            setMessages(prev => [...prev, agentMsg])
-
-            try {
-                await guestApi.sendMessage({
-                    bookingId: Number(booking.id),
-                    senderType: "PROPERTY",
-                    senderName: "Property Team",
-                    content: reply,
-                })
-            } catch(e) {}
-        }, 1500 + Math.random() * 700)
+        }, 500)
     }
 
     return { messages, input, setInput, isTyping, bottomRef, sendMessage }
@@ -142,12 +121,10 @@ export default function MessagingPage() {
         desc: "Message our team for room service, cleaning, maintenance or any assistance.",
         backHref: "/guest/my-room",
         backText: "Back to My Room",
-        initial: [...MESSAGING_CONFIG.STAFF_INITIAL],
         img: "/images/room/resort-exterior.png",
         status: "Staff Online",
         agentName: "Amal — Front Desk",
-        replies: MESSAGING_CONFIG.STAFF_REPLIES,
-        quick: MESSAGING_CONFIG.STAFF_QUICK,
+        quick: QUICK_REPLY_BUTTONS.STAFF,
         agentIcon: () => <User size={18} className="text-[var(--brand-secondary)]" />,
         agentAvatarBg: "bg-[#1a1a1a]",
         bubbleBg: "bg-white border border-[#ebebeb] text-[#1a1a1a] rounded-bl-md",
@@ -160,12 +137,10 @@ export default function MessagingPage() {
         desc: "Message the host directly about your booking or any pre-arrival requests.",
         backHref: "/guest/booking/my-bookings",
         backText: "Back to Bookings",
-        initial: [...MESSAGING_CONFIG.HOST_INITIAL],
         img: "/images/booking/sunset-peak-resort.png",
         status: "Online now",
         agentName: "Property Owner",
-        replies: MESSAGING_CONFIG.HOST_REPLIES,
-        quick: MESSAGING_CONFIG.HOST_QUICK,
+        quick: QUICK_REPLY_BUTTONS.HOST,
         agentIcon: () => <span className="text-white font-black text-[15px]">P</span>,
         agentAvatarBg: "bg-gradient-to-br from-[var(--brand-primary)] to-orange-600",
         bubbleBg: "bg-white border border-[#ebebeb] text-[#1a1a1a] rounded-bl-md",
@@ -175,7 +150,7 @@ export default function MessagingPage() {
         hint: "The property owner will reply as soon as possible."
     }
 
-    const { messages, input, setInput, isTyping, bottomRef, sendMessage } = useMessagingLogic(data.initial, data.replies);
+    const { messages, input, setInput, isTyping, bottomRef, sendMessage } = useMessagingLogic(isStaff);
 
     return (
         <div className="min-h-screen bg-[#f8f7f5] pb-10 font-sans">

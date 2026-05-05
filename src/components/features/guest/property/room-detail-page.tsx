@@ -21,26 +21,22 @@ function formatLKR(n: number) {
 }
 
 const ROOM_DETAIL_CONFIG = {
-    serviceFee: 1000,
-    taxes: 500,
+    serviceFee: 0,  // Should be fetched from backend pricing API
+    taxes: 0,       // Should be fetched from backend pricing API
     baseGuests: 2,
-    extraGuestFeePerNight: 5000,
-    promoCodeDiscountRate: 0.2, // 20%
-    tempDefaultDateCheckIn: new Date(2026, 9, 10),
-    tempDefaultDateCheckOut: new Date(2026, 9, 14),
-    mockBookedDates: [
-        new Date(2026, 9, 5),
-        new Date(2026, 9, 6),
-        new Date(2026, 9, 7),
-        new Date(2026, 9, 18),
-        new Date(2026, 9, 19),
-    ] as Date[],
+    extraGuestFeePerNight: 0,  // Should be fetched from backend or calculated by server
+    promoCodeDiscountRate: 0.0, // Promo codes should be validated server-side
 } as const;
 
 function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | null) {
-    // Parse initial dates from URL
-    const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : ROOM_DETAIL_CONFIG.tempDefaultDateCheckIn
-    const initialCheckOut = searchParams?.get("checkOut") ? new Date(searchParams.get("checkOut")!) : ROOM_DETAIL_CONFIG.tempDefaultDateCheckOut
+    // Calculate sensible date defaults: today + 3 days (check-in), today + 4 days (check-out)
+    const today = new Date();
+    const defaultCheckIn = addDays(today, 3);
+    const defaultCheckOut = addDays(today, 4);
+
+    // Parse initial dates from URL, fall back to calculated defaults
+    const initialCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")!) : defaultCheckIn
+    const initialCheckOut = searchParams?.get("checkOut") ? new Date(searchParams.get("checkOut")!) : defaultCheckOut
 
     // Parse Initial guests
     const initialGuestCount = parseInt(searchParams?.get("guests") || "2", 10)
@@ -58,7 +54,7 @@ function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | 
     const [guests, setGuests] = useState<GuestCounts>({ adults: initialGuestCount, children: 0 })
     const [guestOpen, setGuestOpen] = useState(false)
 
-    // Promo code state
+    // Promo code state - should be validated server-side
     const [promoCode, setPromoCode] = useState("")
     const [isPromoApplied, setIsPromoApplied] = useState(false)
 
@@ -77,12 +73,10 @@ function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | 
     const finalTotal = totalRoomPrice + ROOM_DETAIL_CONFIG.serviceFee + ROOM_DETAIL_CONFIG.taxes - discount
 
     const handleApplyPromo = () => {
-        if (promoCode === "1234") {
-            setIsPromoApplied(true)
-        } else {
-            setIsPromoApplied(false)
-            alert("Invalid promo code")
-        }
+        // Promo code validation should be done server-side
+        // For now, show a message to apply at checkout
+        alert("Promo codes can be applied at checkout")
+        setIsPromoApplied(false)
     }
 
     return { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuests, extraGuestFeeTotal, baseSubtotal, discount, finalTotal, handleApplyPromo };
@@ -93,7 +87,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const router = useRouter()
 
     const allImages = [room.imageSrc, ...(property.galleryImages || [])]
-    const bgBooked = ROOM_DETAIL_CONFIG.mockBookedDates
+    const bgBooked = [] // Availability should be checked against backend booking data
 
     const logic = useRoomDetailLogic(room, searchParams);
     const { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuests, extraGuestFeeTotal, discount, finalTotal, handleApplyPromo } = logic;
