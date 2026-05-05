@@ -60,7 +60,8 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
+// ─── Status Badge ─────────────────────────────────────────────────────
+
 function StatusBadge({ status }: { status: UserStatus }) {
   const cfg = {
     ACTIVE: { class: "bg-[rgba(39,174,96,0.12)] text-[#1a7a45]", dot: "#27ae60" },
@@ -234,7 +235,8 @@ function DeleteModal({ user, onConfirm, onClose, loading }: { user: User; onConf
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────
+
 export default function UsersManagementPage() {
   const router = useRouter();
 
@@ -328,7 +330,8 @@ export default function UsersManagementPage() {
   return (
     <AdminPageLayout>
       <div className="flex flex-col gap-6">
-        {/* ── Page Header ── */}
+
+        {/* Header */}
         <div className="flex justify-between items-start">
           <div>
             <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">User Management</h1>
@@ -363,7 +366,6 @@ export default function UsersManagementPage() {
             <div className="relative flex-1 max-w-[340px]">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-4)] pointer-events-none" />
               <input
-                placeholder="Search by name, email, or role..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full py-[9px] pr-3 pl-9 rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] bg-white outline-none box-border"
@@ -376,7 +378,7 @@ export default function UsersManagementPage() {
             <div className="relative">
               <button
                 onClick={() => setRoleOpen(!roleOpen)}
-                className="flex items-center gap-[7px] px-[14px] py-2 rounded-lg border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] cursor-pointer"
+                className="border px-3 py-2 rounded-md"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -384,8 +386,9 @@ export default function UsersManagementPage() {
                 {roleFilter === "All" ? "Filter by Role" : roleFilter.charAt(0) + roleFilter.slice(1).toLowerCase()}
                 <ChevronDown size={13} />
               </button>
+
               {roleOpen && (
-                <div className="absolute top-[calc(100%+6px)] right-0 bg-white border border-[var(--gray-5)] rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.10)] z-[100] min-w-[140px] overflow-hidden">
+                <div className="absolute bg-white border mt-1 rounded shadow">
                   {roles.map((r) => (
                     <button
                       key={r}

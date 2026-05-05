@@ -13,18 +13,25 @@ import {
 } from "lucide-react"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Stay constants — replace with API data in production
+// Stay constants — extracted to config object
 // ─────────────────────────────────────────────────────────────────────────────
-const HOTEL_NAME   = "Luxe Horizon Resort"
-const ROOM_NUMBER  = "Suite 402"
-const STAY_DATES   = "Oct 12 – Oct 16, 2024"
-const CHECK_IN     = "Oct 12"
-const CHECK_OUT    = "Oct 16"
-const NIGHTS_TOTAL = 4
-const NIGHTS_DONE  = 1
-const BALANCE_DUE  = "LKR 5,400.00"
-const WIFI_NETWORK = "LuxeHorizon_VIP"
-const WIFI_PASS    = "LuxeSuite2024"
+const MY_ROOM_CONFIG = {
+  HOTEL_NAME: "Luxe Horizon Resort",
+  ROOM_NUMBER: "Suite 402",
+  STAY_DATES: "Oct 12 – Oct 16, 2024",
+  CHECK_IN: "Oct 12",
+  CHECK_OUT: "Oct 16",
+  NIGHTS_TOTAL: 4,
+  NIGHTS_DONE: 1,
+  BALANCE_DUE: "LKR 5,400.00",
+  WIFI_NETWORK: "LuxeHorizon_VIP",
+  WIFI_PASS: "LuxeSuite2024"
+} as const;
+
+const {
+  HOTEL_NAME, ROOM_NUMBER, STAY_DATES, CHECK_IN, CHECK_OUT, 
+  NIGHTS_TOTAL, NIGHTS_DONE, BALANCE_DUE, WIFI_NETWORK, WIFI_PASS
+} = MY_ROOM_CONFIG;
 
 // BarcodeDetector is a browser API not in TypeScript's lib — declare minimally
 declare class BarcodeDetector {
@@ -36,24 +43,36 @@ type CameraPhase = "idle" | "requesting" | "scanning" | "detected" | "error"
 type VerifyPhase = "otp_entry" | "verifying" | "verified"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// OTP gate — keeps dashboard private until a 4-digit PIN is entered
+// Business Logic Hook
 // ─────────────────────────────────────────────────────────────────────────────
-function OtpGate({ onVerified }: { onVerified: () => void }) {
+function useOtpGateLogic(onVerified: () => void) {
   const [otp, setOtp]     = useState("")
   const [phase, setPhase] = useState<VerifyPhase>("otp_entry")
   const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (otp.length < 4) { setError("Please enter a valid 4-digit PIN."); return }
     setError("")
     setPhase("verifying")
-    // Simulate front-desk verification — swap for real API call
-    setTimeout(() => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
       sessionStorage.setItem("my_room_verified", "true")
       onVerified()
-    }, 1500)
+    } catch(err) {
+      setError("Verification failed. Please try again.");
+      setPhase("otp_entry");
+    }
   }
+
+  return { otp, setOtp, phase, error, handleSubmit };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OTP gate — keeps dashboard private until a 4-digit PIN is entered
+// ─────────────────────────────────────────────────────────────────────────────
+function OtpGate({ onVerified }: { onVerified: () => void }) {
+  const { otp, setOtp, phase, error, handleSubmit } = useOtpGateLogic(onVerified);
 
   return (
     <div
@@ -352,9 +371,9 @@ function Dashboard() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { icon: Utensils,      label: "Order Food",   sub: "Browse menu",   href: "/guest/order/menu",            bg: "bg-amber-50",  border: "border-amber-100",  iconCls: "text-amber-600"  },
-                    { icon: MessageSquare, label: "Staff Chat",   sub: "We reply fast", href: "/guest/my-room/message-staff",  bg: "bg-blue-50",   border: "border-blue-100",   iconCls: "text-blue-600"   },
+                    { icon: MessageSquare, label: "Staff Chat",   sub: "We reply fast", href: "/guest/messages?type=staff",  bg: "bg-blue-50",   border: "border-blue-100",   iconCls: "text-blue-600"   },
                     { icon: ClipboardList, label: "Order Status", sub: "Track your order", href: "/guest/my-room/order-details", bg: "bg-green-50",  border: "border-green-100",  iconCls: "text-green-600"  },
-                    { icon: Pencil,        label: "Write Review", sub: "Share feedback", href: "/guest/my-room/submit-review", bg: "bg-purple-50", border: "border-purple-100", iconCls: "text-purple-600" },
+                    { icon: Pencil,        label: "Write Review", sub: "Share feedback", href: "/guest/reviews", bg: "bg-purple-50", border: "border-purple-100", iconCls: "text-purple-600" },
                   ].map(({ icon: Icon, label, sub, href, bg, border, iconCls }) => (
                     <Link key={label} href={href}
                       className={`flex flex-col items-center text-center gap-2.5 p-4 rounded-2xl border ${bg} ${border} hover:shadow-md transition-all no-underline group`}>
@@ -469,7 +488,7 @@ function Dashboard() {
                     { icon: Bell,        label: "Assistance",   q: "I need general assistance, please." },
                   ].map(({ icon: Icon, label, q }) => (
                     <Link key={label}
-                      href={`/guest/my-room/message-staff?q=${encodeURIComponent(q)}`}
+                      href={`/guest/messages?type=staff?q=${encodeURIComponent(q)}`}
                       className="flex flex-col items-center gap-2 p-3.5 border rounded-xl transition-all no-underline text-center group"
                       style={{ borderColor: "var(--border)" }}>
                       <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
@@ -481,7 +500,7 @@ function Dashboard() {
                   ))}
                 </div>
 
-                <Link href="/guest/my-room/message-staff"
+                <Link href="/guest/messages?type=staff"
                   className="mt-4 w-full py-3 border rounded-xl text-[0.8125rem] font-bold flex items-center justify-center gap-2 no-underline transition-all"
                   style={{ borderColor: "var(--border)", color: "var(--gray-2)" }}>
                   <MessageSquare size={14} /> Open Staff Chat <ArrowRight size={13} className="ml-auto" />
@@ -551,7 +570,7 @@ function Dashboard() {
                     style={{ background: "var(--brand-primary)" }}>
                     <Phone size={14} /> Call Ext. 0
                   </button>
-                  <Link href="/guest/my-room/message-staff"
+                  <Link href="/guest/messages?type=staff"
                     className="flex-1 flex items-center justify-center gap-2 py-3 border rounded-xl text-xs font-bold transition-all no-underline"
                     style={{ borderColor: "var(--border)", color: "var(--gray-2)" }}>
                     <MessageSquare size={14} /> Message
@@ -574,7 +593,7 @@ function Dashboard() {
                 <p className="text-xs leading-relaxed mb-4" style={{ color: "var(--gray-3)" }}>
                   Share your experience. Your feedback helps us improve for every guest.
                 </p>
-                <Link href="/guest/my-room/submit-review"
+                <Link href="/guest/reviews"
                   className="w-full py-3 rounded-xl text-[0.8125rem] font-bold flex items-center justify-center gap-2 no-underline transition-colors"
                   style={{ background: "var(--brand-primary)", color: "white" }}>
                   <Pencil size={14} /> Write a Review

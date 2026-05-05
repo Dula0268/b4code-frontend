@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { authApi, setToken, removeToken } from "@/lib/api";
 
 type Role = "guest" | "owner" | "admin" | "staff";
 
@@ -20,7 +21,7 @@ type MockUserRecord = {
   profile?: UserProfile;
 };
 
-// Initial mock data
+// ─── Mock Data (fallback when backend is unavailable) ─────────────────────────
 const INITIAL_MOCK_USERS: Record<string, MockUserRecord> = {
   "guest@primestay.com": {
     password: "guest123",
@@ -51,9 +52,9 @@ const saveMockUsers = (users: Record<string, MockUserRecord>) => {
 };
 
 const REDIRECT_MAP: Record<Role, string> = {
-  guest: "/guest",
+  guest: "/guest/search",
   owner: "/owner",
-  staff: "/staff",
+  staff: "/staff/select-property",
   admin: "/admin",
 };
 
@@ -68,15 +69,14 @@ type AuthActions = {
   login: (email: string, password: string) => Promise<string>;
   loginForCheckout: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, role: Role) => Promise<void>;
-  registerFromCheckout: (
-    email: string,
-    password: string,
-    profile: UserProfile
-  ) => Promise<void>;
+  registerFromCheckout: (email: string, password: string, profile: UserProfile) => Promise<void>;
   checkEmailExists: (email: string) => boolean;
   logout: () => void;
   setError: (message: string | null) => void;
   reset: () => void;
+  updatePassword: (email: string, currentPassword: string, newPassword: string) => Promise<void>;
+  updateProfile: (email: string, updates: { name: string }) => Promise<void>;
+  restoreSession: (user: AuthUser) => void;
 };
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
@@ -84,95 +84,175 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   loading: false,
   error: null,
 
+  // ─── Login ────────────────────────────────────────────────────────────────
   login: async (email, password) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 600));
+    try {
+      // Try real backend first
+      const data = await authApi.login(email, password);
+      const role = data.role.toLowerCase() as Role;
 
-    const users = getMockUsers();
-    const match = users[email.toLowerCase()];
-    if (!match || match.password !== password) {
-      set({ loading: false, error: "Invalid email or password." });
-      throw new Error("Invalid credentials");
+      // Store JWT token
+      setToken(data.token);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("auth_user", JSON.stringify({
+          email: data.email,
+          role,
+          userId: data.userId,
+        }));
+      }
+
+      set({ loading: false, user: { email: data.email, role } });
+      return REDIRECT_MAP[role];
+
+    } catch {
+      // Fallback to mock data if backend is unavailable
+      try {
+        await new Promise((r) => setTimeout(r, 600));
+        const users = getMockUsers();
+        const match = users[email.toLowerCase()];
+        if (!match || match.password !== password) {
+          set({ loading: false, error: "Invalid email or password." });
+          throw new Error("Invalid credentials");
+        }
+        set({ loading: false, user: { email, role: match.role, profile: match.profile } });
+        return REDIRECT_MAP[match.role];
+      } catch {
+        set({ loading: false, error: "Invalid email or password." });
+        throw new Error("Invalid credentials");
+      }
     }
-
-    set({
-      loading: false,
-      user: { email, role: match.role, profile: match.profile },
-    });
-    return REDIRECT_MAP[match.role];
   },
 
-  /** Login variation used at checkout — does NOT redirect, just sets the user */
+  // ─── Login For Checkout ───────────────────────────────────────────────────
   loginForCheckout: async (email, password) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 600));
-
-    const users = getMockUsers();
-    const match = users[email.toLowerCase()];
-    if (!match || match.password !== password) {
-      set({ loading: false, error: "Invalid email or password." });
-      throw new Error("Invalid credentials");
+    try {
+      const data = await authApi.login(email, password);
+      const role = data.role.toLowerCase() as Role;
+      setToken(data.token);
+      set({ loading: false, error: null, user: { email: data.email, role } });
+    } catch {
+      await new Promise((r) => setTimeout(r, 600));
+      const users = getMockUsers();
+      const match = users[email.toLowerCase()];
+      if (!match || match.password !== password) {
+        set({ loading: false, error: "Invalid email or password." });
+        throw new Error("Invalid credentials");
+      }
+      set({ loading: false, error: null, user: { email, role: match.role, profile: match.profile } });
     }
-
-    set({
-      loading: false,
-      error: null,
-      user: { email, role: match.role, profile: match.profile },
-    });
   },
 
+  // ─── Register ─────────────────────────────────────────────────────────────
   register: async (email, password, role) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 800));
+    try {
+      // Try real backend first
+      const nameParts = email.split("@")[0].split(".");
+      const firstName = nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) || "User";
+      const lastName = nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || "";
 
-    const lowerEmail = email.toLowerCase();
-    const users = getMockUsers();
-    if (users[lowerEmail]) {
-      set({
-        loading: false,
-        error: "An account with this email already exists.",
-      });
-      throw new Error("Email exists");
+      await authApi.register(email, password, role, firstName, lastName);
+      set({ loading: false });
+    } catch {
+      // Fallback to mock
+      await new Promise((r) => setTimeout(r, 800));
+      const lowerEmail = email.toLowerCase();
+      const users = getMockUsers();
+      if (users[lowerEmail]) {
+        set({ loading: false, error: "An account with this email already exists." });
+        throw new Error("Email exists");
+      }
+      users[lowerEmail] = { password, role };
+      saveMockUsers(users);
+      set({ loading: false });
     }
-
-    users[lowerEmail] = { password, role };
-    saveMockUsers(users);
-    set({ loading: false });
   },
 
-  /** Register using checkout form data — auto-logs in after registration */
+  // ─── Register From Checkout ───────────────────────────────────────────────
   registerFromCheckout: async (email, password, profile) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 800));
-
-    const lowerEmail = email.toLowerCase();
-    const users = getMockUsers();
-    if (users[lowerEmail]) {
-      set({
-        loading: false,
-        error: "An account with this email already exists.",
-      });
-      throw new Error("Email exists");
+    try {
+      await authApi.register(
+        email, password, "guest",
+        profile.firstName, profile.lastName, profile.phone
+      );
+      setToken("");
+      set({ loading: false, error: null, user: { email: email.toLowerCase(), role: "guest", profile } });
+    } catch {
+      await new Promise((r) => setTimeout(r, 800));
+      const lowerEmail = email.toLowerCase();
+      const users = getMockUsers();
+      if (users[lowerEmail]) {
+        set({ loading: false, error: "An account with this email already exists." });
+        throw new Error("Email exists");
+      }
+      users[lowerEmail] = { password, role: "guest", profile };
+      saveMockUsers(users);
+      set({ loading: false, error: null, user: { email: lowerEmail, role: "guest", profile } });
     }
-
-    users[lowerEmail] = { password, role: "guest", profile };
-    saveMockUsers(users);
-
-    // Auto-login after registration
-    set({
-      loading: false,
-      error: null,
-      user: { email: lowerEmail, role: "guest", profile },
-    });
   },
 
-  /** Check if an email is already registered (synchronous, for checkout flow) */
+  // ─── Check Email Exists ───────────────────────────────────────────────────
   checkEmailExists: (email) => {
     const users = getMockUsers();
     return !!users[email.toLowerCase()];
   },
 
-  logout: () => set({ user: null, error: null }),
+  // ─── Logout ───────────────────────────────────────────────────────────────
+  logout: () => {
+    removeToken();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth_user");
+    }
+    set({ user: null, error: null });
+  },
+
   setError: (message) => set({ error: message }),
   reset: () => set({ user: null, loading: false, error: null }),
+
+  // ─── Restore Session ──────────────────────────────────────────────────────
+  restoreSession: (user) => set({ user, loading: false, error: null }),
+
+  // ─── Update Password ──────────────────────────────────────────────────────
+  updatePassword: async (email, currentPassword, newPassword) => {
+    set({ loading: true, error: null });
+    await new Promise((r) => setTimeout(r, 600));
+    const users = getMockUsers();
+    const lowerEmail = email.toLowerCase();
+    const match = users[lowerEmail];
+    if (!match || match.password !== currentPassword) {
+      set({ loading: false, error: "Incorrect current password." });
+      throw new Error("Incorrect current password.");
+    }
+    users[lowerEmail] = { ...match, password: newPassword };
+    if (typeof window !== "undefined") {
+      localStorage.setItem("MOCK_USERS_DB", JSON.stringify(users));
+    }
+    set({ loading: false });
+  },
+
+  // ─── Update Profile ───────────────────────────────────────────────────────
+  updateProfile: async (email, updates) => {
+    set({ loading: true, error: null });
+    await new Promise((r) => setTimeout(r, 600));
+    const users = getMockUsers();
+    const lowerEmail = email.toLowerCase();
+    const match = users[lowerEmail];
+    if (!match) {
+      set({ loading: false, error: "User not found." });
+      throw new Error("User not found.");
+    }
+    users[lowerEmail] = { ...match, ...updates };
+    if (typeof window !== "undefined") {
+      localStorage.setItem("MOCK_USERS_DB", JSON.stringify(users));
+    }
+    set((state) => {
+      if (!state.user || state.user.email.toLowerCase() === lowerEmail) {
+        return { loading: false, user: { email: lowerEmail, ...match, ...updates } };
+      }
+      return { loading: false };
+    });
+  },
 }));
