@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import type { LatLngBoundsExpression, Map as LeafletMap, Marker } from "leaflet"
-import type { PropertyListing } from "./search-results"
+import type { PropertyListing } from "@/services/guest/searchApi"
 
 // ─── Sri Lanka coordinates for each location ──────────────────────────────
 const LOCATION_COORDS: Record<string, [number, number]> = {
@@ -122,7 +122,7 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
         `, { maxWidth: 230 })
 
                 marker.addTo(map)
-                markersRef.current.set(listing.id, marker as Marker)
+                markersRef.current.set(String(listing.id), marker as Marker)
             })
 
             // Fit map to all markers
@@ -148,7 +148,7 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
         if (!mapRef.current) return
         import("leaflet").then(L => {
             markersRef.current.forEach((marker, id) => {
-                const listing = listings.find((l) => l.id === id)
+                const listing = listings.find((l) => String(l.id) === id)
                 if (!listing) return
                 const isHovered = id === hoveredId
                 const icon = L.divIcon({

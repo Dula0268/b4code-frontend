@@ -253,7 +253,9 @@ export const guestApi = {
         const response = await apiFetch("/api/guest/properties");
         if (!response.ok) throw new Error("Failed to fetch properties");
         const data = await response.json();
-        return Array.isArray(data) ? data.map(normalizePropertyListing) : [];
+        // Handle paginated response (new format) or plain array (legacy)
+        const items = Array.isArray(data) ? data : (data.content ?? []);
+        return items.map(normalizePropertyListing);
     },
 
     getPropertyDetail: async (propertyId: number | string) => {

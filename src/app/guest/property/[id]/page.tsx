@@ -38,9 +38,9 @@ function mapBackendRoom(room: BackendRoom, fallback?: Room): Room {
     }
 }
 
-function mergePropertyDetails(fallback: PropertyDetail, backend: Awaited<ReturnType<typeof guestApi.getPropertyDetail>>): PropertyDetail {
-    const backendRooms = Array.isArray((backend as { rooms?: BackendRoom[] }).rooms)
-        ? (backend as { rooms?: BackendRoom[] }).rooms ?? []
+function mergePropertyDetails(fallback: PropertyDetail, backend: any): PropertyDetail {
+    const backendRooms = Array.isArray(backend?.rooms)
+        ? backend.rooms
         : []
 
     return {
@@ -61,7 +61,7 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: Awaited<ReturnT
         reviewBreakdown: backend.reviewBreakdown?.length ? backend.reviewBreakdown : fallback.reviewBreakdown,
         reviews: backend.reviews?.length ? backend.reviews : fallback.reviews,
         rooms: backendRooms.length > 0
-            ? backendRooms.map((room, index) => mapBackendRoom(room, fallback.rooms[index] ?? fallback.rooms[0]))
+            ? backendRooms.map((room: any, index: number) => mapBackendRoom(room, fallback.rooms[index] ?? fallback.rooms[0]))
             : fallback.rooms,
         lat: backend.lat ?? fallback.lat,
         lng: backend.lng ?? fallback.lng,

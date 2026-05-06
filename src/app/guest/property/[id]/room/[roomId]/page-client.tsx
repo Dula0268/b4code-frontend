@@ -76,7 +76,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const router = useRouter()
 
     const allImages = [room.imageSrc, ...(property.galleryImages || [])]
-    const bgBooked = []
+    const bgBooked: Date[] = []
 
     const logic = useRoomDetailLogic(room, searchParams);
     const { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuests, extraGuestFeeTotal, discount, finalTotal, handleApplyPromo } = logic;

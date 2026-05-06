@@ -137,11 +137,11 @@ function useCheckoutLogic() {
 
         setBookingDetails({
           property: property ? {
-            title: property.title,
+            title: String(property.title),
             roomInfo: `${room ? room.name : "Premium Room"} • ${guests} Guests`,
-            rating: property.rating,
-            reviews: property.reviewCount,
-            imageSrc: property.imageSrc
+            rating: Number(property.rating),
+            reviews: Number(property.reviewCount),
+            imageSrc: String(property.imageSrc)
           } : {
             title: "Unknown Property",
             roomInfo: "Unknown Room • 2 Guests",
