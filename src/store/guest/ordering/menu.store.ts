@@ -4,8 +4,10 @@ import api from "@/lib/axios";
 export interface MenuItem {
   id: string;
   name: string;
+  title: string;
   description: string;
   price: number;
+  priceLkr: number;
   imageUrl?: string;
   category: string;
   isAvailable: boolean;
