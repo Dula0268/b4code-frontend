@@ -39,9 +39,10 @@ export const useRBACStore = create<RBACState & RBACActions>((set, get) => ({
         },
         loading: false,
       }));
-    } catch (err: any) {
-      console.error('Failed to fetch role permissions:', err);
-      set({ error: err.message || 'Failed to fetch permissions', loading: false });
+    } catch (err: unknown) {
+      console.error("Failed to fetch role permissions:", err);
+      const message = err instanceof Error ? err.message : "Failed to fetch permissions";
+      set({ error: message, loading: false });
     }
   },
 
@@ -56,9 +57,10 @@ export const useRBACStore = create<RBACState & RBACActions>((set, get) => ({
         },
         actionLoading: false,
       }));
-    } catch (err: any) {
-      console.error('Failed to update role permissions:', err);
-      set({ error: err.message || 'Failed to update permissions', actionLoading: false });
+    } catch (err: unknown) {
+      console.error("Failed to update role permissions:", err);
+      const message = err instanceof Error ? err.message : "Failed to update permissions";
+      set({ error: message, actionLoading: false });
       throw err; // Re-throw so UI can handle failure
     }
   },

@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { AuditLogDto } from "@/api/admin/audit-logs.api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type UserRole = "Admin" | "Staff" | "Owner";
@@ -11,21 +12,10 @@ export type ActionType =
   | "Config Change"
   | "Login Failed";
 
-export interface LogEntry {
-  id: string;
-  userName: string;
-  userRole: string;
-  avatarColor: string;
-  avatarInitial: string;
-  ip: string;
-  action: string;
-  entity: string;
-  entityDetail: string;
-  timestamp: string;
-}
+export type LogEntry = AuditLogDto;
 
 interface AuditLogsTableProps {
-  logs: LogEntry[];
+  logs: AuditLogDto[];
   currentPage: number;
   totalPages: number;
   totalResults: number;

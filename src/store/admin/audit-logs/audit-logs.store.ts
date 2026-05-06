@@ -28,8 +28,9 @@ export const useAdminAuditLogsStore = create<AuditLogsState>((set) => ({
         totalPages: data.totalPages,
         loading: false 
       });
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to fetch audit logs";
+      set({ error: message, loading: false });
     }
   },
 }));
