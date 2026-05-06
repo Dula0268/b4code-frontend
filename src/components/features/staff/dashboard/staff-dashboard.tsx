@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import {
   TrendingUp,
   Hourglass,
@@ -112,6 +113,13 @@ function useManagementCards() {
 export default function StaffDashboard() {
   const stats = useStats();
   const managementCards = useManagementCards();
+  const fetchOrders = useStaffOrdersStore((s) => s.fetchOrders);
+
+  // Fetch orders when component mounts
+  useEffect(() => {
+    console.log("📊 StaffDashboard mounted, fetching orders...");
+    fetchOrders(1); // Fetch orders for property ID 1
+  }, []);
 
   return (
     <div className="h-full overflow-y-auto px-6 py-4 flex flex-col gap-4">

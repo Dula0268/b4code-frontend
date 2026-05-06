@@ -23,18 +23,27 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function StaffMenuList() {
   const menus = useStaffMenuStore((s) => s.menus);
+  const fetchMenus = useStaffMenuStore((s) => s.fetchMenus);
   const toggleVisibility = useStaffMenuStore((s) => s.toggleVisibility);
   const deleteMenu = useStaffMenuStore((s) => s.deleteMenu);
   const successMsg = useStaffMenuStore((s) => s.successMsg);
   const setSuccess = useStaffMenuStore((s) => s.setSuccess);
+  const isLoading = useStaffMenuStore((s) => s.isLoading);
 
   const [page, setPage] = useState(0);
+  const [deletingMenuId, setDeletingMenuId] = useState<string | null>(null);
   const perPage = 4;
   const total = menus.length;
   const paged = menus.slice(page * perPage, (page + 1) * perPage);
   const totalPages = Math.ceil(total / perPage);
 
   const activeItems = menus.reduce((n, m) => n + (m.status === "active" ? m.itemCount : 0), 0);
+
+  // Fetch menus on mount (assuming property ID is 1 for now - adjust as needed)
+  useEffect(() => {
+    const propertyId = 1; // TODO: Get from user context or URL
+    fetchMenus(propertyId);
+  }, [fetchMenus]);
 
   // Auto-dismiss success banner
   useEffect(() => {
@@ -43,8 +52,27 @@ export default function StaffMenuList() {
     return () => clearTimeout(t);
   }, [successMsg, setSuccess]);
 
+  const handleDeleteMenu = (menuId: string, menuName: string) => {
+    if (typeof window !== "undefined" && window.confirm(`Are you sure you want to delete the menu "${menuName}"? This action cannot be undone.`)) {
+      deleteMenu(menuId);
+      setSuccess(`Menu "${menuName}" deleted successfully.`);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
+      {/* ── Loading State ── */}
+      {isLoading && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[var(--gray-5)] border-t-[var(--brand-primary)]"></div>
+            <p className="text-sm text-[var(--gray-3)] mt-3">Loading menus...</p>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && (
+        <>
       {/* ── Success Banner ── */}
       {successMsg && (
         <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-[10px] px-4 py-2 text-sm">
@@ -155,7 +183,13 @@ export default function StaffMenuList() {
                     <Pencil size={13} />
                   </Link>
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-[var(--gray-3)] hover:text-[var(--state-error)]" onClick={() => deleteMenu(menu.id)}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 text-[var(--gray-3)] hover:text-[var(--state-error)]" 
+                  onClick={() => handleDeleteMenu(menu.id, menu.name)}
+                  disabled={deletingMenuId === menu.id}
+                >
                   <Trash2 size={13} />
                 </Button>
               </div>
@@ -190,6 +224,8 @@ export default function StaffMenuList() {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

@@ -20,7 +20,7 @@ const TAG_LABELS: Record<string, string> = {
 
 /* ─── Cart Client ─── */
 
-export default function CartClient({ roomNumber = "304" }: { roomNumber?: string }) {
+export default function CartClient({ roomNumber }: { roomNumber?: string }) {
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
   const remove = useCartStore((s) => s.remove);

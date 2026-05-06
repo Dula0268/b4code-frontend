@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import api from "@/lib/axios";
 import type { MenuItem } from "./cart-store";
 
 /* ─── Types ─── */
@@ -40,6 +41,8 @@ export type Order = {
 type OrderState = {
   currentOrder: Order | null;
   orderHistory: Order[];
+  loading: boolean;
+  error: string | null;
 
   /** Call from checkout to create the order from cart data */
   placeOrder: (opts: {
@@ -51,7 +54,12 @@ type OrderState = {
     roomNumber: string;
     guestName: string;
     paymentMethod: "card" | "room-charge";
-  }) => void;
+    propertyId: number;
+    guestId: number;
+  }) => Promise<string | null>; // Returns order ID or null on error
+
+  /** Fetch order history for a guest */
+  fetchOrderHistory: (guestId: number) => Promise<void>;
 
   /** Advance the order to the next status */
   advanceStatus: (status: OrderStatus, rejectionReason?: string) => void;
@@ -61,6 +69,12 @@ type OrderState = {
 
   /** Clear current order */
   clearOrder: () => void;
+
+  /** Set loading state */
+  setLoading: (value: boolean) => void;
+
+  /** Set error state */
+  setError: (message: string | null) => void;
 };
 
 /* ─── Helpers ─── */
@@ -91,148 +105,150 @@ function formatPlacedAt(date: Date): string {
   return `${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at ${formatTime(date)}`;
 }
 
-/* ─── Seed history for demo ─── */
+function mapBackendStatus(backendStatus: string): OrderStatus {
+  const statusMap: Record<string, OrderStatus> = {
+    NEW: "Placed",
+    PREPARING: "In-Progress",
+    READY: "Accepted",
+    DELIVERED: "Delivered",
+    CANCELLED: "Rejected",
+  };
+  return statusMap[backendStatus] || "Placed";
+}
 
-const SEED_HISTORY: Order[] = [
-  {
-    id: "#ORD-2938",
-    roomNumber: "304",
-    guestName: "John Smith",
-    paymentMethod: "room-charge",
-    lines: [
-      { item: { id: "h1", title: "Chicken Kottu Roti", description: "Chopped roti stir-fried with spices", priceLkr: 1800, category: "Mains" }, qty: 2 },
-      { item: { id: "h2", title: "Fresh Lime Juice", description: "Freshly squeezed lime with sugar", priceLkr: 450, category: "Beverages" }, qty: 2 },
-    ],
-    subtotal: 4500,
-    serviceCharge: 450,
-    tax: 225,
-    total: 5175,
-    currentStatus: "Delivered",
-    timeline: [
-      { status: "Placed", time: "7:30 PM", timestamp: new Date("2023-10-24T19:30:00").getTime() },
-      { status: "Accepted", time: "7:33 PM", timestamp: new Date("2023-10-24T19:33:00").getTime() },
-      { status: "In-Progress", time: "7:45 PM", timestamp: new Date("2023-10-24T19:45:00").getTime() },
-      { status: "Delivered", time: "8:05 PM", timestamp: new Date("2023-10-24T20:05:00").getTime() },
-    ],
-    placedAt: "Oct 24 at 7:30 PM",
-  },
-  {
-    id: "#ORD-2937",
-    roomNumber: "304",
-    guestName: "John Smith",
-    paymentMethod: "card",
-    lines: [
-      { item: { id: "h3", title: "Egg Hoppers", description: "Bowl-shaped crispy pancake with egg", priceLkr: 600, category: "Mains" }, qty: 2 },
-    ],
-    subtotal: 1200,
-    serviceCharge: 120,
-    tax: 60,
-    total: 1380,
-    currentStatus: "Delivered",
-    timeline: [
-      { status: "Placed", time: "8:15 AM", timestamp: new Date("2023-10-23T08:15:00").getTime() },
-      { status: "Accepted", time: "8:18 AM", timestamp: new Date("2023-10-23T08:18:00").getTime() },
-      { status: "In-Progress", time: "8:25 AM", timestamp: new Date("2023-10-23T08:25:00").getTime() },
-      { status: "Delivered", time: "8:40 AM", timestamp: new Date("2023-10-23T08:40:00").getTime() },
-    ],
-    placedAt: "Oct 23 at 8:15 AM",
-  },
-  {
-    id: "#ORD-2935",
-    roomNumber: "304",
-    guestName: "John Smith",
-    paymentMethod: "room-charge",
-    lines: [
-      { item: { id: "h4", title: "Arrack Sour Cocktail", description: "Sri Lankan arrack with lime & sugar", priceLkr: 1500, category: "Beverages" }, qty: 1 },
-      { item: { id: "h5", title: "Cheese Platter", description: "Assorted local and imported cheeses", priceLkr: 1750, category: "Starters" }, qty: 1 },
-    ],
-    subtotal: 3250,
-    serviceCharge: 325,
-    tax: 163,
-    total: 3738,
-    currentStatus: "Delivered",
-    timeline: [
-      { status: "Placed", time: "6:45 PM", timestamp: new Date("2023-10-20T18:45:00").getTime() },
-      { status: "Accepted", time: "6:48 PM", timestamp: new Date("2023-10-20T18:48:00").getTime() },
-      { status: "In-Progress", time: "6:55 PM", timestamp: new Date("2023-10-20T18:55:00").getTime() },
-      { status: "Delivered", time: "7:15 PM", timestamp: new Date("2023-10-20T19:15:00").getTime() },
-    ],
-    placedAt: "Oct 20 at 6:45 PM",
-  },
-  {
-    id: "#ORD-2934",
-    roomNumber: "304",
-    guestName: "John Smith",
-    paymentMethod: "room-charge",
-    lines: [
-      { item: { id: "h6", title: "Rice & Curry Plate", description: "Traditional rice with 3 curries", priceLkr: 2500, category: "Mains" }, qty: 1 },
-    ],
-    subtotal: 2500,
-    serviceCharge: 250,
-    tax: 125,
-    total: 2875,
-    currentStatus: "Delivered",
-    timeline: [
-      { status: "Placed", time: "9:00 AM", timestamp: new Date("2023-10-19T09:00:00").getTime() },
-      { status: "Accepted", time: "9:05 AM", timestamp: new Date("2023-10-19T09:05:00").getTime() },
-      { status: "In-Progress", time: "9:15 AM", timestamp: new Date("2023-10-19T09:15:00").getTime() },
-      { status: "Delivered", time: "9:35 AM", timestamp: new Date("2023-10-19T09:35:00").getTime() },
-    ],
-    placedAt: "Oct 19 at 9:00 AM",
-  },
-  {
-    id: "#ORD-2930",
-    roomNumber: "304",
-    guestName: "John Smith",
-    paymentMethod: "card",
-    lines: [
-      { item: { id: "h7", title: "Fish Ambul Thiyal", description: "Sour fish curry with goraka", priceLkr: 2200, category: "Mains" }, qty: 1 },
-      { item: { id: "h8", title: "King Coconut Water", description: "Fresh king coconut", priceLkr: 350, category: "Beverages" }, qty: 2 },
-    ],
-    subtotal: 2900,
-    serviceCharge: 290,
-    tax: 145,
-    total: 3335,
-    currentStatus: "Delivered",
-    timeline: [
-      { status: "Placed", time: "12:30 PM", timestamp: new Date("2023-10-18T12:30:00").getTime() },
-      { status: "Accepted", time: "12:35 PM", timestamp: new Date("2023-10-18T12:35:00").getTime() },
-      { status: "In-Progress", time: "12:45 PM", timestamp: new Date("2023-10-18T12:45:00").getTime() },
-      { status: "Delivered", time: "1:05 PM", timestamp: new Date("2023-10-18T13:05:00").getTime() },
-    ],
-    placedAt: "Oct 18 at 12:30 PM",
-  },
-];
+function extractApiErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "object" && error !== null) {
+    const response = (error as { response?: { data?: unknown } }).response;
+    if (response && typeof response.data === "object" && response.data !== null) {
+      const data = response.data as Record<string, unknown>;
+      if ("errors" in data && typeof data.errors === "object" && data.errors !== null) {
+        return Object.values(data.errors as Record<string, string>).map(String).join(", ");
+      }
+      if ("message" in data && typeof data.message === "string") {
+        return data.message;
+      }
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+/* ─── Initialize empty history (populated from API) ─── */
 
 /* ─── Store ─── */
 
 export const useOrderStore = create<OrderState>((set) => ({
   currentOrder: null,
-  orderHistory: SEED_HISTORY,
+  orderHistory: [],
+  loading: false,
+  error: null,
 
-  placeOrder: (opts) => {
-    const now = new Date();
-    const order: Order = {
-      id: generateOrderId(),
-      roomNumber: opts.roomNumber,
-      guestName: opts.guestName,
-      paymentMethod: opts.paymentMethod,
-      lines: opts.lines,
-      subtotal: opts.subtotal,
-      serviceCharge: opts.serviceCharge,
-      tax: opts.tax,
-      total: opts.total,
-      currentStatus: "Placed",
-      timeline: [
-        {
-          status: "Placed",
-          time: formatTime(now),
-          timestamp: now.getTime(),
-        },
-      ],
-      placedAt: formatPlacedAt(now),
-    };
-    set({ currentOrder: order });
+  placeOrder: async (opts) => {
+    set({ loading: true, error: null });
+    try {
+      // Debug: Log the API endpoint being called
+      console.log("🔵 Attempting to place order...");
+      console.log("📍 API Base URL:", api.defaults.baseURL);
+      console.log("📍 Full URL:", `${api.defaults.baseURL}/orders`);
+      console.log("📤 Request Payload:", {
+        propertyId: opts.propertyId,
+        guestId: opts.guestId,
+        roomNumber: opts.roomNumber,
+        totalAmount: opts.total,
+        status: "NEW",
+      });
+
+      // Call backend API
+      const response = await api.post("/orders", {
+        propertyId: opts.propertyId,
+        guestId: opts.guestId,
+        roomNumber: opts.roomNumber,
+        totalAmount: opts.total,
+        status: "NEW",
+      });
+
+      console.log("✅ Order placed successfully:", response.data);
+      const backendOrder = response.data;
+      const now = new Date();
+      
+      // Map backend response to frontend Order type
+      const order: Order = {
+        id: `#ORD-${backendOrder.id}`,
+        roomNumber: opts.roomNumber,
+        guestName: opts.guestName,
+        paymentMethod: opts.paymentMethod,
+        lines: opts.lines,
+        subtotal: opts.subtotal,
+        serviceCharge: opts.serviceCharge,
+        tax: opts.tax,
+        total: opts.total,
+        currentStatus: "Placed",
+        timeline: [
+          {
+            status: "Placed",
+            time: formatTime(now),
+            timestamp: now.getTime(),
+          },
+        ],
+        placedAt: formatPlacedAt(now),
+      };
+      set({ currentOrder: order, loading: false });
+      return backendOrder.id;
+    } catch (error: unknown) {
+      let errorMessage = "Failed to place order";
+      errorMessage = extractApiErrorMessage(error, errorMessage);
+      console.error("❌ Order placement error:", error);
+      
+      set({ error: errorMessage, loading: false });
+      return null;
+    }
+  },
+
+  fetchOrderHistory: async (guestId: number) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await api.get(`/orders/guest/${guestId}`);
+      const backendOrders = response.data;
+
+      // Map backend orders to frontend format
+      interface BackendOrder {
+        id: number;
+        roomNumber: string;
+        totalAmount: number;
+        status: string;
+        createdAt: string;
+      }
+      const orderHistory: Order[] = (backendOrders as BackendOrder[]).map((backendOrder) => ({
+        id: `#ORD-${backendOrder.id}`,
+        roomNumber: backendOrder.roomNumber,
+        guestName: "Guest", // Backend doesn't have guest name - will be added later
+        paymentMethod: "room-charge" as const,
+        lines: [], // Will be populated from separate API call
+        subtotal: backendOrder.totalAmount * 0.9,
+        serviceCharge: backendOrder.totalAmount * 0.1 * 0.1,
+        tax: backendOrder.totalAmount * 0.1 * 0.05,
+        total: backendOrder.totalAmount,
+        currentStatus: mapBackendStatus(backendOrder.status),
+        timeline: [
+          {
+            status: mapBackendStatus(backendOrder.status),
+            time: formatTime(new Date(backendOrder.createdAt)),
+            timestamp: new Date(backendOrder.createdAt).getTime(),
+          },
+        ],
+        placedAt: formatPlacedAt(new Date(backendOrder.createdAt)),
+      }));
+
+      set({ orderHistory, loading: false });
+    } catch (error: unknown) {
+      let errorMessage = "Failed to fetch orders";
+      errorMessage = extractApiErrorMessage(error, errorMessage);
+      set({ error: errorMessage, loading: false });
+    }
   },
 
   advanceStatus: (status, rejectionReason) =>
@@ -267,4 +283,8 @@ export const useOrderStore = create<OrderState>((set) => ({
     }),
 
   clearOrder: () => set({ currentOrder: null }),
+
+  setLoading: (value) => set({ loading: value }),
+
+  setError: (message) => set({ error: message }),
 }));

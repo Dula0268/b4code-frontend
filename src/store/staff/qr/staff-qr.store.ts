@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import api, { BASE_URL } from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -19,71 +20,266 @@ export interface QRContext {
   instructionText: string;
   showRoomNumber: boolean;
   showLogo: boolean;
+  qrImageUrl?: string;
 }
 
-// ─── Mock data ─────────────────────────────────────────────────────────────────
-
-const MOCK_QRS: QRContext[] = [
-  { id: "qr-1", name: "Table 01", location: "Main Hall", type: "Dining Table", tab: "Table", status: "active", description: "", qrId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", createdAt: "Oct 24, 2023 at 10:45 AM", instructionText: "Scan to Order Food", showRoomNumber: true, showLogo: true },
-  { id: "qr-2", name: "Patio A", location: "Outdoor Garden", type: "Outdoor", tab: "Table", status: "inactive", description: "Outdoor seating area near the pool", qrId: "b2c3d4e5-f6a7-8901-bcde-f12345678901", createdAt: "Oct 22, 2023 at 3:30 PM", instructionText: "Scan to Order Food", showRoomNumber: true, showLogo: true },
-  { id: "qr-3", name: "Table 02", location: "Main Hall", type: "Dining Table", tab: "Table", status: "active", description: "", qrId: "c3d4e5f6-a7b8-9012-cdef-123456789012", createdAt: "Oct 20, 2023 at 9:00 AM", instructionText: "Scan to Order Food", showRoomNumber: true, showLogo: true },
-  { id: "qr-4", name: "Pool Bar 01", location: "Poolside", type: "Bar", tab: "Table", status: "active", description: "Main poolside bar counter", qrId: "d4e5f6a7-b8c9-0123-defa-234567890123", createdAt: "Oct 18, 2023 at 11:15 AM", instructionText: "Scan to Order Drinks", showRoomNumber: true, showLogo: true },
-  { id: "qr-5", name: "Room 101", location: "1st Floor", type: "Room", tab: "Room", status: "active", description: "Standard room", qrId: "e5f6a7b8-c9d0-1234-efab-345678901234", createdAt: "Oct 15, 2023 at 2:00 PM", instructionText: "Scan for Room Service", showRoomNumber: true, showLogo: true },
-  { id: "qr-6", name: "Room 205", location: "2nd Floor", type: "Room", tab: "Room", status: "active", description: "Deluxe suite", qrId: "f6a7b8c9-d0e1-2345-fabc-456789012345", createdAt: "Oct 12, 2023 at 8:30 AM", instructionText: "Scan for Room Service", showRoomNumber: true, showLogo: true },
-];
+// API Response types
+interface QRResponse {
+  id: number;
+  uniqueQrId: string;
+  name: string;
+  location: string;
+  type: string;
+  status: string;
+  description: string;
+  qrId?: string; // For backward compatibility
+  instructionText: string;
+  showRoomNumber: boolean;
+  showLogo: boolean;
+  propertyId: number;
+  createdBy: number;
+  createdAt: string;
+  expiresAt: string | null;
+  scans: number;
+  lastScannedAt: string | null;
+  qrImageUrl: string;
+  qr_image_url?: string;
+}
 
 // ─── Store ─────────────────────────────────────────────────────────────────────
 
 interface StaffQRState {
   qrs: QRContext[];
   successMsg: string | null;
+  loading: boolean;
+  error: string | null;
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
 }
 
 interface StaffQRActions {
+  fetchQRs: (propertyId: number, page?: number, size?: number) => Promise<void>;
   getQR: (id: string) => QRContext | undefined;
-  addQR: (data: Omit<QRContext, "id" | "qrId" | "createdAt">) => string;
-  updateQR: (id: string, data: Partial<QRContext>) => void;
-  deleteQR: (id: string) => void;
-  toggleStatus: (id: string) => void;
+  addQR: (data: Omit<QRContext, "id" | "qrId" | "createdAt">, propertyId: number) => Promise<string>;
+  updateQR: (id: string, data: Partial<QRContext>) => Promise<void>;
+  deleteQR: (id: string) => Promise<void>;
+  toggleStatus: (id: string) => Promise<void>;
   setSuccess: (msg: string | null) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
 }
 
-let nextId = 100;
+function extractApiErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "object" && error !== null) {
+    const response = (error as { response?: { data?: unknown } }).response;
+    if (response && typeof response.data === "object" && response.data !== null) {
+      const data = response.data as Record<string, unknown>;
+      if (typeof data.message === "string") {
+        return data.message;
+      }
+    }
+  }
 
-function generateUUID() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-  });
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
+  // Ensure the image URL is absolute
+  let qrImageUrl = data.qrImageUrl || data.qr_image_url;
+  
+  if (qrImageUrl && qrImageUrl.startsWith("/")) {
+    qrImageUrl = `${BASE_URL}${qrImageUrl}`;
+  }
+
+  console.log('Mapping QR Response:', { original: data.qrImageUrl || data.qr_image_url, mapped: qrImageUrl });
+
+  return {
+    id: (data.id || "").toString(),
+    name: data.name || "",
+    location: data.location || "",
+    type: (data.type || "Dining Table") as QRType,
+    tab,
+    status: (data.status?.toLowerCase() === "active" ? "active" : "inactive") as QRStatus,
+    description: data.description || "",
+    qrId: data.uniqueQrId || data.qrId || "",
+    createdAt: data.createdAt ? (new Date(data.createdAt).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }) + " at " + new Date(data.createdAt).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })) : "N/A",
+    instructionText: data.instructionText || "",
+    showRoomNumber: !!data.showRoomNumber,
+    showLogo: data.showLogo !== false,
+    qrImageUrl: qrImageUrl,
+  };
 }
 
 export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) => ({
-  qrs: MOCK_QRS,
+  qrs: [],
   successMsg: null,
+  loading: false,
+  error: null,
+  currentPage: 0,
+  pageSize: 10,
+  totalItems: 0,
+
+  fetchQRs: async (propertyId, page = 0, size = 10) => {
+    set({ loading: true, error: null });
+    try {
+      // Trying both common patterns observed in the codebase
+      const response = await api.get("/qr/list", {
+        params: { propertyId, page, size },
+      }).catch(async () => {
+        // Fallback to the other common pattern
+        return await api.get(`/staff/qr/property/${propertyId}?skip=${page * size}&limit=${size}`);
+      });
+      
+      const data = response.data;
+      
+      // Handle array or paginated response
+      const items = Array.isArray(data) ? data : (data.content || []);
+      const totalElements = Array.isArray(data) ? data.length : (data.totalElements || data.length);
+
+      const qrs = items.map((item: QRResponse) => {
+        const tab = item.type === "ROOM" ? "Room" : "Table";
+        return mapQRResponseToContext(item, tab);
+      });
+
+      set({ qrs, currentPage: page, totalItems: totalElements, loading: false });
+    } catch (error: unknown) {
+      const errorMsg = extractApiErrorMessage(error, "Failed to fetch QR codes");
+      console.error("Failed to fetch QRs:", error);
+      set({ error: errorMsg, loading: false });
+    }
+  },
 
   getQR: (id) => get().qrs.find((q) => q.id === id),
 
-  addQR: (data) => {
-    const id = `qr-${nextId++}`;
-    const now = new Date();
-    const createdAt = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + " at " + now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
-    const qr: QRContext = { ...data, id, qrId: generateUUID(), createdAt };
-    set((s) => ({ qrs: [qr, ...s.qrs] }));
-    return id;
+  addQR: async (data, propertyId) => {
+    set({ loading: true, error: null });
+    try {
+      const typeMap: Record<QRType, string> = {
+        "Dining Table": "DINING_TABLE",
+        Room: "ROOM",
+        Outdoor: "OUTDOOR",
+        Bar: "BAR",
+      };
+
+      const payload = {
+        propertyId,
+        name: data.name,
+        location: data.location,
+        type: typeMap[data.type],
+        description: data.description,
+        instructionText: data.instructionText,
+        showRoomNumber: data.showRoomNumber,
+        showLogo: data.showLogo,
+      };
+
+      const response = await api.post("/qr/generate", payload);
+      const tab = data.type === "Room" ? "Room" : "Table";
+      const newQR = mapQRResponseToContext(response.data, tab);
+      set((s) => ({
+        qrs: [newQR, ...s.qrs],
+        successMsg: "QR code created successfully",
+        loading: false,
+      }));
+      return newQR.id;
+    } catch (error: unknown) {
+      const errorMsg = extractApiErrorMessage(error, "Failed to create QR code");
+      set({ error: errorMsg, loading: false });
+      throw new Error(errorMsg);
+    }
   },
 
-  updateQR: (id, data) =>
-    set((s) => ({ qrs: s.qrs.map((q) => (q.id === id ? { ...q, ...data } : q)) })),
+  updateQR: async (id, data) => {
+    set({ loading: true, error: null });
+    try {
+      const typeMap: Record<QRType, string> = {
+        "Dining Table": "DINING_TABLE",
+        Room: "ROOM",
+        Outdoor: "OUTDOOR",
+        Bar: "BAR",
+      };
 
-  deleteQR: (id) => set((s) => ({ qrs: s.qrs.filter((q) => q.id !== id) })),
+      interface QRUpdatePayload {
+        name?: string;
+        location?: string;
+        type?: string;
+        description?: string;
+        instructionText?: string;
+        showRoomNumber?: boolean;
+        showLogo?: boolean;
+      }
+      const payload: QRUpdatePayload = {};
+      if (data.name) payload.name = data.name;
+      if (data.location) payload.location = data.location;
+      if (data.type) payload.type = typeMap[data.type];
+      if (data.description !== undefined) payload.description = data.description;
+      if (data.instructionText) payload.instructionText = data.instructionText;
+      if (data.showRoomNumber !== undefined) payload.showRoomNumber = data.showRoomNumber;
+      if (data.showLogo !== undefined) payload.showLogo = data.showLogo;
 
-  toggleStatus: (id) =>
-    set((s) => ({
-      qrs: s.qrs.map((q) =>
-        q.id === id ? { ...q, status: q.status === "active" ? "inactive" : "active" } : q
-      ),
-    })),
+      const response = await api.put(`/qr/${id}`, payload);
+      const tab = response.data.type === "ROOM" ? "Room" : "Table";
+      const updatedQR = mapQRResponseToContext(response.data, tab);
+      set((s) => ({
+        qrs: s.qrs.map((q) => (q.id === id ? updatedQR : q)),
+        successMsg: "QR code updated successfully",
+        loading: false,
+      }));
+    } catch (error: unknown) {
+      const errorMsg = extractApiErrorMessage(error, "Failed to update QR code");
+      set({ error: errorMsg, loading: false });
+      throw new Error(errorMsg);
+    }
+  },
+
+  deleteQR: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      await api.delete(`/qr/${id}`);
+      set((s) => ({
+        qrs: s.qrs.filter((q) => q.id !== id),
+        successMsg: "QR code deleted successfully",
+        loading: false,
+      }));
+    } catch (error: unknown) {
+      const errorMsg = extractApiErrorMessage(error, "Failed to delete QR code");
+      set({ error: errorMsg, loading: false });
+      throw new Error(errorMsg);
+    }
+  },
+
+  toggleStatus: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await api.post(`/qr/${id}/toggle-status`);
+      const qr = get().qrs.find((q) => q.id === id);
+      const tab = qr ? qr.tab : "Table";
+      const updatedQR = mapQRResponseToContext(response.data, tab);
+      set((s) => ({
+        qrs: s.qrs.map((q) => (q.id === id ? updatedQR : q)),
+        successMsg: "QR code status updated successfully",
+        loading: false,
+      }));
+    } catch (error: unknown) {
+      const errorMsg = extractApiErrorMessage(error, "Failed to toggle QR code status");
+      set({ error: errorMsg, loading: false });
+      throw new Error(errorMsg);
+    }
+  },
 
   setSuccess: (msg) => set({ successMsg: msg }),
+  setLoading: (loading) => set({ loading }),
+  setError: (error) => set({ error }),
 }));
-
