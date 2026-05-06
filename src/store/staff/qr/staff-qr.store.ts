@@ -43,6 +43,7 @@ interface QRResponse {
   scans: number;
   lastScannedAt: string | null;
   qrImageUrl: string;
+  qr_image_url?: string;
 }
 
 // ─── Store ─────────────────────────────────────────────────────────────────────
