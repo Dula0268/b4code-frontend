@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2 } from "lucide-react";
@@ -9,10 +9,10 @@ import { useAuthStore } from "@/store/auth/auth.store";
 export default function AdminProfilePage() {
   const { user, updateProfile } = useAuthStore();
   const [formData, setFormData] = useState({
-    firstName: "Alex",
-    lastName: "Moore",
-    email: "admin@primestay.com",
-    phone: "+94 77 123 4567",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
     department: "System Operations",
     employeeId: "ADM-99321",
   });
@@ -20,14 +20,31 @@ export default function AdminProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Sync form data with user store data
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.profile?.firstName || "",
+        lastName: user.profile?.lastName || "",
+        email: user.email || "",
+        phone: user.profile?.phone || "",
+        department: "System Operations",
+        employeeId: "ADM-99321",
+      });
+    }
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     
     try {
-      const emailToUse = user?.email || "admin@primestay.com";
-      const newName = `${formData.firstName} ${formData.lastName}`.trim();
-      await updateProfile(emailToUse, { name: newName });
+      const emailToUse = user?.email || "";
+      await updateProfile(emailToUse, { 
+        firstName: formData.firstName, 
+        lastName: formData.lastName, 
+        phone: formData.phone 
+      });
       
       setIsSaving(false);
       setShowSuccess(true);

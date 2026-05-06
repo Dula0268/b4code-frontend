@@ -1,73 +1,85 @@
 "use client";
 
-import { Check, AlertCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { CheckCircle2, XCircle, Loader2, CalendarCheck, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 interface PaymentStatusProps {
-    status: "success" | "failed";
-    amount?: string;
+    step: "processing" | "success" | "failed";
     onRetry?: () => void;
+    onChangeMethod?: () => void;
 }
 
-export default function PaymentStatus({ status, amount, onRetry }: PaymentStatusProps) {
+export default function PaymentStatus({ step, onRetry, onChangeMethod }: PaymentStatusProps) {
     const router = useRouter();
 
     useEffect(() => {
-        if (status === "success") {
+        if (step === "success") {
             const timer = setTimeout(() => {
-                router.push("/guest/booking/confirmation");
+                // Get existing search params to preserve booking info
+                const params = new URLSearchParams(window.location.search);
+                params.set("paidInFull", "1");
+                params.set("confirmationCode", "B4C-" + Math.random().toString(36).substring(2, 9).toUpperCase());
+                router.push(`/guest/booking/confirmation?${params.toString()}`);
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [status, router]);
+    }, [step, router]);
 
-    const handleRedirect = () => {
-        router.push("/guest/booking/confirmation");
-    };
-
-    if (status === "success") {
+    if (step === "processing") {
         return (
-            <div className="flex flex-col animate-in zoom-in-95 duration-500">
-                <div className="text-[12px] font-medium text-[#828282] uppercase tracking-wide mb-8">
-                    THANK YOU!
-                </div>
-
-                <div className="flex flex-col items-center justify-center text-center">
-                    <div className="w-16 h-16 rounded-full border-[3px] border-[#4caf50] flex items-center justify-center mb-4 text-[#4caf50]">
-                        <Check strokeWidth={3} className="w-8 h-8" />
-                    </div>
-
-                    <h2 className="text-[16px] font-medium text-[#1d1d1d] mb-6">Payment Approved</h2>
-                </div>
-
-                <div className="bg-[#e5e5e5] -mx-6 md:-mx-8 py-5 text-center mb-6">
-                    <div className="text-[18px] text-[#1d1d1d] tracking-wide">
-                        Payment ID #1215221555
+            <div className="flex flex-col items-center justify-center py-12 text-center animate-in fade-in zoom-in-95 duration-500">
+                <div className="relative mb-8">
+                    <div className="w-20 h-20 border-4 border-neutral-100 rounded-full" />
+                    <div className="absolute inset-0 w-20 h-20 border-4 border-t-[#9a3300] rounded-full animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Loader2 size={32} className="text-[#9a3300] opacity-20" />
                     </div>
                 </div>
-
-                <p className="text-[10px] text-[#828282] text-center px-4">
-                    You will receive an Email Receipt with this payment ID for future reference
+                <h2 className="text-[20px] font-bold text-[#1a1a1a] mb-2">Authorizing Payment</h2>
+                <p className="text-[13px] text-neutral-400 max-w-[240px] leading-relaxed">
+                    Please do not refresh the page. We are securing your transaction with the bank.
                 </p>
-
-                {/* Simulated full height filler if needed so footer sticks to bottom, but we have global footer */}
             </div>
         );
     }
 
-    // Failed State
-    return (
-        <div className="flex flex-col animate-in zoom-in-95 duration-500 text-center items-center justify-center pt-2 pb-6">
+    if (step === "success") {
+        return (
+            <div className="flex flex-col items-center justify-center py-8 text-center animate-in fade-in zoom-in-95 duration-700">
+                <div className="w-24 h-24 bg-[#4caf50]/10 rounded-full flex items-center justify-center mb-6 relative">
+                    <div className="absolute inset-0 bg-[#4caf50]/20 rounded-full animate-ping opacity-40" />
+                    <CheckCircle2 size={48} className="text-[#4caf50] relative z-10" />
+                </div>
+                
+                <h2 className="text-[24px] font-black text-[#1a1a1a] mb-2 tracking-tight">Payment Successful!</h2>
+                <p className="text-[14px] text-neutral-500 mb-8 max-w-[280px] leading-relaxed">
+                    Your luxury stay is now secured. Redirecting you to your booking details...
+                </p>
 
-            <div className="w-14 h-14 rounded-full border-[2px] border-[#e9275b] flex items-center justify-center mb-4 text-[#e9275b]">
-                <AlertCircle strokeWidth={2} className="w-8 h-8" />
+                <div className="w-full bg-[#f8f9fa] rounded-2xl p-4 flex items-center gap-4 border border-neutral-100 mb-2">
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-[#9a3300] shadow-sm">
+                        <CalendarCheck size={20} />
+                    </div>
+                    <div className="text-left">
+                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Next Step</p>
+                        <p className="text-[13px] font-bold text-[#1a1a1a]">View Confirmation</p>
+                    </div>
+                    <ArrowRight size={16} className="ml-auto text-neutral-300 animate-pulse" />
+                </div>
             </div>
+        );
+    }
 
-            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-2 tracking-tight">Payment Failed</h2>
-            <p className="text-[12px] text-[#555] font-medium max-w-[260px] mb-6 leading-relaxed">
-                We couldn&apos;t process your payment. Please check your card details or try a different method.
+    return (
+        <div className="flex flex-col items-center justify-center py-8 text-center animate-in fade-in zoom-in-95 duration-500">
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                <XCircle size={40} className="text-red-500" />
+            </div>
+            <h2 className="text-[20px] font-bold text-[#1a1a1a] mb-2">Payment Failed</h2>
+            <p className="text-[13px] text-neutral-400 mb-8 max-w-[240px] leading-relaxed">
+                Something went wrong with your transaction. Please check your card details and try again.
             </p>
 
             {/* Simulated Credit Card Image */}
@@ -93,7 +105,7 @@ export default function PaymentStatus({ status, amount, onRetry }: PaymentStatus
                 </Button>
 
                 <Button
-                    onClick={onRetry}
+                    onClick={onChangeMethod}
                     variant="ghost"
                     className="w-full h-[46px] rounded-md bg-[#fff4eb] hover:bg-[#ffe8d6] text-[#9a3300] font-bold text-[14px] transition-all"
                 >
@@ -102,14 +114,14 @@ export default function PaymentStatus({ status, amount, onRetry }: PaymentStatus
             </div>
 
             <div className="text-[11px] text-[#555]">
-                Need help? <a href="#" className="text-[#e9275b] hover:underline underline-offset-2">Contact Support</a>
+                Need help? <a href="#" className="text-[#9a3300] hover:underline underline-offset-2">Contact Support</a>
             </div>
 
-            <div className="mt-4 flex flex-col items-center">
-                <div className="text-[9px] text-[#828282] uppercase tracking-wider mb-1 flex items-center gap-1">
-                    POWERED BY <span className="bg-[#1976d2] text-white px-2 py-0.5 rounded-sm lowercase font-bold text-[10px] tracking-normal">PayHere</span>
+            <div className="mt-8 flex flex-col items-center opacity-40">
+                <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    SECURED BY <span className="bg-neutral-200 text-neutral-500 px-1.5 py-0.5 rounded-sm lowercase font-black text-[10px] tracking-normal">PayHere</span>
                 </div>
-                <div className="text-[8px] text-[#aaa]">Secure Payment Gateway for Sri Lanka</div>
+                <div className="text-[8px] text-neutral-400 font-bold uppercase tracking-tighter">SSL Encrypted Transaction</div>
             </div>
         </div>
     );

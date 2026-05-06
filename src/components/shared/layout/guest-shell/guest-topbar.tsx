@@ -22,6 +22,7 @@ export default function GuestTopbar() {
   const pathname = usePathname()
   const router = useRouter()
   const user = useAuthStore((s) => s.user)
+  const isRestoring = useAuthStore((s) => s.isRestoring)
   const logout = useAuthStore((s) => s.logout)
 
   const isSearchPage = pathname.startsWith("/guest/search")
@@ -107,7 +108,9 @@ export default function GuestTopbar() {
           </nav>
 
           {/* Auth buttons OR Account avatar */}
-          {user ? (
+          {isRestoring && !user ? (
+            <div className="w-24 h-9 bg-gray-100 animate-pulse rounded-lg" />
+          ) : user ? (
             <div className="relative" ref={accountMenuRef}>
               <button
                 onClick={() => setAccountMenuOpen((prev) => !prev)}
@@ -131,11 +134,11 @@ export default function GuestTopbar() {
                   </div>
 
                   <Link
-                    href="/guest/account"
+                    href="/guest/profile"
                     onClick={() => setAccountMenuOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#4f4f4f] hover:bg-[#f8f8f8] hover:text-[#953002] transition-colors no-underline"
                   >
-                    <Settings size={15} /> Account Settings
+                    <Settings size={15} /> Profile Settings
                   </Link>
 
                   <div className="border-t border-[#f0f0f0] mt-1 pt-1">

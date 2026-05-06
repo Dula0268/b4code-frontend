@@ -99,6 +99,44 @@ export const userApi = {
         });
         if (!response.ok) throw new Error("Failed to delete user");
     },
+
+    getCurrentUser: async () => {
+        try {
+            const response = await apiFetch("/api/users/me");
+            if (!response.ok) return null;
+            return response.json();
+        } catch {
+            return null;
+        }
+    },
+
+    updateProfile: async (profileData: { firstName?: string; lastName?: string; phone?: string }) => {
+        const response = await apiFetch("/api/users/profile", {
+            method: "PUT",
+            body: JSON.stringify(profileData),
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Profile update failed with status ${response.status}: ${errorText}`);
+            throw new Error(`Failed to update profile (${response.status})`);
+        }
+        return response.json();
+    },
+
+    changePassword: async (passwordData: { currentPassword: string; newPassword: string }) => {
+        const response = await apiFetch("/api/users/password", {
+            method: "PATCH",
+            body: JSON.stringify(passwordData),
+        });
+        if (!response.ok) {
+            try {
+                const error = await response.json();
+                throw new Error(error.message || "Failed to change password");
+            } catch {
+                throw new Error("Failed to change password. Please check your current password.");
+            }
+        }
+    },
 };
 
 export const paymentApi = {
@@ -114,12 +152,20 @@ export const paymentApi = {
         email?: string;
         phone?: string;
     }) => {
-        const response = await apiFetch("/api/payments", {
-            method: "POST",
-            body: JSON.stringify(paymentData),
-        });
-        if (!response.ok) throw new Error("Payment failed");
-        return response.json();
+        try {
+            const response = await apiFetch("/api/payments", {
+                method: "POST",
+                body: JSON.stringify(paymentData),
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || "Payment failed at server");
+            }
+            return response.json();
+        } catch (error) {
+            console.error("Initiate payment error:", error);
+            throw error;
+        }
     },
 
     getMyPayments: async () => {
