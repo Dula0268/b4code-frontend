@@ -1,96 +1,62 @@
 "use client";
 
+import { CreditCard, Wallet, Landmark, ChevronRight } from "lucide-react";
+
 interface PaymentSelectionProps {
     onSelectMethod: (method: string) => void;
     onCancel: () => void;
 }
 
 export default function PaymentSelection({ onSelectMethod, onCancel }: PaymentSelectionProps) {
+    const methods = [
+        { id: "card", name: "Credit / Debit Card", icon: CreditCard, subtitle: "Visa, Mastercard, Amex", primary: true },
+        { id: "genie", name: "Mobile Wallets", icon: Wallet, subtitle: "Genie, FriMi, eZCash", primary: false },
+        { id: "boc", name: "Internet Banking", icon: Landmark, subtitle: "BOC, HNB, Sampath", primary: false },
+    ];
+
     return (
-        <div className="flex flex-col animate-in slide-in-from-right-4 duration-300">
-            <h2 className="text-[11px] font-semibold text-[#828282] uppercase tracking-[0.05em] mb-4">
-                Select a payment method
-            </h2>
-
-            {/* Credit/Debit Card */}
-            <div className="mb-6">
-                <h3 className="text-[12px] font-bold text-[#1d1d1d] mb-3">Credit/Debit Card</h3>
-                <div className="flex flex-wrap gap-2">
-                    {/* VISA */}
-                    <button onClick={() => onSelectMethod("card")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex items-center justify-center rounded-lg hover:border-[#1976d2] transition-colors cursor-pointer shadow-sm">
-                        <span className="text-[#1a1f71] font-bold italic text-[14px] tracking-tight">VISA</span>
-                    </button>
-                    {/* Mastercard */}
-                    <button onClick={() => onSelectMethod("card")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex items-center justify-center rounded-lg hover:border-[#eb001b] transition-colors cursor-pointer shadow-sm relative overflow-hidden">
-                        <div className="w-4 h-4 rounded-full bg-[#eb001b] absolute left-3 opacity-90 mix-blend-multiply"></div>
-                        <div className="w-4 h-4 rounded-full bg-[#f79e1b] absolute right-3 opacity-90 mix-blend-multiply"></div>
-                    </button>
-                    {/* AMEX */}
-                    <button onClick={() => onSelectMethod("card")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex items-center justify-center rounded-lg hover:border-[#002663] transition-colors cursor-pointer shadow-sm">
-                        <div className="bg-[#002663] px-1 py-0.5 rounded-sm">
-                            <span className="text-white font-bold text-[8px] tracking-wider block leading-none">AMERICAN<br/>EXPRESS</span>
-                        </div>
-                    </button>
-                    {/* Discover */}
-                    <button onClick={() => onSelectMethod("card")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex items-center justify-center rounded-lg hover:border-[#f9a021] transition-colors cursor-pointer shadow-sm">
-                        <span className="text-[#333] font-bold text-[10px] tracking-tighter">DISC<span className="text-[#f9a021]">O</span>VER</span>
-                    </button>
-                    {/* Diners Club */}
-                    <button onClick={() => onSelectMethod("card")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex flex-col items-center justify-center rounded-lg hover:border-[#00529b] transition-colors cursor-pointer shadow-sm">
-                        <div className="w-3 h-3 border-2 border-[#00529b] rounded-full mb-0.5" />
-                        <span className="text-[#00529b] font-bold text-[6px] tracking-wider leading-none">Diners Club</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Mobile Wallet */}
-            <div className="mb-6">
-                <h3 className="text-[12px] font-bold text-[#1d1d1d] mb-3">Mobile Wallet</h3>
-                <div className="flex flex-wrap gap-2">
-                    {/* Genie */}
-                    <button onClick={() => onSelectMethod("genie")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex flex-col items-center justify-center rounded-lg hover:border-[#e9275b] transition-colors cursor-pointer shadow-sm">
-                        <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[6px] border-b-[#fba121] -rotate-90 ml-1 mb-0.5" />
-                        <span className="text-[#e9275b] font-bold text-[10px] tracking-tight leading-none">genie</span>
-                    </button>
-                    {/* FriMi */}
-                    <button onClick={() => onSelectMethod("frimi")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex items-center justify-center rounded-lg hover:border-[#ed4224] transition-colors cursor-pointer shadow-sm">
-                        <div className="bg-[#ed4224] w-10 h-[18px] rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold italic text-[9px] tracking-tight">FriMi</span>
-                        </div>
-                    </button>
-                    {/* ezCash */}
-                    <button onClick={() => onSelectMethod("ezcash")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex items-center justify-center rounded-lg hover:border-[#f8b415] transition-colors cursor-pointer shadow-sm">
-                        <span className="text-[#72bc44] font-bold text-[9px] italic tracking-tight">eZ</span>
-                        <span className="text-[#ed1c24] font-bold text-[9px] tracking-tight">Cash</span>
-                    </button>
-                    {/* mCash */}
-                    <button onClick={() => onSelectMethod("mcash")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex items-center justify-center gap-0.5 rounded-lg hover:border-[#0092d0] transition-colors cursor-pointer shadow-sm">
-                        <span className="text-[#4caf50] font-extrabold text-[12px]">m</span>
-                        <span className="text-[#0092d0] font-bold text-[8px] bg-sky-100 px-0.5 rounded-sm">Cash</span>
-                    </button>
-                    {/* Sampath PayApp */}
-                    <button onClick={() => onSelectMethod("sampath")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex flex-col items-center justify-center rounded-lg hover:border-[#f37021] transition-colors cursor-pointer shadow-sm">
-                        <span className="text-[#003b70] font-bold text-[6px]">Sampath</span>
-                        <div className="bg-[#f37021] text-white text-[7px] font-bold px-1 rounded-sm mt-0.5">PayApp</div>
-                    </button>
-                </div>
-            </div>
-
-            {/* Internet Banking */}
-            <div className="mb-8">
-                <h3 className="text-[12px] font-bold text-[#1d1d1d] mb-3">Internet Banking</h3>
-                <div className="flex flex-wrap gap-2">
-                    {/* BOC */}
-                    <button onClick={() => onSelectMethod("boc")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex items-center justify-center rounded-lg hover:border-[#fdb913] transition-colors cursor-pointer shadow-sm">
-                        <div className="bg-[#fdb913] text-black font-bold text-[10px] px-1 rounded-sm">BOC</div>
-                    </button>
-                    {/* HNB */}
-                    <button onClick={() => onSelectMethod("hnb")} className="w-[56px] h-[38px] bg-[#f8f9fa] border border-[#e0e0e0] flex items-center justify-center rounded-lg hover:border-[#003c71] transition-colors cursor-pointer shadow-sm">
-                        <div className="bg-[#003c71] text-[#fdb913] font-bold text-[10px] px-1 rounded-sm">HNB</div>
-                    </button>
-                </div>
-            </div>
+        <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-[14px] font-bold text-[#1a1a1a] mb-5 px-1">Select Payment Method</h2>
             
+            <div className="space-y-3">
+                {methods.map((m) => (
+                    <button
+                        key={m.id}
+                        onClick={() => onSelectMethod(m.id)}
+                        className={`w-full group p-4 rounded-2xl border flex items-center justify-between transition-all duration-300 cursor-pointer ${
+                            m.primary 
+                            ? "bg-neutral-50 border-neutral-100 hover:border-[#9a3300]/30 hover:bg-white hover:shadow-lg hover:shadow-[#9a3300]/5" 
+                            : "bg-white border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50"
+                        }`}
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                                m.primary ? "bg-white text-[#9a3300] shadow-sm" : "bg-neutral-100 text-neutral-500"
+                            } group-hover:bg-[#9a3300] group-hover:text-white`}>
+                                <m.icon size={22} />
+                            </div>
+                            <div className="flex flex-col text-left">
+                                <span className="text-[15px] font-bold text-[#1a1a1a]">{m.name}</span>
+                                <span className="text-[11px] font-medium text-neutral-400">{m.subtitle}</span>
+                            </div>
+                        </div>
+                        <ChevronRight size={18} className="text-neutral-300 group-hover:text-[#9a3300] group-hover:translate-x-1 transition-all" />
+                    </button>
+                ))}
+            </div>
+
+            <div className="mt-8 flex items-center justify-center">
+                <div className="flex items-center gap-3 px-4 py-2 bg-neutral-50 rounded-full border border-neutral-100">
+                    <div className="flex -space-x-2">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="w-5 h-5 rounded-full border-2 border-white bg-neutral-200 flex items-center justify-center overflow-hidden">
+                                <div className="w-full h-full bg-neutral-300 animate-pulse" />
+                            </div>
+                        ))}
+                    </div>
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Trusted by 10k+ Travelers</span>
+                </div>
+            </div>
         </div>
     );
 }

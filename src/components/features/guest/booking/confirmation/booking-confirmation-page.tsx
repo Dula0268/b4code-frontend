@@ -71,7 +71,7 @@ function useBookingConfirmationLogic() {
         ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
 
       const property = propertyId ? getPropertyById(propertyId) : null
-      const room     = property && roomId ? property.rooms.find(r => r.id === roomId) : null
+      const room     = property && roomId ? property.rooms.find(r => r.id === roomId || r.id.replace(/-/g, " ") === roomId) : null
 
       setFallback({
         confirmationCode: code,

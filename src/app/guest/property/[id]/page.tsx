@@ -4,26 +4,28 @@ import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 import PropertyDetailPage from "@/components/features/guest/property/property-detail-page"
 
+import { ALL_PROPERTIES } from "@/lib/mock-properties"
+
 interface Props {
-    params: { id: string }
+    params: Promise<{ id: string }>
 }
 
 async function fetchProperty(id: string) {
     try {
         const res = await fetch(`http://localhost:8080/api/guest/properties/${id}`, { cache: "no-store" });
         if (!res.ok) {
-            if (res.status === 404) return null;
-            throw new Error("Failed to fetch property");
+            // Fallback to mock data if backend fails
+            return ALL_PROPERTIES.find(p => p.id === id) || null;
         }
         return await res.json();
     } catch (error) {
-        console.error("Failed to fetch property", error);
-        return null;
+        console.error("Failed to fetch property, using mock fallback", error);
+        return ALL_PROPERTIES.find(p => p.id === id) || null;
     }
 }
 
 export async function generateMetadata({ params }: Props) {
-    const { id } = params
+    const { id } = await params
     const property = await fetchProperty(id)
     if (!property) return {}
     return {
@@ -33,7 +35,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function PropertyPage({ params }: Props) {
-    const { id } = params
+    const { id } = await params
     const property = await fetchProperty(id)
     if (!property) notFound()
 

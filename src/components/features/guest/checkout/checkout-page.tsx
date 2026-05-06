@@ -10,6 +10,7 @@ import Link from "next/link"
 import { differenceInDays, format } from "date-fns"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
+import { ALL_PROPERTIES } from "@/lib/mock-properties"
 
 // ─── Zod Validation Schema ────────────────────────────────────────────────────
 const checkoutSchema = z.object({
@@ -98,13 +99,19 @@ function useCheckoutLogic() {
             } catch (e) {
                 console.error("Failed to fetch property", e);
             }
+
+            // Fallback to mock data if backend failed
+            if (!property) {
+                property = ALL_PROPERTIES.find(p => p.id === propertyId) || null;
+            }
         }
 
         type ApiRoom = { id: string; name: string; pricePerNight: number }
         type ApiProperty = { rooms?: ApiRoom[]; title: string; rating: number; reviewCount: number; imageSrc: string }
 
         if (property && roomId) {
-            room = (property as ApiProperty).rooms?.find((r) => r.id === roomId) || null;
+            const apiProperty = property as ApiProperty;
+            room = apiProperty.rooms?.find((r) => r.id === roomId || r.id.replace(/-/g, " ") === roomId) || null;
         }
 
         const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
@@ -231,7 +238,16 @@ function useCheckoutLogic() {
       const returnParams = new URLSearchParams(bookingDetails.originalParams)
       returnParams.set('confirmationCode', confirmationCode)
       returnParams.set('paidInFull', paidInFull ? '1' : '0')
-      router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
+      returnParams.set('total', total.toString())
+
+      // ─── Integration Point ──────────────────────────────────────────────────
+      // If paying online, go to the dedicated payment portal first.
+      // Otherwise (Pay at property), go straight to confirmation.
+      if (paidInFull) {
+        router.push(`/payment?${returnParams.toString()}`)
+      } else {
+        router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
+      }
     } catch (e: unknown) {
       setErrorMsg("Failed to process booking. Please try again.")
     } finally {

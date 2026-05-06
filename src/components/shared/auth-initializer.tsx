@@ -12,20 +12,26 @@ export default function AuthInitializer() {
     // Only run once on mount
     if (initialized) return;
 
-    try {
-      const token = getToken();
-      if (token) {
-        const storedUserStr = localStorage.getItem("auth_user");
-        if (storedUserStr) {
-          const user = JSON.parse(storedUserStr);
-          restoreSession(user);
+    const initAuth = async () => {
+      try {
+        const token = getToken();
+        if (token) {
+          const storedUserStr = localStorage.getItem("auth_user");
+          if (storedUserStr) {
+            const user = JSON.parse(storedUserStr);
+            restoreSession(user);
+            // Fetch latest details from backend to ensure persistence
+            await useAuthStore.getState().fetchCurrentUser();
+          }
         }
+      } catch (e) {
+        console.error("Failed to restore session from localStorage", e);
+      } finally {
+        setInitialized(true);
       }
-    } catch (e) {
-      console.error("Failed to restore session from localStorage", e);
-    } finally {
-      setInitialized(true);
-    }
+    };
+
+    initAuth();
   }, [initialized, restoreSession]);
 
   return null; // This component doesn't render anything

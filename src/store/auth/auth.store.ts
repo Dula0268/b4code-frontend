@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { authApi, setToken, removeToken } from "@/lib/api";
+import { authApi, userApi, setToken, removeToken } from "@/lib/api";
 
 type Role = "guest" | "owner" | "admin" | "staff";
 
@@ -45,11 +45,6 @@ const getMockUsers = (): Record<string, MockUserRecord> => {
   }
 };
 
-const saveMockUsers = (users: Record<string, MockUserRecord>) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("MOCK_USERS_DB", JSON.stringify(users));
-  }
-};
 
 const REDIRECT_MAP: Record<Role, string> = {
   guest: "/guest/search",
@@ -62,6 +57,7 @@ const REDIRECT_MAP: Record<Role, string> = {
 type AuthState = {
   user: AuthUser | null;
   loading: boolean;
+  isRestoring: boolean;
   error: string | null;
 };
 
@@ -75,13 +71,15 @@ type AuthActions = {
   setError: (message: string | null) => void;
   reset: () => void;
   updatePassword: (email: string, currentPassword: string, newPassword: string) => Promise<void>;
-  updateProfile: (email: string, updates: { name: string }) => Promise<void>;
+  updateProfile: (email: string, updates: Partial<UserProfile>) => Promise<void>;
+  fetchCurrentUser: () => Promise<void>;
   restoreSession: (user: AuthUser) => void;
 };
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   user: null,
   loading: false,
+  isRestoring: false,
   error: null,
 
   // ─── Login ────────────────────────────────────────────────────────────────
@@ -105,22 +103,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       set({ loading: false, user: { email: data.email, role } });
       return REDIRECT_MAP[role];
 
-    } catch {
-      // Fallback to mock data if backend is unavailable
-      try {
-        await new Promise((r) => setTimeout(r, 600));
-        const users = getMockUsers();
-        const match = users[email.toLowerCase()];
-        if (!match || match.password !== password) {
-          set({ loading: false, error: "Invalid email or password." });
-          throw new Error("Invalid credentials");
-        }
-        set({ loading: false, user: { email, role: match.role, profile: match.profile } });
-        return REDIRECT_MAP[match.role];
-      } catch {
-        set({ loading: false, error: "Invalid email or password." });
-        throw new Error("Invalid credentials");
-      }
+    } catch (err) {
+      set({ loading: false, error: err instanceof Error ? err.message : "Login failed." });
+      throw err;
     }
   },
 
@@ -132,15 +117,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       const role = data.role.toLowerCase() as Role;
       setToken(data.token);
       set({ loading: false, error: null, user: { email: data.email, role } });
-    } catch {
-      await new Promise((r) => setTimeout(r, 600));
-      const users = getMockUsers();
-      const match = users[email.toLowerCase()];
-      if (!match || match.password !== password) {
-        set({ loading: false, error: "Invalid email or password." });
-        throw new Error("Invalid credentials");
-      }
-      set({ loading: false, error: null, user: { email, role: match.role, profile: match.profile } });
+    } catch (err) {
+      set({ loading: false, error: err instanceof Error ? err.message : "Login failed." });
+      throw err;
     }
   },
 
@@ -155,18 +134,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
       await authApi.register(email, password, role, firstName, lastName);
       set({ loading: false });
-    } catch {
-      // Fallback to mock
-      await new Promise((r) => setTimeout(r, 800));
-      const lowerEmail = email.toLowerCase();
-      const users = getMockUsers();
-      if (users[lowerEmail]) {
-        set({ loading: false, error: "An account with this email already exists." });
-        throw new Error("Email exists");
-      }
-      users[lowerEmail] = { password, role };
-      saveMockUsers(users);
-      set({ loading: false });
+    } catch (err) {
+      set({ loading: false, error: err instanceof Error ? err.message : "Registration failed." });
+      throw err;
     }
   },
 
@@ -180,17 +150,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       );
       setToken("");
       set({ loading: false, error: null, user: { email: email.toLowerCase(), role: "guest", profile } });
-    } catch {
-      await new Promise((r) => setTimeout(r, 800));
-      const lowerEmail = email.toLowerCase();
-      const users = getMockUsers();
-      if (users[lowerEmail]) {
-        set({ loading: false, error: "An account with this email already exists." });
-        throw new Error("Email exists");
-      }
-      users[lowerEmail] = { password, role: "guest", profile };
-      saveMockUsers(users);
-      set({ loading: false, error: null, user: { email: lowerEmail, role: "guest", profile } });
+    } catch (err) {
+      set({ loading: false, error: err instanceof Error ? err.message : "Registration failed." });
+      throw err;
     }
   },
 
@@ -213,46 +175,69 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   reset: () => set({ user: null, loading: false, error: null }),
 
   // ─── Restore Session ──────────────────────────────────────────────────────
-  restoreSession: (user) => set({ user, loading: false, error: null }),
+  restoreSession: (user) => set({ user, loading: false, isRestoring: true, error: null }),
 
   // ─── Update Password ──────────────────────────────────────────────────────
   updatePassword: async (email, currentPassword, newPassword) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 600));
-    const users = getMockUsers();
-    const lowerEmail = email.toLowerCase();
-    const match = users[lowerEmail];
-    if (!match || match.password !== currentPassword) {
-      set({ loading: false, error: "Incorrect current password." });
-      throw new Error("Incorrect current password.");
+    try {
+      await userApi.changePassword({ currentPassword, newPassword });
+      set({ loading: false });
+    } catch (err) {
+      set({ loading: false, error: err instanceof Error ? err.message : "Failed to update password" });
+      throw err;
     }
-    users[lowerEmail] = { ...match, password: newPassword };
-    if (typeof window !== "undefined") {
-      localStorage.setItem("MOCK_USERS_DB", JSON.stringify(users));
-    }
-    set({ loading: false });
   },
 
   // ─── Update Profile ───────────────────────────────────────────────────────
   updateProfile: async (email, updates) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 600));
-    const users = getMockUsers();
-    const lowerEmail = email.toLowerCase();
-    const match = users[lowerEmail];
-    if (!match) {
-      set({ loading: false, error: "User not found." });
-      throw new Error("User not found.");
+    try {
+      // Try real backend
+      const data = await userApi.updateProfile(updates);
+      const profile: UserProfile = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+      };
+
+      set((state) => {
+        if (!state.user) return { loading: false };
+        const updatedUser = { ...state.user, profile };
+        // Sync to localStorage
+        if (typeof window !== "undefined") {
+          localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+        }
+        return { loading: false, user: updatedUser };
+      });
+    } catch (err) {
+      set({ loading: false, error: err instanceof Error ? err.message : "Failed to update profile." });
+      throw err;
     }
-    users[lowerEmail] = { ...match, ...updates };
-    if (typeof window !== "undefined") {
-      localStorage.setItem("MOCK_USERS_DB", JSON.stringify(users));
-    }
-    set((state) => {
-      if (!state.user || state.user.email.toLowerCase() === lowerEmail) {
-        return { loading: false, user: { email: lowerEmail, ...match, ...updates } };
+  },
+
+  fetchCurrentUser: async () => {
+    try {
+      const data = await userApi.getCurrentUser();
+      
+      // Safety check: if backend is unreachable or session invalid, data will be null
+      if (!data) {
+        set({ loading: false, isRestoring: false });
+        return;
       }
-      return { loading: false };
-    });
+
+      const role = data.role.toLowerCase() as Role;
+      const profile: UserProfile = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+      };
+      const user: AuthUser = { email: data.email, role, profile };
+
+      set({ user, loading: false, isRestoring: false });
+    } catch (err) {
+      console.error("Failed to fetch current user profile:", err);
+      set({ isRestoring: false });
+    }
   },
 }));

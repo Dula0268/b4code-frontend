@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight, X, Heart, Star, Loader2 } from "lucide-react"
 
 import FiltersSidebar, { type FilterState } from "./filters-sidebar"
+import { ALL_PROPERTIES } from "@/lib/mock-properties"
 
 // Dynamically import the map (Leaflet must not run on server)
 const MapView = dynamic(() => import("./map-view"), { ssr: false })
@@ -167,36 +168,24 @@ function useSearchResultsLogic(destination: string, checkIn: string, checkOut: s
     const [hoveredId, setHoveredId] = useState<string | null>(null)
 
     useEffect(() => {
-        let isMounted = true;
-        const fetchListings = async () => {
-            try {
-                setLoading(true);
-                const query = new URLSearchParams();
-                if (destination && destination !== "Sri Lanka") query.append("destination", destination);
-                if (checkIn) query.append("checkIn", checkIn);
-                if (checkOut) query.append("checkOut", checkOut);
-                if (guests) query.append("guests", guests.toString());
-                
-                const res = await fetch(`${SEARCH_RESULTS_CONFIG.API_BASE_URL}/guest/search?${query.toString()}`);
-                if (!res.ok) throw new Error("Failed to fetch listings");
-                const data = await res.json();
-                if (isMounted) {
-                    setListings(data);
-                }
-            } catch (err) {
-                console.error("Error fetching properties:", err);
-                // Removed mock data fallback
-                if (isMounted) {
-                    setListings([]);
-                }
-            } finally {
-                if (isMounted) {
-                    setLoading(false);
-                }
-            }
-        };
-        fetchListings();
-        return () => { isMounted = false; };
+        setLoading(true);
+        // Using mock data directly as primary source to match teammate's design
+        const mockListings: PropertyListing[] = ALL_PROPERTIES.map(p => ({
+            id: p.id,
+            title: p.title,
+            location: p.location,
+            propertyType: p.propertyType,
+            pricePerNight: p.pricePerNight,
+            maxGuests: p.rooms[0]?.maxGuests || 2,
+            baseGuests: p.rooms[0]?.maxGuests || 2,
+            extraGuestFee: 0,
+            rating: p.rating,
+            reviewCount: p.reviewCount,
+            badge: p.badge,
+            imageSrc: p.imageSrc
+        }));
+        setListings(mockListings);
+        setLoading(false);
     }, [destination, checkIn, checkOut, guests]);
 
     // Filtering
