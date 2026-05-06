@@ -1,6 +1,12 @@
 import { RefreshCcw, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
+interface FinanceSummaryWithTotalRefunds {
+  pendingRefunds?: number;
+  totalRefunds?: number;
+  refundsGrowth?: string;
+}
+
 export default function RefundsCard() {
     const { summary, summaryLoading } = useAdminFinanceStore();
 
@@ -14,8 +20,10 @@ export default function RefundsCard() {
 
     const trendStr = summary.refundsGrowth || "0%";
     const isUp = !trendStr.startsWith("-");
-    const TrendIcon = isUp ? TrendingUp : TrendingDown;
-    const trendColor = isUp ? "text-[#16A34A]" : "text-[#DC2626]";
+    
+    const typedSummary = summary as FinanceSummaryWithTotalRefunds;
+    const totalRefundsFallback = typeof typedSummary.totalRefunds === "number" ? typedSummary.totalRefunds : undefined;
+    const pendingRefundsValue = summary.pendingRefunds ?? totalRefundsFallback ?? 0;
 
     return (
         <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between h-[136px]">
@@ -27,7 +35,7 @@ export default function RefundsCard() {
             </div>
             <div className="flex flex-col gap-1.5">
                 <p className="text-3xl font-bold text-gray-900 leading-none tracking-tight">
-                    {(summary.pendingRefunds ?? (summary as any).totalRefunds ?? 0).toLocaleString()}
+                    {pendingRefundsValue.toLocaleString()}
                 </p>
                 <div className="flex items-center gap-1.5 mt-1">
                     <span className={`flex items-center text-sm font-semibold ${isUp ? "text-emerald-500" : "text-red-500"}`}>

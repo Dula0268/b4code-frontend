@@ -9,7 +9,6 @@ import {
   ExternalLink,
   CircleCheck,
   XCircle,
-  PauseCircle,
   Loader2
 } from "lucide-react";
 import Toast from "@/components/ui/toast";
@@ -59,8 +58,9 @@ export default function PayoutDetailPanel({
         setToastMessage(null);
         onClose();
       }, 2000);
-    } catch (err: any) {
-      alert(err.message || "Failed to process payout");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to process payout";
+      alert(message);
     }
   };
 
