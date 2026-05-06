@@ -51,6 +51,15 @@ export interface Menu {
   items: MenuItem[];
 }
 
+export interface BackendMenuItem {
+  id: number;
+  name: string;
+  price: number;
+  description?: string;
+  category?: string;
+  isAvailable: boolean;
+}
+
 // ─── Store ─────────────────────────────────────────────────────────────────────
 
 interface StaffMenuState {
@@ -84,6 +93,19 @@ function calcPriceRange(items: MenuItem[]): string {
   return min === max ? `LKR ${min.toLocaleString()}` : `LKR ${min.toLocaleString()} - ${max.toLocaleString()}`;
 }
 
+function extractApiErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "object" && error !== null) {
+    const response = (error as { response?: { data?: unknown } }).response;
+    if (response && typeof response.data === "object" && response.data !== null) {
+      const data = response.data as Record<string, unknown>;
+      if (typeof data.message === "string") {
+        return data.message;
+      }
+    }
+  }
+  return fallback;
+}
+
 let nextMenuId = 5;
 let nextItemId = 100;
 
@@ -103,14 +125,6 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       const menuItems = response.data;
       
       // Convert backend menu items to frontend format
-      interface BackendMenuItem {
-        id: number;
-        name: string;
-        price: number;
-        description?: string;
-        category?: string;
-        isAvailable: boolean;
-      }
       const menuItemMap = menuItems.reduce((acc: Record<string, MenuItem[]>, item: BackendMenuItem) => {
         const menuKey = item.category || "General";
         if (!acc[menuKey]) acc[menuKey] = [];
