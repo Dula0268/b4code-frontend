@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import RoomDetailPage from "@/components/features/guest/property/room-detail-page"
+import RoomPageClient from "./page-client"
 import type { PropertyDetail } from "@/lib/mock-properties"
 import { getPropertyById } from "@/lib/mock-properties"
 
@@ -33,12 +33,12 @@ export default async function RoomPage({ params }: Props) {
     if (!room) notFound()
 
     return (
-        <>
+        <div className="min-h-screen flex flex-col bg-[#fafafa]">
             <GuestTopbar />
-            <main>
-                <RoomDetailPage property={property} room={room} />
+            <main className="flex-1">
+                <RoomPageClient property={property} room={room} />
             </main>
-            <GuestFooter />
-        </>
+            <GuestFooter variant="full" />
+        </div>
     )
 }

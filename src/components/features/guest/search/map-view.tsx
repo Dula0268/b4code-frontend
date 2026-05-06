@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import type { LatLngBoundsExpression, Map as LeafletMap, Marker } from "leaflet"
-import type { PropertyListing } from "./search-results-page"
+import type { PropertyListing } from "./search-results"
 
 // ─── Sri Lanka coordinates for each location ──────────────────────────────
 const LOCATION_COORDS: Record<string, [number, number]> = {

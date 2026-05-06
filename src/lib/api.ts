@@ -16,7 +16,30 @@ const normalizeList = (value: unknown) => {
     return [];
 };
 
-const normalizeRoom = (room: any) => ({
+interface RoomData {
+    id?: unknown; roomId?: unknown; name?: unknown; roomName?: unknown;
+    maxGuests?: unknown; maxOccupancy?: unknown; sqft?: unknown;
+    pricePerNight?: unknown; originalPrice?: unknown; features?: unknown;
+    amenities?: unknown; imageSrc?: unknown; imageUrl?: unknown;
+    [key: string]: unknown;
+}
+
+interface PropertyData {
+    id?: unknown; propertyId?: unknown; title?: unknown; name?: unknown;
+    location?: unknown; city?: unknown; propertyType?: unknown;
+    pricePerNight?: unknown; lowestPricePerNight?: unknown;
+    maxGuests?: unknown; availableRooms?: RoomData[];
+    baseGuests?: unknown; extraGuestFee?: unknown; rating?: unknown;
+    averageRating?: unknown; reviewCount?: unknown; badge?: unknown;
+    imageSrc?: unknown; imageUrl?: unknown; fullAddress?: unknown; address?: unknown;
+    galleryImages?: unknown; hostName?: unknown; ownerName?: unknown;
+    hostBio?: unknown; hostYears?: unknown; hostSuperhost?: unknown;
+    description?: unknown; reviewBreakdown?: unknown; reviews?: unknown;
+    rooms?: RoomData[]; lat?: unknown; lng?: unknown; amenities?: unknown;
+    [key: string]: unknown;
+}
+
+const normalizeRoom = (room: RoomData) => ({
     ...room,
     id: String(room?.id ?? room?.roomId ?? ""),
     name: room?.name ?? room?.roomName ?? "Room",
@@ -28,7 +51,7 @@ const normalizeRoom = (room: any) => ({
     imageSrc: room?.imageSrc || room?.imageUrl || DEFAULT_ROOM_IMAGE,
 });
 
-const normalizePropertyListing = (property: any) => ({
+const normalizePropertyListing = (property: PropertyData) => ({
     ...property,
     id: String(property?.id ?? property?.propertyId ?? ""),
     title: property?.title ?? property?.name ?? "Untitled property",
@@ -44,7 +67,7 @@ const normalizePropertyListing = (property: any) => ({
     imageSrc: property?.imageSrc || property?.imageUrl || DEFAULT_PROPERTY_IMAGE,
 });
 
-const normalizePropertyDetail = (property: any) => ({
+const normalizePropertyDetail = (property: PropertyData) => ({
     ...property,
     id: String(property?.id ?? property?.propertyId ?? ""),
     title: property?.title ?? property?.name ?? "Untitled property",

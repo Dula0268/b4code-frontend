@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import PropertyDetailPage from "@/components/features/guest/property/property-detail-page"
+import PropertyClient from "./page-client"
 import { guestApi } from "@/lib/api"
 import { getPropertyById, type PropertyDetail, type Room } from "@/lib/mock-properties"
 
@@ -96,14 +96,18 @@ export default async function PropertyPage({ params }: Props) {
     if (!property) notFound()
 
     return (
-        <>
+        <div className="min-h-screen flex flex-col bg-[#fafafa]">
             <GuestTopbar />
-            <main>
-                <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading property details...</div>}>
-                    <PropertyDetailPage property={property} />
+            <main className="flex-1">
+                <Suspense fallback={
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="w-10 h-10 border-4 border-t-[var(--brand-secondary)] border-[var(--border)] rounded-full animate-spin" />
+                    </div>
+                }>
+                    <PropertyClient property={property} />
                 </Suspense>
             </main>
-            <GuestFooter />
-        </>
+            <GuestFooter variant="full" />
+        </div>
     )
 }
