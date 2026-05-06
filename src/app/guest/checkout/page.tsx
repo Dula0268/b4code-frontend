@@ -126,7 +126,7 @@ function useCheckoutLogic() {
         }
 
         if (property && roomId) {
-            room = (property.rooms?.find((r) => String(r.id) === String(roomId)) as { id: string; name: string; pricePerNight: number }) || null
+            room = (property.rooms?.find((r) => String(r.id) === String(roomId)) as unknown as { id: string; name: string; pricePerNight: number }) || null
         }
 
         const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1

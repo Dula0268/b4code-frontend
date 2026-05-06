@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { XCircle, ChevronRight, Bell } from "lucide-react"
 import { useAuthStore } from "@/store/auth/auth.store"
-import { type BookingStatus } from "@/store/guest/booking/booking.store"
+import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/booking.store"
 import { guestApi } from "@/lib/api"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
@@ -25,6 +25,7 @@ function useMyBookingsLogic() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const user = useAuthStore(s => s.user)
+  const localBookings = useGuestBookingStore(s => s.bookings)
 
   useEffect(() => {
     let active = true
@@ -36,8 +37,9 @@ function useMyBookingsLogic() {
               return
             }
 
-            const data = await guestApi.getGuestBookings(email)
-            if (active) {
+            let apiBookings: BookingCardData[] = []
+            try {
+                const data = await guestApi.getGuestBookings(email)
                 type ApiBooking = {
                   bookingId?: number | string
                   id?: number | string
@@ -63,7 +65,7 @@ function useMyBookingsLogic() {
                   return "UPCOMING"
                 }
 
-                const apiBookings: BookingCardData[] = (data as ApiBooking[]).map((b) => ({
+                apiBookings = (data as ApiBooking[]).map((b) => ({
                     id: String(b.bookingId ?? b.id ?? b.confirmationNumber ?? crypto.randomUUID()),
                     propertyId: String(b.bookingId ?? b.id ?? ""),
                     orderNumber: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
@@ -79,9 +81,41 @@ function useMyBookingsLogic() {
                     paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
                     paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
                     roomName: b.roomName,
+                    isFromStore: false,
+                }))
+            } catch (err) {
+                console.warn("API booking fetch failed or empty:", err)
+            }
+
+            if (active) {
+                const userLocalBookings = localBookings.filter(b => b.userEmail.toLowerCase() === email.toLowerCase())
+                const mappedLocal: BookingCardData[] = userLocalBookings.map(b => ({
+                    id: String(b.id),
+                    propertyId: String(b.propertyId),
+                    orderNumber: b.confirmationCode,
+                    status: b.status,
+                    property: b.property,
+                    location: b.location,
+                    imageSrc: b.imageSrc,
+                    checkIn: b.checkIn,
+                    checkOut: b.checkOut,
+                    guests: b.guestsLabel,
+                    totalPrice: b.totalPrice,
+                    nightsLabel: b.nightsLabel,
+                    paymentMethod: b.paymentMethod,
+                    paidInFull: b.paidInFull,
+                    roomName: b.roomName,
                     isFromStore: true,
                 }))
-                setBookings(apiBookings)
+
+                const merged = [...mappedLocal]
+                for (const apiB of apiBookings) {
+                    if (!merged.find(m => m.orderNumber === apiB.orderNumber)) {
+                        merged.push(apiB)
+                    }
+                }
+                
+                setBookings(merged)
             }
         } catch {
             if (active) setErrorMsg("Failed to synchronize bookings. Try again.")
@@ -95,7 +129,7 @@ function useMyBookingsLogic() {
     }
     
     return () => { active = false }
-  }, [user])
+  }, [user, localBookings])
 
   const visible = bookings.filter(b => b.status === activeTab)
   const nextUpcoming = bookings.find(b => b.status === "UPCOMING") ?? null
