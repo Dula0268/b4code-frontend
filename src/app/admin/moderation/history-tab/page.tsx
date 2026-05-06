@@ -1,84 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Search, Download } from "lucide-react";
-import type {
-  HistoryAction,
-  HistoryEntry,
-} from "@/store/admin/moderation/admin-moderation.store";
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const HISTORY_ENTRIES: HistoryEntry[] = [
-  {
-    id: "1",
-    resolvedDate: "Oct 24, 2023",
-    resolvedTime: "14:32 PM",
-    caseId: "#REV-8921",
-    actionTaken: "Review Removed",
-    adminInitials: "AM",
-    adminName: "Alex Morgan",
-    adminColor: "#C05621",
-    outcome: "Violated Hate Speech Policy",
-  },
-  {
-    id: "2",
-    resolvedDate: "Oct 24, 2023",
-    resolvedTime: "11:15 AM",
-    caseId: "#DIS-4920",
-    actionTaken: "Refund Issued",
-    adminInitials: "SJ",
-    adminName: "Sarah Jenkins",
-    adminColor: "#2563EB",
-    outcome: "Full Refund ($450.00) Approved",
-  },
-  {
-    id: "3",
-    resolvedDate: "Oct 23, 2023",
-    resolvedTime: "16:45 PM",
-    caseId: "#REV-8915",
-    actionTaken: "Review Kept",
-    adminInitials: "AM",
-    adminName: "Alex Morgan",
-    adminColor: "#C05621",
-    outcome: "Content within Guidelines",
-  },
-  {
-    id: "4",
-    resolvedDate: "Oct 23, 2023",
-    resolvedTime: "09:10 AM",
-    caseId: "#DIS-4918",
-    actionTaken: "Appeal Denied",
-    adminInitials: "SYS",
-    adminName: "System Auto",
-    adminColor: "#F59E0B",
-    outcome: "Insufficient Evidence Provided",
-  },
-  {
-    id: "5",
-    resolvedDate: "Oct 22, 2023",
-    resolvedTime: "15:20 PM",
-    caseId: "#REV-8902",
-    actionTaken: "Review Removed",
-    adminInitials: "SJ",
-    adminName: "Sarah Jenkins",
-    adminColor: "#2563EB",
-    outcome: "Spam / Promotional Content",
-  },
-];
-
-const PAGE_SIZE = 5;
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Search, Download, Loader2 } from "lucide-react";
+import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
 
 // ─── Action Badge ─────────────────────────────────────────────────────────────
-function ActionBadge({ action }: { action: HistoryAction }) {
-  const cfg: Record<HistoryAction, string> = {
+function ActionBadge({ action }: { action: string }) {
+  const cfg: Record<string, string> = {
     "Review Removed": "bg-red-50 text-red-600 border-red-200",
     "Refund Issued": "bg-orange-50 text-orange-600 border-orange-200",
     "Review Kept": "bg-green-50 text-green-600 border-green-200",
     "Appeal Denied": "bg-yellow-50 text-yellow-700 border-yellow-200",
   };
+  const bgClass = cfg[action] || "bg-gray-50 text-gray-700 border-gray-200";
   return (
     <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${cfg[action]}`}
+      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${bgClass}`}
     >
       {action}
     </span>
@@ -100,30 +37,24 @@ export default function HistoryTabPage() {
     "Appeal Denied",
   ];
 
-  const filtered = HISTORY_ENTRIES.filter((e) => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      e.caseId.toLowerCase().includes(q) ||
-      e.adminName.toLowerCase().includes(q) ||
-      e.outcome.toLowerCase().includes(q);
-    const matchAction =
-      actionFilter === "All Actions" || e.actionTaken === actionFilter;
-    return matchSearch && matchAction;
-  });
+  const { history, historyTotalPages, historyLoading, fetchHistory } = useAdminModerationStore();
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchHistory({
+        search: search || undefined,
+        action: actionFilter !== "All Actions" ? actionFilter : undefined,
+        page: currentPage - 1,
+        size: 5,
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [fetchHistory, search, actionFilter, currentPage]);
 
-  const goPage = (p: number) =>
-    setCurrentPage(Math.max(1, Math.min(totalPages, p)));
+  const goPage = (p: number) => setCurrentPage(Math.max(1, Math.min(historyTotalPages, p)));
 
-  const startIndex =
-    filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const endIndex = Math.min(currentPage * PAGE_SIZE, filtered.length);
+  const startIndex = (currentPage - 1) * 5 + 1;
+  const endIndex = Math.max(0, startIndex + history.length - 1);
 
   return (
     <div className="flex flex-col gap-5">
@@ -219,7 +150,13 @@ export default function HistoryTabPage() {
               </tr>
             </thead>
             <tbody>
-              {paged.length === 0 ? (
+              {historyLoading ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center">
+                    <Loader2 className="animate-spin inline-block text-[var(--brand-primary)]" size={24} />
+                  </td>
+                </tr>
+              ) : history.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -229,7 +166,7 @@ export default function HistoryTabPage() {
                   </td>
                 </tr>
               ) : (
-                paged.map((entry, idx) => (
+                history.map((entry, idx) => (
                   <tr
                     key={entry.id}
                     className={`border-t border-[#F0EBE7] transition-colors ${
@@ -258,9 +195,9 @@ export default function HistoryTabPage() {
                       <div className="flex items-center gap-2.5">
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[11px] shrink-0"
-                          style={{ backgroundColor: entry.adminColor }}
+                          style={{ backgroundColor: entry.adminColor || '#C05621' }}
                         >
-                          {entry.adminInitials}
+                          {entry.adminInitials || (entry.adminName ? entry.adminName.charAt(0) : '?')}
                         </div>
                         <span className="font-medium text-[#1A1A1A] text-[13px]">
                           {entry.adminName}
@@ -281,10 +218,8 @@ export default function HistoryTabPage() {
         {/* ── Pagination ── */}
         <div className="flex justify-between items-center px-5 py-3.5 border-t border-[#F0EBE7]">
           <span className="text-[13px] text-[#9E7B6A]">
-            Showing <strong className="text-[#1A1A1A]">{startIndex}</strong> to{" "}
-            <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
-            <strong className="text-[#1A1A1A]">{filtered.length}</strong>{" "}
-            results
+            Page <strong className="text-[#1A1A1A]">{currentPage}</strong> of{" "}
+            <strong className="text-[#1A1A1A]">{historyTotalPages}</strong>
           </span>
           <div className="flex items-center gap-1">
             <button
@@ -300,19 +235,19 @@ export default function HistoryTabPage() {
             </button>
             {(() => {
               const pages: (number | "...")[] = [];
-              if (totalPages <= 5) {
-                for (let i = 1; i <= totalPages; i++) pages.push(i);
+              if (historyTotalPages <= 5) {
+                for (let i = 1; i <= historyTotalPages; i++) pages.push(i);
               } else {
                 pages.push(1);
                 if (currentPage > 3) pages.push("...");
                 for (
                   let i = Math.max(2, currentPage - 1);
-                  i <= Math.min(totalPages - 1, currentPage + 1);
+                  i <= Math.min(historyTotalPages - 1, currentPage + 1);
                   i++
                 )
                   pages.push(i);
-                if (currentPage < totalPages - 2) pages.push("...");
-                pages.push(totalPages);
+                if (currentPage < historyTotalPages - 2) pages.push("...");
+                pages.push(historyTotalPages);
               }
               return pages.map((p, i) =>
                 p === "..." ? (
@@ -339,9 +274,9 @@ export default function HistoryTabPage() {
             })()}
             <button
               onClick={() => goPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === historyTotalPages || historyTotalPages === 0}
               className={`w-8 h-8 rounded-md border border-[#E8DDD8] bg-white flex items-center justify-center ${
-                currentPage === totalPages
+                currentPage === historyTotalPages || historyTotalPages === 0
                   ? "cursor-not-allowed text-[#D1D5DB]"
                   : "cursor-pointer text-[#6B7280]"
               }`}
