@@ -57,10 +57,12 @@ export default function ItemDetailsClient({
     return arr;
   }, [itemReviews, sortBy]);
 
-  const addOns = React.useMemo(() => item.addOns ?? [], [item.addOns]);
-  const gallery = item.gallery ?? (item.imageUrl ? [item.imageUrl] : []);
+  const itemAddOns = (item as MenuItemDetail).addOns;
+  const addOns = React.useMemo(() => itemAddOns ?? [], [itemAddOns]);
+  const gallery = (item as MenuItemDetail).gallery ?? (item.imageUrl ? [item.imageUrl] : []);
   const heroSrc = gallery[activeImage] ?? item.imageUrl;
   const itemTitle = (item as { title?: string }).title ?? item.name ?? "Item";
+  const detailItem = item as MenuItemDetail;
   const itemPrice = (item as { priceLkr?: number }).priceLkr ?? item.price ?? 0;
 
   const addOnPrice = React.useMemo(() => {
@@ -168,14 +170,14 @@ export default function ItemDetailsClient({
 
             {/* Rating · Tag · Prep time */}
             <div className="flex flex-wrap items-center gap-3 text-sm text-[#6b7280]">
-              {item.rating ? (
+            {detailItem.rating ? (
                 <div className="flex items-center gap-1">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
                   </svg>
-                  <span className="font-medium text-[#374151]">{item.rating}</span>
-                  {item.reviewCount ? (
-                    <span>({item.reviewCount} reviews)</span>
+                  <span className="font-medium text-[#374151]">{detailItem.rating}</span>
+                  {detailItem.reviewCount ? (
+                    <span>({detailItem.reviewCount} reviews)</span>
                   ) : null}
                 </div>
               ) : null}
@@ -185,10 +187,10 @@ export default function ItemDetailsClient({
                   <span>{TAG_LABELS[item.tag] ?? item.tag}</span>
                 </>
               ) : null}
-              {item.prepTime ? (
+              {detailItem.prepTime ? (
                 <>
                   <Dot />
-                  <span>{item.prepTime}</span>
+                  <span>{detailItem.prepTime}</span>
                 </>
               ) : null}
             </div>
@@ -197,13 +199,13 @@ export default function ItemDetailsClient({
           {/* Description */}
           <div className="space-y-4 text-base text-[#4b5563] leading-6">
             <p>{item.description}</p>
-            {item.longDescription ? <p>{item.longDescription}</p> : null}
+            {detailItem.longDescription ? <p>{detailItem.longDescription}</p> : null}
           </div>
 
           {/* Allergen / dietary tags */}
-          {item.allergens && item.allergens.length > 0 ? (
+          {detailItem.allergens && detailItem.allergens.length > 0 ? (
             <div className="flex flex-wrap gap-2 pt-4">
-              {item.allergens.map((tag) => (
+              {detailItem.allergens.map((tag: string) => (
                 <div
                   key={tag}
                   className="rounded border border-[rgba(146,48,2,0.1)] bg-[rgba(146,48,2,0.05)] px-3.5 py-1.5 text-sm font-medium text-[#923002]"
