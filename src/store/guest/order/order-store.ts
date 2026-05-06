@@ -116,6 +116,27 @@ function mapBackendStatus(backendStatus: string): OrderStatus {
   return statusMap[backendStatus] || "Placed";
 }
 
+function extractApiErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "object" && error !== null) {
+    const response = (error as { response?: { data?: unknown } }).response;
+    if (response && typeof response.data === "object" && response.data !== null) {
+      const data = response.data as Record<string, unknown>;
+      if ("errors" in data && typeof data.errors === "object" && data.errors !== null) {
+        return Object.values(data.errors as Record<string, string>).map(String).join(", ");
+      }
+      if ("message" in data && typeof data.message === "string") {
+        return data.message;
+      }
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 /* ─── Initialize empty history (populated from API) ─── */
 
 /* ─── Store ─── */
@@ -179,31 +200,8 @@ export const useOrderStore = create<OrderState>((set) => ({
       return backendOrder.id;
     } catch (error: unknown) {
       let errorMessage = "Failed to place order";
-      if (!(error instanceof Error)) {
-        const errData = error as any;
-        error = new Error(errData?.message || String(error));
-      }
-      
+      errorMessage = extractApiErrorMessage(error, errorMessage);
       console.error("❌ Order placement error:", error);
-      console.error("📊 Error Details:", {
-        code: error.code,
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        url: error.config?.url,
-        method: error.config?.method,
-        response: error.response?.data,
-      });
-      
-      // Handle validation errors from backend
-      if (error.response?.data?.errors) {
-        const validationErrors = error.response.data.errors;
-        errorMessage = Object.values(validationErrors).join(", ");
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
       
       set({ error: errorMessage, loading: false });
       return null;
@@ -248,11 +246,7 @@ export const useOrderStore = create<OrderState>((set) => ({
       set({ orderHistory, loading: false });
     } catch (error: unknown) {
       let errorMessage = "Failed to fetch orders";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        errorMessage = (error as any).response?.data?.message || errorMessage;
-      }
+      errorMessage = extractApiErrorMessage(error, errorMessage);
       set({ error: errorMessage, loading: false });
     }
   },

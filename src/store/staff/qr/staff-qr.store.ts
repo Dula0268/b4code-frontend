@@ -69,6 +69,24 @@ interface StaffQRActions {
   setError: (error: string | null) => void;
 }
 
+function extractApiErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "object" && error !== null) {
+    const response = (error as { response?: { data?: unknown } }).response;
+    if (response && typeof response.data === "object" && response.data !== null) {
+      const data = response.data as Record<string, unknown>;
+      if (typeof data.message === "string") {
+        return data.message;
+      }
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
   // Ensure the image URL is absolute
   let qrImageUrl = data.qrImageUrl || data.qr_image_url;
@@ -137,12 +155,7 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
 
       set({ qrs, currentPage: page, totalItems: totalElements, loading: false });
     } catch (error: unknown) {
-      let errorMsg = "Failed to fetch QR codes";
-      if (error instanceof Error) {
-        errorMsg = error.message;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        errorMsg = (error as any).response?.data?.message || errorMsg;
-      }
+      const errorMsg = extractApiErrorMessage(error, "Failed to fetch QR codes");
       console.error("Failed to fetch QRs:", error);
       set({ error: errorMsg, loading: false });
     }
@@ -181,12 +194,7 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
       }));
       return newQR.id;
     } catch (error: unknown) {
-      let errorMsg = "Failed to create QR code";
-      if (error instanceof Error) {
-        errorMsg = error.message;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        errorMsg = (error as any).response?.data?.message || errorMsg;
-      }
+      const errorMsg = extractApiErrorMessage(error, "Failed to create QR code");
       set({ error: errorMsg, loading: false });
       throw new Error(errorMsg);
     }
@@ -229,12 +237,7 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         loading: false,
       }));
     } catch (error: unknown) {
-      let errorMsg = "Failed to update QR code";
-      if (error instanceof Error) {
-        errorMsg = error.message;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        errorMsg = (error as any).response?.data?.message || errorMsg;
-      }
+      const errorMsg = extractApiErrorMessage(error, "Failed to update QR code");
       set({ error: errorMsg, loading: false });
       throw new Error(errorMsg);
     }
@@ -250,12 +253,7 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         loading: false,
       }));
     } catch (error: unknown) {
-      let errorMsg = "Failed to delete QR code";
-      if (error instanceof Error) {
-        errorMsg = error.message;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        errorMsg = (error as any).response?.data?.message || errorMsg;
-      }
+      const errorMsg = extractApiErrorMessage(error, "Failed to delete QR code");
       set({ error: errorMsg, loading: false });
       throw new Error(errorMsg);
     }
@@ -274,12 +272,7 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         loading: false,
       }));
     } catch (error: unknown) {
-      let errorMsg = "Failed to toggle QR code status";
-      if (error instanceof Error) {
-        errorMsg = error.message;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        errorMsg = (error as any).response?.data?.message || errorMsg;
-      }
+      const errorMsg = extractApiErrorMessage(error, "Failed to toggle QR code status");
       set({ error: errorMsg, loading: false });
       throw new Error(errorMsg);
     }

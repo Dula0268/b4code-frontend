@@ -118,6 +118,24 @@ function mapFrontendStatusToBackend(status: OrderStatus): string {
   return statusMap[status] || "NEW";
 }
 
+function extractApiErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "object" && error !== null) {
+    const response = (error as { response?: { data?: unknown } }).response;
+    if (response && typeof response.data === "object" && response.data !== null) {
+      const data = response.data as Record<string, unknown>;
+      if (typeof data.message === "string") {
+        return data.message;
+      }
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 // Helper function to convert backend order to frontend order
 interface BackendOrderResponse {
   id: number;
@@ -191,12 +209,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         console.log(`✅ Converted to frontend format:`, orders);
         set({ orders, loading: false });
       } catch (error: unknown) {
-        let errorMessage = "Failed to fetch orders";
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else if (typeof error === 'object' && error !== null && 'response' in error) {
-          errorMessage = (error as any).response?.data?.message || errorMessage;
-        }
+        const errorMessage = extractApiErrorMessage(error, "Failed to fetch orders");
         console.error(`❌ Failed to fetch orders:`, error);
         set({ error: errorMessage, loading: false });
         // Keep existing orders on error
@@ -233,12 +246,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
           },
         }));
       } catch (error: unknown) {
-        let errorMessage = "Failed to accept order";
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else if (typeof error === 'object' && error !== null && 'response' in error) {
-          errorMessage = (error as any).response?.data?.message || errorMessage;
-        }
+        const errorMessage = extractApiErrorMessage(error, "Failed to accept order");
         set({ error: errorMessage });
       }
     },
@@ -273,12 +281,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
           },
         }));
       } catch (error: unknown) {
-        let errorMessage = "Failed to reject order";
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else if (typeof error === 'object' && error !== null && 'response' in error) {
-          errorMessage = (error as any).response?.data?.message || errorMessage;
-        }
+        const errorMessage = extractApiErrorMessage(error, "Failed to reject order");
         set({ error: errorMessage });
       }
     },
@@ -326,12 +329,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
           }));
         }
       } catch (error: unknown) {
-        let errorMessage = "Failed to advance order status";
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else if (typeof error === 'object' && error !== null && 'response' in error) {
-          errorMessage = (error as any).response?.data?.message || errorMessage;
-        }
+        const errorMessage = extractApiErrorMessage(error, "Failed to advance order status");
         set({ error: errorMessage });
       }
     },

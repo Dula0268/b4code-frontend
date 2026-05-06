@@ -69,10 +69,16 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
       set({ categories, loading: false });
     } catch (error: unknown) {
       let errorMsg = "Failed to fetch menu";
-      if (error instanceof Error) {
+      if (typeof error === "object" && error !== null) {
+        const response = (error as { response?: { data?: unknown } }).response;
+        if (response && typeof response.data === "object" && response.data !== null) {
+          const data = response.data as Record<string, unknown>;
+          if (typeof data.message === "string") {
+            errorMsg = data.message;
+          }
+        }
+      } else if (error instanceof Error) {
         errorMsg = error.message;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        errorMsg = (error as any).response?.data?.message || errorMsg;
       }
       set({ error: errorMsg, loading: false });
       console.error("Failed to fetch menu:", error);

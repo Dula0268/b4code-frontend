@@ -143,12 +143,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
 
       set({ menus, isLoading: false });
     } catch (error: unknown) {
-      let errorMsg = "Failed to fetch menus";
-      if (error instanceof Error) {
-        errorMsg = error.message;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        errorMsg = (error as any).response?.data?.message || errorMsg;
-      }
+      const errorMsg = extractApiErrorMessage(error, "Failed to fetch menus");
       set({ errorMsg, isLoading: false });
       console.error("Failed to fetch menus:", error);
     }
@@ -180,12 +175,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         isLoading: false,
       }));
     } catch (error: unknown) {
-      let errorMsg = "Failed to fetch menu items";
-      if (error instanceof Error) {
-        errorMsg = error.message;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        errorMsg = (error as any).response?.data?.message || errorMsg;
-      }
+      const errorMsg = extractApiErrorMessage(error, "Failed to fetch menu items");
       set({ errorMsg, isLoading: false });
       console.error("Failed to fetch menu items:", error);
     }
