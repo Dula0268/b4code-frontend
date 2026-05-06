@@ -9,7 +9,7 @@ import {
   ExternalLink,
   CircleCheck,
   XCircle,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import Toast from "@/components/ui/toast";
 import type { PayoutDto } from "@/api/admin/finance.api";
@@ -29,7 +29,15 @@ function getInitials(name: string) {
 }
 
 function getColorForName(name: string) {
-  const colors = ["#C05621", "#2563EB", "#7C3AED", "#059669", "#DC2626", "#0891B2", "#CA8A04"];
+  const colors = [
+    "#C05621",
+    "#2563EB",
+    "#7C3AED",
+    "#059669",
+    "#DC2626",
+    "#0891B2",
+    "#CA8A04",
+  ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -51,7 +59,7 @@ export default function PayoutDetailPanel({
     try {
       const ref = prompt("Enter bank reference ID (optional):");
       if (ref === null) return; // cancelled
-      
+
       await processPayout(payout.id, ref);
       setToastMessage("Payout approved successfully.");
       setTimeout(() => {
@@ -59,7 +67,8 @@ export default function PayoutDetailPanel({
         onClose();
       }, 2000);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to process payout";
+      const message =
+        err instanceof Error ? err.message : "Failed to process payout";
       alert(message);
     }
   };
@@ -82,7 +91,7 @@ export default function PayoutDetailPanel({
             <Loader2 className="animate-spin text-[#C05621]" size={32} />
           </div>
         )}
-        
+
         {/* Toast Notification positioned within panel container */}
         <div className="absolute top-4 left-0 right-0 z-50 flex justify-center px-4">
           <Toast
@@ -99,7 +108,9 @@ export default function PayoutDetailPanel({
             <h2 className="text-sm font-bold text-[#1A1A1A] uppercase tracking-wider">
               Payout Request
             </h2>
-            <span className="text-xs text-[#9E7B6A] font-medium">#{payout.id}</span>
+            <span className="text-xs text-[#9E7B6A] font-medium">
+              #{payout.id}
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -113,15 +124,19 @@ export default function PayoutDetailPanel({
           {/* ── Owner Info ── */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div 
+              <div
                 className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold"
                 style={{ backgroundColor: getColorForName(payout.hostName) }}
               >
                 {getInitials(payout.hostName)}
               </div>
               <div>
-                <p className="text-sm font-bold text-[#1A1A1A]">{payout.hostName}</p>
-                <p className="text-[11px] text-[#9E7B6A]">{payout.propertyName}</p>
+                <p className="text-sm font-bold text-[#1A1A1A]">
+                  {payout.hostName}
+                </p>
+                <p className="text-[11px] text-[#9E7B6A]">
+                  {payout.propertyName}
+                </p>
               </div>
             </div>
             {/* View Profile Link */}
@@ -158,13 +173,17 @@ export default function PayoutDetailPanel({
               <div className="flex items-start gap-3 pb-4 relative">
                 <div className="flex flex-col items-center z-10">
                   <CheckCircle2 size={20} className="text-[#16A34A] shrink-0" />
-                  {isProcessed && <div className="w-px h-full bg-[#E5E7EB] absolute top-5 left-[9.5px]" />}
+                  {isProcessed && (
+                    <div className="w-px h-full bg-[#E5E7EB] absolute top-5 left-[9.5px]" />
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#1A1A1A]">
                     Balance Validated
                   </p>
-                  <p className="text-[11px] text-[#9E7B6A]">Bank: {payout.bankDetails}</p>
+                  <p className="text-[11px] text-[#9E7B6A]">
+                    Bank: {payout.bankDetails}
+                  </p>
                 </div>
               </div>
 
@@ -237,7 +256,11 @@ export default function PayoutDetailPanel({
                   Gross Amount
                 </span>
                 <span className="text-sm font-medium text-[#1A1A1A]">
-                  LKR {(payout.amount / 0.85).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  LKR{" "}
+                  {(payout.amount / 0.85).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
 
@@ -250,7 +273,11 @@ export default function PayoutDetailPanel({
                   </p>
                 </div>
                 <span className="text-sm font-bold text-[#DC2626]">
-                  -LKR {((payout.amount / 0.85) * 0.15).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  -LKR{" "}
+                  {((payout.amount / 0.85) * 0.15).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
 
@@ -265,7 +292,11 @@ export default function PayoutDetailPanel({
                   NET PAYOUT
                 </span>
                 <span className="text-lg font-bold text-[#C05621]">
-                  LKR {payout.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  LKR{" "}
+                  {payout.amount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
             </div>
@@ -282,7 +313,10 @@ export default function PayoutDetailPanel({
                 <CircleCheck size={18} />
                 Approve Payout
               </button>
-              <button disabled={actionLoading} className="w-full py-3.5 rounded-xl border border-[#E8DDD8] text-[#1A1A1A] text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#FEF2F2] disabled:opacity-50 transition-colors cursor-pointer">
+              <button
+                disabled={actionLoading}
+                className="w-full py-3.5 rounded-xl border border-[#E8DDD8] text-[#1A1A1A] text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#FEF2F2] disabled:opacity-50 transition-colors cursor-pointer"
+              >
                 <XCircle size={18} className="text-[#DC2626]" />
                 Reject Payout
               </button>
