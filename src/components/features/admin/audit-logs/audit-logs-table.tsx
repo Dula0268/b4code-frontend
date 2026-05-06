@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { AuditLogDto } from "@/api/admin/audit-logs.api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type UserRole = "Admin" | "Staff" | "Owner";
@@ -11,21 +12,10 @@ export type ActionType =
   | "Config Change"
   | "Login Failed";
 
-export interface LogEntry {
-  id: string;
-  userName: string;
-  userRole: UserRole;
-  avatarColor: string;
-  avatarInitial: string;
-  ip: string;
-  action: ActionType;
-  entity: string;
-  entityDetail: string;
-  timestamp: string;
-}
+export type LogEntry = AuditLogDto;
 
 interface AuditLogsTableProps {
-  logs: LogEntry[];
+  logs: AuditLogDto[];
   currentPage: number;
   totalPages: number;
   totalResults: number;
@@ -34,8 +24,8 @@ interface AuditLogsTableProps {
 }
 
 // ─── Action Badge ──────────────────────────────────────────────────────────────
-function ActionBadge({ action }: { action: ActionType }) {
-  const cfg: Record<ActionType, string> = {
+function ActionBadge({ action }: { action: string }) {
+  const cfg: Record<string, string> = {
     Updated: "bg-yellow-100/80 text-yellow-800",
     Deleted: "bg-red-100/70 text-red-700",
     "Login Success": "bg-green-100/70 text-green-700",
@@ -43,9 +33,10 @@ function ActionBadge({ action }: { action: ActionType }) {
     "Config Change": "bg-gray-100/70 text-gray-700",
     "Login Failed": "bg-red-100/70 text-red-700",
   };
+  const color = cfg[action] || "bg-gray-100/70 text-gray-700";
   return (
     <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${cfg[action]}`}
+      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${color}`}
     >
       {action}
     </span>

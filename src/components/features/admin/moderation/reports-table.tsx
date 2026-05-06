@@ -1,86 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, Star, Loader2 } from "lucide-react";
 import TotalDisputesCard from "./kpi-cards/total-disputes-card";
 import UrgentCard from "./kpi-cards/urgent-card";
 import RemovedTodayCard from "./kpi-cards/removed-today-card";
 import AvgTimeCard from "./kpi-cards/avg-time-card";
-import {
-  useAdminModerationStore,
-  type FlaggedReview,
-  type FlagStatus,
-} from "@/store/admin/moderation/admin-moderation.store";
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const FLAGGED_REVIEWS: FlaggedReview[] = [
-  {
-    id: "1",
-    reviewerName: "Jane Doe",
-    timeAgo: "2h ago",
-    rating: 1,
-    propertyName: "Seaside Villa #402",
-    propertyId: "88321",
-    contentSnippet:
-      "...location was okay, but the host was incredibly rude and aggressive when...",
-    fullContent:
-      "The location was okay, but the host was incredibly rude and aggressive when we asked for extra towels. The place was dirty. I want a full refund immediately! #terrible",
-    highlightedTerms: ["rude and aggressive"],
-    flagStatus: "Harassment",
-  },
-  {
-    id: "2",
-    reviewerName: "Mike Smith",
-    timeAgo: "5h ago",
-    rating: 5,
-    propertyName: "Downtown Loft",
-    propertyId: "19283",
-    contentSnippet: "Crypto Investment Opportunities at...",
-    fullContent:
-      "Great place! Also check out these amazing Crypto Investment Opportunities at our website for guaranteed returns!",
-    highlightedTerms: ["Crypto", "Investment Opportunities"],
-    flagStatus: "Spam / Scam",
-  },
-  {
-    id: "3",
-    reviewerName: "John Doe",
-    timeAgo: "1d ago",
-    rating: 1,
-    propertyName: "Mountain Cabin",
-    propertyId: "44219",
-    contentSnippet:
-      "I hated this place! The owner is a complete liar and thief. Do not book!.",
-    fullContent:
-      "I hated this place! The owner is a complete liar and thief. Do not book!. The worst experience ever.",
-    highlightedTerms: ["liar and thief"],
-    flagStatus: "Profanity",
-  },
-  {
-    id: "4",
-    reviewerName: "Alice Springs",
-    timeAgo: "2d ago",
-    rating: 3,
-    propertyName: "City Center Apt",
-    propertyId: "33102",
-    contentSnippet: "...contact me 555-0192 for direct Off-platform..",
-    fullContent:
-      "Nice place overall. Contact me at 555-0192 for direct bookings off-platform to avoid fees.",
-    highlightedTerms: ["Off-platform"],
-    flagStatus: "Policy Violation",
-  },
-];
-
-const PAGE_SIZE = 4;
+import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
+import type { FlaggedReview } from "@/api/admin/moderation.api";
 
 // ─── Flag Badge ───────────────────────────────────────────────────────────────
-function FlagBadge({ status }: { status: FlagStatus }) {
-  const cfg: Record<FlagStatus, { bg: string; text: string; icon: string }> = {
+function FlagBadge({ status }: { status: string }) {
+  const cfg: Record<string, { bg: string; text: string; icon: string }> = {
     Harassment: { bg: "bg-red-50", text: "text-red-600", icon: "🚩" },
     "Spam / Scam": { bg: "bg-yellow-50", text: "text-yellow-700", icon: "⚠" },
     Profanity: { bg: "bg-orange-50", text: "text-orange-600", icon: "🚫" },
     "Policy Violation": { bg: "bg-blue-50", text: "text-blue-600", icon: "⊘" },
   };
-  const c = cfg[status];
+  const c = cfg[status] || { bg: "bg-gray-50", text: "text-gray-600", icon: "•" };
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${c.bg} ${c.text}`}
@@ -110,43 +47,6 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-// ─── Highlighted Text ─────────────────────────────────────────────────────────
-function HighlightedSnippet({
-  text,
-  terms,
-}: {
-  text: string;
-  terms: string[];
-}) {
-  if (!terms.length) return <span>{text}</span>;
-
-  const regex = new RegExp(
-    `(${terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
-    "gi",
-  );
-  const parts = text.split(regex);
-
-  return (
-    <span>
-      {parts.map((part, i) => {
-        const isHighlighted = terms.some(
-          (t) => t.toLowerCase() === part.toLowerCase(),
-        );
-        return isHighlighted ? (
-          <span
-            key={i}
-            className="bg-[#FEF3C7] text-[#92400E] px-1 py-0.5 rounded font-semibold text-[12px]"
-          >
-            {part}
-          </span>
-        ) : (
-          <span key={i}>{part}</span>
-        );
-      })}
-    </span>
-  );
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function ReviewsQueue() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -154,27 +54,20 @@ export default function ReviewsQueue() {
   const [ratingFilter, setRatingFilter] = useState("Any");
   const [flagOpen, setFlagOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
-  const setSelectedReview = useAdminModerationStore((s) => s.setSelectedReview);
+  
+  const { reviews, reviewsTotalPages, reviewsLoading, fetchReviews, setSelectedReview } = useAdminModerationStore();
+  const startIndex = (currentPage - 1) * 4 + 1;
+  const endIndex = Math.max(0, startIndex + reviews.length - 1);
 
-  const filtered = FLAGGED_REVIEWS.filter((r) => {
-    if (flagFilter !== "All" && r.flagStatus !== flagFilter) return false;
-    if (ratingFilter !== "Any" && r.rating !== Number(ratingFilter))
-      return false;
-    return true;
-  });
+  useEffect(() => {
+    fetchReviews({
+      status: flagFilter !== "All" ? flagFilter : undefined,
+      page: currentPage - 1,
+      size: 4,
+    });
+  }, [fetchReviews, flagFilter, currentPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
-
-  const goPage = (p: number) =>
-    setCurrentPage(Math.max(1, Math.min(totalPages, p)));
-
-  const startIndex =
-    filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const endIndex = Math.min(currentPage * PAGE_SIZE, filtered.length);
+  const goPage = (p: number) => setCurrentPage(Math.max(1, Math.min(reviewsTotalPages, p)));
 
   const flagOptions: string[] = [
     "All",
@@ -302,7 +195,13 @@ export default function ReviewsQueue() {
               </tr>
             </thead>
             <tbody>
-              {paged.length === 0 ? (
+              {reviewsLoading ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center">
+                    <Loader2 className="animate-spin inline-block text-[var(--brand-primary)]" size={24} />
+                  </td>
+                </tr>
+              ) : reviews.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -312,7 +211,7 @@ export default function ReviewsQueue() {
                   </td>
                 </tr>
               ) : (
-                paged.map((review, idx) => (
+                reviews.map((review, idx) => (
                   <tr
                     key={review.id}
                     onClick={() => setSelectedReview(review)}
@@ -323,15 +222,18 @@ export default function ReviewsQueue() {
                     {/* Reviewer */}
                     <td className="px-5 py-3.5 min-w-40">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8.5 h-8.5 rounded-full bg-[#FDEADE] flex items-center justify-center text-[#C05621] font-bold text-[13px] shrink-0">
-                          {review.reviewerName.charAt(0)}
+                        <div 
+                          className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0"
+                          style={{ backgroundColor: review.guestAvatarColor || '#C05621' }}
+                        >
+                          {review.guestInitial || (review.guestName ? review.guestName.charAt(0) : '?')}
                         </div>
                         <div>
                           <p className="m-0 font-semibold text-[#1A1A1A]">
-                            {review.reviewerName}
+                            {review.guestName}
                           </p>
                           <p className="m-0 text-xs text-[#9E7B6A]">
-                            {review.timeAgo}
+                            {review.flaggedAt}
                           </p>
                         </div>
                       </div>
@@ -352,15 +254,12 @@ export default function ReviewsQueue() {
                     {/* Content Snippet */}
                     <td className="px-5 py-3.5 max-w-70">
                       <p className="m-0 text-[13px] text-[#6B7280] truncate">
-                        <HighlightedSnippet
-                          text={review.contentSnippet}
-                          terms={review.highlightedTerms}
-                        />
+                        {review.reviewText}
                       </p>
                     </td>
                     {/* Flag Status */}
                     <td className="px-5 py-3.5">
-                      <FlagBadge status={review.flagStatus} />
+                      <FlagBadge status={review.flagReason} />
                     </td>
                   </tr>
                 ))
@@ -372,10 +271,8 @@ export default function ReviewsQueue() {
         {/* ── Pagination ── */}
         <div className="flex justify-between items-center px-5 py-3.5 border-t border-[#F0EBE7]">
           <span className="text-[13px] text-[#9E7B6A]">
-            Showing <strong className="text-[#1A1A1A]">{startIndex}</strong> to{" "}
-            <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
-            <strong className="text-[#1A1A1A]">{filtered.length}</strong>{" "}
-            flagged reviews
+            Page <strong className="text-[#1A1A1A]">{currentPage}</strong> of{" "}
+            <strong className="text-[#1A1A1A]">{reviewsTotalPages}</strong>
           </span>
           <div className="flex items-center gap-1">
             <button
@@ -389,7 +286,7 @@ export default function ReviewsQueue() {
             >
               <ChevronLeft size={14} />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            {Array.from({ length: reviewsTotalPages }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
                 onClick={() => goPage(p)}
@@ -404,9 +301,9 @@ export default function ReviewsQueue() {
             ))}
             <button
               onClick={() => goPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === reviewsTotalPages || reviewsTotalPages === 0}
               className={`w-8 h-8 rounded-md border border-[#E8DDD8] bg-white flex items-center justify-center ${
-                currentPage === totalPages
+                currentPage === reviewsTotalPages || reviewsTotalPages === 0
                   ? "cursor-not-allowed text-[#D1D5DB]"
                   : "cursor-pointer text-[#6B7280]"
               }`}
