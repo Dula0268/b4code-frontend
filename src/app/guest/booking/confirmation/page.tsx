@@ -1,5 +1,6 @@
-import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import { Suspense } from "react"
 import BookingConfirmationPage from "@/components/features/guest/booking/confirmation/booking-confirmation-page"
 
 export const metadata = {
@@ -10,9 +11,11 @@ export const metadata = {
 export default function BookingConfirmationRoute() {
     return (
         <>
-            <BookingTopbar />
+            <GuestTopbar />
             <main>
-                <BookingConfirmationPage />
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading confirmation...</div>}>
+                    <BookingConfirmationPage />
+                </Suspense>
             </main>
             <GuestFooter />
         </>

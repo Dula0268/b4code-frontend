@@ -1,44 +1,298 @@
-import api from './axios';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-/**
- * Common API services for the staff portal.
- */
-export const staffApi = {
-  /**
-   * Fetches properties assigned to a specific staff user.
-   * @param staffId The unique ID of the staff user.
-   */
-  getMyProperties: async (staffId: number) => {
-    try {
-      const response = await api.get(`/staff/properties/${staffId}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to fetch properties for staff ${staffId}:`, error);
-      return []; // Return empty array on failure to prevent dashboard crashes
+export const getToken = (): string | null => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("auth_token");
+};
+
+export const setToken = (token: string): void => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("auth_token", token);
+};
+
+export const removeToken = (): void => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+};
+
+export const apiFetch = async (
+    endpoint: string,
+    options: RequestInit = {}
+): Promise<Response> => {
+    const token = getToken();
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(options.headers as Record<string, string>),
+    };
+
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
     }
-  },
-  
-  /**
-   * Checks the assignment status of a staff member for a specific property.
-   */
-  checkStatus: async (staffId: number, propertyId: number) => {
-    const response = await api.get('/staff/status', {
-      params: { staffId, propertyId }
-    });
-    return response.data;
-  },
 
-  /**
-   * Sends a request to select/join a property.
-   */
-  selectProperty: async (staffId: number, propertyId: number) => {
-    const response = await api.post('/staff/select-property', null, {
-      params: { staffId, propertyId }
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
     });
-    return response.data;
-  }
+
+    return response;
+};
+
+export const authApi = {
+    login: async (email: string, password: string) => {
+        const response = await apiFetch("/api/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ email, password }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Invalid email or password.");
+        }
+        return response.json();
+    },
+
+    register: async (
+        email: string,
+        password: string,
+        role: string,
+        firstName: string,
+        lastName: string,
+        phone?: string
+    ) => {
+        const response = await apiFetch("/api/auth/register", {
+            method: "POST",
+            body: JSON.stringify({ email, password, role: role.toUpperCase(), firstName, lastName, phone }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Registration failed.");
+        }
+        return response.json();
+    },
+};
+
+export const userApi = {
+    getAllUsers: async () => {
+        const response = await apiFetch("/api/users");
+        if (!response.ok) throw new Error("Failed to fetch users");
+        return response.json();
+    },
+
+    getUserById: async (id: number) => {
+        const response = await apiFetch(`/api/users/${id}`);
+        if (!response.ok) throw new Error("Failed to fetch user");
+        return response.json();
+    },
+
+    updateUserRole: async (id: number, role: string) => {
+        const response = await apiFetch(`/api/users/${id}/role`, {
+            method: "PATCH",
+            body: JSON.stringify({ role: role.toUpperCase() }),
+        });
+        if (!response.ok) throw new Error("Failed to update role");
+        return response.json();
+    },
+
+    deleteUser: async (id: number) => {
+        const response = await apiFetch(`/api/users/${id}`, {
+            method: "DELETE",
+        });
+        if (!response.ok) throw new Error("Failed to delete user");
+    },
+};
+
+export const paymentApi = {
+    initiatePayment: async (paymentData: {
+        amount: number;
+        currency?: string;
+        paymentMethod: string;
+        cardHolderName?: string;
+        cardNumber?: string;
+        cardExpiry?: string;
+        firstName?: string;
+        lastName?: string;
+        email?: string;
+        phone?: string;
+    }) => {
+        const response = await apiFetch("/api/payments", {
+            method: "POST",
+            body: JSON.stringify(paymentData),
+        });
+        if (!response.ok) throw new Error("Payment failed");
+        return response.json();
+    },
+
+    getMyPayments: async () => {
+        const response = await apiFetch("/api/payments/my");
+        if (!response.ok) throw new Error("Failed to fetch payments");
+        return response.json();
+    },
+
+    getAllPayments: async () => {
+        const response = await apiFetch("/api/payments");
+        if (!response.ok) throw new Error("Failed to fetch payments");
+        return response.json();
+    },
+};
+
+export const staffApi = {
+    getAllProperties: async () => {
+        const response = await apiFetch("/api/staff/all-properties");
+        if (!response.ok) throw new Error("Failed to fetch properties");
+        return response.json();
+    },
+
+    getMyProperties: async (staffId: number) => {
+        const response = await apiFetch(`/api/staff/properties/${staffId}`);
+        if (!response.ok) throw new Error("Failed to fetch properties");
+        return response.json();
+    },
+
+    checkStatus: async (staffId: number, propertyId: number) => {
+        const response = await apiFetch(`/api/staff/status?staffId=${staffId}&propertyId=${propertyId}`);
+        if (!response.ok) throw new Error("Failed to check staff property status");
+        return response.json();
+    },
+
+    selectProperty: async (staffId: number, propertyId: number) => {
+        const response = await apiFetch(`/api/staff/select-property?staffId=${staffId}&propertyId=${propertyId}`, {
+            method: "POST",
+        });
+        if (!response.ok) throw new Error("Failed to select property");
+        return response.json();
+    },
 };
 
 export default {
-  staffApi
+    apiFetch,
+    authApi,
+    userApi,
+    paymentApi,
+    staffApi,
+    getToken,
+    setToken,
+    removeToken,
 };
+export const apiFetch = async (
+    endpoint: string,
+    options: RequestInit = {}
+): Promise<Response> => {
+    const token = getToken();
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(options.headers as Record<string, string>),
+    };
+
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+    });
+
+    return response;
+};
+
+// Auth APIs
+export const authApi = {
+    login: async (email: string, password: string) => {
+        const response = await apiFetch("/api/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ email, password }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Invalid email or password.");
+        }
+        return response.json();
+    },
+
+    register: async (
+        email: string,
+        password: string,
+        role: string,
+        firstName: string,
+        lastName: string,
+        phone?: string
+    ) => {
+        const response = await apiFetch("/api/auth/register", {
+            method: "POST",
+            body: JSON.stringify({ email, password, role: role.toUpperCase(), firstName, lastName, phone }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Registration failed.");
+        }
+        return response.json();
+    },
+};
+
+// User Management APIs
+export const userApi = {
+    getAllUsers: async () => {
+        const response = await apiFetch("/api/users");
+        if (!response.ok) throw new Error("Failed to fetch users");
+        return response.json();
+    },
+
+    getUserById: async (id: number) => {
+        const response = await apiFetch(`/api/users/${id}`);
+        if (!response.ok) throw new Error("Failed to fetch user");
+        return response.json();
+    },
+
+    updateUserRole: async (id: number, role: string) => {
+        const response = await apiFetch(`/api/users/${id}/role`, {
+            method: "PATCH",
+            body: JSON.stringify({ role: role.toUpperCase() }),
+        });
+        if (!response.ok) throw new Error("Failed to update role");
+        return response.json();
+    },
+
+    deleteUser: async (id: number) => {
+        const response = await apiFetch(`/api/users/${id}`, {
+            method: "DELETE",
+        });
+        if (!response.ok) throw new Error("Failed to delete user");
+    },
+};
+
+// Payment APIs
+export const paymentApi = {
+    initiatePayment: async (paymentData: {
+        amount: number;
+        currency?: string;
+        paymentMethod: string;
+        cardHolderName?: string;
+        cardNumber?: string;
+        cardExpiry?: string;
+        firstName?: string;
+        lastName?: string;
+        email?: string;
+        phone?: string;
+    }) => {
+        const response = await apiFetch("/api/payments", {
+            method: "POST",
+            body: JSON.stringify(paymentData),
+        });
+        if (!response.ok) throw new Error("Payment failed");
+        return response.json();
+    },
+
+    getMyPayments: async () => {
+        const response = await apiFetch("/api/payments/my");
+        if (!response.ok) throw new Error("Failed to fetch payments");
+        return response.json();
+    },
+
+    getAllPayments: async () => {
+        const response = await apiFetch("/api/payments");
+        if (!response.ok) throw new Error("Failed to fetch payments");
+        return response.json();
+    },
+
+};
+>>>>>>> origin/dev

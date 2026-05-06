@@ -1,4 +1,4 @@
-import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import QrScannerPage from "@/components/features/guest/my-room/qr-scanner-page"
 
 export const metadata = {
@@ -6,16 +6,16 @@ export const metadata = {
     description: "Scan the QR code in your room to browse the digital food & beverage menu.",
 }
 
+import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+
 export default function QrScannerRoute() {
     return (
-        <div className="min-h-screen flex flex-col bg-[#f7f5f2]">
-            <BookingTopbar />
+        <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+            <GuestTopbar />
             <main className="flex-1">
                 <QrScannerPage />
             </main>
-            <footer className="bg-[#e9e6e0] py-5 text-center text-[13px] text-[#6b6762]">
-                © 2026 PRIME STAY. All Rights Reserved.
-            </footer>
+            <GuestFooter />
         </div>
     )
 }

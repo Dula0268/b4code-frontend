@@ -1,4 +1,4 @@
-import BookingTopbar from "@/components/shared/layout/guest-shell/booking-topbar"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import MyRoomPage from "@/components/features/guest/my-room/my-room-page"
 
 export const metadata = {
@@ -6,16 +6,16 @@ export const metadata = {
     description: "Welcome to your room. Order food, request room service, explore hotel facilities, and more.",
 }
 
+import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+
 export default function MyRoomRoute() {
     return (
-        <>
-            <BookingTopbar />
-            <main>
+        <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+            <GuestTopbar />
+            <main className="flex-1">
                 <MyRoomPage />
             </main>
-            <footer className="bg-[#f4f4f4] border-t border-[#e0e0e0] py-5 text-center text-[13px] text-[#828282]">
-                © 2026 PRIME STAY. All Rights Reserved.
-            </footer>
-        </>
+            <GuestFooter />
+        </div>
     )
 }

@@ -1,15 +1,105 @@
 "use client";
 
 import { useState } from "react";
+import React from "react";
 import { Search, Users, CreditCard, Settings } from "lucide-react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import PermissionSection, {
-  Permission,
-} from "@/components/features/admin/settings/permission-section";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Role = "Admin" | "Owner" | "Staff" | "Guest";
 const roles: Role[] = ["Admin", "Owner", "Staff", "Guest"];
+
+interface Permission {
+  key: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+}
+
+// ─── Inlined PermissionToggle ─────────────────────────────────────────────────
+function PermissionToggle({
+  label,
+  description,
+  enabled,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  enabled: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between px-5 py-[18px]">
+      {/* Left: label + description */}
+      <div className="flex-1 pr-8">
+        <p className="m-0 text-[14px] font-semibold text-[var(--black-2)]">
+          {label}
+        </p>
+        <p className="m-0 mt-1 text-[12.5px] text-[var(--gray-3)] leading-snug">
+          {description}
+        </p>
+      </div>
+
+      {/* Toggle switch — iOS style */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        onClick={() => onChange(!enabled)}
+        className={`relative w-[50px] h-[28px] rounded-full border-none outline-none cursor-pointer p-0 flex-shrink-0 transition-colors duration-250 ${
+          enabled
+            ? "bg-[#27ae60] shadow-[inset_0_1px_2px_rgba(0,0,0,0.10)]"
+            : "bg-[#cbd5e0] shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]"
+        }`}
+      >
+        {/* Knob */}
+        <span
+          className={`absolute top-[3px] w-[22px] h-[22px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.25),_0_1px_2px_rgba(0,0,0,0.12)] transition-[left] duration-250 block ${
+            enabled ? "left-[23px]" : "left-[3px]"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
+// ─── Inlined PermissionSection ────────────────────────────────────────────────
+function PermissionSection({
+  icon,
+  title,
+  permissions,
+  onToggle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  permissions: Permission[];
+  onToggle: (key: string, value: boolean) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Section heading */}
+      <div className="flex items-center gap-2">
+        <span className="text-[var(--brand-primary)] flex-shrink-0">{icon}</span>
+        <h3 className="m-0 text-[15px] font-bold text-[var(--black-2)]">
+          {title}
+        </h3>
+      </div>
+
+      {/* Permission rows card */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-[var(--gray-5)]">
+        {permissions.map((perm) => (
+          <PermissionToggle
+            key={perm.key}
+            label={perm.label}
+            description={perm.description}
+            enabled={perm.enabled}
+            onChange={(value) => onToggle(perm.key, value)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ─── Default permission data ──────────────────────────────────────────────────
 const defaultPermissions: Record<
@@ -300,7 +390,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Role tabs — no icons */}
+        {/* Role tabs */}
         <div className="flex items-center bg-white rounded-full border border-[var(--gray-5)] p-1 shadow-sm w-full">
           {roles.map((r) => (
             <button
