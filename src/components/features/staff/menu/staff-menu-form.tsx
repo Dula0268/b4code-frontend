@@ -30,6 +30,7 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
   const [type, setType] = useState(existingMenu?.type ?? "Sri Lankan");
   const [isActive, setIsActive] = useState(existingMenu?.isVisible ?? true);
   const [nameError, setNameError] = useState(false);
+  const [descError, setDescError] = useState(false);
 
   // Inline items list for new menu creation
   const [items, setItems] = useState<(DraftItem & { _uid: number })[]>([]);
@@ -53,7 +54,7 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
   const handleAddItem = () => {
     let hasErr = false;
     if (!itemName.trim()) { setItemNameErr(true); hasErr = true; }
-    if (!itemPrice.trim() || isNaN(Number(itemPrice))) { setItemPriceErr(true); hasErr = true; }
+    if (!itemPrice.trim() || isNaN(Number(itemPrice)) || Number(itemPrice) < 0) { setItemPriceErr(true); hasErr = true; }
     if (hasErr) return;
     setItems((prev) => [...prev, {
       _uid: draftUid++,
@@ -73,7 +74,14 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
   const removeItem = (uid: number) => setItems((prev) => prev.filter((i) => i._uid !== uid));
 
   const handleSave = () => {
-    if (!name.trim()) { setNameError(true); return; }
+    let hasErr = false;
+    if (!name.trim()) { setNameError(true); hasErr = true; }
+    if (!description.trim() && !isEdit) { setDescError(true); hasErr = true; }
+    if (!isEdit && items.length === 0) { 
+      alert("Please add at least one item to create a menu.");
+      return; 
+    }
+    if (hasErr) return;
     if (isEdit && menuId) {
       updateMenu(menuId, { name, description, type, isVisible: isActive, status: isActive ? "active" : "draft" });
       setSuccess(`Menu "${name}" updated successfully.`);
@@ -143,14 +151,17 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
             </div>
             {/* Description */}
             <div>
-              <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Description <span className="text-[var(--gray-3)] normal-case font-normal">(Optional)</span></Label>
+              <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Description <span className={descError && !isEdit ? "text-[var(--state-error)]" : "text-[var(--gray-3)] normal-case font-normal"}>(Optional)</span></Label>
               <Textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => { setDescription(e.target.value); setDescError(false); }}
                 placeholder="Provide details about the menu items, serving times, or dietary notes..."
                 rows={3}
-                className="mt-1 text-xs rounded-[8px] border-[var(--gray-5)] resize-none focus:border-[var(--brand-primary)]"
+                className={`mt-1 text-xs rounded-[8px] resize-none focus:border-[var(--brand-primary)] ${
+                  descError && !isEdit ? "border-[var(--state-error)] bg-[rgba(235,87,87,0.04)]" : "border-[var(--gray-5)]"
+                }`}
               />
+              {descError && !isEdit && <p className="text-[10px] text-[var(--state-error)] mt-0.5">Description is required for new menus.</p>}
               <p className="text-[10px] text-[var(--gray-4)] mt-0.5">Briefly describe what this menu offers to guests.</p>
             </div>
             </CardContent>

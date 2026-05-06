@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import Image from "next/image";
@@ -12,83 +12,13 @@ import {
   MoreVertical,
   ChevronDown,
   Calendar,
+  Loader2,
 } from "lucide-react";
+import { useAdminAnalyticsStore } from "@/store/admin/analytics/admin-analytics.store";
+import { RevPar } from "@/api/admin/analytics.api";
 
 // ─── Room Data ────────────────────────────────────────────────────────────────
-const ROOMS = [
-  {
-    id: 1,
-    type: "Suite",
-    roomNumber: "Room 104",
-    name: "Ocean Wing Master Suite",
-    adults: 2,
-    sqm: 120,
-    occupancy: 92,
-    adr: 540.0,
-    revpar: 496.8,
-    image: "/images/rooms/room-ocean-king.jpg",
-  },
-  {
-    id: 2,
-    type: "Villa",
-    roomNumber: "Room V-02",
-    name: "Canopy Garden Sanctuary",
-    adults: 4,
-    sqm: 240,
-    occupancy: 78,
-    adr: 720.0,
-    revpar: 561.6,
-    image: "/images/rooms/room-grand-suite.jpg",
-  },
-  {
-    id: 3,
-    type: "Penthouse",
-    roomNumber: "Room P-01",
-    name: "The Celestial Observatory",
-    adults: 2,
-    sqm: 180,
-    occupancy: 64,
-    adr: 1200.0,
-    revpar: 768.0,
-    image: "/images/rooms/room-water-villa.jpg",
-  },
-  {
-    id: 4,
-    type: "Suite",
-    roomNumber: "Room 201",
-    name: "Horizon Infinity Suite",
-    adults: 3,
-    sqm: 160,
-    occupancy: 85,
-    adr: 680.0,
-    revpar: 578.0,
-    image: "/images/rooms/room-executive.jpg",
-  },
-  {
-    id: 5,
-    type: "Villa",
-    roomNumber: "Room V-05",
-    name: "Palm Retreat Sanctuary",
-    adults: 6,
-    sqm: 320,
-    occupancy: 71,
-    adr: 960.0,
-    revpar: 681.6,
-    image: "/images/rooms/room-heritage.jpg",
-  },
-  {
-    id: 6,
-    type: "Eco Cabin",
-    roomNumber: "Room E-03",
-    name: "Rainforest Eco Retreat",
-    adults: 2,
-    sqm: 95,
-    occupancy: 88,
-    adr: 380.0,
-    revpar: 334.4,
-    image: "/images/rooms/room-eco-cabin.jpg",
-  },
-];
+
 
 const ITEMS_PER_PAGE = 3;
 
@@ -101,14 +31,14 @@ const ROOM_CATEGORIES = [
 ];
 
 // ─── Room Card ────────────────────────────────────────────────────────────────
-function RoomCard({ room }: { room: (typeof ROOMS)[0] }) {
+function RoomCard({ room }: { room: RevPar }) {
   return (
     <div className="flex items-stretch gap-0 bg-white rounded-2xl border border-[#F0EBE7] shadow-sm overflow-hidden">
       {/* Room Image */}
       <div className="relative w-[200px] flex-shrink-0">
         <Image
           src={room.image}
-          alt={room.name}
+          alt={room.propertyName}
           fill
           className="object-cover"
         />
@@ -122,7 +52,7 @@ function RoomCard({ room }: { room: (typeof ROOMS)[0] }) {
             {room.type} &bull; {room.roomNumber}
           </p>
           <h2 className="text-[20px] font-bold text-[#1A1A1A] leading-snug m-0 mb-3">
-            {room.name}
+            {room.propertyName}
           </h2>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
@@ -144,9 +74,9 @@ function RoomCard({ room }: { room: (typeof ROOMS)[0] }) {
             </p>
             <p
               className="text-[22px] font-bold leading-none m-0"
-              style={{ color: room.occupancy >= 80 ? "#2D7D5C" : "#C05621" }}
+              style={{ color: room.occupancyRate >= 80 ? "#2D7D5C" : "#C05621" }}
             >
-              {room.occupancy}%
+              {room.occupancyRate}%
             </p>
           </div>
           <div>
@@ -154,7 +84,7 @@ function RoomCard({ room }: { room: (typeof ROOMS)[0] }) {
               ADR
             </p>
             <p className="text-[22px] font-bold text-[#1A1A1A] leading-none m-0">
-              LKR {room.adr.toFixed(2)}
+              {room.currency} {room.avgDailyRate.toFixed(2)}
             </p>
           </div>
           <div>
@@ -162,7 +92,7 @@ function RoomCard({ room }: { room: (typeof ROOMS)[0] }) {
               RevPAR (Calculated)
             </p>
             <p className="text-[26px] font-bold text-[#1A1A1A] leading-none m-0">
-              LKR {room.revpar.toFixed(2)}
+              {room.currency} {room.revpar.toFixed(2)}
             </p>
           </div>
 
@@ -183,10 +113,18 @@ export default function RevparDetailPage() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [categoryOpen, setCategoryOpen] = useState(false);
 
+  const { revParBreakdown, loading, fetchAnalyticsData } = useAdminAnalyticsStore();
+
+  useEffect(() => {
+    if (revParBreakdown.length === 0) {
+      fetchAnalyticsData();
+    }
+  }, [revParBreakdown.length, fetchAnalyticsData]);
+
   const filtered =
     selectedCategory === "All Categories"
-      ? ROOMS
-      : ROOMS.filter((r) => r.type === selectedCategory);
+      ? revParBreakdown
+      : revParBreakdown.filter((r) => r.type === selectedCategory);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const pageRooms = filtered.slice(
@@ -272,14 +210,19 @@ export default function RevparDetailPage() {
 
         {/* ── Room Cards ── */}
         <div className="flex flex-col gap-4">
-          {pageRooms.length === 0 ? (
+          {loading ? (
+            <div className="bg-white rounded-2xl border border-[#F0EBE7] p-12 flex flex-col items-center justify-center">
+              <Loader2 className="animate-spin text-[#C05621] mb-2" size={32} />
+              <p className="text-[#9E7B6A] text-[14px]">Loading property data...</p>
+            </div>
+          ) : pageRooms.length === 0 ? (
             <div className="bg-white rounded-2xl border border-[#F0EBE7] p-12 text-center">
               <p className="text-[#9E7B6A] text-[14px]">
-                No rooms found for selected category.
+                No properties found for selected category.
               </p>
             </div>
           ) : (
-            pageRooms.map((room) => <RoomCard key={room.id} room={room} />)
+            pageRooms.map((room) => <RoomCard key={room.propertyId} room={room} />)
           )}
         </div>
 

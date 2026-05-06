@@ -10,22 +10,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// ─── Monthly Revenue Data ─────────────────────────────────────────────────────
-const revenueData = [
-  { month: "Jan", revenue: 450000 },
-  { month: "Feb", revenue: 520000 },
-  { month: "Mar", revenue: 380000 },
-  { month: "Apr", revenue: 620000 },
-  { month: "May", revenue: 720000 },
-  { month: "Jun", revenue: 950000 },
-  { month: "Jul", revenue: 1020000 },
-  { month: "Aug", revenue: 880000 },
-  { month: "Sep", revenue: 760000 },
-  { month: "Oct", revenue: 920000 },
-  { month: "Nov", revenue: 1050000 },
-  { month: "Dec", revenue: 980000 },
-];
-
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
 interface TooltipPayload {
   payload: { month: string };
@@ -54,9 +38,19 @@ function CustomTooltip({ active, payload }: TooltipProps) {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
+import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
+import { Loader2 } from "lucide-react";
+
 export default function RevenueTrendChart() {
+  const { revenueTrend, trendLoading } = useAdminFinanceStore();
+
   return (
-    <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-5">
+    <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-5 relative">
+      {trendLoading && (
+        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+          <Loader2 className="animate-spin text-[#C05621]" size={32} />
+        </div>
+      )}
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
@@ -67,7 +61,10 @@ export default function RevenueTrendChart() {
             Gross volume over time
           </p>
         </div>
-        <button className="px-4 py-2 text-[14px] font-medium text-[#C05621] bg-[#FDEADE] rounded-lg hover:bg-[#FBD5C0] transition-colors">
+        <button 
+          suppressHydrationWarning
+          className="px-4 py-2 text-[14px] font-medium text-[#C05621] bg-[#FDEADE] rounded-lg hover:bg-[#FBD5C0] transition-colors"
+        >
           Monthly
         </button>
       </div>
@@ -75,7 +72,7 @@ export default function RevenueTrendChart() {
       {/* ── Chart ── */}
       <ResponsiveContainer width="100%" height={300}>
         <AreaChart
-          data={revenueData}
+          data={revenueTrend}
           margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
         >
           <defs>

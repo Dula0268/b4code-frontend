@@ -1,35 +1,21 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-// Store token in localStorage
 export const getToken = (): string | null => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("auth_token");
 };
 
 export const setToken = (token: string): void => {
+    if (typeof window === "undefined") return;
     localStorage.setItem("auth_token", token);
 };
 
 export const removeToken = (): void => {
+    if (typeof window === "undefined") return;
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
 };
 
-export const staffApi = {
-    getAllProperties: async () => {
-        const response = await apiFetch("/api/staff/all-properties");
-        if (!response.ok) throw new Error("Failed to fetch properties");
-        return response.json();
-    },
-
-
-    getMyProperties: async (staffId: number) => {
-        const response = await apiFetch(`/api/staff/properties/${staffId}`);
-        if (!response.ok) throw new Error("Failed to fetch properties");
-        return response.json();
-    },
-};
-// Base fetch with auth header
 export const apiFetch = async (
     endpoint: string,
     options: RequestInit = {}
@@ -52,7 +38,6 @@ export const apiFetch = async (
     return response;
 };
 
-// Auth APIs
 export const authApi = {
     login: async (email: string, password: string) => {
         const response = await apiFetch("/api/auth/login", {
@@ -86,7 +71,6 @@ export const authApi = {
     },
 };
 
-// User Management APIs
 export const userApi = {
     getAllUsers: async () => {
         const response = await apiFetch("/api/users");
@@ -155,7 +139,6 @@ export const userApi = {
     },
 };
 
-// Payment APIs
 export const paymentApi = {
     initiatePayment: async (paymentData: {
         amount: number;
@@ -196,5 +179,45 @@ export const paymentApi = {
         if (!response.ok) throw new Error("Failed to fetch payments");
         return response.json();
     },
-
 };
+
+export const staffApi = {
+    getAllProperties: async () => {
+        const response = await apiFetch("/api/staff/all-properties");
+        if (!response.ok) throw new Error("Failed to fetch properties");
+        return response.json();
+    },
+
+    getMyProperties: async (staffId: number) => {
+        const response = await apiFetch(`/api/staff/properties/${staffId}`);
+        if (!response.ok) throw new Error("Failed to fetch properties");
+        return response.json();
+    },
+
+    checkStatus: async (staffId: number, propertyId: number) => {
+        const response = await apiFetch(`/api/staff/status?staffId=${staffId}&propertyId=${propertyId}`);
+        if (!response.ok) throw new Error("Failed to check staff property status");
+        return response.json();
+    },
+
+    selectProperty: async (staffId: number, propertyId: number) => {
+        const response = await apiFetch(`/api/staff/select-property?staffId=${staffId}&propertyId=${propertyId}`, {
+            method: "POST",
+        });
+        if (!response.ok) throw new Error("Failed to select property");
+        return response.json();
+    },
+};
+
+const apiClient = {
+    apiFetch,
+    authApi,
+    userApi,
+    paymentApi,
+    staffApi,
+    getToken,
+    setToken,
+    removeToken,
+};
+
+export default apiClient;

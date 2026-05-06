@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useCartStore } from "@/store/guest/order/cart-store";
+import { useCartStore, type MenuItem } from "@/store/guest/order/cart-store";
 import { useGuestReviewsStore } from "@/store/guest/reviews/reviews.store";
 import type { MenuItemDetail } from "@/data/menu-items";
 
@@ -22,9 +22,9 @@ function formatLkr(n: number) {
 
 export default function ItemDetailsClient({
   item,
-  roomNumber = "304",
+  roomNumber,
 }: {
-  item: MenuItemDetail;
+  item: MenuItem | MenuItemDetail;
   roomNumber?: string;
 }) {
   const [qty, setQty] = React.useState(1);
@@ -57,9 +57,13 @@ export default function ItemDetailsClient({
     return arr;
   }, [itemReviews, sortBy]);
 
-  const addOns = React.useMemo(() => item.addOns ?? [], [item.addOns]);
-  const gallery = item.gallery ?? (item.imageUrl ? [item.imageUrl] : []);
+  const itemAddOns = (item as MenuItemDetail).addOns;
+  const addOns = React.useMemo(() => itemAddOns ?? [], [itemAddOns]);
+  const gallery = (item as MenuItemDetail).gallery ?? (item.imageUrl ? [item.imageUrl] : []);
   const heroSrc = gallery[activeImage] ?? item.imageUrl;
+  const itemTitle = (item as { title?: string }).title ?? item.name ?? "Item";
+  const detailItem = item as MenuItemDetail;
+  const itemPrice = (item as { priceLkr?: number }).priceLkr ?? item.price ?? 0;
 
   const addOnPrice = React.useMemo(() => {
     return addOns.reduce((sum, addon) => {
@@ -67,7 +71,7 @@ export default function ItemDetailsClient({
     }, 0);
   }, [selectedAddOns, addOns]);
 
-  const totalPrice = item.priceLkr * qty + addOnPrice;
+  const totalPrice = itemPrice * qty + addOnPrice;
 
   const handleAddToCart = () => {
     for (let i = 0; i < qty; i++) {
@@ -97,7 +101,7 @@ export default function ItemDetailsClient({
           Menu
         </Link>
         <ChevronRight />
-        <span className="text-[#953002] font-medium">{item.title}</span>
+        <span className="text-[#953002] font-medium">{itemTitle}</span>
       </nav>
 
       <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-start">
@@ -109,7 +113,7 @@ export default function ItemDetailsClient({
               {heroSrc ? (
                 <Image
                   src={heroSrc}
-                  alt={item.title}
+                  alt={itemTitle}
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 66vw"
@@ -143,7 +147,7 @@ export default function ItemDetailsClient({
                 >
                   <Image
                     src={src}
-                    alt={`${item.title} ${idx + 1}`}
+                    alt={`${itemTitle} ${idx + 1}`}
                     fill
                     className="object-cover"
                     sizes="96px"
@@ -157,23 +161,23 @@ export default function ItemDetailsClient({
           <div className="border-b border-[rgba(146,48,2,0.1)] pb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 md:gap-4 mb-2">
               <h1 className="text-2xl md:text-4xl font-bold text-[#111827] leading-tight">
-                {item.title}
+                {itemTitle}
               </h1>
               <span className="text-xl md:text-3xl font-bold text-[#923002] leading-7 md:leading-9 whitespace-nowrap">
-                {formatLkr(item.priceLkr)}
+                {formatLkr(itemPrice)}
               </span>
             </div>
 
             {/* Rating · Tag · Prep time */}
             <div className="flex flex-wrap items-center gap-3 text-sm text-[#6b7280]">
-              {item.rating ? (
+            {detailItem.rating ? (
                 <div className="flex items-center gap-1">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
                   </svg>
-                  <span className="font-medium text-[#374151]">{item.rating}</span>
-                  {item.reviewCount ? (
-                    <span>({item.reviewCount} reviews)</span>
+                  <span className="font-medium text-[#374151]">{detailItem.rating}</span>
+                  {detailItem.reviewCount ? (
+                    <span>({detailItem.reviewCount} reviews)</span>
                   ) : null}
                 </div>
               ) : null}
@@ -183,10 +187,10 @@ export default function ItemDetailsClient({
                   <span>{TAG_LABELS[item.tag] ?? item.tag}</span>
                 </>
               ) : null}
-              {item.prepTime ? (
+              {detailItem.prepTime ? (
                 <>
                   <Dot />
-                  <span>{item.prepTime}</span>
+                  <span>{detailItem.prepTime}</span>
                 </>
               ) : null}
             </div>
@@ -195,13 +199,13 @@ export default function ItemDetailsClient({
           {/* Description */}
           <div className="space-y-4 text-base text-[#4b5563] leading-6">
             <p>{item.description}</p>
-            {item.longDescription ? <p>{item.longDescription}</p> : null}
+            {detailItem.longDescription ? <p>{detailItem.longDescription}</p> : null}
           </div>
 
           {/* Allergen / dietary tags */}
-          {item.allergens && item.allergens.length > 0 ? (
+          {detailItem.allergens && detailItem.allergens.length > 0 ? (
             <div className="flex flex-wrap gap-2 pt-4">
-              {item.allergens.map((tag) => (
+              {detailItem.allergens.map((tag: string) => (
                 <div
                   key={tag}
                   className="rounded border border-[rgba(146,48,2,0.1)] bg-[rgba(146,48,2,0.05)] px-3.5 py-1.5 text-sm font-medium text-[#923002]"

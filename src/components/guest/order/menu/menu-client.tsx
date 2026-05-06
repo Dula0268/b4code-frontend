@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { useCartStore, type MenuItem } from "@/store/guest/order/cart-store";
-import { MENU_ITEMS } from "@/data/menu-items";
 import MenuItemCard from "./menu-item-card";
 import OrderSidebar from "./order-sidebar";
 
@@ -37,7 +36,8 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "name-desc", label: "Name: Z → A" },
 ];
 
-const DEMO_ITEMS = MENU_ITEMS;
+// TODO: Fetch from API using guest menu store instead of hardcoded items
+const DEMO_ITEMS: MenuItem[] = [];
 
 function formatLkr(n: number) {
   return `LKR ${n.toLocaleString("en-LK")}`;

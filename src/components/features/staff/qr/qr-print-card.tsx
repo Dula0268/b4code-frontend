@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, QrCode } from "lucide-react";
+import { ArrowLeft, Download, QrCode, Printer } from "lucide-react";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,8 +28,9 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
     );
   }
 
-  const handleSave = () => {
-    updateQR(qrId, { instructionText: instruction, showRoomNumber: showRoom, showLogo: showLogo });
+  const handleSaveAndPrint = async () => {
+    await updateQR(qrId, { instructionText: instruction, showRoomNumber: showRoom, showLogo: showLogo });
+    window.print();
   };
 
   return (
@@ -47,8 +48,8 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => router.push("/staff/qr")}>Back to List</Button>
-          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave}>
-            <Download size={12} /> Download Print PDF
+          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSaveAndPrint}>
+            <Printer size={12} /> Save & Print
           </Button>
         </div>
       </div>
@@ -113,8 +114,13 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
                     {showRoom && (
                       <p className="text-xs font-bold text-[var(--black-2)]">{qr.name}</p>
                     )}
-                    <div className="w-[140px] h-[140px] bg-[var(--black-3)] rounded-[8px] flex items-center justify-center">
-                      <QrCode size={64} className="text-[var(--gray-2)]" />
+                    <div className="w-[140px] h-[140px] bg-white border border-[var(--gray-5)] rounded-[8px] flex items-center justify-center overflow-hidden p-2">
+                      {qr.qrImageUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={qr.qrImageUrl} alt={`QR Code for ${qr.name}`} className="w-full h-full object-contain" />
+                      ) : (
+                        <QrCode size={64} className="text-[var(--gray-2)]" />
+                      )}
                     </div>
                     <p className="text-[10px] text-[var(--gray-3)] text-center">{instruction}</p>
                   </div>

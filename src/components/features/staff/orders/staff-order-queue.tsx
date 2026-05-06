@@ -270,11 +270,18 @@ export default function StaffOrderQueue() {
 
   const orders = useStaffOrdersStore((s) => s.orders);
   const toast = useStaffOrdersStore((s) => s.toast);
+  const fetchOrders = useStaffOrdersStore((s) => s.fetchOrders);
   const acceptOrder = useStaffOrdersStore((s) => s.acceptOrder);
   const rejectOrder = useStaffOrdersStore((s) => s.rejectOrder);
   const advanceStatus = useStaffOrdersStore((s) => s.advanceStatus);
   const clearToast = useStaffOrdersStore((s) => s.clearToast);
   const getCountByStatus = useStaffOrdersStore((s) => s.getCountByStatus);
+
+  // Fetch orders when component mounts
+  useEffect(() => {
+    console.log("📦 StaffOrderQueue mounted, fetching orders...");
+    fetchOrders(1); // Fetch orders for property ID 1
+  }, []);
 
   const filteredOrders = orders.filter(
     (o) =>

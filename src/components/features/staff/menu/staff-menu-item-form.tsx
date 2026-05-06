@@ -50,7 +50,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
   const handleSave = () => {
     let hasErr = false;
     if (!name.trim()) { setNameError(true); hasErr = true; }
-    if (!price.trim() || isNaN(Number(price))) { setPriceError(true); hasErr = true; }
+    if (!price.trim() || isNaN(Number(price)) || Number(price) < 0) { setPriceError(true); hasErr = true; }
     if (hasErr) return;
 
     const data = {
