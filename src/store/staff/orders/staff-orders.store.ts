@@ -169,7 +169,7 @@ function convertBackendOrder(backendOrder: BackendOrderResponse): Order {
         label: STATUS_LABELS[status],
         time: createdAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
         detail: "From Backend",
-        color: (status === "in-progress" ? "yellow" : "green") as const,
+        color: (status === "in-progress" ? "yellow" : "green") as "yellow" | "green",
       },
     ],
     internalNotes: [],
@@ -360,6 +360,6 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
     getOrdersByStatus: (status) => get().orders.filter((o) => o.status === status),
     getCountByStatus: (status) => get().orders.filter((o) => o.status === status).length,
 
-    reset: () => set({ orders: createMockOrders(), loading: false, error: null, toast: null }),
+    reset: () => set({ orders: [], loading: false, error: null, toast: null }),
   })
 );
