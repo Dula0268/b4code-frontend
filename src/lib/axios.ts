@@ -55,10 +55,23 @@ api.interceptors.response.use(
     });
     
     // Handle different error scenarios
-    const errorInfo: any = {
+    interface ErrorInfo {
+      timestamp: string;
+      message: string;
+      code?: string;
+      scenario?: string;
+      status?: number;
+      statusText?: string;
+      data?: unknown;
+      url?: string;
+      method?: string;
+      requestURL?: string;
+    }
+    
+    const errorInfo: ErrorInfo = {
       timestamp: new Date().toISOString(),
-      message: error.message,
-      code: error.code,
+      message: error?.message || 'Unknown error',
+      code: error?.code,
     };
 
     if (error?.response) {

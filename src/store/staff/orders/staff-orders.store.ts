@@ -119,7 +119,15 @@ function mapFrontendStatusToBackend(status: OrderStatus): string {
 }
 
 // Helper function to convert backend order to frontend order
-function convertBackendOrder(backendOrder: any): Order {
+interface BackendOrderResponse {
+  id: number;
+  roomNumber: string;
+  guestId: number;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+}
+function convertBackendOrder(backendOrder: BackendOrderResponse): Order {
   const createdAt = new Date(backendOrder.createdAt);
   const status = mapBackendStatusToFrontend(backendOrder.status);
   
@@ -182,9 +190,14 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         const orders = backendOrders.map(convertBackendOrder);
         console.log(`✅ Converted to frontend format:`, orders);
         set({ orders, loading: false });
-      } catch (error: any) {
+      } catch (error: unknown) {
+        let errorMessage = "Failed to fetch orders";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'object' && error !== null && 'response' in error) {
+          errorMessage = (error as any).response?.data?.message || errorMessage;
+        }
         console.error(`❌ Failed to fetch orders:`, error);
-        const errorMessage = error.response?.data?.message || "Failed to fetch orders";
         set({ error: errorMessage, loading: false });
         // Keep existing orders on error
       }
@@ -219,8 +232,13 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
             detail: `Order ${orderId} accepted`,
           },
         }));
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.message || "Failed to accept order";
+      } catch (error: unknown) {
+        let errorMessage = "Failed to accept order";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'object' && error !== null && 'response' in error) {
+          errorMessage = (error as any).response?.data?.message || errorMessage;
+        }
         set({ error: errorMessage });
       }
     },
@@ -254,8 +272,13 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
             detail: `Order ${orderId} Rejected`,
           },
         }));
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.message || "Failed to reject order";
+      } catch (error: unknown) {
+        let errorMessage = "Failed to reject order";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'object' && error !== null && 'response' in error) {
+          errorMessage = (error as any).response?.data?.message || errorMessage;
+        }
         set({ error: errorMessage });
       }
     },
@@ -302,8 +325,13 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
             }),
           }));
         }
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.message || "Failed to advance order status";
+      } catch (error: unknown) {
+        let errorMessage = "Failed to advance order status";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'object' && error !== null && 'response' in error) {
+          errorMessage = (error as any).response?.data?.message || errorMessage;
+        }
         set({ error: errorMessage });
       }
     },

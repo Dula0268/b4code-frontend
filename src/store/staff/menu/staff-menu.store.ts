@@ -103,7 +103,15 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       const menuItems = response.data;
       
       // Convert backend menu items to frontend format
-      const menuItemMap = menuItems.reduce((acc: Record<string, MenuItem[]>, item: any) => {
+      interface BackendMenuItem {
+        id: number;
+        name: string;
+        price: number;
+        description?: string;
+        category?: string;
+        isAvailable: boolean;
+      }
+      const menuItemMap = menuItems.reduce((acc: Record<string, MenuItem[]>, item: BackendMenuItem) => {
         const menuKey = item.category || "General";
         if (!acc[menuKey]) acc[menuKey] = [];
         acc[menuKey].push({
@@ -134,8 +142,13 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       }));
 
       set({ menus, isLoading: false });
-    } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || "Failed to fetch menus";
+    } catch (error: unknown) {
+      let errorMsg = "Failed to fetch menus";
+      if (error instanceof Error) {
+        errorMsg = error.message;
+      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+        errorMsg = (error as any).response?.data?.message || errorMsg;
+      }
       set({ errorMsg, isLoading: false });
       console.error("Failed to fetch menus:", error);
     }
@@ -150,9 +163,9 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       set((state) => ({
         menus: state.menus.map((menu) => ({
           ...menu,
-          items: backendItems
-            .filter((item: any) => item.category === menu.type || menu.type === item.category)
-            .map((item: any) => ({
+          items: (backendItems as BackendMenuItem[])
+            .filter((item) => item.category === menu.type || menu.type === item.category)
+            .map((item) => ({
               id: String(item.id),
               name: item.name,
               price: item.price,
@@ -166,8 +179,13 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         })),
         isLoading: false,
       }));
-    } catch (error: any) {
-      const errorMsg = error?.response?.data?.message || "Failed to fetch menu items";
+    } catch (error: unknown) {
+      let errorMsg = "Failed to fetch menu items";
+      if (error instanceof Error) {
+        errorMsg = error.message;
+      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+        errorMsg = (error as any).response?.data?.message || errorMsg;
+      }
       set({ errorMsg, isLoading: false });
       console.error("Failed to fetch menu items:", error);
     }

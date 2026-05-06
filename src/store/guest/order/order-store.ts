@@ -177,8 +177,12 @@ export const useOrderStore = create<OrderState>((set) => ({
       };
       set({ currentOrder: order, loading: false });
       return backendOrder.id;
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Failed to place order";
+      if (!(error instanceof Error)) {
+        const errData = error as any;
+        error = new Error(errData?.message || String(error));
+      }
       
       console.error("❌ Order placement error:", error);
       console.error("📊 Error Details:", {
@@ -213,7 +217,14 @@ export const useOrderStore = create<OrderState>((set) => ({
       const backendOrders = response.data;
 
       // Map backend orders to frontend format
-      const orderHistory: Order[] = backendOrders.map((backendOrder: any) => ({
+      interface BackendOrder {
+        id: number;
+        roomNumber: string;
+        totalAmount: number;
+        status: string;
+        createdAt: string;
+      }
+      const orderHistory: Order[] = (backendOrders as BackendOrder[]).map((backendOrder) => ({
         id: `#ORD-${backendOrder.id}`,
         roomNumber: backendOrder.roomNumber,
         guestName: "Guest", // Backend doesn't have guest name - will be added later
@@ -235,8 +246,13 @@ export const useOrderStore = create<OrderState>((set) => ({
       }));
 
       set({ orderHistory, loading: false });
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Failed to fetch orders";
+    } catch (error: unknown) {
+      let errorMessage = "Failed to fetch orders";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+        errorMessage = (error as any).response?.data?.message || errorMessage;
+      }
       set({ error: errorMessage, loading: false });
     }
   },

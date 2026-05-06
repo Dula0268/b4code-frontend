@@ -105,8 +105,12 @@ export const useCartStore = create<CartState>((set, get) => ({
         propertyId,
         isLoadingRates: false,
       });
-    } catch (error: any) {
-      console.warn("Failed to fetch charges, using defaults:", error);
+    } catch (error: unknown) {
+      let errorMessage = "Failed to fetch charges, using defaults";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.warn(errorMessage, error);
       set({ propertyId, isLoadingRates: false });
     }
   },
