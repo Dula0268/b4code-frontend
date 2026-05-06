@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import ReviewsQueue from "@/components/features/admin/moderation/reports-table";
 import DisputesHub from "@/app/admin/moderation/dispute-hub/page";
@@ -11,26 +12,36 @@ import {
 } from "@/store/admin/moderation/admin-moderation.store";
 import { MessageSquareWarning, Scale, History } from "lucide-react";
 
-// ─── Tab Config ───────────────────────────────────────────────────────────────
-const TABS: {
-  key: ModerationTab;
-  label: string;
-  badge?: number;
-  icon: React.ElementType;
-}[] = [
+// ─── Tab Config Base ────────────────────────────────────────────────────────
+const getTabs = (badgeCounts: { pendingReviews: number; openDisputes: number }) => [
   {
-    key: "reviews",
+    key: "reviews" as ModerationTab,
     label: "Reviews Queue",
-    badge: 24,
+    badge: badgeCounts.pendingReviews > 0 ? badgeCounts.pendingReviews : undefined,
     icon: MessageSquareWarning,
   },
-  { key: "disputes", label: "Disputes", badge: 8, icon: Scale },
-  { key: "history", label: "History", icon: History },
+  { 
+    key: "disputes" as ModerationTab,
+    label: "Disputes", 
+    badge: badgeCounts.openDisputes > 0 ? badgeCounts.openDisputes : undefined, 
+    icon: Scale 
+  },
+  { key: "history" as ModerationTab, label: "History", icon: History },
 ];
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ModerationPage() {
-  const { activeTab, setActiveTab, selectedReview } = useAdminModerationStore();
+  const { activeTab, setActiveTab, selectedReview, badgeCounts, fetchBadgeCounts } = useAdminModerationStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    fetchBadgeCounts();
+  }, [fetchBadgeCounts]);
+
+  if (!isMounted) return null; // Prevent hydration mismatch on tabs
+
+  const tabs = getTabs(badgeCounts);
 
   return (
     <AdminPageLayout>
@@ -47,7 +58,7 @@ export default function ModerationPage() {
 
         {/* ── Tab Bar ── */}
         <div className="flex items-center gap-1 border-b-2 border-[#F0EBE7]">
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (

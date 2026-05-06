@@ -112,7 +112,8 @@ export default function AuditLogsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  const { logs, totalElements, totalPages, fetchLogs, loading } = useAdminAuditLogsStore();
+  const { logs, totalElements, totalPages, fetchLogs, loading } =
+    useAdminAuditLogsStore();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -126,7 +127,7 @@ export default function AuditLogsPage() {
       page: currentPage - 1,
       size: PAGE_SIZE,
       search: debouncedSearch,
-      role: roleFilter
+      role: roleFilter,
     });
   }, [fetchLogs, currentPage, debouncedSearch, roleFilter]);
 
@@ -134,9 +135,9 @@ export default function AuditLogsPage() {
     <AdminPageLayout>
       <div className="flex flex-col gap-6 relative">
         {loading && logs.length === 0 && (
-           <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50">
-             <Loader2 className="animate-spin text-[#C05621]" size={48} />
-           </div>
+          <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50">
+            <Loader2 className="animate-spin text-[#C05621]" size={48} />
+          </div>
         )}
         <AuditLogsHeader />
 
