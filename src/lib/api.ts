@@ -295,4 +295,14 @@ export const paymentApi = {
     },
 
 };
->>>>>>> origin/dev
+
+export default {
+    apiFetch,
+    authApi,
+    userApi,
+    paymentApi,
+    staffApi,
+    getToken,
+    setToken,
+    removeToken,
+};

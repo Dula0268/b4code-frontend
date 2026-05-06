@@ -1107,7 +1107,6 @@ export const ALL_PROPERTIES: PropertyDetail[] = [
         lat: 6.4218,
         lng: 80.0006,
     },
->>>>>>> origin/dev
 ]
 
 export function getPropertyById(id: string): PropertyDetail | undefined {
