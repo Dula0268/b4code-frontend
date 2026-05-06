@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAdminAnalyticsStore } from "@/store/admin/analytics/admin-analytics.store";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import {
   AreaChart,
@@ -22,6 +24,7 @@ import {
   BadgeDollarSign,
   Clock,
   XCircle,
+  Loader2,
 } from "lucide-react";
 
 // ─── Gross Booking Value Chart Data ───────────────────────────────────────────
@@ -95,6 +98,24 @@ function OccupancyRing({ pct }: { pct: number }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PlatformAnalyticsPage() {
   const router = useRouter();
+  const { platformAnalytics, platformSummary, bookingsChart, loading, error, fetchAnalyticsData } = useAdminAnalyticsStore();
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
+
+  if (loading && !platformAnalytics) {
+    return (
+      <AdminPageLayout>
+        <div className="flex justify-center items-center py-32">
+          <Loader2 className="animate-spin text-[var(--brand-primary)]" size={40} />
+        </div>
+      </AdminPageLayout>
+    );
+  }
+
+  const formatCurrency = (val: number | undefined) => 
+    val !== undefined ? val.toLocaleString() : "0";
 
   return (
     <AdminPageLayout>
@@ -110,6 +131,12 @@ export default function PlatformAnalyticsPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200">
+            {error}
+          </div>
+        )}
+
         {/* ── Row 1: Gross Booking Value Chart + Net Revenue ── */}
         <div className="flex gap-5">
           {/* Gross Booking Value Chart */}
@@ -120,16 +147,21 @@ export default function PlatformAnalyticsPage() {
                   Gross Booking Value
                 </p>
                 <p className="text-[34px] font-bold text-[#C05621] leading-none m-0">
-                  LKR 1,284,500
+                  LKR {formatCurrency(platformAnalytics?.grossBookingValue)}
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-lg text-[12px] font-semibold bg-[#E6F5EF] text-[#2D7D5C]">
-                +12.4% vs last mo
+              <span className={`px-3 py-1 rounded-lg text-[12px] font-semibold ${
+                (platformAnalytics?.grossBookingValueChangePct ?? 0) >= 0 
+                  ? "bg-[#E6F5EF] text-[#2D7D5C]" 
+                  : "bg-red-50 text-red-600"
+              }`}>
+                {(platformAnalytics?.grossBookingValueChangePct ?? 0) > 0 ? "+" : ""}
+                {platformAnalytics?.grossBookingValueChangePct ?? 0}% vs last mo
               </span>
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart
-                data={bookingData}
+                data={bookingsChart}
                 margin={{ top: 10, right: 0, left: -15, bottom: 0 }}
               >
                 <defs>
@@ -157,7 +189,6 @@ export default function PlatformAnalyticsPage() {
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
-                  ticks={[0, 400000, 800000, 1200000]}
                 />
                 <Tooltip
                   content={<CustomTooltip />}
@@ -182,12 +213,12 @@ export default function PlatformAnalyticsPage() {
               Net Revenue
             </p>
             <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0">
-              LKR 342,120
+              LKR {formatCurrency(platformAnalytics?.netRevenue)}
             </p>
             <div className="flex items-center gap-1.5">
               <TrendingUp size={14} color="#27ae60" />
               <span className="text-[12px] font-medium text-[#9E7B6A]">
-                After 20% commission
+                After {platformAnalytics?.commissionRate ?? 20}% commission
               </span>
             </div>
           </div>
@@ -200,7 +231,7 @@ export default function PlatformAnalyticsPage() {
             <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase self-start">
               Occupancy Rate
             </p>
-            <OccupancyRing pct={78} />
+            <OccupancyRing pct={platformAnalytics?.occupancyRate ?? 0} />
             <p className="text-[12px] text-[#9E7B6A] text-center leading-snug">
               Current active stays across all regions
             </p>
@@ -217,16 +248,16 @@ export default function PlatformAnalyticsPage() {
               </p>
             </div>
             <p className="text-[36px] font-bold text-[#1A1A1A] leading-none m-0">
-              LKR 420
+              LKR {formatCurrency(platformAnalytics?.avgDailyRate)}
             </p>
             <div>
               <div className="h-2 rounded-full bg-[#F0EBE7] overflow-hidden mb-1.5">
                 <div
                   className="h-full rounded-full bg-[#C05621]"
-                  style={{ width: "93%" }}
+                  style={{ width: `${Math.min(100, ((platformAnalytics?.avgDailyRate ?? 0) / (platformAnalytics?.avgDailyRateGoal || 1)) * 100)}%` }}
                 />
               </div>
-              <p className="text-[12px] text-[#9E7B6A]">Goal: LKR 450/night</p>
+              <p className="text-[12px] text-[#9E7B6A]">Goal: LKR {formatCurrency(platformAnalytics?.avgDailyRateGoal)}/night</p>
             </div>
           </div>
 
@@ -240,7 +271,7 @@ export default function PlatformAnalyticsPage() {
                 RevPAR
               </p>
               <p className="text-[36px] font-bold text-white leading-none mt-2 mb-0">
-                LKR 327.60
+                LKR {formatCurrency(platformAnalytics?.revpar)}
               </p>
             </div>
             <div className="flex items-center justify-between mt-6">
@@ -263,11 +294,17 @@ export default function PlatformAnalyticsPage() {
               </p>
             </div>
             <p className="text-[30px] font-bold text-[#1A1A1A] leading-none m-0">
-              18.5 <span className="text-[16px] font-normal text-[#9E7B6A]">days</span>
+              {platformSummary?.avgLeadTimeDays ?? 0} <span className="text-[16px] font-normal text-[#9E7B6A]">days</span>
             </p>
             <div className="flex items-center gap-1">
-              <TrendingDown size={13} color="#27ae60" />
-              <span className="text-[12px] text-[#6B7280]">-2 days from last week</span>
+              {(platformSummary?.avgLeadTimeChange ?? 0) <= 0 ? (
+                <TrendingDown size={13} color="#27ae60" />
+              ) : (
+                <TrendingUp size={13} color="#EB5757" />
+              )}
+              <span className="text-[12px] text-[#6B7280]">
+                {platformSummary?.avgLeadTimeChange ?? 0} days from last week
+              </span>
             </div>
           </div>
 
@@ -280,7 +317,7 @@ export default function PlatformAnalyticsPage() {
               </p>
             </div>
             <p className="text-[30px] font-bold text-[#EB5757] leading-none m-0">
-              4.2%
+              {platformSummary?.cancellationRate ?? 0}%
             </p>
             <div className="h-[2px] w-12 rounded bg-[#EB5757]" />
           </div>
@@ -294,7 +331,7 @@ export default function PlatformAnalyticsPage() {
               </p>
             </div>
             <p className="text-[30px] font-bold text-[#1A1A1A] leading-none m-0">
-              3,248
+              {formatCurrency(platformSummary?.totalBookings)}
             </p>
           </div>
 
@@ -307,7 +344,7 @@ export default function PlatformAnalyticsPage() {
               </p>
             </div>
             <p className="text-[30px] font-bold text-[#1A1A1A] leading-none m-0">
-              842
+              {formatCurrency(platformSummary?.activeBookings)}
             </p>
           </div>
         </div>
@@ -324,7 +361,7 @@ export default function PlatformAnalyticsPage() {
                 New Listings
               </p>
               <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0">
-                24
+                {formatCurrency(platformSummary?.newListingsThisWeek)}
               </p>
               <p className="text-[12px] text-[#9E7B6A] mt-0.5">
                 Properties onboarding this week
@@ -342,11 +379,11 @@ export default function PlatformAnalyticsPage() {
                 Registered Users
               </p>
               <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0">
-                48.2k
+                {formatCurrency(platformSummary?.registeredUsers)}
               </p>
               <div className="flex items-center gap-1 mt-0.5">
                 <TrendingUp size={12} color="#27ae60" />
-                <p className="text-[12px] text-[#27ae60] m-0">↑ 5% this month</p>
+                <p className="text-[12px] text-[#27ae60] m-0">↑ {platformSummary?.registeredUsersGrowthPct ?? 0}% this month</p>
               </div>
             </div>
           </div>
@@ -360,7 +397,7 @@ export default function PlatformAnalyticsPage() {
               </p>
             </div>
             <p className="text-[34px] font-bold text-white leading-none m-0 mt-3">
-              LKR 68,424
+              LKR {formatCurrency(platformSummary?.platformCommission)}
             </p>
             <div className="mt-4 flex items-center gap-2 bg-[rgba(255,255,255,0.12)] rounded-lg px-3 py-2 w-fit">
               <span className="w-4 h-4 rounded-full bg-[#4CAF50] flex items-center justify-center flex-shrink-0">

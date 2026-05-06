@@ -1,111 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Calendar,
   Filter,
   ChevronLeft,
   ChevronRight,
+  Loader2
 } from "lucide-react";
-
-// ─── Types ──────────────────────────────────────────────────────────────────────
-type TxStatus = "Completed" | "Pending" | "Failed" | "Refunded";
-
-interface Transaction {
-  id: string;
-  date: string;
-  propertyName: string;
-  guestName: string;
-  guestInitials: string;
-  guestColor: string;
-  amount: string;
-  status: TxStatus;
-}
-
-// ─── Static data ────────────────────────────────────────────────────────────────
-const TRANSACTIONS: Transaction[] = [
-  {
-    id: "#TRX-9821",
-    date: "Oct 24, 2023",
-    propertyName: "Sunset Villa, Apt 4B",
-    guestName: "John Doe",
-    guestInitials: "JD",
-    guestColor: "#C05621",
-    amount: "LKR 1,250.00",
-    status: "Completed",
-  },
-  {
-    id: "#TRX-9820",
-    date: "Oct 24, 2023",
-    propertyName: "Ocean View Loft",
-    guestName: "Alice Smith",
-    guestInitials: "AS",
-    guestColor: "#2563EB",
-    amount: "LKR 450.00",
-    status: "Pending",
-  },
-  {
-    id: "#TRX-9819",
-    date: "Oct 23, 2023",
-    propertyName: "Mountain Retreat, Cabin 2",
-    guestName: "Robert King",
-    guestInitials: "RK",
-    guestColor: "#7C3AED",
-    amount: "LKR 890.50",
-    status: "Completed",
-  },
-  {
-    id: "#TRX-9818",
-    date: "Oct 23, 2023",
-    propertyName: "Downtown Studio",
-    guestName: "Emily Moore",
-    guestInitials: "EM",
-    guestColor: "#059669",
-    amount: "LKR 210.00",
-    status: "Failed",
-  },
-  {
-    id: "#TRX-9817",
-    date: "Oct 22, 2023",
-    propertyName: "Lakeside Cottage",
-    guestName: "Michael Chen",
-    guestInitials: "MC",
-    guestColor: "#DC2626",
-    amount: "LKR 1,500.00",
-    status: "Refunded",
-  },
-  {
-    id: "#TRX-9816",
-    date: "Oct 22, 2023",
-    propertyName: "City Center Penthouse",
-    guestName: "Sarah Lee",
-    guestInitials: "SL",
-    guestColor: "#0891B2",
-    amount: "LKR 3,200.00",
-    status: "Completed",
-  },
-  {
-    id: "#TRX-9815",
-    date: "Oct 21, 2023",
-    propertyName: "Sunset Villa, Apt 2A",
-    guestName: "David Park",
-    guestInitials: "DP",
-    guestColor: "#CA8A04",
-    amount: "LKR 750.00",
-    status: "Completed",
-  },
-];
+import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
 // ─── Status badge ───────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: TxStatus }) {
-  const map: Record<TxStatus, { bg: string; text: string }> = {
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; text: string }> = {
     Completed: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]" },
     Pending: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]" },
     Failed: { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]" },
     Refunded: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]" },
   };
-  const s = map[status];
+  const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]" };
 
   return (
     <span
@@ -116,15 +30,57 @@ function StatusBadge({ status }: { status: TxStatus }) {
   );
 }
 
+// ─── Helpers ────────────────────────────────────────────────────────────────────
+function getInitials(name: string) {
+  if (!name) return "??";
+  const parts = name.split(" ");
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+function getColorForName(name: string) {
+  const colors = ["#C05621", "#2563EB", "#7C3AED", "#059669", "#DC2626", "#0891B2", "#CA8A04"];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────────
 export default function TransactionTable() {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalResults = 128;
-  const perPage = 5;
-  const totalPages = Math.ceil(totalResults / perPage);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const perPage = 10;
+
+  const { transactions, transactionsTotalElements, transactionsTotalPages, fetchTransactions, transactionsLoading } = useAdminFinanceStore();
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    fetchTransactions({
+      page: currentPage - 1,
+      size: perPage,
+      search: debouncedSearch,
+      type: statusFilter === "All Status" ? undefined : statusFilter.toUpperCase()
+    });
+  }, [fetchTransactions, currentPage, debouncedSearch, statusFilter]);
 
   return (
-    <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm overflow-hidden relative">
+      {transactionsLoading && transactions.length === 0 && (
+        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+          <Loader2 className="animate-spin text-[#C05621]" size={32} />
+        </div>
+      )}
+      
       {/* ── Filters ── */}
       <div className="p-5 flex items-end gap-4 flex-wrap border-b border-[#F0EBE7]">
         {/* Search */}
@@ -139,21 +95,15 @@ export default function TransactionTable() {
             />
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Booking ID, guest name..."
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] placeholder:text-[#C4B5AB] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition"
             />
           </div>
-        </div>
-
-        {/* Date Range */}
-        <div className="min-w-45">
-          <label className="block text-xs font-semibold text-[#9E7B6A] mb-1.5">
-            Date Range
-          </label>
-          <button className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] hover:bg-[#FAF5F2] transition">
-            <Calendar size={15} className="text-[#9E7B6A]" />
-            Last 30 days
-          </button>
         </div>
 
         {/* Status */}
@@ -161,7 +111,14 @@ export default function TransactionTable() {
           <label className="block text-xs font-semibold text-[#9E7B6A] mb-1.5">
             Status
           </label>
-          <select className="w-full px-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] bg-white focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition appearance-none cursor-pointer">
+          <select 
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full px-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] bg-white focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition appearance-none cursor-pointer"
+          >
             <option>All Status</option>
             <option>Completed</option>
             <option>Pending</option>
@@ -169,16 +126,10 @@ export default function TransactionTable() {
             <option>Refunded</option>
           </select>
         </div>
-
-        {/* Filter btn */}
-        <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#E8DDD8] text-sm font-medium text-[#1A1A1A] hover:bg-[#FAF5F2] transition">
-          <Filter size={15} />
-          Filter
-        </button>
       </div>
 
       {/* ── Table ── */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto min-h-[300px]">
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#F0EBE7]">
@@ -199,16 +150,26 @@ export default function TransactionTable() {
               </th>
             </tr>
           </thead>
-          <tbody>
-            {TRANSACTIONS.map((tx) => (
+          <tbody className="relative">
+            {transactionsLoading && transactions.length > 0 && (
+               <tr className="absolute inset-0 bg-white/50 z-10"><td colSpan={5}></td></tr>
+            )}
+            {transactions.length === 0 && !transactionsLoading && (
+              <tr>
+                <td colSpan={5} className="py-12 text-center text-[#9E7B6A] text-sm">
+                  No transactions found.
+                </td>
+              </tr>
+            )}
+            {transactions.map((tx) => (
               <tr
                 key={tx.id}
                 className="border-b border-[#F0EBE7] last:border-b-0 hover:bg-[#FDFAF8] transition-colors"
               >
                 {/* ID + date */}
                 <td className="px-6 py-4">
-                  <p className="text-sm font-bold text-[#1A1A1A]">{tx.id}</p>
-                  <p className="text-[11px] text-[#9E7B6A] mt-0.5">{tx.date}</p>
+                  <p className="text-sm font-bold text-[#1A1A1A]">#{tx.bookingId}</p>
+                  <p className="text-[11px] text-[#9E7B6A] mt-0.5">{new Date(tx.date).toLocaleDateString()}</p>
                 </td>
 
                 {/* Property */}
@@ -221,9 +182,9 @@ export default function TransactionTable() {
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-                      style={{ backgroundColor: tx.guestColor }}
+                      style={{ backgroundColor: getColorForName(tx.guestName) }}
                     >
-                      {tx.guestInitials}
+                      {getInitials(tx.guestName)}
                     </div>
                     <span className="text-sm text-[#1A1A1A]">
                       {tx.guestName}
@@ -233,7 +194,7 @@ export default function TransactionTable() {
 
                 {/* Amount */}
                 <td className="px-6 py-4 text-sm font-semibold text-[#1A1A1A]">
-                  {tx.amount}
+                  LKR {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
 
                 {/* Status */}
@@ -247,77 +208,69 @@ export default function TransactionTable() {
       </div>
 
       {/* ── Pagination ── */}
-      <div className="px-6 py-4 flex items-center justify-between border-t border-[#F0EBE7]">
-        <p className="text-sm text-[#9E7B6A]">
-          Showing{" "}
-          <span className="font-semibold text-[#1A1A1A]">
-            {(currentPage - 1) * perPage + 1}
-          </span>{" "}
-          to{" "}
-          <span className="font-semibold text-[#1A1A1A]">
-            {Math.min(currentPage * perPage, totalResults)}
-          </span>{" "}
-          of{" "}
-          <span className="font-semibold text-[#C05621]">{totalResults}</span>{" "}
-          results
-        </p>
+      {transactionsTotalPages > 0 && (
+        <div className="px-6 py-4 flex items-center justify-between border-t border-[#F0EBE7]">
+          <p className="text-sm text-[#9E7B6A]">
+            Showing{" "}
+            <span className="font-semibold text-[#1A1A1A]">
+              {(currentPage - 1) * perPage + 1}
+            </span>{" "}
+            to{" "}
+            <span className="font-semibold text-[#1A1A1A]">
+              {Math.min(currentPage * perPage, transactionsTotalElements)}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-[#C05621]">{transactionsTotalElements}</span>{" "}
+            results
+          </p>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors"
-          >
-            <ChevronLeft size={16} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors cursor-pointer"
+            >
+              <ChevronLeft size={16} />
+            </button>
 
-          {/* Page number buttons */}
-          <button
-            onClick={() => setCurrentPage(1)}
-            className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors ${
-              currentPage === 1
-                ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
-                : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
-            }`}
-          >
-            1
-          </button>
+            {/* Simple page numbers */}
+            {Array.from({ length: Math.min(5, transactionsTotalPages) }).map((_, i) => {
+              let pageNum = i + 1;
+              if (transactionsTotalPages > 5 && currentPage > 3) {
+                pageNum = currentPage - 2 + i;
+                if (pageNum > transactionsTotalPages) return null;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                    currentPage === pageNum
+                      ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
+                      : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
 
-          <button
-            onClick={() => setCurrentPage(2)}
-            className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors ${
-              currentPage === 2
-                ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
-                : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
-            }`}
-          >
-            2
-          </button>
+            {transactionsTotalPages > 5 && currentPage < transactionsTotalPages - 2 && (
+               <span className="w-9 h-9 flex items-center justify-center text-sm text-[#9E7B6A] font-bold">
+                 …
+               </span>
+            )}
 
-          <span className="w-9 h-9 flex items-center justify-center text-sm text-[#9E7B6A] font-bold">
-            …
-          </span>
-
-          <button
-            onClick={() => setCurrentPage(totalPages)}
-            className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors ${
-              currentPage === totalPages
-                ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
-                : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
-            }`}
-          >
-            {totalPages}
-          </button>
-
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors"
-          >
-            <ChevronRight size={16} />
-          </button>
+            <button
+              disabled={currentPage === transactionsTotalPages}
+              onClick={() => setCurrentPage((p) => Math.min(transactionsTotalPages, p + 1))}
+              className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors cursor-pointer"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
