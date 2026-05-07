@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import RevenueCard from "@/components/features/admin/finance/kpi-cards/revenue-card";
 import PlatformCommissionCard from "@/components/features/admin/finance/kpi-cards/platform-commission-card";
@@ -17,6 +18,13 @@ export default function FinancePage() {
   const [activeTab, setActiveTab] = useState<
     "overview" | "transaction" | "refunds"
   >("overview");
+
+  const { fetchSummary, fetchRevenueTrend } = useAdminFinanceStore();
+
+  useEffect(() => {
+    fetchSummary();
+    fetchRevenueTrend();
+  }, [fetchSummary, fetchRevenueTrend]);
 
   return (
     <AdminPageLayout>
@@ -86,11 +94,11 @@ export default function FinancePage() {
         {activeTab === "overview" && (
           <>
             {/* KPI Cards */}
-            <div className="flex gap-4">
-              <RevenueCard />
-              <PlatformCommissionCard />
-              <TotalPayoutCard />
-              <RefundsCard />
+            <div className="grid grid-cols-4 gap-4 w-full">
+              <div className="w-full"><RevenueCard /></div>
+              <div className="w-full"><PlatformCommissionCard /></div>
+              <div className="w-full"><TotalPayoutCard /></div>
+              <div className="w-full"><RefundsCard /></div>
             </div>
 
             {/* Chart + Recent Transactions */}

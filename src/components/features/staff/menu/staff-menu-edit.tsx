@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, Search, Pencil, Trash2, LayoutGrid, List, UtensilsCrossed, Flame } from "lucide-react";
+import { ArrowLeft, Plus, Search, Pencil, Trash2, LayoutGrid, List, UtensilsCrossed, Flame, CheckCircle, X } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import type { MenuItem } from "@/store/staff/menu/staff-menu.store";
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,13 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
   const menu = useStaffMenuStore((s) => s.getMenu(menuId));
   const deleteItem = useStaffMenuStore((s) => s.deleteItem);
   const toggleItemStatus = useStaffMenuStore((s) => s.toggleItemStatus);
+  const successMsg = useStaffMenuStore((s) => s.successMsg);
+  const setSuccess = useStaffMenuStore((s) => s.setSuccess);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All Categories");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
 
   const categories = useMemo(() => {
     if (!menu) return [];
@@ -37,6 +40,20 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
       return matchSearch && matchCat;
     });
   }, [menu, search, category]);
+
+  const handleDeleteItem = (itemId: string, itemName: string) => {
+    if (typeof window !== "undefined" && window.confirm(`Remove "${itemName}" from this menu? This action cannot be undone.`)) {
+      deleteItem(menuId, itemId);
+      setSuccess(`Item "${itemName}" removed.`);
+    }
+  };
+
+  // Auto-dismiss success banner
+  useEffect(() => {
+    if (!successMsg) return;
+    const t = setTimeout(() => setSuccess(null), 4000);
+    return () => clearTimeout(t);
+  }, [successMsg, setSuccess]);
 
   if (!menu) {
     return (
@@ -60,6 +77,15 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
 
   return (
     <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
+      {/* ── Success Banner ── */}
+      {successMsg && (
+        <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-[10px] px-4 py-2 text-sm">
+          <CheckCircle size={16} className="text-[var(--state-success)]" />
+          <span className="text-[var(--black-2)] font-medium flex-1">{successMsg}</span>
+          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setSuccess(null)}><X size={14} /></Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex-none flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -194,7 +220,11 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                     <Link href={`/staff/menu/${menuId}/items/${item.id}`} className="flex-1 text-center py-1 text-[10px] font-bold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.06)] rounded-md hover:bg-[rgba(149,48,2,0.12)] transition-colors">
                       EDIT
                     </Link>
-                    <button onClick={() => deleteItem(menuId, item.id)} className="p-1 text-[var(--gray-4)] hover:text-[var(--state-error)] transition-colors">
+                    <button 
+                      onClick={() => handleDeleteItem(item.id, item.name)} 
+                      disabled={deletingItemId === item.id}
+                      className="p-1 text-[var(--gray-4)] hover:text-[var(--state-error)] transition-colors disabled:opacity-50"
+                    >
                       <Trash2 size={12} />
                     </button>
                   </div>
@@ -222,7 +252,11 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                   className="shrink-0 data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)]"
                 />
                 <Link href={`/staff/menu/${menuId}/items/${item.id}`} className="text-[10px] font-bold text-[var(--brand-primary)] hover:underline shrink-0">EDIT</Link>
-                <button onClick={() => deleteItem(menuId, item.id)} className="p-1 text-[var(--gray-4)] hover:text-[var(--state-error)] transition-colors shrink-0">
+                <button 
+                  onClick={() => handleDeleteItem(item.id, item.name)} 
+                  disabled={deletingItemId === item.id}
+                  className="p-1 text-[var(--gray-4)] hover:text-[var(--state-error)] transition-colors shrink-0 disabled:opacity-50"
+                >
                   <Trash2 size={12} />
                 </button>
               </div>

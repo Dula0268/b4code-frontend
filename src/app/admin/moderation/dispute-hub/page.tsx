@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -12,6 +12,7 @@ import {
   Clock,
   FileText,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import OpenCasesCard from "@/components/features/admin/moderation/kpi-cards/open-cases-card";
 import PendingDecisionCard from "@/components/features/admin/moderation/kpi-cards/pending-decision-card";
@@ -19,79 +20,20 @@ import TotalDisputedCard from "@/components/features/admin/moderation/kpi-cards/
 import AvgResolutionCard from "@/components/features/admin/moderation/kpi-cards/avg-resolution-card";
 import {
   useAdminModerationStore,
-  type DisputeCase,
-  type DisputeReason,
-  type DisputeStatus,
 } from "@/store/admin/moderation/admin-moderation.store";
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const DISPUTE_CASES: DisputeCase[] = [
-  {
-    id: "1",
-    disputeId: "#4925",
-    guestName: "Sarah Connor",
-    propertyName: "SkyNet Lodge",
-    reason: "Cancellation Policy",
-    amount: "LKR 1,200.00",
-    status: "Decision Pending",
-    bookingId: "#BK-45323",
-    stayDates: "Oct 12-15",
-    cancellationPolicy: "Strict Cancellation",
-    daysUntilAutoClose: 2,
-  },
-  {
-    id: "2",
-    disputeId: "#4921",
-    guestName: "John Wick",
-    propertyName: "Continental Hotel",
-    reason: "Payment Issue",
-    amount: "LKR 150.00",
-    status: "Evidence Uploaded",
-    bookingId: "#BK-45210",
-    stayDates: "Oct 10-12",
-    cancellationPolicy: "Flexible",
-    daysUntilAutoClose: 5,
-  },
-  {
-    id: "3",
-    disputeId: "#4892",
-    guestName: "Ellen Ripley",
-    propertyName: "Nostromo Cabin",
-    reason: "Property Damage",
-    amount: "LKR 4,500.00",
-    status: "Open",
-    bookingId: "#BK-44892",
-    stayDates: "Oct 8-11",
-    cancellationPolicy: "Moderate",
-    daysUntilAutoClose: 7,
-  },
-  {
-    id: "4",
-    disputeId: "#4880",
-    guestName: "Marty McFly",
-    propertyName: "Hill Valley Inn",
-    reason: "Cancellation Policy",
-    amount: "LKR 230.00",
-    status: "Evidence Uploaded",
-    bookingId: "#BK-44880",
-    stayDates: "Oct 5-8",
-    cancellationPolicy: "Strict Cancellation",
-    daysUntilAutoClose: 3,
-  },
-];
-
-const PAGE_SIZE = 4;
+import type { Dispute } from "@/api/admin/moderation.api";
 
 // ─── Reason Badge ─────────────────────────────────────────────────────────────
-function ReasonBadge({ reason }: { reason: DisputeReason }) {
-  const cfg: Record<DisputeReason, string> = {
+function ReasonBadge({ reason }: { reason: string }) {
+  const cfg: Record<string, string> = {
     "Cancellation Policy": "bg-blue-50 text-blue-700 border-blue-200",
     "Payment Issue": "bg-orange-50 text-orange-700 border-orange-200",
     "Property Damage": "bg-red-50 text-red-700 border-red-200",
   };
+  const bgClass = cfg[reason] || "bg-gray-50 text-gray-700 border-gray-200";
   return (
     <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${cfg[reason]}`}
+      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${bgClass}`}
     >
       {reason}
     </span>
@@ -99,14 +41,14 @@ function ReasonBadge({ reason }: { reason: DisputeReason }) {
 }
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: DisputeStatus }) {
-  const cfg: Record<DisputeStatus, { dot: string; text: string }> = {
+function StatusBadge({ status }: { status: string }) {
+  const cfg: Record<string, { dot: string; text: string }> = {
     "Decision Pending": { dot: "bg-red-500", text: "text-red-600" },
     "Evidence Uploaded": { dot: "bg-green-500", text: "text-green-600" },
     Open: { dot: "bg-yellow-500", text: "text-yellow-700" },
     Resolved: { dot: "bg-gray-400", text: "text-gray-500" },
   };
-  const c = cfg[status];
+  const c = cfg[status] || { dot: "bg-gray-400", text: "text-gray-600" };
   return (
     <span
       className={`inline-flex items-center gap-1.5 text-xs font-semibold ${c.text}`}
@@ -118,11 +60,13 @@ function StatusBadge({ status }: { status: DisputeStatus }) {
 }
 
 // ─── Resolution Summary Panel ─────────────────────────────────────────────────
-function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
-  const { setSelectedDispute, setDisputeResolved } = useAdminModerationStore();
+function ResolutionSummary({ dispute }: { dispute: Dispute }) {
+  const { setSelectedDispute, setDisputeResolved, resolveDispute, actionLoading } = useAdminModerationStore();
   const [note, setNote] = useState("");
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
+    await resolveDispute(dispute.id, "Refund Approved", true);
+    
     const now = new Date();
     const time = now.toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -132,7 +76,25 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
     setDisputeResolved({
       amount: dispute.amount,
       bookingId: dispute.bookingId || "#BK-99201",
-      caseId: `#DSP-${dispute.disputeId.replace("#", "")}`,
+      caseId: dispute.disputeId,
+      time,
+    });
+    setSelectedDispute(null);
+  };
+
+  const handleDeny = async () => {
+    await resolveDispute(dispute.id, "Refund Denied (Host Wins)", false);
+    
+    const now = new Date();
+    const time = now.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    setDisputeResolved({
+      amount: "LKR 0.00",
+      bookingId: dispute.bookingId || "#BK-99201",
+      caseId: dispute.disputeId,
       time,
     });
     setSelectedDispute(null);
@@ -265,13 +227,18 @@ function ResolutionSummary({ dispute }: { dispute: DisputeCase }) {
       <div className="flex flex-col gap-2.5">
         <button
           onClick={handleApprove}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#16A34A] text-white text-[14px] font-semibold border-none cursor-pointer hover:bg-[#15803D] transition-colors"
+          disabled={actionLoading}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#16A34A] text-white text-[14px] font-semibold border-none cursor-pointer hover:bg-[#15803D] transition-colors disabled:opacity-50"
         >
-          <CheckCircle2 size={16} />
+          {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
           Approve Refund
         </button>
-        <button className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#1A1A1A] text-[14px] font-semibold border-[1.5px] border-[#E8DDD8] cursor-pointer hover:border-[#C05621] transition-colors">
-          <XCircle size={16} />
+        <button 
+          onClick={handleDeny}
+          disabled={actionLoading}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#1A1A1A] text-[14px] font-semibold border-[1.5px] border-[#E8DDD8] cursor-pointer hover:border-[#C05621] transition-colors disabled:opacity-50"
+        >
+          {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <XCircle size={16} />}
           Deny Refund (Host Wins)
         </button>
         <button className="w-full flex items-center justify-center gap-2 py-2 bg-transparent text-[#C05621] text-[13px] font-semibold border-none cursor-pointer hover:underline">
@@ -357,21 +324,25 @@ function DisputeResolvedView() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function DisputeHubPage() {
   const [currentPage, setCurrentPage] = useState(1);
-  const { selectedDispute, setSelectedDispute, disputeResolved } =
-    useAdminModerationStore();
+  const { 
+    selectedDispute, 
+    setSelectedDispute, 
+    disputeResolved, 
+    disputes, 
+    disputesTotalPages, 
+    fetchDisputes,
+    disputesLoading,
+    badgeCounts 
+  } = useAdminModerationStore();
 
-  const totalPages = Math.max(1, Math.ceil(DISPUTE_CASES.length / PAGE_SIZE));
-  const paged = DISPUTE_CASES.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  useEffect(() => {
+    fetchDisputes({ page: currentPage - 1, size: 4 });
+  }, [fetchDisputes, currentPage]);
 
-  const goPage = (p: number) =>
-    setCurrentPage(Math.max(1, Math.min(totalPages, p)));
+  const goPage = (p: number) => setCurrentPage(Math.max(1, Math.min(disputesTotalPages, p)));
 
-  const startIndex =
-    DISPUTE_CASES.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const endIndex = Math.min(currentPage * PAGE_SIZE, DISPUTE_CASES.length);
+  const startIndex = (currentPage - 1) * 4 + 1;
+  const endIndex = Math.max(0, startIndex + disputes.length - 1);
 
   // ── Resolved View ──
   if (disputeResolved) {
@@ -421,7 +392,7 @@ export default function DisputeHubPage() {
           </svg>
           All Open Cases
           <span className="w-5 h-5 rounded-full bg-[#16A34A] text-white text-[11px] font-bold flex items-center justify-center">
-            {DISPUTE_CASES.length}
+            {badgeCounts.openDisputes}
           </span>
         </button>
       </div>
@@ -457,7 +428,13 @@ export default function DisputeHubPage() {
                 </tr>
               </thead>
               <tbody>
-                {paged.length === 0 ? (
+                {disputesLoading ? (
+                  <tr>
+                    <td colSpan={selectedDispute ? 4 : 6} className="py-12 text-center">
+                      <Loader2 className="animate-spin inline-block text-[var(--brand-primary)]" size={24} />
+                    </td>
+                  </tr>
+                ) : disputes.length === 0 ? (
                   <tr>
                     <td
                       colSpan={selectedDispute ? 4 : 6}
@@ -467,7 +444,7 @@ export default function DisputeHubPage() {
                     </td>
                   </tr>
                 ) : (
-                  paged.map((dispute) => {
+                  disputes.map((dispute) => {
                     const isSelected = selectedDispute?.id === dispute.id;
                     return (
                       <tr
@@ -541,10 +518,8 @@ export default function DisputeHubPage() {
           {/* ── Pagination ── */}
           <div className="flex justify-between items-center px-5 py-3.5 border-t border-[#F0EBE7]">
             <span className="text-[13px] text-[#9E7B6A]">
-              Showing <strong className="text-[#1A1A1A]">{startIndex}</strong>{" "}
-              to <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
-              <strong className="text-[#1A1A1A]">{DISPUTE_CASES.length}</strong>{" "}
-              results
+              Page <strong className="text-[#1A1A1A]">{currentPage}</strong>{" "}
+              of <strong className="text-[#1A1A1A]">{disputesTotalPages}</strong>
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -558,7 +533,7 @@ export default function DisputeHubPage() {
               >
                 <ChevronLeft size={14} />
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              {Array.from({ length: disputesTotalPages }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}
                   onClick={() => goPage(p)}
@@ -573,9 +548,9 @@ export default function DisputeHubPage() {
               ))}
               <button
                 onClick={() => goPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === disputesTotalPages || disputesTotalPages === 0}
                 className={`w-8 h-8 rounded-md border border-[#E8DDD8] bg-white flex items-center justify-center ${
-                  currentPage === totalPages
+                  currentPage === disputesTotalPages || disputesTotalPages === 0
                     ? "cursor-not-allowed text-[#D1D5DB]"
                     : "cursor-pointer text-[#6B7280]"
                 }`}

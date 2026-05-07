@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import TotalRevenueCard from "@/components/features/admin/dashboard/kpi-cards/total-revenue-card";
 import OccupancyRateCard from "@/components/features/admin/dashboard/kpi-cards/occupancy-rate-card";
@@ -8,67 +9,84 @@ import RevenueTrendChart from "@/components/features/admin/finance/revenue-trend
 import RecentVerificationRequests, {
   type VerificationRequest,
 } from "@/components/features/admin/dashboard/recent-verification-requests";
+import { useAdminDashboardStore } from "@/store/admin/dashboard/admin-dashboard.store";
+import type { RecentVerification } from "@/api/admin/dashboard.api";
+import { Loader2 } from "lucide-react";
 
-// ─── Static Data ──────────────────────────────────────────────────────────────
-const RECENT_VERIFICATIONS: VerificationRequest[] = [
-  {
-    id: "1",
-    name: "Sunny Villa",
-    entityId: "#PROP-8291",
-    type: "Property Verification",
-    dateSubmitted: "Oct 24, 2023",
-    status: "Pending",
-    action: "Review",
-    icon: "property",
-  },
-  {
-    id: "3",
-    name: "Downtown Loft",
-    entityId: "#PROP-1120",
-    type: "Property Verification",
-    dateSubmitted: "Oct 22, 2023",
-    status: "Rejected",
-    action: "View",
-    icon: "property",
-  },
-  {
-    id: "5",
-    name: "Ocean Breeze Suite",
-    entityId: "#PROP-3345",
-    type: "Property Verification",
-    dateSubmitted: "Oct 20, 2023",
-    status: "Pending",
-    action: "Review",
-    icon: "property",
-  },
-];
+// ─── Helper Functions ─────────────────────────────────────────────────────────
+const mapToVerificationRequest = (
+  v: RecentVerification,
+): VerificationRequest => ({
+  id: v.id,
+  name: v.name,
+  entityId: v.entityId,
+  type: v.type,
+  dateSubmitted: v.dateSubmitted,
+  status: (v.status as "Pending" | "Verified" | "Rejected") || "Pending",
+  action: (v.action as "Review" | "View") || "Review",
+  icon: (v.icon === "user" ? "user" : "property") as "property" | "user",
+});
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
+  const { kpis, recentVerifications, loading, error, fetchDashboardData } =
+    useAdminDashboardStore();
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
   return (
     <AdminPageLayout>
       <div className="flex flex-col gap-6">
         {/* ── Page Title ── */}
-        <h1 className="text-[22px] font-bold text-(--black-2) m-0">
+        <h1 className="text-[22px] font-bold text-[#1A1A1A] m-0">
           Dashboard Overview
         </h1>
 
-        {/* ── KPI Cards ── */}
-        <div className="grid grid-cols-3 gap-5">
-          <TotalRevenueCard
-            value="LKR 1,200,000"
-            change="+12%"
-            positive={true}
-          />
-          <OccupancyRateCard value="82%" change="+4%" positive={true} />
-          <ActiveBookingsCard value="1,240" change="-1%" positive={false} />
-        </div>
+        {error && (
+          <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200">
+            {error}
+          </div>
+        )}
 
-        {/* ── Revenue Trend Chart ── */}
-        <RevenueTrendChart />
+        {loading && !kpis ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2
+              className="animate-spin text-(--brand-primary)"
+              size={32}
+            />
+          </div>
+        ) : (
+          <>
+            {/* ── KPI Cards ── */}
+            <div className="grid grid-cols-3 gap-5">
+              <TotalRevenueCard
+                value={kpis?.totalRevenue.value ?? "LKR 0"}
+                change={kpis?.totalRevenue.change ?? "0%"}
+                positive={kpis?.totalRevenue.positive ?? true}
+              />
+              <OccupancyRateCard
+                value={kpis?.occupancyRate.value ?? "0%"}
+                change={kpis?.occupancyRate.change ?? "0%"}
+                positive={kpis?.occupancyRate.positive ?? true}
+              />
+              <ActiveBookingsCard
+                value={kpis?.activeBookings.value ?? "0"}
+                change={kpis?.activeBookings.change ?? "0%"}
+                positive={kpis?.activeBookings.positive ?? true}
+              />
+            </div>
 
-        {/* ── Recent Verification Requests ── */}
-        <RecentVerificationRequests requests={RECENT_VERIFICATIONS} />
+            {/* ── Revenue Trend Chart ── */}
+            <RevenueTrendChart />
+
+            {/* ── Recent Verification Requests ── */}
+            <RecentVerificationRequests
+              requests={recentVerifications.map(mapToVerificationRequest)}
+            />
+          </>
+        )}
       </div>
     </AdminPageLayout>
   );

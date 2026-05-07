@@ -7,10 +7,18 @@ import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import PayoutKpiCards from "@/components/features/admin/finance/payout-kpi-cards";
 import PayoutTable from "./payout-table";
 import PayoutDetailPanel from "./payout-detail-panel";
+import type { PayoutDto } from "@/api/admin/finance.api";
+import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
+import { useEffect } from "react";
 
 export default function PayoutPage() {
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [selectedPayout, setSelectedPayout] = useState<PayoutDto | null>(null);
   const router = useRouter();
+  const { fetchSummary } = useAdminFinanceStore();
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   return (
     <AdminPageLayout>
@@ -34,12 +42,13 @@ export default function PayoutPage() {
         <PayoutKpiCards />
 
         {/* ── Payout Table ── */}
-        <PayoutTable onRowClick={() => setPanelOpen(true)} />
+        <PayoutTable onRowClick={(p) => setSelectedPayout(p)} />
 
         {/* ── Detail Panel ── */}
         <PayoutDetailPanel
-          isOpen={panelOpen}
-          onClose={() => setPanelOpen(false)}
+          isOpen={!!selectedPayout}
+          onClose={() => setSelectedPayout(null)}
+          payout={selectedPayout}
         />
       </div>
     </AdminPageLayout>

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle, Copy, Printer, Download, QrCode } from "lucide-react";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
+import { BASE_URL } from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 export default function QrDetail({ qrId }: { qrId: string }) {
   const router = useRouter();
   const qr = useStaffQRStore((s) => s.getQR(qrId));
+  console.log('QR detail context:', qr);
+  console.log('BASE_URL:', BASE_URL);
   const successMsg = useStaffQRStore((s) => s.successMsg);
   const setSuccess = useStaffQRStore((s) => s.setSuccess);
 
@@ -34,6 +37,25 @@ export default function QrDetail({ qrId }: { qrId: string }) {
     navigator.clipboard.writeText(qr.qrId);
   };
 
+  const downloadQR = async () => {
+    if (!qr.qrImageUrl) return;
+    try {
+      const response = await fetch(qr.qrImageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `QR-${qr.name.replace(/\s+/g, "-")}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Failed to download QR code", err);
+      window.open(qr.qrImageUrl, "_blank");
+    }
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
       {/* Header */}
@@ -48,7 +70,7 @@ export default function QrDetail({ qrId }: { qrId: string }) {
           <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={() => router.push(`/staff/qr/${qrId}/print`)}>
             <Printer size={12} /> Print QR
           </Button>
-          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1">
+          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={downloadQR} disabled={!qr.qrImageUrl}>
             <Download size={12} /> Download
           </Button>
         </div>
@@ -67,8 +89,13 @@ export default function QrDetail({ qrId }: { qrId: string }) {
         {/* Left: QR Code */}
         <Card className="bg-white flex-1 py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
           <CardContent className="p-6 h-full flex flex-col items-center justify-center gap-3">
-            <div className="w-[180px] h-[180px] bg-[var(--black-3)] rounded-[12px] flex items-center justify-center">
-              <QrCode size={80} className="text-[var(--gray-2)]" />
+            <div className="w-[200px] h-[200px] bg-white border border-[var(--gray-5)] rounded-[12px] flex items-center justify-center overflow-hidden p-2 shadow-sm">
+              {qr.qrImageUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={qr.qrImageUrl} alt={`QR Code for ${qr.name}`} className="w-full h-full object-contain" />
+              ) : (
+                <QrCode size={80} className="text-[var(--gray-2)]" />
+              )}
             </div>
             <Badge className="bg-[rgba(149,48,2,0.08)] text-[var(--brand-primary)] text-xs font-medium px-3 py-1 rounded-full">
               {qr.name}

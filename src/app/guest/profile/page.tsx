@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Lock, UploadCloud } from "lucide-react";
@@ -9,23 +9,38 @@ import { useAuthStore } from "@/store/auth/auth.store";
 export default function GuestProfilePage() {
   const { user, updateProfile } = useAuthStore();
   const [formData, setFormData] = useState({
-    firstName: "Alex",
-    lastName: "Rivera",
-    email: "alex.rivera@example.com",
+    firstName: "",
+    lastName: "",
+    email: "",
     phone: "",
   });
 
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Sync form data with user store data
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.profile?.firstName || "",
+        lastName: user.profile?.lastName || "",
+        email: user.email || "",
+        phone: user.profile?.phone || "",
+      });
+    }
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     
     try {
-      const emailToUse = user?.email || "guest@primestay.com";
-      const newName = `${formData.firstName} ${formData.lastName}`.trim();
-      await updateProfile(emailToUse, { name: newName });
+      const emailToUse = user?.email || "";
+      await updateProfile(emailToUse, { 
+        firstName: formData.firstName, 
+        lastName: formData.lastName, 
+        phone: formData.phone 
+      });
       
       setIsSaving(false);
       setShowSuccess(true);

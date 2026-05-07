@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Lock, UploadCloud } from "lucide-react";
@@ -9,8 +9,8 @@ import { useAuthStore } from "@/store/auth/auth.store";
 export default function OwnerProfilePage() {
   const { user, updateProfile } = useAuthStore();
   const [formData, setFormData] = useState({
-    businessName: "Alex Rivera",
-    email: "alex.rivera@example.com",
+    businessName: "",
+    email: "",
     phone: "",
     staffRole: "",
     assignedProperty: "",
@@ -22,14 +22,38 @@ export default function OwnerProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Sync form data with user store data
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        businessName: `${user.profile?.firstName || ""} ${user.profile?.lastName || ""}`.trim(),
+        email: user.email || "",
+        phone: user.profile?.phone || "",
+        staffRole: "Owner",
+        assignedProperty: "Sunset Villa",
+        propertyAddress: "123 Coastal Road",
+        country: "Sri Lanka",
+        taxId: "TX-998877",
+      });
+    }
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
     try {
-      const emailToUse = user?.email || "owner@primestay.com";
-      const newName = formData.businessName.trim() || "Owner";
-      await updateProfile(emailToUse, { name: newName });
+      const emailToUse = user?.email || "";
+      // Split business name into first and last for the backend
+      const parts = formData.businessName.split(" ");
+      const firstName = parts[0] || "";
+      const lastName = parts.slice(1).join(" ") || "";
+      
+      await updateProfile(emailToUse, { 
+        firstName, 
+        lastName, 
+        phone: formData.phone 
+      });
 
       setIsSaving(false);
       setShowSuccess(true);

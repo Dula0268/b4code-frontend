@@ -1,107 +1,160 @@
-import { create } from "zustand";
+import { create } from 'zustand';
+import {
+  ModerationApi,
+  type FlaggedReview,
+  type Dispute,
+  type ModerationHistory,
+} from '@/api/admin/moderation.api';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 export type ModerationTab = "reviews" | "disputes" | "history";
 
-export type FlagStatus = "Harassment" | "Spam / Scam" | "Profanity" | "Policy Violation";
-
-export interface FlaggedReview {
-  id: string;
-  reviewerName: string;
-  reviewerAvatar?: string;
-  timeAgo: string;
-  rating: number;
-  propertyName: string;
-  propertyId: string;
-  contentSnippet: string;
-  fullContent: string;
-  highlightedTerms: string[];
-  flagStatus: FlagStatus;
-}
-
-export type DisputeStatus = "Decision Pending" | "Evidence Uploaded" | "Open" | "Resolved";
-export type DisputeReason = "Cancellation Policy" | "Payment Issue" | "Property Damage";
-
-export interface DisputeCase {
-  id: string;
-  disputeId: string;
-  guestName: string;
-  propertyName: string;
-  reason: DisputeReason;
-  amount: string;
-  status: DisputeStatus;
-  bookingId?: string;
-  stayDates?: string;
-  cancellationPolicy?: string;
-  daysUntilAutoClose?: number;
-}
-
-export type HistoryAction = "Review Removed" | "Refund Issued" | "Review Kept" | "Appeal Denied";
-
-export interface HistoryEntry {
-  id: string;
-  resolvedDate: string;
-  resolvedTime: string;
-  caseId: string;
-  actionTaken: HistoryAction;
-  adminInitials: string;
-  adminName: string;
-  adminColor: string;
-  outcome: string;
-}
-
-export interface ToastNotification {
-  id: string;
-  type: "success" | "error" | "info";
-  title: string;
-  message: string;
-}
-
-// ─── State ────────────────────────────────────────────────────────────────────
 type AdminModerationState = {
   activeTab: ModerationTab;
   selectedReview: FlaggedReview | null;
-  selectedDispute: DisputeCase | null;
+  selectedDispute: Dispute | null;
   disputeResolved: { amount: string; bookingId: string; caseId: string; time: string } | null;
-  loading: boolean;
+  badgeCounts: { pendingReviews: number; openDisputes: number };
+  
+  // Reviews
+  reviews: FlaggedReview[];
+  reviewsTotalPages: number;
+  reviewsLoading: boolean;
+
+  // Disputes
+  disputes: Dispute[];
+  disputesTotalPages: number;
+  disputesLoading: boolean;
+
+  // History
+  history: ModerationHistory[];
+  historyTotalPages: number;
+  historyLoading: boolean;
+
+  actionLoading: boolean;
   error: string | null;
-  toast: ToastNotification | null;
-  banner: { message: string } | null;
 };
 
 type AdminModerationActions = {
   setActiveTab: (tab: ModerationTab) => void;
   setSelectedReview: (review: FlaggedReview | null) => void;
-  setSelectedDispute: (dispute: DisputeCase | null) => void;
+  setSelectedDispute: (dispute: Dispute | null) => void;
   setDisputeResolved: (data: { amount: string; bookingId: string; caseId: string; time: string } | null) => void;
-  setLoading: (value: boolean) => void;
-  setError: (message: string | null) => void;
-  showToast: (toast: ToastNotification) => void;
-  dismissToast: () => void;
-  showBanner: (message: string) => void;
-  dismissBanner: () => void;
-  reset: () => void;
+  
+  fetchBadgeCounts: () => Promise<void>;
+  
+  fetchReviews: (params?: { status?: string; search?: string; page?: number; size?: number }) => Promise<void>;
+  approveReview: (id: number) => Promise<void>;
+  removeReview: (id: number, adminNote: string) => Promise<void>;
+
+  fetchDisputes: (params?: { status?: string; search?: string; page?: number; size?: number }) => Promise<void>;
+  resolveDispute: (id: string, resolution: string, refundApproved: boolean) => Promise<void>;
+
+  fetchHistory: (params?: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }) => Promise<void>;
 };
 
-export const useAdminModerationStore = create<AdminModerationState & AdminModerationActions>((set) => ({
-  activeTab: "reviews",
+export const useAdminModerationStore = create<AdminModerationState & AdminModerationActions>((set, get) => ({
+  activeTab: 'reviews',
   selectedReview: null,
   selectedDispute: null,
   disputeResolved: null,
-  loading: false,
-  error: null,
-  toast: null,
-  banner: null,
+  badgeCounts: { pendingReviews: 0, openDisputes: 0 },
+  
+  reviews: [],
+  reviewsTotalPages: 0,
+  reviewsLoading: false,
 
-  setActiveTab: (tab) => set({ activeTab: tab, selectedReview: null, selectedDispute: null, disputeResolved: null }),
+  disputes: [],
+  disputesTotalPages: 0,
+  disputesLoading: false,
+
+  history: [],
+  historyTotalPages: 0,
+  historyLoading: false,
+
+  actionLoading: false,
+  error: null,
+
+  setActiveTab: (tab) => set({ activeTab: tab }),
   setSelectedReview: (review) => set({ selectedReview: review }),
-  setSelectedDispute: (dispute) => set({ selectedDispute: dispute, disputeResolved: null }),
+  setSelectedDispute: (dispute) => set({ selectedDispute: dispute }),
   setDisputeResolved: (data) => set({ disputeResolved: data }),
-  setLoading: (value) => set({ loading: value }),
-  setError: (message) => set({ error: message }),
-  showToast: (toast) => set({ toast }),
-  dismissToast: () => set({ toast: null }),
-  showBanner: (message) => set({ banner: { message } }),
-  dismissBanner: () => set({ banner: null }),
-  reset: () => set({ activeTab: "reviews", selectedReview: null, selectedDispute: null, disputeResolved: null, loading: false, error: null, toast: null, banner: null }),
+
+  fetchBadgeCounts: async () => {
+    try {
+      const counts = await ModerationApi.getBadgeCounts();
+      set({ badgeCounts: counts });
+    } catch (err) {
+      console.error('fetchBadgeCounts error:', err);
+    }
+  },
+
+  fetchReviews: async (params) => {
+    set({ reviewsLoading: true, error: null });
+    try {
+      const res = await ModerationApi.getReviews(params || {});
+      set({ reviews: res.content, reviewsTotalPages: res.totalPages, reviewsLoading: false });
+    } catch (err) {
+      console.error('fetchReviews error:', err);
+      set({ error: 'Failed to load reviews', reviewsLoading: false });
+    }
+  },
+
+  approveReview: async (id) => {
+    set({ actionLoading: true, error: null });
+    try {
+      await ModerationApi.approveReview(id);
+      get().fetchBadgeCounts(); // Update counts
+      // Optionally re-fetch current page or optimistic update. Will rely on component re-fetching for simplicity.
+      set({ actionLoading: false });
+    } catch (err) {
+      console.error('approveReview error:', err);
+      set({ error: 'Failed to approve review', actionLoading: false });
+    }
+  },
+
+  removeReview: async (id, adminNote) => {
+    set({ actionLoading: true, error: null });
+    try {
+      await ModerationApi.removeReview(id, adminNote);
+      get().fetchBadgeCounts();
+      set({ actionLoading: false });
+    } catch (err) {
+      console.error('removeReview error:', err);
+      set({ error: 'Failed to remove review', actionLoading: false });
+    }
+  },
+
+  fetchDisputes: async (params) => {
+    set({ disputesLoading: true, error: null });
+    try {
+      const res = await ModerationApi.getDisputes(params || {});
+      set({ disputes: res.content, disputesTotalPages: res.totalPages, disputesLoading: false });
+    } catch (err) {
+      console.error('fetchDisputes error:', err);
+      set({ error: 'Failed to load disputes', disputesLoading: false });
+    }
+  },
+
+  resolveDispute: async (id, resolution, refundApproved) => {
+    set({ actionLoading: true, error: null });
+    try {
+      await ModerationApi.resolveDispute(id, resolution, refundApproved);
+      get().fetchBadgeCounts();
+      set({ actionLoading: false });
+    } catch (err) {
+      console.error('resolveDispute error:', err);
+      set({ error: 'Failed to resolve dispute', actionLoading: false });
+    }
+  },
+
+  fetchHistory: async (params) => {
+    set({ historyLoading: true, error: null });
+    try {
+      const res = await ModerationApi.getHistory(params || {});
+      set({ history: res.content, historyTotalPages: res.totalPages, historyLoading: false });
+    } catch (err) {
+      console.error('fetchHistory error:', err);
+      set({ error: 'Failed to load history', historyLoading: false });
+    }
+  },
 }));

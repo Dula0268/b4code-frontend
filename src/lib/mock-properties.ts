@@ -1,18 +1,3 @@
-// ─── Shared Property Types ────────────────────────────────────────────────────
-
-export interface Room {
-    id: string
-    name: string
-    maxGuests: number
-    bedType: string
-    sqft: number
-    pricePerNight: number
-    originalPrice?: number
-    tag?: "Refundable" | "Popular" | "Last rooms"
-    features: string[]
-    imageSrc: string
-}
-
 export interface Review {
     id: string
     author: string
@@ -59,6 +44,19 @@ export interface PropertyDetail {
     // Map coords (for embed)
     lat: number
     lng: number
+}
+
+export interface Room {
+    id: string
+    name: string
+    maxGuests: number
+    bedType: string
+    sqft: number
+    pricePerNight: number
+    originalPrice?: number
+    tag?: string
+    features: string[]
+    imageSrc: string
 }
 
 // ─── Amenity icon names (Lucide) ─────────────────────────────────────────────
@@ -1112,5 +1110,5 @@ export const ALL_PROPERTIES: PropertyDetail[] = [
 ]
 
 export function getPropertyById(id: string): PropertyDetail | undefined {
-    return ALL_PROPERTIES.find(p => p.id === id)
+  return ALL_PROPERTIES.find(p => p.id === id)
 }
