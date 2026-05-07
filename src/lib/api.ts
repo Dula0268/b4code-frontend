@@ -180,6 +180,17 @@ export const authApi = {
 };
 
 // User Management APIs
+type UserProfileUpdate = {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+};
+
+type ChangePasswordPayload = {
+    currentPassword: string;
+    newPassword: string;
+};
+
 export const userApi = {
     getAllUsers: async () => {
         const response = await apiFetch("/api/users");
@@ -207,6 +218,30 @@ export const userApi = {
             method: "DELETE",
         });
         if (!response.ok) throw new Error("Failed to delete user");
+    },
+
+    getCurrentUser: async () => {
+        const response = await apiFetch("/api/users/me");
+        if (!response.ok) throw new Error("Failed to fetch current user");
+        return response.json();
+    },
+
+    updateProfile: async (updates: UserProfileUpdate) => {
+        const response = await apiFetch("/api/users/me/profile", {
+            method: "PATCH",
+            body: JSON.stringify(updates),
+        });
+        if (!response.ok) throw new Error("Failed to update profile");
+        return response.json();
+    },
+
+    changePassword: async (payload: ChangePasswordPayload) => {
+        const response = await apiFetch("/api/users/me/password", {
+            method: "PATCH",
+            body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error("Failed to update password");
+        return response.json();
     },
 };
 
