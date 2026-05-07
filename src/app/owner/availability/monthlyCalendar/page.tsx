@@ -105,6 +105,12 @@ const mockBookings: Record<string, BookingInfo> = {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * MonthlyCalendarPage Component
+ * 
+ * Provides a calendar view of property availability and bookings for a whole month.
+ * Owners can select dates, manage blocks, and view booking details.
+ */
 export default function MonthlyCalendarPage() {
     const [year, setYear] = useState(2024);
     const [month, setMonth] = useState(10); // November (0-indexed)
@@ -221,7 +227,7 @@ export default function MonthlyCalendarPage() {
                     <div className="text-[11px] font-semibold text-[#828282] mb-0.5">Occupancy (Nov)</div>
                     <div className="text-[22px] font-extrabold text-[#1d1d1d]">78%</div>
                     <div className="h-1 bg-[#e8e8e8] rounded flex mt-2 overflow-hidden">
-                        <div className="h-full bg-[#953002] rounded" style={{ width: "78%" }} />
+                        <div className="h-full bg-[#953002] rounded w-[78%]" />
                     </div>
                 </div>
                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3 px-3.5 mb-2">
@@ -283,11 +289,11 @@ export default function MonthlyCalendarPage() {
                                     <div
                                         key={key}
                                         onClick={() => cell.currentMonth && toggleDate(key)}
-                                        className={`py-1.5 px-2 flex flex-col relative transition-all duration-100 min-h-[80px] overflow-hidden ${ci < 6 ? "border-r border-[#e8e8e8]" : ""} ${cell.currentMonth ? "cursor-pointer" : "cursor-default"}`}
-                                        style={{
-                                            background: isSelected ? "#fef5ef" : "#fff",
-                                            boxShadow: isSelected ? "inset 0 0 0 2px #953002" : "none",
-                                        }}
+                                        className={`py-1.5 px-2 flex flex-col relative transition-all duration-100 min-h-[80px] overflow-hidden ${
+                                            ci < 6 ? "border-r border-[#e8e8e8]" : ""
+                                        } ${cell.currentMonth ? "cursor-pointer" : "cursor-default"} ${
+                                            isSelected ? "bg-[#fef5ef] shadow-[inset_0_0_0_2px_#953002]" : "bg-white shadow-none"
+                                        }`}
                                     >
                                         {/* Date number */}
                                         <div className={`text-[13px] mb-1 leading-none ${dimmed ? "text-[#ccc]" : booking?.type === "booked" ? "text-[#953002] font-extrabold" : isToday ? "text-white font-extrabold" : "text-[#1d1d1d] font-bold"} ${isToday ? "bg-[#953002] rounded-full w-6 h-6 inline-flex items-center justify-center p-0" : ""}`}>
@@ -313,7 +319,9 @@ export default function MonthlyCalendarPage() {
                                                             <span className="text-[9px] text-[#828282] underline cursor-pointer">details</span>
                                                         )}
                                                         {booking.dot && (
-                                                            <span className={`absolute bottom-1.5 right-2 w-2 h-2 rounded-full`} style={{ background: booking.dot === "green" ? "#27ae60" : booking.dot === "orange" ? "#f2994a" : "#eb5757" }} />
+                                                            <span className={`absolute bottom-1.5 right-2 w-2 h-2 rounded-full ${
+                                                                booking.dot === "green" ? "bg-[#27ae60]" : booking.dot === "orange" ? "bg-[#f2994a]" : "bg-[#eb5757]"
+                                                            }`} />
                                                         )}
                                                     </>
                                                 )}
@@ -354,9 +362,9 @@ export default function MonthlyCalendarPage() {
                     {/* New Status */}
                     <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-2">NEW STATUS</div>
                     {[
-                        { key: "available", label: "Available", color: "#953002" },
-                        { key: "booked", label: "Booked (Manual)", color: "#b0b0b0" },
-                        { key: "blocked", label: "Blocked / OOO", color: "#b0b0b0" },
+                        { key: "available", label: "Available", borderColorClass: "border-[#953002]" },
+                        { key: "booked", label: "Booked (Manual)", borderColorClass: "border-[#b0b0b0]" },
+                        { key: "blocked", label: "Blocked / OOO", borderColorClass: "border-[#b0b0b0]" },
                     ].map((opt) => {
                         const sel = newStatus === opt.key;
                         return (
@@ -367,7 +375,9 @@ export default function MonthlyCalendarPage() {
                                     sel ? "border-2 border-[#953002] bg-[#fef5ef]" : "border border-[#e0e0e0] bg-white"
                                 }`}
                             >
-                                <span className={`w-3.5 h-3.5 flex-shrink-0 rounded-full inline-flex items-center justify-center ${sel ? "bg-[#953002]" : "border-2 border-[#b0b0b0]"}`} style={{ borderColor: !sel && opt.color ? opt.color : '' }}>
+                                <span className={`w-3.5 h-3.5 flex-shrink-0 rounded-full inline-flex items-center justify-center ${
+                                    sel ? "bg-[#953002]" : `border-2 ${opt.borderColorClass}`
+                                }`}>
                                     {sel && <Check size={10} color="#fff" strokeWidth={3} />}
                                 </span>
                                 <span className={`text-[13px] ${sel ? "font-bold text-[#1d1d1d]" : "font-medium text-[#1d1d1d]"}`}>{opt.label}</span>

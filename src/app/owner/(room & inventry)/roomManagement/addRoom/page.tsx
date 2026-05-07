@@ -30,6 +30,12 @@ const roomTypes = [
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * AddRoomPage Component
+ *
+ * Multi-section form for adding a new room to a property, including
+ * room type, capacity, pricing, amenities, and photo uploads.
+ */
 export default function AddRoomPage() {
     const router = useRouter();
     const [roomName, setRoomName] = useState("");

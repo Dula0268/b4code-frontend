@@ -11,6 +11,12 @@ import {
     Upload
 } from "lucide-react";
 
+/**
+ * AddStaffPage Component
+ *
+ * Form for adding a new staff member to a property, including
+ * personal details, role assignment, and access permissions.
+ */
 export default function AddStaffPage() {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -54,7 +60,7 @@ export default function AddStaffPage() {
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#828282] font-semibold">Downtown Luxury Loft</span>
+                    <span className="text-[#828282] font-semibold">Property Name</span>
                     <ChevronRight size={14} color="#b0b0b0" />
                     <a href="/owner/properties/Staff" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Staff</a>
                     <ChevronRight size={14} color="#b0b0b0" />

@@ -24,6 +24,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * EditPropertyDetailsPage Component
+ *
+ * Form for modifying existing property details such as name, description,
+ * location, contact information, and photo gallery.
+ */
 export default function EditPropertyDetailsPage() {
     const [form, setForm] = useState<Record<string, string>>({
         name: "Lakeside Cabin Retreat - Luxury Coastal Retreat",
@@ -86,7 +92,7 @@ export default function EditPropertyDetailsPage() {
                 <div className="flex items-center gap-1.5 text-[12px] mb-0.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <a href="/owner/properties/propertyDetails" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Downtown Luxury Loft</a>
+                    <a href="/owner/properties/propertyDetails" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Property Name</a>
                     <ChevronRight size={14} color="#b0b0b0" />
                     <span className="text-[#953002] font-semibold">Edit property details</span>
                 </div>

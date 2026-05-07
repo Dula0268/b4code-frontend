@@ -17,6 +17,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * CreateNewPropertyPage Component
+ *
+ * Multi-step form for registering a new property, including
+ * basic info, location, amenities, photos, and pricing setup.
+ */
 export default function CreateNewPropertyPage() {
     const [form, setForm] = useState({
         name: "",

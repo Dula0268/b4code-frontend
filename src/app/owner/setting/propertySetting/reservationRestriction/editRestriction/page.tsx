@@ -20,6 +20,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * EditRestrictionPage Component
+ *
+ * Form for editing an existing reservation restriction rule,
+ * pre-populated with the current rule values for modification.
+ */
 export default function EditRestrictionPage() {
     const [ruleCategory, setRuleCategory] = useState("Minimum Length of Stay");
     const [startDate, setStartDate] = useState("10/26/2023");

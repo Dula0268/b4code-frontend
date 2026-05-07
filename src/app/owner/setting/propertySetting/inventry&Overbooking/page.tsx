@@ -25,6 +25,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * InventoryOverbookingPage Component
+ *
+ * Configuration page for managing room inventory counts and
+ * overbooking thresholds to maximize occupancy safely.
+ */
 export default function InventoryOverbookingPage() {
     const [autoClose, setAutoClose] = useState(true);
     const [thresholdLimit, setThresholdLimit] = useState("2");

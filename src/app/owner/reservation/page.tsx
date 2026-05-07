@@ -27,79 +27,90 @@ import {
 
 /* ───────────────────── mock data ───────────────────── */
 
+/** Reservation records with Tailwind-compatible class tokens for dynamic styling */
 const reservations = [
     {
         initials: "AJ",
-        initialsBg: "#e8d4c8",
-        initialsColor: "#953002",
+        initialsBgClass: "bg-[#e8d4c8]",
+        initialsColorClass: "text-[#953002]",
         name: "Alex Johnson",
         tier: "GOLD MEMBER",
-        tierColor: "#b8860b",
+        tierColorClass: "text-[#b8860b]",
         property: "Grand Plaza Hotel",
         room: "Luxury Suite - Room 402",
         checkIn: "Oct 12",
         checkOut: "Oct 15",
         checkOutHighlight: false,
         payment: "Paid",
-        paymentColor: "#27ae60",
+        paymentColorClass: "text-[#27ae60]",
+        paymentDotClass: "bg-[#27ae60]",
         status: "CONFIRMED",
-        statusBg: "#27ae60",
+        statusBgClass: "bg-[#27ae60]",
     },
     {
         initials: "MG",
-        initialsBg: "#d4e8d4",
-        initialsColor: "#2d6a2d",
+        initialsBgClass: "bg-[#d4e8d4]",
+        initialsColorClass: "text-[#2d6a2d]",
         name: "John Doe",
         tier: "NEW GUEST",
-        tierColor: "#2f80ed",
+        tierColorClass: "text-[#2f80ed]",
         property: "Seaside Villa",
         room: "Ocean View - Suite A",
         checkIn: "Oct 14",
         checkOut: "Oct 20",
         checkOutHighlight: true,
         payment: "Partial",
-        paymentColor: "#f2994a",
+        paymentColorClass: "text-[#f2994a]",
+        paymentDotClass: "bg-[#f2994a]",
         status: "PENDING",
-        statusBg: "#f2994a",
+        statusBgClass: "bg-[#f2994a]",
     },
     {
         initials: "JS",
-        initialsBg: "#e8e0d4",
-        initialsColor: "#8b6914",
+        initialsBgClass: "bg-[#e8e0d4]",
+        initialsColorClass: "text-[#8b6914]",
         name: "James Smith",
         tier: "REGULAR GUEST",
-        tierColor: "#828282",
+        tierColorClass: "text-[#828282]",
         property: "Mountain Lodge",
         room: "Pine Cabin - #5",
         checkIn: "Oct 15",
         checkOut: "Oct 16",
         checkOutHighlight: false,
         payment: "Unpaid",
-        paymentColor: "#eb5757",
+        paymentColorClass: "text-[#eb5757]",
+        paymentDotClass: "bg-[#eb5757]",
         status: "CANCELLED",
-        statusBg: "#eb5757",
+        statusBgClass: "bg-[#eb5757]",
     },
     {
         initials: "LC",
-        initialsBg: "#d4d8e8",
-        initialsColor: "#2d3a6a",
+        initialsBgClass: "bg-[#d4d8e8]",
+        initialsColorClass: "text-[#2d3a6a]",
         name: "Linda Chen",
         tier: "BUSINESS TRAVELER",
-        tierColor: "#953002",
+        tierColorClass: "text-[#953002]",
         property: "Grand Plaza Hotel",
         room: "Standard Room - 101",
         checkIn: "Oct 18",
         checkOut: "Oct 22",
         checkOutHighlight: false,
         payment: "Paid",
-        paymentColor: "#27ae60",
+        paymentColorClass: "text-[#27ae60]",
+        paymentDotClass: "bg-[#27ae60]",
         status: "CONFIRMED",
-        statusBg: "#27ae60",
+        statusBgClass: "bg-[#27ae60]",
     },
 ];
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * ReservationPage Component
+ *
+ * Lists all guest reservations with KPI cards, search/filter controls,
+ * and an interactive data table with pagination.
+ */
 export default function ReservationPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -253,15 +264,15 @@ export default function ReservationPage() {
                                 {reservations.map((r, i) => (
                                     <tr key={i} className="border-b border-[#f5f5f5] transition-colors hover:bg-[#fafafa]">
                                         {/* Guest */}
-                                        <td className="py-3.5 px-4 text-[13px] color-[#4f4f4f] align-middle">
+                                        {/* Guest */}
+                                        <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle">
                                             <div className="flex items-center gap-2.5">
-                                                <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0"
-                                                    style={{ background: r.initialsBg, color: r.initialsColor }}>
+                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 ${r.initialsBgClass} ${r.initialsColorClass}`}>
                                                     {r.initials}
                                                 </div>
                                                 <div>
                                                     <div className="text-[13px] font-bold text-[#1d1d1d]">{r.name}</div>
-                                                    <div className="text-[9px] font-bold tracking-wide" style={{ color: r.tierColor }}>{r.tier}</div>
+                                                    <div className={`text-[9px] font-bold tracking-wide ${r.tierColorClass}`}>{r.tier}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -285,15 +296,15 @@ export default function ReservationPage() {
                                             </div>
                                         </td>
                                         {/* Payment */}
-                                        <td className="py-3.5 px-4 text-[13px] color-[#4f4f4f] align-middle text-center">
-                                            <span className="text-[11px] font-semibold inline-flex items-center gap-1" style={{ color: r.paymentColor }}>
-                                                <span className="w-1.5 h-1.5 rounded-full" style={{ background: r.paymentColor }} />
+                                        <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle text-center">
+                                            <span className={`text-[11px] font-semibold inline-flex items-center gap-1 ${r.paymentColorClass}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${r.paymentDotClass}`} />
                                                 {r.payment}
                                             </span>
                                         </td>
                                         {/* Status */}
-                                        <td className="py-3.5 px-4 text-[13px] color-[#4f4f4f] align-middle text-center">
-                                            <span className="text-[10px] font-bold text-white rounded px-3 py-1 tracking-wide" style={{ background: r.statusBg }}>
+                                        <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle text-center">
+                                            <span className={`text-[10px] font-bold text-white rounded px-3 py-1 tracking-wide ${r.statusBgClass}`}>
                                                 {r.status}
                                             </span>
                                         </td>

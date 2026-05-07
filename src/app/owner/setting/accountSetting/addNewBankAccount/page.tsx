@@ -16,6 +16,12 @@ import {
     Landmark
 } from "lucide-react";
 
+/**
+ * AddNewBankAccountPage Component
+ *
+ * Form for adding a new bank account for payout disbursements,
+ * including bank name, account number, SWIFT/BIC, and verification.
+ */
 export default function AddNewBankAccountPage() {
     const [bankName, setBankName] = useState("");
     const [accountHolder, setAccountHolder] = useState("");

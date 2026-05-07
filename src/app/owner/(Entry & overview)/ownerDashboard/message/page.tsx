@@ -146,6 +146,12 @@ const messageTemplates: Template[] = [
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * MessagePage Component
+ *
+ * Real-time messaging interface for property owners to communicate
+ * with guests. Supports conversation threads, search, and quick replies.
+ */
 export default function MessagePage() {
     const [selectedConversation, setSelectedConversation] = useState(1);
     const [messageText, setMessageText] = useState("");

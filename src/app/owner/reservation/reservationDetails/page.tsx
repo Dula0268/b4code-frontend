@@ -23,6 +23,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * ReservationDetailsPage Component
+ *
+ * Displays the full details of a single reservation including guest info,
+ * property & room assignment, stay dates, payment summary, and a status timeline.
+ */
 export default function ReservationDetailsPage() {
     const reservation = {
         id: "#RSV-8829",
@@ -45,10 +51,10 @@ export default function ReservationDetailsPage() {
         paymentMethod: "Visa ending in 4242",
         paymentDate: "Oct 01, 2023",
         timeline: [
-            { label: "Booking Created", time: "Oct 01, 2023 • 10:45 AM", icon: "created", color: "#953002", active: true },
-            { label: "Payment Confirmed", time: "Oct 01, 2023 • 10:50 AM", icon: "payment", color: "#27ae60", active: true },
-            { label: "Check-in", time: "Scheduled: Oct 12", icon: "checkin", color: "#b0b0b0", active: false },
-            { label: "Check-out", time: "Scheduled: Oct 15", icon: "checkout", color: "#b0b0b0", active: false },
+            { label: "Booking Created", time: "Oct 01, 2023 • 10:45 AM", icon: "created", bgClass: "bg-[#953002]", iconColor: "#fff", active: true },
+            { label: "Payment Confirmed", time: "Oct 01, 2023 • 10:50 AM", icon: "payment", bgClass: "bg-[#27ae60]", iconColor: "#fff", active: true },
+            { label: "Check-in", time: "Scheduled: Oct 12", icon: "checkin", bgClass: "bg-transparent", borderClass: "border-2 border-[#b0b0b0]", iconColor: "#b0b0b0", active: false },
+            { label: "Check-out", time: "Scheduled: Oct 15", icon: "checkout", bgClass: "bg-transparent", borderClass: "border-2 border-[#b0b0b0]", iconColor: "#b0b0b0", active: false },
         ],
     };
 
@@ -129,28 +135,29 @@ export default function ReservationDetailsPage() {
                         <div className="flex flex-col gap-0">
                             {reservation.timeline.map((item, i) => (
                                 <div key={i} className="flex items-start gap-3.5 relative pb-5">
-                                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10"
-                                        style={{
-                                            background: item.active ? item.color : "transparent",
-                                            border: item.active ? "none" : `2px solid ${item.color}`,
-                                        }}>
-                                        {item.icon === "created" && <CalendarDays size={14} color="#fff" />}
-                                        {item.icon === "payment" && <CheckCircle2 size={14} color="#fff" />}
-                                        {item.icon === "checkin" && <LogIn size={14} color={item.color} />}
-                                        {item.icon === "checkout" && <LogOut size={14} color={item.color} />}
+                                    {/* Timeline dot */}
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 ${item.bgClass} ${item.borderClass ?? ""}`}>
+                                        {item.icon === "created" && <CalendarDays size={14} color={item.iconColor} />}
+                                        {item.icon === "payment" && <CheckCircle2 size={14} color={item.iconColor} />}
+                                        {item.icon === "checkin" && <LogIn size={14} color={item.iconColor} />}
+                                        {item.icon === "checkout" && <LogOut size={14} color={item.iconColor} />}
                                     </div>
+                                    {/* Connector line */}
                                     {i < reservation.timeline.length - 1 && (
-                                        <div className="absolute left-[15px] top-[36px] bottom-0 border-l-2 border-dashed"
-                                            style={{ borderColor: reservation.timeline[i + 1].active ? "#e0e0e0" : "#e8e8e8" }} />
+                                        <div className={`absolute left-[15px] top-[36px] bottom-0 border-l-2 border-dashed ${
+                                            reservation.timeline[i + 1].active ? "border-[#e0e0e0]" : "border-[#e8e8e8]"
+                                        }`} />
                                     )}
+                                    {/* Label & time */}
                                     <div className="flex-1">
-                                        <div className="text-[13px]" style={{
-                                            fontWeight: item.active ? 700 : 500,
-                                            color: item.active ? "#1d1d1d" : "#828282",
-                                        }}>
+                                        <div className={`text-[13px] ${
+                                            item.active ? "font-bold text-[#1d1d1d]" : "font-medium text-[#828282]"
+                                        }`}>
                                             {item.label}
                                         </div>
-                                        <div className="text-[11px] mt-0.5" style={{ color: item.active ? "#953002" : "#b0b0b0" }}>
+                                        <div className={`text-[11px] mt-0.5 ${
+                                            item.active ? "text-[#953002]" : "text-[#b0b0b0]"
+                                        }`}>
                                             {item.time}
                                         </div>
                                     </div>

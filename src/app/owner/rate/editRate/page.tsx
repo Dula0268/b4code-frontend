@@ -23,6 +23,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * EditRatePage Component
+ *
+ * Form interface for editing rate plans, including plan name, description,
+ * pricing rules, channel distribution, and cancellation policies.
+ */
 export default function EditRatePage() {
     const [planName, setPlanName] = useState("Early Bird Special");
     const [description, setDescription] = useState(

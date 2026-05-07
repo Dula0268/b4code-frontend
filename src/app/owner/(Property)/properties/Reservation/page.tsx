@@ -22,15 +22,16 @@ import {
 
 /* ───────────────────── data ───────────────────── */
 
-const reservationsData = [
-    { id: "RES-001", guest: "John Doe", room: "Master Suite", dates: "Oct 15 - Oct 20, 2026", status: "Confirmed", total: "Rs. 600,000" },
-    { id: "RES-002", guest: "Jane Smith", room: "Family Loft", dates: "Nov 10 - Nov 15, 2026", status: "Pending", total: "Rs. 750,000" },
-    { id: "RES-003", guest: "Alice Johnson", room: "Ocean Guest Room", dates: "Dec 01 - Dec 05, 2026", status: "Cancelled", total: "Rs. 400,000" },
-    { id: "RES-004", guest: "Bob Brown", room: "Master Suite", dates: "Dec 10 - Dec 12, 2026", status: "Confirmed", total: "Rs. 240,000" },
-];
+const reservationsData: any[] = [];
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * ReservationsPage Component
+ *
+ * Property-level reservation listing with filtering, guest details,
+ * and status management for upcoming and past bookings.
+ */
 export default function ReservationsPage() {
     const [activeTab, setActiveTab] = useState("Reservations");
     const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
@@ -62,7 +63,7 @@ export default function ReservationsPage() {
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Downtown Luxury Loft</span>
+                    <span className="text-[#953002] font-semibold">Property Name</span>
                 </div>
 
                 {/* Scrollable Content */}
@@ -76,7 +77,7 @@ export default function ReservationsPage() {
                             </div>
                             <div>
                                 <div className="flex items-center gap-2.5">
-                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Downtown Luxury Loft</h2>
+                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Property Name</h2>
                                     <span className="text-[9px] font-bold text-white bg-[#27ae60] rounded w-max px-[7px] py-[2px] tracking-widest">ACTIVE</span>
                                 </div>
                                 <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">

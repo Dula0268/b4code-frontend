@@ -15,6 +15,12 @@ import {
     Shield
 } from "lucide-react";
 
+/**
+ * ViewStaffProfilePage Component
+ *
+ * Read-only profile view for a staff member, showing personal details,
+ * assigned properties, role, activity log, and performance metrics.
+ */
 export default function ViewStaffProfilePage() {
     // Hardcoded mock mock data for display
     const staff = {
@@ -62,7 +68,7 @@ export default function ViewStaffProfilePage() {
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#828282] font-semibold">Downtown Luxury Loft</span>
+                    <span className="text-[#828282] font-semibold">Property Name</span>
                     <ChevronRight size={14} color="#b0b0b0" />
                     <a href="/owner/properties/Staff" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Staff</a>
                     <ChevronRight size={14} color="#b0b0b0" />

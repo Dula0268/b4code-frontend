@@ -39,6 +39,12 @@ const paymentStatuses = [
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * ManualBookingPage Component
+ *
+ * Step-by-step form for creating manual bookings on behalf of guests.
+ * Includes guest details, room selection, date picking, and payment processing.
+ */
 export default function ManualBookingPage() {
     // Guest Details
     const [firstName, setFirstName] = useState("");

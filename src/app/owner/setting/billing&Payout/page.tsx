@@ -21,6 +21,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * BillingPayoutPage Component
+ *
+ * Overview of billing history and payout transactions, including
+ * linked bank accounts, pending payouts, and transaction records.
+ */
 export default function BillingPayoutPage() {
     const navItems = [
         { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },

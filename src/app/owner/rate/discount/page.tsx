@@ -25,19 +25,19 @@ const metrics = [
         title: "ACTIVE CODES",
         value: "08",
         icon: <TrendingUp size={20} color="#27ae60" />,
-        iconBg: "#e8f8ef",
+        iconBgClass: "bg-[#e8f8ef]",
     },
     {
         title: "TOTAL REDEMPTIONS",
         value: "1,248",
         icon: <Ticket size={20} color="#953002" />,
-        iconBg: "#fef0e7",
+        iconBgClass: "bg-[#fef0e7]",
     },
     {
         title: "REVENUE DRIVEN",
         value: "$14.2k",
         icon: <Banknote size={20} color="#953002" />,
-        iconBg: "#fef0e7",
+        iconBgClass: "bg-[#fef0e7]",
     },
 ];
 
@@ -82,6 +82,12 @@ const promotions = [
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * DiscountPage Component
+ * 
+ * Interface for property owners to create, manage, and track promotional
+ * discounts and campaign codes.
+ */
 export default function DiscountPage() {
     const [promoName, setPromoName] = useState("SUMMER2024");
     const [percentage, setPercentage] = useState("15");
@@ -243,8 +249,7 @@ export default function DiscountPage() {
                                 {metrics.map((m, i) => (
                                     <div key={i} className="bg-white border border-[#e8e8e8] rounded-2xl py-6 px-6 flex items-center gap-4 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.02)]">
                                         <div
-                                            className="w-14 h-14 rounded-full shrink-0 flex items-center justify-center"
-                                            style={{ backgroundColor: m.iconBg }}
+                                            className={`w-14 h-14 rounded-full shrink-0 flex items-center justify-center ${m.iconBgClass}`}
                                         >
                                             {m.icon}
                                         </div>
@@ -358,10 +363,7 @@ export default function DiscountPage() {
                                                             />
                                                         )}
                                                         {p.usageLimit === null && (
-                                                            <div
-                                                                className="h-full rounded-full w-full"
-                                                                style={{ backgroundColor: "#953002", opacity: 0.15 }}
-                                                            />
+                                                            <div className="h-full rounded-full w-full bg-[#953002]/15" />
                                                         )}
                                                     </div>
                                                 </td>

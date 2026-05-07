@@ -25,6 +25,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * NotificationPreferencesPage Component
+ *
+ * Allows owners to configure notification channels (email, SMS, push)
+ * and toggle individual event triggers for bookings, payments, and reviews.
+ */
 export default function NotificationPreferencesPage() {
     const [newBookings, setNewBookings] = useState(true);
     const [cancellations, setCancellations] = useState(true);

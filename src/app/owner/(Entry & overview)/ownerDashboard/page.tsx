@@ -132,6 +132,12 @@ const highlightDay = 2;
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * OwnerDashboardPage Component
+ *
+ * Main entry point for property owners. Displays KPI metrics, recent activity,
+ * occupancy charts, and quick-action shortcuts for managing properties.
+ */
 export default function OwnerDashboardPage() {
     const [calMonth, setCalMonth] = useState(9); // October (0-indexed)
     const [calYear, setCalYear] = useState(2023);

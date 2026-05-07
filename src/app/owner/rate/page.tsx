@@ -54,6 +54,12 @@ const seasons = [
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * RatePage Component
+ * 
+ * Main dashboard for the Rate module. Allows property owners to configure
+ * base prices, active discounts, and seasonal/weekend modifiers.
+ */
 export default function RatePage() {
     const [weekendFri, setWeekendFri] = useState(true);
     const [weekendSun, setWeekendSun] = useState(false);
@@ -272,11 +278,9 @@ export default function RatePage() {
                                         <span className="text-[14px] font-bold text-[#1d1d1d]">15%</span>
                                         <button
                                             onClick={() => setWeekendFri(!weekendFri)}
-                                            className="w-11 h-6 rounded-full border-none cursor-pointer flex items-center px-1 transition-all duration-200"
-                                            style={{
-                                                background: weekendFri ? "#953002" : "#e0e0e0",
-                                                justifyContent: weekendFri ? "flex-end" : "flex-start",
-                                            }}
+                                            className={`w-11 h-6 rounded-full border-none cursor-pointer flex items-center px-1 transition-all duration-200 ${
+                                                weekendFri ? "bg-[#953002] justify-end" : "bg-[#e0e0e0] justify-start"
+                                            }`}
                                         >
                                             <span className="w-4.5 h-4.5 rounded-full bg-white shadow-sm" />
                                         </button>
@@ -292,11 +296,9 @@ export default function RatePage() {
                                         <span className="text-[14px] font-bold text-[#1d1d1d]">0%</span>
                                         <button
                                             onClick={() => setWeekendSun(!weekendSun)}
-                                            className="w-11 h-6 rounded-full border-none cursor-pointer flex items-center px-1 transition-all duration-200"
-                                            style={{
-                                                background: weekendSun ? "#953002" : "#e0e0e0",
-                                                justifyContent: weekendSun ? "flex-end" : "flex-start",
-                                            }}
+                                            className={`w-11 h-6 rounded-full border-none cursor-pointer flex items-center px-1 transition-all duration-200 ${
+                                                weekendSun ? "bg-[#953002] justify-end" : "bg-[#e0e0e0] justify-start"
+                                            }`}
                                         >
                                             <span className="w-4.5 h-4.5 rounded-full bg-white shadow-sm" />
                                         </button>

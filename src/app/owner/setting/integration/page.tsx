@@ -23,6 +23,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * IntegrationPage Component
+ *
+ * Displays available third-party integrations (OTAs, payment gateways,
+ * channel managers) with connect/disconnect controls for each service.
+ */
 export default function IntegrationPage() {
     const navItems = [
         { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },

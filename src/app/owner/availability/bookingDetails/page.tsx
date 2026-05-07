@@ -28,6 +28,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * BookingDetailsPage Component
+ *
+ * Displays the complete details of an individual booking, including
+ * guest information, property details, payment status, and action controls.
+ */
 export default function BookingDetailsPage() {
     const [notes, setNotes] = useState("");
 

@@ -28,6 +28,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * CreateRestrictionPage Component
+ *
+ * Form for creating a new reservation restriction rule with
+ * configurable type, date range, room type scope, and thresholds.
+ */
 export default function CreateRestrictionPage() {
     const [ruleCategory, setRuleCategory] = useState("Minimum Length of Stay");
     const [startDate, setStartDate] = useState("");

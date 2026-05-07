@@ -29,6 +29,12 @@ const ratePlans = [
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * RatesPage Component
+ *
+ * Property-level rate management showing base prices, seasonal
+ * adjustments, and rate plan configurations per room type.
+ */
 export default function RatesPage() {
     const [activeTab, setActiveTab] = useState("Rates");
     const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
@@ -60,7 +66,7 @@ export default function RatesPage() {
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Downtown Luxury Loft</span>
+                    <span className="text-[#953002] font-semibold">Property Name</span>
                 </div>
 
                 {/* Scrollable Content */}
@@ -74,7 +80,7 @@ export default function RatesPage() {
                             </div>
                             <div>
                                 <div className="flex items-center gap-2.5">
-                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Downtown Luxury Loft</h2>
+                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Property Name</h2>
                                     <span className="text-[9px] font-bold text-white bg-[#27ae60] rounded w-max px-[7px] py-[2px] tracking-widest">ACTIVE</span>
                                 </div>
                                 <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">

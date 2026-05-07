@@ -148,6 +148,12 @@ function OccupancyIcon({ count }: { count: number }) {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * RoomManagementPage Component
+ *
+ * Central room management dashboard listing all room types with
+ * occupancy stats, pricing, amenities, and quick-action controls.
+ */
 export default function RoomManagementPage() {
     const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("All Rooms");
     const [currentPage, setCurrentPage] = useState(1);

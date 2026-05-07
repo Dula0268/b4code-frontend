@@ -30,6 +30,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * ReservationRestrictionPage Component
+ *
+ * Lists all active reservation restriction rules (min stay, max stay,
+ * closed-to-arrival, etc.) and provides create/edit/delete actions.
+ */
 export default function ReservationRestrictionPage() {
     const [search, setSearch] = useState("");
 

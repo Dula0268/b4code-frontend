@@ -16,6 +16,12 @@ import {
     Landmark
 } from "lucide-react";
 
+/**
+ * EditBankDetailsPage Component
+ *
+ * Form for editing existing bank account details used for
+ * payout processing, including account number and routing info.
+ */
 export default function EditBankDetailsPage() {
     const [bankName, setBankName] = useState("Chase Bank");
     const [accountHolder, setAccountHolder] = useState("John Doe");

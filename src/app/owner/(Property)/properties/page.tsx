@@ -22,63 +22,7 @@ import {
 
 /* ───────────────────── data ───────────────────── */
 
-const properties = [
-    {
-        id: 1,
-        name: "Downtown Luxury Loft",
-        address: "123 Main St, Gampaha, WA",
-        image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=80&fit=crop",
-        rate: "Rs.40,000",
-        rating: 4.8,
-        reviews: 12,
-        status: "active",
-        statusOn: true,
-    },
-    {
-        id: 2,
-        name: "Lakeside Cabin Retreat",
-        address: "456 Lake Rd, Tahoe, CA",
-        image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=120&h=80&fit=crop",
-        rate: "Rs.60,000",
-        rating: 4.9,
-        reviews: 24,
-        status: "inactive",
-        statusOn: false,
-    },
-    {
-        id: 3,
-        name: "Urban Skyline Condo",
-        address: "789 Broad St, New York, NY",
-        image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=120&h=80&fit=crop",
-        rate: "Rs.120,000",
-        rating: 4.7,
-        reviews: 8,
-        status: "active",
-        statusOn: true,
-    },
-    {
-        id: 4,
-        name: "Sunny Beach Bungalow",
-        address: "321 Ocean Dr, Miami, FL",
-        image: "https://images.unsplash.com/photo-1559599238-308793637427?w=120&h=80&fit=crop",
-        rate: "Rs.90,000",
-        rating: 4.6,
-        reviews: 15,
-        status: "active",
-        statusOn: true,
-    },
-    {
-        id: 5,
-        name: "Alpine Ski Lodge",
-        address: "654 Mountain View, Aspen, CO",
-        image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=120&h=80&fit=crop",
-        rate: "Rs.140,000",
-        rating: 5.0,
-        reviews: 5,
-        status: "maintenance",
-        statusOn: false,
-    },
-];
+const properties: any[] = [];
 
 const sidebarItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/owner/ownerDashboard", active: false },
@@ -92,6 +36,12 @@ const sidebarItems = [
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * PropertiesPage Component
+ *
+ * Lists all properties owned by the current user with summary cards
+ * showing occupancy, revenue, and status for each property.
+ */
 export default function PropertiesPage() {
     const [searchText, setSearchText] = useState("");
     const [currentPage, setCurrentPage] = useState(1);

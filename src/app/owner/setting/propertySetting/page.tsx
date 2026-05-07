@@ -25,14 +25,16 @@ import {
 
 /* ───────────────────── mock data ───────────────────── */
 
-const properties = [
-    { name: "Downtown Luxury Loft", address: "123 Main St, Gamapha, WA", img: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=80&h=80&fit=crop" },
-    { name: "Lakeside Cabin Retreat", address: "456 Lake Rd, Tahoe, CA", img: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=80&h=80&fit=crop" },
-    { name: "Urban Skyline Condo", address: "789 Broad St, New York, NY", img: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=80&h=80&fit=crop" },
-];
+const properties: any[] = [];
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * PropertySettingPage Component
+ *
+ * Central settings hub for a property, providing access to general
+ * configuration, reservation restrictions, inventory rules, and integrations.
+ */
 export default function PropertySettingPage() {
     const [currency, setCurrency] = useState("LKR");
     const [timezone, setTimezone] = useState("(GMT-08:00) Pacific Time");

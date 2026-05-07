@@ -21,6 +21,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * ChangePasswordPage Component
+ *
+ * Secure form for changing the owner account password, requiring
+ * current password verification and new password confirmation.
+ */
 export default function ChangePasswordPage() {
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");

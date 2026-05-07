@@ -20,6 +20,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * ChangePhotoPage Component
+ *
+ * Interface for uploading or removing the owner profile photo,
+ * with image preview and upload progress feedback.
+ */
 export default function ChangePhotoPage() {
     const [preview, setPreview] = useState<string | null>("https://api.dicebear.com/7.x/avataaars/svg?seed=kasun");
     const [isDragging, setIsDragging] = useState(false);

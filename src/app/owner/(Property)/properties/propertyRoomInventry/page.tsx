@@ -30,6 +30,12 @@ const rooms = [
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * PropertyRoomInventoryPage Component
+ *
+ * Manages room inventory for a specific property, including room counts,
+ * availability allocations, and overbooking thresholds per room type.
+ */
 export default function PropertyRoomInventoryPage() {
     const [activeTab, setActiveTab] = useState("Rooms");
     const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
@@ -75,7 +81,7 @@ export default function PropertyRoomInventoryPage() {
                             </div>
                             <div>
                                 <div className="flex items-center gap-2.5">
-                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Downtown Luxury Loft</h2>
+                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Property Name</h2>
                                     <span className="text-[9px] font-bold text-white bg-[#27ae60] rounded w-max px-[7px] py-[2px] tracking-widest">ACTIVE</span>
                                 </div>
                                 <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">

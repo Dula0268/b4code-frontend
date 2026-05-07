@@ -20,11 +20,17 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * PropertyDetailsPage Component
+ *
+ * Read-only view of a single property showing its full details,
+ * amenities, location map, and photo gallery.
+ */
 export default function PropertyDetailsPage() {
     const [activeTab, setActiveTab] = useState("Overview");
 
     const property = {
-        name: "Downtown Luxury Loft",
+        name: "Property Name",
         description:
             "Experience breathtaking coastal views in this ultra-modern architectural masterpiece. Located in the heart of Malibu, this villa offers premium amenities, infinity pool, and private beach access for an unforgettable stay.",
         type: "Villa",
@@ -63,7 +69,7 @@ export default function PropertyDetailsPage() {
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Downtown Luxury Loft</span>
+                    <span className="text-[#953002] font-semibold">Property Name</span>
                 </div>
 
                 {/* Scrollable Content */}
@@ -77,7 +83,7 @@ export default function PropertyDetailsPage() {
                             </div>
                             <div>
                                 <div className="flex items-center gap-2.5">
-                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Downtown Luxury Loft</h2>
+                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Property Name</h2>
                                     <span className="text-[9px] font-bold text-white bg-[#27ae60] rounded w-max px-[7px] py-[2px] tracking-widest">ACTIVE</span>
                                 </div>
                                 <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">

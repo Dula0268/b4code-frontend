@@ -27,6 +27,12 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * AccountSettingPage Component
+ *
+ * Owner account settings page allowing profile edits, email/phone updates,
+ * and navigation to sub-pages for password, photo, and billing changes.
+ */
 export default function AccountSettingPage() {
     const [firstName, setFirstName] = useState("kasun");
     const [lastName, setLastName] = useState("kumara");

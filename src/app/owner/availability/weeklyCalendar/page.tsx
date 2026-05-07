@@ -69,6 +69,12 @@ const mockBookings: Record<string, BookingInfo> = {
 
 /* ───────────────────── component ───────────────────── */
 
+/**
+ * WeeklyCalendarPage Component
+ * 
+ * Provides a calendar view of property availability and bookings for a single week.
+ * Owners can select dates, manage blocks, and view booking details in a more granular view.
+ */
 export default function WeeklyCalendarPage() {
     const [baseDate, setBaseDate] = useState(new Date(2024, 10, 5)); // Nov 5, 2024
     const [selectedDates, setSelectedDates] = useState(["2024-11-03", "2024-11-04", "2024-11-05"]);
@@ -169,7 +175,7 @@ export default function WeeklyCalendarPage() {
                     <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">OCCUPANCY (NOV)</div>
                     <div className="text-[22px] font-extrabold text-[#1d1d1d]">78%</div>
                     <div className="h-1 bg-[#e8e8e8] rounded mt-2 overflow-hidden">
-                        <div className="h-full bg-[#953002] rounded" style={{ width: "78%" }} />
+                        <div className="h-full bg-[#953002] rounded w-[78%]" />
                     </div>
                 </div>
                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3 px-3.5 mb-2">
@@ -280,9 +286,9 @@ export default function WeeklyCalendarPage() {
                     {/* New Status */}
                     <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-2">NEW STATUS</div>
                     {[
-                        { key: "available", label: "Available", color: "#953002" },
-                        { key: "booked", label: "Booked (Manual)", color: "#b0b0b0" },
-                        { key: "blocked", label: "Blocked / OOO", color: "#b0b0b0" },
+                        { key: "available", label: "Available", borderColorClass: "border-[#953002]" },
+                        { key: "booked", label: "Booked (Manual)", borderColorClass: "border-[#b0b0b0]" },
+                        { key: "blocked", label: "Blocked / OOO", borderColorClass: "border-[#b0b0b0]" },
                     ].map((opt) => {
                         const sel = newStatus === opt.key;
                         return (
@@ -293,7 +299,9 @@ export default function WeeklyCalendarPage() {
                                     sel ? "border-2 border-[#953002] bg-[#fef5ef]" : "border border-[#e0e0e0] bg-white"
                                 }`}
                             >
-                                <span className={`w-3.5 h-3.5 flex-shrink-0 rounded-full inline-flex items-center justify-center ${sel ? "bg-[#953002]" : "border-2 border-[#b0b0b0]"}`} style={{ borderColor: !sel && opt.color ? opt.color : '' }}>
+                                <span className={`w-3.5 h-3.5 flex-shrink-0 rounded-full inline-flex items-center justify-center ${
+                                    sel ? "bg-[#953002]" : `border-2 ${opt.borderColorClass}`
+                                }`}>
                                     {sel && <Check size={10} color="#fff" strokeWidth={3} />}
                                 </span>
                                 <span className={`text-[13px] ${sel ? "font-bold text-[#1d1d1d]" : "font-medium text-[#1d1d1d]"}`}>{opt.label}</span>
