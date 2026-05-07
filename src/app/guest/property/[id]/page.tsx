@@ -23,9 +23,18 @@ type BackendRoom = {
     imageUrl?: string
 }
 
-type BackendPropertyDetail = Omit<Partial<PropertyDetail>, "rooms"> & {
+type BackendPropertyDetail = {
+    [key: string]: unknown
     id?: string | number
-    rooms?: BackendRoom[]
+    rooms?: unknown
+}
+
+function isStringArray(value: unknown): value is string[] {
+    return Array.isArray(value) && value.every(item => typeof item === "string")
+}
+
+function isBackendRoomArray(value: unknown): value is BackendRoom[] {
+    return Array.isArray(value) && value.every(item => typeof item === "object" && item !== null)
 }
 
 function mapBackendRoom(room: BackendRoom, fallback?: Room): Room {
@@ -44,30 +53,46 @@ function mapBackendRoom(room: BackendRoom, fallback?: Room): Room {
 }
 
 function mergePropertyDetails(fallback: PropertyDetail, backend: BackendPropertyDetail): PropertyDetail {
-    const backendRooms = backend.rooms ?? []
+    const backendRooms = isBackendRoomArray(backend.rooms) ? backend.rooms : []
+    const title = typeof backend.title === "string" ? backend.title : fallback.title
+    const location = typeof backend.location === "string" ? backend.location : fallback.location
+    const fullAddress = typeof backend.fullAddress === "string" ? backend.fullAddress : fallback.fullAddress
+    const propertyType = typeof backend.propertyType === "string" ? backend.propertyType : fallback.propertyType
+    const pricePerNight = typeof backend.pricePerNight === "number" ? backend.pricePerNight : fallback.pricePerNight
+    const rating = typeof backend.rating === "number" ? backend.rating : fallback.rating
+    const reviewCount = typeof backend.reviewCount === "number" ? backend.reviewCount : fallback.reviewCount
+    const badge = backend.badge === "Superhost" || backend.badge === "Guest favorite" ? backend.badge : fallback.badge
+    const imageSrc = typeof backend.imageSrc === "string" ? backend.imageSrc : fallback.imageSrc
+    const galleryImages = isStringArray(backend.galleryImages) && backend.galleryImages.length > 0 ? backend.galleryImages : fallback.galleryImages
+    const description = typeof backend.description === "string" ? backend.description : fallback.description
+    const amenities = Array.isArray(backend.amenities) && backend.amenities.length > 0 ? backend.amenities : fallback.amenities
+    const reviewBreakdown = Array.isArray(backend.reviewBreakdown) && backend.reviewBreakdown.length > 0 ? backend.reviewBreakdown : fallback.reviewBreakdown
+    const reviews = Array.isArray(backend.reviews) && backend.reviews.length > 0 ? backend.reviews : fallback.reviews
+    const lat = typeof backend.lat === "number" ? backend.lat : fallback.lat
+    const lng = typeof backend.lng === "number" ? backend.lng : fallback.lng
 
     return {
         ...fallback,
         id: String(backend.id ?? fallback.id),
-        title: backend.title ?? fallback.title,
-        location: backend.location ?? fallback.location,
-        fullAddress: backend.fullAddress ?? fallback.fullAddress,
-        propertyType: backend.propertyType ?? fallback.propertyType,
-        pricePerNight: backend.pricePerNight ?? fallback.pricePerNight,
-        rating: backend.rating ?? fallback.rating,
-        reviewCount: backend.reviewCount ?? fallback.reviewCount,
-        badge: backend.badge ?? fallback.badge,
-        imageSrc: backend.imageSrc ?? fallback.imageSrc,
-        galleryImages: backend.galleryImages?.length ? backend.galleryImages : fallback.galleryImages,
-        description: backend.description ?? fallback.description,
-        amenities: backend.amenities?.length ? backend.amenities : fallback.amenities,
-        reviewBreakdown: backend.reviewBreakdown?.length ? backend.reviewBreakdown : fallback.reviewBreakdown,
-        reviews: backend.reviews?.length ? backend.reviews : fallback.reviews,
+        title,
+        location,
+        fullAddress,
+        propertyType,
+        pricePerNight,
+        rating,
+        reviewCount,
+        badge,
+        imageSrc,
+        galleryImages,
+        description,
+        amenities,
+        reviewBreakdown,
+        reviews,
         rooms: backendRooms.length > 0
             ? backendRooms.map((room, index) => mapBackendRoom(room, fallback.rooms[index] ?? fallback.rooms[0]))
             : fallback.rooms,
-        lat: backend.lat ?? fallback.lat,
-        lng: backend.lng ?? fallback.lng,
+        lat,
+        lng,
     }
 }
 
