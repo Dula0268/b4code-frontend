@@ -3,30 +3,23 @@
 import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { useCartStore, type MenuItem } from "@/store/guest/order/cart-store";
+import { useGuestMenuStore } from "@/store/guest/ordering/menu.store";
+import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 import MenuItemCard from "./menu-item-card";
 import OrderSidebar from "./order-sidebar";
 
-const CATEGORIES: MenuItem["category"][] = [
-  "All Items",
-  "Starters",
-  "Mains",
-  "Desserts",
-  "Beverages",
-];
+type SortOption = "default" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 
-const TAG_OPTIONS: { value: NonNullable<MenuItem["tag"]>; label: string }[] = [
+const TAG_OPTIONS: { value: string; label: string }[] = [
   { value: "POPULAR", label: "Popular" },
   { value: "VEG", label: "Veg" },
   { value: "SPICY", label: "Spicy" },
   { value: "NON_VEG", label: "Non Veg" },
 ];
-
-type SortOption = "default" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "default", label: "Default" },
@@ -36,9 +29,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "name-desc", label: "Name: Z → A" },
 ];
 
-// TODO: Fetch from API using guest menu store instead of hardcoded items
-const DEMO_ITEMS: MenuItem[] = [];
-
 function formatLkr(n: number) {
   return `LKR ${n.toLocaleString("en-LK")}`;
 }
@@ -47,15 +37,33 @@ export default function MenuClient() {
   const add = useCartStore((s) => s.add);
   const itemCount = useCartStore((s) => s.itemCount());
 
-  const [category, setCategory] = React.useState<MenuItem["category"]>("All Items");
+  // Guest menu store — fetches from API
+  const categories = useGuestMenuStore((s) => s.categories);
+  const fetchMenu = useGuestMenuStore((s) => s.fetchMenu);
+  const menuLoading = useGuestMenuStore((s) => s.loading);
+  const menuError = useGuestMenuStore((s) => s.error);
+
+  // QR context provides the propertyId
+  const qrContext = useOrderContextStore((s) => s.qrContext);
+
+  // Local UI state
+  const [activeCategory, setActiveCategory] = React.useState<string>("All Items");
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<SortOption>("default");
-  const [tagFilters, setTagFilters] = React.useState<Set<NonNullable<MenuItem["tag"]>>>(new Set());
+  const [tagFilters, setTagFilters] = React.useState<Set<string>>(new Set());
 
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const filterRef = React.useRef<HTMLDivElement>(null);
+
+  // Fetch menu from API when propertyId is available
+  React.useEffect(() => {
+    const propertyId = qrContext?.propertyId;
+    if (propertyId && propertyId > 0) {
+      fetchMenu(propertyId);
+    }
+  }, [qrContext?.propertyId, fetchMenu]);
 
   // Close filter dropdown on outside click
   React.useEffect(() => {
@@ -75,7 +83,7 @@ export default function MenuClient() {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
-  const toggleTag = (tag: NonNullable<MenuItem["tag"]>) => {
+  const toggleTag = (tag: string) => {
     setTagFilters((prev) => {
       const next = new Set(prev);
       if (next.has(tag)) next.delete(tag);
@@ -84,12 +92,37 @@ export default function MenuClient() {
     });
   };
 
+  // Build category list from API data
+  const categoryNames = React.useMemo(() => {
+    return ["All Items", ...categories.map((c) => c.name)];
+  }, [categories]);
+
+  // Flatten all items from categories and convert to cart-compatible format
+  const allItems: MenuItem[] = React.useMemo(() => {
+    return categories.flatMap((cat) =>
+      cat.items.map((item) => ({
+        id: String(item.id),
+        name: item.name,
+        title: item.title || item.name,
+        description: item.description || "",
+        price: item.price,
+        priceLkr: item.priceLkr || item.price,
+        imageUrl: item.imageUrl,
+        tag: item.tag,
+        category: item.category || cat.name,
+        variants: item.variants,
+        modifiers: item.modifiers,
+      }))
+    );
+  }, [categories]);
+
+  // Filter and sort items
   const items = React.useMemo(() => {
-    let result = [...DEMO_ITEMS];
+    let result = [...allItems];
 
     // Category filter
-    if (category !== "All Items") {
-      result = result.filter((i) => i.category === category);
+    if (activeCategory !== "All Items") {
+      result = result.filter((i) => i.category === activeCategory);
     }
 
     // Search filter
@@ -114,9 +147,44 @@ export default function MenuClient() {
     else if (sortBy === "name-desc") result.sort((a, b) => b.title.localeCompare(a.title));
 
     return result;
-  }, [category, searchQuery, tagFilters, sortBy]);
+  }, [allItems, activeCategory, searchQuery, tagFilters, sortBy]);
 
   const hasActiveFilters = tagFilters.size > 0 || sortBy !== "default";
+
+  // Loading state
+  if (menuLoading) {
+    return (
+      <div className="ps-container flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[var(--gray-5)] border-t-[var(--brand-primary)]" />
+          <p className="text-sm text-[var(--gray-3)] mt-4">Loading menu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (menuError) {
+    return (
+      <div className="ps-container flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-sm">
+          <div className="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <p className="text-lg font-bold text-[var(--black-2)]">Unable to load menu</p>
+          <p className="text-sm text-[var(--gray-3)] mt-1">{menuError}</p>
+          <Button
+            className="mt-4 bg-[var(--brand-primary)] text-white"
+            onClick={() => qrContext?.propertyId && fetchMenu(qrContext.propertyId)}
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ps-container">
@@ -125,12 +193,12 @@ export default function MenuClient() {
         <div className="col-span-12 xl:col-span-8 2xl:col-span-9">
           {/* category pills row — horizontally scrollable on mobile */}
           <div className="flex items-center gap-1.5 md:gap-3 overflow-x-auto pb-1.5 md:pb-0 md:flex-wrap scrollbar-hide">
-            {CATEGORIES.map((c) => {
-              const active = c === category;
+            {categoryNames.map((c) => {
+              const active = c === activeCategory;
               return (
                 <button
                   key={c}
-                  onClick={() => setCategory(c)}
+                  onClick={() => setActiveCategory(c)}
                   className={[
                     "h-8 md:h-10 rounded-full border px-3 md:px-5 text-[11px] md:text-sm font-medium transition whitespace-nowrap shrink-0",
                     active
@@ -145,7 +213,12 @@ export default function MenuClient() {
           </div>
 
           <div className="mt-3 md:mt-8 flex items-center justify-between">
-            <h3 className="text-[#111827] text-base md:text-2xl font-bold">Popular Dishes</h3>
+            <h3 className="text-[#111827] text-base md:text-2xl font-bold">
+              {activeCategory === "All Items" ? "All Dishes" : activeCategory}
+              <span className="text-sm font-normal text-[var(--gray-3)] ml-2">
+                ({items.length} {items.length === 1 ? "item" : "items"})
+              </span>
+            </h3>
 
             {/* right-side icons */}
             <div className="flex items-center gap-2">
@@ -314,7 +387,11 @@ export default function MenuClient() {
                     <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                   <p className="text-lg font-medium text-[var(--black-2)]">No dishes found</p>
-                  <p className="text-sm text-[var(--gray-3)] mt-1">Try adjusting your search or filters</p>
+                  <p className="text-sm text-[var(--gray-3)] mt-1">
+                    {allItems.length === 0
+                      ? "The menu hasn't been set up yet. Please check back later."
+                      : "Try adjusting your search or filters"}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-6">
