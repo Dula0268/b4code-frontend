@@ -23,12 +23,6 @@ import {
 
 /* ───────────────────── component ───────────────────── */
 
-/**
- * EditRatePage Component
- *
- * Form interface for editing rate plans, including plan name, description,
- * pricing rules, channel distribution, and cancellation policies.
- */
 export default function EditRatePage() {
     const [planName, setPlanName] = useState("Early Bird Special");
     const [description, setDescription] = useState(
@@ -62,11 +56,10 @@ export default function EditRatePage() {
                         <a
                             key={item.label}
                             href={item.href}
-                            className={`flex items-center gap-2.5 py-2.5 px-3.5 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-4 ${
-                                item.active
-                                    ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                    : "bg-transparent text-[#4f4f4f] font-medium border-transparent"
-                            }`}
+                            className={`flex items-center gap-2.5 py-2.5 px-3.5 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-4 ${item.active
+                                ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
+                                : "bg-transparent text-[#4f4f4f] font-medium border-transparent"
+                                }`}
                         >
                             {item.icon}
                             <span>{item.label}</span>
@@ -276,9 +269,8 @@ export default function EditRatePage() {
                                     <span className="text-[13px] text-[#4f4f4f]">Live on channels</span>
                                     <button
                                         onClick={() => setLiveOnChannels(!liveOnChannels)}
-                                        className={`w-11 h-6 rounded-full border-none cursor-pointer flex items-center px-[3px] transition-all duration-200 ${
-                                            liveOnChannels ? "bg-[#953002] justify-end" : "bg-[#e0e0e0] justify-start"
-                                        }`}
+                                        className={`w-11 h-6 rounded-full border-none cursor-pointer flex items-center px-[3px] transition-all duration-200 ${liveOnChannels ? "bg-[#953002] justify-end" : "bg-[#e0e0e0] justify-start"
+                                            }`}
                                     >
                                         <span className="w-4.5 h-4.5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]" />
                                     </button>
