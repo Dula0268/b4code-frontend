@@ -3,13 +3,8 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import {
-  Clock, ChefHat, CheckCircle2, Receipt,
-  Phone, MessageSquare, Star, Package, Truck,
-  ArrowRight, RefreshCw, AlertCircle, Utensils, MapPin
-} from "lucide-react"
+import { Clock, ChefHat, CheckCircle2, Receipt, Phone, MessageSquare, Star, Package, Truck, ArrowRight, RefreshCw, AlertCircle, Utensils, MapPin } from "lucide-react"
 
-// ─── Configuration & Types ───────────────────────────────────────────────────
 type OrderStatus = "preparing" | "ready" | "delivering" | "delivered"
 
 const APP_CONFIG = {
@@ -53,7 +48,6 @@ const STATUS_MAP: Record<OrderStatus, { label: string; color: string; bg: string
   delivered: { label: "Delivered", color: "text-green-700", bg: "bg-green-50 border-green-200", progress: 100 },
 }
 
-// ─── Business Logic Hook ─────────────────────────────────────────────────────
 function useOrderDetailsLogic() {
   const [order, setOrder] = useState<typeof MOCK_ORDER | null>(null)
   const [loading, setLoading] = useState(true)
@@ -65,7 +59,6 @@ function useOrderDetailsLogic() {
     const fetchInitial = async () => {
       try {
         setLoading(true)
-        // Simulate network API fetch
         await new Promise(resolve => setTimeout(resolve, APP_CONFIG.apiDelayMs))
         if (active) setOrder(MOCK_ORDER)
       } catch (err) {
@@ -82,9 +75,8 @@ function useOrderDetailsLogic() {
     setRefreshing(true)
     setErrorMsg(null)
     try {
-      // Simulate real-time polling check
       await new Promise(resolve => setTimeout(resolve, APP_CONFIG.apiDelayMs))
-      setOrder({ ...MOCK_ORDER }) // Trigger React re-render
+      setOrder({ ...MOCK_ORDER })
     } catch (err) {
       setErrorMsg("Refresh failed. Retrying...")
     } finally {
@@ -95,7 +87,6 @@ function useOrderDetailsLogic() {
   const handleReportIssue = async () => {
     setErrorMsg(null)
     try {
-      // Simulate escalation to staff
       await new Promise(resolve => setTimeout(resolve, 500))
       alert("Front desk has been alerted regarding this order.")
     } catch (err) {
@@ -103,13 +94,10 @@ function useOrderDetailsLogic() {
     }
   }
 
-  return {
-    order, loading, refreshing, errorMsg, handleRefreshStatus, handleReportIssue
-  }
+  return { order, loading, refreshing, errorMsg, handleRefreshStatus, handleReportIssue }
 }
 
-// ─── Component UI ────────────────────────────────────────────────────────────
-export default function OrderDetailsPage() {
+export default function OrderDetailsPageClient() {
   const logic = useOrderDetailsLogic()
   const { order, loading, refreshing, errorMsg } = logic
 
@@ -121,8 +109,7 @@ export default function OrderDetailsPage() {
     )
   }
 
-  const status = order.status
-  const statusInfo = STATUS_MAP[status]
+  const statusInfo = STATUS_MAP[order.status]
 
   return (
     <div className="min-h-screen pt-20 pb-16" style={{ background: "transparent" }}>
@@ -137,7 +124,6 @@ export default function OrderDetailsPage() {
           </div>
         )}
 
-        {/* ── Hero status bar ───────────────────────────────────────────── */}
         <div className="bg-[var(--brand-primary)] rounded-[28px] overflow-hidden mb-6 shadow-lg relative">
           {refreshing && (
             <div className="absolute top-0 left-0 w-full h-1">
@@ -168,22 +154,17 @@ export default function OrderDetailsPage() {
               </div>
             </div>
 
-            {/* Progress bar */}
             <div>
               <div className="flex justify-between text-[11px] font-bold text-white/40 mb-2">
                 <span>Order placed</span>
                 <span>Delivered</span>
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-[var(--brand-secondary)] to-[var(--brand-primary)] rounded-full transition-all duration-1000"
-                  style={{ width: `${statusInfo.progress}%` }}
-                />
+                <div className="h-full bg-gradient-to-r from-[var(--brand-secondary)] to-[var(--brand-primary)] rounded-full transition-all duration-1000" style={{ width: `${statusInfo.progress}%` }} />
               </div>
             </div>
           </div>
 
-          {/* Chef strip */}
           <div className="border-t border-white/8 px-8 py-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-[var(--brand-secondary)]/20 flex items-center justify-center">
               <ChefHat size={20} className="text-[var(--brand-secondary)]" />
@@ -198,13 +179,9 @@ export default function OrderDetailsPage() {
           </div>
         </div>
 
-        {/* ── Main grid ─────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── Left: Items + Bill ──────────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-5">
-
-            {/* Ordered Items */}
             <div className="ps-card rounded-[24px] p-7">
               <h2 className="text-[16px] font-black text-[var(--fg)] mb-6 flex items-center gap-2">
                 <Utensils size={16} className="text-[var(--brand-secondary)]" /> Ordered Items
@@ -237,7 +214,6 @@ export default function OrderDetailsPage() {
               </div>
             </div>
 
-            {/* Bill Breakdown */}
             <div className="ps-card rounded-[24px] p-7">
               <h2 className="text-[16px] font-black text-[var(--fg)] mb-5 flex items-center gap-2">
                 <Receipt size={16} className="text-[var(--brand-secondary)]" /> Bill Summary
@@ -271,10 +247,8 @@ export default function OrderDetailsPage() {
               </div>
             </div>
 
-            {/* Quick Actions */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link href={`/guest/messages?type=staff?tab=staff&q=Question about my order ${order.id}`}
-                className="flex items-center gap-3 p-5 bg-white rounded-2xl border border-[var(--border)] shadow-sm hover:shadow-md transition-shadow no-underline group">
+              <Link href={`/guest/messages?type=staff?tab=staff&q=Question about my order ${order.id}`} className="flex items-center gap-3 p-5 bg-white rounded-2xl border border-[var(--border)] shadow-sm hover:shadow-md transition-shadow no-underline group">
                 <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)] flex items-center justify-center flex-shrink-0">
                   <MessageSquare size={18} className="text-[var(--brand-secondary)]" />
                 </div>
@@ -298,15 +272,12 @@ export default function OrderDetailsPage() {
             </div>
           </div>
 
-          {/* ── Right: Timeline ─────────────────────────────────────────── */}
           <div className="lg:col-span-1 space-y-5 sticky top-24 self-start">
             <div className="ps-card rounded-[24px] p-7">
               <h2 className="text-[16px] font-black text-[var(--fg)] mb-7">Order Progress</h2>
 
               <div className="relative">
-                {/* Track line */}
                 <div className="absolute left-[15px] top-3 bottom-8 w-[2px] bg-[var(--border)]" />
-                {/* Filled track */}
                 <div className="absolute left-[15px] top-3 w-[2px] bg-gradient-to-b from-[var(--brand-secondary)] to-[var(--brand-secondary)]/40" style={{ height: "40%" }} />
 
                 <div className="space-y-6">
@@ -314,19 +285,12 @@ export default function OrderDetailsPage() {
                     const Icon = step.icon
                     return (
                       <div key={i} className="relative flex items-start gap-4">
-                        <div className={`w-[30px] h-[30px] rounded-full z-10 flex-shrink-0 flex items-center justify-center border-2 transition-all ${step.active
-                          ? "bg-[var(--brand-secondary)] border-[var(--brand-secondary)] shadow-lg shadow-amber-300/40"
-                          : step.done
-                            ? "bg-[var(--brand-secondary)] border-[var(--brand-secondary)]"
-                            : "bg-white border-[var(--border)]"
-                          }`}>
+                        <div className={`w-[30px] h-[30px] rounded-full z-10 flex-shrink-0 flex items-center justify-center border-2 transition-all ${step.active ? "bg-[var(--brand-secondary)] border-[var(--brand-secondary)] shadow-lg shadow-amber-300/40" : step.done ? "bg-[var(--brand-secondary)] border-[var(--brand-secondary)]" : "bg-white border-[var(--border)]"}`}>
                           <Icon size={13} className={step.done || step.active ? "text-[var(--brand-primary)]" : "text-[var(--gray-4)]"} />
                           {step.active && <span className="absolute inset-0 rounded-full bg-[var(--brand-secondary)]/30 animate-ping" />}
                         </div>
                         <div className="flex-1 pt-1">
-                          <p className={`text-[13px] font-bold ${step.done || step.active ? "text-[var(--fg)]" : "text-[var(--gray-4)]"}`}>
-                            {step.label}
-                          </p>
+                          <p className={`text-[13px] font-bold ${step.done || step.active ? "text-[var(--fg)]" : "text-[var(--gray-4)]"}`}>{step.label}</p>
                           <p className="text-[11px] text-[var(--gray-4)] mt-0.5">{step.time}</p>
                           {step.assignee && (
                             <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-[var(--brand-secondary)]/10 rounded-lg text-[10px] font-black text-[var(--brand-primary)] uppercase tracking-wide">
@@ -341,27 +305,21 @@ export default function OrderDetailsPage() {
               </div>
 
               <div className="mt-8 pt-5 border-t border-[var(--border)] flex flex-col gap-3">
-                <button
-                  onClick={logic.handleRefreshStatus}
-                  disabled={refreshing}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 border border-[var(--border)] hover:bg-[#f8f7f5] text-[13px] font-bold text-[var(--gray-2)] rounded-xl transition-colors cursor-pointer disabled:opacity-50">
+                <button onClick={logic.handleRefreshStatus} disabled={refreshing} className="w-full flex items-center justify-center gap-2 py-2.5 border border-[var(--border)] hover:bg-[#f8f7f5] text-[13px] font-bold text-[var(--gray-2)] rounded-xl transition-colors cursor-pointer disabled:opacity-50">
                   <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
                   {refreshing ? "Refreshing..." : "Refresh Status"}
                 </button>
-                <Link href="/guest/my-room"
-                  className="w-full py-3 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)] text-white rounded-xl text-[13px] font-bold transition-colors flex items-center justify-center gap-2 no-underline">
+                <Link href="/guest/my-room" className="w-full py-3 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)] text-white rounded-xl text-[13px] font-bold transition-colors flex items-center justify-center gap-2 no-underline">
                   Back to Dashboard
                 </Link>
               </div>
             </div>
 
-            {/* Rate after delivery */}
             <div className="bg-[var(--brand-primary)] rounded-[24px] p-6 text-white">
               <p className="text-[12px] font-black text-white/40 uppercase tracking-widest mb-3">After your meal</p>
               <h3 className="text-[16px] font-black mb-1">Enjoyed it?</h3>
               <p className="text-[12px] text-white/50 mb-4 leading-relaxed">Leave a review and help other guests discover our best dishes.</p>
-              <Link href="/guest/reviews"
-                className="flex items-center gap-2 text-[var(--brand-secondary)] font-bold text-[13px] no-underline hover:gap-3 transition-all">
+              <Link href="/guest/reviews" className="flex items-center gap-2 text-[var(--brand-secondary)] font-bold text-[13px] no-underline hover:gap-3 transition-all">
                 <Star size={14} className="fill-[var(--brand-secondary)]" />
                 Write a Review <ArrowRight size={13} />
               </Link>

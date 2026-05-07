@@ -1,19 +1,18 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
-import QrScannerPage from "@/components/features/guest/my-room/qr-scanner-page"
+import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import QrScannerPageClient from "./page-client"
 
 export const metadata = {
     title: "Scan to Order — Prime Stay Sri Lanka",
     description: "Scan the QR code in your room to browse the digital food & beverage menu.",
 }
 
-import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-
-export default function QrScannerRoute() {
+export default function QrScannerPage() {
     return (
         <div className="min-h-screen flex flex-col bg-[var(--bg)]">
             <GuestTopbar />
             <main className="flex-1">
-                <QrScannerPage />
+                <QrScannerPageClient />
             </main>
             <GuestFooter />
         </div>
