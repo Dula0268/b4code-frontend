@@ -21,6 +21,8 @@ export interface PropertyListing {
   badge?: string;
   imageSrc: string;
   amenities: string[];
+  lat?: number;
+  lng?: number;
 }
 
 export interface PaginatedResponse<T> {

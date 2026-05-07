@@ -4,27 +4,19 @@ import { useEffect, useRef } from "react"
 import type { LatLngBoundsExpression, Map as LeafletMap, Marker } from "leaflet"
 import type { PropertyListing } from "@/services/guest/searchApi"
 
-// ─── Sri Lanka coordinates for each location ──────────────────────────────
-const LOCATION_COORDS: Record<string, [number, number]> = {
-    "Colombo": [6.9271, 79.8612],
-    "Galle": [6.0535, 80.2210],
-    "Kandy": [7.2906, 80.6337],
-    "Negombo": [7.2086, 79.8358],
-    "Mirissa": [5.9469, 80.4571],
-    "Ella": [6.8667, 81.0500],
-    "Nuwara Eliya": [6.9497, 80.7891],
-    "Trincomalee": [8.5874, 81.2152],
-    "Arugam Bay": [6.8397, 81.8360],
-    "Sigiriya": [7.9570, 80.7603],
-    "Bentota": [6.4268, 79.9967],
-    "Hikkaduwa": [6.1395, 80.1024],
-    "Unawatuna": [6.0097, 80.2497],
-    "Jaffna": [9.6615, 80.0255],
-    "Polonnaruwa": [7.9394, 81.0003],
-}
+// Sri Lanka center fallback
+const SRI_LANKA_CENTER: [number, number] = [7.8731, 80.7718]
 
-function getCoords(location: string): [number, number] {
-    return LOCATION_COORDS[location] ?? [7.8731, 80.7718] // Sri Lanka center
+/**
+ * Gets coordinates for a listing.
+ * Uses lat/lng from backend API (database) if available.
+ * Falls back to Sri Lanka center only as last resort.
+ */
+function getCoords(listing: PropertyListing): [number, number] {
+    if (listing.lat && listing.lng) {
+        return [listing.lat, listing.lng]
+    }
+    return SRI_LANKA_CENTER
 }
 
 function formatLKR(v: number) {
@@ -60,7 +52,7 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
 
             // Create map centered on Sri Lanka
             const map = L.map(containerRef.current!, {
-                center: [7.8731, 80.7718],
+                center: SRI_LANKA_CENTER,
                 zoom: 7,
                 zoomControl: true,
                 scrollWheelZoom: true,
@@ -72,9 +64,9 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
                 maxZoom: 19,
             }).addTo(map)
 
-            // Add a marker for each listing
+            // Add a marker for each listing — using lat/lng from backend API
             listings.forEach(listing => {
-                const [lat, lng] = getCoords(listing.location)
+                const [lat, lng] = getCoords(listing)
 
                 // Price-label marker (custom DivIcon)
                 const icon = L.divIcon({
@@ -125,9 +117,9 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
                 markersRef.current.set(String(listing.id), marker as Marker)
             })
 
-            // Fit map to all markers
+            // Fit map to all markers using backend lat/lng
             if (listings.length > 0) {
-                const bounds = listings.map((l) => getCoords(l.location))
+                const bounds = listings.map((l) => getCoords(l))
                 map.fitBounds(bounds as unknown as LatLngBoundsExpression, { padding: [40, 40], maxZoom: 10 })
             }
 
