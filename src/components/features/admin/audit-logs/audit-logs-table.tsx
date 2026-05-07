@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { AuditLogDto } from "@/api/admin/audit-logs.api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type UserRole = "Admin" | "Staff" | "Owner";
@@ -11,21 +12,10 @@ export type ActionType =
   | "Config Change"
   | "Login Failed";
 
-export interface LogEntry {
-  id: string;
-  userName: string;
-  userRole: UserRole;
-  avatarColor: string;
-  avatarInitial: string;
-  ip: string;
-  action: ActionType;
-  entity: string;
-  entityDetail: string;
-  timestamp: string;
-}
+export type LogEntry = AuditLogDto;
 
 interface AuditLogsTableProps {
-  logs: LogEntry[];
+  logs: AuditLogDto[];
   currentPage: number;
   totalPages: number;
   totalResults: number;
@@ -34,8 +24,8 @@ interface AuditLogsTableProps {
 }
 
 // ─── Action Badge ──────────────────────────────────────────────────────────────
-function ActionBadge({ action }: { action: ActionType }) {
-  const cfg: Record<ActionType, string> = {
+function ActionBadge({ action }: { action: string }) {
+  const cfg: Record<string, string> = {
     Updated: "bg-yellow-100/80 text-yellow-800",
     Deleted: "bg-red-100/70 text-red-700",
     "Login Success": "bg-green-100/70 text-green-700",
@@ -43,9 +33,10 @@ function ActionBadge({ action }: { action: ActionType }) {
     "Config Change": "bg-gray-100/70 text-gray-700",
     "Login Failed": "bg-red-100/70 text-red-700",
   };
+  const color = cfg[action] || "bg-gray-100/70 text-gray-700";
   return (
     <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${cfg[action]}`}
+      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${color}`}
     >
       {action}
     </span>
@@ -56,7 +47,7 @@ function ActionBadge({ action }: { action: ActionType }) {
 function Avatar({ entry }: { entry: LogEntry }) {
   return (
     <div
-      className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0"
+      className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0"
       style={{ backgroundColor: entry.avatarColor }}
     >
       {entry.avatarInitial}
@@ -94,7 +85,7 @@ export default function AuditLogsTable({
               ].map((h) => (
                 <th
                   key={h}
-                  className="px-5 py-2.75 text-left text-[11px] font-bold text-(--gray-3) tracking-wider uppercase whitespace-nowrap"
+                  className="px-5 py-[11px] text-left text-[11px] font-bold text-[var(--gray-3)] tracking-wider uppercase whitespace-nowrap"
                 >
                   {h}
                 </th>
@@ -106,7 +97,7 @@ export default function AuditLogsTable({
               <tr>
                 <td
                   colSpan={5}
-                  className="py-12 text-center text-(--gray-3) text-sm"
+                  className="py-12 text-center text-[var(--gray-3)] text-sm"
                 >
                   No audit logs found.
                 </td>
@@ -115,43 +106,43 @@ export default function AuditLogsTable({
               logs.map((log, idx) => (
                 <tr
                   key={log.id}
-                  className={`border-t border-(--gray-5) transition-colors ${
+                  className={`border-t border-[var(--gray-5)] transition-colors ${
                     idx % 2 === 0 ? "bg-white" : "bg-[#fafafa]"
                   } hover:bg-[#f5efec]`}
                 >
                   {/* User / Role */}
-                  <td className="px-5 py-3.5 min-w-45">
-                    <div className="flex items-center gap-2.5">
+                  <td className="px-5 py-[14px] min-w-[180px]">
+                    <div className="flex items-center gap-[10px]">
                       <Avatar entry={log} />
                       <div>
-                        <p className="m-0 font-semibold text-(--black-2)">
+                        <p className="m-0 font-semibold text-[var(--black-2)]">
                           {log.userName}
                         </p>
-                        <p className="m-0 text-xs text-(--gray-3)">
+                        <p className="m-0 text-xs text-[var(--gray-3)]">
                           {log.userRole}
                         </p>
                       </div>
                     </div>
                   </td>
                   {/* IP */}
-                  <td className="px-5 py-3.5 text-(--gray-2) font-mono text-[13px] whitespace-nowrap">
+                  <td className="px-5 py-[14px] text-[var(--gray-2)] font-mono text-[13px] whitespace-nowrap">
                     {log.ip}
                   </td>
                   {/* Action */}
-                  <td className="px-5 py-3.5">
+                  <td className="px-5 py-[14px]">
                     <ActionBadge action={log.action} />
                   </td>
                   {/* Entity */}
-                  <td className="px-5 py-3.5 min-w-55">
-                    <p className="m-0 font-semibold text-(--black-2)">
+                  <td className="px-5 py-[14px] min-w-[220px]">
+                    <p className="m-0 font-semibold text-[var(--black-2)]">
                       {log.entity}
                     </p>
-                    <p className="m-0 text-xs text-(--gray-3)">
+                    <p className="m-0 text-xs text-[var(--gray-3)]">
                       {log.entityDetail}
                     </p>
                   </td>
                   {/* Timestamp */}
-                  <td className="px-5 py-3.5 text-(--gray-3) text-[13px] whitespace-nowrap">
+                  <td className="px-5 py-[14px] text-[var(--gray-3)] text-[13px] whitespace-nowrap">
                     {log.timestamp}
                   </td>
                 </tr>
@@ -162,11 +153,13 @@ export default function AuditLogsTable({
       </div>
 
       {/* ── Pagination ── */}
-      <div className="flex justify-between items-center px-5 py-3.5 border-t border-(--gray-5)">
-        <span className="text-[13px] text-(--gray-3)">
-          Showing <strong className="text-(--black-2)">{startIndex}</strong> to{" "}
-          <strong className="text-(--black-2)">{endIndex}</strong> of{" "}
-          <strong className="text-(--black-2)">{totalResults}</strong> results
+      <div className="flex justify-between items-center px-5 py-[14px] border-t border-[var(--gray-5)]">
+        <span className="text-[13px] text-[var(--gray-3)]">
+          Showing{" "}
+          <strong className="text-[var(--black-2)]">{startIndex}</strong> to{" "}
+          <strong className="text-[var(--black-2)]">{endIndex}</strong> of{" "}
+          <strong className="text-[var(--black-2)]">{totalResults}</strong>{" "}
+          results
         </span>
 
         <div className="flex items-center gap-1">
@@ -174,10 +167,10 @@ export default function AuditLogsTable({
           <button
             onClick={() => goPage(currentPage - 1)}
             disabled={currentPage === 1}
-            className={`w-8 h-8 rounded-md border border-(--gray-5) bg-white flex items-center justify-center ${
+            className={`w-8 h-8 rounded-md border border-[var(--gray-5)] bg-white flex items-center justify-center ${
               currentPage === 1
-                ? "cursor-not-allowed text-(--gray-4)"
-                : "cursor-pointer text-(--gray-2)"
+                ? "cursor-not-allowed text-[var(--gray-4)]"
+                : "cursor-pointer text-[var(--gray-2)]"
             }`}
           >
             <ChevronLeft size={14} />
@@ -204,7 +197,7 @@ export default function AuditLogsTable({
               p === "..." ? (
                 <span
                   key={`e${i}`}
-                  className="w-8 h-8 flex items-center justify-center text-[13px] text-(--gray-3)"
+                  className="w-8 h-8 flex items-center justify-center text-[13px] text-[var(--gray-3)]"
                 >
                   …
                 </span>
@@ -214,8 +207,8 @@ export default function AuditLogsTable({
                   onClick={() => goPage(p as number)}
                   className={`w-8 h-8 rounded-md border cursor-pointer text-[13px] ${
                     currentPage === p
-                      ? "border-(--brand-secondary) bg-(--brand-secondary) text-white font-bold"
-                      : "border-(--gray-5) bg-white text-(--gray-2) font-normal"
+                      ? "border-[var(--brand-secondary)] bg-[var(--brand-secondary)] text-white font-bold"
+                      : "border-[var(--gray-5)] bg-white text-[var(--gray-2)] font-normal"
                   }`}
                 >
                   {p}
@@ -228,10 +221,10 @@ export default function AuditLogsTable({
           <button
             onClick={() => goPage(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className={`w-8 h-8 rounded-md border border-(--gray-5) bg-white flex items-center justify-center ${
+            className={`w-8 h-8 rounded-md border border-[var(--gray-5)] bg-white flex items-center justify-center ${
               currentPage === totalPages
-                ? "cursor-not-allowed text-(--gray-4)"
-                : "cursor-pointer text-(--gray-2)"
+                ? "cursor-not-allowed text-[var(--gray-4)]"
+                : "cursor-pointer text-[var(--gray-2)]"
             }`}
           >
             <ChevronRight size={14} />

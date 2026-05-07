@@ -1,73 +1,24 @@
-import { ArrowUpRight, RotateCcw, ArrowDown } from "lucide-react";
+import { ArrowUpRight, RotateCcw, ArrowDown, Loader2 } from "lucide-react";
+import { useEffect } from "react";
+import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-type TransactionType = "payout" | "booking" | "refund" | "fee";
-
-interface Transaction {
-  id: string;
-  title: string;
-  subtitle: string;
-  amount: string;
-  type: TransactionType;
-  positive: boolean;
-}
-
-// ─── Static data ──────────────────────────────────────────────────────────────
-const TRANSACTIONS: Transaction[] = [
-  {
-    id: "1",
-    title: "Payout to Host",
-    subtitle: "Today, 10:23 AM",
-    amount: "-LKR 1,250.00",
-    type: "payout",
-    positive: false,
-  },
-  {
-    id: "2",
-    title: "Booking #4921",
-    subtitle: "Yesterday, 4:15 PM",
-    amount: "+LKR 420.00",
-    type: "booking",
-    positive: true,
-  },
-  {
-    id: "3",
-    title: "Booking #4920",
-    subtitle: "Yesterday, 2:30 PM",
-    amount: "+LKR 850.00",
-    type: "booking",
-    positive: true,
-  },
-  {
-    id: "4",
-    title: "Refund Processed",
-    subtitle: "Oct 24, 9:00 AM",
-    amount: "-LKR 120.00",
-    type: "refund",
-    positive: false,
-  },
-  {
-    id: "5",
-    title: "Service Fee",
-    subtitle: "Oct 23, 11:45 AM",
-    amount: "-LKR 15.00",
-    type: "fee",
-    positive: false,
-  },
-];
+type TransactionType = "payout" | "booking" | "refund" | "fee" | string;
 
 // ─── Icon helpers ─────────────────────────────────────────────────────────────
 function TransactionIcon({ type }: { type: TransactionType }) {
-  const base = "w-9 h-9 rounded-full flex items-center justify-center shrink-0";
+  const base =
+    "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0";
+  const normalizedType = type.toLowerCase();
 
-  if (type === "booking") {
+  if (normalizedType.includes("booking") || normalizedType === "payment") {
     return (
       <div className={`${base} bg-[#DCFCE7]`}>
         <ArrowUpRight size={16} className="text-[#16A34A]" />
       </div>
     );
   }
-  if (type === "refund") {
+  if (normalizedType.includes("refund")) {
     return (
       <div className={`${base} bg-[#FEE2E2]`}>
         <RotateCcw size={15} className="text-[#DC2626]" />
@@ -84,40 +35,68 @@ function TransactionIcon({ type }: { type: TransactionType }) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function RecentTransactions() {
+  const { transactions, fetchTransactions, transactionsLoading } = useAdminFinanceStore();
+
+  useEffect(() => {
+    // Only fetch if we don't have enough data or specifically need recent ones
+    fetchTransactions({ page: 0, size: 5 });
+  }, [fetchTransactions]);
+
+  // We only show top 5 here
+  const recent = transactions.slice(0, 5);
+
   return (
-    <div className="w-75 shrink-0 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-4">
+    <div className="w-[300px] flex-shrink-0 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-4 relative">
+      {transactionsLoading && transactions.length === 0 && (
+        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-2xl">
+          <Loader2 className="animate-spin text-[#C05621]" size={32} />
+        </div>
+      )}
+      
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <h2 className="text-[16px] font-bold text-[#1A1A1A]">
           Recent Transactions
         </h2>
-        <button className="text-[13px] font-semibold text-[#C05621] hover:underline">
+        <button className="text-[13px] font-semibold text-[#C05621] hover:underline cursor-pointer bg-transparent border-none">
           View All
         </button>
       </div>
 
       {/* ── Transaction list ── */}
-      <ul className="flex flex-col gap-4">
-        {TRANSACTIONS.map((tx) => (
-          <li key={tx.id} className="flex items-center gap-3">
-            <TransactionIcon type={tx.type} />
+      <ul className="flex flex-col gap-4 mt-2">
+        {recent.length === 0 && !transactionsLoading && (
+           <li className="text-[13px] text-[#9E7B6A] text-center py-4">No recent transactions.</li>
+        )}
+        {recent.map((tx) => {
+          // Attempt to map backend response to UI
+          const title = tx.status === 'Refunded' ? 'Refund Processed' : `Booking #${tx.bookingId}`;
+          const isPositive = tx.status !== 'Refunded' && !tx.status.includes('Payout');
+          const amountDisplay = `${isPositive ? '+' : '-'}LKR ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+          
+          return (
+            <li key={tx.id} className="flex items-center gap-3">
+              <TransactionIcon type={tx.status} />
 
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-[#1A1A1A] truncate">
-                {tx.title}
-              </p>
-              <p className="text-[11px] text-[#9E7B6A]">{tx.subtitle}</p>
-            </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-[#1A1A1A] truncate">
+                  {title}
+                </p>
+                <p className="text-[11px] text-[#9E7B6A]">
+                  {new Date(tx.date).toLocaleDateString()}
+                </p>
+              </div>
 
-            <span
-              className={`text-[13px] font-bold shrink-0 ${
-                tx.positive ? "text-[#16A34A]" : "text-[#1A1A1A]"
-              }`}
-            >
-              {tx.amount}
-            </span>
-          </li>
-        ))}
+              <span
+                className={`text-[13px] font-bold flex-shrink-0 ${
+                  isPositive ? "text-[#16A34A]" : "text-[#1A1A1A]"
+                }`}
+              >
+                {amountDisplay}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

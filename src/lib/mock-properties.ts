@@ -1,18 +1,3 @@
-// ─── Shared Property Types ────────────────────────────────────────────────────
-
-export interface Room {
-    id: string
-    name: string
-    maxGuests: number
-    bedType: string
-    sqft: number
-    pricePerNight: number
-    originalPrice?: number
-    tag?: "Refundable" | "Popular" | "Last rooms"
-    features: string[]
-    imageSrc: string
-}
-
 export interface Review {
     id: string
     author: string
@@ -21,6 +6,7 @@ export interface Review {
     date: string
     text: string
     rating: number
+    ownerReply?: string
 }
 
 export interface PropertyDetail {
@@ -58,6 +44,19 @@ export interface PropertyDetail {
     // Map coords (for embed)
     lat: number
     lng: number
+}
+
+export interface Room {
+    id: string
+    name: string
+    maxGuests: number
+    bedType: string
+    sqft: number
+    pricePerNight: number
+    originalPrice?: number
+    tag?: string
+    features: string[]
+    imageSrc: string
 }
 
 // ─── Amenity icon names (Lucide) ─────────────────────────────────────────────
@@ -113,6 +112,7 @@ export const ALL_PROPERTIES: PropertyDetail[] = [
                 date: "2 months ago",
                 text: "Incredible stay. The staff was attentive and the location is unbeatable. The rooftop views are even better in person!",
                 rating: 5,
+                ownerReply: "Thank you so much Marco! We're thrilled you enjoyed the rooftop views and our staff's hospitality. We hope to welcome you back to Colombo Sky Residency soon.",
             },
             {
                 id: "r2",
@@ -1110,5 +1110,5 @@ export const ALL_PROPERTIES: PropertyDetail[] = [
 ]
 
 export function getPropertyById(id: string): PropertyDetail | undefined {
-    return ALL_PROPERTIES.find(p => p.id === id)
+  return ALL_PROPERTIES.find(p => p.id === id)
 }

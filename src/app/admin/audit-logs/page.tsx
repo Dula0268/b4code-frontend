@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Search, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, ChevronDown, Loader2 } from "lucide-react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import AuditLogsHeader from "@/components/features/admin/audit-logs/audit-logs-header";
-import AuditLogsTable, {
-  LogEntry,
-  UserRole,
-} from "@/components/features/admin/audit-logs/audit-logs-table";
+import AuditLogsTable from "@/components/features/admin/audit-logs/audit-logs-table";
+import { useAdminAuditLogsStore } from "@/store/admin/audit-logs/audit-logs.store";
 
 // ─── Helper Functions ──────────────────────────────────────────────────────────
-function roleCfg(role: "All" | UserRole) {
+function roleCfg(role: string) {
   const map: Record<string, string> = {
     All: "bg-[var(--brand-primary)]/8 text-[var(--brand-primary)]",
     Admin: "bg-blue-500/12 text-blue-700",
@@ -23,10 +21,10 @@ function roleCfg(role: "All" | UserRole) {
 // ─── Filters Component ─────────────────────────────────────────────────────────
 interface AuditLogsFiltersProps {
   search: string;
-  roleFilter: "All" | UserRole;
+  roleFilter: string;
   roleOpen: boolean;
   onSearchChange: (value: string) => void;
-  onRoleFilterChange: (role: "All" | UserRole) => void;
+  onRoleFilterChange: (role: string) => void;
   onRoleOpenChange: (open: boolean) => void;
 }
 
@@ -38,7 +36,7 @@ function AuditLogsFilters({
   onRoleFilterChange,
   onRoleOpenChange,
 }: AuditLogsFiltersProps) {
-  const roles: ("All" | UserRole)[] = ["All", "Admin", "Staff", "Owner"];
+  const roles = ["All", "Admin", "Staff", "Owner"];
 
   return (
     <div className="flex gap-3 items-center flex-wrap">
@@ -101,211 +99,46 @@ function AuditLogsFilters({
           </div>
         )}
       </div>
-
-      {/* Date Range (static display) */}
-      <div className="flex items-center gap-2 px-4 py-2 rounded-[10px] border-[1.5px] border-(--gray-5) bg-white text-[13px] text-(--gray-2) cursor-pointer">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <rect
-            x="1"
-            y="2"
-            width="12"
-            height="11"
-            rx="1.5"
-            stroke="var(--gray-3)"
-            strokeWidth="1.2"
-          />
-          <path
-            d="M4 1v2M10 1v2M1 5h12"
-            stroke="var(--gray-3)"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-          />
-        </svg>
-        Oct 01 – Oct 24, 2023
-      </div>
     </div>
   );
 }
 
-// ─── Mock Data ─────────────────────────────────────────────────────────────────
-const ALL_LOGS: LogEntry[] = [
-  {
-    id: "1",
-    userName: "Admin User",
-    userRole: "Admin",
-    avatarColor: "#f4a261",
-    avatarInitial: "A",
-    ip: "192.168.1.45",
-    action: "Updated",
-    entity: "Rate Plan: Summer Special 2024",
-    entityDetail: "ID: RP-2024-SUM",
-    timestamp: "Oct 24, 2023 09:45 AM",
-  },
-  {
-    id: "2",
-    userName: "Admin User",
-    userRole: "Admin",
-    avatarColor: "#f4a261",
-    avatarInitial: "A",
-    ip: "127.0.0.1",
-    action: "Deleted",
-    entity: "Room Type: Deluxe King",
-    entityDetail: "ID: RT-DLX-KG-404",
-    timestamp: "Oct 24, 2023 09:31 AM",
-  },
-  {
-    id: "3",
-    userName: "Mike Ross",
-    userRole: "Staff",
-    avatarColor: "#2f80ed",
-    avatarInitial: "M",
-    ip: "203.112.88.10",
-    action: "Login Success",
-    entity: "Web Portal Access",
-    entityDetail: "Session: 8f92-a1b2",
-    timestamp: "Oct 24, 2023 08:58 AM",
-  },
-  {
-    id: "4",
-    userName: "Alice Liu",
-    userRole: "Staff",
-    avatarColor: "#27ae60",
-    avatarInitial: "A",
-    ip: "192.168.1.102",
-    action: "Created",
-    entity: "New Booking: #99283",
-    entityDetail: "Guest: John Doe",
-    timestamp: "Oct 23, 2023 05:12 PM",
-  },
-  {
-    id: "5",
-    userName: "Admin User",
-    userRole: "Admin",
-    avatarColor: "#f4a261",
-    avatarInitial: "A",
-    ip: "10.0.5.22",
-    action: "Config Change",
-    entity: "Firewall Rules Update",
-    entityDetail: "Policy: Default-Deny",
-    timestamp: "Oct 23, 2023 03:40 PM",
-  },
-  {
-    id: "6",
-    userName: "Admin User",
-    userRole: "Admin",
-    avatarColor: "#f4a261",
-    avatarInitial: "A",
-    ip: "192.168.1.45",
-    action: "Login Failed",
-    entity: "Invalid Password Attempt",
-    entityDetail: "Source: External",
-    timestamp: "Oct 23, 2023 02:20 PM",
-  },
-  {
-    id: "7",
-    userName: "Nina Patel",
-    userRole: "Owner",
-    avatarColor: "#e84393",
-    avatarInitial: "N",
-    ip: "192.168.2.10",
-    action: "Updated",
-    entity: "Property: Sunset Villa",
-    entityDetail: "ID: PROP-4092",
-    timestamp: "Oct 22, 2023 11:05 AM",
-  },
-  {
-    id: "8",
-    userName: "Priya Sharma",
-    userRole: "Owner",
-    avatarColor: "#8e44ad",
-    avatarInitial: "P",
-    ip: "192.168.3.55",
-    action: "Created",
-    entity: "New Listing: Oceanview Apt",
-    entityDetail: "ID: PROP-4095",
-    timestamp: "Oct 22, 2023 10:30 AM",
-  },
-  {
-    id: "9",
-    userName: "Mike Ross",
-    userRole: "Staff",
-    avatarColor: "#2f80ed",
-    avatarInitial: "M",
-    ip: "203.112.88.10",
-    action: "Deleted",
-    entity: "Old Cabin Listing",
-    entityDetail: "ID: PROP-3021",
-    timestamp: "Oct 21, 2023 04:15 PM",
-  },
-  {
-    id: "10",
-    userName: "Daniel Osei",
-    userRole: "Staff",
-    avatarColor: "#16a085",
-    avatarInitial: "D",
-    ip: "192.168.1.78",
-    action: "Login Success",
-    entity: "Web Portal Access",
-    entityDetail: "Session: c3d4-e5f6",
-    timestamp: "Oct 20, 2023 08:02 AM",
-  },
-  {
-    id: "11",
-    userName: "Emily Chen",
-    userRole: "Owner",
-    avatarColor: "#27ae60",
-    avatarInitial: "E",
-    ip: "192.168.4.12",
-    action: "Config Change",
-    entity: "Pricing Rule Update",
-    entityDetail: "Rule: Weekday-Standard",
-    timestamp: "Oct 19, 2023 03:30 PM",
-  },
-  {
-    id: "12",
-    userName: "Alice Liu",
-    userRole: "Staff",
-    avatarColor: "#27ae60",
-    avatarInitial: "A",
-    ip: "192.168.1.102",
-    action: "Login Failed",
-    entity: "Invalid OTP Attempt",
-    entityDetail: "Source: Mobile App",
-    timestamp: "Oct 18, 2023 01:45 PM",
-  },
-];
-
-const PAGE_SIZE = 10;
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AuditLogsPage() {
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"All" | UserRole>("All");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("All");
   const [roleOpen, setRoleOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
-  // Filter
-  const filtered = ALL_LOGS.filter((log) => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      log.userName.toLowerCase().includes(q) ||
-      log.ip.includes(q) ||
-      log.entity.toLowerCase().includes(q) ||
-      log.entityDetail.toLowerCase().includes(q);
-    const matchRole = roleFilter === "All" || log.userRole === roleFilter;
-    return matchSearch && matchRole;
-  });
+  const { logs, totalElements, totalPages, fetchLogs, loading } =
+    useAdminAuditLogsStore();
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  useEffect(() => {
+    fetchLogs({
+      page: currentPage - 1,
+      size: PAGE_SIZE,
+      search: debouncedSearch,
+      role: roleFilter,
+    });
+  }, [fetchLogs, currentPage, debouncedSearch, roleFilter]);
 
   return (
     <AdminPageLayout>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 relative">
+        {loading && logs.length === 0 && (
+          <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50">
+            <Loader2 className="animate-spin text-[#C05621]" size={48} />
+          </div>
+        )}
         <AuditLogsHeader />
 
         <AuditLogsFilters
@@ -324,10 +157,10 @@ export default function AuditLogsPage() {
         />
 
         <AuditLogsTable
-          logs={paged}
+          logs={logs}
           currentPage={currentPage}
           totalPages={totalPages}
-          totalResults={filtered.length}
+          totalResults={totalElements}
           pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
         />

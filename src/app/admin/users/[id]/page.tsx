@@ -12,119 +12,46 @@ import {
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import UserProfileHeader from "@/components/features/admin/users/user-profile-header";
 import UserAccountInformation from "@/components/features/admin/users/user-account-information";
+import { userApi } from "@/lib/api";
 import UserActivityLog, {
   type ActivityLogEntry,
 } from "@/components/features/admin/users/user-activity-log";
 
-// ─── Shared user data (same as users list) ───────────────────────────────────
-const ALL_USERS = [
-  {
-    id: "1",
-    name: "Sarah Jenkins",
-    email: "sarah.j@primestay.com",
-    avatarColor: "#f4a261",
-    avatarInitial: "S",
-    role: "Owner" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 24, 2023 at 09:41 AM",
-    phone: "+1 (555) 123-4567",
-    joined: "August 15, 2022",
-    timezone: "(GMT-05:00) Eastern Time (US & Canada)",
-  },
-  {
-    id: "2",
-    name: "Mike Ross",
-    email: "mike.ross@primestay.com",
-    avatarColor: "#2f80ed",
-    avatarInitial: "M",
-    role: "Staff" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 23, 2023 at 02:15 PM",
-    phone: "+1 (555) 234-5678",
-    joined: "March 10, 2023",
-    timezone: "(GMT+00:00) London",
-  },
-  {
-    id: "3",
-    name: "John Doe",
-    email: "john.d@gmail.com",
-    avatarColor: "#953002",
-    avatarInitial: "J",
-    role: "Staff" as const,
-    status: "Suspended" as const,
-    lastLogin: "Sep 12, 2023 at 11:00 AM",
-    phone: "+1 (555) 345-6789",
-    joined: "June 1, 2022",
-    timezone: "(GMT+05:30) India",
-  },
-  {
-    id: "4",
-    name: "Emily Chen",
-    email: "emily.chen@primestay.com",
-    avatarColor: "#27ae60",
-    avatarInitial: "E",
-    role: "Owner" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 24, 2023 at 08:30 AM",
-    phone: "+1 (555) 456-7890",
-    joined: "January 5, 2021",
-    timezone: "(GMT-08:00) Pacific Time",
-  },
-  {
-    id: "5",
-    name: "Aisha Kumar",
-    email: "aisha.k@primestay.com",
-    avatarColor: "#e67e22",
-    avatarInitial: "A",
-    role: "Staff" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 21, 2023 at 03:40 PM",
-    phone: "+1 (555) 567-8901",
-    joined: "April 20, 2023",
-    timezone: "(GMT+05:30) India",
-  },
-  {
-    id: "6",
-    name: "Nina Patel",
-    email: "nina.patel@primestay.com",
-    avatarColor: "#e84393",
-    avatarInitial: "N",
-    role: "Owner" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 24, 2023 at 07:55 AM",
-    phone: "+1 (555) 678-9012",
-    joined: "September 3, 2020",
-    timezone: "(GMT+05:30) India",
-  },
-  {
-    id: "7",
-    name: "Daniel Osei",
-    email: "daniel.o@primestay.com",
-    avatarColor: "#16a085",
-    avatarInitial: "D",
-    role: "Staff" as const,
-    status: "Active" as const,
-    lastLogin: "Oct 20, 2023 at 11:30 AM",
-    phone: "+1 (555) 789-0123",
-    joined: "July 12, 2022",
-    timezone: "(GMT+00:00) London",
-  },
-  {
-    id: "8",
-    name: "Priya Sharma",
-    email: "priya.s@primestay.com",
-    avatarColor: "#8e44ad",
-    avatarInitial: "P",
-    role: "Owner" as const,
-    status: "Suspended" as const,
-    lastLogin: "Oct 19, 2023 at 02:00 PM",
-    phone: "+1 (555) 890-1234",
-    joined: "February 28, 2021",
-    timezone: "(GMT+05:30) India",
-  },
-];
+// ─── User Type ───────────────────────────────
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  avatarColor: string;
+  avatarInitial: string;
+  role: string;
+  status: string;
+  lastLogin: string;
+  phone: string;
+  joined: string;
+  timezone: string;
+};
 
-// ─── Mock activity log ────────────────────────────────────────────────────────
+// Helper to generate consistent avatar colors
+function stringToColor(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = [
+    "#f4a261",
+    "#2f80ed",
+    "#953002",
+    "#27ae60",
+    "#e67e22",
+    "#e84393",
+    "#16a085",
+    "#8e44ad",
+  ];
+  return colors[Math.abs(hash) % colors.length];
+}
+
+// ─── Mock activity log ───────────────────────────────────────────────
 const ACTIVITY_LOG: ActivityLogEntry[] = [
   {
     action: "update",
@@ -163,7 +90,7 @@ const ACTIVITY_LOG: ActivityLogEntry[] = [
   },
 ];
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
+// ─── Toast ───────────────────────────────────────────────────────────
 function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3500);
@@ -180,12 +107,11 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
       >
         <X size={15} />
       </button>
-      <style>{`@keyframes slideIn { from { opacity:0; transform:translateY(-12px) } to { opacity:1; transform:translateY(0) } }`}</style>
     </div>
   );
 }
 
-// ─── Reset Password Modal ─────────────────────────────────────────────────────
+// ─── Reset Password Modal ────────────────────────────────────────────
 function ResetPasswordModal({
   email,
   onClose,
@@ -204,28 +130,31 @@ function ResetPasswordModal({
         className="bg-white rounded-2xl px-8 py-9 w-105 shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Icon */}
         <div className="w-13 h-13 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center mb-4.5">
           <RotateCcw size={22} color="var(--brand-primary)" />
         </div>
+
         <h2 className="m-0 mb-2 text-xl font-bold text-(--black-2)">
           Reset Password?
         </h2>
+
         <p className="m-0 mb-7 text-sm text-(--gray-3) leading-relaxed">
           A secure reset link will be sent to
           <br />
           <strong className="text-(--black-2)">{email}</strong>
         </p>
+
         <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-5.5 py-2.5 rounded-[10px] border border-(--gray-5) bg-white text-sm font-semibold text-(--gray-2) cursor-pointer"
+            className="px-5.5 py-2.5 rounded-[10px] border border-(--gray-5) bg-white text-sm font-semibold text-(--gray-2)"
           >
             Cancel
           </button>
+
           <button
             onClick={onSend}
-            className="px-5.5 py-2.5 rounded-[10px] border-none bg-(--brand-primary) text-white text-sm font-bold cursor-pointer shadow-[0_2px_8px_rgba(149,48,2,0.25)] hover:bg-(--primary-hover)"
+            className="px-5.5 py-2.5 rounded-[10px] bg-(--brand-primary) text-white text-sm font-bold"
           >
             Send Reset Link
           </button>
@@ -235,22 +164,91 @@ function ResetPasswordModal({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Page ───────────────────────────────────────────────────────
 export default function UserDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const user = ALL_USERS.find((u) => u.id === params.id) ?? ALL_USERS[0];
 
-  const [suspended, setSuspended] = useState(user.status === "Suspended");
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [suspended, setSuspended] = useState(false);
+  const [currentRole, setCurrentRole] = useState<string>("Staff");
   const [toast, setToast] = useState<string | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const id = parseInt(params.id as string);
+        if (isNaN(id)) return;
+
+        const u = await userApi.getUserById(id);
+
+        const name =
+          `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Unknown User";
+
+        const formattedRole = u.role
+          ? u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase()
+          : "Staff";
+
+        const formattedUser: User = {
+          id: u.id.toString(),
+          name,
+          email: u.email,
+          avatarColor: stringToColor(name),
+          avatarInitial: name.charAt(0).toUpperCase(),
+          role: formattedRole,
+          status: "Active",
+          lastLogin:
+            new Date(u.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }) +
+            " at " +
+            new Date(u.createdAt).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          phone: "+1 (555) 000-0000",
+          joined: new Date(u.createdAt).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }),
+          timezone: "(GMT+00:00) Default Timezone",
+        };
+
+        setUser(formattedUser);
+        setCurrentRole(formattedUser.role);
+        setSuspended(formattedUser.status === "Suspended");
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUser();
+  }, [params.id]);
+
+  const handleRoleChange = async (newRole: string) => {
+    try {
+      if (!user) return;
+
+      await userApi.updateUserRole(Number(user.id), newRole);
+      setCurrentRole(newRole);
+      setToast(`Role updated to ${newRole}`);
+    } catch (err) {
+      console.error("Failed to update role:", err);
+      setToast("Failed to update user role");
+    }
+  };
 
   const handleSuspendToggle = () => {
     const next = !suspended;
     setSuspended(next);
-    setToast(
-      next ? "User Suspended Successfully" : "Account Reactivated Successfully",
-    );
+    setToast(next ? "User Suspended Successfully" : "Account Reactivated Successfully");
   };
 
   const handleSendReset = () => {
@@ -258,12 +256,30 @@ export default function UserDetailPage() {
     setToast("Password Reset Link Sent!");
   };
 
+  if (loading) {
+    return (
+      <AdminPageLayout>
+        <div className="flex items-center justify-center h-64 text-(--gray-3)">
+          Loading user details...
+        </div>
+      </AdminPageLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AdminPageLayout>
+        <div className="flex items-center justify-center h-64 text-(--gray-3)">
+          User not found.
+        </div>
+      </AdminPageLayout>
+    );
+  }
+
   return (
     <>
-      {/* ── Toast ── */}
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      {/* ── Reset Password Modal ── */}
       {showResetModal && (
         <ResetPasswordModal
           email={user.email}
@@ -274,35 +290,31 @@ export default function UserDetailPage() {
 
       <AdminPageLayout>
         <div className="flex flex-col gap-6">
-          {/* ── Breadcrumb ── */}
           <div className="flex items-center gap-1.5 text-sm">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-(--gray-3) text-sm p-0 hover:text-(--black-2)"
+              className="flex items-center gap-1 text-(--gray-3)"
             >
               <ArrowLeft size={14} />
               User Management
             </button>
-            <ChevronRight size={14} color="var(--gray-4)" />
+
+            <ChevronRight size={14} />
             <span className="text-(--brand-primary) font-semibold">
               Account Details
             </span>
           </div>
 
-          {/* ── Profile Header Card ── */}
           <UserProfileHeader
-            user={user}
+            user={{ ...user, role: currentRole }}
             suspended={suspended}
             onResetPassword={() => setShowResetModal(true)}
             onSuspendToggle={handleSuspendToggle}
+            onRoleChange={handleRoleChange}
           />
 
-          {/* ── Two-column body ── */}
           <div className="grid grid-cols-[1fr_1.7fr] gap-5 items-start">
-            {/* ── Account Information ── */}
             <UserAccountInformation user={user} />
-
-            {/* ── Activity Log ── */}
             <UserActivityLog activities={ACTIVITY_LOG} />
           </div>
         </div>

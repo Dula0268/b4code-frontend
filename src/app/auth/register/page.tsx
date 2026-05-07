@@ -29,6 +29,11 @@ function RegisterForm() {
 
     const [role, setRole] = useState<Role>("guest");
 
+    // Clear any previous global auth errors on mount
+    useEffect(() => {
+        setError(null);
+    }, [setError]);
+
     // Initialize role from query params
     useEffect(() => {
         const roleParam = searchParams.get("role") as Role;
@@ -75,7 +80,7 @@ function RegisterForm() {
         const randomStr = Math.random().toString(36).substring(2, 6);
         setFullName(`Mock ${role.charAt(0).toUpperCase() + role.slice(1)}`);
         setEmail(`demo_${role}_${randomStr}@primestay.com`);
-        setPhone("+1 555 010 1234");
+        setPhone("0777646946");
         setPassword("Pass1234");
         setConfirmPassword("Pass1234");
         setAgreedToTerms(true);
@@ -83,10 +88,9 @@ function RegisterForm() {
         if (role === "owner") {
             setPropertyName("Sunset Villa");
             setPropertyAddress("123 Ocean Dr, Miami, FL");
-            setNationalId("ID-987654321");
+            setNationalId("981234567V");
         } else if (role === "staff") {
-            setStaffRole("Manager");
-            setEmployeeId("EMP-1024");
+            setStaffRole("Kitchen Staff");
             setAssignedProperty("Sunset Villa");
         }
     };
@@ -112,6 +116,18 @@ function RegisterForm() {
             return;
         }
 
+        if (!/^\d{10}$/.test(phone)) {
+            setLocalError("Phone number must be exactly 10 digits (e.g. 0777646946).");
+            return;
+        }
+
+        if (role === "owner") {
+            if (nationalId.length !== 10 && nationalId.length !== 12) {
+                setLocalError("National ID must be exactly 10 or 12 characters long.");
+                return;
+            }
+        }
+
         try {
             await register(email, password, role);
             setShowSuccessModal(true);
@@ -127,7 +143,8 @@ function RegisterForm() {
                 setCountdown((prev) => prev - 1);
             }, 1000);
         } else if (showSuccessModal && countdown === 0) {
-            router.push("/auth/login");
+            const redirectParams = searchParams.get("redirect") ? `?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
+            router.push(`/auth/login${redirectParams}`);
         }
         return () => clearTimeout(timer);
     }, [showSuccessModal, countdown, router]);
@@ -179,7 +196,7 @@ function RegisterForm() {
                                 <h2 className="text-[28px] font-extrabold text-[#953002] md:text-[32px] leading-tight">
                                     Create your account
                                 </h2>
-                                <p className="mt-2 text-[14px] text-neutral-500 font-medium">
+                                <p className="mt-2 text-[14px] text-[#953002]/80 font-medium">
                                     Join our hospitality community today.
                                 </p>
                             </div>
@@ -187,7 +204,7 @@ function RegisterForm() {
                             {/* ROLE DISPLAY (HIDDEN TOGGLE) */}
                             <div className="mb-6">
                                 <div className="flex items-center justify-between mb-2">
-                                    <Label className="text-[12px] font-extrabold text-neutral-800 uppercase tracking-wider block">Joining as</Label>
+                                    <Label className="text-[12px] font-extrabold text-[#282828] uppercase tracking-wider block">JOIN AS A</Label>
                                     <button
                                         type="button"
                                         onClick={handleFillMockData}
@@ -211,6 +228,8 @@ function RegisterForm() {
                                         <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                             <Input
                                                 type="text"
+                                                name="fullName"
+                                                autoComplete="name"
                                                 placeholder="John Doe"
                                                 value={fullName}
                                                 onChange={(e) => setFullName(e.target.value)}
@@ -228,6 +247,8 @@ function RegisterForm() {
                                         <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                             <Input
                                                 type="email"
+                                                name="email"
+                                                autoComplete="email"
                                                 placeholder="john@example.com"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
@@ -245,7 +266,9 @@ function RegisterForm() {
                                         <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                             <Input
                                                 type="tel"
-                                                placeholder="+94 777 646 946"
+                                                name="phone"
+                                                autoComplete="tel"
+                                                placeholder="0777646946"
                                                 value={phone}
                                                 onChange={(e) => setPhone(e.target.value)}
                                                 className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
@@ -263,6 +286,8 @@ function RegisterForm() {
                                             <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                                 <Input
                                                     type="password"
+                                                    name="password"
+                                                    autoComplete="new-password"
                                                     placeholder="••••••••"
                                                     value={password}
                                                     onChange={(e) => setPassword(e.target.value)}
@@ -280,13 +305,15 @@ function RegisterForm() {
                                             <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                                 <Input
                                                     type="password"
+                                                    name="confirmPassword"
+                                                    autoComplete="new-password"
                                                     placeholder="••••••••"
                                                     value={confirmPassword}
                                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                                     className="h-[48px] w-full rounded-full bg-transparent pl-[40px] pr-[12px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
                                                     required
                                                 />
-                                                <Lock className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                <svg className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
                                             </div>
                                         </div>
                                     </div>
@@ -363,33 +390,21 @@ function RegisterForm() {
                                         <div className="space-y-1.5">
                                             <Label className="pl-1 text-[13px] font-bold text-[#282828]">Staff Role</Label>
                                             <div className="relative">
-                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="Manager"
+                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center relative">
+                                                    <select
+                                                        name="staffRole"
                                                         value={staffRole}
                                                         onChange={(e) => setStaffRole(e.target.value)}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] text-[#282828] border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30 appearance-none outline-none"
                                                         required={role === "staff"}
-                                                    />
+                                                    >
+                                                        <option value="" disabled>Select a role</option>
+                                                        <option value="Kitchen Staff">Kitchen Staff</option>
+                                                    </select>
                                                     <Briefcase className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                            <Label className="pl-1 text-[13px] font-bold text-[#282828]">Employee ID</Label>
-                                            <div className="relative">
-                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="EMP-0001"
-                                                        value={employeeId}
-                                                        onChange={(e) => setEmployeeId(e.target.value)}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                        required={role === "staff"}
-                                                    />
-                                                    <KeyRound className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                    <div className="absolute right-4 pointer-events-none text-[#953002]/70">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -443,7 +458,7 @@ function RegisterForm() {
                                 <div className="mt-4 text-center text-[13px] font-medium text-neutral-600 pb-2">
                                     Already have an account?{" "}
                                     <Link
-                                        href="/auth/login"
+                                        href={searchParams.get("redirect") ? `/auth/login?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "/auth/login"}
                                         className="font-extrabold text-[#953002] hover:underline"
                                     >
                                         Log in
@@ -500,14 +515,20 @@ function RegisterForm() {
                             </div>
 
                             <Button
-                                onClick={() => router.push("/auth/login")}
+                                onClick={() => {
+                                    const redirectParams = searchParams.get("redirect") ? `?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
+                                    router.push(`/auth/login${redirectParams}`);
+                                }}
                                 className="w-full h-[52px] rounded-full bg-[#953002] hover:bg-[#7a2600] text-white font-extrabold text-[15px] mb-4"
                             >
                                 Go to Login Now
                             </Button>
 
                             <p className="text-[12px] text-neutral-500 font-medium pb-2">
-                                If you are not redirected, <button onClick={() => router.push("/auth/login")} className="text-[#953002] font-bold hover:underline cursor-pointer">click here</button>
+                                If you are not redirected, <button onClick={() => {
+                                    const redirectParams = searchParams.get("redirect") ? `?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
+                                    router.push(`/auth/login${redirectParams}`);
+                                }} className="text-[#953002] font-bold hover:underline cursor-pointer">click here</button>
                             </p>
                         </div>
                     </div>

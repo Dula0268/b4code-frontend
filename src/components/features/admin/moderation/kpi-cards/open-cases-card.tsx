@@ -1,22 +1,25 @@
 import { FolderOpen } from "lucide-react";
+import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
 
 export default function OpenCasesCard() {
+  const { badgeCounts } = useAdminModerationStore();
+
   return (
-    <div className="flex-1 min-w-0 bg-white rounded-2xl border border-[#F0EBE7] p-5 flex flex-col gap-3 shadow-sm">
+    <div className="flex-1 min-w-0 bg-white rounded-2xl border border-[#F0EBE7] p-5 flex flex-col gap-2 shadow-sm">
       <div className="flex items-center justify-between">
-        <p className="text-[13px] text-[#9E7B6A] font-normal leading-none m-0">
+        <p className="text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider m-0">
           Open Cases
         </p>
-        <div className="w-10 h-10 rounded-xl bg-[#FDEADE] flex items-center justify-center">
-          <FolderOpen size={18} className="text-[#C05621]" />
+        <div className="w-9 h-9 rounded-xl bg-[#FDEADE] flex items-center justify-center">
+          <FolderOpen size={16} className="text-[#C05621]" />
         </div>
       </div>
       <p className="text-[28px] font-bold text-[#1A1A1A] leading-none tracking-tight m-0">
-        14
+        {badgeCounts.openDisputes}
       </p>
-      <p className="text-[12px] text-[#9E7B6A] m-0">
-        Active disputes requiring attention
-      </p>
+      <div className="flex items-center gap-1 text-xs text-[#6B7280]">
+        <span>Active disputes requiring attention</span>
+      </div>
     </div>
   );
 }

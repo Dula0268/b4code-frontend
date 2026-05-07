@@ -1,269 +1,174 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Users, CreditCard, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import React from "react";
+import { Search, Users, CreditCard, Settings, Loader2 } from "lucide-react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import PermissionSection, {
-  Permission,
-} from "@/components/features/admin/settings/permission-section";
+import { useRBACStore } from "@/store/auth/rbac.store";
+import type { Permission } from "@/api/admin/settings.api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Role = "Admin" | "Owner" | "Staff" | "Guest";
 const roles: Role[] = ["Admin", "Owner", "Staff", "Guest"];
 
-// ─── Default permission data ──────────────────────────────────────────────────
-const defaultPermissions: Record<
-  Role,
-  { user: Permission[]; financial: Permission[]; system: Permission[] }
-> = {
-  Admin: {
-    user: [
-      {
-        key: "manage_users",
-        label: "Manage Users",
-        description: "Allow role to create, edit and deactivate user accounts.",
-        enabled: true,
-      },
-      {
-        key: "invite_members",
-        label: "Invite Members",
-        description: "Send email invitations to join the workspace.",
-        enabled: true,
-      },
-      {
-        key: "delete_accounts",
-        label: "Delete Accounts",
-        description: "Permanently remove users from the organization database.",
-        enabled: false,
-      },
-    ],
-    financial: [
-      {
-        key: "process_refunds",
-        label: "Process Refunds",
-        description: "Ability to issue partial or full refunds to customers.",
-        enabled: true,
-      },
-      {
-        key: "view_transactions",
-        label: "View Transactions",
-        description:
-          "Read-only access to historical payment data and invoices.",
-        enabled: true,
-      },
-    ],
-    system: [
-      {
-        key: "edit_workspace",
-        label: "Edit Workspace Settings",
-        description: "Modify workspace name, logo, and general appearance.",
-        enabled: true,
-      },
-      {
-        key: "audit_logs",
-        label: "Audit Logs",
-        description: "View detailed history of all actions performed by users.",
-        enabled: true,
-      },
-    ],
-  },
-  Owner: {
-    user: [
-      {
-        key: "manage_users",
-        label: "Manage Users",
-        description: "Allow role to create, edit and deactivate user accounts.",
-        enabled: true,
-      },
-      {
-        key: "invite_members",
-        label: "Invite Members",
-        description: "Send email invitations to join the workspace.",
-        enabled: true,
-      },
-      {
-        key: "delete_accounts",
-        label: "Delete Accounts",
-        description: "Permanently remove users from the organization database.",
-        enabled: true,
-      },
-    ],
-    financial: [
-      {
-        key: "process_refunds",
-        label: "Process Refunds",
-        description: "Ability to issue partial or full refunds to customers.",
-        enabled: true,
-      },
-      {
-        key: "view_transactions",
-        label: "View Transactions",
-        description:
-          "Read-only access to historical payment data and invoices.",
-        enabled: true,
-      },
-    ],
-    system: [
-      {
-        key: "edit_workspace",
-        label: "Edit Workspace Settings",
-        description: "Modify workspace name, logo, and general appearance.",
-        enabled: true,
-      },
-      {
-        key: "audit_logs",
-        label: "Audit Logs",
-        description: "View detailed history of all actions performed by users.",
-        enabled: false,
-      },
-    ],
-  },
-  Staff: {
-    user: [
-      {
-        key: "manage_users",
-        label: "Manage Users",
-        description: "Allow role to create, edit and deactivate user accounts.",
-        enabled: false,
-      },
-      {
-        key: "invite_members",
-        label: "Invite Members",
-        description: "Send email invitations to join the workspace.",
-        enabled: true,
-      },
-      {
-        key: "delete_accounts",
-        label: "Delete Accounts",
-        description: "Permanently remove users from the organization database.",
-        enabled: false,
-      },
-    ],
-    financial: [
-      {
-        key: "process_refunds",
-        label: "Process Refunds",
-        description: "Ability to issue partial or full refunds to customers.",
-        enabled: false,
-      },
-      {
-        key: "view_transactions",
-        label: "View Transactions",
-        description:
-          "Read-only access to historical payment data and invoices.",
-        enabled: true,
-      },
-    ],
-    system: [
-      {
-        key: "edit_workspace",
-        label: "Edit Workspace Settings",
-        description: "Modify workspace name, logo, and general appearance.",
-        enabled: false,
-      },
-      {
-        key: "audit_logs",
-        label: "Audit Logs",
-        description: "View detailed history of all actions performed by users.",
-        enabled: false,
-      },
-    ],
-  },
-  Guest: {
-    user: [
-      {
-        key: "manage_users",
-        label: "Manage Users",
-        description: "Allow role to create, edit and deactivate user accounts.",
-        enabled: false,
-      },
-      {
-        key: "invite_members",
-        label: "Invite Members",
-        description: "Send email invitations to join the workspace.",
-        enabled: false,
-      },
-      {
-        key: "delete_accounts",
-        label: "Delete Accounts",
-        description: "Permanently remove users from the organization database.",
-        enabled: false,
-      },
-    ],
-    financial: [
-      {
-        key: "process_refunds",
-        label: "Process Refunds",
-        description: "Ability to issue partial or full refunds to customers.",
-        enabled: false,
-      },
-      {
-        key: "view_transactions",
-        label: "View Transactions",
-        description:
-          "Read-only access to historical payment data and invoices.",
-        enabled: false,
-      },
-    ],
-    system: [
-      {
-        key: "edit_workspace",
-        label: "Edit Workspace Settings",
-        description: "Modify workspace name, logo, and general appearance.",
-        enabled: false,
-      },
-      {
-        key: "audit_logs",
-        label: "Audit Logs",
-        description: "View detailed history of all actions performed by users.",
-        enabled: false,
-      },
-    ],
-  },
-};
+// ─── Inlined PermissionToggle ─────────────────────────────────────────────────
+function PermissionToggle({
+  label,
+  description,
+  enabled,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  enabled: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between px-5 py-[18px]">
+      {/* Left: label + description */}
+      <div className="flex-1 pr-8">
+        <p className="m-0 text-[14px] font-semibold text-[var(--black-2)]">
+          {label}
+        </p>
+        <p className="m-0 mt-1 text-[12.5px] text-[var(--gray-3)] leading-snug">
+          {description}
+        </p>
+      </div>
+
+      {/* Toggle switch — iOS style */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        onClick={() => onChange(!enabled)}
+        className={`relative w-[50px] h-[28px] rounded-full border-none outline-none cursor-pointer p-0 flex-shrink-0 transition-colors duration-250 ${
+          enabled
+            ? "bg-[#27ae60] shadow-[inset_0_1px_2px_rgba(0,0,0,0.10)]"
+            : "bg-[#cbd5e0] shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]"
+        }`}
+      >
+        {/* Knob */}
+        <span
+          className={`absolute top-[3px] w-[22px] h-[22px] rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.25),_0_1px_2px_rgba(0,0,0,0.12)] transition-[left] duration-250 block ${
+            enabled ? "left-[23px]" : "left-[3px]"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
+// ─── Inlined PermissionSection ────────────────────────────────────────────────
+function PermissionSection({
+  icon,
+  title,
+  permissions,
+  onToggle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  permissions: Permission[];
+  onToggle: (key: string, value: boolean) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Section heading */}
+      <div className="flex items-center gap-2">
+        <span className="text-[var(--brand-primary)] flex-shrink-0">{icon}</span>
+        <h3 className="m-0 text-[15px] font-bold text-[var(--black-2)]">
+          {title}
+        </h3>
+      </div>
+
+      {/* Permission rows card */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-[var(--gray-5)]">
+        {permissions.map((perm) => (
+          <PermissionToggle
+            key={perm.key}
+            label={perm.label}
+            description={perm.description}
+            enabled={perm.enabled}
+            onChange={(value) => onToggle(perm.key, value)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const [activeRole, setActiveRole] = useState<Role>("Admin");
-  const [permData, setPermData] = useState(defaultPermissions);
   const [search, setSearch] = useState("");
   const [saved, setSaved] = useState(false);
+  
+  // Track changes made by user before saving
+  const [pendingUpdates, setPendingUpdates] = useState<Record<string, boolean>>({});
 
-  const handleToggle = (
-    section: "user" | "financial" | "system",
-    key: string,
-    value: boolean,
-  ) => {
+  const {
+    permissionsData,
+    loading,
+    actionLoading,
+    fetchRolePermissions,
+    updateRolePermissions
+  } = useRBACStore();
+
+  useEffect(() => {
+    fetchRolePermissions(activeRole);
+    setPendingUpdates({});
     setSaved(false);
-    setPermData((prev) => ({
+  }, [activeRole, fetchRolePermissions]);
+
+  const handleToggle = (key: string, value: boolean) => {
+    setSaved(false);
+    setPendingUpdates((prev) => ({
       ...prev,
-      [activeRole]: {
-        ...prev[activeRole],
-        [section]: prev[activeRole][section].map((p) =>
-          p.key === key ? { ...p, enabled: value } : p,
-        ),
-      },
+      [key]: value,
     }));
   };
 
-  const filter = (list: Permission[]) =>
-    list.filter(
-      (p) =>
-        !search.trim() ||
-        p.label.toLowerCase().includes(search.toLowerCase()) ||
-        p.description.toLowerCase().includes(search.toLowerCase()),
-    );
+  const handleSave = async () => {
+    if (Object.keys(pendingUpdates).length === 0) return;
+    
+    try {
+      await updateRolePermissions(activeRole, pendingUpdates);
+      setPendingUpdates({});
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error("Save failed", err);
+    }
+  };
 
-  const current = permData[activeRole];
+  const currentDto = permissionsData[activeRole];
+  const userPerms = currentDto?.permissions?.user || [];
+  const financialPerms = currentDto?.permissions?.financial || [];
+  const systemPerms = currentDto?.permissions?.system || [];
+
+  // Override backend value with pending change if it exists
+  const applyPending = (p: Permission) => ({
+    ...p,
+    enabled: pendingUpdates[p.key] !== undefined ? pendingUpdates[p.key] : p.enabled
+  });
+
+  const filter = (list: Permission[]) =>
+    list
+      .map(applyPending)
+      .filter(
+        (p) =>
+          !search.trim() ||
+          p.label.toLowerCase().includes(search.toLowerCase()) ||
+          p.description.toLowerCase().includes(search.toLowerCase()),
+      );
 
   return (
     <AdminPageLayout>
-      <div className="max-w-225 w-full mx-auto flex flex-col gap-6">
+      <div className="max-w-[900px] w-full mx-auto flex flex-col gap-6">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-(--gray-3)">
+        <nav className="flex items-center gap-2 text-sm text-[var(--gray-3)]">
           <span>Settings</span>
-          <span className="text-(--gray-4)">›</span>
-          <span className="text-(--brand-primary) font-semibold">
+          <span className="text-[var(--gray-4)]">›</span>
+          <span className="text-[var(--brand-primary)] font-semibold">
             Role Permission
           </span>
         </nav>
@@ -271,37 +176,39 @@ export default function SettingsPage() {
         {/* Page title + action buttons */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="m-0 text-2xl font-extrabold text-(--black-2)">
+            <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">
               Light Permission Settings
             </h1>
-            <p className="m-0 mt-1.5 text-sm text-(--gray-3) max-w-110 leading-relaxed">
+            <p className="m-0 mt-[6px] text-sm text-[var(--gray-3)] max-w-[440px] leading-relaxed">
               Configure granular access control for different user roles in your
               organization. Changes take effect on the next user login.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <button
               type="button"
               onClick={() => {
-                setPermData(defaultPermissions);
+                setPendingUpdates({});
                 setSaved(false);
               }}
-              className="px-5 py-2.25 rounded-[10px] border border-(--gray-5) bg-white text-sm font-semibold text-(--gray-2) cursor-pointer hover:bg-[#f9f9f9] transition-colors"
+              className="px-5 py-[9px] rounded-[10px] border border-[var(--gray-5)] bg-white text-sm font-semibold text-[var(--gray-2)] cursor-pointer hover:bg-[#f9f9f9] transition-colors"
             >
               Discard
             </button>
             <button
               type="button"
-              onClick={() => setSaved(true)}
-              className="px-5 py-2.25 rounded-[10px] bg-(--brand-primary) text-white border-none text-sm font-semibold cursor-pointer shadow-[0_2px_8px_rgba(149,48,2,0.25)] hover:bg-(--primary-hover) transition-colors"
+              onClick={handleSave}
+              disabled={actionLoading || Object.keys(pendingUpdates).length === 0}
+              className="px-5 py-[9px] flex items-center justify-center gap-2 rounded-[10px] bg-[var(--brand-primary)] text-white border-none text-sm font-semibold cursor-pointer shadow-[0_2px_8px_rgba(149,48,2,0.25)] hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50"
             >
+              {actionLoading && <Loader2 size={16} className="animate-spin" />}
               Save Changes
             </button>
           </div>
         </div>
 
-        {/* Role tabs — no icons */}
-        <div className="flex items-center bg-white rounded-full border border-(--gray-5) p-1 shadow-sm w-full">
+        {/* Role tabs */}
+        <div className="flex items-center bg-white rounded-full border border-[var(--gray-5)] p-1 shadow-sm w-full">
           {roles.map((r) => (
             <button
               key={r}
@@ -311,10 +218,10 @@ export default function SettingsPage() {
                 setSaved(false);
                 setSearch("");
               }}
-              className={`flex-1 py-2.25 rounded-full text-sm font-semibold border-none cursor-pointer transition-colors ${
+              className={`flex-1 py-[9px] rounded-full text-sm font-semibold border-none cursor-pointer transition-colors ${
                 activeRole === r
-                  ? "bg-(--brand-primary) text-white shadow-sm"
-                  : "bg-transparent text-(--gray-2) hover:bg-[#f5f5f5]"
+                  ? "bg-[var(--brand-primary)] text-white shadow-sm"
+                  : "bg-transparent text-[var(--gray-2)] hover:bg-[#f5f5f5]"
               }`}
             >
               {r}
@@ -323,62 +230,74 @@ export default function SettingsPage() {
         </div>
 
         {/* Search bar */}
-        <div className="flex items-center gap-3 px-4 py-2.75 bg-white border border-(--gray-5) rounded-xl shadow-sm">
-          <Search size={15} className="text-(--gray-4) shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-[11px] bg-white border border-[var(--gray-5)] rounded-[12px] shadow-sm">
+          <Search size={15} className="text-[var(--gray-4)] flex-shrink-0" />
           <input
             type="text"
-            placeholder="Search permissions (e.g. ‘refunds’, ‘delete’)…"
+            placeholder="Search permissions (e.g. 'refunds', 'delete')…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 border-none outline-none bg-transparent text-sm text-(--black-2) placeholder:text-(--gray-4)"
+            className="flex-1 border-none outline-none bg-transparent text-sm text-[var(--black-2)] placeholder:text-[var(--gray-4)]"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="text-(--gray-4) bg-transparent border-none cursor-pointer text-xs hover:text-(--gray-2)"
+              className="text-[var(--gray-4)] bg-transparent border-none cursor-pointer text-xs hover:text-[var(--gray-2)]"
             >
               ✕
             </button>
           )}
-          <span className="text-[11px] text-(--gray-4) bg-[#f5f5f5] border border-(--gray-5) rounded px-1.5 py-0.5 font-mono select-none shrink-0">
+          <span className="text-[11px] text-[var(--gray-4)] bg-[#f5f5f5] border border-[var(--gray-5)] rounded px-[6px] py-[2px] font-mono select-none flex-shrink-0">
             ⌘K
           </span>
         </div>
 
         {/* Permission sections */}
         <div className="flex flex-col gap-7">
-          {filter(current.user).length > 0 && (
-            <PermissionSection
-              icon={<Users size={18} />}
-              title="User Management"
-              permissions={filter(current.user)}
-              onToggle={(key, value) => handleToggle("user", key, value)}
-            />
+          {loading ? (
+            <div className="py-20 flex justify-center text-[var(--brand-primary)]">
+              <Loader2 className="animate-spin" size={32} />
+            </div>
+          ) : !currentDto ? (
+            <div className="py-20 text-center text-[var(--gray-3)] text-sm">
+              Failed to load permissions.
+            </div>
+          ) : (
+            <>
+              {filter(userPerms).length > 0 && (
+                <PermissionSection
+                  icon={<Users size={18} />}
+                  title="User Management"
+                  permissions={filter(userPerms)}
+                  onToggle={handleToggle}
+                />
+              )}
+              {filter(financialPerms).length > 0 && (
+                <PermissionSection
+                  icon={<CreditCard size={18} />}
+                  title="Financial Operations"
+                  permissions={filter(financialPerms)}
+                  onToggle={handleToggle}
+                />
+              )}
+              {filter(systemPerms).length > 0 && (
+                <PermissionSection
+                  icon={<Settings size={18} />}
+                  title="System & Security"
+                  permissions={filter(systemPerms)}
+                  onToggle={handleToggle}
+                />
+              )}
+              {filter(userPerms).length === 0 &&
+                filter(financialPerms).length === 0 &&
+                filter(systemPerms).length === 0 && (
+                  <div className="text-center py-12 text-[var(--gray-3)] text-sm">
+                    No permissions match &ldquo;{search}&rdquo;
+                  </div>
+                )}
+            </>
           )}
-          {filter(current.financial).length > 0 && (
-            <PermissionSection
-              icon={<CreditCard size={18} />}
-              title="Financial Operations"
-              permissions={filter(current.financial)}
-              onToggle={(key, value) => handleToggle("financial", key, value)}
-            />
-          )}
-          {filter(current.system).length > 0 && (
-            <PermissionSection
-              icon={<Settings size={18} />}
-              title="System & Security"
-              permissions={filter(current.system)}
-              onToggle={(key, value) => handleToggle("system", key, value)}
-            />
-          )}
-          {filter(current.user).length === 0 &&
-            filter(current.financial).length === 0 &&
-            filter(current.system).length === 0 && (
-              <div className="text-center py-12 text-(--gray-3) text-sm">
-                No permissions match &ldquo;{search}&rdquo;
-              </div>
-            )}
         </div>
 
         {/* Save confirmation */}

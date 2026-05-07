@@ -1,94 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Search,
-  SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-
-// ─── Types ──────────────────────────────────────────────────────────────────────
-type PayoutStatus = "Hold" | "Rejected";
-type PaymentModel = "Commission" | "Flat Fee";
-
-interface PayoutRow {
-  id: string;
-  propertyName: string;
-  propertyImage: string;
-  pvId: string;
-  ownerName: string;
-  ownerRole: string;
-  ownerInitials: string;
-  ownerColor: string;
-  paymentModel: PaymentModel;
-  avbBalance: string;
-  reqBalance: string;
-  status: PayoutStatus;
-}
-
-// ─── Static data ────────────────────────────────────────────────────────────────
-const PAYOUTS: PayoutRow[] = [
-  {
-    id: "1",
-    propertyName: "City Loft, NY",
-    propertyImage: "",
-    pvId: "#PV-2935",
-    ownerName: "Harvey Specter",
-    ownerRole: "Owner",
-    ownerInitials: "HS",
-    ownerColor: "#7C3AED",
-    paymentModel: "Commission",
-    avbBalance: "LKR 23 562",
-    reqBalance: "LKR 5 000",
-    status: "Hold",
-  },
-  {
-    id: "2",
-    propertyName: "Ocean View Apt",
-    propertyImage: "",
-    pvId: "#PV-2937",
-    ownerName: "Mike Ross",
-    ownerRole: "Owner",
-    ownerInitials: "MR",
-    ownerColor: "#2563EB",
-    paymentModel: "Commission",
-    avbBalance: "LKR 23 562",
-    reqBalance: "LKR 5 000",
-    status: "Hold",
-  },
-  {
-    id: "3",
-    propertyName: "Mountain Retreat",
-    propertyImage: "",
-    pvId: "#PV-2936",
-    ownerName: "Jessica Pearson",
-    ownerRole: "Owner",
-    ownerInitials: "JP",
-    ownerColor: "#DC2626",
-    paymentModel: "Flat Fee",
-    avbBalance: "LKR 23 562",
-    reqBalance: "LKR 5 000",
-    status: "Rejected",
-  },
-  {
-    id: "4",
-    propertyName: "City Loft, NY",
-    propertyImage: "",
-    pvId: "#PV-2935",
-    ownerName: "Harvey Specter",
-    ownerRole: "Owner",
-    ownerInitials: "HS",
-    ownerColor: "#7C3AED",
-    paymentModel: "Commission",
-    avbBalance: "LKR 23 562",
-    reqBalance: "LKR 5 000",
-    status: "Hold",
-  },
-];
+import { useState, useEffect } from "react";
+import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
+import type { PayoutDto } from "@/api/admin/finance.api";
 
 // ─── Badges ─────────────────────────────────────────────────────────────────────
-function PaymentModelBadge({ model }: { model: PaymentModel }) {
+function PaymentModelBadge({ model }: { model: string }) {
   return (
     <span
       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
@@ -102,16 +20,14 @@ function PaymentModelBadge({ model }: { model: PaymentModel }) {
   );
 }
 
-function PayoutStatusBadge({ status }: { status: PayoutStatus }) {
-  const map: Record<PayoutStatus, { bg: string; text: string; dot: string }> = {
+function PayoutStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; text: string; dot: string }> = {
     Hold: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
-    Rejected: {
-      bg: "bg-[#FEF2F2]",
-      text: "text-[#DC2626]",
-      dot: "bg-[#DC2626]",
-    },
+    Pending: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
+    Processed: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]", dot: "bg-[#16A34A]" },
+    Rejected: { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]", dot: "bg-[#DC2626]" },
   };
-  const s = map[status];
+  const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", dot: "bg-[#6B7280]" };
 
   return (
     <span
@@ -126,19 +42,58 @@ function PayoutStatusBadge({ status }: { status: PayoutStatus }) {
 // ─── Property placeholder images ────────────────────────────────────────────────
 const PROPERTY_COLORS = ["#E8DDD8", "#D4C5BC", "#C4B5AB", "#B5A59B"];
 
+function getInitials(name: string) {
+  if (!name) return "??";
+  const parts = name.split(" ");
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+function getColorForName(name: string) {
+  const colors = ["#C05621", "#2563EB", "#7C3AED", "#059669", "#DC2626", "#0891B2", "#CA8A04"];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────────
 interface PayoutTableProps {
-  onRowClick: () => void;
+  onRowClick: (payout: PayoutDto) => void;
 }
 
 export default function PayoutTable({ onRowClick }: PayoutTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalEntries = 24;
-  const perPage = 4;
-  const totalPages = Math.ceil(totalEntries / perPage);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const perPage = 10;
+
+  const { payouts, payoutsTotalElements, payoutsTotalPages, fetchPayouts, payoutsLoading } = useAdminFinanceStore();
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    fetchPayouts({
+      page: currentPage - 1,
+      size: perPage,
+      search: debouncedSearch
+    });
+  }, [fetchPayouts, currentPage, debouncedSearch]);
 
   return (
-    <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm overflow-hidden relative">
+      {payoutsLoading && payouts.length === 0 && (
+        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+          <Loader2 className="animate-spin text-[#C05621]" size={32} />
+        </div>
+      )}
+      
       {/* ── Search & Filter ── */}
       <div className="p-5 flex items-center justify-between gap-4 flex-wrap">
         <div className="relative flex-1 min-w-62.5 max-w-105">
@@ -148,6 +103,11 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
           />
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search by name, email, or role..."
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] placeholder:text-[#C4B5AB] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition"
           />
@@ -159,7 +119,7 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
       </div>
 
       {/* ── Table ── */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto min-h-[300px]">
         <table className="w-full">
           <thead>
             <tr className="border-y border-[#F0EBE7]">
@@ -170,10 +130,7 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                 Owner
               </th>
               <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Payment Model
-              </th>
-              <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Avb. Balance
+                Period
               </th>
               <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
                 Req. Balance
@@ -183,12 +140,22 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
               </th>
             </tr>
           </thead>
-          <tbody>
-            {PAYOUTS.map((p, idx) => (
+          <tbody className="relative">
+            {payoutsLoading && payouts.length > 0 && (
+               <tr className="absolute inset-0 bg-white/50 z-10"><td colSpan={5}></td></tr>
+            )}
+            {payouts.length === 0 && !payoutsLoading && (
+              <tr>
+                <td colSpan={5} className="py-12 text-center text-[#9E7B6A] text-sm">
+                  No payout requests found.
+                </td>
+              </tr>
+            )}
+            {payouts.map((p, idx) => (
               <tr
-                key={p.id + "-" + idx}
+                key={p.id}
                 className="border-b border-[#F0EBE7] last:border-b-0 hover:bg-[#FDFAF8] transition-colors cursor-pointer"
-                onClick={onRowClick}
+                onClick={() => onRowClick(p)}
               >
                 {/* Property */}
                 <td className="px-6 py-4">
@@ -196,15 +163,14 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                     <div
                       className="w-10 h-10 rounded-lg shrink-0"
                       style={{
-                        backgroundColor:
-                          PROPERTY_COLORS[idx % PROPERTY_COLORS.length],
+                        backgroundColor: PROPERTY_COLORS[idx % PROPERTY_COLORS.length],
                       }}
                     />
                     <div>
                       <p className="text-sm font-semibold text-[#1A1A1A]">
                         {p.propertyName}
                       </p>
-                      <p className="text-[11px] text-[#9E7B6A]">ID: {p.pvId}</p>
+                      <p className="text-[11px] text-[#9E7B6A]">ID: #{p.id}</p>
                     </div>
                   </div>
                 </td>
@@ -214,34 +180,28 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-                      style={{ backgroundColor: p.ownerColor }}
+                      style={{ backgroundColor: getColorForName(p.hostName) }}
                     >
-                      {p.ownerInitials}
+                      {getInitials(p.hostName)}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-[#1A1A1A]">
-                        {p.ownerName}
-                      </p>
-                      <p className="text-[11px] text-[#9E7B6A]">
-                        {p.ownerRole}
+                        {p.hostName}
                       </p>
                     </div>
                   </div>
                 </td>
 
-                {/* Payment Model */}
+                {/* Period */}
                 <td className="px-6 py-4">
-                  <PaymentModelBadge model={p.paymentModel} />
-                </td>
-
-                {/* Avb. Balance */}
-                <td className="px-6 py-4 text-sm text-[#1A1A1A]">
-                  {p.avbBalance}
+                  <span className="text-sm text-[#1A1A1A]">
+                    {p.period}
+                  </span>
                 </td>
 
                 {/* Req. Balance */}
-                <td className="px-6 py-4 text-sm text-[#1A1A1A]">
-                  {p.reqBalance}
+                <td className="px-6 py-4 text-sm text-[#1A1A1A] font-medium">
+                  LKR {p.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
 
                 {/* Status */}
@@ -255,70 +215,62 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
       </div>
 
       {/* ── Pagination ── */}
-      <div className="px-6 py-4 flex items-center justify-between border-t border-[#F0EBE7]">
-        <p className="text-sm text-[#9E7B6A]">
-          Showing <span className="font-semibold text-[#1A1A1A]">1</span> to{" "}
-          <span className="font-semibold text-[#1A1A1A]">4</span> of{" "}
-          <span className="font-semibold text-[#C05621]">{totalEntries}</span>{" "}
-          entries
-        </p>
+      {payoutsTotalPages > 0 && (
+        <div className="px-6 py-4 flex items-center justify-between border-t border-[#F0EBE7]">
+          <p className="text-sm text-[#9E7B6A]">
+            Showing <span className="font-semibold text-[#1A1A1A]">{(currentPage - 1) * perPage + 1}</span> to{" "}
+            <span className="font-semibold text-[#1A1A1A]">{Math.min(currentPage * perPage, payoutsTotalElements)}</span> of{" "}
+            <span className="font-semibold text-[#C05621]">{payoutsTotalElements}</span>{" "}
+            entries
+          </p>
 
-        <div className="flex items-center gap-2">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="w-9 h-9 rounded-lg border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors"
-          >
-            <ChevronLeft size={16} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors cursor-pointer"
+            >
+              <ChevronLeft size={16} />
+            </button>
 
-          {/* Page number buttons */}
-          <button
-            onClick={() => setCurrentPage(1)}
-            className={`w-9 h-9 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors ${
-              currentPage === 1
-                ? "bg-[#F59E0B] text-white"
-                : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
-            }`}
-          >
-            1
-          </button>
+            {/* Simple page numbers */}
+            {Array.from({ length: Math.min(5, payoutsTotalPages) }).map((_, i) => {
+              let pageNum = i + 1;
+              if (payoutsTotalPages > 5 && currentPage > 3) {
+                pageNum = currentPage - 2 + i;
+                if (pageNum > payoutsTotalPages) return null;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                    currentPage === pageNum
+                      ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
+                      : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
 
-          <button
-            onClick={() => setCurrentPage(2)}
-            className={`w-9 h-9 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors ${
-              currentPage === 2
-                ? "bg-[#F59E0B] text-white"
-                : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
-            }`}
-          >
-            2
-          </button>
+            {payoutsTotalPages > 5 && currentPage < payoutsTotalPages - 2 && (
+               <span className="w-9 h-9 flex items-center justify-center text-sm text-[#9E7B6A] font-bold">
+                 …
+               </span>
+            )}
 
-          <span className="w-9 h-9 flex items-center justify-center text-sm text-[#9E7B6A] font-bold">
-            …
-          </span>
-
-          <button
-            onClick={() => setCurrentPage(totalPages)}
-            className={`w-9 h-9 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors ${
-              currentPage === totalPages
-                ? "bg-[#F59E0B] text-white"
-                : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
-            }`}
-          >
-            {totalPages}
-          </button>
-
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="w-9 h-9 rounded-lg border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors"
-          >
-            <ChevronRight size={16} />
-          </button>
+            <button
+              disabled={currentPage === payoutsTotalPages}
+              onClick={() => setCurrentPage((p) => Math.min(payoutsTotalPages, p + 1))}
+              className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors cursor-pointer"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

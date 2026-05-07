@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import Link from "next/link";
 import UserIcon from "@/components/features/admin/user-icon";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -34,15 +35,20 @@ export default function AdminHeader({
     onSearch?.(e.target.value);
   };
 
+
+
   return (
     <header
-      className={`fixed top-0 right-0 h-17 z-40 bg-(--white) border-b border-(--gray-5) flex items-center justify-end px-7 gap-4 ${
-        fullWidth ? "left-0" : "left-65"
-      }`}
+      className={`fixed top-0 right-0 h-[68px] z-40 bg-[var(--white)] border-b border-[var(--gray-5)] flex items-center justify-end px-7 gap-4 ${fullWidth ? "left-0" : "left-[260px]"
+        }`}
     >
       {/* ── Search Bar ── */}
-      <div className="flex items-center gap-2 bg-[#f0ebe7] rounded-xl py-2.25 px-4 w-70 transition-shadow duration-150 focus-within:shadow-[0_0_0_2px_rgba(149,48,2,0.18)]">
-        <Search size={15} className="shrink-0" style={{ color: "#b07a6e" }} />
+      <div className="flex items-center gap-2 bg-[#f0ebe7] rounded-xl py-[9px] px-[16px] w-[280px] transition-shadow duration-150 focus-within:shadow-[0_0_0_2px_rgba(149,48,2,0.18)]">
+        <Search
+          size={15}
+          className="flex-shrink-0"
+          style={{ color: "#b07a6e" }}
+        />
         <input
           type="text"
           placeholder="Search..."
@@ -53,12 +59,13 @@ export default function AdminHeader({
       </div>
 
       {/* ── User Avatar ── */}
-      <div
+      <Link
+        href="/admin/profile"
         title={adminName}
-        className="relative w-10.5 h-10.5 shrink-0 cursor-pointer"
+        className="relative w-[42px] h-[42px] flex-shrink-0 cursor-pointer"
       >
         {/* Avatar circle — overflow-hidden so SVG clips cleanly */}
-        <div className="w-10.5 h-10.5 rounded-full overflow-hidden">
+        <div className="w-[42px] h-[42px] rounded-full overflow-hidden">
           {avatarSrc ? (
             <Image
               src={avatarSrc}
@@ -72,8 +79,8 @@ export default function AdminHeader({
         </div>
 
         {/* Green online indicator dot */}
-        <span className="absolute bottom-px right-px w-2.75 h-2.75 rounded-full bg-(--state-success) border-2 border-(--white)" />
-      </div>
+        <span className="absolute bottom-[1px] right-[1px] w-[11px] h-[11px] rounded-full bg-[var(--state-success)] border-2 border-[var(--white)]" />
+      </Link>
     </header>
   );
 }

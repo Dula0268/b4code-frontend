@@ -45,6 +45,9 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const [guestOpen, setGuestOpen] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
 
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   // ── Close on outside click ─────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -61,6 +64,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
 
   // ── Derived display labels ─────────────────────────────────────────────
   const dateLabel = (() => {
+    if (!mounted) return ""
     if (checkIn && checkOut) {
       const fmt = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
       return `${fmt(checkIn)} – ${fmt(checkOut)}`
@@ -72,7 +76,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   })()
 
   const guestTotal = guests.adults + guests.children
-  const guestLabel = `${guestTotal} guest${guestTotal !== 1 ? "s" : ""}`
+  const guestLabel = !mounted ? "1 guest" : `${guestTotal} guest${guestTotal !== 1 ? "s" : ""}`
 
   // Keep search results in sync when guest count changes on compact search bar.
   useEffect(() => {
@@ -138,6 +142,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
           ? "p-1 border border-[#e0e0e0] shadow-[0_2px_12px_rgba(0,0,0,0.08)] w-full max-w-[580px]"
           : "p-2 shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-[640px]",
       ].join(" ")}
+      suppressHydrationWarning
     >
 
       {/* ── Location ─────────────────────────────────────────────────── */}
@@ -146,7 +151,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { closeAll(); setLocationOpen(true) }}
         >
-          <MapPin size={16} className="text-[#953002] flex-shrink-0" />
+          <MapPin size={16} className="text-[var(--brand-primary)] flex-shrink-0" />
           <input
             type="text"
             value={destination}
@@ -154,6 +159,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
             onFocus={() => { closeAll(); setLocationOpen(true) }}
             placeholder="Where are you going?"
             className="border-none outline-none text-sm text-[#333333] placeholder:text-[#828282] bg-transparent w-full"
+            suppressHydrationWarning
           />
         </div>
 
@@ -173,7 +179,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { closeAll(); setCalOpen(o => !o) }}
         >
-          <Calendar size={16} className="text-[#953002] flex-shrink-0" />
+          <Calendar size={16} className="text-[var(--brand-primary)] flex-shrink-0" />
           <span className={`text-sm truncate ${dateLabel ? "text-[#333333]" : "text-[#828282]"}`}>
             {dateLabel || "Dates"}
           </span>
@@ -223,7 +229,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { closeAll(); setGuestOpen(o => !o) }}
         >
-          <Users size={16} className="text-[#953002] flex-shrink-0" />
+          <Users size={16} className="text-[var(--brand-primary)] flex-shrink-0" />
           <span className="text-sm text-[#333333]">{guestLabel}</span>
         </div>
 
@@ -239,8 +245,8 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       <button
         onClick={handleSearch}
         aria-label="Search"
-        className="bg-[#953002] hover:bg-[#6d2200] text-white rounded-lg w-11 h-11 flex items-center
-                   justify-center flex-shrink-0 transition-colors self-center"
+        className="bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white rounded-lg w-11 h-11 flex items-center justify-center transition-all duration-300 active:scale-95 group shadow-md hover:shadow-lg flex-shrink-0"
+        suppressHydrationWarning
       >
         <Search size={18} />
       </button>
