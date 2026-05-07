@@ -104,20 +104,6 @@ function mapBackendStatusToFrontend(status: string): OrderStatus {
   return statusMap[status] || "placed";
 }
 
-// Helper function to map frontend status to backend status
-function mapFrontendStatusToBackend(status: OrderStatus): string {
-  const statusMap: Record<OrderStatus, string> = {
-    placed: "NEW",
-    accepted: "PREPARING",
-    "in-progress": "PREPARING",
-    ready: "READY",
-    delivered: "DELIVERED",
-    completed: "DELIVERED",
-    cancelled: "CANCELLED",
-  };
-  return statusMap[status] || "NEW";
-}
-
 function extractApiErrorMessage(error: unknown, fallback: string): string {
   if (typeof error === "object" && error !== null) {
     const response = (error as { response?: { data?: unknown } }).response;

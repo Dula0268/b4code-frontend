@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, CreditCard, Lock, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CreditCard, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { paymentApi } from "@/lib/api";
@@ -43,7 +43,7 @@ export default function PaymentCardForm({ onBack, onSubmit, amount }: PaymentCar
                 setIsProcessing(false);
                 onSubmit(true);
             }, 1500);
-        } catch (error) {
+        } catch {
             setIsProcessing(false);
             onSubmit(false);
         }

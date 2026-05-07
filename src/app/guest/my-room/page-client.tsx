@@ -55,7 +55,7 @@ function useOtpGateLogic(onVerified: () => void) {
       await new Promise(resolve => setTimeout(resolve, 1500));
       sessionStorage.setItem("my_room_verified", "true")
       onVerified()
-    } catch(err) {
+    } catch {
       setError("Verification failed. Please try again.");
       setPhase("otp_entry");
     }

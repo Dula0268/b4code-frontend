@@ -23,6 +23,11 @@ type BackendRoom = {
     imageUrl?: string
 }
 
+type BackendPropertyDetail = Omit<Partial<PropertyDetail>, "rooms"> & {
+    id?: string | number
+    rooms?: BackendRoom[]
+}
+
 function mapBackendRoom(room: BackendRoom, fallback?: Room): Room {
     return {
         id: String(room.id ?? room.roomId ?? fallback?.id ?? ""),
@@ -38,10 +43,8 @@ function mapBackendRoom(room: BackendRoom, fallback?: Room): Room {
     }
 }
 
-function mergePropertyDetails(fallback: PropertyDetail, backend: any): PropertyDetail {
-    const backendRooms = Array.isArray(backend?.rooms)
-        ? backend.rooms
-        : []
+function mergePropertyDetails(fallback: PropertyDetail, backend: BackendPropertyDetail): PropertyDetail {
+    const backendRooms = backend.rooms ?? []
 
     return {
         ...fallback,
@@ -61,7 +64,7 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: any): PropertyD
         reviewBreakdown: backend.reviewBreakdown?.length ? backend.reviewBreakdown : fallback.reviewBreakdown,
         reviews: backend.reviews?.length ? backend.reviews : fallback.reviews,
         rooms: backendRooms.length > 0
-            ? backendRooms.map((room: any, index: number) => mapBackendRoom(room, fallback.rooms[index] ?? fallback.rooms[0]))
+            ? backendRooms.map((room, index) => mapBackendRoom(room, fallback.rooms[index] ?? fallback.rooms[0]))
             : fallback.rooms,
         lat: backend.lat ?? fallback.lat,
         lng: backend.lng ?? fallback.lng,
@@ -73,7 +76,7 @@ async function fetchProperty(id: string) {
     if (!fallback) return null
 
     try {
-        const backend = await guestApi.getPropertyDetail(id)
+        const backend = await guestApi.getPropertyDetail(id) as BackendPropertyDetail
         return mergePropertyDetails(fallback, backend)
     } catch {
         return fallback
