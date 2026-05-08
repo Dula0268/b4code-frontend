@@ -52,10 +52,10 @@ export interface PageResponse<T> {
 }
 
 export const ModerationApi = {
-  getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number }> =>
+  getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number }> =>
     api.get('/api/admin/moderation/counts').then((res) => res.data),
 
-  getReviews: (params: { status?: string; search?: string; page?: number; size?: number }): Promise<PageResponse<FlaggedReview>> =>
+  getReviews: (params: { flagReason?: string; search?: string; page?: number; size?: number }): Promise<PageResponse<FlaggedReview>> =>
     api.get('/api/admin/moderation/reviews', { params }).then((res) => res.data),
 
   approveReview: (id: number): Promise<FlaggedReview> =>

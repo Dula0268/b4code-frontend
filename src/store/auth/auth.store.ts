@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { authApi, userApi, setToken, removeToken } from "@/lib/api";
+import axios from "axios";
+import { userApi } from "@/api/user.api";
 
 type Role = "guest" | "owner" | "admin" | "staff";
 
@@ -12,16 +13,17 @@ export type UserProfile = {
 type AuthUser = {
   email: string;
   role: Role;
+  userId?: number;
   profile?: UserProfile;
 };
 
+// ─── Mock users (kept for guest / owner / staff flows) ────────────────────────
 type MockUserRecord = {
   password: string;
   role: Role;
   profile?: UserProfile;
 };
 
-// ─── Mock Data (fallback when backend is unavailable) ─────────────────────────
 const INITIAL_MOCK_USERS: Record<string, MockUserRecord> = {
   "guest@primestay.com": {
     password: "guest123",
@@ -30,7 +32,6 @@ const INITIAL_MOCK_USERS: Record<string, MockUserRecord> = {
   },
   "owner@primestay.com": { password: "owner123", role: "owner" },
   "staff@primestay.com": { password: "staff123", role: "staff" },
-  "admin@primestay.com": { password: "admin123", role: "admin" },
 };
 
 const getMockUsers = (): Record<string, MockUserRecord> => {
@@ -45,6 +46,22 @@ const getMockUsers = (): Record<string, MockUserRecord> => {
   }
 };
 
+const saveMockUsers = (users: Record<string, MockUserRecord>) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    // Persist only the non-initial portion (optional, but cleaner).
+    // If you prefer, you can store the whole object instead.
+    const toStore: Record<string, MockUserRecord> = { ...users };
+    for (const key of Object.keys(INITIAL_MOCK_USERS)) {
+      delete toStore[key];
+    }
+
+    localStorage.setItem("MOCK_USERS_DB", JSON.stringify(toStore));
+  } catch {
+    // ignore storage errors (quota, private mode, etc.)
+  }
+};
 
 const REDIRECT_MAP: Record<Role, string> = {
   guest: "/guest/search",
@@ -52,6 +69,26 @@ const REDIRECT_MAP: Record<Role, string> = {
   staff: "/staff/select-property",
   admin: "/admin",
 };
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+// ─── Hydrate from localStorage on load ───────────────────────────────────────
+function hydrateUser(): AuthUser | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const token = localStorage.getItem("accessToken");
+    const email = localStorage.getItem("authEmail");
+    const role = localStorage.getItem("authRole") as Role | null;
+    const userId = localStorage.getItem("authUserId");
+    if (token && email && role) {
+      return { email, role, userId: userId ? Number(userId) : undefined };
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
 
 // ─── State & Actions ──────────────────────────────────────────────────────────
 type AuthState = {
@@ -77,96 +114,123 @@ type AuthActions = {
 };
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
-  user: null,
+  user: hydrateUser(),
   loading: false,
   isRestoring: false,
   error: null,
 
-  // ─── Login ────────────────────────────────────────────────────────────────
+  // ── Login ─────────────────────────────────────────────────────────────────
   login: async (email, password) => {
     set({ loading: true, error: null });
-    try {
-      // Try real backend first
-      const data = await authApi.login(email, password);
-      const role = data.role.toLowerCase() as Role;
 
-      // Store JWT token
-      setToken(data.token);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("auth_user", JSON.stringify({
-          email: data.email,
-          role,
-          userId: data.userId,
-        }));
+    // ── Admin: call real backend ──
+    if (email.toLowerCase() === "admin@primestay.com" ||
+        email.toLowerCase().endsWith("@primestay.com")) {
+      try {
+        const { data } = await axios.post(`${API_BASE}/api/auth/login`, {
+          email: email.toLowerCase(),
+          password,
+        });
+
+        const role = (data.role?.toLowerCase() ?? "guest") as Role;
+
+        // Only store token for admin — other roles fall through to mock
+        if (role === "admin" || role === "staff") {
+          localStorage.setItem("accessToken", data.token);
+          localStorage.setItem("refreshToken", data.refreshToken);
+          localStorage.setItem("authEmail", data.email);
+          localStorage.setItem("authRole", role);
+          localStorage.setItem("authUserId", String(data.userId));
+
+          const user: AuthUser = { email: data.email, role, userId: data.userId };
+          set({ loading: false, user });
+          return REDIRECT_MAP[role];
+        }
+      } catch (err: unknown) {
+        const msg =
+          axios.isAxiosError(err) && err.response?.status === 401
+            ? "Invalid email or password."
+            : "Unable to reach the server. Please try again.";
+        set({ loading: false, error: msg });
+        throw new Error(msg);
       }
-
-      set({ loading: false, user: { email: data.email, role } });
-      return REDIRECT_MAP[role];
-
-    } catch (err) {
-      set({ loading: false, error: err instanceof Error ? err.message : "Login failed." });
-      throw err;
     }
+
+    // ── Other roles: mock ──
+    await new Promise((r) => setTimeout(r, 600));
+    const users = getMockUsers();
+    const match = users[email.toLowerCase()];
+    if (!match || match.password !== password) {
+      set({ loading: false, error: "Invalid email or password." });
+      throw new Error("Invalid credentials");
+    }
+    set({
+      loading: false,
+      user: { email, role: match.role, profile: match.profile },
+    });
+    return REDIRECT_MAP[match.role];
   },
 
-  // ─── Login For Checkout ───────────────────────────────────────────────────
+  // ── Login for Checkout ────────────────────────────────────────────────────
   loginForCheckout: async (email, password) => {
     set({ loading: true, error: null });
-    try {
-      const data = await authApi.login(email, password);
-      const role = data.role.toLowerCase() as Role;
-      setToken(data.token);
-      set({ loading: false, error: null, user: { email: data.email, role } });
-    } catch (err) {
-      set({ loading: false, error: err instanceof Error ? err.message : "Login failed." });
-      throw err;
+    await new Promise((r) => setTimeout(r, 600));
+    const users = getMockUsers();
+    const match = users[email.toLowerCase()];
+    if (!match || match.password !== password) {
+      set({ loading: false, error: "Invalid email or password." });
+      throw new Error("Invalid credentials");
     }
+    set({
+      loading: false,
+      error: null,
+      user: { email, role: match.role, profile: match.profile },
+    });
   },
 
-  // ─── Register ─────────────────────────────────────────────────────────────
+  // ── Register ──────────────────────────────────────────────────────────────
   register: async (email, password, role) => {
     set({ loading: true, error: null });
-    try {
-      // Try real backend first
-      const nameParts = email.split("@")[0].split(".");
-      const firstName = nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) || "User";
-      const lastName = nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || "";
-
-      await authApi.register(email, password, role, firstName, lastName);
-      set({ loading: false });
-    } catch (err) {
-      set({ loading: false, error: err instanceof Error ? err.message : "Registration failed." });
-      throw err;
+    await new Promise((r) => setTimeout(r, 800));
+    const lowerEmail = email.toLowerCase();
+    const users = getMockUsers();
+    if (users[lowerEmail]) {
+      set({ loading: false, error: "An account with this email already exists." });
+      throw new Error("Email exists");
     }
+    users[lowerEmail] = { password, role };
+    saveMockUsers(users);
+    set({ loading: false });
   },
 
-  // ─── Register From Checkout ───────────────────────────────────────────────
+  // ── Register from Checkout ────────────────────────────────────────────────
   registerFromCheckout: async (email, password, profile) => {
     set({ loading: true, error: null });
-    try {
-      await authApi.register(
-        email, password, "guest",
-        profile.firstName, profile.lastName, profile.phone
-      );
-      setToken("");
-      set({ loading: false, error: null, user: { email: email.toLowerCase(), role: "guest", profile } });
-    } catch (err) {
-      set({ loading: false, error: err instanceof Error ? err.message : "Registration failed." });
-      throw err;
+    await new Promise((r) => setTimeout(r, 800));
+    const lowerEmail = email.toLowerCase();
+    const users = getMockUsers();
+    if (users[lowerEmail]) {
+      set({ loading: false, error: "An account with this email already exists." });
+      throw new Error("Email exists");
     }
+    users[lowerEmail] = { password, role: "guest", profile };
+    saveMockUsers(users);
+    set({ loading: false, error: null, user: { email: lowerEmail, role: "guest", profile } });
   },
 
-  // ─── Check Email Exists ───────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
   checkEmailExists: (email) => {
     const users = getMockUsers();
     return !!users[email.toLowerCase()];
   },
 
-  // ─── Logout ───────────────────────────────────────────────────────────────
   logout: () => {
-    removeToken();
     if (typeof window !== "undefined") {
-      localStorage.removeItem("auth_user");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("authEmail");
+      localStorage.removeItem("authRole");
+      localStorage.removeItem("authUserId");
     }
     set({ user: null, error: null });
   },

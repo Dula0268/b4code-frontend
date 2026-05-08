@@ -15,7 +15,7 @@ export default function RemovedTodayCard() {
         </div>
       </div>
       <p className="text-[28px] font-bold text-[#1A1A1A] leading-none tracking-tight m-0">
-        {badgeCounts.pendingReviews > 0 ? "-" : "0"}
+        {badgeCounts.removedToday || "0"}
       </p>
     </div>
   );

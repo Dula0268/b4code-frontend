@@ -13,7 +13,7 @@ type AdminModerationState = {
   selectedReview: FlaggedReview | null;
   selectedDispute: Dispute | null;
   disputeResolved: { amount: string; bookingId: string; caseId: string; time: string } | null;
-  badgeCounts: { pendingReviews: number; openDisputes: number };
+  badgeCounts: { pendingReviews: number; openDisputes: number; removedToday: number };
   
   // Reviews
   reviews: FlaggedReview[];
@@ -42,7 +42,7 @@ type AdminModerationActions = {
   
   fetchBadgeCounts: () => Promise<void>;
   
-  fetchReviews: (params?: { status?: string; search?: string; page?: number; size?: number }) => Promise<void>;
+  fetchReviews: (params?: { flagReason?: string; search?: string; page?: number; size?: number }) => Promise<void>;
   approveReview: (id: number) => Promise<void>;
   removeReview: (id: number, adminNote: string) => Promise<void>;
 
@@ -57,7 +57,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
   selectedReview: null,
   selectedDispute: null,
   disputeResolved: null,
-  badgeCounts: { pendingReviews: 0, openDisputes: 0 },
+  badgeCounts: { pendingReviews: 0, openDisputes: 0, removedToday: 0 },
   
   reviews: [],
   reviewsTotalPages: 0,
@@ -104,7 +104,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
     try {
       await ModerationApi.approveReview(id);
       get().fetchBadgeCounts(); // Update counts
-      // Optionally re-fetch current page or optimistic update. Will rely on component re-fetching for simplicity.
+      await get().fetchReviews(); // Refetch to update the queue UI
       set({ actionLoading: false });
     } catch (err) {
       console.error('approveReview error:', err);
@@ -117,6 +117,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
     try {
       await ModerationApi.removeReview(id, adminNote);
       get().fetchBadgeCounts();
+      await get().fetchReviews(); // Refetch to update the queue UI
       set({ actionLoading: false });
     } catch (err) {
       console.error('removeReview error:', err);
@@ -140,6 +141,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
     try {
       await ModerationApi.resolveDispute(id, resolution, refundApproved);
       get().fetchBadgeCounts();
+      await get().fetchDisputes(); // Refetch disputes
       set({ actionLoading: false });
     } catch (err) {
       console.error('resolveDispute error:', err);
