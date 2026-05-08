@@ -53,23 +53,23 @@ export interface PageResponse<T> {
 
 export const ModerationApi = {
   getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number }> =>
-    api.get('/api/admin/moderation/counts').then((res) => res.data),
+    api.get('/admin/moderation/counts').then((res) => res.data),
 
   getReviews: (params: { flagReason?: string; search?: string; page?: number; size?: number }): Promise<PageResponse<FlaggedReview>> =>
-    api.get('/api/admin/moderation/reviews', { params }).then((res) => res.data),
+    api.get('/admin/moderation/reviews', { params }).then((res) => res.data),
 
   approveReview: (id: number): Promise<FlaggedReview> =>
-    api.put(`/api/admin/moderation/reviews/${id}/approve`).then((res) => res.data),
+    api.put(`/admin/moderation/reviews/${id}/approve`).then((res) => res.data),
 
   removeReview: (id: number, adminNote: string): Promise<FlaggedReview> =>
-    api.put(`/api/admin/moderation/reviews/${id}/remove`, { adminNote }).then((res) => res.data),
+    api.put(`/admin/moderation/reviews/${id}/remove`, { adminNote }).then((res) => res.data),
 
   getDisputes: (params: { status?: string; search?: string; page?: number; size?: number }): Promise<PageResponse<Dispute>> =>
-    api.get('/api/admin/moderation/disputes', { params }).then((res) => res.data),
+    api.get('/admin/moderation/disputes', { params }).then((res) => res.data),
 
   resolveDispute: (id: string, resolution: string, refundApproved: boolean): Promise<Dispute> =>
-    api.put(`/api/admin/moderation/disputes/${id}/resolve`, { resolution, refundApproved }).then((res) => res.data),
+    api.put(`/admin/moderation/disputes/${id}/resolve`, { resolution, refundApproved }).then((res) => res.data),
 
   getHistory: (params: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }): Promise<PageResponse<ModerationHistory>> =>
-    api.get('/api/admin/moderation/history', { params }).then((res) => res.data),
+    api.get('/admin/moderation/history', { params }).then((res) => res.data),
 };

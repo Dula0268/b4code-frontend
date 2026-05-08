@@ -46,14 +46,14 @@ export interface BookingChartPoint {
 
 export const AnalyticsApi = {
   getPlatformAnalytics: (): Promise<PlatformAnalytics> =>
-    api.get('/api/admin/analytics/platform').then((res) => res.data),
+    api.get('/admin/analytics/platform').then((res) => res.data),
 
   getPlatformSummary: (): Promise<PlatformSummary> =>
-    api.get('/api/admin/analytics/platform-summary').then((res) => res.data),
+    api.get('/admin/analytics/platform-summary').then((res) => res.data),
 
   getRevPar: (): Promise<RevPar[]> =>
-    api.get('/api/admin/analytics/revpar').then((res) => res.data),
+    api.get('/admin/analytics/revpar').then((res) => res.data),
 
   getBookingsChart: (): Promise<BookingChartPoint[]> =>
-    api.get('/api/admin/analytics/bookings-chart').then((res) => res.data),
+    api.get('/admin/analytics/bookings-chart').then((res) => res.data),
 };

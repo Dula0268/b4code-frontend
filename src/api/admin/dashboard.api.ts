@@ -30,11 +30,11 @@ export interface RecentVerification {
 
 export const DashboardApi = {
   getKpis: (): Promise<DashboardKpi> =>
-    api.get('/api/admin/dashboard/kpis').then((res) => res.data),
+    api.get('/admin/dashboard/kpis').then((res) => res.data),
 
   getRevenueTrend: (): Promise<RevenueTrendPoint[]> =>
-    api.get('/api/admin/dashboard/revenue-trend').then((res) => res.data),
+    api.get('/admin/dashboard/revenue-trend').then((res) => res.data),
 
   getRecentVerifications: (): Promise<RecentVerification[]> =>
-    api.get('/api/admin/dashboard/recent-verifications').then((res) => res.data),
+    api.get('/admin/dashboard/recent-verifications').then((res) => res.data),
 };

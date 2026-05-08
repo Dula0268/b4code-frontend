@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Search, ChevronDown, ChevronLeft, ChevronRight, Loader2, Image as ImageIcon } from "lucide-react";
+import {
+  Search,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Image as ImageIcon,
+} from "lucide-react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import { useAdminPropertiesStore } from "@/store/admin/properties/properties.store";
 
@@ -16,7 +23,16 @@ function getInitials(name: string) {
 }
 
 function getColorForName(name: string) {
-  const colors = ["#C05621", "#2563EB", "#7C3AED", "#059669", "#DC2626", "#0891B2", "#CA8A04"];
+  if (!name) return "#9E7B6A"; // Default color if name is undefined
+  const colors = [
+    "#C05621",
+    "#2563EB",
+    "#7C3AED",
+    "#059669",
+    "#DC2626",
+    "#0891B2",
+    "#CA8A04",
+  ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -64,7 +80,13 @@ export default function PropertiesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  const { properties, propertiesTotalElements, propertiesTotalPages, fetchProperties, loading } = useAdminPropertiesStore();
+  const {
+    properties,
+    propertiesTotalElements,
+    propertiesTotalPages,
+    fetchProperties,
+    loading,
+  } = useAdminPropertiesStore();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -78,17 +100,27 @@ export default function PropertiesPage() {
       page: currentPage - 1,
       size: PAGE_SIZE,
       search: debouncedSearch,
-      status: statusFilter === "All" ? undefined : statusFilter.toUpperCase().replace(/\s+/g, "_")
+      status:
+        statusFilter === "All"
+          ? undefined
+          : statusFilter.toUpperCase().replace(/\s+/g, "_"),
     });
   }, [fetchProperties, currentPage, debouncedSearch, statusFilter]);
 
   const goPage = (p: number) =>
     setCurrentPage(Math.max(1, Math.min(propertiesTotalPages, p)));
 
-  const startIndex = propertiesTotalElements === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const startIndex =
+    propertiesTotalElements === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const endIndex = Math.min(currentPage * PAGE_SIZE, propertiesTotalElements);
 
-  const statusOptions = ["All", "Pending", "Under Review", "Approved", "Rejected"];
+  const statusOptions = [
+    "All",
+    "Pending",
+    "Under Review",
+    "Approved",
+    "Rejected",
+  ];
 
   return (
     <AdminPageLayout>
@@ -171,7 +203,9 @@ export default function PropertiesPage() {
               </thead>
               <tbody className="relative">
                 {loading && properties.length > 0 && (
-                   <tr className="absolute inset-0 bg-white/50 z-10"><td colSpan={5}></td></tr>
+                  <tr className="absolute inset-0 bg-white/50 z-10">
+                    <td colSpan={5}></td>
+                  </tr>
                 )}
                 {properties.length === 0 && !loading ? (
                   <tr>
@@ -192,7 +226,7 @@ export default function PropertiesPage() {
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-[#F3F4F6] flex items-center justify-center">
-                             <ImageIcon className="text-[#C4B5AB]" size={20} />
+                            <ImageIcon className="text-[#C4B5AB]" size={20} />
                           </div>
                           <div>
                             <p className="m-0 font-semibold text-[13px] text-[#1A1A1A]">
@@ -209,7 +243,11 @@ export default function PropertiesPage() {
                         <div className="flex items-center gap-2.5">
                           <div
                             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[12px] shrink-0"
-                            style={{ backgroundColor: getColorForName(property.hostName) }}
+                            style={{
+                              backgroundColor: getColorForName(
+                                property.hostName,
+                              ),
+                            }}
                           >
                             {getInitials(property.hostName)}
                           </div>
@@ -226,10 +264,15 @@ export default function PropertiesPage() {
                       {/* Submitted */}
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         <p className="m-0 text-[13px] text-[#1A1A1A]">
-                          {new Date(property.submissionDate).toLocaleDateString()}
+                          {new Date(
+                            property.submissionDate,
+                          ).toLocaleDateString()}
                         </p>
                         <p className="m-0 text-[11px] text-[#9E7B6A]">
-                          {new Date(property.submissionDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(property.submissionDate).toLocaleTimeString(
+                            [],
+                            { hour: "2-digit", minute: "2-digit" },
+                          )}
                         </p>
                       </td>
                       {/* Status */}
@@ -260,7 +303,9 @@ export default function PropertiesPage() {
               <span className="text-[13px] text-[#9E7B6A]">
                 Showing <strong className="text-[#1A1A1A]">{startIndex}</strong>{" "}
                 to <strong className="text-[#1A1A1A]">{endIndex}</strong> of{" "}
-                <strong className="text-[#1A1A1A]">{propertiesTotalElements}</strong>{" "}
+                <strong className="text-[#1A1A1A]">
+                  {propertiesTotalElements}
+                </strong>{" "}
                 entries
               </span>
               <div className="flex items-center gap-2">

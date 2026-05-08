@@ -1,6 +1,6 @@
-import axios from 'axios';
+import api from '@/lib/axios';
 
-const API_URL = "http://localhost:8080/api/admin/settings/permissions";
+const API_ENDPOINT = "/admin/settings/permissions";
 
 export interface Permission {
   key: string;
@@ -18,23 +18,9 @@ export interface RolePermissionsDto {
 }
 
 export const SettingsApi = {
-  getRolePermissions: async (role: string): Promise<RolePermissionsDto> => {
-    const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/${role}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    return response.data;
-  },
+  getRolePermissions: (role: string): Promise<RolePermissionsDto> =>
+    api.get(`${API_ENDPOINT}/${role}`).then((res) => res.data),
 
-  updateRolePermissions: async (role: string, updates: Record<string, boolean>): Promise<RolePermissionsDto> => {
-    const token = localStorage.getItem('token');
-    const response = await axios.put(`${API_URL}/${role}`, updates, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    return response.data;
-  }
+  updateRolePermissions: (role: string, updates: Record<string, boolean>): Promise<RolePermissionsDto> =>
+    api.put(`${API_ENDPOINT}/${role}`, updates).then((res) => res.data),
 };

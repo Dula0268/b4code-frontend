@@ -23,5 +23,5 @@ export interface AuditLogPageDto {
 
 export const AuditLogsApi = {
   getAuditLogs: (params: { role?: string; search?: string; page?: number; size?: number }): Promise<AuditLogPageDto> =>
-    api.get('/api/admin/audit-logs', { params }).then((res) => res.data),
+    api.get('/admin/audit-logs', { params }).then((res) => res.data),
 };

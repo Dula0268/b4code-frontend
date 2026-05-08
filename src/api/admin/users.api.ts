@@ -52,7 +52,7 @@ export const UsersApi = {
     size = 6
   ): Promise<UserPage> =>
     api
-      .get('/api/admin/users', {
+      .get('/admin/users', {
         params: {
           search: search || undefined,
           role: role || undefined,
@@ -65,21 +65,21 @@ export const UsersApi = {
 
   // GET /api/admin/users/{id}
   getById: (id: number): Promise<User> =>
-    api.get(`/api/admin/users/${id}`).then((r) => r.data),
+    api.get(`/admin/users/${id}`).then((r) => r.data),
 
   // POST /api/admin/users
   create: (payload: CreateUserPayload): Promise<User> =>
-    api.post('/api/admin/users', payload).then((r) => r.data),
+    api.post('/admin/users', payload).then((r) => r.data),
 
   // PUT /api/admin/users/{id}
   update: (id: number, payload: UpdateUserPayload): Promise<User> =>
-    api.put(`/api/admin/users/${id}`, payload).then((r) => r.data),
+    api.put(`/admin/users/${id}`, payload).then((r) => r.data),
 
   // PUT /api/admin/users/{id}/status   body: { status: "ACTIVE" | "SUSPENDED" }
   updateStatus: (id: number, status: UserStatus): Promise<User> =>
-    api.put(`/api/admin/users/${id}/status`, { status }).then((r) => r.data),
+    api.put(`/admin/users/${id}/status`, { status }).then((r) => r.data),
 
   // DELETE /api/admin/users/{id}
   delete: (id: number): Promise<void> =>
-    api.delete(`/api/admin/users/${id}`).then(() => undefined),
+    api.delete(`/admin/users/${id}`).then(() => undefined),
 };
