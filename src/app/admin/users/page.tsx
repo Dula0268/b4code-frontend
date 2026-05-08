@@ -17,14 +17,26 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import { useAdminUsersStore, type User, type UserStatus } from "@/store/admin/users/admin-users.store";
+import {
+  useAdminUsersStore,
+  type User,
+  type UserStatus,
+} from "@/store/admin/users/admin-users.store";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 /** Pick a consistent avatar colour from the user's email */
 function avatarColor(email: string): string {
   const COLOURS = [
-    "#f4a261","#2f80ed","#953002","#27ae60","#e67e22",
-    "#e84393","#16a085","#8e44ad","#2980b9","#d35400",
+    "#f4a261",
+    "#2f80ed",
+    "#953002",
+    "#27ae60",
+    "#e67e22",
+    "#e84393",
+    "#16a085",
+    "#8e44ad",
+    "#2980b9",
+    "#d35400",
   ];
   let hash = 0;
   for (const ch of email) hash = (hash * 31 + ch.charCodeAt(0)) & 0xffffffff;
@@ -39,7 +51,11 @@ function formatDateTime(iso: string | null): { date: string; time: string } {
   if (!iso) return { date: "Never", time: "" };
   const d = new Date(iso);
   return {
-    date: d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    date: d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }),
     time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
   };
 }
@@ -54,7 +70,9 @@ function RoleBadge({ role }: { role: string }) {
   };
   const label = role.charAt(0) + role.slice(1).toLowerCase();
   return (
-    <span className={`inline-block px-3 py-[3px] rounded-full text-xs font-semibold ${cfg[role] ?? "bg-gray-100 text-gray-600"}`}>
+    <span
+      className={`inline-block px-3 py-[3px] rounded-full text-xs font-semibold ${cfg[role] ?? "bg-gray-100 text-gray-600"}`}
+    >
       {label}
     </span>
   );
@@ -64,13 +82,24 @@ function RoleBadge({ role }: { role: string }) {
 
 function StatusBadge({ status }: { status: UserStatus }) {
   const cfg = {
-    ACTIVE: { class: "bg-[rgba(39,174,96,0.12)] text-[#1a7a45]", dot: "#27ae60" },
-    SUSPENDED: { class: "bg-[rgba(235,87,87,0.12)] text-[#b83030]", dot: "#eb5757" },
+    ACTIVE: {
+      class: "bg-[rgba(39,174,96,0.12)] text-[#1a7a45]",
+      dot: "#27ae60",
+    },
+    SUSPENDED: {
+      class: "bg-[rgba(235,87,87,0.12)] text-[#b83030]",
+      dot: "#eb5757",
+    },
   };
   const s = cfg[status] ?? cfg.ACTIVE;
   return (
-    <span className={`inline-flex items-center gap-[5px] px-3 py-[3px] rounded-full text-xs font-semibold ${s.class}`}>
-      <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ backgroundColor: s.dot }} />
+    <span
+      className={`inline-flex items-center gap-[5px] px-3 py-[3px] rounded-full text-xs font-semibold ${s.class}`}
+    >
+      <span
+        className="w-[6px] h-[6px] rounded-full flex-shrink-0"
+        style={{ backgroundColor: s.dot }}
+      />
       {status.charAt(0) + status.slice(1).toLowerCase()}
     </span>
   );
@@ -91,7 +120,8 @@ function RowMenu({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -109,17 +139,27 @@ function RowMenu({
       {open && (
         <div className="absolute right-0 top-[calc(100%+4px)] bg-white border border-[var(--gray-5)] rounded-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.10)] z-[200] min-w-[160px] overflow-hidden">
           <button
-            onClick={() => { onStatusToggle(); setOpen(false); }}
+            onClick={() => {
+              onStatusToggle();
+              setOpen(false);
+            }}
             className="flex items-center gap-2 w-full text-left px-4 py-[10px] text-[13px] text-[var(--gray-2)] hover:bg-[var(--gray-6)] border-none bg-transparent cursor-pointer"
           >
             {user.status === "ACTIVE" ? (
-              <><Ban size={13} className="text-orange-500" /> Suspend</>
+              <>
+                <Ban size={13} className="text-orange-500" /> Suspend
+              </>
             ) : (
-              <><ShieldCheck size={13} className="text-green-600" /> Activate</>
+              <>
+                <ShieldCheck size={13} className="text-green-600" /> Activate
+              </>
             )}
           </button>
           <button
-            onClick={() => { onDelete(); setOpen(false); }}
+            onClick={() => {
+              onDelete();
+              setOpen(false);
+            }}
             className="flex items-center gap-2 w-full text-left px-4 py-[10px] text-[13px] text-red-600 hover:bg-red-50 border-none bg-transparent cursor-pointer"
           >
             <Trash2 size={13} /> Delete User
@@ -137,29 +177,68 @@ function AddUserModal({
   saving,
 }: {
   onClose: () => void;
-  onSave: (data: { firstName: string; lastName: string; email: string; role: string; password: string }) => void;
+  onSave: (data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    password: string;
+  }) => void;
   saving: boolean;
 }) {
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", role: "GUEST", password: "" });
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    role: "GUEST",
+    password: "",
+  });
   const roles = ["OWNER", "STAFF", "GUEST"];
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[440px] p-8 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-[var(--gray-3)] hover:text-[var(--black-2)] bg-transparent border-none cursor-pointer">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-[var(--gray-3)] hover:text-[var(--black-2)] bg-transparent border-none cursor-pointer"
+        >
           <X size={18} />
         </button>
-        <h2 className="text-[18px] font-extrabold text-[var(--black-2)] mb-6">Add New User</h2>
+        <h2 className="text-[18px] font-extrabold text-[var(--black-2)] mb-6">
+          Add New User
+        </h2>
 
         <div className="flex flex-col gap-4">
           {[
-            { label: "First Name", key: "firstName", type: "text", placeholder: "John" },
-            { label: "Last Name", key: "lastName", type: "text", placeholder: "Doe" },
-            { label: "Email", key: "email", type: "email", placeholder: "john@example.com" },
-            { label: "Password", key: "password", type: "password", placeholder: "Min 6 characters" },
+            {
+              label: "First Name",
+              key: "firstName",
+              type: "text",
+              placeholder: "John",
+            },
+            {
+              label: "Last Name",
+              key: "lastName",
+              type: "text",
+              placeholder: "Doe",
+            },
+            {
+              label: "Email",
+              key: "email",
+              type: "email",
+              placeholder: "john@example.com",
+            },
+            {
+              label: "Password",
+              key: "password",
+              type: "password",
+              placeholder: "Min 6 characters",
+            },
           ].map(({ label, key, type, placeholder }) => (
             <div key={key}>
-              <label className="block text-[13px] font-semibold text-[var(--gray-2)] mb-1">{label}</label>
+              <label className="block text-[13px] font-semibold text-[var(--gray-2)] mb-1">
+                {label}
+              </label>
               <input
                 type={type}
                 placeholder={placeholder}
@@ -171,19 +250,28 @@ function AddUserModal({
           ))}
 
           <div>
-            <label className="block text-[13px] font-semibold text-[var(--gray-2)] mb-1">Role</label>
+            <label className="block text-[13px] font-semibold text-[var(--gray-2)] mb-1">
+              Role
+            </label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
               className="w-full px-3 py-[9px] rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] outline-none bg-white"
             >
-              {roles.map((r) => <option key={r} value={r}>{r.charAt(0) + r.slice(1).toLowerCase()}</option>)}
+              {roles.map((r) => (
+                <option key={r} value={r}>
+                  {r.charAt(0) + r.slice(1).toLowerCase()}
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 py-[10px] rounded-[10px] border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] font-semibold cursor-pointer hover:bg-[var(--gray-6)]">
+          <button
+            onClick={onClose}
+            className="flex-1 py-[10px] rounded-[10px] border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] font-semibold cursor-pointer hover:bg-[var(--gray-6)]"
+          >
             Cancel
           </button>
           <button
@@ -191,7 +279,11 @@ function AddUserModal({
             onClick={() => onSave(form as Parameters<typeof onSave>[0])}
             className="flex-1 py-[10px] rounded-[10px] bg-[var(--brand-primary)] text-white text-[13px] font-semibold cursor-pointer hover:bg-[var(--primary-hover)] disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+            {saving ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Check size={14} />
+            )}
             {saving ? "Saving…" : "Create User"}
           </button>
         </div>
@@ -201,24 +293,46 @@ function AddUserModal({
 }
 
 // ─── Delete Confirm Modal ─────────────────────────────────────────────────────
-function DeleteModal({ user, onConfirm, onClose, loading }: { user: User; onConfirm: () => void; onClose: () => void; loading: boolean }) {
+function DeleteModal({
+  user,
+  onConfirm,
+  onClose,
+  loading,
+}: {
+  user: User;
+  onConfirm: () => void;
+  onClose: () => void;
+  loading: boolean;
+}) {
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[380px] p-8 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-[var(--gray-3)] hover:text-[var(--black-2)] bg-transparent border-none cursor-pointer">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-[var(--gray-3)] hover:text-[var(--black-2)] bg-transparent border-none cursor-pointer"
+        >
           <X size={18} />
         </button>
         <div className="flex flex-col items-center text-center gap-3">
           <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
             <Trash2 size={24} className="text-red-500" />
           </div>
-          <h2 className="text-[17px] font-extrabold text-[var(--black-2)]">Delete User?</h2>
+          <h2 className="text-[17px] font-extrabold text-[var(--black-2)]">
+            Delete User?
+          </h2>
           <p className="text-[13px] text-[var(--gray-3)]">
-            Are you sure you want to delete <strong>{user.fullName || `${user.firstName} ${user.lastName}`}</strong>? This action cannot be undone.
+            Are you sure you want to delete{" "}
+            <strong>
+              {user.fullName || `${user.firstName} ${user.lastName}`}
+            </strong>
+            ? This action cannot be undone.
           </p>
         </div>
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 py-[10px] rounded-[10px] border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] font-semibold cursor-pointer">
+          <button
+            onClick={onClose}
+            className="flex-1 py-[10px] rounded-[10px] border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] font-semibold cursor-pointer"
+          >
             Cancel
           </button>
           <button
@@ -226,7 +340,11 @@ function DeleteModal({ user, onConfirm, onClose, loading }: { user: User; onConf
             disabled={loading}
             className="flex-1 py-[10px] rounded-[10px] bg-red-500 text-white text-[13px] font-semibold cursor-pointer hover:bg-red-600 disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+            {loading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Trash2 size={14} />
+            )}
             {loading ? "Deleting…" : "Delete"}
           </button>
         </div>
@@ -279,7 +397,7 @@ export default function UsersManagementPage() {
         search || undefined,
         roleFilter === "All" ? undefined : roleFilter,
         undefined,
-        0
+        0,
       );
     }, 400);
     return () => clearTimeout(timer);
@@ -291,7 +409,7 @@ export default function UsersManagementPage() {
       search || undefined,
       roleFilter === "All" ? undefined : roleFilter,
       undefined,
-      page
+      page,
     );
   }
 
@@ -307,7 +425,11 @@ export default function UsersManagementPage() {
   }
 
   async function handleCreateUser(data: {
-    firstName: string; lastName: string; email: string; role: string; password: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    password: string;
   }) {
     try {
       await createUser({
@@ -330,11 +452,12 @@ export default function UsersManagementPage() {
   return (
     <AdminPageLayout>
       <div className="flex flex-col gap-6">
-
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">User Management</h1>
+            <h1 className="m-0 text-2xl font-extrabold text-[var(--black-2)]">
+              User Management
+            </h1>
             <p className="mt-[6px] mb-0 text-sm text-[var(--gray-3)]">
               Manage platform access, roles, and account statuses.
             </p>
@@ -352,7 +475,10 @@ export default function UsersManagementPage() {
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
             {error}
-            <button onClick={() => useAdminUsersStore.getState().reset()} className="ml-4 text-red-500 hover:text-red-700 bg-transparent border-none cursor-pointer">
+            <button
+              onClick={() => useAdminUsersStore.getState().reset()}
+              className="ml-4 text-red-500 hover:text-red-700 bg-transparent border-none cursor-pointer"
+            >
               <X size={14} />
             </button>
           </div>
@@ -364,7 +490,10 @@ export default function UsersManagementPage() {
           <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--gray-5)]">
             {/* Search */}
             <div className="relative flex-1 max-w-[340px]">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-4)] pointer-events-none" />
+              <Search
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-4)] pointer-events-none"
+              />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -378,28 +507,43 @@ export default function UsersManagementPage() {
             <div className="relative">
               <button
                 onClick={() => setRoleOpen(!roleOpen)}
-                className="border px-3 py-2 rounded-md"
+                className="flex items-center gap-2 px-4 py-[9px] rounded-lg border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] font-medium cursor-pointer hover:bg-[var(--gray-6)] hover:border-[var(--gray-4)] transition-colors"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path
+                    d="M1 3h12M3 7h8M5 11h4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
-                {roleFilter === "All" ? "Filter by Role" : roleFilter.charAt(0) + roleFilter.slice(1).toLowerCase()}
-                <ChevronDown size={13} />
+                {roleFilter === "All"
+                  ? "Filter by Role"
+                  : roleFilter.charAt(0) + roleFilter.slice(1).toLowerCase()}
+                <ChevronDown
+                  size={13}
+                  className={`transition-transform ${roleOpen ? "rotate-180" : ""}`}
+                />
               </button>
 
               {roleOpen && (
-                <div className="absolute bg-white border mt-1 rounded shadow">
+                <div className="absolute right-0 top-[calc(100%+4px)] bg-white border border-[var(--gray-5)] rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.08)] z-[100] min-w-[160px] overflow-hidden">
                   {roles.map((r) => (
                     <button
                       key={r}
-                      onClick={() => { setRoleFilter(r); setRoleOpen(false); }}
-                      className={`block w-full text-left px-4 py-[9px] border-none text-[13px] cursor-pointer ${
+                      onClick={() => {
+                        setRoleFilter(r);
+                        setRoleOpen(false);
+                      }}
+                      className={`block w-full text-left px-4 py-[10px] border-none text-[13px] cursor-pointer transition-colors ${
                         roleFilter === r
-                          ? "bg-[rgba(149,48,2,0.07)] text-[var(--brand-primary)] font-semibold"
-                          : "bg-white text-[var(--gray-2)] font-normal"
+                          ? "bg-[rgba(149,48,2,0.08)] text-[var(--brand-primary)] font-semibold"
+                          : "bg-white text-[var(--gray-2)] font-normal hover:bg-[var(--gray-6)]"
                       }`}
                     >
-                      {r === "All" ? "All Roles" : r.charAt(0) + r.slice(1).toLowerCase()}
+                      {r === "All"
+                        ? "All Roles"
+                        : r.charAt(0) + r.slice(1).toLowerCase()}
                     </button>
                   ))}
                 </div>
@@ -413,7 +557,10 @@ export default function UsersManagementPage() {
               <thead>
                 <tr className="bg-[#F6F8F7]">
                   {["USER", "ROLE", "STATUS", "LAST LOGIN", ""].map((h) => (
-                    <th key={h} className="px-4 py-[11px] text-left text-[11.5px] font-bold text-[var(--gray-3)] tracking-[0.06em] uppercase whitespace-nowrap">
+                    <th
+                      key={h}
+                      className="px-4 py-[11px] text-left text-[11.5px] font-bold text-[var(--gray-3)] tracking-[0.06em] uppercase whitespace-nowrap"
+                    >
                       {h}
                     </th>
                   ))}
@@ -423,13 +570,21 @@ export default function UsersManagementPage() {
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="py-16 text-center">
-                      <Loader2 size={28} className="animate-spin mx-auto text-[var(--brand-primary)]" />
-                      <p className="mt-3 text-sm text-[var(--gray-3)]">Loading users…</p>
+                      <Loader2
+                        size={28}
+                        className="animate-spin mx-auto text-[var(--brand-primary)]"
+                      />
+                      <p className="mt-3 text-sm text-[var(--gray-3)]">
+                        Loading users…
+                      </p>
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-[var(--gray-3)] text-sm">
+                    <td
+                      colSpan={5}
+                      className="py-10 text-center text-[var(--gray-3)] text-sm"
+                    >
                       No users found.
                     </td>
                   </tr>
@@ -457,20 +612,33 @@ export default function UsersManagementPage() {
                             </div>
                             <div>
                               <p className="m-0 font-semibold text-[var(--black-2)]">
-                                {user.fullName || `${user.firstName} ${user.lastName}`}
+                                {user.fullName ||
+                                  `${user.firstName} ${user.lastName}`}
                               </p>
-                              <p className="m-0 text-xs text-[var(--gray-3)]">{user.email}</p>
+                              <p className="m-0 text-xs text-[var(--gray-3)]">
+                                {user.email}
+                              </p>
                             </div>
                           </div>
                         </td>
                         {/* Role */}
-                        <td className="px-4 py-[14px]"><RoleBadge role={user.role} /></td>
+                        <td className="px-4 py-[14px]">
+                          <RoleBadge role={user.role} />
+                        </td>
                         {/* Status */}
-                        <td className="px-4 py-[14px]"><StatusBadge status={user.status} /></td>
+                        <td className="px-4 py-[14px]">
+                          <StatusBadge status={user.status} />
+                        </td>
                         {/* Last Login */}
                         <td className="px-4 py-[14px] whitespace-nowrap">
-                          <span className="text-[var(--black-2)] font-medium">{date}</span>
-                          {time && <span className="text-[var(--gray-3)] ml-2 text-[13px]">{time}</span>}
+                          <span className="text-[var(--black-2)] font-medium">
+                            {date}
+                          </span>
+                          {time && (
+                            <span className="text-[var(--gray-3)] ml-2 text-[13px]">
+                              {time}
+                            </span>
+                          )}
                         </td>
                         {/* Actions */}
                         <td className="px-4 py-[14px] w-10">
@@ -491,9 +659,11 @@ export default function UsersManagementPage() {
           {/* ── Pagination ── */}
           <div className="flex justify-between items-center px-5 py-[14px] border-t border-[var(--gray-5)]">
             <span className="text-[13px] text-[var(--gray-3)]">
-              Showing <strong className="text-[var(--black-2)]">{startRow}</strong> to{" "}
+              Showing{" "}
+              <strong className="text-[var(--black-2)]">{startRow}</strong> to{" "}
               <strong className="text-[var(--black-2)]">{endRow}</strong> of{" "}
-              <strong className="text-[var(--black-2)]">{totalElements}</strong> results
+              <strong className="text-[var(--black-2)]">{totalElements}</strong>{" "}
+              results
             </span>
 
             <div className="flex items-center gap-1">
@@ -501,7 +671,9 @@ export default function UsersManagementPage() {
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 0}
                 className={`w-8 h-8 rounded-md border border-[var(--gray-5)] bg-white flex items-center justify-center ${
-                  currentPage === 0 ? "cursor-not-allowed text-[var(--gray-4)]" : "cursor-pointer text-[var(--gray-2)]"
+                  currentPage === 0
+                    ? "cursor-not-allowed text-[var(--gray-4)]"
+                    : "cursor-pointer text-[var(--gray-2)]"
                 }`}
               >
                 <ChevronLeft size={15} />
@@ -525,7 +697,9 @@ export default function UsersManagementPage() {
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage >= totalPages - 1 || totalPages === 0}
                 className={`w-8 h-8 rounded-md border border-[var(--gray-5)] bg-white flex items-center justify-center ${
-                  currentPage >= totalPages - 1 ? "cursor-not-allowed text-[var(--gray-4)]" : "cursor-pointer text-[var(--gray-2)]"
+                  currentPage >= totalPages - 1
+                    ? "cursor-not-allowed text-[var(--gray-4)]"
+                    : "cursor-pointer text-[var(--gray-2)]"
                 }`}
               >
                 <ChevronRight size={15} />
