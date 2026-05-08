@@ -90,7 +90,12 @@ async function apiFetch<T>(endpoint: string): Promise<T> {
     cache: "no-store",
   });
   if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${res.statusText}`);
+    let errMsg = `API error ${res.status}: ${res.statusText}`;
+    try {
+      const errData = await res.json();
+      if (errData && errData.message) errMsg = errData.message;
+    } catch (_) {}
+    throw new Error(errMsg);
   }
   return res.json();
 }

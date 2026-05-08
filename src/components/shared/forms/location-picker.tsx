@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MapPin, Loader2 } from "lucide-react";
-import { getFilterOptions } from "@/services/guest/searchApi";
+import { getFilterOptions } from "@/api/guest/search.api";
 
 // ─── Props ────────────────────────────────────────────────────────────────
 export interface LocationPickerProps {
