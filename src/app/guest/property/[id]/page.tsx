@@ -96,7 +96,7 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: BackendProperty
     }
 }
 
-async function fetchProperty(id: string) {
+export async function fetchProperty(id: string) {
     const fallback = getPropertyById(id)
     if (!fallback) return null
 
