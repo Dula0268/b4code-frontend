@@ -6,241 +6,108 @@ import Link from "next/link"
 import {
   MapPin, MessageSquare, Pencil, XCircle, Download,
   Star, ChevronRight, RefreshCw, FileText, BedDouble,
-  Bell, CreditCard, Wallet,
+  Bell, CreditCard, Wallet, Lock, Calendar
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth/auth.store"
-import { useGuestBookingStore, type StoredBooking, type BookingStatus } from "@/store/guest/booking/booking.store"
+import { paymentApi } from "@/lib/api"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 interface Booking {
   id: string
-  propertyId?: string
-  orderNumber: string
-  status: BookingStatus
+  orderId: string
+  status: "UPCOMING" | "COMPLETED" | "CANCELLED"
   property: string
   location: string
   imageSrc: string
   checkIn: string
   checkOut: string
-  guests: string
   totalPrice: number
-  nightsLabel: string
-  paymentMethod?: "online" | "property"
-  paidInFull?: boolean
-  roomName?: string
-  bookingStatus?: string      // only for COMPLETED
-  cancellationNote?: string   // only for CANCELLED
-  isFromStore?: boolean       // false = mock/demo data
+  paymentStatus: string
+  paymentMethod: string
 }
 
-type Tab = BookingStatus   // reuse the same union — no separate type needed
-
-// Mock bookings completely removed; purely relying on database data.
-
-const TABS: Tab[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
+const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
 function formatLKR(amount: number) {
   return `LKR ${amount.toLocaleString("en-US")}`
 }
 
-const APP_CONFIG = {
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
-} as const
-
 // ─────────────────────────────────────────────────────────────────────────────
-// Status badge — colour-coded pill matching design-system state tokens
+// Components
 // ─────────────────────────────────────────────────────────────────────────────
-const STATUS_STYLE: Record<BookingStatus, { bg: string; text: string; border: string }> = {
-  UPCOMING:  { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  COMPLETED: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200"    },
-  CANCELLED: { bg: "bg-gray-100",   text: "text-gray-500",    border: "border-gray-200"    },
-}
 
-function StatusBadge({ status }: { status: BookingStatus }) {
-  const s = STATUS_STYLE[status]
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    SUCCESS: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    PENDING: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    FAILED: "bg-red-500/20 text-red-400 border-red-500/30",
+  }
   return (
-    <span className={`text-[0.625rem] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest border ${s.bg} ${s.text} ${s.border}`}>
+    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest border ${styles[status] || styles.PENDING}`}>
       {status}
     </span>
   )
 }
 
-function PaymentBadge({ paidInFull }: { paidInFull: boolean }) {
-  return paidInFull ? (
-    <span className="inline-flex items-center gap-1 text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
-      <CreditCard size={10} /> Paid
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1 text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wide">
-      <Wallet size={10} /> Pay at Property
-    </span>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared button classes — defined once to keep cards consistent
-// ─────────────────────────────────────────────────────────────────────────────
-const btnPrimary = "inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer no-underline"
-const btnHost    = "inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer no-underline"
-const btnOutline = "inline-flex items-center gap-2 border border-[var(--border)] hover:border-[var(--brand-primary)] text-[var(--gray-2)] hover:text-[var(--brand-primary)] text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
-const btnDanger  = "inline-flex items-center gap-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
-const btnGhost   = "inline-flex items-center gap-1.5 text-xs font-bold text-[var(--gray-3)] hover:text-[var(--brand-primary)] transition-colors cursor-pointer ml-auto"
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Booking card
-// ─────────────────────────────────────────────────────────────────────────────
 function BookingCard({ booking }: { booking: Booking }) {
-  const isUpcoming  = booking.status === "UPCOMING"
-  const isCompleted = booking.status === "COMPLETED"
-  const isCancelled = booking.status === "CANCELLED"
-
-  // Per-booking cancel href keeps the cancel page pre-populated for store bookings
-  const cancelHref = booking.isFromStore
-    ? `/guest/booking/cancel?bookingId=${encodeURIComponent(booking.id)}`
-    : "/guest/booking/cancel"
-
-  // Prefer deep-linking to the property; fall back to search
-  const rebookHref = booking.propertyId
-    ? `/guest/property/${encodeURIComponent(booking.propertyId)}`
-    : `/guest/search?property=${encodeURIComponent(booking.property)}&location=${encodeURIComponent(booking.location)}`
-
   return (
-    <div className="ps-card overflow-hidden flex flex-col sm:flex-row hover:shadow-[var(--shadow-card)] transition-shadow">
-
-      {/* Property image */}
-      <div className="relative w-full sm:w-52 h-44 sm:h-auto flex-shrink-0">
+    <div className="relative group overflow-hidden rounded-[24px] bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-all duration-500 hover:shadow-2xl hover:shadow-black/20 flex flex-col sm:flex-row">
+      {/* Property Image */}
+      <div className="relative w-full sm:w-56 h-48 sm:h-auto overflow-hidden">
         <Image
           src={booking.imageSrc}
           alt={booking.property}
           fill
-          sizes="(max-width: 640px) 100vw, 208px"
-          className={`object-cover ${isCancelled ? "grayscale opacity-60" : ""}`}
+          className="object-cover transition-transform duration-700 group-hover:scale-110"
         />
-        {/* Status pill floated over the image so the card body stays clean */}
-        <div className="absolute top-3 left-3">
-          <StatusBadge status={booking.status} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+        <div className="absolute top-4 left-4">
+          <StatusBadge status={booking.paymentStatus} />
         </div>
       </div>
 
-      {/* Card body */}
-      <div className="flex-1 p-5 flex flex-col gap-3">
-
-        {/* Order number + price */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            {booking.paidInFull !== undefined && !isCancelled && (
-              <PaymentBadge paidInFull={booking.paidInFull} />
-            )}
-            <span className="text-[0.6875rem] font-semibold" style={{ color: "var(--gray-3)" }}>
-              #{booking.orderNumber}
-            </span>
-          </div>
-          <div className="text-right flex-shrink-0">
-            <p className="text-[1.1875rem] font-black leading-tight"
-              style={{ color: isCancelled ? "var(--gray-4)" : "var(--fg)" }}>
-              {formatLKR(booking.totalPrice)}
-            </p>
-            <p className="text-[0.625rem] font-semibold" style={{ color: "var(--gray-4)" }}>
-              {booking.nightsLabel}
-            </p>
-          </div>
-        </div>
-
-        {/* Property name + room + location */}
+      {/* Content */}
+      <div className="flex-1 p-6 flex flex-col justify-between">
         <div>
-          <h3 className="text-base font-black leading-snug" style={{ color: "var(--fg)" }}>
-            {booking.property}
-          </h3>
-          {booking.roomName && (
-            <p className="text-xs font-semibold mt-0.5" style={{ color: "var(--gray-2)" }}>
-              {booking.roomName}
-            </p>
-          )}
-          <div className="flex items-center gap-1 mt-1">
-            <MapPin size={11} style={{ color: "var(--gray-4)" }} />
-            <p className="text-xs" style={{ color: "var(--gray-3)" }}>{booking.location}</p>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+              Ref: {booking.orderId}
+            </span>
+            <div className="text-right">
+              <p className="text-[18px] font-black text-white leading-tight">{formatLKR(booking.totalPrice)}</p>
+              <p className="text-[10px] font-bold text-white/40 uppercase tracking-tighter">Total Price</p>
+            </div>
+          </div>
+
+          <h3 className="text-[20px] font-black text-white mb-1 tracking-tight">{booking.property}</h3>
+          
+          <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-1.5 text-white/60">
+              <Calendar size={14} className="text-[#9a3300]" />
+              <span className="text-[12px] font-medium">{booking.checkIn} — {booking.checkOut}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-white/60">
+              <MapPin size={14} className="text-[#9a3300]" />
+              <span className="text-[12px] font-medium">{booking.location}</span>
+            </div>
           </div>
         </div>
 
-        {/* Cancellation note — only for cancelled bookings */}
-        {isCancelled && booking.cancellationNote && (
-          <p className="text-xs leading-relaxed rounded-xl px-3 py-2.5 border"
-            style={{ color: "var(--gray-3)", background: "color-mix(in srgb, var(--gray-5) 40%, white)", borderColor: "var(--border)" }}>
-            {booking.cancellationNote}
-          </p>
-        )}
-
-        {/* Dates + status (hidden for cancelled — shown in the note above) */}
-        {!isCancelled && (
-          <div className="flex flex-wrap gap-4 sm:gap-6">
-            <div>
-              <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-0.5" style={{ color: "var(--gray-4)" }}>
-                Stay Dates
-              </p>
-              <p className="text-xs font-bold" style={{ color: "var(--fg)" }}>
-                {booking.checkIn} – {booking.checkOut}
-              </p>
-            </div>
-            <div>
-              <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-0.5" style={{ color: "var(--gray-4)" }}>
-                {isCompleted ? "Status" : "Guests"}
-              </p>
-              <p className="text-xs font-bold" style={{ color: isCompleted ? "var(--state-success)" : "var(--fg)" }}>
-                {isCompleted ? booking.bookingStatus : booking.guests}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Action row */}
-        <div className="flex items-center gap-2 flex-wrap mt-auto pt-1">
-
-          {isUpcoming && (
-            <>
-              <Link href="/guest/my-room" className={btnPrimary} style={{ background: "var(--brand-primary)" }}>
-                <BedDouble size={13} /> My Room
-              </Link>
-              {/* Amber accent on Message Host to visually distinguish it from the plain primary action */}
-              <Link href="/guest/messages?type=host"
-                className={`${btnHost}`}
-                style={{ background: "var(--brand-primary)", color: "var(--brand-secondary)" }}>
-                <MessageSquare size={13} /> Message Host
-              </Link>
-              <Link href="/guest/booking/modify" className={btnOutline}>
-                <Pencil size={12} /> Modify
-              </Link>
-              <Link href={cancelHref} className={btnDanger}>
-                <XCircle size={13} /> Cancel
-              </Link>
-            </>
-          )}
-
-          {isCompleted && (
-            <>
-              <Link href="/guest/booking/confirmation" className={btnOutline}>
-                <Download size={13} /> Download Invoice
-              </Link>
-              <Link href={`/guest/reviews?propertyId=${booking.propertyId}`} className={btnOutline}>
-                <Star size={13} /> Rate Stay
-              </Link>
-              <Link href="/guest/booking/confirmation" className={btnGhost}>
-                View Details <ChevronRight size={13} />
-              </Link>
-            </>
-          )}
-
-          {isCancelled && (
-            <>
-              <Link href={rebookHref} className={btnPrimary} style={{ background: "var(--brand-primary)" }}>
-                <RefreshCw size={13} /> Rebook Property
-              </Link>
-              <Link href="/guest/booking/cancel" className={btnOutline}>
-                <FileText size={13} /> Cancellation Policy
-              </Link>
-            </>
-          )}
+        <div className="flex items-center gap-3 mt-6 pt-6 border-t border-white/5">
+          <Link 
+            href={`/guest/booking/confirmation?orderId=${booking.orderId}`}
+            className="h-10 px-5 bg-white/10 hover:bg-white text-white hover:text-black rounded-xl text-[12px] font-black flex items-center gap-2 transition-all"
+          >
+            <FileText size={14} /> View Details
+          </Link>
+          <Link 
+            href="#"
+            className="h-10 px-5 border border-white/10 hover:border-[#9a3300] text-white/70 hover:text-[#9a3300] rounded-xl text-[12px] font-black flex items-center gap-2 transition-all"
+          >
+            <Download size={14} /> Invoice
+          </Link>
         </div>
       </div>
     </div>
@@ -248,192 +115,131 @@ function BookingCard({ booking }: { booking: Booking }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Map from the booking store shape to the local Booking interface
+// Page Component
 // ─────────────────────────────────────────────────────────────────────────────
-function fromStore(b: StoredBooking): Booking {
-  return {
-    id:            b.id,
-    propertyId:    b.propertyId,
-    orderNumber:   b.confirmationCode,
-    status:        b.status,
-    property:      b.property,
-    location:      b.location ? `${b.location}, Sri Lanka` : "Sri Lanka",
-    imageSrc:      b.imageSrc,
-    checkIn:       b.checkInFormatted,
-    checkOut:      b.checkOutFormatted,
-    guests:        b.guestsLabel,
-    totalPrice:    b.totalPrice,
-    nightsLabel:   b.nightsLabel,
-    paymentMethod: b.paymentMethod,
-    paidInFull:    b.paidInFull,
-    roomName:      b.roomName,
-    isFromStore:   true,
-  }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Business Logic Hook
-// ─────────────────────────────────────────────────────────────────────────────
-function useMyBookingsLogic() {
-  const [activeTab, setActiveTab] = useState<Tab>("UPCOMING")
+export default function MyBookingsPage() {
+  const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
   const [bookings, setBookings] = useState<Booking[]>([])
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-
+  const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
 
   useEffect(() => {
-    let active = true
     async function loadBookings() {
-        try {
-            type AuthUserLike = { id?: number }
-            const guestId = (user as AuthUserLike | null)?.id ?? 1;
-            const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings?guestId=${guestId}`, { cache: "no-store" });
-            if (!res.ok) throw new Error("Failed to fetch bookings");
-            const data = await res.json();
-            
-            if (active) {
-                type ApiBooking = {
-                  id: number | string
-                  propertyId: number | string
-                  status: BookingStatus | "PENDING"
-                  propertyName?: string
-                  location?: string
-                  imageSrc?: string
-                  checkInDate: string
-                  checkOutDate: string
-                  totalPrice: number
-                }
-
-                // Normalize API status to UI status: PENDING → UPCOMING
-                const normalizeStatus = (s: string): BookingStatus => {
-                  if (s === "PENDING") return "UPCOMING"
-                  if (s === "UPCOMING" || s === "COMPLETED" || s === "CANCELLED") return s
-                  return "UPCOMING" // safe fallback
-                }
-
-                const apiBookings = (data as ApiBooking[]).map((b) => ({
-                    id: String(b.id),
-                    propertyId: String(b.propertyId),
-                    orderNumber: `BK-${b.id}88${b.propertyId}`,
-                    status: normalizeStatus(b.status),
-                    property: b.propertyName || "Prime Stay Property",
-                    location: b.location ? `${b.location}, Sri Lanka` : "Sri Lanka",
-                    imageSrc: b.imageSrc || "/images/properties/property-1.jpg",
-                    checkIn: b.checkInDate,
-                    checkOut: b.checkOutDate,
-                    guests: "Guests",
-                    totalPrice: b.totalPrice,
-                    nightsLabel: "Total for stay",
-                    paymentMethod: "online" as const,
-                    paidInFull: true,
-                    isFromStore: true,
-                }));
-                // We show API bookings directly
-                setBookings(apiBookings)
-            }
-        } catch(err) {
-            if (active) setErrorMsg("Failed to synchronize bookings. Try again.")
-        }
+      try {
+        const data = await paymentApi.getMyPayments();
+        
+        // Transform payment data into booking-like cards for the UI
+        const mappedBookings = data.map((p: any) => ({
+          id: String(p.id),
+          orderId: p.orderId,
+          status: p.status === "SUCCESS" ? "UPCOMING" : "CANCELLED",
+          property: "Luxury Resort Stay", // Placeholder since payment doesn't store property name yet
+          location: "Colombo, Sri Lanka",
+          imageSrc: "/images/properties/property-1.jpg",
+          checkIn: "Jun 12, 2024",
+          checkOut: "Jun 15, 2024",
+          totalPrice: p.amount,
+          paymentStatus: p.status,
+          paymentMethod: p.paymentMethod
+        }));
+        
+        setBookings(mappedBookings);
+      } catch (err) {
+        console.error("Failed to load bookings:", err);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    if (user) {
-        loadBookings();
-    } else {
-        setBookings([]);
-    }
-    
-    return () => { active = false }
-  }, [user])
-
-  const visible = bookings.filter(b => b.status === activeTab)
-  const nextUpcoming = bookings.find(b => b.status === "UPCOMING") ?? null
-
-  return { activeTab, setActiveTab, bookings, errorMsg, visible, nextUpcoming }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Page
-// ─────────────────────────────────────────────────────────────────────────────
-export default function MyBookingsPage() {
-  const logic = useMyBookingsLogic()
-  const { activeTab, setActiveTab, errorMsg, visible, nextUpcoming } = logic
+    if (user) loadBookings();
+  }, [user]);
 
   return (
-    <div className="min-h-screen pt-20 pb-16" style={{ background: "transparent" }}>
-      <div className="max-w-[860px] mx-auto px-4">
+    <div className="min-h-screen relative bg-[#0a0a0a] overflow-hidden">
+      {/* Immersive Background */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/payment_page_background_1778058273069.png"
+          alt="Luxury background"
+          fill
+          className="object-cover opacity-40 scale-105 blur-sm"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/80 via-transparent to-[#0a0a0a]" />
+      </div>
 
-        {errorMsg && (
-          <div className="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded-2xl flex items-center justify-between border border-red-200 shadow-sm">
-             <div className="flex items-center gap-2">
-                <XCircle size={16} />
-                <p className="text-sm font-semibold">{errorMsg}</p>
-             </div>
+      <div className="relative z-10 max-w-[900px] mx-auto px-6 pt-32 pb-20">
+        {/* Header Section */}
+        <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-1 bg-[#9a3300] rounded-full" />
+            <span className="text-[12px] font-black text-[#9a3300] uppercase tracking-[0.2em]">Guest Portal</span>
           </div>
-        )}
-
-        {/* Header */}
-        <div className="pt-8 pb-6">
-          <h1 className="text-[1.875rem] font-black leading-tight" style={{ color: "var(--fg)", fontSize: "1.875rem" }}>
-            My Bookings
+          <h1 className="text-[42px] font-black text-white leading-none tracking-tight mb-4">
+            My Luxury <span className="text-white/40 italic font-medium">Stays</span>
           </h1>
-          <p className="text-sm mt-1 font-medium" style={{ color: "var(--gray-3)" }}>
-            Track your stays and manage upcoming travel plans.
+          <p className="text-white/50 text-[15px] font-medium max-w-md leading-relaxed">
+            Manage your upcoming escapes and relive your past memories with Prime Stay.
           </p>
         </div>
 
-        {/* Tab toggle — pill style keeps it compact on mobile */}
-        <div className="flex items-center gap-1 mb-6 ps-card w-full sm:w-fit p-1 overflow-x-auto no-scrollbar">
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-[18px] backdrop-blur-md mb-8 w-fit animate-in fade-in slide-in-from-left-4 duration-700">
           {TABS.map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className="px-4 sm:px-5 py-2 text-[0.75rem] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer whitespace-nowrap"
-              style={{
-                background: activeTab === tab ? "var(--brand-primary)" : "transparent",
-                color:      activeTab === tab ? "white"          : "var(--gray-3)",
-              }}>
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-2.5 rounded-[14px] text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${
+                activeTab === tab 
+                  ? "bg-[#9a3300] text-white shadow-lg shadow-[#9a3300]/20" 
+                  : "text-white/40 hover:text-white"
+              }`}
+            >
               {tab}
             </button>
           ))}
         </div>
 
-        {/* Upcoming reminder — only shown on the UPCOMING tab */}
-        {activeTab === "UPCOMING" && nextUpcoming && (
-          <div className="mb-6 rounded-2xl p-4 sm:p-5 flex items-start sm:items-center gap-4 border border-amber-200 bg-amber-50">
-            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <Bell size={17} className="text-amber-600 animate-pulse" />
+        {/* Booking List */}
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+          {loading ? (
+            <div className="py-20 flex flex-col items-center justify-center text-white/20">
+              <div className="w-12 h-12 border-4 border-white/5 border-t-[#9a3300] rounded-full animate-spin mb-4" />
+              <p className="text-[12px] font-black uppercase tracking-widest">Loading Collection...</p>
             </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-black" style={{ color: "var(--fg)" }}>Upcoming stay!</h3>
-              <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "var(--gray-2)" }}>
-                Your trip to <strong>{nextUpcoming.property}</strong> is coming up ({nextUpcoming.checkIn} – {nextUpcoming.checkOut}).
-                {nextUpcoming.paidInFull === false && " Bring a valid ID for payment at check-in."}
-              </p>
-            </div>
-            <Link href="/guest/my-room"
-              className="hidden sm:inline-flex text-xs font-black whitespace-nowrap no-underline transition-colors"
-              style={{ color: "var(--fg)" }}>
-              View Room →
-            </Link>
-          </div>
-        )}
-
-        {/* Booking list */}
-        <div className="flex flex-col gap-4">
-          {visible.length === 0 ? (
-            <div className="ps-card p-12 text-center">
-              <p className="text-sm font-semibold mb-3" style={{ color: "var(--gray-4)" }}>
-                No {activeTab.toLowerCase()} bookings.
-              </p>
-              <Link href="/guest/search"
-                className="inline-flex items-center gap-1.5 text-sm font-bold no-underline transition-colors"
-                style={{ color: "var(--fg)" }}>
-                Browse Properties <ChevronRight size={13} />
+          ) : bookings.length === 0 ? (
+            <div className="py-24 rounded-[32px] bg-white/5 border border-white/10 border-dashed backdrop-blur-sm flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                <Calendar size={32} className="text-white/20" />
+              </div>
+              <h2 className="text-[20px] font-bold text-white mb-2">No bookings found</h2>
+              <p className="text-white/40 text-[14px] mb-8">Ready for your next adventure?</p>
+              <Link 
+                href="/guest/search"
+                className="h-12 px-8 bg-[#9a3300] hover:bg-[#7a2800] text-white rounded-xl font-black text-[13px] flex items-center gap-2 transition-all shadow-xl shadow-[#9a3300]/20"
+              >
+                Discover Properties <ChevronRight size={16} />
               </Link>
             </div>
           ) : (
-            visible.map(booking => <BookingCard key={booking.id} booking={booking} />)
+            bookings
+              .filter(b => b.status === activeTab)
+              .map(booking => <BookingCard key={booking.id} booking={booking} />)
           )}
         </div>
 
+        {/* Footer info */}
+        <div className="mt-20 flex flex-col items-center opacity-30">
+          <div className="flex items-center gap-2 mb-2">
+            <Lock size={12} className="text-white" />
+            <span className="text-[10px] font-black text-white uppercase tracking-widest">End-to-End Encrypted Portal</span>
+          </div>
+          <div className="h-[1px] w-12 bg-white/20 mb-4" />
+          <p className="text-[9px] text-white/50 text-center uppercase tracking-tighter">
+            Prime Stay Luxury Hospitality Group &copy; 2024
+          </p>
+        </div>
       </div>
     </div>
   )

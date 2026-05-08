@@ -84,9 +84,31 @@ export const authApi = {
         }
         return response.json();
     },
+    
+    forgotPassword: async (email: string): Promise<{ message: string; devResetLink?: string }> => {
+        const response = await apiFetch("/api/auth/forgot-password", {
+            method: "POST",
+            body: JSON.stringify({ email }),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to send reset link.");
+        }
+        return response.json();
+    },
+
+    resetPassword: async (token: string, newPassword: string) => {
+        const response = await apiFetch("/api/auth/reset-password", {
+            method: "POST",
+            body: JSON.stringify({ token, newPassword }),
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error || "Failed to reset password. The link may have expired.");
+        }
+        return response.text();
+    },
 };
 
-// User Management APIs
 export const userApi = {
     getAllUsers: async () => {
         const response = await apiFetch("/api/users");
