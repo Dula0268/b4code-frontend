@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ChevronDown, ChevronUp, Map, Home, Building2, BedDouble, Hotel, Palmtree, TreePine } from "lucide-react"
-import type { FilterOptionsResponse, PropertyTypeOption, RatingOption, SortOption } from "@/services/guest/searchApi"
+import type { FilterOptionsResponse, PropertyTypeOption, RatingOption, SortOption } from "@/api/guest/search.api"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface FilterState {
