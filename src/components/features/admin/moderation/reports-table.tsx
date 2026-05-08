@@ -61,7 +61,7 @@ export default function ReviewsQueue() {
 
   useEffect(() => {
     fetchReviews({
-      status: flagFilter !== "All" ? flagFilter : undefined,
+      flagReason: flagFilter !== "All" ? flagFilter : undefined,
       page: currentPage - 1,
       size: 4,
     });

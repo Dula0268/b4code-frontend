@@ -10,6 +10,7 @@ export interface FinanceSummaryDto {
   payoutGrowth: string;
   pendingRefunds: number;
   refundsGrowth: string;
+  pendingPayouts: number;
 }
 
 export interface RevenueTrendPointDto {

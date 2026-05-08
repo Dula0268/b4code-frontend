@@ -19,7 +19,7 @@ export default function FinancePage() {
     "overview" | "transaction" | "refunds"
   >("overview");
 
-  const { fetchSummary, fetchRevenueTrend } = useAdminFinanceStore();
+  const { summary, fetchSummary, fetchRevenueTrend } = useAdminFinanceStore();
 
   useEffect(() => {
     fetchSummary();
@@ -83,9 +83,11 @@ export default function FinancePage() {
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#C05621] text-[#C05621] text-sm font-semibold hover:bg-[#FDEADE] transition-colors"
             >
               Payout
-              <span className="w-5 h-5 rounded-full bg-[#C05621] text-white text-[11px] font-bold flex items-center justify-center">
-                8
-              </span>
+              {summary && summary.pendingPayouts > 0 && (
+                <span className="w-5 h-5 rounded-full bg-[#C05621] text-white text-[11px] font-bold flex items-center justify-center">
+                  {summary.pendingPayouts}
+                </span>
+              )}
             </button>
           </div>
         </div>
