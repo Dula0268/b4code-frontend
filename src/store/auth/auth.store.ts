@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
+import { userApi } from "@/api/user.api";
 
 type Role = "guest" | "owner" | "admin" | "staff";
 
