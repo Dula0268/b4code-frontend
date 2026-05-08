@@ -17,7 +17,7 @@ type PaymentMethod = "in-app" | "room-charge";
 
 /* ─── Checkout Client ─── */
 
-export default function CheckoutClient({ roomNumber = "304" }: { roomNumber?: string }) {
+export default function CheckoutClient({ roomNumber, guestName, propertyId, guestId }: { roomNumber?: string; guestName?: string; propertyId?: number; guestId?: number }) {
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
   const remove = useCartStore((s) => s.remove);
@@ -37,15 +37,22 @@ export default function CheckoutClient({ roomNumber = "304" }: { roomNumber?: st
   const placeOrder = useOrderStore((s) => s.placeOrder);
 
   const handlePlaceOrder = () => {
+    if (!roomNumber || !guestName || propertyId === undefined || guestId === undefined) {
+      console.error("Missing required order data: roomNumber, guestName, propertyId, or guestId");
+      return;
+    }
+
     placeOrder({
       lines: lines.map((l) => ({ item: l.item, qty: l.qty })),
       subtotal,
       serviceCharge,
       tax,
       total,
-      roomNumber: roomNumber,
-      guestName: "John Smith",
+      roomNumber,
+      guestName,
       paymentMethod: paymentMethod === "room-charge" ? "room-charge" : "card",
+      propertyId,
+      guestId,
     });
     router.push("/guest/order/confirmation");
   };

@@ -1,8 +1,11 @@
 import axios from 'axios';
 
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  baseURL: `${BASE_URL}/api`,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // Include cookies/credentials for auth
 });
 
 // Attach JWT token to every outgoing request automatically

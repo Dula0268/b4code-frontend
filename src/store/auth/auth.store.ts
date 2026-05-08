@@ -64,9 +64,9 @@ const saveMockUsers = (users: Record<string, MockUserRecord>) => {
 };
 
 const REDIRECT_MAP: Record<Role, string> = {
-  guest: "/guest",
+  guest: "/guest/search",
   owner: "/owner",
-  staff: "/staff",
+  staff: "/staff/select-property",
   admin: "/admin",
 };
 
@@ -94,6 +94,7 @@ function hydrateUser(): AuthUser | null {
 type AuthState = {
   user: AuthUser | null;
   loading: boolean;
+  isRestoring: boolean;
   error: string | null;
 };
 
@@ -101,20 +102,21 @@ type AuthActions = {
   login: (email: string, password: string) => Promise<string>;
   loginForCheckout: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, role: Role) => Promise<void>;
-  registerFromCheckout: (
-    email: string,
-    password: string,
-    profile: UserProfile
-  ) => Promise<void>;
+  registerFromCheckout: (email: string, password: string, profile: UserProfile) => Promise<void>;
   checkEmailExists: (email: string) => boolean;
   logout: () => void;
   setError: (message: string | null) => void;
   reset: () => void;
+  updatePassword: (email: string, currentPassword: string, newPassword: string) => Promise<void>;
+  updateProfile: (email: string, updates: Partial<UserProfile>) => Promise<void>;
+  fetchCurrentUser: () => Promise<void>;
+  restoreSession: (user: AuthUser) => void;
 };
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   user: hydrateUser(),
   loading: false,
+  isRestoring: false,
   error: null,
 
   // ── Login ─────────────────────────────────────────────────────────────────
@@ -235,4 +237,71 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
   setError: (message) => set({ error: message }),
   reset: () => set({ user: null, loading: false, error: null }),
+
+  // ─── Restore Session ──────────────────────────────────────────────────────
+  restoreSession: (user) => set({ user, loading: false, isRestoring: true, error: null }),
+
+  // ─── Update Password ──────────────────────────────────────────────────────
+  updatePassword: async (email, currentPassword, newPassword) => {
+    set({ loading: true, error: null });
+    try {
+      await userApi.changePassword({ currentPassword, newPassword });
+      set({ loading: false });
+    } catch (err) {
+      set({ loading: false, error: err instanceof Error ? err.message : "Failed to update password" });
+      throw err;
+    }
+  },
+
+  // ─── Update Profile ───────────────────────────────────────────────────────
+  updateProfile: async (email, updates) => {
+    set({ loading: true, error: null });
+    try {
+      // Try real backend
+      const data = await userApi.updateProfile(updates);
+      const profile: UserProfile = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+      };
+
+      set((state) => {
+        if (!state.user) return { loading: false };
+        const updatedUser = { ...state.user, profile };
+        // Sync to localStorage
+        if (typeof window !== "undefined") {
+          localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+        }
+        return { loading: false, user: updatedUser };
+      });
+    } catch (err) {
+      set({ loading: false, error: err instanceof Error ? err.message : "Failed to update profile." });
+      throw err;
+    }
+  },
+
+  fetchCurrentUser: async () => {
+    try {
+      const data = await userApi.getCurrentUser();
+      
+      // Safety check: if backend is unreachable or session invalid, data will be null
+      if (!data) {
+        set({ loading: false, isRestoring: false });
+        return;
+      }
+
+      const role = data.role.toLowerCase() as Role;
+      const profile: UserProfile = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+      };
+      const user: AuthUser = { email: data.email, role, profile };
+
+      set({ user, loading: false, isRestoring: false });
+    } catch (err) {
+      console.error("Failed to fetch current user profile:", err);
+      set({ isRestoring: false });
+    }
+  },
 }));

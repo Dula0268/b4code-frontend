@@ -33,7 +33,8 @@ function LoginPageContent() {
     try {
       const path = await login(email, password);
       const redirect = searchParams?.get("redirect");
-      router.push(redirect || path);
+      const validRedirect = redirect && redirect !== "/" ? redirect : null;
+      router.push(validRedirect || path);
     } catch {
 
     }
