@@ -46,8 +46,19 @@ const getMockUsers = (): Record<string, MockUserRecord> => {
 };
 
 const saveMockUsers = (users: Record<string, MockUserRecord>) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("MOCK_USERS_DB", JSON.stringify(users));
+  if (typeof window === "undefined") return;
+
+  try {
+    // Persist only the non-initial portion (optional, but cleaner).
+    // If you prefer, you can store the whole object instead.
+    const toStore: Record<string, MockUserRecord> = { ...users };
+    for (const key of Object.keys(INITIAL_MOCK_USERS)) {
+      delete toStore[key];
+    }
+
+    localStorage.setItem("MOCK_USERS_DB", JSON.stringify(toStore));
+  } catch {
+    // ignore storage errors (quota, private mode, etc.)
   }
 };
 
