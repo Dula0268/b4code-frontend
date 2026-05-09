@@ -7,7 +7,8 @@ import {
   Calendar, ChevronRight, Lock
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth/auth.store"
-import { paymentApi } from "@/lib/api"
+import { guestApi } from "@/lib/api"
+import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/booking.store"
 import BookingCard, { type BookingCardData } from "@/components/features/guest/booking/booking-card"
 
 const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
@@ -16,14 +17,17 @@ export default function MyBookingsPage() {
   const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const user = useAuthStore(s => s.user)
+  const localBookings = useGuestBookingStore(s => s.bookings)
 
   useEffect(() => {
     async function loadBookings() {
         try {
             const email = user?.email
             if (!email) {
-              if (active) setBookings([])
+              setBookings([])
+              setLoading(false)
               return
             }
 
@@ -77,43 +81,43 @@ export default function MyBookingsPage() {
                 console.warn("API booking fetch failed or empty:", err)
             }
 
-            if (active) {
-                const userLocalBookings = localBookings.filter(b => b.userEmail.toLowerCase() === email.toLowerCase())
-                const mappedLocal: BookingCardData[] = userLocalBookings.map(b => ({
-                    id: String(b.id),
-                    propertyId: String(b.propertyId),
-                    orderNumber: b.confirmationCode,
-                    status: b.status,
-                    property: b.property,
-                    location: b.location,
-                    imageSrc: b.imageSrc,
-                    checkIn: b.checkIn,
-                    checkOut: b.checkOut,
-                    guests: b.guestsLabel,
-                    totalPrice: b.totalPrice,
-                    nightsLabel: b.nightsLabel,
-                    paymentMethod: b.paymentMethod,
-                    paidInFull: b.paidInFull,
-                    roomName: b.roomName,
-                    isFromStore: true,
-                }))
+            const userLocalBookings = localBookings.filter(b => b.userEmail.toLowerCase() === email.toLowerCase())
+            const mappedLocal: BookingCardData[] = userLocalBookings.map(b => ({
+                id: String(b.id),
+                propertyId: String(b.propertyId),
+                orderNumber: b.confirmationCode,
+                status: b.status,
+                property: b.property,
+                location: b.location,
+                imageSrc: b.imageSrc,
+                checkIn: b.checkIn,
+                checkOut: b.checkOut,
+                guests: b.guestsLabel,
+                totalPrice: b.totalPrice,
+                nightsLabel: b.nightsLabel,
+                paymentMethod: b.paymentMethod,
+                paidInFull: b.paidInFull,
+                roomName: b.roomName,
+                isFromStore: true,
+            }))
 
-                // Local store bookings take full priority (they have the latest status including cancellations)
-                const merged = [...mappedLocal]
-                for (const apiB of apiBookings) {
-                    // Skip API bookings that already exist in local store (by orderNumber or id)
-                    const existsLocally = merged.find(m =>
-                        m.orderNumber === apiB.orderNumber || m.id === apiB.id
-                    )
-                    if (!existsLocally) {
-                        merged.push(apiB)
-                    }
+            // Local store bookings take full priority (they have the latest status including cancellations)
+            const merged = [...mappedLocal]
+            for (const apiB of apiBookings) {
+                // Skip API bookings that already exist in local store (by orderNumber or id)
+                const existsLocally = merged.find(m =>
+                    m.orderNumber === apiB.orderNumber || m.id === apiB.id
+                )
+                if (!existsLocally) {
+                    merged.push(apiB)
                 }
-                
-                setBookings(merged)
             }
+            
+            setBookings(merged)
         } catch {
-            if (active) setErrorMsg("Failed to synchronize bookings. Try again.")
+            setErrorMsg("Failed to synchronize bookings. Try again.")
+        } finally {
+            setLoading(false)
         }
     }
 
