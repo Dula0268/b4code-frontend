@@ -3,8 +3,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, Search, Pencil, Trash2, LayoutGrid, List, UtensilsCrossed, Flame, CheckCircle, X } from "lucide-react";
+import { ArrowLeft, Plus, Search, Pencil, Trash2, LayoutGrid, List, UtensilsCrossed, Flame, CheckCircle, X, Loader2 } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
+import { useAuthStore } from "@/store/auth/auth.store";
 import type { MenuItem } from "@/store/staff/menu/staff-menu.store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
   const toggleItemStatus = useStaffMenuStore((s) => s.toggleItemStatus);
   const successMsg = useStaffMenuStore((s) => s.successMsg);
   const setSuccess = useStaffMenuStore((s) => s.setSuccess);
+  const isLoading = useStaffMenuStore((s) => s.isLoading);
   const errorMsg = useStaffMenuStore((s) => s.errorMsg);
   const setError = useStaffMenuStore((s) => s.setError);
 
@@ -27,6 +29,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
   const [category, setCategory] = useState("All Categories");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+  const [togglingItemId, setTogglingItemId] = useState<string | null>(null);
 
   const categories = useMemo(() => {
     if (!menu) return [];
@@ -45,12 +48,39 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
 
   const handleDeleteItem = async (itemId: string, itemName: string) => {
     if (typeof window !== "undefined" && window.confirm(`Remove "${itemName}" from this menu? This action cannot be undone.`)) {
-      await deleteItem(menuId, itemId);
-      if (!useStaffMenuStore.getState().errorMsg) {
+      setDeletingItemId(itemId);
+      try {
+        await deleteItem(menuId, itemId);
         setSuccess(`Item "${itemName}" removed.`);
+      } catch (err) {
+        // Error handled by store
+      } finally {
+        setDeletingItemId(null);
       }
     }
   };
+
+  const handleToggleStatus = async (itemId: string, itemName: string) => {
+    setTogglingItemId(itemId);
+    try {
+      await toggleItemStatus(menuId, itemId);
+      // No success message for simple toggle to avoid clutter
+    } catch (err) {
+      // Error handled by store
+    } finally {
+      setTogglingItemId(null);
+    }
+  };
+
+  const { user } = useAuthStore();
+  const fetchMenus = useStaffMenuStore((s) => s.fetchMenus);
+
+  // Auto-fetch if missing (e.g. on refresh)
+  useEffect(() => {
+    if (!menu && user?.propertyId) {
+      fetchMenus(user.propertyId);
+    }
+  }, [menu, user, fetchMenus]);
 
   // Auto-dismiss success banner
   useEffect(() => {
@@ -59,10 +89,30 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
     return () => clearTimeout(t);
   }, [successMsg, setSuccess]);
 
+  if (isLoading && !menu) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-primary)]" />
+        <p className="text-sm text-[var(--gray-3)] font-medium">Loading menu data...</p>
+      </div>
+    );
+  }
+
   if (!menu) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-sm text-[var(--gray-3)]">Menu not found.</p>
+      <div className="h-full flex flex-col items-center justify-center gap-4 p-8 text-center">
+        <div className="w-16 h-16 rounded-full bg-[rgba(130,130,130,0.05)] flex items-center justify-center">
+          <UtensilsCrossed size={32} className="text-[var(--gray-3)] opacity-20" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-[var(--black-1)]">Menu Not Found</h3>
+          <p className="text-sm text-[var(--gray-3)] mt-1 max-w-[260px]">
+            We couldn't find the category "{menuId}". It might have been deleted or renamed.
+          </p>
+        </div>
+        <Button onClick={() => router.push("/staff/menu")} variant="outline" className="mt-2 rounded-[10px]">
+          Back to Overview
+        </Button>
       </div>
     );
   }
@@ -71,9 +121,8 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
     const isActive = item.status === "active";
     const label = item.tag || (isActive ? "Active" : "Draft");
     return (
-      <Badge variant="outline" className={`text-[9px] font-bold uppercase border-0 ${
-        isActive ? "bg-[rgba(39,174,96,0.08)] text-[var(--state-success)]" : "bg-[rgba(130,130,130,0.08)] text-[var(--gray-3)]"
-      }`}>
+      <Badge variant="outline" className={`text-[9px] font-bold uppercase border-0 ${isActive ? "bg-[rgba(39,174,96,0.08)] text-[var(--state-success)]" : "bg-[rgba(130,130,130,0.08)] text-[var(--gray-3)]"
+        }`}>
         {label}
       </Badge>
     );
@@ -126,32 +175,32 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
       {/* Menu summary card */}
       <Card className="bg-white flex-none py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
         <CardContent className="px-4 py-2.5 flex items-center gap-6">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[rgba(149,48,2,0.08)] flex items-center justify-center">
-            <UtensilsCrossed size={14} className="text-[var(--brand-primary)]" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[rgba(149,48,2,0.08)] flex items-center justify-center">
+              <UtensilsCrossed size={14} className="text-[var(--brand-primary)]" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-[var(--black-2)]">{menu.name}</p>
+              <p className="text-[10px] text-[var(--gray-3)]">{menu.type}</p>
+            </div>
           </div>
+          <div className="h-6 w-px bg-[var(--gray-5)]" />
           <div>
-            <p className="text-xs font-bold text-[var(--black-2)]">{menu.name}</p>
-            <p className="text-[10px] text-[var(--gray-3)]">{menu.type}</p>
+            <p className="text-[10px] text-[var(--gray-3)]">Items</p>
+            <p className="text-xs font-bold text-[var(--black-2)]">{menu.items.length}</p>
           </div>
-        </div>
-        <div className="h-6 w-px bg-[var(--gray-5)]" />
-        <div>
-          <p className="text-[10px] text-[var(--gray-3)]">Items</p>
-          <p className="text-xs font-bold text-[var(--black-2)]">{menu.items.length}</p>
-        </div>
-        <div className="h-6 w-px bg-[var(--gray-5)]" />
-        <div>
-          <p className="text-[10px] text-[var(--gray-3)]">Price Range</p>
-          <p className="text-xs font-bold text-[var(--black-2)]">{menu.priceRange}</p>
-        </div>
-        <div className="h-6 w-px bg-[var(--gray-5)]" />
-        <div>
-          <p className="text-[10px] text-[var(--gray-3)]">Status</p>
-          <Badge variant="outline" className={`text-[10px] font-bold border-0 ${menu.status === "active" ? "bg-[rgba(39,174,96,0.1)] text-[var(--state-success)]" : "bg-[rgba(130,130,130,0.1)] text-[var(--gray-3)]"}`}>
-            {menu.status === "active" ? "Active" : "Draft"}
-          </Badge>
-        </div>
+          <div className="h-6 w-px bg-[var(--gray-5)]" />
+          <div>
+            <p className="text-[10px] text-[var(--gray-3)]">Price Range</p>
+            <p className="text-xs font-bold text-[var(--black-2)]">{menu.priceRange}</p>
+          </div>
+          <div className="h-6 w-px bg-[var(--gray-5)]" />
+          <div>
+            <p className="text-[10px] text-[var(--gray-3)]">Status</p>
+            <Badge variant="outline" className={`text-[10px] font-bold border-0 ${menu.status === "active" ? "bg-[rgba(39,174,96,0.1)] text-[var(--state-success)]" : "bg-[rgba(130,130,130,0.1)] text-[var(--gray-3)]"}`}>
+              {menu.status === "active" ? "Active" : "Draft"}
+            </Badge>
+          </div>
         </CardContent>
       </Card>
 
@@ -203,9 +252,13 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
           <div className="grid grid-cols-3 gap-3">
             {filteredItems.map((item) => (
               <div key={item.id} className="bg-white border border border-[var(--gray-5)] rounded-[10px] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex flex-col">
-                {/* Image placeholder */}
-                <div className="h-24 bg-gradient-to-br from-[var(--gray-5)] to-[rgba(149,48,2,0.05)] relative flex items-center justify-center">
-                  <UtensilsCrossed size={20} className="text-[var(--gray-4)]" />
+                {/* Image display */}
+                <div className="h-24 bg-gradient-to-br from-[var(--gray-5)] to-[rgba(149,48,2,0.05)] relative flex items-center justify-center overflow-hidden">
+                  {item.imageUrls && item.imageUrls.length > 0 ? (
+                    <img src={item.imageUrls[0]} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <UtensilsCrossed size={20} className="text-[var(--gray-4)]" />
+                  )}
                   <div className="absolute top-2 left-2">{statusBadge(item)}</div>
                 </div>
                 <div className="p-3 flex flex-col gap-1 flex-1">
@@ -222,18 +275,22 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                   </div>
                   {/* Availability toggle */}
                   <div className="mt-1.5 pt-1.5 border-t border-[var(--gray-5)]">
-                    <Switch
-                      checked={item.status === "active"}
-                      onCheckedChange={() => toggleItemStatus(menuId, item.id)}
-                      className="data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)]"
-                    />
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={item.status === "active"}
+                        onCheckedChange={() => handleToggleStatus(item.id, item.name)}
+                        disabled={togglingItemId === item.id}
+                        className="data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)]"
+                      />
+                      {togglingItemId === item.id && <Loader2 size={10} className="animate-spin text-[var(--gray-3)]" />}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
                     <Link href={`/staff/menu/${menuId}/items/${item.id}`} className="flex-1 text-center py-1 text-[10px] font-bold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.06)] rounded-md hover:bg-[rgba(149,48,2,0.12)] transition-colors">
                       EDIT
                     </Link>
-                    <button 
-                      onClick={() => handleDeleteItem(item.id, item.name)} 
+                    <button
+                      onClick={() => handleDeleteItem(item.id, item.name)}
                       disabled={deletingItemId === item.id}
                       className="p-1 text-[var(--gray-4)] hover:text-[var(--state-error)] transition-colors disabled:opacity-50"
                     >
@@ -248,8 +305,12 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
           <div className="flex flex-col gap-2">
             {filteredItems.map((item) => (
               <div key={item.id} className="bg-white border border border-[var(--gray-5)] rounded-[10px] px-3 py-2.5 flex items-center gap-3 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--gray-5)] to-[rgba(149,48,2,0.05)] flex items-center justify-center shrink-0">
-                  <UtensilsCrossed size={14} className="text-[var(--gray-4)]" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--gray-5)] to-[rgba(149,48,2,0.05)] flex items-center justify-center shrink-0 overflow-hidden">
+                  {item.imageUrls && item.imageUrls.length > 0 ? (
+                    <img src={item.imageUrls[0]} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <UtensilsCrossed size={14} className="text-[var(--gray-4)]" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-[var(--black-2)]">{item.name}</p>
@@ -258,14 +319,18 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                 {statusBadge(item)}
                 <span className="text-xs font-bold text-[var(--brand-primary)] shrink-0">LKR {item.price.toLocaleString()}</span>
                 {item.calories && <span className="text-[10px] text-[var(--gray-3)] flex items-center gap-0.5 shrink-0"><Flame size={10} />{item.calories}</span>}
-                <Switch
-                  checked={item.status === "active"}
-                  onCheckedChange={() => toggleItemStatus(menuId, item.id)}
-                  className="shrink-0 data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)]"
-                />
+                <div className="flex items-center gap-2 shrink-0">
+                  <Switch
+                    checked={item.status === "active"}
+                    onCheckedChange={() => handleToggleStatus(item.id, item.name)}
+                    disabled={togglingItemId === item.id}
+                    className="data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)]"
+                  />
+                  {togglingItemId === item.id && <Loader2 size={10} className="animate-spin text-[var(--gray-3)]" />}
+                </div>
                 <Link href={`/staff/menu/${menuId}/items/${item.id}`} className="text-[10px] font-bold text-[var(--brand-primary)] hover:underline shrink-0">EDIT</Link>
-                <button 
-                  onClick={() => handleDeleteItem(item.id, item.name)} 
+                <button
+                  onClick={() => handleDeleteItem(item.id, item.name)}
                   disabled={deletingItemId === item.id}
                   className="p-1 text-[var(--gray-4)] hover:text-[var(--state-error)] transition-colors shrink-0 disabled:opacity-50"
                 >
