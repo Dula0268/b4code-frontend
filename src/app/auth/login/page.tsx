@@ -35,8 +35,20 @@ function LoginPageContent() {
       const redirect = searchParams?.get("redirect");
       const validRedirect = redirect && redirect !== "/" ? redirect : null;
       router.push(validRedirect || path);
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Login failed.";
 
+      if (message.includes("pending")) {
+        setError("⏳ Your account is pending approval.");
+        return;
+      }
+
+      if (message.includes("rejected")) {
+        setError("❌ Your account has been rejected.");
+        return;
+      }
+
+      setError("Invalid email or password.");
     }
   }
 
@@ -115,27 +127,33 @@ function LoginPageContent() {
 
                   <div className="relative">
                     <div className="bg-[rgba(149,48,2,0.1)] border border-[#e5e7eb] rounded-full w-full flex items-center">
+
                       <Input
                         type={showPw ? "text" : "password"}
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="h-[54px] w-full rounded-full bg-transparent pl-[48px] pr-[48px] text-[16px] placeholder:text-[rgba(130,130,130,0.5)] border-0"
+                        autoComplete="new-password"
+                        className="h-[54px] w-full rounded-full bg-transparent pl-[48px] pr-[52px] text-[16px] placeholder:text-[rgba(130,130,130,0.5)] border-0 appearance-none"
                         required
+                        hideToggle
                       />
+
                       <Lock className="absolute left-4 h-6 w-6 text-[#953002] pointer-events-none" />
+
                       <button
                         type="button"
                         onClick={() => setShowPw((s) => !s)}
-                        className="absolute right-4 text-[#666] hover:text-[#000]"
+                        className="absolute right-4 z-10 text-[#666] hover:text-[#000]"
                         aria-label={showPw ? "Hide password" : "Show password"}
                       >
                         {showPw ? (
-                          <EyeOff className="h-6 w-6" />
+                          <Eye className="h-5 w-5" />
                         ) : (
-                          <Eye className="h-6 w-6" />
+                          <EyeOff className="h-5 w-5" />
                         )}
                       </button>
+
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import axios from "axios";
+import { authApi, setToken, removeToken } from "@/lib/api";
 import { userApi } from "@/api/user.api";
 
 type Role = "guest" | "owner" | "admin" | "staff";
@@ -14,69 +14,27 @@ type AuthUser = {
   email: string;
   role: Role;
   userId?: number;
+  propertyId?: number;
   profile?: UserProfile;
-};
-
-// ─── Mock users (kept for guest / owner / staff flows) ────────────────────────
-type MockUserRecord = {
-  password: string;
-  role: Role;
-  profile?: UserProfile;
-};
-
-const INITIAL_MOCK_USERS: Record<string, MockUserRecord> = {
-  "guest@primestay.com": {
-    password: "guest123",
-    role: "guest",
-    profile: { firstName: "John", lastName: "Doe", phone: "+94 77 123 4567" },
-  },
-  "owner@primestay.com": { password: "owner123", role: "owner" },
-  "staff@primestay.com": { password: "staff123", role: "staff" },
-};
-
-const getMockUsers = (): Record<string, MockUserRecord> => {
-  if (typeof window === "undefined") return INITIAL_MOCK_USERS;
-  try {
-    const stored = localStorage.getItem("MOCK_USERS_DB");
-    return stored
-      ? { ...INITIAL_MOCK_USERS, ...JSON.parse(stored) }
-      : INITIAL_MOCK_USERS;
-  } catch {
-    return INITIAL_MOCK_USERS;
-  }
-};
-
-const saveMockUsers = (users: Record<string, MockUserRecord>) => {
-  if (typeof window === "undefined") return;
-
-  try {
-    // Persist only the non-initial portion (optional, but cleaner).
-    // If you prefer, you can store the whole object instead.
-    const toStore: Record<string, MockUserRecord> = { ...users };
-    for (const key of Object.keys(INITIAL_MOCK_USERS)) {
-      delete toStore[key];
-    }
-
-    localStorage.setItem("MOCK_USERS_DB", JSON.stringify(toStore));
-  } catch {
-    // ignore storage errors (quota, private mode, etc.)
-  }
 };
 
 const REDIRECT_MAP: Record<Role, string> = {
   guest: "/guest/search",
   owner: "/owner",
-  staff: "/staff/select-property",
+  staff: "/staff",
   admin: "/admin",
 };
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 // ─── Hydrate from localStorage on load ───────────────────────────────────────
 function hydrateUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
   try {
+    const stored = localStorage.getItem("auth_user");
+    if (stored) {
+      return JSON.parse(stored);
+    }
+    
+    // Legacy support
     const token = localStorage.getItem("accessToken");
     const email = localStorage.getItem("authEmail");
     const role = localStorage.getItem("authRole") as Role | null;
@@ -101,14 +59,25 @@ type AuthState = {
 type AuthActions = {
   login: (email: string, password: string) => Promise<string>;
   loginForCheckout: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, role: Role) => Promise<void>;
-  registerFromCheckout: (email: string, password: string, profile: UserProfile) => Promise<void>;
-  checkEmailExists: (email: string) => boolean;
+  register: (email: string, password: string, role: Role, propertyId?: number) => Promise<void>;
+  registerFromCheckout: (
+    email: string,
+    password: string,
+    profile: UserProfile
+  ) => Promise<void>;
+  checkEmailExists: () => boolean;
   logout: () => void;
   setError: (message: string | null) => void;
   reset: () => void;
-  updatePassword: (email: string, currentPassword: string, newPassword: string) => Promise<void>;
-  updateProfile: (email: string, updates: Partial<UserProfile>) => Promise<void>;
+  updatePassword: (
+    email: string,
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<void>;
+  updateProfile: (
+    email: string,
+    updates: Partial<UserProfile>
+  ) => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
   restoreSession: (user: AuthUser) => void;
 };
@@ -119,112 +88,153 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   isRestoring: false,
   error: null,
 
-  // ── Login ─────────────────────────────────────────────────────────────────
+  // ─── LOGIN ─────────────────────────────────────────────
   login: async (email, password) => {
     set({ loading: true, error: null });
 
-    // ── Admin: call real backend ──
-    if (email.toLowerCase() === "admin@primestay.com" ||
-        email.toLowerCase().endsWith("@primestay.com")) {
-      try {
-        const { data } = await axios.post(`${API_BASE}/api/auth/login`, {
-          email: email.toLowerCase(),
-          password,
-        });
+    try {
+      const data = await authApi.login(email, password);
+      const role = data.role.toLowerCase() as Role;
 
-        const role = (data.role?.toLowerCase() ?? "guest") as Role;
+      setToken(data.token);
 
-        // Only store token for admin — other roles fall through to mock
-        if (role === "admin" || role === "staff") {
-          localStorage.setItem("accessToken", data.token);
-          localStorage.setItem("refreshToken", data.refreshToken);
-          localStorage.setItem("authEmail", data.email);
-          localStorage.setItem("authRole", role);
-          localStorage.setItem("authUserId", String(data.userId));
+      const userData: AuthUser = {
+        email: data.email,
+        role,
+        userId: data.userId,
+        propertyId: data.propertyId,
+        profile: data.profile,
+      };
 
-          const user: AuthUser = { email: data.email, role, userId: data.userId };
-          set({ loading: false, user });
-          return REDIRECT_MAP[role];
-        }
-      } catch (err: unknown) {
-        const msg =
-          axios.isAxiosError(err) && err.response?.status === 401
-            ? "Invalid email or password."
-            : "Unable to reach the server. Please try again.";
-        set({ loading: false, error: msg });
-        throw new Error(msg);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("auth_user", JSON.stringify(userData));
+        // Also keep legacy keys for compatibility
+        localStorage.setItem("accessToken", data.token);
+        localStorage.setItem("authEmail", data.email);
+        localStorage.setItem("authRole", role);
+        localStorage.setItem("authUserId", String(data.userId));
       }
-    }
 
-    // ── Other roles: mock ──
-    await new Promise((r) => setTimeout(r, 600));
-    const users = getMockUsers();
-    const match = users[email.toLowerCase()];
-    if (!match || match.password !== password) {
-      set({ loading: false, error: "Invalid email or password." });
-      throw new Error("Invalid credentials");
+      set({
+        loading: false,
+        user: userData,
+      });
+
+      return REDIRECT_MAP[role];
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unexpected error occurred";
+
+      console.log("LOGIN ERROR:", message);
+
+      set({ loading: false, error: message });
+
+      throw new Error(message);
     }
-    set({
-      loading: false,
-      user: { email, role: match.role, profile: match.profile },
-    });
-    return REDIRECT_MAP[match.role];
   },
 
-  // ── Login for Checkout ────────────────────────────────────────────────────
+  // ─── LOGIN FOR CHECKOUT ─────────────────────────────
   loginForCheckout: async (email, password) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 600));
-    const users = getMockUsers();
-    const match = users[email.toLowerCase()];
-    if (!match || match.password !== password) {
-      set({ loading: false, error: "Invalid email or password." });
-      throw new Error("Invalid credentials");
+
+    try {
+      const data = await authApi.login(email, password);
+      const role = data.role.toLowerCase() as Role;
+
+      setToken(data.token);
+
+      const userData: AuthUser = { 
+        email: data.email, 
+        role, 
+        userId: data.userId, 
+        propertyId: data.propertyId,
+        profile: data.profile
+      };
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("auth_user", JSON.stringify(userData));
+      }
+
+      set({
+        loading: false,
+        user: userData,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Login failed";
+
+      set({ loading: false, error: message });
+      throw new Error(message);
     }
-    set({
-      loading: false,
-      error: null,
-      user: { email, role: match.role, profile: match.profile },
-    });
   },
 
-  // ── Register ──────────────────────────────────────────────────────────────
-  register: async (email, password, role) => {
+  // ─── REGISTER ─────────────────────────────────────────
+  register: async (email, password, role, propertyId) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 800));
-    const lowerEmail = email.toLowerCase();
-    const users = getMockUsers();
-    if (users[lowerEmail]) {
-      set({ loading: false, error: "An account with this email already exists." });
-      throw new Error("Email exists");
+
+    try {
+      const nameParts = email.split("@")[0].split(".");
+      const firstName =
+        nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) ||
+        "User";
+      const lastName =
+        nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || "";
+
+      await authApi.register(email, password, role, firstName, lastName, undefined, propertyId);
+
+      set({ loading: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Registration failed";
+
+      set({ loading: false, error: message });
+
+      throw new Error(message);
     }
-    users[lowerEmail] = { password, role };
-    saveMockUsers(users);
-    set({ loading: false });
   },
 
-  // ── Register from Checkout ────────────────────────────────────────────────
+  // ─── REGISTER FROM CHECKOUT ─────────────────────────
   registerFromCheckout: async (email, password, profile) => {
     set({ loading: true, error: null });
-    await new Promise((r) => setTimeout(r, 800));
-    const lowerEmail = email.toLowerCase();
-    const users = getMockUsers();
-    if (users[lowerEmail]) {
-      set({ loading: false, error: "An account with this email already exists." });
-      throw new Error("Email exists");
+
+    try {
+      await authApi.register(
+        email,
+        password,
+        "guest",
+        profile.firstName,
+        profile.lastName,
+        profile.phone
+      );
+
+      setToken("");
+
+      set({
+        loading: false,
+        user: {
+          email: email.toLowerCase(),
+          role: "guest",
+          profile,
+        },
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Registration failed";
+
+      set({ loading: false, error: message });
+
+      throw new Error(message);
     }
-    users[lowerEmail] = { password, role: "guest", profile };
-    saveMockUsers(users);
-    set({ loading: false, error: null, user: { email: lowerEmail, role: "guest", profile } });
   },
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  checkEmailExists: (email) => {
-    const users = getMockUsers();
-    return !!users[email.toLowerCase()];
+  checkEmailExists: () => {
+    // We don't have a real endpoint for this in authApi yet, so we return false
+    // or we could implement it if needed. For now, keep it simple.
+    return false;
   },
 
   logout: () => {
+    removeToken();
     if (typeof window !== "undefined") {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
@@ -232,33 +242,40 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       localStorage.removeItem("authRole");
       localStorage.removeItem("authUserId");
     }
+
     set({ user: null, error: null });
   },
 
   setError: (message) => set({ error: message }),
+
   reset: () => set({ user: null, loading: false, error: null }),
 
-  // ─── Restore Session ──────────────────────────────────────────────────────
-  restoreSession: (user) => set({ user, loading: false, isRestoring: true, error: null }),
+  restoreSession: (user) =>
+    set({ user, loading: false, isRestoring: true, error: null }),
 
-  // ─── Update Password ──────────────────────────────────────────────────────
+  // ─── UPDATE PASSWORD ───────────────────────────────
   updatePassword: async (email, currentPassword, newPassword) => {
     set({ loading: true, error: null });
+
     try {
       await userApi.changePassword({ currentPassword, newPassword });
       set({ loading: false });
     } catch (err) {
-      set({ loading: false, error: err instanceof Error ? err.message : "Failed to update password" });
-      throw err;
+      const message = err instanceof Error ? err.message : "Failed to update password";
+
+      set({ loading: false, error: message });
+
+      throw new Error(message);
     }
   },
 
-  // ─── Update Profile ───────────────────────────────────────────────────────
+  // ─── UPDATE PROFILE ────────────────────────────────
   updateProfile: async (email, updates) => {
     set({ loading: true, error: null });
+
     try {
-      // Try real backend
       const data = await userApi.updateProfile(updates);
+
       const profile: UserProfile = {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -267,40 +284,58 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
       set((state) => {
         if (!state.user) return { loading: false };
+
         const updatedUser = { ...state.user, profile };
-        // Sync to localStorage
+
         if (typeof window !== "undefined") {
           localStorage.setItem("auth_user", JSON.stringify(updatedUser));
         }
-        return { loading: false, user: updatedUser };
+
+        return {
+          loading: false,
+          user: updatedUser,
+        };
       });
     } catch (err) {
-      set({ loading: false, error: err instanceof Error ? err.message : "Failed to update profile." });
-      throw err;
+      const message = err instanceof Error ? err.message : "Failed to update profile";
+
+      set({ loading: false, error: message });
+
+      throw new Error(message);
     }
   },
 
+  // ─── FETCH CURRENT USER ────────────────────────────
   fetchCurrentUser: async () => {
     try {
       const data = await userApi.getCurrentUser();
-      
-      // Safety check: if backend is unreachable or session invalid, data will be null
+
       if (!data) {
         set({ loading: false, isRestoring: false });
         return;
       }
 
       const role = data.role.toLowerCase() as Role;
+
       const profile: UserProfile = {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
       };
-      const user: AuthUser = { email: data.email, role, profile };
 
-      set({ user, loading: false, isRestoring: false });
+      set({
+        user: {
+          email: data.email,
+          role,
+          userId: data.userId,
+          propertyId: data.propertyId,
+          profile,
+        },
+        loading: false,
+        isRestoring: false,
+      });
     } catch (err) {
-      console.error("Failed to fetch current user profile:", err);
+      console.error("Failed to fetch user:", err);
       set({ isRestoring: false });
     }
   },

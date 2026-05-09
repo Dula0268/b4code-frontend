@@ -3,8 +3,9 @@
 import { Search } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import Link from "next/link";
+import { useAuthStore } from "@/store/auth/auth.store";
 import UserIcon from "@/components/features/admin/user-icon";
+import Link from "next/link";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface AdminHeaderProps {
@@ -23,12 +24,16 @@ interface AdminHeaderProps {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function AdminHeader({
-  adminName = "Admin",
+  adminName: adminNameProp,
   avatarSrc,
   onSearch,
   fullWidth = false,
 }: AdminHeaderProps) {
+  const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const adminName = adminNameProp || 
+    (user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Admin");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -73,6 +78,10 @@ export default function AdminHeader({
               fill
               className="object-cover"
             />
+          ) : user?.profile ? (
+            <div className="w-full h-full bg-[#953002] flex items-center justify-center text-white text-sm font-bold">
+              {user.profile.firstName[0].toUpperCase()}{user.profile.lastName[0].toUpperCase()}
+            </div>
           ) : (
             <UserIcon size={42} />
           )}
