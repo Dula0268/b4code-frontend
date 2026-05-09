@@ -8,7 +8,9 @@ export const userApi = {
     firstName?: string;
     lastName?: string;
     phone?: string;
-  }) => api.patch("/users/profile", updates).then((r) => r.data),
+    avatarUrl?: string;
+    nationalIdUrl?: string;
+  }) => api.put("/users/profile", updates).then((r) => r.data),
 
   getCurrentUser: () => api.get("/users/me").then((r) => r.data),
 };

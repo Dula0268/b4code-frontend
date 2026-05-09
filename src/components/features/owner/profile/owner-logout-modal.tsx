@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth/auth.store";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function OwnerLogoutModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
     const handleLogout = () => {
@@ -38,11 +38,12 @@ export default function OwnerLogoutModal() {
         <Button 
           className="w-full h-12 rounded-full bg-[#953002] hover:bg-[#7a2702] text-white font-medium text-[15px] transition-colors"
           onClick={() => {
+            logout();
             setIsOpen(false);
-            router.push("/auth/login");
+            window.location.href = "/";
           }}
         >
-          Go to Login Page
+          Back to Home Page
         </Button>
       </div>
     </div>

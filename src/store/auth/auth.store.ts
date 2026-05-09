@@ -8,6 +8,8 @@ export type UserProfile = {
   firstName: string;
   lastName: string;
   phone: string;
+  avatarUrl?: string;
+  nationalIdUrl?: string;
 };
 
 type AuthUser = {
@@ -33,7 +35,7 @@ function hydrateUser(): AuthUser | null {
     if (stored) {
       return JSON.parse(stored);
     }
-    
+
     // Legacy support
     const token = localStorage.getItem("accessToken");
     const email = localStorage.getItem("authEmail");
@@ -51,6 +53,7 @@ function hydrateUser(): AuthUser | null {
 // ─── State & Actions ──────────────────────────────────────────────────────────
 type AuthState = {
   user: AuthUser | null;
+  isAuthenticated: boolean;
   loading: boolean;
   isRestoring: boolean;
   error: string | null;
@@ -82,11 +85,14 @@ type AuthActions = {
   restoreSession: (user: AuthUser) => void;
 };
 
-export const useAuthStore = create<AuthState & AuthActions>((set) => ({
-  user: hydrateUser(),
-  loading: false,
-  isRestoring: false,
-  error: null,
+export const useAuthStore = create<AuthState & AuthActions>((set) => {
+  const initialUser = hydrateUser();
+  return {
+    user: initialUser,
+    isAuthenticated: !!initialUser,
+    loading: false,
+    isRestoring: false,
+    error: null,
 
   // ─── LOGIN ─────────────────────────────────────────────
   login: async (email, password) => {
@@ -118,14 +124,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       set({
         loading: false,
         user: userData,
+        isAuthenticated: true,
       });
 
       return REDIRECT_MAP[role];
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Unexpected error occurred";
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err instanceof Error ? err.message : "Unexpected error occurred");
 
       console.log("LOGIN ERROR:", message);
 
@@ -145,10 +150,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
       setToken(data.token);
 
-      const userData: AuthUser = { 
-        email: data.email, 
-        role, 
-        userId: data.userId, 
+      const userData: AuthUser = {
+        email: data.email,
+        role,
+        userId: data.userId,
         propertyId: data.propertyId,
         profile: data.profile
       };
@@ -160,9 +165,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       set({
         loading: false,
         user: userData,
+        isAuthenticated: true,
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Login failed";
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || (err instanceof Error ? err.message : "Login failed");
 
       set({ loading: false, error: message });
       throw new Error(message);
@@ -211,6 +217,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
       set({
         loading: false,
+        isAuthenticated: true,
         user: {
           email: email.toLowerCase(),
           role: "guest",
@@ -243,15 +250,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       localStorage.removeItem("authUserId");
     }
 
-    set({ user: null, error: null });
+    set({ user: null, isAuthenticated: false, error: null });
   },
 
   setError: (message) => set({ error: message }),
 
-  reset: () => set({ user: null, loading: false, error: null }),
+  reset: () => set({ user: null, isAuthenticated: false, loading: false, error: null }),
 
   restoreSession: (user) =>
-    set({ user, loading: false, isRestoring: true, error: null }),
+    set({ user, isAuthenticated: true, loading: false, isRestoring: true, error: null }),
 
   // ─── UPDATE PASSWORD ───────────────────────────────
   updatePassword: async (email, currentPassword, newPassword) => {
@@ -280,6 +287,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
+        avatarUrl: data.avatarUrl,
+        nationalIdUrl: data.nationalIdUrl,
       };
 
       set((state) => {
@@ -321,6 +330,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
+        avatarUrl: data.avatarUrl,
+        nationalIdUrl: data.nationalIdUrl,
       };
 
       set({
@@ -331,12 +342,23 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
           propertyId: data.propertyId,
           profile,
         },
+        isAuthenticated: true,
         loading: false,
         isRestoring: false,
       });
-    } catch (err) {
-      console.error("Failed to fetch user:", err);
-      set({ isRestoring: false });
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { status?: number } };
+      if (axiosError?.response?.status === 401 || axiosError?.response?.status === 403) {
+        // Token is invalid/expired — quietly clear state
+        set({ user: null, isAuthenticated: false, isRestoring: false });
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("auth-storage");
+        }
+      } else {
+        console.error("Failed to fetch user:", err);
+        set({ isRestoring: false });
+      }
     }
-  },
-}));
+  }
+};
+});

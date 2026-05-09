@@ -1,14 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import RoleGuard from "@/components/shared/auth/role-guard";
 
 export default function OwnerPage() {
   const router = useRouter();
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#F6F8F7]">
-      <div className="text-center flex flex-col gap-4">
-        <h1 className="text-[28px] font-bold text-[#282828]">Owner Portal</h1>
+    <RoleGuard allowedRoles={["owner", "admin"]}>
+      <div className="flex items-center justify-center min-h-screen bg-[#F6F8F7]">
+        <div className="text-center flex flex-col gap-4">
+          <h1 className="text-[28px] font-bold text-[#282828]">Owner Portal</h1>
         <p className="text-sm text-[#666]">Manage your properties, availability and payouts.</p>
         <div className="flex gap-3 justify-center mt-2">
           <button
@@ -38,5 +40,6 @@ export default function OwnerPage() {
         </div>
       </div>
     </div>
+    </RoleGuard>
   );
 }

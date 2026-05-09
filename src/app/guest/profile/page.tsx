@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Lock, UploadCloud } from "lucide-react";
+import { CheckCircle2, Lock, UploadCloud, User as UserIcon, Camera } from "lucide-react";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { imageApi } from "@/lib/api";
 
 export default function GuestProfilePage() {
   const { user, updateProfile } = useAuthStore();
@@ -13,9 +14,12 @@ export default function GuestProfilePage() {
     lastName: "",
     email: "",
     phone: "",
+    avatarUrl: "",
+    nationalIdUrl: "",
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingId, setIsUploadingId] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Sync form data with user store data
@@ -26,9 +30,31 @@ export default function GuestProfilePage() {
         lastName: user.profile?.lastName || "",
         email: user.email || "",
         phone: user.profile?.phone || "",
+        avatarUrl: user.profile?.avatarUrl || "",
+        nationalIdUrl: user.profile?.nationalIdUrl || "",
       });
     }
   }, [user]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingId(true);
+
+    try {
+      const result = await imageApi.upload(file, "identity");
+      setFormData(prev => ({
+        ...prev,
+        nationalIdUrl: result.url
+      }));
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploadingId(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +65,9 @@ export default function GuestProfilePage() {
       await updateProfile(emailToUse, { 
         firstName: formData.firstName, 
         lastName: formData.lastName, 
-        phone: formData.phone 
+        phone: formData.phone,
+        avatarUrl: formData.avatarUrl,
+        nationalIdUrl: formData.nationalIdUrl
       });
       
       setIsSaving(false);
@@ -123,12 +151,47 @@ export default function GuestProfilePage() {
 
         <div className="space-y-3">
           <label className="text-sm font-medium text-[#44403c]">Government ID</label>
-          <div className="border-2 border-dashed border-[#e5e7eb] rounded-2xl flex flex-col items-center justify-center py-10 px-6 bg-[#fafafa] cursor-pointer hover:bg-[#f3f4f6] transition-colors">
-            <div className="w-10 h-10 bg-white rounded-md shadow-sm border border-[#e5e7eb] flex items-center justify-center mb-3">
-              <UploadCloud size={20} className="text-[#c2410c]" />
-            </div>
-            <p className="font-semibold text-sm text-[#374151] mb-1">Click to upload or drag and drop</p>
-            <p className="text-xs text-[#9ca3af]">SVG, PNG, JPG or PDF (max. 5MB). Required for international bookings.</p>
+          <div className="relative">
+            {formData.nationalIdUrl ? (
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-[#e5e7eb] group">
+                <img src={formData.nationalIdUrl} alt="National ID" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <label className="cursor-pointer bg-white text-[#1c1917] px-4 py-2 rounded-lg font-bold text-sm hover:bg-neutral-100 transition-colors">
+                    Change ID Photo
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*,application/pdf" 
+                      onChange={(e) => handleFileUpload(e)}
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : (
+              <label className="border-2 border-dashed border-[#e5e7eb] rounded-2xl flex flex-col items-center justify-center py-10 px-6 bg-[#fafafa] cursor-pointer hover:bg-[#f3f4f6] transition-colors relative">
+                {isUploadingId ? (
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 border-3 border-[#953002] border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <p className="text-sm font-medium text-[#953002]">Uploading identity document...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-10 h-10 bg-white rounded-md shadow-sm border border-[#e5e7eb] flex items-center justify-center mb-3">
+                      <UploadCloud size={20} className="text-[#c2410c]" />
+                    </div>
+                    <p className="font-semibold text-sm text-[#374151] mb-1">Click to upload or drag and drop</p>
+                    <p className="text-xs text-[#9ca3af]">SVG, PNG, JPG or PDF (max. 5MB). Required for international bookings.</p>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*,application/pdf" 
+                  onChange={(e) => handleFileUpload(e)}
+                  disabled={isUploadingId}
+                />
+              </label>
+            )}
           </div>
         </div>
 
@@ -139,7 +202,7 @@ export default function GuestProfilePage() {
           <Button 
             type="submit" 
             className="bg-[#d97706] hover:bg-[#b45309] text-white px-8 transition-colors h-11 font-medium rounded-xl"
-            disabled={isSaving}
+            disabled={isSaving || isUploadingId}
           >
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>

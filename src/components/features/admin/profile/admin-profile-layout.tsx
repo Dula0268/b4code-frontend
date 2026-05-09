@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, Lock, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import AdminLogoutModal from "./admin-logout-modal";
 import { useAuthStore } from "@/store/auth/auth.store";
-import UserIcon from "@/components/features/admin/user-icon";
+import { Camera, User, Lock, LogOut } from "lucide-react";
+import { useState } from "react";
+import { imageApi } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 interface AdminProfileLayoutProps {
   children: React.ReactNode;
@@ -19,11 +20,29 @@ const ADMIN_PROFILE_NAV_ITEMS = [
 
 export default function AdminProfileLayout({ children }: AdminProfileLayoutProps) {
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const { user, updateProfile } = useAuthStore();
+  const [isUploading, setIsUploading] = useState(false);
+
   const displayName = user?.email?.split("@")[0] || "Admin User";
 
   const names = displayName.split(" ");
   const initials = names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.email) return;
+
+    setIsUploading(true);
+    try {
+      const result = await imageApi.upload(file, "avatars");
+      await updateProfile(user.email, { avatarUrl: result.url });
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
+      alert("Failed to upload avatar. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="w-full mx-auto flex flex-col bg-white rounded-2xl shadow-sm border border-[#f3f4f6] overflow-hidden min-h-[700px]">
@@ -32,8 +51,31 @@ export default function AdminProfileLayout({ children }: AdminProfileLayoutProps
         <aside className="w-full md:w-[280px] bg-[#fdfaf8] border-r border-[#f3f4f6] flex flex-col py-8 px-6 relative z-10">
           {/* User Info */}
           <div className="flex flex-col items-center justify-center mb-8">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center text-[#953002] text-2xl font-bold mb-3 shadow-sm overflow-hidden uppercase">
-              <UserIcon size={80} />
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-full bg-[#953002]/10 flex items-center justify-center text-[#953002] text-2xl font-bold mb-3 shadow-md overflow-hidden uppercase border-[3px] border-white relative">
+                {user?.profile?.avatarUrl ? (
+                  <img src={user.profile.avatarUrl} alt="Admin" className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <span>{initials}</span>
+                )}
+                
+                {isUploading && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
+
+              <label className="absolute bottom-2 right-0 w-8 h-8 bg-[#953002] text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-[#7a2600] transition-all shadow-lg border-2 border-white z-20 hover:scale-110">
+                <Camera size={16} />
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                />
+              </label>
             </div>
             <h2 className="text-xl font-bold text-[#1c1917] mb-1 truncate w-full text-center">{displayName}</h2>
             <div className="bg-[#953002]/10 text-[#953002] text-xs font-semibold px-3 py-1 rounded-full">
