@@ -2,36 +2,49 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import { Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { authApi } from "@/lib/api";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const token = searchParams?.get("token") || "";
+
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPw, setShowPw] = useState(false);
     const [showConfirmPw, setShowConfirmPw] = useState(false);
-
     const [isSuccess, setIsSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(2);
+    const [error, setError] = useState<string | null>(null);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (password !== confirmPassword) {
-            alert("Passwords do not match!");
+            setError("Passwords do not match!");
+            return;
+        }
+        if (!token) {
+            setError("Invalid reset link. Please request a new one.");
             return;
         }
         setLoading(true);
-        // Mock API call to reset password
-        await new Promise((r) => setTimeout(r, 800));
-        setLoading(false);
-        setIsSuccess(true);
+        setError(null);
+        try {
+            await authApi.resetPassword(token, password);
+            setIsSuccess(true);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to reset password. The link may have expired.");
+        } finally {
+            setLoading(false);
+        }
     }
 
     // Handle countdown for redirect
@@ -146,6 +159,12 @@ export default function ResetPasswordPage() {
                                             </div>
                                         </div>
 
+                                        {error && (
+                                            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                                {error}
+                                            </div>
+                                        )}
+
                                         <Button type="submit" disabled={loading} size="lg" className="w-full h-[56px] text-[16px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] mt-8 transition-all">
                                             {loading ? "Resetting..." : "Reset Password"}
                                         </Button>
@@ -204,5 +223,13 @@ export default function ResetPasswordPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <ResetPasswordContent />
+        </Suspense>
     );
 }

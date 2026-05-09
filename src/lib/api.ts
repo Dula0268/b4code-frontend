@@ -152,11 +152,14 @@ export const authApi = {
             method: "POST",
             body: JSON.stringify({ email, password }),
         });
+
+        const data = await response.json().catch(() => null);
+
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || "Invalid email or password.");
+            throw new Error(data?.message || "Login failed");
         }
-        return response.json();
+
+        return data;
     },
 
     register: async (
@@ -165,17 +168,49 @@ export const authApi = {
         role: string,
         firstName: string,
         lastName: string,
-        phone?: string
+        phone?: string,
+        propertyId?: number
     ) => {
         const response = await apiFetch("/api/auth/register", {
             method: "POST",
-            body: JSON.stringify({ email, password, role: role.toUpperCase(), firstName, lastName, phone }),
+            body: JSON.stringify({ 
+                email, 
+                password, 
+                role: role.toUpperCase(), 
+                firstName, 
+                lastName, 
+                phone,
+                propertyId
+            }),
         });
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || "Registration failed.");
         }
         return response.json();
+    },
+
+    forgotPassword: async (email: string): Promise<{ message: string; devResetLink?: string }> => {
+        const response = await apiFetch("/api/auth/forgot-password", {
+            method: "POST",
+            body: JSON.stringify({ email }),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to send reset link.");
+        }
+        return response.json();
+    },
+
+    resetPassword: async (token: string, newPassword: string) => {
+        const response = await apiFetch("/api/auth/reset-password", {
+            method: "POST",
+            body: JSON.stringify({ token, newPassword }),
+        });
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error || "Failed to reset password. The link may have expired.");
+        }
+        return response.text();
     },
 };
 
@@ -281,6 +316,14 @@ export const paymentApi = {
 
 };
 
+export const propertiesApi = {
+    getPublicList: async (): Promise<Array<{ id: number; name: string }>> => {
+        const response = await apiFetch("/api/properties/public/list");
+        if (!response.ok) throw new Error("Failed to fetch properties");
+        return response.json();
+    },
+};
+
 // Guest APIs
 export const guestApi = {
     // Property Methods
@@ -381,6 +424,30 @@ export const guestApi = {
             body: JSON.stringify(messageData),
         });
         if (!response.ok) throw new Error("Failed to send message");
+        return response.json();
+    },
+};
+
+export const ownerApi = {
+    getPendingStaff: async () => {
+        const response = await apiFetch("/api/owner/staff/pending");
+        if (!response.ok) throw new Error("Failed to fetch pending staff");
+        return response.json();
+    },
+
+    approveStaff: async (staffId: number) => {
+        const response = await apiFetch(`/api/owner/staff/${staffId}/approve`, {
+            method: "PUT",
+        });
+        if (!response.ok) throw new Error("Failed to approve staff");
+        return response.json();
+    },
+
+    rejectStaff: async (staffId: number) => {
+        const response = await apiFetch(`/api/owner/staff/${staffId}/reject`, {
+            method: "PUT",
+        });
+        if (!response.ok) throw new Error("Failed to reject staff");
         return response.json();
     },
 };

@@ -3,34 +3,35 @@
 import Image from "next/image"
 import Link from "next/link"
 import {
-  MapPin, MessageSquare, Pencil, XCircle, Download,
+  MapPin, MessageSquare, Download,
   Star, ChevronRight, RefreshCw, FileText, BedDouble,
-  CreditCard, Wallet,
+  CreditCard, Wallet, Calendar
 } from "lucide-react"
-import type { BookingStatus } from "@/store/guest/booking/booking.store"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 export interface BookingCardData {
   id: string
-  propertyId?: string
-  orderNumber: string
-  status: BookingStatus
+  orderId: string
+  status: "UPCOMING" | "COMPLETED" | "CANCELLED"
   property: string
   location: string
   imageSrc: string
   checkIn: string
   checkOut: string
-  guests: string
   totalPrice: number
   nightsLabel: string
-  paymentMethod?: "online" | "property"
+  guests?: string
+  paymentMethod?: string
+  paymentStatus?: string
   paidInFull?: boolean
   roomName?: string
   bookingStatus?: string
   cancellationNote?: string
   isFromStore?: boolean
+  propertyId?: string
+  orderNumber?: string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,23 +44,27 @@ function formatLKR(amount: number) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
-const STATUS_STYLE: Record<BookingStatus, { bg: string; text: string; border: string }> = {
-  UPCOMING:  { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  COMPLETED: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200"    },
-  CANCELLED: { bg: "bg-gray-100",   text: "text-gray-500",    border: "border-gray-200"    },
-}
 
-function StatusBadge({ status }: { status: BookingStatus }) {
-  const s = STATUS_STYLE[status]
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    UPCOMING: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    COMPLETED: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    CANCELLED: "bg-red-500/20 text-red-400 border-red-500/30",
+    SUCCESS: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    PENDING: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    FAILED: "bg-red-500/20 text-red-400 border-red-500/30",
+  }
   return (
-    <span className={`text-[0.625rem] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest border ${s.bg} ${s.text} ${s.border}`}>
+    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest border ${styles[status] || styles.PENDING}`}>
       {status}
     </span>
   )
 }
 
-function PaymentBadge({ paidInFull }: { paidInFull: boolean }) {
-  return paidInFull ? (
+function PaymentBadge({ paidInFull, method }: { paidInFull?: boolean, method?: string }) {
+  const isPaid = paidInFull || method === "ONLINE_CARD";
+  
+  return isPaid ? (
     <span className="inline-flex items-center gap-1 text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
       <CreditCard size={10} /> Paid
     </span>
@@ -74,10 +79,8 @@ function PaymentBadge({ paidInFull }: { paidInFull: boolean }) {
 // Button style constants
 // ─────────────────────────────────────────────────────────────────────────────
 const btnPrimary = "inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer no-underline"
-const btnHost    = "inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer no-underline"
-const btnOutline = "inline-flex items-center gap-2 border border-[var(--border)] hover:border-[var(--brand-primary)] text-[var(--gray-2)] hover:text-[var(--brand-primary)] text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
-const btnDanger  = "inline-flex items-center gap-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
-const btnGhost   = "inline-flex items-center gap-1.5 text-xs font-bold text-[var(--gray-3)] hover:text-[var(--brand-primary)] transition-colors cursor-pointer ml-auto"
+const btnOutline = "inline-flex items-center gap-2 border border-white/10 hover:border-[#9a3300] text-white/70 hover:text-[#9a3300] text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline"
+const btnGhost   = "inline-flex items-center gap-1.5 text-xs font-bold text-white/40 hover:text-[#9a3300] transition-colors cursor-pointer ml-auto"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BookingCard — reusable card for displaying a single booking
@@ -96,125 +99,89 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
     : `/guest/search?property=${encodeURIComponent(booking.property)}&location=${encodeURIComponent(booking.location)}`
 
   return (
-    <div className="ps-card overflow-hidden flex flex-col sm:flex-row hover:shadow-[var(--shadow-card)] transition-shadow">
+    <div className="relative group overflow-hidden rounded-[24px] bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-all duration-500 hover:shadow-2xl hover:shadow-black/20 flex flex-col sm:flex-row">
       {/* Property image */}
-      <div className="relative w-full sm:w-52 h-44 sm:h-auto flex-shrink-0">
+      <div className="relative w-full sm:w-52 h-48 sm:h-auto flex-shrink-0 overflow-hidden">
         <Image
           src={booking.imageSrc}
           alt={booking.property}
           fill
-          sizes="(max-width: 640px) 100vw, 208px"
-          className={`object-cover ${isCancelled ? "grayscale opacity-60" : ""}`}
+          className="object-cover transition-transform duration-700 group-hover:scale-110"
         />
-        <div className="absolute top-3 left-3">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+        <div className="absolute top-4 left-4">
           <StatusBadge status={booking.status} />
         </div>
       </div>
 
       {/* Card body */}
-      <div className="flex-1 p-5 flex flex-col gap-3">
-        {/* Order number + price */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            {booking.paidInFull !== undefined && !isCancelled && (
-              <PaymentBadge paidInFull={booking.paidInFull} />
-            )}
-            <span className="text-[0.6875rem] font-semibold" style={{ color: "var(--gray-3)" }}>
-              #{booking.orderNumber}
+      <div className="flex-1 p-6 flex flex-col justify-between">
+        {/* Header: Order ID + Price */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex flex-col gap-1">
+             <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+              Ref: {booking.orderId || booking.orderNumber}
             </span>
+            <div className="flex items-center gap-2 mt-1">
+              <PaymentBadge paidInFull={booking.paidInFull} method={booking.paymentMethod} />
+            </div>
           </div>
-          <div className="text-right flex-shrink-0">
-            <p className="text-[1.1875rem] font-black leading-tight"
-              style={{ color: isCancelled ? "var(--gray-4)" : "var(--fg)" }}>
-              {formatLKR(booking.totalPrice)}
-            </p>
-            <p className="text-[0.625rem] font-semibold" style={{ color: "var(--gray-4)" }}>
-              {booking.nightsLabel}
-            </p>
+          <div className="text-right">
+            <p className="text-[20px] font-black text-white leading-tight">{formatLKR(booking.totalPrice)}</p>
+            <p className="text-[10px] font-bold text-white/40 uppercase tracking-tighter">{booking.nightsLabel}</p>
           </div>
         </div>
 
-        {/* Property name + room + location */}
-        <div>
-          <h3 className="text-base font-black leading-snug" style={{ color: "var(--fg)" }}>
-            {booking.property}
-          </h3>
-          {booking.roomName && (
-            <p className="text-xs font-semibold mt-0.5" style={{ color: "var(--gray-2)" }}>
-              {booking.roomName}
-            </p>
-          )}
-          <div className="flex items-center gap-1 mt-1">
-            <MapPin size={11} style={{ color: "var(--gray-4)" }} />
-            <p className="text-xs" style={{ color: "var(--gray-3)" }}>{booking.location}</p>
+        {/* Property Info */}
+        <div className="mb-6">
+          <h3 className="text-[22px] font-black text-white mb-1 tracking-tight">{booking.property}</h3>
+          <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-1.5 text-white/60">
+              <Calendar size={14} className="text-[#9a3300]" />
+              <span className="text-[12px] font-medium">{booking.checkIn} — {booking.checkOut}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-white/60">
+              <MapPin size={14} className="text-[#9a3300]" />
+              <span className="text-[12px] font-medium">{booking.location}</span>
+            </div>
           </div>
         </div>
-
-        {/* Cancellation note */}
-        {isCancelled && booking.cancellationNote && (
-          <p className="text-xs leading-relaxed rounded-xl px-3 py-2.5 border"
-            style={{ color: "var(--gray-3)", background: "color-mix(in srgb, var(--gray-5) 40%, white)", borderColor: "var(--border)" }}>
-            {booking.cancellationNote}
-          </p>
-        )}
-
-        {/* Dates + status */}
-        {!isCancelled && (
-          <div className="flex flex-wrap gap-4 sm:gap-6">
-            <div>
-              <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-0.5" style={{ color: "var(--gray-4)" }}>Stay Dates</p>
-              <p className="text-xs font-bold" style={{ color: "var(--fg)" }}>{booking.checkIn} – {booking.checkOut}</p>
-            </div>
-            <div>
-              <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-0.5" style={{ color: "var(--gray-4)" }}>
-                {isCompleted ? "Status" : "Guests"}
-              </p>
-              <p className="text-xs font-bold" style={{ color: isCompleted ? "var(--state-success)" : "var(--fg)" }}>
-                {isCompleted ? booking.bookingStatus : booking.guests}
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Action row */}
-        <div className="flex items-center gap-2 flex-wrap mt-auto pt-1">
+        <div className="flex items-center gap-3 mt-auto pt-6 border-t border-white/5 flex-wrap">
           {isUpcoming && (
             <>
-              <Link href="/guest/my-room" className={btnPrimary} style={{ background: "var(--brand-primary)" }}>
-                <BedDouble size={13} /> My Room
+              <Link href="/guest/my-room" className={btnPrimary} style={{ background: "#9a3300" }}>
+                <BedDouble size={14} /> My Room
               </Link>
-              <Link href="/guest/messages?type=host" className={`${btnHost}`}
-                style={{ background: "var(--brand-primary)", color: "var(--brand-secondary)" }}>
-                <MessageSquare size={13} /> Message Host
+              <Link href="/guest/messages?type=host" className={btnOutline}>
+                <MessageSquare size={14} /> Message Host
               </Link>
-              <Link href="/guest/booking/modify" className={btnOutline}>
-                <Pencil size={12} /> Modify
-              </Link>
-              <Link href={cancelHref} className={btnDanger}>
-                <XCircle size={13} /> Cancel
+              <Link href={cancelHref} className={btnGhost}>
+                Cancel Booking
               </Link>
             </>
           )}
           {isCompleted && (
             <>
               <Link href="/guest/booking/confirmation" className={btnOutline}>
-                <Download size={13} /> Download Invoice
+                <Download size={14} /> Invoice
               </Link>
               <Link href={`/guest/reviews?propertyId=${booking.propertyId}`} className={btnOutline}>
-                <Star size={13} /> Rate Stay
+                <Star size={14} /> Rate Stay
               </Link>
               <Link href="/guest/booking/confirmation" className={btnGhost}>
-                View Details <ChevronRight size={13} />
+                Details <ChevronRight size={14} />
               </Link>
             </>
           )}
           {isCancelled && (
             <>
-              <Link href={rebookHref} className={btnPrimary} style={{ background: "var(--brand-primary)" }}>
-                <RefreshCw size={13} /> Rebook Property
+              <Link href={rebookHref} className={btnPrimary} style={{ background: "#9a3300" }}>
+                <RefreshCw size={14} /> Rebook
               </Link>
               <Link href="/guest/booking/cancel" className={btnOutline}>
-                <FileText size={13} /> Cancellation Policy
+                <FileText size={14} /> Policy
               </Link>
             </>
           )}

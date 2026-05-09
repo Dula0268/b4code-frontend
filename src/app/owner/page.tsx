@@ -29,6 +29,12 @@ export default function OwnerPage() {
           >
             Payouts
           </button>
+          <button
+            onClick={() => router.push("/owner/staff")}
+            className="px-5 py-2.5 rounded-full border border-[#953002] text-[#953002] text-sm font-semibold hover:bg-[rgba(149,48,2,0.08)]"
+          >
+            Staff Management
+          </button>
         </div>
       </div>
     </div>

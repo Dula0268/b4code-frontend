@@ -1,231 +1,149 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import Link from "next/link"
-import { XCircle, ChevronRight, Bell } from "lucide-react"
+import { 
+  Calendar, ChevronRight, Lock
+} from "lucide-react"
 import { useAuthStore } from "@/store/auth/auth.store"
-import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/booking.store"
-import { guestApi } from "@/lib/api"
-import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
-import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import { paymentApi } from "@/lib/api"
 import BookingCard, { type BookingCardData } from "@/components/features/guest/booking/booking-card"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
-type Tab = BookingStatus
-const TABS: Tab[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
+const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Business Logic Hook
-// ─────────────────────────────────────────────────────────────────────────────
-function useMyBookingsLogic() {
-  const [activeTab, setActiveTab] = useState<Tab>("UPCOMING")
+export default function MyBookingsPage() {
+  const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
   const [bookings, setBookings] = useState<BookingCardData[]>([])
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-
+  const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
-  const localBookings = useGuestBookingStore(s => s.bookings)
 
   useEffect(() => {
-    let active = true
     async function loadBookings() {
-        try {
-            const email = user?.email
-            if (!email) {
-              if (active) setBookings([])
-              return
-            }
-
-            let apiBookings: BookingCardData[] = []
-            try {
-                const data = await guestApi.getGuestBookings(email)
-                type ApiBooking = {
-                  bookingId?: number | string
-                  id?: number | string
-                  confirmationNumber?: string
-                  propertyName?: string
-                  propertyAddress?: string
-                  roomName?: string
-                  guestName?: string
-                  guestEmail?: string
-                  guestCount?: number
-                  checkIn?: string
-                  checkOut?: string
-                  nights?: number
-                  totalAmount?: number
-                  status?: string
-                  paymentMethod?: string
-                  createdAt?: string
-                }
-
-                const normalizeStatus = (s?: string): BookingStatus => {
-                  if (s === "COMPLETED") return "COMPLETED"
-                  if (s === "CANCELLED") return "CANCELLED"
-                  return "UPCOMING"
-                }
-
-                apiBookings = (data as ApiBooking[]).map((b) => ({
-                    id: String(b.bookingId ?? b.id ?? b.confirmationNumber ?? crypto.randomUUID()),
-                    propertyId: String(b.bookingId ?? b.id ?? ""),
-                    orderNumber: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
-                    status: normalizeStatus(b.status),
-                    property: b.propertyName || "Prime Stay Property",
-                    location: b.propertyAddress || "Sri Lanka",
-                    imageSrc: "/images/properties/property-1.jpg",
-                    checkIn: b.checkIn || "",
-                    checkOut: b.checkOut || "",
-                    guests: `${b.guestCount ?? 2} Guests`,
-                    totalPrice: b.totalAmount ?? 0,
-                    nightsLabel: `${b.nights ?? 1} night${(b.nights ?? 1) > 1 ? "s" : ""}`,
-                    paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
-                    paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
-                    roomName: b.roomName,
-                    isFromStore: false,
-                }))
-            } catch (err) {
-                console.warn("API booking fetch failed or empty:", err)
-            }
-
-            if (active) {
-                const userLocalBookings = localBookings.filter(b => b.userEmail.toLowerCase() === email.toLowerCase())
-                const mappedLocal: BookingCardData[] = userLocalBookings.map(b => ({
-                    id: String(b.id),
-                    propertyId: String(b.propertyId),
-                    orderNumber: b.confirmationCode,
-                    status: b.status,
-                    property: b.property,
-                    location: b.location,
-                    imageSrc: b.imageSrc,
-                    checkIn: b.checkIn,
-                    checkOut: b.checkOut,
-                    guests: b.guestsLabel,
-                    totalPrice: b.totalPrice,
-                    nightsLabel: b.nightsLabel,
-                    paymentMethod: b.paymentMethod,
-                    paidInFull: b.paidInFull,
-                    roomName: b.roomName,
-                    isFromStore: true,
-                }))
-
-                const merged = [...mappedLocal]
-                for (const apiB of apiBookings) {
-                    if (!merged.find(m => m.orderNumber === apiB.orderNumber)) {
-                        merged.push(apiB)
-                    }
-                }
-                
-                setBookings(merged)
-            }
-        } catch {
-            if (active) setErrorMsg("Failed to synchronize bookings. Try again.")
-        }
+      try {
+        const data = await paymentApi.getMyPayments();
+        
+        // Transform payment data into booking-like cards for the UI
+        const mappedBookings: BookingCardData[] = data.map((p: {
+          id: number;
+          orderId: string;
+          status: string;
+          amount: number;
+          paymentMethod: string;
+        }) => ({
+          id: String(p.id),
+          orderId: p.orderId,
+          orderNumber: p.orderId,
+          status: p.status === "SUCCESS" ? "UPCOMING" : "CANCELLED",
+          property: "Luxury Resort Stay", 
+          location: "Colombo, Sri Lanka",
+          imageSrc: "/images/properties/property-1.jpg",
+          checkIn: "Jun 12, 2024",
+          checkOut: "Jun 15, 2024",
+          totalPrice: p.amount,
+          paymentStatus: p.status,
+          paymentMethod: p.paymentMethod,
+          nightsLabel: "3 nights",
+          guests: "2 Guests"
+        }));
+        
+        setBookings(mappedBookings);
+      } catch (err) {
+        console.error("Failed to load bookings:", err);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    if (user) {
-        loadBookings();
-    } else {
-        setBookings([]);
-    }
-    
-    return () => { active = false }
-  }, [user, localBookings])
-
-  const visible = bookings.filter(b => b.status === activeTab)
-  const nextUpcoming = bookings.find(b => b.status === "UPCOMING") ?? null
-
-  return { activeTab, setActiveTab, bookings, errorMsg, visible, nextUpcoming }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Page
-// ─────────────────────────────────────────────────────────────────────────────
-export default function MyBookingsPage() {
-  const { activeTab, setActiveTab, errorMsg, visible, nextUpcoming } = useMyBookingsLogic()
+    if (user) loadBookings();
+  }, [user]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <GuestTopbar />
+    <div className="min-h-screen relative bg-[#0a0a0a] overflow-hidden">
+      {/* Immersive Background */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/payment_page_background_1778058273069.png"
+          alt="Luxury background"
+          fill
+          className="object-cover opacity-40 scale-105 blur-sm"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/80 via-transparent to-[#0a0a0a]" />
+      </div>
 
-      <main className="flex-1 pt-20 pb-16" style={{ background: "transparent" }}>
-        <div className="max-w-[860px] mx-auto px-4">
+      <div className="relative z-10 max-w-[900px] mx-auto px-6 pt-32 pb-20">
+        {/* Header Section */}
+        <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-1 bg-[#9a3300] rounded-full" />
+            <span className="text-[12px] font-black text-[#9a3300] uppercase tracking-[0.2em]">Guest Portal</span>
+          </div>
+          <h1 className="text-[42px] font-black text-white leading-none tracking-tight mb-4">
+            My Luxury <span className="text-white/40 italic font-medium">Stays</span>
+          </h1>
+          <p className="text-white/50 text-[15px] font-medium max-w-md leading-relaxed">
+            Manage your upcoming escapes and relive your past memories with Prime Stay.
+          </p>
+        </div>
 
-          {errorMsg && (
-            <div className="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded-2xl flex items-center justify-between border border-red-200 shadow-sm">
-               <div className="flex items-center gap-2">
-                  <XCircle size={16} />
-                  <p className="text-sm font-semibold">{errorMsg}</p>
-               </div>
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-[18px] backdrop-blur-md mb-8 w-fit animate-in fade-in slide-in-from-left-4 duration-700">
+          {TABS.map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-6 py-2.5 rounded-[14px] text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${
+                activeTab === tab 
+                  ? "bg-[#9a3300] text-white shadow-lg shadow-[#9a3300]/20" 
+                  : "text-white/40 hover:text-white"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Booking List */}
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+          {loading ? (
+            <div className="py-20 flex flex-col items-center justify-center text-white/20">
+              <div className="w-12 h-12 border-4 border-white/5 border-t-[#9a3300] rounded-full animate-spin mb-4" />
+              <p className="text-[12px] font-black uppercase tracking-widest">Loading Collection...</p>
             </div>
-          )}
-
-          {/* Header */}
-          <div className="pt-8 pb-6">
-            <h1 className="text-[1.875rem] font-black leading-tight" style={{ color: "var(--fg)", fontSize: "1.875rem" }}>
-              My Bookings
-            </h1>
-            <p className="text-sm mt-1 font-medium" style={{ color: "var(--gray-3)" }}>
-              Track your stays and manage upcoming travel plans.
-            </p>
-          </div>
-
-          {/* Tab toggle */}
-          <div className="flex items-center gap-1 mb-6 ps-card w-full sm:w-fit p-1 overflow-x-auto no-scrollbar">
-            {TABS.map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                className="px-4 sm:px-5 py-2 text-[0.75rem] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer whitespace-nowrap"
-                style={{
-                  background: activeTab === tab ? "var(--brand-primary)" : "transparent",
-                  color:      activeTab === tab ? "white"          : "var(--gray-3)",
-                }}>
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          {/* Upcoming reminder */}
-          {activeTab === "UPCOMING" && nextUpcoming && (
-            <div className="mb-6 rounded-2xl p-4 sm:p-5 flex items-start sm:items-center gap-4 border border-amber-200 bg-amber-50">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <Bell size={17} className="text-amber-600 animate-pulse" />
+          ) : bookings.length === 0 ? (
+            <div className="py-24 rounded-[32px] bg-white/5 border border-white/10 border-dashed backdrop-blur-sm flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                <Calendar size={32} className="text-white/20" />
               </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-black" style={{ color: "var(--fg)" }}>Upcoming stay!</h3>
-                <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "var(--gray-2)" }}>
-                  Your trip to <strong>{nextUpcoming.property}</strong> is coming up ({nextUpcoming.checkIn} – {nextUpcoming.checkOut}).
-                  {nextUpcoming.paidInFull === false && " Bring a valid ID for payment at check-in."}
-                </p>
-              </div>
-              <Link href="/guest/my-room"
-                className="hidden sm:inline-flex text-xs font-black whitespace-nowrap no-underline transition-colors"
-                style={{ color: "var(--fg)" }}>
-                View Room →
+              <h2 className="text-[20px] font-bold text-white mb-2">No bookings found</h2>
+              <p className="text-white/40 text-[14px] mb-8">Ready for your next adventure?</p>
+              <Link 
+                href="/guest/search"
+                className="h-12 px-8 bg-[#9a3300] hover:bg-[#7a2800] text-white rounded-xl font-black text-[13px] flex items-center gap-2 transition-all shadow-xl shadow-[#9a3300]/20"
+              >
+                Discover Properties <ChevronRight size={16} />
               </Link>
             </div>
+          ) : (
+            bookings
+              .filter(b => b.status === activeTab)
+              .map(booking => <BookingCard key={booking.id} booking={booking} />)
           )}
-
-          {/* Booking list — uses the extracted BookingCard component */}
-          <div className="flex flex-col gap-4">
-            {visible.length === 0 ? (
-              <div className="ps-card p-12 text-center">
-                <p className="text-sm font-semibold mb-3" style={{ color: "var(--gray-4)" }}>
-                  No {activeTab.toLowerCase()} bookings.
-                </p>
-                <Link href="/guest/search"
-                  className="inline-flex items-center gap-1.5 text-sm font-bold no-underline transition-colors"
-                  style={{ color: "var(--fg)" }}>
-                  Browse Properties <ChevronRight size={13} />
-                </Link>
-              </div>
-            ) : (
-              visible.map(booking => <BookingCard key={booking.id} booking={booking} />)
-            )}
-          </div>
-
         </div>
-      </main>
 
-      <GuestFooter />
+        {/* Footer info */}
+        <div className="mt-20 flex flex-col items-center opacity-30">
+          <div className="flex items-center gap-2 mb-2">
+            <Lock size={12} className="text-white" />
+            <span className="text-[10px] font-black text-white uppercase tracking-widest">End-to-End Encrypted Portal</span>
+          </div>
+          <div className="h-[1px] w-12 bg-white/20 mb-4" />
+          <p className="text-[9px] text-white/50 text-center uppercase tracking-tighter">
+            Prime Stay Luxury Hospitality Group &copy; 2024
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
