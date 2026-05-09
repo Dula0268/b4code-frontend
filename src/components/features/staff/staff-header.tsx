@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuthStore } from "@/store/auth/auth.store";
 import { Search, User } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -11,11 +12,15 @@ interface StaffHeaderProps {
 }
 
 export default function StaffHeader({
-  staffName = "Staff Member",
+  staffName: staffNameProp,
   avatarSrc,
   onSearch,
 }: StaffHeaderProps) {
+  const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const staffName = staffNameProp || 
+    (user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Staff Member");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -47,6 +52,10 @@ export default function StaffHeader({
               fill
               className="object-cover"
             />
+          ) : user?.profile ? (
+            <div className="w-full h-full bg-[#953002] flex items-center justify-center text-white text-sm font-bold">
+              {user.profile.firstName[0].toUpperCase()}{user.profile.lastName[0].toUpperCase()}
+            </div>
           ) : (
             <User size={20} className="text-neutral-500" />
           )}

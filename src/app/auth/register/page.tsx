@@ -4,13 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { Mail, Lock, CheckCircle2, Phone, User, Home, MapPin, Building2, Briefcase, KeyRound, Building } from "lucide-react";
+import { Mail, Lock, CheckCircle2, Phone, User, Home, MapPin, Building2, Briefcase, Building } from "lucide-react";
 import clsx from "clsx";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { propertiesApi } from "@/lib/api";
 
 type Role = "guest" | "owner" | "staff";
 
@@ -57,14 +58,23 @@ function RegisterForm() {
 
     // Staff Fields
     const [staffRole, setStaffRole] = useState("");
-    const [employeeId, setEmployeeId] = useState("");
-    const [assignedProperty, setAssignedProperty] = useState("");
+    const [selectedPropertyId, setSelectedPropertyId] = useState<number | "">("");
+    const [properties, setProperties] = useState<Array<{ id: number; name: string }>>([]);
 
     const [localError, setLocalError] = useState<string | null>(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [countdown, setCountdown] = useState(2);
 
     const displayError = localError || authError;
+
+    // Fetch properties for staff dropdown
+    useEffect(() => {
+        if (role === "staff") {
+            propertiesApi.getPublicList()
+                .then(setProperties)
+                .catch(err => console.error("Failed to load properties:", err));
+        }
+    }, [role]);
 
     // Password strength calculation
     const getPasswordStrength = () => {
@@ -91,7 +101,9 @@ function RegisterForm() {
             setNationalId("981234567V");
         } else if (role === "staff") {
             setStaffRole("Kitchen Staff");
-            setAssignedProperty("Sunset Villa");
+            if (properties.length > 0) {
+                setSelectedPropertyId(properties[0].id);
+            }
         }
     };
 
@@ -111,8 +123,13 @@ function RegisterForm() {
             return;
         }
 
-        if (password.length < 6) {
-            setLocalError("Password must be at least 6 characters.");
+        const passwordRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+        if (!passwordRegex.test(password)) {
+            setLocalError(
+                "Password must be at least 8 characters and include uppercase, lowercase, number and special character (@$!%*?&)."
+            );
             return;
         }
 
@@ -128,8 +145,18 @@ function RegisterForm() {
             }
         }
 
+        if (role === "staff" && !selectedPropertyId) {
+            setLocalError("Please select a property to register for.");
+            return;
+        }
+
         try {
-            await register(email, password, role);
+            await register(
+                email, 
+                password, 
+                role, 
+                role === "staff" ? Number(selectedPropertyId) : undefined
+            );
             setShowSuccessModal(true);
         } catch {
             // Error handled by store
@@ -147,7 +174,7 @@ function RegisterForm() {
             router.push(`/auth/login${redirectParams}`);
         }
         return () => clearTimeout(timer);
-    }, [showSuccessModal, countdown, router]);
+    }, [showSuccessModal, countdown, router, searchParams]);
 
 
     return (
@@ -412,16 +439,23 @@ function RegisterForm() {
                                         <div className="space-y-1.5">
                                             <Label className="pl-1 text-[13px] font-bold text-[#282828]">Assigned Property</Label>
                                             <div className="relative">
-                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="Select a property"
-                                                        value={assignedProperty}
-                                                        onChange={(e) => setAssignedProperty(e.target.value)}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center relative">
+                                                    <select
+                                                        name="assignedProperty"
+                                                        value={selectedPropertyId}
+                                                        onChange={(e) => setSelectedPropertyId(Number(e.target.value))}
+                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] text-[#282828] border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30 appearance-none outline-none"
                                                         required={role === "staff"}
-                                                    />
-                                                    <MapPin className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                    >
+                                                        <option value="" disabled>Select a property</option>
+                                                        {properties.map(p => (
+                                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    <Home className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                    <div className="absolute right-4 pointer-events-none text-[#953002]/70">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -501,9 +535,13 @@ function RegisterForm() {
                                 <CheckCircle2 className="h-8 w-8 text-[#137333]" />
                             </div>
 
-                            <h3 className="text-[20px] font-extrabold text-[#282828] mb-2">Registered Successful</h3>
+                            <h3 className="text-[20px] font-extrabold text-[#282828] mb-2">
+                                {role === "staff" ? "Registration Submitted" : "Registered Successful"}
+                            </h3>
                             <p className="text-[14px] text-neutral-500 leading-relaxed mb-6">
-                                You have been securely logged in.<br />Thank you for using our platform.
+                                {role === "staff" 
+                                    ? "Your request has been sent to the property owner for approval. You will be able to log in once they verify your account." 
+                                    : "You have been securely registered. Thank you for joining our platform."}
                             </p>
 
                             <div className="w-full bg-[#e6f4ea] rounded-xl p-3 mb-6 flex items-center justify-between">

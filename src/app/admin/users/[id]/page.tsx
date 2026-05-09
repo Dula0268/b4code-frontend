@@ -12,7 +12,7 @@ import {
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import UserProfileHeader from "@/components/features/admin/users/user-profile-header";
 import UserAccountInformation from "@/components/features/admin/users/user-account-information";
-import { userApi } from "@/lib/api";
+import { UsersApi } from "@/api/admin/users.api";
 import UserActivityLog, {
   type ActivityLogEntry,
 } from "@/components/features/admin/users/user-activity-log";
@@ -182,7 +182,7 @@ export default function UserDetailPage() {
         const id = parseInt(params.id as string);
         if (isNaN(id)) return;
 
-        const u = await userApi.getUserById(id);
+        const u = await UsersApi.getById(id);
 
         const name =
           `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Unknown User";
@@ -191,6 +191,10 @@ export default function UserDetailPage() {
           ? u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase()
           : "Staff";
 
+        const formattedStatus = u.status
+          ? u.status.charAt(0).toUpperCase() + u.status.slice(1).toLowerCase()
+          : "Active";
+
         const formattedUser: User = {
           id: u.id.toString(),
           name,
@@ -198,24 +202,27 @@ export default function UserDetailPage() {
           avatarColor: stringToColor(name),
           avatarInitial: name.charAt(0).toUpperCase(),
           role: formattedRole,
-          status: "Active",
-          lastLogin:
-            new Date(u.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            }) +
-            " at " +
-            new Date(u.createdAt).toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
+          status: formattedStatus,
+          lastLogin: u.lastLogin
+            ? new Date(u.lastLogin).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }) +
+              " at " +
+              new Date(u.lastLogin).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Never",
           phone: "+1 (555) 000-0000",
-          joined: new Date(u.createdAt).toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          }),
+          joined: u.createdAt
+            ? new Date(u.createdAt).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "Unknown",
           timezone: "(GMT+00:00) Default Timezone",
         };
 
@@ -236,7 +243,9 @@ export default function UserDetailPage() {
     try {
       if (!user) return;
 
-      await userApi.updateUserRole(Number(user.id), newRole);
+      await UsersApi.update(Number(user.id), {
+        role: newRole as import("@/api/admin/users.api").UserRole,
+      });
       setCurrentRole(newRole);
       setToast(`Role updated to ${newRole}`);
     } catch (err) {
@@ -245,10 +254,26 @@ export default function UserDetailPage() {
     }
   };
 
-  const handleSuspendToggle = () => {
+  const handleSuspendToggle = async () => {
     const next = !suspended;
-    setSuspended(next);
-    setToast(next ? "User Suspended Successfully" : "Account Reactivated Successfully");
+    try {
+      if (!user) return;
+
+      const newStatus = next ? "SUSPENDED" : "ACTIVE";
+      await UsersApi.updateStatus(
+        Number(user.id),
+        newStatus as import("@/api/admin/users.api").UserStatus,
+      );
+      setSuspended(next);
+      setToast(
+        next
+          ? "User Suspended Successfully"
+          : "Account Reactivated Successfully",
+      );
+    } catch (err) {
+      console.error("Failed to update user status:", err);
+      setToast("Failed to update user status");
+    }
   };
 
   const handleSendReset = () => {
