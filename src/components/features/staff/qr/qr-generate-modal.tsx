@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Save, Info } from "lucide-react";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
+import { useAuthStore } from "@/store/auth/auth.store";
 import type { QRType, QRTab } from "@/store/staff/qr/staff-qr.store";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,9 @@ const TYPE_TAB: Record<QRType, QRTab> = {
 
 export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrId?: string; propertyId?: number }) {
   const searchParams = useSearchParams();
+  const { user } = useAuthStore();
   const queryPropertyId = searchParams?.get("propertyId") ? parseInt(searchParams.get("propertyId")!, 10) : null;
-  const fallbackPropertyId = typeof window !== "undefined" ? parseInt(localStorage.getItem("selected_property_id") || "", 10) || null : null;
+  const fallbackPropertyId = typeof window !== "undefined" ? (user?.propertyId || parseInt(localStorage.getItem("selected_property_id") || "", 10) || null) : null;
   const propertyId = propPropertyId || queryPropertyId || fallbackPropertyId;
 
   const router = useRouter();
