@@ -183,7 +183,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                     {/* RIGHT COLUMN */}
                     <div className="w-full lg:w-[300px] flex-shrink-0 lg:sticky lg:top-24">
                         <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-sm overflow-hidden">
-                            <div className="relative h-[200px] bg-[#e8f4f8]">
+                            <div className="relative h-[350px] bg-[#e8f4f8]">
                                 <iframe
                                     title="Property location map"
                                     src={`https://www.openstreetmap.org/export/embed.html?bbox=${property.lng - 0.05},${property.lat - 0.05},${property.lng + 0.05},${property.lat + 0.05}&layer=mapnik&marker=${property.lat},${property.lng}`}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, UtensilsCrossed, Save, Plus, Trash2, ImagePlus } from "lucide-react";
+import { ArrowLeft, UtensilsCrossed, Save, Plus, Trash2, ImagePlus, X } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import type { MenuItem } from "@/store/staff/menu/staff-menu.store";
 import { Switch } from "@/components/ui/switch";
@@ -24,6 +24,10 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
   const addMenu = useStaffMenuStore((s) => s.addMenu);
   const updateMenu = useStaffMenuStore((s) => s.updateMenu);
   const setSuccess = useStaffMenuStore((s) => s.setSuccess);
+
+  const isLoading = useStaffMenuStore((s) => s.isLoading);
+  const errorMsg = useStaffMenuStore((s) => s.errorMsg);
+  const setError = useStaffMenuStore((s) => s.setError);
 
   const [name, setName] = useState(existingMenu?.name ?? "");
   const [description, setDescription] = useState(existingMenu?.description ?? "");
@@ -73,13 +77,13 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
 
   const removeItem = (uid: number) => setItems((prev) => prev.filter((i) => i._uid !== uid));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     let hasErr = false;
     if (!name.trim()) { setNameError(true); hasErr = true; }
     if (!description.trim() && !isEdit) { setDescError(true); hasErr = true; }
-    if (!isEdit && items.length === 0) { 
-      alert("Please add at least one item to create a menu.");
-      return; 
+    if (!isEdit && items.length === 0) {
+      setError("Please add at least one item to create a menu.");
+      return;
     }
     if (hasErr) return;
     if (isEdit && menuId) {
@@ -87,11 +91,12 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
       setSuccess(`Menu "${name}" updated successfully.`);
       router.push("/staff/menu");
     } else {
-      // Strip _uid before sending to store
       const cleanItems: Omit<MenuItem, "id">[] = items.map(({ _uid, ...rest }) => rest);
-      const id = addMenu({ name, description, type, isVisible: isActive, status: isActive ? "active" : "draft", isNew: true }, cleanItems);
-      setSuccess(`Menu "${name}" created with ${cleanItems.length} item${cleanItems.length !== 1 ? "s" : ""}.`);
-      router.push(`/staff/menu/${id}`);
+      const id = await addMenu({ name, description, type, isVisible: isActive, status: isActive ? "active" : "draft", isNew: true }, cleanItems);
+      if (id) {
+        setSuccess(`Menu "${name}" created with ${cleanItems.length} item${cleanItems.length !== 1 ? "s" : ""}.`);
+        router.push("/staff/menu");
+      }
     }
   };
 
@@ -110,11 +115,19 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => router.push("/staff/menu")}>Cancel</Button>
-          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave}>
-            <Save size={12} /> Save Menu
+          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave} disabled={isLoading}>
+            <Save size={12} /> {isLoading ? "Saving..." : "Save Menu"}
           </Button>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {errorMsg && (
+        <div className="flex-none flex items-center gap-2 bg-[rgba(235,87,87,0.08)] border border-[rgba(235,87,87,0.2)] rounded-[10px] px-4 py-2 text-sm">
+          <span className="text-[#eb5757] font-medium flex-1">{errorMsg}</span>
+          <button onClick={() => setError(null)} className="text-[#eb5757] hover:opacity-70"><X size={14} /></button>
+        </div>
+      )}
 
       {/* Body — 2-column */}
       <div className="flex-1 flex gap-4 overflow-hidden min-h-0">

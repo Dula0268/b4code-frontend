@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, ImagePlus, Plus, Trash2, Clock, GripVertical } from "lucide-react";
+import { ArrowLeft, Save, ImagePlus, Plus, Trash2, Clock, GripVertical, X } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import type { Variant, Modifier, AvailabilityWindow } from "@/store/staff/menu/staff-menu.store";
 import { Switch } from "@/components/ui/switch";
@@ -23,6 +23,9 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
   const addItem = useStaffMenuStore((s) => s.addItem);
   const updateItem = useStaffMenuStore((s) => s.updateItem);
   const setSuccess = useStaffMenuStore((s) => s.setSuccess);
+  const isLoading = useStaffMenuStore((s) => s.isLoading);
+  const errorMsg = useStaffMenuStore((s) => s.errorMsg);
+  const setError = useStaffMenuStore((s) => s.setError);
 
   const existing = menu?.items.find((i) => i.id === itemId);
   const isEdit = !!itemId;
@@ -47,10 +50,10 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
 
   const back = () => router.push(`/staff/menu/${menuId}`);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     let hasErr = false;
     if (!name.trim()) { setNameError(true); hasErr = true; }
-    if (!price.trim() || isNaN(Number(price)) || Number(price) < 0) { setPriceError(true); hasErr = true; }
+    if (!price.trim() || isNaN(Number(price)) || Number(price) <= 0) { setPriceError(true); hasErr = true; }
     if (hasErr) return;
 
     const data = {
@@ -66,14 +69,18 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
       modifiers,
     };
 
-    if (isEdit && itemId) {
-      updateItem(menuId, itemId, data);
-      setSuccess(`Item "${name}" updated.`);
-    } else {
-      addItem(menuId, data);
-      setSuccess(`Item "${name}" added.`);
+    try {
+      if (isEdit && itemId) {
+        await updateItem(menuId, itemId, data);
+        setSuccess(`Item "${name}" updated.`);
+      } else {
+        await addItem(menuId, data);
+        setSuccess(`Item "${name}" added.`);
+      }
+      back();
+    } catch {
+      // errorMsg is set by the store
     }
-    back();
   };
 
   /* ─── Variant helpers ─── */
@@ -132,11 +139,19 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={back}>Cancel</Button>
-          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave}>
-            <Save size={12} /> Save Item
+          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave} disabled={isLoading}>
+            <Save size={12} /> {isLoading ? "Saving..." : "Save Item"}
           </Button>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {errorMsg && (
+        <div className="flex-none flex items-center gap-2 bg-[rgba(235,87,87,0.08)] border border-[rgba(235,87,87,0.2)] rounded-[10px] px-4 py-2 text-sm">
+          <span className="text-[#eb5757] font-medium flex-1">{errorMsg}</span>
+          <button onClick={() => setError(null)} className="text-[#eb5757] hover:opacity-70"><X size={14} /></button>
+        </div>
+      )}
 
       {/* Body — 2-column, scrollable left */}
       <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">

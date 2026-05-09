@@ -4,12 +4,24 @@ import { useSearchParams } from "next/navigation";
 import StaffPageLayout from "@/components/features/staff/layout/staff-page-layout";
 import QrList from "@/components/features/staff/qr/qr-list";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 
 function QrContent() {
   const searchParams = useSearchParams();
   const queryPropertyId = searchParams?.get("propertyId") ? parseInt(searchParams.get("propertyId")!, 10) : null;
-  const propertyId = queryPropertyId || (typeof window !== "undefined" ? parseInt(localStorage.getItem("selected_property_id") || "", 10) || null : null);
+
+  const [propertyId, setPropertyId] = useState<number | null>(queryPropertyId);
+
+  // Read from localStorage only on the client after mount to avoid hydration mismatch
+  useEffect(() => {
+    if (!propertyId) {
+      const stored = localStorage.getItem("selected_property_id");
+      if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed)) setPropertyId(parsed);
+      }
+    }
+  }, [propertyId]);
 
   return (
     <StaffPageLayout>
@@ -26,3 +38,4 @@ export default function QrPage() {
     </Suspense>
   );
 }
+

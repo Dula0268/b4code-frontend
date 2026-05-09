@@ -48,6 +48,26 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
+  // Keep the compact search bar aligned with the current URL when navigating
+  // between guest search results.
+  useEffect(() => {
+    if (!isCompact) return
+
+    const nextDestination = searchParams.get("destination") ?? ""
+    const nextCheckIn = searchParams.get("checkIn")
+      ? new Date(searchParams.get("checkIn")! + "T00:00:00")
+      : null
+    const nextCheckOut = searchParams.get("checkOut")
+      ? new Date(searchParams.get("checkOut")! + "T00:00:00")
+      : null
+    const nextGuests = Math.max(1, Number(searchParams.get("guests") ?? 1))
+
+    setDestination(nextDestination)
+    setCheckIn(nextCheckIn)
+    setCheckOut(nextCheckOut)
+    setGuests({ adults: nextGuests, children: 0 })
+  }, [isCompact, searchParams])
+
   // ── Close on outside click ─────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -91,36 +111,16 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
 
   // ── Search ─────────────────────────────────────────────────────────────
   const handleSearch = () => {
-    // Validate destination
-    if (!destination.trim()) {
-      alert("Please select a destination")
-      return
-    }
-
-    // Validate dates
-    if (!checkIn || !checkOut) {
-      alert("Please select check-in and check-out dates")
-      return
-    }
-
-    // Validate date order
-    if (checkOut <= checkIn) {
+    if (checkIn && checkOut && checkOut <= checkIn) {
       alert("Check-out date must be after check-in date")
       return
     }
 
-    // Validate guests
-    if (guestTotal < 1) {
-      alert("Please select at least one guest")
-      return
-    }
-
-    const params = new URLSearchParams({
-      destination,
-      checkIn: checkIn.toISOString().split("T")[0],
-      checkOut: checkOut.toISOString().split("T")[0],
-      guests: String(guestTotal),
-    })
+    const params = new URLSearchParams()
+    if (destination.trim()) params.set("destination", destination.trim())
+    if (checkIn) params.set("checkIn", checkIn.toISOString().split("T")[0])
+    if (checkOut) params.set("checkOut", checkOut.toISOString().split("T")[0])
+    params.set("guests", String(Math.max(1, guestTotal)))
     const url = `/guest/search?${params.toString()}`
     // Replace history entry when already on search page to avoid stacking
     if (pathname.startsWith("/guest/search")) {

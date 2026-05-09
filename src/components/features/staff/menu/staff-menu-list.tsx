@@ -28,6 +28,8 @@ export default function StaffMenuList() {
   const deleteMenu = useStaffMenuStore((s) => s.deleteMenu);
   const successMsg = useStaffMenuStore((s) => s.successMsg);
   const setSuccess = useStaffMenuStore((s) => s.setSuccess);
+  const errorMsg = useStaffMenuStore((s) => s.errorMsg);
+  const setError = useStaffMenuStore((s) => s.setError);
   const isLoading = useStaffMenuStore((s) => s.isLoading);
 
   const [page, setPage] = useState(0);
@@ -52,10 +54,12 @@ export default function StaffMenuList() {
     return () => clearTimeout(t);
   }, [successMsg, setSuccess]);
 
-  const handleDeleteMenu = (menuId: string, menuName: string) => {
+  const handleDeleteMenu = async (menuId: string, menuName: string) => {
     if (typeof window !== "undefined" && window.confirm(`Are you sure you want to delete the menu "${menuName}"? This action cannot be undone.`)) {
-      deleteMenu(menuId);
-      setSuccess(`Menu "${menuName}" deleted successfully.`);
+      await deleteMenu(menuId);
+      if (!useStaffMenuStore.getState().errorMsg) {
+        setSuccess(`Menu "${menuName}" deleted successfully.`);
+      }
     }
   };
 
@@ -79,6 +83,14 @@ export default function StaffMenuList() {
           <CheckCircle size={16} className="text-[var(--state-success)]" />
           <span className="text-[var(--black-2)] font-medium flex-1">{successMsg}</span>
           <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setSuccess(null)}><X size={14} /></Button>
+        </div>
+      )}
+
+      {/* ── Error Banner ── */}
+      {errorMsg && (
+        <div className="flex-none flex items-center gap-2 bg-[rgba(235,87,87,0.08)] border border-[rgba(235,87,87,0.2)] rounded-[10px] px-4 py-2 text-sm">
+          <span className="text-[#eb5757] font-medium flex-1">{errorMsg}</span>
+          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setError(null)}><X size={14} /></Button>
         </div>
       )}
 

@@ -49,7 +49,24 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
     try {
       set({ loading: true, error: null, propertyId });
       const response = await api.get(`/menu-items/property/${propertyId}`);
-      const items: MenuItem[] = response.data;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawItems: any[] = response.data;
+
+      // Map backend fields to frontend MenuItem shape
+      const items: MenuItem[] = rawItems.map((item) => ({
+        id: String(item.id),
+        name: item.name || "",
+        title: item.name || "",
+        description: item.description || "",
+        price: item.price || 0,
+        priceLkr: item.price || 0,
+        imageUrl: item.imageUrl,
+        category: item.category || "Other",
+        isAvailable: item.isAvailable !== false,
+        tag: item.tag,
+        variants: item.variants,
+        modifiers: item.modifiers,
+      }));
 
       // Group items by category
       const categoryMap = new Map<string, MenuItem[]>();
@@ -62,11 +79,12 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
       });
 
       // Convert map to categories array
-      const categories: MenuCategory[] = Array.from(categoryMap).map(([name, items], idx) => ({
+      const categories: MenuCategory[] = Array.from(categoryMap).map(([name, catItems], idx) => ({
         id: `cat-${idx}`,
         name,
-        items: items.filter((item) => item.isAvailable),
+        items: catItems.filter((item) => item.isAvailable),
       }));
+
 
       set({ categories, loading: false });
     } catch (error: unknown) {

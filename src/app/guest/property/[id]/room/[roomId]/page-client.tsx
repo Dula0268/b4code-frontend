@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, Suspense, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -12,17 +12,14 @@ import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-p
 import { addDays, differenceInDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { guestApi } from "@/lib/api"
 
 function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
 }
 
 const ROOM_DETAIL_CONFIG = {
-    serviceFee: 0,
-    taxes: 0,
     baseGuests: 2,
-    extraGuestFeePerNight: 0,
-    promoCodeDiscountRate: 0.0,
 } as const;
 
 function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | null) {
@@ -48,27 +45,72 @@ function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | 
     const [guestOpen, setGuestOpen] = useState(false)
 
     const [promoCode, setPromoCode] = useState("")
-    const [isPromoApplied, setIsPromoApplied] = useState(false)
+    const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null)
+    const [promoError, setPromoError] = useState<string | null>(null)
+    type PriceData = {
+        subtotal: number;
+        discountAmount: number;
+        taxAmount: number;
+        totalAmount: number;
+    };
+    const [priceData, setPriceData] = useState<PriceData | null>(null)
+    const [isLoadingPrice, setIsLoadingPrice] = useState(false)
+
+    useEffect(() => {
+        const fetchPrice = async () => {
+            if (!date?.from || !date?.to || !room.id) return;
+            setIsLoadingPrice(true);
+            setPromoError(null);
+            try {
+                const data = await guestApi.getPricePreview(
+                    Number(room.id),
+                    format(date.from, "yyyy-MM-dd"),
+                    format(date.to, "yyyy-MM-dd"),
+                    appliedPromoCode || undefined
+                );
+                setPriceData(data);
+            } catch (err) {
+                if (err instanceof Error) {
+                    setPromoError(err.message);
+                } else {
+                    setPromoError("Invalid promo code");
+                }
+                setAppliedPromoCode(null);
+                if (appliedPromoCode) {
+                    const fallbackData = await guestApi.getPricePreview(
+                        Number(room.id),
+                        format(date.from, "yyyy-MM-dd"),
+                        format(date.to, "yyyy-MM-dd"),
+                        undefined
+                    ).catch(() => null);
+                    if (fallbackData) setPriceData(fallbackData);
+                }
+            } finally {
+                setIsLoadingPrice(false);
+            }
+        };
+        fetchPrice();
+    }, [date?.from, date?.to, room.id, appliedPromoCode]);
 
     const nights = date?.from && date?.to ? Math.max(1, differenceInDays(date.to, date.from)) : 1
     const totalRoomPrice = room.pricePerNight * nights
     
     const totalGuests = guests.adults + guests.children;
     const isGuestLimitExceeded = totalGuests > room.maxGuests;
-    
-    const extraGuests = Math.max(0, totalGuests - ROOM_DETAIL_CONFIG.baseGuests);
-    const extraGuestFeeTotal = extraGuests * ROOM_DETAIL_CONFIG.extraGuestFeePerNight * nights;
-
-    const baseSubtotal = totalRoomPrice + extraGuestFeeTotal;
-    const discount = isPromoApplied ? totalRoomPrice * ROOM_DETAIL_CONFIG.promoCodeDiscountRate : 0
-    const finalTotal = totalRoomPrice + ROOM_DETAIL_CONFIG.serviceFee + ROOM_DETAIL_CONFIG.taxes - discount
 
     const handleApplyPromo = () => {
-        alert("Promo codes can be applied at checkout")
-        setIsPromoApplied(false)
+        if (promoCode.trim()) {
+            setAppliedPromoCode(promoCode.trim());
+        }
     }
 
-    return { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuests, extraGuestFeeTotal, baseSubtotal, discount, finalTotal, handleApplyPromo };
+    return { 
+        galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, 
+        descExpanded, setDescExpanded, date, setDate, guests, setGuests, 
+        guestOpen, setGuestOpen, promoCode, setPromoCode, appliedPromoCode, 
+        nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, 
+        handleApplyPromo, priceData, isLoadingPrice, promoError 
+    };
 }
 
 function RoomDetailPageContent({ property, room }: { property: PropertyDetail; room: Room }) {
@@ -79,9 +121,18 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
     const bgBooked: Date[] = []
 
     const logic = useRoomDetailLogic(room, searchParams);
-    const { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuests, extraGuestFeeTotal, discount, finalTotal, handleApplyPromo } = logic;
-    const serviceFee = ROOM_DETAIL_CONFIG.serviceFee;
-    const taxes = ROOM_DETAIL_CONFIG.taxes;
+    const { 
+        galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, 
+        descExpanded, setDescExpanded, date, setDate, guests, setGuests, 
+        guestOpen, setGuestOpen, promoCode, setPromoCode, appliedPromoCode, 
+        nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, 
+        handleApplyPromo, priceData, isLoadingPrice, promoError 
+    } = logic;
+
+    const subtotal = priceData?.subtotal ?? totalRoomPrice;
+    const discountAmount = priceData?.discountAmount ?? 0;
+    const taxAmount = priceData?.taxAmount ?? 0;
+    const finalTotal = priceData?.totalAmount ?? totalRoomPrice;
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -252,27 +303,29 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             </div>
 
                             <div className="flex flex-col gap-3 mb-5 border-b border-[#f0f0f0] pb-5">
-                                <div className="flex justify-between text-[14px] text-[#555]"><span>{formatLKR(room.pricePerNight)} x {nights} nights</span><span className="font-semibold text-[#1d1d1d]">{formatLKR(totalRoomPrice)}</span></div>
-                                {extraGuestFeeTotal > 0 && <div className="flex justify-between text-[14px] text-[#555]"><span>Extra guest fee ({extraGuests}x LKR 5,000 x {nights} nights)</span><span className="font-semibold text-[#1d1d1d]">{formatLKR(extraGuestFeeTotal)}</span></div>}
-                                <div className="flex justify-between text-[14px] text-[#555]"><span>Service Fee</span><span className="font-semibold text-[#1d1d1d]">{formatLKR(serviceFee)}</span></div>
-                                <div className="flex justify-between text-[14px] text-[#555]"><span>Taxes & Fees</span><span className="font-semibold text-[#1d1d1d]">{formatLKR(taxes)}</span></div>
-                                {isPromoApplied && <div className="flex justify-between text-[14px] text-[var(--brand-primary)] font-semibold mt-1"><span>Promo Code Discount (20%)</span><span>-{formatLKR(discount)}</span></div>}
+                                <div className="flex justify-between text-[14px] text-[#555]"><span>{formatLKR(room.pricePerNight)} x {nights} nights</span><span className="font-semibold text-[#1d1d1d]">{formatLKR(subtotal)}</span></div>
+                                {taxAmount > 0 && <div className="flex justify-between text-[14px] text-[#555]"><span>Taxes & Fees (10%)</span><span className="font-semibold text-[#1d1d1d]">{formatLKR(taxAmount)}</span></div>}
+                                {discountAmount > 0 && <div className="flex justify-between text-[14px] text-[var(--brand-primary)] font-semibold mt-1"><span>Promo Code Discount</span><span>-{formatLKR(discountAmount)}</span></div>}
                             </div>
 
                             <div className="mb-5 pb-5 border-b border-[#f0f0f0]">
-                                <button className="text-[14px] font-semibold text-[var(--brand-primary)] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between"><span>Have a promo code? {isPromoApplied && "✅ Applied"}</span></button>
-                                <div className="mt-3 flex gap-2">
-                                    <input type="text" placeholder="Enter code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className="flex-1 w-full px-3 py-2 border border-[#e0e0e0] rounded-xl text-[14px] outline-none focus:border-[var(--brand-primary)] transition-colors bg-[#fafafa]" />
-                                    <button onClick={handleApplyPromo} className="px-4 py-2 bg-[#1d1d1d] hover:bg-[#333] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap">Apply</button>
+                                <button className="text-[14px] font-semibold text-[var(--brand-primary)] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between"><span>Have a promo code? {appliedPromoCode && !promoError && "✅ Applied"}</span></button>
+                                <div className="mt-3 flex flex-col gap-2">
+                                    <div className="flex gap-2">
+                                        <input type="text" placeholder="Enter code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className={`flex-1 w-full px-3 py-2 border ${promoError ? "border-red-500" : "border-[#e0e0e0]"} rounded-xl text-[14px] outline-none focus:border-[var(--brand-primary)] transition-colors bg-[#fafafa]`} />
+                                        <button onClick={handleApplyPromo} disabled={isLoadingPrice} className="px-4 py-2 bg-[#1d1d1d] hover:bg-[#333] disabled:opacity-50 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap">{isLoadingPrice ? "..." : "Apply"}</button>
+                                    </div>
+                                    {promoError && <span className="text-[12px] font-medium text-red-500">{promoError}</span>}
+                                    {appliedPromoCode && !promoError && <span className="text-[12px] font-medium text-green-600">Promo code applied successfully!</span>}
                                 </div>
                             </div>
 
                             <div className="flex justify-between items-center mb-6">
                                 <span className="text-[18px] font-bold text-[#1d1d1d]">Total</span>
-                                <span className="text-[20px] font-bold text-[var(--brand-primary)]">{formatLKR(finalTotal)}</span>
+                                <span className="text-[20px] font-bold text-[var(--brand-primary)]">{isLoadingPrice ? "..." : formatLKR(finalTotal)}</span>
                             </div>
 
-                            <button onClick={() => { const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}`; router.push(checkoutUrl); }} className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 cursor-pointer">Confirm & Book <ArrowRight size={18} /></button>
+                            <button onClick={() => { const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}${appliedPromoCode && !promoError ? `&promoCode=${encodeURIComponent(appliedPromoCode)}` : ""}`; router.push(checkoutUrl); }} disabled={isLoadingPrice || isGuestLimitExceeded} className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] disabled:opacity-50 text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 cursor-pointer">{isLoadingPrice ? "Calculating..." : "Confirm & Book"} <ArrowRight size={18} /></button>
 
                             <div className="text-center text-[13px] text-[#828282] mb-6">You won&apos;t be charged yet</div>
 

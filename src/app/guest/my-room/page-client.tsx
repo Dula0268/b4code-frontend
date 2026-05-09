@@ -446,12 +446,5 @@ function Dashboard() {
 }
 
 export default function MyRoomPageClient() {
-  const [verified, setVerified] = useState(false)
-
-  useEffect(() => {
-    if (sessionStorage.getItem("my_room_verified") === "true") setVerified(true)
-  }, [])
-
-  if (!verified) return <OtpGate onVerified={() => setVerified(true)} />
   return <Dashboard />
 }

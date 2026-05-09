@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import type { LatLngBoundsExpression, Map as LeafletMap, Marker } from "leaflet"
-import type { PropertyListing } from "@/services/guest/searchApi"
+import type { PropertyListing } from "@/api/guest/search.api"
 
 // Sri Lanka center fallback
 const SRI_LANKA_CENTER: [number, number] = [7.8731, 80.7718]
