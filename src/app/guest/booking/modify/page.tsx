@@ -53,13 +53,34 @@ function useModifyReservationLogic() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const bookingIdParam = searchParams.get("bookingId")
+  const bookingRefParam = searchParams.get("bookingRef")
+  const checkInParam = searchParams.get("checkIn")
+  const checkOutParam = searchParams.get("checkOut")
+  const guestsParam = searchParams.get("guests")
+  const totalPriceParam = searchParams.get("totalPrice")
+  const propertyIdParam = searchParams.get("propertyId")
 
   const bookings = useGuestBookingStore((s) => s.bookings)
   const storeBooking = useMemo(() => (bookingIdParam ? bookings.find((b) => b.id === bookingIdParam) : undefined), [bookings, bookingIdParam])
+  const apiBookingId = bookingIdParam && !storeBooking ? bookingIdParam : null
+
+  const parseGuestCount = (raw?: string | null) => {
+    const match = raw?.match(/\d+/)
+    return match ? Number(match[0]) : 2
+  }
+
+  const nightsFromQuery = checkInParam && checkOutParam ? nightsBetween(checkInParam, checkOutParam) : 1
 
   const originalData = storeBooking ? {
     bookingId: storeBooking.confirmationCode, checkIn: storeBooking.checkIn, checkOut: storeBooking.checkOut,
     nights: storeBooking.nights, total: storeBooking.totalPrice, guests: storeBooking.guests,
+  } : apiBookingId ? {
+    bookingId: bookingRefParam || apiBookingId,
+    checkIn: checkInParam || "2024-06-12",
+    checkOut: checkOutParam || "2024-06-15",
+    nights: nightsFromQuery,
+    total: Number(totalPriceParam ?? 0) || 0,
+    guests: parseGuestCount(guestsParam),
   } : ORIGINAL_DATA
 
   const [checkIn, setCheckIn] = useState(originalData.checkIn || "2024-06-14")
@@ -88,11 +109,22 @@ function useModifyReservationLogic() {
     if (!dateValid || newNights === 0) return
     setErrorMsg(null); setSubmitting(true)
     try {
-      if (storeBooking && !storeBooking.id.startsWith("bk-")) {
+      const targetBookingId = storeBooking?.id || apiBookingId
+      if (targetBookingId && !targetBookingId.startsWith("bk-")) {
         type AuthUserLike = { id?: number }
         const guestIdToUse = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
-        const payload = { propertyId: parseInt(storeBooking.propertyId) || 1, roomId: parseInt(roomId) || 1, checkInDate: checkIn, checkOutDate: checkOut, guests, specialRequests: "Modified booking", paymentMethod: "CARD", totalPrice: newTotal };
-        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${storeBooking.id}?guestId=${guestIdToUse}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const selectedRoomId = roomId === "executive" ? 2 : Number.parseInt(storeBooking?.roomId ?? "1", 10) || 1
+        const payload = {
+          propertyId: Number.parseInt(storeBooking?.propertyId ?? propertyIdParam ?? "1", 10) || 1,
+          roomId: selectedRoomId,
+          checkInDate: checkIn,
+          checkOutDate: checkOut,
+          guests,
+          specialRequests: "Modified booking",
+          paymentMethod: "CARD",
+          totalPrice: newTotal,
+        };
+        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${targetBookingId}?guestId=${guestIdToUse}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         if (!res.ok) throw new Error("Failed to modify booking on server.");
       }
       router.push("/guest/booking/confirmation")

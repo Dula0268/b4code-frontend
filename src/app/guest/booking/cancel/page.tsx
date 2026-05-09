@@ -58,6 +58,12 @@ function useCancelBookingLogic() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const bookingIdParam = searchParams.get("bookingId")
+  const bookingRefParam = searchParams.get("bookingRef")
+  const propertyParam = searchParams.get("property")
+  const imageSrcParam = searchParams.get("imageSrc")
+  const checkInParam = searchParams.get("checkIn")
+  const checkOutParam = searchParams.get("checkOut")
+  const totalPriceParam = searchParams.get("totalPrice")
 
   const bookings = useGuestBookingStore((s) => s.bookings)
   const cancelBooking = useGuestBookingStore((s) => s.cancelBooking)
@@ -67,6 +73,15 @@ function useCancelBookingLogic() {
     [bookings, bookingIdParam]
   )
 
+  const apiBookingId = bookingIdParam && !storeBooking ? bookingIdParam : null
+
+  const parseDateLabel = (raw?: string | null, withYear?: boolean) => {
+    if (!raw) return withYear ? "N/A" : "N/A"
+    const date = new Date(`${raw}T00:00:00`)
+    if (Number.isNaN(date.getTime())) return raw
+    return date.toLocaleDateString("en-US", withYear ? { month: "short", day: "numeric", year: "numeric" } : { month: "short", day: "numeric" })
+  }
+
   const activeBooking = storeBooking
     ? {
         id: storeBooking.confirmationCode,
@@ -75,6 +90,17 @@ function useCancelBookingLogic() {
         checkIn: storeBooking.checkInFormatted,
         checkOut: storeBooking.checkOutFormatted,
         totalPaid: storeBooking.totalPrice,
+        cancellationPctFee: APP_CONFIG.cancellationFeePercent,
+        cardLast4: APP_CONFIG.defaultCardSuffix,
+      }
+    : apiBookingId
+    ? {
+        id: bookingRefParam || apiBookingId,
+        property: propertyParam || "Selected Property",
+        imageSrc: imageSrcParam || "/images/booking/ocean-villa-malibu.png",
+        checkIn: parseDateLabel(checkInParam, false),
+        checkOut: parseDateLabel(checkOutParam, true),
+        totalPaid: Number(totalPriceParam ?? 0) || 0,
         cancellationPctFee: APP_CONFIG.cancellationFeePercent,
         cardLast4: APP_CONFIG.defaultCardSuffix,
       }
@@ -89,7 +115,7 @@ function useCancelBookingLogic() {
   const cancellationFee = Math.round(activeBooking.totalPaid * (activeBooking.cancellationPctFee / 100))
   const refundableAmount = activeBooking.totalPaid - cancellationFee
 
-  const isNotFound = Boolean(bookingIdParam && !storeBooking)
+  const isNotFound = Boolean(bookingIdParam && !storeBooking && !apiBookingId)
   const canSubmit = reason.trim() !== "" && agreed && !submitting && !isNotFound
 
   const handleCancelSubmit = async () => {
@@ -99,10 +125,12 @@ function useCancelBookingLogic() {
     setSubmitting(true)
 
     try {
-      if (storeBooking && !storeBooking.id.startsWith("bk-")) {
+      const targetBookingId = storeBooking?.id || apiBookingId
+
+      if (targetBookingId && !targetBookingId.startsWith("bk-")) {
         type AuthUserLike = { id?: number }
         const guestIdToUse = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
-        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${storeBooking.id}/cancel?guestId=${guestIdToUse}`, {
+        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${targetBookingId}/cancel?guestId=${guestIdToUse}`, {
             method: "PATCH"
         });
         if (!res.ok) {
