@@ -57,7 +57,7 @@ function useBookingConfirmationLogic() {
     try {
       // Restore params if PayHere stripped the URL (PayHere returns only ?order_id=...)
       const orderId = searchParams.get("order_id")
-      let paramsToUse = searchParams
+      let paramsToUse: ReturnType<typeof useSearchParams> | URLSearchParams = searchParams
       
       if (orderId && !searchParams.has("confirmationCode")) {
         const storedParamsStr = sessionStorage.getItem("pendingBookingParams")
