@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   UtensilsCrossed,
   Layers,
-  TrendingUp,
   Plus,
   SlidersHorizontal,
   Pencil,
@@ -15,6 +14,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
+import { useAuthStore } from "@/store/auth/auth.store";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,11 +41,19 @@ export default function StaffMenuList() {
 
   const activeItems = menus.reduce((n, m) => n + (m.status === "active" ? m.itemCount : 0), 0);
 
-  // Fetch menus on mount (assuming property ID is 1 for now - adjust as needed)
+  const { user } = useAuthStore();
+
+  // Fetch menus on mount
   useEffect(() => {
-    const propertyId = 1; // TODO: Get from user context or URL
-    fetchMenus(propertyId);
-  }, [fetchMenus]);
+    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
+    console.log(`🍽️ StaffMenuList mounted, fetching menus for property: ${propertyId}...`);
+    if (propertyId) {
+      fetchMenus(Number(propertyId));
+    } else {
+      console.warn("⚠️ No propertyId found for staff menu list");
+      fetchMenus(1);
+    }
+  }, [user, fetchMenus]);
 
   // Auto-dismiss success banner
   useEffect(() => {
@@ -118,11 +126,10 @@ export default function StaffMenuList() {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div className="flex-none grid grid-cols-3 gap-3">
+      <div className="flex-none grid grid-cols-2 gap-3">
         {[
-          { label: "Total Menus", value: String(total), sub: "2 added this month", icon: UtensilsCrossed, iconBg: "bg-[rgba(149,48,2,0.08)]", iconColor: "text-[var(--brand-primary)]" },
+          { label: "Total Menus", value: String(total), sub: `${menus.filter(m => m.status === "active").length} active`, icon: UtensilsCrossed, iconBg: "bg-[rgba(149,48,2,0.08)]", iconColor: "text-[var(--brand-primary)]" },
           { label: "Active Items", value: String(activeItems), sub: "Across all menus", icon: Layers, iconBg: "bg-[rgba(39,174,96,0.08)]", iconColor: "text-[var(--state-success)]" },
-          { label: "Most Popular", value: "Seafood Dinner", sub: "45 orders last week", icon: TrendingUp, iconBg: "bg-[rgba(149,48,2,0.08)]", iconColor: "text-[var(--brand-primary)]" },
         ].map((s) => (
           <Card key={s.label} className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="px-4 py-3 flex items-start justify-between">

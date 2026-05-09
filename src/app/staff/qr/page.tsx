@@ -5,23 +5,32 @@ import StaffPageLayout from "@/components/features/staff/layout/staff-page-layou
 import QrList from "@/components/features/staff/qr/qr-list";
 
 import React, { Suspense, useState, useEffect } from "react";
+import { useAuthStore } from "@/store/auth/auth.store";
 
 function QrContent() {
   const searchParams = useSearchParams();
+  const { user } = useAuthStore();
   const queryPropertyId = searchParams?.get("propertyId") ? parseInt(searchParams.get("propertyId")!, 10) : null;
 
   const [propertyId, setPropertyId] = useState<number | null>(queryPropertyId);
 
-  // Read from localStorage only on the client after mount to avoid hydration mismatch
+  // Read from AuthStore or localStorage only on the client after mount to avoid hydration mismatch
   useEffect(() => {
     if (!propertyId) {
+      // 1. Check AuthStore (assigned property)
+      if (user?.propertyId) {
+        setPropertyId(user.propertyId);
+        return;
+      }
+
+      // 2. Check localStorage (selected property)
       const stored = localStorage.getItem("selected_property_id");
       if (stored) {
         const parsed = parseInt(stored, 10);
         if (!isNaN(parsed)) setPropertyId(parsed);
       }
     }
-  }, [propertyId]);
+  }, [propertyId, user]);
 
   return (
     <StaffPageLayout>

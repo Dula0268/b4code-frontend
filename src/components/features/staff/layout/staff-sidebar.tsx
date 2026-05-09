@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Logo from "@/components/shared/branding/logo";
 import { usePathname, useRouter } from "next/navigation";
@@ -15,24 +16,36 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { useStaffChatStore } from "@/store/staff/messages/staff-chat.store";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/staff", icon: LayoutDashboard },
   { label: "Order Management", href: "/staff/orders", icon: ClipboardList },
   { label: "Menu Management", href: "/staff/menu", icon: Package },
   { label: "QR Management", href: "/staff/qr", icon: QrCode },
-  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, badge: 3 },
+  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, isChat: true },
 ];
 
 export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuthStore();
+  const unreadMessages = useStaffChatStore((s) => s.conversations.reduce((acc, conv) => acc + conv.unread, 0));
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const displayName = user?.email?.split("@")[0] || "Alex Moore";
   const names = displayName.split(" ");
   const initials = names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
   const shortName = names.length > 1 ? `${names[0]} ${names[names.length - 1][0]}.` : names[0];
+
+  if (!mounted) {
+    // Return a skeleton or null during SSR/initial hydration to avoid mismatch
+    return <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] fixed top-0 left-0 bottom-0 z-50" />;
+  }
 
   return (
     <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
@@ -55,6 +68,8 @@ export default function StaffSidebar() {
               pathname === item.href ||
               (item.href !== "/staff" && pathname.startsWith(item.href + "/"));
 
+            const badge = item.isChat ? unreadMessages : null;
+
             return (
               <li key={item.href}>
                 <Link
@@ -70,11 +85,11 @@ export default function StaffSidebar() {
                       }`}
                   />
                   <span className="flex-1">{item.label}</span>
-                  {item.badge && (
+                  {badge ? (
                     <Badge variant="destructive" className="text-[11px] font-bold min-w-[20px] h-[20px] px-1">
-                      {item.badge}
+                      {badge}
                     </Badge>
-                  )}
+                  ) : null}
                 </Link>
               </li>
             );
