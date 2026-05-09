@@ -44,8 +44,8 @@ type BookingDetails = {
   price: {
     base: number
     taxes: number
-    serviceFee: number
     discount: number
+    total: number
   }
   originalParams: string
 }
@@ -56,11 +56,7 @@ function parseIsoDate(raw: string | null) {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
-const CHECKOUT_CONFIG = {
-  taxRate: 0.11,
-  serviceFee: 3500,
-  onlineDiscountPercent: 0.05,
-} as const;
+// ─── Constants removed as we use backend ──────────────────────────────────────────
 
 function useCheckoutLogic() {
   const router = useRouter()
@@ -129,11 +125,25 @@ function useCheckoutLogic() {
             room = (property.rooms?.find((r) => String(r.id) === String(roomId)) as unknown as { id: string; name: string; pricePerNight: number }) || null
         }
 
-        const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
-        const basePrice = room ? room.pricePerNight * nights : (property?.pricePerNight ?? 0) * nights
+        let priceData = null;
+        if (roomId && checkInDate && checkOutDate) {
+            try {
+                priceData = await guestApi.getPricePreview(
+                    Number(roomId),
+                    format(checkInDate, "yyyy-MM-dd"),
+                    format(checkOutDate, "yyyy-MM-dd"),
+                    searchParams.get("promoCode") || undefined
+                );
+            } catch (e) {
+                console.error("Failed to get price preview", e);
+            }
+        }
 
-        const computedTotal = totalFromQuery > 0 ? totalFromQuery : (basePrice + basePrice * CHECKOUT_CONFIG.taxRate + CHECKOUT_CONFIG.serviceFee)
-        const taxes = totalFromQuery > 0 ? (totalFromQuery - basePrice - CHECKOUT_CONFIG.serviceFee) : (basePrice * CHECKOUT_CONFIG.taxRate)
+        const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
+        const basePrice = priceData?.subtotal ?? (room ? room.pricePerNight * nights : (property?.pricePerNight ?? 0) * nights)
+        const taxes = priceData?.taxAmount ?? 0
+        const discountAmount = priceData?.discountAmount ?? 0
+        const total = priceData?.totalAmount ?? basePrice
 
         setBookingDetails({
           property: property ? {
@@ -152,9 +162,9 @@ function useCheckoutLogic() {
           dates: checkInDate && checkOutDate ? `${format(checkInDate, 'MMM d')} - ${format(checkOutDate, 'MMM d')} (${nights} nights)` : "Select dates",
           price: {
             base: basePrice,
-            taxes: taxes > 0 ? taxes : 0,
-            serviceFee: CHECKOUT_CONFIG.serviceFee,
-            discount: 0,
+            taxes: taxes,
+            discount: discountAmount,
+            total: total,
           },
           originalParams: searchParams.toString()
         })
@@ -169,8 +179,8 @@ function useCheckoutLogic() {
   })
 
   const paymentMethod = watch("paymentMethod")
-  const discountAmount = bookingDetails && paymentMethod === 'online' ? bookingDetails.price.base * CHECKOUT_CONFIG.onlineDiscountPercent : 0
-  const total = bookingDetails ? (bookingDetails.price.base + bookingDetails.price.taxes + bookingDetails.price.serviceFee - discountAmount) : 0
+  const total = bookingDetails ? bookingDetails.price.total : 0
+  const discountAmount = bookingDetails ? bookingDetails.price.discount : 0
 
   const onSubmit = async (data: CheckoutFormValues) => {
     if (!bookingDetails) return;
@@ -241,8 +251,8 @@ function useCheckoutLogic() {
         totalPrice: Math.round(total),
         basePrice: bookingDetails.price.base,
         taxes: Math.round(bookingDetails.price.taxes),
-        serviceFee: bookingDetails.price.serviceFee,
-        discount: Math.round(discountAmount),
+        serviceFee: 0,
+        discount: Math.round(bookingDetails.price.discount),
         paymentMethod: data.paymentMethod,
         paidInFull,
         nationalId: data.nationalId || undefined,
@@ -408,10 +418,9 @@ function CheckoutContent() {
               <div className="space-y-3 mb-6">
                 <h4 className="text-[15px] font-bold text-[var(--fg)] mb-2">Price details</h4>
                 <div className="flex justify-between text-sm"><span className="text-[var(--muted)]">Base Price</span><span className="text-[var(--fg)]">LKR {bookingDetails.price.base.toLocaleString()}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-[var(--muted)] underline decoration-dotted underline-offset-4 cursor-help" title="Local taxes and tourism levies">Taxes</span><span className="text-[var(--fg)]">LKR {Math.round(bookingDetails.price.taxes).toLocaleString()}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-[var(--muted)] underline decoration-dotted underline-offset-4 cursor-help" title="Platform booking fee">Service fee</span><span className="text-[var(--fg)]">LKR {bookingDetails.price.serviceFee.toLocaleString()}</span></div>
-                {paymentMethod === 'online' && discountAmount > 0 && (
-                  <div className="flex justify-between text-sm"><span className="text-[var(--state-success)]/90">Online Discount (5%)</span><span className="text-[var(--state-success)]/90">- LKR {Math.round(discountAmount).toLocaleString()}</span></div>
+                {bookingDetails.price.taxes > 0 && <div className="flex justify-between text-sm"><span className="text-[var(--muted)] underline decoration-dotted underline-offset-4 cursor-help" title="Local taxes and tourism levies">Taxes</span><span className="text-[var(--fg)]">LKR {Math.round(bookingDetails.price.taxes).toLocaleString()}</span></div>}
+                {bookingDetails.price.discount > 0 && (
+                  <div className="flex justify-between text-sm"><span className="text-[var(--state-success)]/90">Promo Code Discount</span><span className="text-[var(--state-success)]/90">- LKR {Math.round(bookingDetails.price.discount).toLocaleString()}</span></div>
                 )}
               </div>
 
