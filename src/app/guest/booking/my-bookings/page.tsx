@@ -108,9 +108,14 @@ function useMyBookingsLogic() {
                     isFromStore: true,
                 }))
 
+                // Local store bookings take full priority (they have the latest status including cancellations)
                 const merged = [...mappedLocal]
                 for (const apiB of apiBookings) {
-                    if (!merged.find(m => m.orderNumber === apiB.orderNumber)) {
+                    // Skip API bookings that already exist in local store (by orderNumber or id)
+                    const existsLocally = merged.find(m =>
+                        m.orderNumber === apiB.orderNumber || m.id === apiB.id
+                    )
+                    if (!existsLocally) {
                         merged.push(apiB)
                     }
                 }

@@ -64,8 +64,9 @@ function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | 
     const finalTotal = totalRoomPrice + ROOM_DETAIL_CONFIG.serviceFee + ROOM_DETAIL_CONFIG.taxes - discount
 
     const handleApplyPromo = () => {
-        alert("Promo codes can be applied at checkout")
-        setIsPromoApplied(false)
+        if (promoCode.trim()) {
+            setIsPromoApplied(true)
+        }
     }
 
     return { galleryOpen, setGalleryOpen, activeGalleryIdx, setActiveGalleryIdx, descExpanded, setDescExpanded, date, setDate, guests, setGuests, guestOpen, setGuestOpen, promoCode, setPromoCode, isPromoApplied, nights, totalRoomPrice, totalGuests, isGuestLimitExceeded, extraGuests, extraGuestFeeTotal, baseSubtotal, discount, finalTotal, handleApplyPromo };
@@ -272,7 +273,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                                 <span className="text-[20px] font-bold text-[var(--brand-primary)]">{formatLKR(finalTotal)}</span>
                             </div>
 
-                            <button onClick={() => { const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}`; router.push(checkoutUrl); }} className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 cursor-pointer">Confirm & Book <ArrowRight size={18} /></button>
+                            <button onClick={() => { const checkoutUrl = `/guest/checkout?propertyId=${property.id}&roomId=${room.id}&checkIn=${date?.from ? format(date.from, "yyyy-MM-dd") : ""}&checkOut=${date?.to ? format(date.to, "yyyy-MM-dd") : ""}&guests=${totalGuests}&total=${finalTotal}${isPromoApplied && promoCode.trim() ? `&promoCode=${encodeURIComponent(promoCode.trim())}` : ""}`; router.push(checkoutUrl); }} className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold text-[15px] py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4 cursor-pointer">Confirm & Book <ArrowRight size={18} /></button>
 
                             <div className="text-center text-[13px] text-[#828282] mb-6">You won&apos;t be charged yet</div>
 

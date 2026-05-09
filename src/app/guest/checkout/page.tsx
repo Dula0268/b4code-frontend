@@ -165,7 +165,7 @@ function useCheckoutLogic() {
 
   const { register, handleSubmit, watch, formState: { errors }, setValue, reset: resetForm } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { paymentMethod: "online", promoCode: "", nationalId: "" }
+    defaultValues: { paymentMethod: "online", promoCode: searchParams?.get("promoCode") || "", nationalId: "" }
   })
 
   const paymentMethod = watch("paymentMethod")
