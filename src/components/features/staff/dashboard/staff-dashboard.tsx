@@ -16,6 +16,10 @@ import {
   Eye,
 } from "lucide-react";
 import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
+import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
+import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
+import { useStaffChatStore } from "@/store/staff/messages/staff-chat.store";
+import { useAuthStore } from "@/store/auth/auth.store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -31,9 +35,9 @@ function useStats() {
       icon: ClipboardList,
       iconBg: "bg-[rgba(149,48,2,0.08)]",
       iconColor: "text-[var(--brand-primary)]",
-      trend: "+2 from last hour",
+      trend: queueCount > 0 ? "Action required" : "Queue clear",
       trendIcon: TrendingUp,
-      trendColor: "text-[var(--brand-primary)]",
+      trendColor: queueCount > 0 ? "text-[var(--brand-primary)]" : "text-[var(--gray-3)]",
     },
     {
       label: "In-Progress",
@@ -41,7 +45,7 @@ function useStats() {
       icon: Hourglass,
       iconBg: "bg-[rgba(255,180,1,0.08)]",
       iconColor: "text-[var(--brand-secondary)]",
-      trend: "2 delayed > 15m",
+      trend: inProgress > 0 ? "Actively prepping" : "Kitchen idle",
       trendIcon: Hourglass,
       trendColor: "text-[var(--brand-secondary)]",
     },
@@ -51,17 +55,17 @@ function useStats() {
       icon: CheckCheck,
       iconBg: "bg-[rgba(39,174,96,0.08)]",
       iconColor: "text-[var(--state-success)]",
-      trend: "98% Satisfaction",
+      trend: "Daily total",
       trendIcon: CheckCheck,
       trendColor: "text-[var(--state-success)]",
     },
     {
       label: "Avg Prep Time",
-      value: "18m",
+      value: "—",
       icon: Timer,
       iconBg: "bg-[rgba(47,128,237,0.08)]",
       iconColor: "text-[var(--state-info)]",
-      trend: "-2m vs Yesterday",
+      trend: "Tracking active",
       trendIcon: ArrowDown,
       trendColor: "text-[var(--state-info)]",
     },
@@ -70,11 +74,16 @@ function useStats() {
 
 function useManagementCards() {
   const placedCount = useStaffOrdersStore((s) => s.getCountByStatus("placed"));
+  const menus = useStaffMenuStore((s) => s.menus);
+  const outOfStockCount = menus.reduce((acc, menu) => acc + menu.items.filter(i => i.status === "draft").length, 0);
+  const activeQRs = useStaffQRStore((s) => s.qrs.filter(q => q.status === "active").length);
+  const unreadMessages = useStaffChatStore((s) => s.conversations.reduce((acc, conv) => acc + conv.unread, 0));
+
   return [
     {
       title: "Order Management",
-      highlight: `${placedCount} New Orders`,
-      description: "Pending review and assignment to kitchen staff.",
+      highlight: placedCount > 0 ? `${placedCount} New Orders` : "No New Orders",
+      description: "Manage incoming guest orders and update prep status.",
       buttonLabel: "Manage Orders",
       buttonIcon: ArrowRight,
       href: "/staff/orders",
@@ -82,8 +91,8 @@ function useManagementCards() {
     },
     {
       title: "Menu Management",
-      highlight: "2 Items Out of Stock",
-      description: "Update availability for dinner service menu items.",
+      highlight: outOfStockCount > 0 ? `${outOfStockCount} Items Unavailable` : "All Items Available",
+      description: "Update menu availability and manage property dishes.",
       buttonLabel: "Update Menu",
       buttonIcon: UtensilsCrossed,
       href: "/staff/menu",
@@ -91,8 +100,8 @@ function useManagementCards() {
     },
     {
       title: "QR Management",
-      highlight: "24 Active QRs",
-      description: "Current active sessions across all dining areas.",
+      highlight: `${activeQRs} Active QR Codes`,
+      description: "Monitor and manage QR code locations for guest ordering.",
       buttonLabel: "View QR Codes",
       buttonIcon: Eye,
       href: "/staff/qr",
@@ -100,8 +109,8 @@ function useManagementCards() {
     },
     {
       title: "Guest Chats",
-      highlight: "3 Unread Messages",
-      description: "Direct inquiries from rooms 104, 202, and 305.",
+      highlight: unreadMessages > 0 ? `${unreadMessages} Unread Messages` : "No Unread Messages",
+      description: "Communicate directly with guests in real-time.",
       buttonLabel: "Open Chats",
       buttonIcon: MessageSquare,
       href: "/staff/messages",
@@ -115,11 +124,27 @@ export default function StaffDashboard() {
   const managementCards = useManagementCards();
   const fetchOrders = useStaffOrdersStore((s) => s.fetchOrders);
 
-  // Fetch orders when component mounts
+  const { user } = useAuthStore();
+  const fetchMenus = useStaffMenuStore((s) => s.fetchMenus);
+  const fetchQRs = useStaffQRStore((s) => s.fetchQRs);
+
+  // Fetch all dashboard data when component mounts
   useEffect(() => {
-    console.log("📊 StaffDashboard mounted, fetching orders...");
-    fetchOrders(1); // Fetch orders for property ID 1
-  }, []);
+    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
+    console.log(`📊 StaffDashboard: Refreshing all data for property: ${propertyId}...`);
+    
+    if (propertyId) {
+      const pid = Number(propertyId);
+      fetchOrders(pid);
+      fetchMenus(pid);
+      fetchQRs(pid);
+    } else {
+      console.warn("⚠️ No propertyId found for staff dashboard");
+      fetchOrders(1);
+      fetchMenus(1);
+      fetchQRs(1);
+    }
+  }, [user, fetchOrders, fetchMenus, fetchQRs]);
 
   return (
     <div className="h-full overflow-y-auto px-6 py-4 flex flex-col gap-4">
