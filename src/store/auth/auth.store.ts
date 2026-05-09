@@ -128,9 +128,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
       });
 
       return REDIRECT_MAP[role];
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message ||
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
         (err instanceof Error ? err.message : "Unexpected error occurred");
 
       console.log("LOGIN ERROR:", message);
@@ -168,8 +167,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         user: userData,
         isAuthenticated: true,
       });
-    } catch (err: any) {
-      const message = err?.response?.data?.message || (err instanceof Error ? err.message : "Login failed");
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || (err instanceof Error ? err.message : "Login failed");
 
       set({ loading: false, error: message });
       throw new Error(message);
@@ -347,8 +346,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         loading: false,
         isRestoring: false,
       });
-    } catch (err: any) {
-      if (err?.response?.status === 401 || err?.response?.status === 403) {
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { status?: number } };
+      if (axiosError?.response?.status === 401 || axiosError?.response?.status === 403) {
         // Token is invalid/expired — quietly clear state
         set({ user: null, isAuthenticated: false, isRestoring: false });
         if (typeof window !== "undefined") {

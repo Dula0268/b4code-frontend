@@ -35,9 +35,9 @@ export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps
     try {
       const result = await imageApi.upload(file, "avatars");
       await updateProfile(user.email, { avatarUrl: result.url });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to upload avatar:", err);
-      const errorMessage = err.message || "Please check your Cloudinary configuration.";
+      const errorMessage = err instanceof Error ? err.message : "Please check your Cloudinary configuration.";
       alert(`Failed to upload image: ${errorMessage}`);
     } finally {
       setIsUploading(false);
