@@ -47,7 +47,13 @@ function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | 
     const [promoCode, setPromoCode] = useState("")
     const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null)
     const [promoError, setPromoError] = useState<string | null>(null)
-    const [priceData, setPriceData] = useState<any>(null)
+    type PriceData = {
+        subtotal: number;
+        discountAmount: number;
+        taxAmount: number;
+        totalAmount: number;
+    };
+    const [priceData, setPriceData] = useState<PriceData | null>(null)
     const [isLoadingPrice, setIsLoadingPrice] = useState(false)
 
     useEffect(() => {
@@ -63,8 +69,12 @@ function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | 
                     appliedPromoCode || undefined
                 );
                 setPriceData(data);
-            } catch (err: any) {
-                setPromoError(err.message || "Invalid promo code");
+            } catch (err) {
+                if (err instanceof Error) {
+                    setPromoError(err.message);
+                } else {
+                    setPromoError("Invalid promo code");
+                }
                 setAppliedPromoCode(null);
                 if (appliedPromoCode) {
                     const fallbackData = await guestApi.getPricePreview(
