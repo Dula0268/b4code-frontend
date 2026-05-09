@@ -16,7 +16,7 @@ import {
     type PropertyListing,
     type PaginatedResponse,
     type FilterOptionsResponse,
-} from "@/services/guest/searchApi"
+} from "@/api/guest/search.api"
 
 const MapView = dynamic(() => import("@/components/features/guest/search/map-view"), { ssr: false })
 
@@ -223,7 +223,7 @@ function SearchResultsContent() {
             setResults(data)
         } catch (err) {
             console.error("Search failed:", err)
-            setError("Could not connect to the server. Please check that the backend is running.")
+            setError(err instanceof Error ? err.message : "An unexpected error occurred while fetching properties.")
         } finally {
             setLoading(false)
         }

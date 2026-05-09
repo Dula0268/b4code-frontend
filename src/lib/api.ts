@@ -344,6 +344,22 @@ export const guestApi = {
     },
 
     // Booking Methods
+    getPricePreview: async (roomId: number, checkIn: string, checkOut: string, promoCode?: string) => {
+        const query = new URLSearchParams();
+        query.append("roomId", roomId.toString());
+        query.append("checkIn", checkIn);
+        query.append("checkOut", checkOut);
+        if (promoCode) {
+            query.append("promoCode", promoCode);
+        }
+        const response = await apiFetch(`/api/guest/bookings/price-preview?${query.toString()}`);
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || "Failed to fetch price preview");
+        }
+        return response.json();
+    },
+
     getGuestBookings: async (email: string) => {
         const response = await apiFetch(`/api/guest/bookings/guest?email=${encodeURIComponent(email)}`);
         if (!response.ok) throw new Error("Failed to fetch bookings");

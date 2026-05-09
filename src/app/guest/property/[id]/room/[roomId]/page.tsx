@@ -9,9 +9,7 @@ interface Props {
     params: { id: string; roomId: string }
 }
 
-async function fetchProperty(id: string): Promise<PropertyDetail | null> {
-    return getPropertyById(id) ?? null
-}
+import { fetchProperty } from "../../page"
 
 export async function generateMetadata({ params }: Props) {
     const { id, roomId } = params

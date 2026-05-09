@@ -7,7 +7,8 @@ import {
   Calendar, ChevronRight, Lock
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth/auth.store"
-import { paymentApi } from "@/lib/api"
+import { guestApi } from "@/lib/api"
+import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/booking.store"
 import BookingCard, { type BookingCardData } from "@/components/features/guest/booking/booking-card"
 
 const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
@@ -17,46 +18,112 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
+  const localBookings = useGuestBookingStore(s => s.bookings)
 
   useEffect(() => {
     async function loadBookings() {
-      try {
-        const data = await paymentApi.getMyPayments();
-        
-        // Transform payment data into booking-like cards for the UI
-        const mappedBookings: BookingCardData[] = data.map((p: {
-          id: number;
-          orderId: string;
-          status: string;
-          amount: number;
-          paymentMethod: string;
-        }) => ({
-          id: String(p.id),
-          orderId: p.orderId,
-          orderNumber: p.orderId,
-          status: p.status === "SUCCESS" ? "UPCOMING" : "CANCELLED",
-          property: "Luxury Resort Stay", 
-          location: "Colombo, Sri Lanka",
-          imageSrc: "/images/properties/property-1.jpg",
-          checkIn: "Jun 12, 2024",
-          checkOut: "Jun 15, 2024",
-          totalPrice: p.amount,
-          paymentStatus: p.status,
-          paymentMethod: p.paymentMethod,
-          nightsLabel: "3 nights",
-          guests: "2 Guests"
-        }));
-        
-        setBookings(mappedBookings);
-      } catch (err) {
-        console.error("Failed to load bookings:", err);
-      } finally {
-        setLoading(false);
-      }
+        try {
+            const email = user?.email
+            if (!email) {
+              setBookings([])
+              setLoading(false)
+              return
+            }
+
+            let apiBookings: BookingCardData[] = []
+            try {
+                const data = await guestApi.getGuestBookings(email)
+                type ApiBooking = {
+                  bookingId?: number | string
+                  id?: number | string
+                  confirmationNumber?: string
+                  propertyName?: string
+                  propertyAddress?: string
+                  roomName?: string
+                  guestName?: string
+                  guestEmail?: string
+                  guestCount?: number
+                  checkIn?: string
+                  checkOut?: string
+                  nights?: number
+                  totalAmount?: number
+                  status?: string
+                  paymentMethod?: string
+                  createdAt?: string
+                }
+
+                const normalizeStatus = (s?: string): BookingStatus => {
+                  if (s === "COMPLETED") return "COMPLETED"
+                  if (s === "CANCELLED") return "CANCELLED"
+                  return "UPCOMING"
+                }
+
+                apiBookings = (data as ApiBooking[]).map((b) => ({
+                    id: String(b.bookingId ?? b.id ?? b.confirmationNumber ?? crypto.randomUUID()),
+                    propertyId: String(b.bookingId ?? b.id ?? ""),
+                    orderId: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
+                    orderNumber: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
+                    status: normalizeStatus(b.status),
+                    property: b.propertyName || "Prime Stay Property",
+                    location: b.propertyAddress || "Sri Lanka",
+                    imageSrc: "/images/properties/property-1.jpg",
+                    checkIn: b.checkIn || "",
+                    checkOut: b.checkOut || "",
+                    guests: `${b.guestCount ?? 2} Guests`,
+                    totalPrice: b.totalAmount ?? 0,
+                    nightsLabel: `${b.nights ?? 1} night${(b.nights ?? 1) > 1 ? "s" : ""}`,
+                    paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
+                    paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
+                    roomName: b.roomName,
+                    isFromStore: false,
+                }))
+            } catch (err) {
+                console.warn("API booking fetch failed or empty:", err)
+            }
+
+            const userLocalBookings = localBookings.filter(b => b.userEmail.toLowerCase() === email.toLowerCase())
+            const mappedLocal: BookingCardData[] = userLocalBookings.map(b => ({
+                id: String(b.id),
+                propertyId: String(b.propertyId),
+                orderId: b.confirmationCode,
+                orderNumber: b.confirmationCode,
+                status: b.status,
+                property: b.property,
+                location: b.location,
+                imageSrc: b.imageSrc,
+                checkIn: b.checkIn,
+                checkOut: b.checkOut,
+                guests: b.guestsLabel,
+                totalPrice: b.totalPrice,
+                nightsLabel: b.nightsLabel,
+                paymentMethod: b.paymentMethod,
+                paidInFull: b.paidInFull,
+                roomName: b.roomName,
+                isFromStore: true,
+            }))
+
+            // Local store bookings take full priority (they have the latest status including cancellations)
+            const merged = [...mappedLocal]
+            for (const apiB of apiBookings) {
+                // Skip API bookings that already exist in local store (by orderNumber or id)
+                const existsLocally = merged.find(m =>
+                    m.orderNumber === apiB.orderNumber || m.id === apiB.id
+                )
+                if (!existsLocally) {
+                    merged.push(apiB)
+                }
+            }
+            
+            setBookings(merged)
+        } catch (err) {
+            console.error("Failed to synchronize bookings:", err)
+        } finally {
+            setLoading(false)
+        }
     }
 
     if (user) loadBookings();
-  }, [user]);
+  }, [user, localBookings]);
 
   return (
     <div className="min-h-screen relative bg-[#0a0a0a] overflow-hidden">

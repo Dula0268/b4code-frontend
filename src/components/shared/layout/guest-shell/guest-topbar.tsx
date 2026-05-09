@@ -25,6 +25,12 @@ export default function GuestTopbar() {
   const isRestoring = useAuthStore((s) => s.isRestoring)
   const logout = useAuthStore((s) => s.logout)
 
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+
   const isSearchPage = pathname.startsWith("/guest/search")
 
   // Close account menu on outside click
@@ -84,7 +90,7 @@ export default function GuestTopbar() {
           !isSearchPage && "ml-auto",
         ].join(" ")}>
           <nav className="flex items-center gap-6">
-            {NAV_LINKS.filter(l => l.label !== "My Bookings" || user).map(({ label, href }) => {
+            {NAV_LINKS.map(({ label, href }) => {
               const isActive =
                 pathname === href ||
                 (href === "/guest/search" && pathname.startsWith("/guest/search")) ||
@@ -108,7 +114,7 @@ export default function GuestTopbar() {
           </nav>
 
           {/* Auth buttons OR Account avatar */}
-          {isRestoring && !user ? (
+          {!mounted || (isRestoring && !user) ? (
             <div className="w-24 h-9 bg-gray-100 animate-pulse rounded-lg" />
           ) : user ? (
             <div className="relative" ref={accountMenuRef}>
@@ -192,7 +198,7 @@ export default function GuestTopbar() {
             </div>
           )}
 
-          {NAV_LINKS.filter(l => l.label !== "My Bookings" || user).map(({ label, href }) => (
+          {NAV_LINKS.map(({ label, href }) => (
             <Link
               key={href}
               href={href}
@@ -207,7 +213,7 @@ export default function GuestTopbar() {
           ))}
 
           {/* Mobile: auth buttons or account info */}
-          {user ? (
+          {!mounted ? null : user ? (
             <div className="flex flex-col gap-2 pt-2 border-t border-[#e0e0e0]">
               <div className="flex items-center gap-3 py-2">
                 <div className="w-9 h-9 rounded-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0">
