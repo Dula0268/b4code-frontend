@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/auth/auth.store"

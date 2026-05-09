@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, UtensilsCrossed, Save, Plus, Trash2, ImagePlus, X } from "lucide-react";
+import { ArrowLeft, UtensilsCrossed, Save, Plus, Trash2, ImagePlus, X, Upload, Loader2 } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
+import { useAuthStore } from "@/store/auth/auth.store";
+import api from "@/lib/axios";
 import type { MenuItem } from "@/store/staff/menu/staff-menu.store";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -47,19 +49,65 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
   const [itemDesc, setItemDesc] = useState("");
   const [itemNameErr, setItemNameErr] = useState(false);
   const [itemPriceErr, setItemPriceErr] = useState(false);
+  const [itemImageFiles, setItemImageFiles] = useState<File[]>([]);
+  const [itemImagePreviews, setItemImagePreviews] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const { user } = useAuthStore();
+  const propertyId = user?.propertyId;
 
   const isEdit = !!menuId;
 
   const resetItemForm = () => {
     setItemName(""); setItemPrice(""); setItemCategory("Main"); setItemDesc("");
     setItemNameErr(false); setItemPriceErr(false);
+    setItemImageFiles([]); setItemImagePreviews([]);
   };
 
-  const handleAddItem = () => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setItemImageFiles((prev) => [...prev, ...files]);
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => setItemImagePreviews((prev) => [...prev, reader.result as string]);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeSelectedImage = (index: number) => {
+    setItemImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setItemImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddItem = async () => {
     let hasErr = false;
     if (!itemName.trim()) { setItemNameErr(true); hasErr = true; }
     if (!itemPrice.trim() || isNaN(Number(itemPrice)) || Number(itemPrice) < 0) { setItemPriceErr(true); hasErr = true; }
     if (hasErr) return;
+
+    const uploadedUrls: string[] = [];
+    if (itemImageFiles.length > 0) {
+      setUploadingImage(true);
+      try {
+        for (const file of itemImageFiles) {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("folder", "menu_items");
+          const res = await api.post("/images/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          uploadedUrls.push(res.data.url);
+        }
+      } catch (err) {
+        console.error("Image upload failed:", err);
+      } finally {
+        setUploadingImage(false);
+      }
+    }
+
     setItems((prev) => [...prev, {
       _uid: draftUid++,
       name: itemName.trim(),
@@ -67,6 +115,7 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
       description: itemDesc.trim(),
       category: itemCategory,
       status: "active",
+      imageUrls: uploadedUrls,
       availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
       variants: [],
       modifiers: [],
@@ -91,8 +140,8 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
       setSuccess(`Menu "${name}" updated successfully.`);
       router.push("/staff/menu");
     } else {
-      const cleanItems: Omit<MenuItem, "id">[] = items.map(({ _uid, ...rest }) => rest);
-      const id = await addMenu({ name, description, type, isVisible: isActive, status: isActive ? "active" : "draft", isNew: true }, cleanItems);
+      const cleanItems: Omit<MenuItem, "id">[] = items.map(({ _uid: _, ...rest }) => rest);
+      const id = await addMenu({ name, description, type, isVisible: isActive, status: isActive ? "active" : "draft", isNew: true }, cleanItems, propertyId);
       if (id) {
         setSuccess(`Menu "${name}" created with ${cleanItems.length} item${cleanItems.length !== 1 ? "s" : ""}.`);
         router.push("/staff/menu");
@@ -231,11 +280,15 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
                 </div>
               ) : (
                 <div className="flex-1 overflow-y-auto flex flex-col gap-2">
-                  {items.map((item) => (
+                    {items.map((item) => (
                     <div key={item._uid} className="flex items-center gap-2.5 bg-[rgba(0,0,0,0.015)] rounded-[8px] px-3 py-2">
-                      <div className="w-8 h-8 rounded-lg bg-[rgba(149,48,2,0.06)] flex items-center justify-center shrink-0">
-                        <UtensilsCrossed size={12} className="text-[var(--brand-primary)] opacity-60" />
-                      </div>
+                      {item.imageUrls && item.imageUrls.length > 0 ? (
+                        <img src={item.imageUrls[0]} alt={item.name} className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg bg-[rgba(149,48,2,0.06)] flex items-center justify-center shrink-0">
+                          <UtensilsCrossed size={12} className="text-[var(--brand-primary)] opacity-60" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-[var(--black-2)] truncate">{item.name}</p>
                         <div className="flex items-center gap-1.5">
@@ -257,13 +310,14 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
 
       {/* Add Item Dialog */}
       <Dialog open={showAddItem} onOpenChange={setShowAddItem}>
-        <DialogContent className="max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle className="text-sm font-bold text-[var(--black-2)]">Add Menu Item</DialogTitle>
+        <DialogContent className="max-w-[450px] bg-white border border-[var(--gray-5)] shadow-xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-[var(--gray-5)] bg-[rgba(0,0,0,0.01)]">
+            <DialogTitle className="text-base font-bold text-[var(--black-2)]">Add Menu Item</DialogTitle>
+            <p className="text-[10px] text-[var(--gray-3)] mt-0.5">Enter details for the new dish or beverage.</p>
           </DialogHeader>
-          <div className="flex flex-col gap-3 py-2">
+          <div className="flex flex-col gap-5 px-6 py-5">
             <div>
-              <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Item Name <span className="text-[var(--state-error)]">*</span></Label>
+              <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase tracking-wider">Item Name <span className="text-[var(--state-error)]">*</span></Label>
               <Input
                 value={itemName}
                 onChange={(e) => { setItemName(e.target.value); setItemNameErr(false); }}
@@ -307,11 +361,38 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
                 className="mt-1 text-xs rounded-[8px] border-[var(--gray-5)] resize-none"
               />
             </div>
+            {/* Image Upload */}
+            <div>
+              <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Dish Photos <span className="text-[var(--gray-3)] normal-case font-normal">(Optional)</span></Label>
+              
+              <div className="mt-2 grid grid-cols-4 gap-2">
+                {itemImagePreviews.map((preview, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-[8px] overflow-hidden border border-[var(--gray-5)]">
+                    <img src={preview} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => removeSelectedImage(idx)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 cursor-pointer border-0 p-0"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+                
+                {itemImagePreviews.length < 8 && (
+                  <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-[var(--gray-5)] rounded-[8px] cursor-pointer hover:border-[var(--brand-primary)] hover:bg-[rgba(149,48,2,0.02)] transition-colors">
+                    <Upload size={14} className="text-[var(--gray-4)]" />
+                    <span className="text-[8px] text-[var(--gray-4)] mt-1">Add</span>
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+                  </label>
+                )}
+              </div>
+              <p className="text-[9px] text-[var(--gray-4)] mt-2">Upload up to 8 images (JPG, PNG)</p>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowAddItem(false)}>Cancel</Button>
-            <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleAddItem}>
-              <Plus size={12} /> Add Item
+          <DialogFooter className="px-6 py-4 border-t border-[var(--gray-5)] bg-[rgba(0,0,0,0.01)]">
+            <Button variant="outline" size="sm" className="text-xs h-8 px-4" onClick={() => setShowAddItem(false)} disabled={uploadingImage}>Cancel</Button>
+            <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-8 px-4 gap-1.5 hover:bg-[var(--brand-primary)]/90" onClick={handleAddItem} disabled={uploadingImage}>
+              {uploadingImage ? <><Loader2 size={12} className="animate-spin" /> Processing...</> : <><Plus size={12} /> Add Item</>}
             </Button>
           </DialogFooter>
         </DialogContent>

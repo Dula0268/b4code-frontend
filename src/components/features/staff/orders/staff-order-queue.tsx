@@ -20,6 +20,7 @@ import {
   type Order,
   type OrderStatus,
 } from "@/store/staff/orders/staff-orders.store";
+import { useAuthStore } from "@/store/auth/auth.store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -277,11 +278,19 @@ export default function StaffOrderQueue() {
   const clearToast = useStaffOrdersStore((s) => s.clearToast);
   const getCountByStatus = useStaffOrdersStore((s) => s.getCountByStatus);
 
+  const { user } = useAuthStore();
+
   // Fetch orders when component mounts
   useEffect(() => {
-    console.log("📦 StaffOrderQueue mounted, fetching orders...");
-    fetchOrders(1); // Fetch orders for property ID 1
-  }, []);
+    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
+    console.log(`📦 StaffOrderQueue mounted, fetching orders for property: ${propertyId}...`);
+    if (propertyId) {
+      fetchOrders(Number(propertyId));
+    } else {
+      console.warn("⚠️ No propertyId found for staff order queue");
+      fetchOrders(1);
+    }
+  }, [user, fetchOrders]);
 
   const filteredOrders = orders.filter(
     (o) =>

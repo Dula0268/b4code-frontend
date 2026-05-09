@@ -30,7 +30,9 @@
 
     /* UI defaults */
     --bg: var(--white);
+    --background: var(--white);
     --fg: var(--black-2);
+    --foreground: var(--black-2);
     --muted: var(--gray-3);
     --border: var(--gray-5);
 

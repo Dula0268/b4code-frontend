@@ -31,8 +31,9 @@ export interface MenuItem {
   description: string;
   category: string;
   status: MenuStatus;
-  calories?: number;
   tag?: string;
+  calories?: number;
+  imageUrls: string[];
   availability: AvailabilityWindow;
   variants: Variant[];
   modifiers: Modifier[];
@@ -58,6 +59,10 @@ export interface BackendMenuItem {
   description?: string;
   category?: string;
   isAvailable: boolean;
+  imageUrls?: string[];
+  imageUrl?: string;
+  tag?: string;
+  calories?: number;
 }
 
 // ─── Store ─────────────────────────────────────────────────────────────────────
@@ -74,11 +79,11 @@ interface StaffMenuActions {
   fetchMenus: (propertyId: number) => Promise<void>;
   fetchMenuItems: (propertyId: number) => Promise<void>;
   getMenu: (id: string) => Menu | undefined;
-  addMenu: (menu: Omit<Menu, "id" | "itemCount" | "priceRange" | "items">, items?: Omit<MenuItem, "id">[]) => Promise<string>;
+  addMenu: (menu: Omit<Menu, "id" | "itemCount" | "priceRange" | "items">, items?: Omit<MenuItem, "id">[], propId?: number) => Promise<string>;
   updateMenu: (id: string, data: Partial<Menu>) => void;
   deleteMenu: (id: string) => Promise<void>;
   toggleVisibility: (id: string) => Promise<void>;
-  addItem: (menuId: string, item: Omit<MenuItem, "id">) => Promise<void>;
+  addItem: (menuId: string, item: Omit<MenuItem, "id">, propId?: number) => Promise<void>;
   updateItem: (menuId: string, itemId: string, data: Partial<MenuItem>) => Promise<void>;
   deleteItem: (menuId: string, itemId: string) => Promise<void>;
   toggleItemStatus: (menuId: string, itemId: string) => Promise<void>;
@@ -119,18 +124,22 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     try {
       set({ isLoading: true, errorMsg: null, propertyId });
       const response = await api.get(`/menu-items/property/${propertyId}`);
-      const menuItems = response.data;
+      const backendItems = response.data as BackendMenuItem[];
 
-      const menuItemMap = (menuItems as BackendMenuItem[]).reduce((acc: Record<string, MenuItem[]>, item) => {
-        const menuKey = item.category || "General";
-        if (!acc[menuKey]) acc[menuKey] = [];
-        acc[menuKey].push({
+      // Group items by category to build menus dynamically
+      const menuItemMap = backendItems.reduce((acc: Record<string, MenuItem[]>, item) => {
+        const category = item.category || "General";
+        if (!acc[category]) acc[category] = [];
+        acc[category].push({
           id: String(item.id),
           name: item.name,
           price: item.price,
           description: item.description || "",
           category: item.category || "General",
           status: item.isAvailable ? "active" : "draft",
+          imageUrls: item.imageUrls || (item.imageUrl ? [item.imageUrl] : []),
+          tag: item.tag,
+          calories: item.calories,
           availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
           variants: [],
           modifiers: [],
@@ -139,7 +148,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       }, {});
 
       const menus: Menu[] = Object.entries(menuItemMap).map(([category, items]) => ({
-        id: category,
+        id: category, // Using category name as ID for now
         name: category,
         description: `${category} items`,
         type: category,
@@ -152,64 +161,40 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
 
       set({ menus, isLoading: false });
     } catch (error: unknown) {
-      const errorMsg = extractApiErrorMessage(error, "Failed to fetch menus");
-      set({ errorMsg, isLoading: false });
+      set({ errorMsg: extractApiErrorMessage(error, "Failed to fetch menus"), isLoading: false });
     }
   },
 
   fetchMenuItems: async (propertyId: number) => {
-    try {
-      set({ isLoading: true, errorMsg: null });
-      const response = await api.get(`/menu-items/property/${propertyId}`);
-      const backendItems = response.data as BackendMenuItem[];
-
-      set((state) => ({
-        menus: state.menus.map((menu) => {
-          const items: MenuItem[] = backendItems
-            .filter((item) => (item.category || "General") === menu.type)
-            .map((item) => ({
-              id: String(item.id),
-              name: item.name,
-              price: item.price,
-              description: item.description || "",
-              category: item.category || "General",
-              status: item.isAvailable ? ("active" as const) : ("draft" as const),
-              availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
-              variants: [],
-              modifiers: [],
-            }));
-          return { ...menu, items, itemCount: items.length, priceRange: calcPriceRange(items) };
-        }),
-        isLoading: false,
-      }));
-    } catch (error: unknown) {
-      const errorMsg = extractApiErrorMessage(error, "Failed to fetch menu items");
-      set({ errorMsg, isLoading: false });
-    }
+    // fetchMenuItems is now just an alias for fetchMenus since they do the same thing
+    return get().fetchMenus(propertyId);
   },
 
   getMenu: (id) => get().menus.find((m) => m.id === id),
 
-  addMenu: async (data, initialItems) => {
-    const propertyId = get().propertyId;
+  addMenu: async (data, initialItems, propId) => {
+    const propertyId = propId || get().propertyId;
     if (!propertyId) {
-      set({ errorMsg: "No property selected" });
+      set({ errorMsg: "No property selected. Please try re-logging." });
       return "";
     }
     try {
       set({ isLoading: true, errorMsg: null });
       const category = data.name;
 
-      for (const item of initialItems ?? []) {
-        await api.post("/menu-items", {
+      const itemPromises = (initialItems ?? []).map(item => 
+        api.post("/menu-items", {
           propertyId,
           name: item.name,
           description: item.description,
           price: item.price,
           category,
           isAvailable: item.status === "active",
-        });
-      }
+          imageUrls: item.imageUrls,
+        })
+      );
+      
+      await Promise.all(itemPromises);
 
       await get().fetchMenus(propertyId);
       set({ isLoading: false });
@@ -265,8 +250,8 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     }
   },
 
-  addItem: async (menuId, item) => {
-    const propertyId = get().propertyId;
+  addItem: async (menuId, item, propId) => {
+    const propertyId = propId || get().propertyId;
     const menu = get().menus.find((m) => m.id === menuId);
     if (!propertyId || !menu) {
       set({ errorMsg: "No property or menu selected" });
@@ -279,8 +264,11 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         name: item.name,
         description: item.description,
         price: item.price,
-        category: menu.name,
+        category: item.category || menu.name,
         isAvailable: item.status === "active",
+        imageUrls: item.imageUrls,
+        tag: item.tag,
+        calories: item.calories,
       });
       const saved = response.data as BackendMenuItem;
       const newItem: MenuItem = {
@@ -303,13 +291,23 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
   updateItem: async (menuId, itemId, data) => {
     try {
       set({ isLoading: true, errorMsg: null });
-      await api.put(`/menu-items/${itemId}`, {
+      const updateData: Record<string, unknown> = {
         name: data.name,
         description: data.description,
         price: data.price,
         category: data.category,
-        isAvailable: data.status === "active",
-      });
+        tag: data.tag,
+        calories: data.calories,
+      };
+
+      if (data.status !== undefined) {
+        updateData.isAvailable = data.status === "active";
+      }
+      if (data.imageUrls !== undefined) {
+        updateData.imageUrls = data.imageUrls;
+      }
+
+      await api.put(`/menu-items/${itemId}`, updateData);
       set((s) => ({
         menus: s.menus.map((m) => {
           if (m.id !== menuId) return m;
