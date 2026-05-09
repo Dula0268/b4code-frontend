@@ -147,7 +147,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         return acc;
       }, {});
 
-      const menus: StaffMenu[] = Object.entries(menuItemMap).map(([category, items]) => ({
+      const menus: Menu[] = Object.entries(menuItemMap).map(([category, items]) => ({
         id: category, // Using category name as ID for now
         name: category,
         description: `${category} items`,
@@ -157,7 +157,6 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         priceRange: calcPriceRange(items),
         itemCount: items.length,
         items,
-        lastUpdated: new Date().toISOString(),
       }));
 
       set({ menus, isLoading: false });
