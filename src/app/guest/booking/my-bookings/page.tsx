@@ -17,7 +17,6 @@ export default function MyBookingsPage() {
   const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const user = useAuthStore(s => s.user)
   const localBookings = useGuestBookingStore(s => s.bookings)
 
@@ -62,6 +61,7 @@ export default function MyBookingsPage() {
                 apiBookings = (data as ApiBooking[]).map((b) => ({
                     id: String(b.bookingId ?? b.id ?? b.confirmationNumber ?? crypto.randomUUID()),
                     propertyId: String(b.bookingId ?? b.id ?? ""),
+                    orderId: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
                     orderNumber: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
                     status: normalizeStatus(b.status),
                     property: b.propertyName || "Prime Stay Property",
@@ -85,6 +85,7 @@ export default function MyBookingsPage() {
             const mappedLocal: BookingCardData[] = userLocalBookings.map(b => ({
                 id: String(b.id),
                 propertyId: String(b.propertyId),
+                orderId: b.confirmationCode,
                 orderNumber: b.confirmationCode,
                 status: b.status,
                 property: b.property,
@@ -114,15 +115,15 @@ export default function MyBookingsPage() {
             }
             
             setBookings(merged)
-        } catch {
-            setErrorMsg("Failed to synchronize bookings. Try again.")
+        } catch (err) {
+            console.error("Failed to synchronize bookings:", err)
         } finally {
             setLoading(false)
         }
     }
 
     if (user) loadBookings();
-  }, [user]);
+  }, [user, localBookings]);
 
   return (
     <div className="min-h-screen relative bg-[#0a0a0a] overflow-hidden">
