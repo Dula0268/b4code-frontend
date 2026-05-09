@@ -31,6 +31,7 @@ export interface MenuItem {
   description: string;
   category: string;
   status: MenuStatus;
+  tag?: string;
   calories?: number;
   imageUrls: string[];
   availability: AvailabilityWindow;
@@ -59,6 +60,9 @@ export interface BackendMenuItem {
   category?: string;
   isAvailable: boolean;
   imageUrls?: string[];
+  imageUrl?: string;
+  tag?: string;
+  calories?: number;
 }
 
 // ─── Store ─────────────────────────────────────────────────────────────────────
@@ -134,6 +138,8 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
           category: item.category || "General",
           status: item.isAvailable ? "active" : "draft",
           imageUrls: item.imageUrls || (item.imageUrl ? [item.imageUrl] : []),
+          tag: item.tag,
+          calories: item.calories,
           availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
           variants: [],
           modifiers: [],
@@ -262,6 +268,8 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         category: item.category || menu.name,
         isAvailable: item.status === "active",
         imageUrls: item.imageUrls,
+        tag: item.tag,
+        calories: item.calories,
       });
       const saved = response.data as BackendMenuItem;
       const newItem: MenuItem = {
@@ -289,6 +297,8 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         description: data.description,
         price: data.price,
         category: data.category,
+        tag: data.tag,
+        calories: data.calories,
       };
 
       if (data.status !== undefined) {
