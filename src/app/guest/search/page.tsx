@@ -154,7 +154,7 @@ function SearchResultsContent() {
     const destination = searchParams?.get("destination") || ""
     const checkIn = searchParams?.get("checkIn") || ""
     const checkOut = searchParams?.get("checkOut") || ""
-    const guests = Number(searchParams?.get("guests") || 2)
+    const guests = Number(searchParams?.get("guests") || 1)
 
     // State
     const [filterOptions, setFilterOptions] = useState<FilterOptionsResponse | null>(null)
