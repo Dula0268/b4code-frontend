@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, Lock, LogOut } from "lucide-react";
+import { User, Lock, LogOut, Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import OwnerLogoutModal from "./owner-logout-modal";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { imageApi } from "@/lib/api";
+import { useState } from "react";
 
 interface OwnerProfileLayoutProps {
   children: React.ReactNode;
@@ -18,9 +20,29 @@ const OWNER_PROFILE_NAV_ITEMS = [
 
 export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps) {
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const { user, updateProfile } = useAuthStore();
+  const [isUploading, setIsUploading] = useState(false);
+
   const ownerEmail = user?.email || "owner@primestay.com";
-  const ownerName = user?.email?.split("@")[0] || "Alex Moore"
+  const ownerName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : ownerEmail.split("@")[0];
+  const avatarUrl = user?.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(ownerName)}&background=953002&color=fff`;
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.email) return;
+
+    setIsUploading(true);
+    try {
+      const result = await imageApi.upload(file, "avatars");
+      await updateProfile(user.email, { avatarUrl: result.url });
+    } catch (err: any) {
+      console.error("Failed to upload avatar:", err);
+      const errorMessage = err.message || "Please check your Cloudinary configuration.";
+      alert(`Failed to upload image: ${errorMessage}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="w-full mx-auto flex flex-col bg-white rounded-2xl shadow-sm border border-[#f3f4f6] overflow-hidden min-h-[700px]">
@@ -29,9 +51,29 @@ export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps
         <aside className="w-full md:w-[280px] bg-[#fdfaf8] border-r border-[#f3f4f6] flex flex-col py-8 px-6 relative z-10">
           {/* User Info */}
           <div className="flex flex-col items-center justify-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-[#953002]/10 flex items-center justify-center text-[#953002] text-2xl font-bold mb-3 border-[3px] border-white shadow-sm overflow-hidden">
-              <img src="https://i.pravatar.cc/150?u=owner" alt="Owner Avatar" className="w-full h-full object-cover" />
+            <div className="relative group">
+              <div className="w-20 h-20 rounded-full bg-[#953002]/10 flex items-center justify-center text-[#953002] text-2xl font-bold mb-3 border-[3px] border-white shadow-sm overflow-hidden">
+                <img src={avatarUrl} alt="Owner Avatar" className="w-full h-full object-cover" />
+                
+                {isUploading && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
+                    <Loader2 size={24} className="text-white animate-spin" />
+                  </div>
+                )}
+              </div>
+              
+              <label className="absolute bottom-3 right-0 w-7 h-7 bg-[#953002] text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-[#7a2600] transition-colors shadow-md border-2 border-white z-30 group-hover:scale-110 duration-200">
+                <Camera size={14} />
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleAvatarUpload}
+                  disabled={isUploading}
+                />
+              </label>
             </div>
+            
             <h2 className="text-xl font-bold text-[#1c1917] mb-1 truncate w-full text-center">{ownerName}</h2>
             <div className="bg-[#953002]/10 text-[#953002] text-xs font-semibold px-3 py-1 rounded-full">
               Property Owner

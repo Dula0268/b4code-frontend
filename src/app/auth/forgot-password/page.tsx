@@ -15,7 +15,6 @@ export default function ForgotPasswordPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [devResetLink, setDevResetLink] = useState<string | null>(null);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -24,7 +23,6 @@ export default function ForgotPasswordPage() {
         try {
             const result = await authApi.forgotPassword(email);
             console.log(result);
-            if (result.devResetLink) setDevResetLink(result.devResetLink);
             setIsSubmitted(true);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -129,18 +127,7 @@ export default function ForgotPasswordPage() {
                                         We&apos;ve sent a recovery link to your email address. Please check your inbox and your spam folder just in case.
                                     </p>
 
-                                    {/* DEV MODE: Show clickable link for demo/testing */}
-                                    {devResetLink && (
-                                        <div className="w-full mt-6 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50 p-4 text-left">
-                                            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-2">⚡ Dev Mode — Reset Link</p>
-                                            <p className="text-xs text-amber-600 mb-3">In production, this link would be sent via email. For demo purposes, click below:</p>
-                                            <a href={devResetLink} className="block w-full">
-                                                <Button type="button" size="lg" className="w-full h-[48px] text-[15px] font-extrabold rounded-full bg-amber-500 hover:bg-amber-600 text-white transition-all">
-                                                    🔐 Open Reset Link
-                                                </Button>
-                                            </a>
-                                        </div>
-                                    )}
+
 
                                     <div className="w-full mt-10 space-y-6">
 

@@ -1,4 +1,5 @@
 import StaffSidebar from "@/components/features/staff/layout/staff-sidebar";
+import RoleGuard from "@/components/shared/auth/role-guard";
 
 interface StaffPageLayoutProps {
   children: React.ReactNode;
@@ -6,14 +7,16 @@ interface StaffPageLayoutProps {
 
 export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f8f6f5]">
-      {/* Fixed Sidebar */}
-      <StaffSidebar />
+    <RoleGuard allowedRoles={["staff", "admin", "owner"]}>
+      <div className="flex h-screen overflow-hidden bg-[#f8f6f5]">
+        {/* Fixed Sidebar */}
+        <StaffSidebar />
 
-      {/* Right side: header + page content */}
-      <div className="ml-[260px] flex-1 flex flex-col h-full overflow-hidden">
-        {children}
+        {/* Right side: header + page content */}
+        <div className="ml-[260px] flex-1 flex flex-col h-full overflow-hidden">
+          {children}
+        </div>
       </div>
-    </div>
+    </RoleGuard>
   );
 }

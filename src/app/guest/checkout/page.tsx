@@ -253,7 +253,16 @@ function useCheckoutLogic() {
       const returnParams = new URLSearchParams(bookingDetails.originalParams)
       returnParams.set('confirmationCode', confirmationCode)
       returnParams.set('paidInFull', paidInFull ? '1' : '0')
-      router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
+      
+      if (data.paymentMethod === 'online') {
+          returnParams.set('total', String(total))
+          returnParams.set('firstName', user?.profile?.firstName || user?.email?.split('@')[0] || '')
+          returnParams.set('lastName', user?.profile?.lastName || '')
+          returnParams.set('email', user?.email || '')
+          router.push(`/payment?${returnParams.toString()}`)
+      } else {
+          router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
+      }
     } catch (e: unknown) {
       setErrorMsg("Failed to process booking. Please try again.")
     } finally {
