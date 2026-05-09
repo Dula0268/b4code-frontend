@@ -84,7 +84,7 @@ export default function GuestTopbar() {
           !isSearchPage && "ml-auto",
         ].join(" ")}>
           <nav className="flex items-center gap-6">
-            {NAV_LINKS.filter(l => l.label !== "My Bookings" || user).map(({ label, href }) => {
+            {NAV_LINKS.map(({ label, href }) => {
               const isActive =
                 pathname === href ||
                 (href === "/guest/search" && pathname.startsWith("/guest/search")) ||
@@ -192,7 +192,7 @@ export default function GuestTopbar() {
             </div>
           )}
 
-          {NAV_LINKS.filter(l => l.label !== "My Bookings" || user).map(({ label, href }) => (
+          {NAV_LINKS.map(({ label, href }) => (
             <Link
               key={href}
               href={href}
