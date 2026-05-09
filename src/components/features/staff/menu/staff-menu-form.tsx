@@ -140,7 +140,7 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
       setSuccess(`Menu "${name}" updated successfully.`);
       router.push("/staff/menu");
     } else {
-      const cleanItems: Omit<MenuItem, "id">[] = items.map(({ _uid, ...rest }) => rest);
+      const cleanItems: Omit<MenuItem, "id">[] = items.map(({ _uid: _, ...rest }) => rest);
       const id = await addMenu({ name, description, type, isVisible: isActive, status: isActive ? "active" : "draft", isNew: true }, cleanItems, propertyId);
       if (id) {
         setSuccess(`Menu "${name}" created with ${cleanItems.length} item${cleanItems.length !== 1 ? "s" : ""}.`);

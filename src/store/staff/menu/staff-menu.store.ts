@@ -284,7 +284,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
   updateItem: async (menuId, itemId, data) => {
     try {
       set({ isLoading: true, errorMsg: null });
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         name: data.name,
         description: data.description,
         price: data.price,

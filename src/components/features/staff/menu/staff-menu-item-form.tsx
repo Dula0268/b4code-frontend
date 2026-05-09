@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, ImagePlus, Plus, Trash2, Clock, GripVertical, X, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, Clock, GripVertical, X, Upload } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import { useAuthStore } from "@/store/auth/auth.store";
 import api from "@/lib/axios";
@@ -54,7 +54,6 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
   const [itemImages, setItemImages] = useState<ImageState[]>(
     existing?.imageUrls?.map(url => ({ preview: url, isExisting: true })) || []
   );
-  const [uploadingImage, setUploadingImage] = useState(false);
 
   const { user } = useAuthStore();
   const propertyId = user?.propertyId;
@@ -88,7 +87,6 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
     const newFiles = itemImages.filter(img => !img.isExisting && img.file).map(img => img.file!);
     
     if (newFiles.length > 0) {
-      setUploadingImage(true);
       try {
         for (const file of newFiles) {
           const formData = new FormData();
@@ -104,10 +102,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
       } catch (err) {
         console.error("Image upload failed:", err);
         setError("One or more images failed to upload. Please try again.");
-        setUploadingImage(false);
         return;
-      } finally {
-        setUploadingImage(false);
       }
     }
 

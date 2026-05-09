@@ -52,7 +52,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
       try {
         await deleteItem(menuId, itemId);
         setSuccess(`Item "${itemName}" removed.`);
-      } catch (err) {
+      } catch (_err) {
         // Error handled by store
       } finally {
         setDeletingItemId(null);
@@ -60,12 +60,12 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
     }
   };
 
-  const handleToggleStatus = async (itemId: string, itemName: string) => {
+  const handleToggleStatus = async (itemId: string, _itemName: string) => {
     setTogglingItemId(itemId);
     try {
       await toggleItemStatus(menuId, itemId);
       // No success message for simple toggle to avoid clutter
-    } catch (err) {
+    } catch (_err) {
       // Error handled by store
     } finally {
       setTogglingItemId(null);
@@ -107,7 +107,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
         <div>
           <h3 className="text-lg font-semibold text-[var(--black-1)]">Menu Not Found</h3>
           <p className="text-sm text-[var(--gray-3)] mt-1 max-w-[260px]">
-            We couldn't find the category "{menuId}". It might have been deleted or renamed.
+            We couldn&apos;t find the category &quot;{menuId}&quot;. It might have been deleted or renamed.
           </p>
         </div>
         <Button onClick={() => router.push("/staff/menu")} variant="outline" className="mt-2 rounded-[10px]">
