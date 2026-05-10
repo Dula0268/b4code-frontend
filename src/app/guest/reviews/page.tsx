@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, Suspense } from "react"
+import { useState, useRef, useEffect, Suspense } from "react"
 import { Star, X, Camera, ImagePlus, ChevronLeft, CheckCircle2, ThumbsUp, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -107,30 +107,40 @@ function useReviewLogic() {
   }
 
   const searchParams = useSearchParams()
-  const propertyId = searchParams?.get("propertyId") || "1"
+  const propertyId = searchParams?.get("propertyId")
+  const { bookings, fetchUserBookings, loading } = useGuestBookingStore()
+  const user = useAuthStore(s => s.user)
+
+  useEffect(() => {
+    if (user?.email && bookings.length === 0) {
+      fetchUserBookings(user.email)
+    }
+  }, [user?.email, bookings.length, fetchUserBookings])
+
+  const activeBooking = propertyId 
+    ? bookings.find(b => b.propertyId === propertyId) 
+    : bookings.find(b => b.status === "COMPLETED") || bookings[0]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isFormValid) return
+    if (!isFormValid || !activeBooking) return
     setIsSubmitting(true)
     setErrorMsg(null)
     
-    const guest = useAuthStore.getState().user
-    const guestName = guest?.profile?.firstName ? `${guest.profile.firstName} ${guest.profile.lastName}` : "Guest"
-    const bookingStore = useGuestBookingStore.getState()
-    const booking = bookingStore.bookings.find((item) => item.propertyId === propertyId) ?? bookingStore.bookings[0]
-
-    if (!booking) {
-      setErrorMsg("You need a completed booking before leaving a review.")
-      setIsSubmitting(false)
-      return
-    }
-
     try {
-      await guestApi.createReview({ bookingId: Number(booking.id), overallRating, comment: reviewText })
+      await guestApi.createReview({ 
+        bookingId: Number(activeBooking.id), 
+        overallRating, 
+        comment: reviewText,
+        cleanlinessRating: categoryRatings.cleanliness,
+        accuracyRating: categoryRatings.value, // Mapping value to accuracy as a proxy
+        communicationRating: categoryRatings.service,
+        locationRating: categoryRatings.location,
+        valueRating: categoryRatings.value
+      })
       setSubmitted(true)
     } catch (err) {
-      setErrorMsg("Failed to submit review.")
+      setErrorMsg("Failed to submit review. You may have already reviewed this booking.")
     } finally {
       setIsSubmitting(false)
     }
@@ -140,7 +150,7 @@ function useReviewLogic() {
     setSubmitted(false); setOverallRating(0); setCategoryRatings({}); setReviewText(""); setPhotos([]);
   }
 
-  return { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm }
+  return { activeBooking, loading, overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -150,7 +160,24 @@ function SubmitReviewContent() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const logic = useReviewLogic()
-  const { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm } = logic
+  const { activeBooking, loading, overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm } = logic
+
+  if (loading) {
+    return <div className="min-h-[400px] flex items-center justify-center"><div className="w-10 h-10 border-4 border-t-[var(--brand-secondary)] border-[var(--border)] rounded-full animate-spin" /></div>
+  }
+
+  if (!activeBooking && !submitted) {
+    return (
+      <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
+        <div className="w-20 h-20 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-6">
+          <Star size={40} className="text-gray-300" />
+        </div>
+        <h2 className="text-2xl font-black mb-2">No booking found</h2>
+        <p className="text-gray-500 max-w-sm mb-8">You need a completed booking to leave a review for this property.</p>
+        <Link href="/guest/booking/my-bookings" className="px-8 py-4 bg-[var(--brand-primary)] text-white rounded-2xl font-black no-underline">View My Bookings</Link>
+      </div>
+    )
+  }
 
   if (submitted) {
     return (
@@ -167,7 +194,7 @@ function SubmitReviewContent() {
             ))}
           </div>
           <p className="text-sm leading-relaxed mb-8" style={{ color: "var(--gray-3)" }}>
-            Thank you for your feedback! Your review has been submitted and will be published after a brief review.
+            Thank you for your feedback! Your review has been shared with {activeBooking?.property || "the property"}.
           </p>
           <div className="flex flex-col gap-3">
             <Link href="/guest/my-room" className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 no-underline" style={{ background: "var(--brand-primary)", color: "white" }}>
@@ -190,7 +217,7 @@ function SubmitReviewContent() {
 
       {/* Hero banner */}
       <div className="relative rounded-[1.5rem] overflow-hidden mb-8 h-[180px] sm:h-[200px]">
-        <Image src="/images/room/review-stay.png" alt="Your stay" fill className="object-cover" />
+        <Image src={activeBooking?.imageSrc || "/images/room/review-stay.png"} alt="Your stay" fill className="object-cover" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.8), transparent)" }} />
         <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[0.6875rem] font-bold uppercase tracking-wide mb-3 w-fit border"
@@ -200,7 +227,9 @@ function SubmitReviewContent() {
           <h1 className="text-[1.75rem] font-black text-white mb-1 tracking-tight" style={{ fontSize: "clamp(1.25rem, 4vw, 1.75rem)" }}>
             How was your stay?
           </h1>
-          <p className="text-sm text-white/60">Luxe Horizon Resort · Suite 402 · Oct 12–16, 2024</p>
+          <p className="text-sm text-white/60">
+            {activeBooking?.property} · {activeBooking?.roomName} · {activeBooking?.checkInFormatted}–{activeBooking?.checkOutFormatted}
+          </p>
         </div>
       </div>
 

@@ -21,7 +21,7 @@ const APP_CONFIG = {
   guestFee: 5000,
   executiveExtra: 20000,
   defaultCurrency: "LKR",
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
+  apiBaseUrl: (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080").replace(/\/$/, "") + "/api",
 } as const
 
 interface RoomOption {
@@ -123,7 +123,7 @@ function useModifyReservationLogic() {
           checkOutDate: checkOut,
           guests,
           specialRequests: "Modified booking",
-          paymentMethod: "CARD",
+          paymentMethod: "ONLINE_CARD",
           totalPrice: newTotal,
         }
         // Try server modify; if server doesn't support modify, we'll fallback to local store update

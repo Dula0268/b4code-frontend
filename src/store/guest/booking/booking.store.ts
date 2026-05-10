@@ -50,6 +50,7 @@ type GuestBookingActions = {
   updateBookingStatus: (code: string, updates: Partial<StoredBooking>) => void;
   setLoading: (value: boolean) => void;
   setError: (message: string | null) => void;
+  fetchUserBookings: (email: string) => Promise<void>;
   reset: () => void;
 };
 
@@ -119,6 +120,51 @@ export const useGuestBookingStore = create<GuestBookingState & GuestBookingActio
 
     setLoading: (value) => set({ loading: value }),
     setError: (message) => set({ error: message }),
+
+    fetchUserBookings: async (email) => {
+      if (!email) return;
+      set({ loading: true, error: null });
+      try {
+        const { guestApi } = await import("@/lib/api");
+        const data = await guestApi.getGuestBookings(email);
+        
+        // Map backend BookingResponse to StoredBooking
+        const mapped: StoredBooking[] = data.map((b: any) => ({
+          id: String(b.bookingId),
+          confirmationCode: b.confirmationNumber,
+          status: b.status,
+          property: b.propertyName,
+          propertyId: String(b.propertyId),
+          location: b.propertyAddress,
+          imageSrc: "", // Backend doesn't return property image in booking response currently
+          roomName: b.roomName,
+          roomId: String(b.roomId),
+          checkIn: b.checkIn,
+          checkOut: b.checkOut,
+          checkInFormatted: new Date(b.checkIn).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          checkOutFormatted: new Date(b.checkOut).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+          guests: b.guestCount,
+          guestsLabel: `${b.guestCount} Guest${b.guestCount !== 1 ? "s" : ""}`,
+          nights: b.nights,
+          nightsLabel: `${b.nights} Night${b.nights !== 1 ? "s" : ""}`,
+          totalPrice: b.totalAmount,
+          basePrice: b.totalAmount, // Backend summary doesn't separate these
+          taxes: 0,
+          serviceFee: 0,
+          discount: 0,
+          paymentMethod: b.paymentMethod === "ONLINE_CARD" ? "online" : "property",
+          paidInFull: b.paymentMethod === "ONLINE_CARD",
+          bookedAt: b.createdAt,
+          userEmail: b.guestEmail
+        }));
+
+        set({ bookings: mapped, loading: false });
+        saveBookings(mapped);
+      } catch (err: any) {
+        set({ error: err.message || "Failed to fetch bookings", loading: false });
+      }
+    },
+
     reset: () => set({ loading: false, error: null }),
   })
 );
