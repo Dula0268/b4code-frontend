@@ -32,6 +32,7 @@ export interface StoredBooking {
   nationalId?: string;
   bookedAt: string;      // ISO timestamp
   userEmail: string;
+  hostName?: string;
 }
 
 // ─── State & Actions ──────────────────────────────────────────────────────────
@@ -136,7 +137,7 @@ export const useGuestBookingStore = create<GuestBookingState & GuestBookingActio
           property: b.propertyName,
           propertyId: String(b.propertyId),
           location: b.propertyAddress,
-          imageSrc: "", // Backend doesn't return property image in booking response currently
+          imageSrc: b.propertyImage || "", 
           roomName: b.roomName,
           roomId: String(b.roomId),
           checkIn: b.checkIn,
@@ -155,7 +156,8 @@ export const useGuestBookingStore = create<GuestBookingState & GuestBookingActio
           paymentMethod: b.paymentMethod === "ONLINE_CARD" ? "online" : "property",
           paidInFull: b.paymentMethod === "ONLINE_CARD",
           bookedAt: b.createdAt,
-          userEmail: b.guestEmail
+          userEmail: b.guestEmail,
+          hostName: b.hostName
         }));
 
         set({ bookings: mapped, loading: false });

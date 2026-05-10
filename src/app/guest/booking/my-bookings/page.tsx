@@ -51,6 +51,7 @@ export default function MyBookingsPage() {
                   totalAmount?: number
                   status?: string
                   paymentMethod?: string
+                  propertyImage?: string
                   createdAt?: string
                 }
 
@@ -68,7 +69,7 @@ export default function MyBookingsPage() {
                     status: normalizeStatus(b.status),
                     property: b.propertyName || "Prime Stay Property",
                     location: b.propertyAddress || "Sri Lanka",
-                    imageSrc: "/images/properties/property-1.jpg",
+                    imageSrc: b.propertyImage || "/images/properties/property-1.jpg",
                     checkIn: b.checkIn || "",
                     checkOut: b.checkOut || "",
                     guests: `${b.guestCount ?? 2} Guests`,

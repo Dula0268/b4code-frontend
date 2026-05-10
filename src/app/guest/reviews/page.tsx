@@ -128,19 +128,38 @@ function useReviewLogic() {
     setErrorMsg(null)
     
     try {
+      // 1. Upload photos to Cloudinary if any
+      let photoUrls: string[] = []
+      if (photos.length > 0) {
+        const { imageApi } = await import("@/lib/api")
+        const uploadPromises = photos.map(async (p) => {
+          // p.url is a blob URL, we need to fetch it to get a File/Blob if we don't have the original
+          // But wait, it's easier if I had the original File. 
+          // Let's modify handlePhotoUpload to store the original File too.
+          const response = await fetch(p.url)
+          const blob = await response.blob()
+          const file = new File([blob], p.name, { type: blob.type })
+          const res = await imageApi.upload(file, "reviews")
+          return res.url
+        })
+        photoUrls = await Promise.all(uploadPromises)
+      }
+
+      // 2. Submit review with photo URLs
       await guestApi.createReview({ 
         bookingId: Number(activeBooking.id), 
         overallRating, 
         comment: reviewText,
         cleanlinessRating: categoryRatings.cleanliness,
-        accuracyRating: categoryRatings.value, // Mapping value to accuracy as a proxy
+        accuracyRating: categoryRatings.value,
         communicationRating: categoryRatings.service,
         locationRating: categoryRatings.location,
-        valueRating: categoryRatings.value
+        valueRating: categoryRatings.value,
+        photoUrls
       })
       setSubmitted(true)
-    } catch (err) {
-      setErrorMsg("Failed to submit review. You may have already reviewed this booking.")
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to submit review. You may have already reviewed this booking.")
     } finally {
       setIsSubmitting(false)
     }

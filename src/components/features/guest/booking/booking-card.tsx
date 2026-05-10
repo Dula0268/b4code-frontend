@@ -5,7 +5,7 @@ import Link from "next/link"
 import {
   MapPin, MessageSquare, Download,
   Star, ChevronRight, RefreshCw, FileText, BedDouble,
-  CreditCard, Wallet, Calendar
+  CreditCard, Wallet, Calendar, CheckCircle2
 } from "lucide-react"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -111,6 +111,17 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
     ? `/guest/property/${encodeURIComponent(booking.propertyId)}`
     : `/guest/search?property=${encodeURIComponent(booking.property)}&location=${encodeURIComponent(booking.location)}`
 
+  const handleComplete = async () => {
+    if (!window.confirm("Are you sure you want to complete this stay?")) return
+    try {
+      const { guestApi } = await import("@/lib/api")
+      await guestApi.completeBooking(Number(booking.id))
+      window.location.reload()
+    } catch (err) {
+      alert("Failed to complete booking")
+    }
+  }
+
   return (
     <div className="relative group overflow-hidden rounded-[24px] bg-white border border-[#eadfce] transition-all duration-300 hover:shadow-xl hover:shadow-[#cbb89e]/35 flex flex-col sm:flex-row">
       {/* Property image */}
@@ -168,13 +179,16 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
                 <BedDouble size={14} /> My Room
               </Link>
               <Link href={modifyHref} className={btnOutline}>
-                <RefreshCw size={14} /> Modify Booking
+                <RefreshCw size={14} /> Modify
               </Link>
-              <Link href="/guest/messages?type=host" className={btnOutline}>
-                <MessageSquare size={14} /> Message Host
+              <Link href={`/guest/messages?type=host&bookingId=${booking.id}`} className={btnOutline}>
+                <MessageSquare size={14} /> Message
               </Link>
+              <button onClick={handleComplete} className={btnOutline}>
+                <CheckCircle2 size={14} /> Complete
+              </button>
               <Link href={cancelHref} className={`${btnGhost} sm:ml-auto`}>
-                Cancel Booking
+                Cancel Stay
               </Link>
             </>
           )}
