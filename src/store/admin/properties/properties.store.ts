@@ -15,10 +15,10 @@ interface PropertiesState {
 
   // Actions
   fetchProperties: (params: { search?: string; status?: string; page?: number; size?: number }) => Promise<void>;
-  getPropertyById: (id: string) => Promise<void>;
-  approveProperty: (id: string) => Promise<void>;
-  rejectProperty: (id: string, reason: string) => Promise<void>;
-  markUnderReview: (id: string) => Promise<void>;
+  getPropertyById: (id: number) => Promise<void>;
+  approveProperty: (id: number) => Promise<void>;
+  rejectProperty: (id: number, reason: string) => Promise<void>;
+  markUnderReview: (id: number) => Promise<void>;
   setSelectedProperty: (prop: PropertyDto | null) => void;
 }
 
@@ -51,7 +51,7 @@ export const useAdminPropertiesStore = create<PropertiesState>((set) => ({
     }
   },
 
-  getPropertyById: async (id: string) => {
+  getPropertyById: async (id: number) => {
     set({ loading: true, error: null });
     try {
       const data = await PropertyApi.getPropertyById(id);
@@ -61,7 +61,7 @@ export const useAdminPropertiesStore = create<PropertiesState>((set) => ({
     }
   },
 
-  approveProperty: async (id: string) => {
+  approveProperty: async (id: number) => {
     set({ actionLoading: true, error: null });
     try {
       const updated = await PropertyApi.approveProperty(id);
@@ -76,7 +76,7 @@ export const useAdminPropertiesStore = create<PropertiesState>((set) => ({
     }
   },
 
-  rejectProperty: async (id: string, reason: string) => {
+  rejectProperty: async (id: number, reason: string) => {
     set({ actionLoading: true, error: null });
     try {
       const updated = await PropertyApi.rejectProperty(id, reason);
@@ -91,7 +91,7 @@ export const useAdminPropertiesStore = create<PropertiesState>((set) => ({
     }
   },
 
-  markUnderReview: async (id: string) => {
+  markUnderReview: async (id: number) => {
     set({ actionLoading: true, error: null });
     try {
       const updated = await PropertyApi.markUnderReview(id);
