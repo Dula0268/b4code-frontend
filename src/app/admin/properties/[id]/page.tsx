@@ -206,9 +206,8 @@ export default function PropertyDetailsPage() {
             </span>
           </div>
           <p className="text-[13px] text-[#9E7B6A] mt-1.5 m-0">
-            Submitted on{" "}
-            {new Date(selectedProperty.submissionDate).toLocaleDateString()} •
-            ID: #{selectedProperty.id}
+            Submitted on {selectedProperty.submittedDate || "N/A"} • ID: #
+            {selectedProperty.id}
           </p>
         </div>
 
@@ -228,7 +227,7 @@ export default function PropertyDetailsPage() {
               <DetailCard
                 icon={<MapPin size={18} />}
                 label="Address"
-                value={selectedProperty.location || "N/A"}
+                value="N/A"
               />
               <DetailCard icon={<Home size={18} />} label="Type" value="N/A" />
               <DetailCard
@@ -268,7 +267,7 @@ export default function PropertyDetailsPage() {
 
             <div className="flex flex-col gap-4">
               <DocumentCard
-                image={selectedProperty.documentUrl || ""}
+                image=""
                 label="Property Document"
                 type="DOC"
                 updated="Submitted with application"
