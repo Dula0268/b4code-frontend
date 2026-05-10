@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 // ─── Booking Types ────────────────────────────────────────────────────────────
-export type BookingStatus = "UPCOMING" | "COMPLETED" | "CANCELLED";
+export type BookingStatus = "UPCOMING" | "COMPLETED" | "CANCELLED" | "CONFIRMED";
 export type PaymentMethod = "online" | "property";
 
 export interface StoredBooking {

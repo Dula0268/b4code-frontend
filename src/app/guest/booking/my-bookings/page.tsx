@@ -22,6 +22,12 @@ export default function MyBookingsPage() {
   const user = useAuthStore(s => s.user)
   const localBookings = useGuestBookingStore(s => s.bookings)
 
+  const normalizeStatus = (s?: string): BookingStatus => {
+    if (s === "COMPLETED") return "COMPLETED"
+    if (s === "CANCELLED") return "CANCELLED"
+    return "UPCOMING"
+  }
+
   useEffect(() => {
     async function loadBookings() {
         try {
@@ -55,12 +61,6 @@ export default function MyBookingsPage() {
                   createdAt?: string
                 }
 
-                const normalizeStatus = (s?: string): BookingStatus => {
-                  if (s === "COMPLETED") return "COMPLETED"
-                  if (s === "CANCELLED") return "CANCELLED"
-                  return "UPCOMING"
-                }
-
                 apiBookings = (data as ApiBooking[]).map((b) => ({
                     id: String(b.bookingId ?? b.id ?? b.confirmationNumber ?? crypto.randomUUID()),
                     propertyId: String(b.bookingId ?? b.id ?? ""),
@@ -90,7 +90,7 @@ export default function MyBookingsPage() {
                 propertyId: String(b.propertyId),
                 orderId: b.confirmationCode,
                 orderNumber: b.confirmationCode,
-                status: b.status,
+                status: normalizeStatus(b.status),
                 property: b.property,
                 location: b.location,
                 imageSrc: b.imageSrc,

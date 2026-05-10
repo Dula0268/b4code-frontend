@@ -279,8 +279,6 @@ function Dashboard() {
   const stayProgress = isCompleted ? 100 : Math.round((nightsDone / nightsTotal) * 100)
   const stayDates = displayBooking.checkInFormatted + " – " + displayBooking.checkOutFormatted
   const balanceDue = `LKR ${displayBooking.totalPrice.toLocaleString()}`
-  const wifiNetwork = `${displayBooking.property.replace(/\s+/g, "")}_Guest`
-  const wifiPass = `Stay${displayBooking.id}!`
 
   return (
     <>
@@ -432,48 +430,12 @@ function Dashboard() {
                   ))}
                 </div>
               </div>
-
-              <div className="ps-card p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center"><Wifi size={18} className="text-blue-600" /></div>
-                  <div>
-                    <p className="text-[0.875rem] font-black" style={{ color: "var(--fg)" }}>Wi-Fi Access</p>
-                    <p className="text-[0.6875rem]" style={{ color: "var(--gray-3)" }}>Complimentary for guests</p>
-                  </div>
-                </div>
-                {[
-                  { label: "Network",  value: wifiNetwork },
-                  { label: "Password", value: wifiPass    },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex justify-between items-center py-2.5 px-3 rounded-xl border mb-2" style={{ background: "color-mix(in srgb, var(--gray-5) 50%, white)", borderColor: "var(--border)" }}>
-                    <span className="text-[0.6875rem] font-semibold" style={{ color: "var(--gray-3)" }}>{label}</span><span className="text-xs font-black tracking-wide" style={{ color: "var(--fg)" }}>{value}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="ps-card p-5">
-                <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-3" style={{ color: "var(--gray-4)" }}>Front Desk</p>
-                <p className="text-[0.8125rem] leading-relaxed mb-4" style={{ color: "var(--gray-2)" }}>Need anything? We&apos;re available 24 hours a day.</p>
-                <div className="flex gap-2">
-                  <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer" style={{ background: "var(--brand-primary)" }}><Phone size={14} /> Call Ext. 0</button>
-                  <Link href={`/guest/messages?type=staff&bookingId=${displayBooking.id}`} className="flex-1 flex items-center justify-center gap-2 py-3 border rounded-xl text-xs font-bold transition-all no-underline" style={{ borderColor: "var(--border)", color: "var(--gray-2)" }}><MessageSquare size={14} /> Message</Link>
-                </div>
-              </div>
-
-              <div className="ps-card p-5">
-                <div className="flex items-center gap-2 mb-3"><ThumbsUp size={16} className={isCompleted ? "text-amber-500" : "text-emerald-500"} /><p className="text-[0.875rem] font-black" style={{ color: "var(--fg)" }}>{isCompleted ? "Enjoyed your stay?" : "Ready to checkout?"}</p></div>
-                <p className="text-xs leading-relaxed mb-4" style={{ color: "var(--gray-3)" }}>{isCompleted ? "Your feedback helps us improve for every guest. Please share your experience with us." : "Marking your stay as complete will allow you to share your feedback and help us improve."}</p>
-                {isCompleted ? (
-                   <Link href={`/guest/reviews?propertyId=${displayBooking.propertyId}`} className="w-full py-3.5 rounded-xl text-[0.875rem] font-black flex items-center justify-center gap-2 no-underline transition-all text-white" style={{ background: "var(--brand-primary)" }}><Pencil size={16} /> Write a Review</Link>
-                ) : (
-                   <button onClick={handleCompleteBooking} className="w-full py-3.5 rounded-xl text-[0.875rem] font-black flex items-center justify-center gap-2 transition-all cursor-pointer border-none text-white" style={{ background: "var(--brand-primary)" }}><CheckCircle2 size={16} /> Complete Booking</button>
-                )}
-              </div>
             </div>
 
           </div>
         </div>
       </div>
+
 
       {showCamera && <QrCameraModal phase={cameraPhase} error={cameraError} videoRef={videoRef} onClose={closeCamera} onRetry={openCamera} />}
     </>
