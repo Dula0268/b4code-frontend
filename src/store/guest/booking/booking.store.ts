@@ -46,6 +46,7 @@ type GuestBookingActions = {
   getBookingByCode: (code: string) => StoredBooking | undefined;
   getBookingsByEmail: (email: string) => StoredBooking[];
   cancelBooking: (id: string) => void;
+  modifyBooking: (id: string, updates: Partial<StoredBooking>) => void;
   updateBookingStatus: (code: string, updates: Partial<StoredBooking>) => void;
   setLoading: (value: boolean) => void;
   setError: (message: string | null) => void;
@@ -106,6 +107,12 @@ export const useGuestBookingStore = create<GuestBookingState & GuestBookingActio
       const updated = get().bookings.map((b) =>
         b.id === id ? { ...b, status: "CANCELLED" as BookingStatus } : b
       );
+      saveBookings(updated);
+      set({ bookings: updated });
+    },
+
+    modifyBooking: (id, updates) => {
+      const updated = get().bookings.map((b) => (b.id === id ? { ...b, ...updates } : b));
       saveBookings(updated);
       set({ bookings: updated });
     },

@@ -130,8 +130,10 @@ function useCancelBookingLogic() {
       if (targetBookingId && !targetBookingId.startsWith("bk-")) {
         type AuthUserLike = { id?: number }
         const guestIdToUse = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
-        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${targetBookingId}/cancel?guestId=${guestIdToUse}`, {
-            method: "PATCH"
+        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${targetBookingId}/cancel`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason: reason.trim(), guestId: guestIdToUse, comments: comments.trim() }),
         });
         if (!res.ok) {
             throw new Error("Failed to cancel booking on server.");

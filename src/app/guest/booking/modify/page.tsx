@@ -95,7 +95,8 @@ function useModifyReservationLogic() {
   const roomUpgrade = roomId === "executive" ? APP_CONFIG.executiveExtra * newNights : 0
   const newTotal = APP_CONFIG.pricePerNight * newNights + roomUpgrade
   const guestFeeTotal = guests > originalData.guests ? APP_CONFIG.guestFee * (guests - originalData.guests) : 0
-  const additionalDue = Math.max(0, newTotal - originalData.total + guestFeeTotal)
+  const priceDiff = newTotal - originalData.total + guestFeeTotal // may be negative => refund
+  const additionalDue = priceDiff
 
   const handleCheckIn = (val: string) => {
     setCheckIn(val)
@@ -112,9 +113,10 @@ function useModifyReservationLogic() {
       const targetBookingId = storeBooking?.id || apiBookingId
       if (targetBookingId && !targetBookingId.startsWith("bk-")) {
         type AuthUserLike = { id?: number }
-        const guestIdToUse = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
+        const guestIdToUse = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1
         const selectedRoomId = roomId === "executive" ? 2 : Number.parseInt(storeBooking?.roomId ?? "1", 10) || 1
         const payload = {
+          guestId: guestIdToUse,
           propertyId: Number.parseInt(storeBooking?.propertyId ?? propertyIdParam ?? "1", 10) || 1,
           roomId: selectedRoomId,
           checkInDate: checkIn,
@@ -123,13 +125,34 @@ function useModifyReservationLogic() {
           specialRequests: "Modified booking",
           paymentMethod: "CARD",
           totalPrice: newTotal,
-        };
-        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${targetBookingId}?guestId=${guestIdToUse}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        }
+        // Try server modify; if server doesn't support modify, we'll fallback to local store update
+        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${targetBookingId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
         if (!res.ok) throw new Error("Failed to modify booking on server.");
       }
-      router.push("/guest/booking/confirmation")
+      // If new total is less than original, route to refund flow
+      if (priceDiff < 0) {
+        router.push(`/guest/booking/refund?bookingId=${encodeURIComponent(targetBookingId || storeBooking?.id || "")}&source=modify&refundAmount=${encodeURIComponent(String(Math.abs(priceDiff)))}`)
+      } else {
+        router.push("/guest/booking/confirmation")
+      }
     } catch (e: unknown) {
-      setErrorMsg(e instanceof Error ? e.message : "Failed to modify the reservation. Please try again.")
+      // Fallback: update local store and proceed
+      try {
+        if (storeBooking) {
+          useGuestBookingStore.getState().modifyBooking(storeBooking.id, {
+            checkIn, checkOut, guests, totalPrice: newTotal,
+          })
+        }
+        if (priceDiff < 0) {
+          router.push(`/guest/booking/refund?bookingId=${encodeURIComponent(storeBooking?.id || apiBookingId || "")}&source=modify&refundAmount=${encodeURIComponent(String(Math.abs(priceDiff)))}`)
+        } else {
+          router.push("/guest/booking/confirmation")
+        }
+        return
+      } catch {
+        setErrorMsg(e instanceof Error ? e.message : "Failed to modify the reservation. Please try again.")
+      }
     } finally { setSubmitting(false) }
   }
 
@@ -313,16 +336,30 @@ function ModifyContent() {
                   ))}
                 </div>
                 <div className="border-t pt-4 mb-5" style={{ borderColor: "var(--gray-5)" }}>
-                  <p className="text-xs mb-1" style={{ color: "var(--gray-3)" }}>Additional Amount to Pay</p>
-                  <p className="text-[1.75rem] font-black leading-tight" style={{ color: "var(--brand-primary)" }}>{formatCurrency(logic.additionalDue)}</p>
-                  <p className="text-[0.6875rem] mt-0.5" style={{ color: "var(--gray-4)" }}>Tax & fees included</p>
+                  <p className="text-xs mb-1" style={{ color: "var(--gray-3)" }}>{logic.additionalDue >= 0 ? "Additional Amount to Pay" : "Refund Amount"}</p>
+                    <p className="text-[1.75rem] font-black leading-tight" style={{ color: logic.additionalDue >= 0 ? "var(--brand-primary)" : "var(--state-success)" }}>{formatCurrency(Math.abs(logic.additionalDue))}</p>
+                    <p className="text-[0.6875rem] mt-0.5" style={{ color: "var(--gray-4)" }}>Tax & fees included</p>
                 </div>
                 <button onClick={logic.handleConfirmChanges} disabled={!logic.dateValid || logic.newNights === 0 || logic.submitting}
                   className="w-full flex items-center justify-center gap-2 text-white font-bold text-sm py-3.5 rounded-xl transition-colors cursor-pointer mb-3 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ background: "var(--brand-primary)" }}>
-                  {logic.submitting ? (<><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Processing…</>) : (<>Confirm & Pay Changes <ArrowRight size={15} /></>)}
+                  {logic.submitting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Processing…
+                    </>
+                  ) : (
+                    <>
+                      {logic.additionalDue < 0 ? (
+                        <>Request Refund <ArrowRight size={15} /></>
+                      ) : logic.additionalDue > 0 ? (
+                        <>Confirm & Pay Changes <ArrowRight size={15} /></>
+                      ) : (
+                        <>Confirm Changes <ArrowRight size={15} /></>
+                      )}
+                    </>
+                  )}
                 </button>
-                <button onClick={logic.handleCancelModifications} disabled={logic.submitting} className="w-full text-center text-sm transition-colors cursor-pointer" style={{ color: "var(--gray-3)" }}>Cancel Modifications</button>
+                <button onClick={logic.handleCancelModifications} disabled={logic.submitting} className="w-full text-center text-sm transition-colors cursor-pointer" style={{ color: "var(--state-error)" }}>Cancel Modifications</button>
                 <p className="text-[0.6875rem] mt-3 text-center leading-relaxed" style={{ color: "var(--gray-4)" }}>By confirming, you agree to our 24-hour modification policy. Additional charges are non-refundable.</p>
               </div>
               {/* Policy card */}

@@ -10,6 +10,8 @@ import { useAuthStore } from "@/store/auth/auth.store"
 import { guestApi } from "@/lib/api"
 import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/booking.store"
 import BookingCard, { type BookingCardData } from "@/components/features/guest/booking/booking-card"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
+import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 
 const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
@@ -127,6 +129,7 @@ export default function MyBookingsPage() {
 
   return (
     <div className="min-h-screen relative bg-[#faf6f1] overflow-hidden">
+      <GuestTopbar />
       {/* Immersive Background */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -211,6 +214,7 @@ export default function MyBookingsPage() {
           </p>
         </div>
       </div>
+      <GuestFooter />
     </div>
   )
 }

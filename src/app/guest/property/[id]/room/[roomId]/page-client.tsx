@@ -99,9 +99,9 @@ function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | 
     const isGuestLimitExceeded = totalGuests > room.maxGuests;
 
     const handleApplyPromo = () => {
-        if (promoCode.trim()) {
-            setAppliedPromoCode(promoCode.trim());
-        }
+        const trimmedCode = promoCode.trim()
+        if (!trimmedCode) return
+        setAppliedPromoCode(trimmedCode)
     }
 
     return { 
@@ -309,7 +309,7 @@ function RoomDetailPageContent({ property, room }: { property: PropertyDetail; r
                             </div>
 
                             <div className="mb-5 pb-5 border-b border-[#f0f0f0]">
-                                <button className="text-[14px] font-semibold text-[var(--brand-primary)] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between"><span>Have a promo code? {appliedPromoCode && !promoError && "✅ Applied"}</span></button>
+                                <button className="text-[14px] font-semibold text-[var(--brand-primary)] hover:underline bg-transparent border-none p-0 cursor-pointer text-left w-full flex items-center justify-between"><span>Have a promo code?</span></button>
                                 <div className="mt-3 flex flex-col gap-2">
                                     <div className="flex gap-2">
                                         <input type="text" placeholder="Enter code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className={`flex-1 w-full px-3 py-2 border ${promoError ? "border-red-500" : "border-[#e0e0e0]"} rounded-xl text-[14px] outline-none focus:border-[var(--brand-primary)] transition-colors bg-[#fafafa]`} />

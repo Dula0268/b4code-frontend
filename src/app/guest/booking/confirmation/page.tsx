@@ -12,7 +12,6 @@ import {
 import { getPropertyById } from "@/lib/mock-properties"
 import { useGuestBookingStore, type StoredBooking } from "@/store/guest/booking/booking.store"
 import { differenceInDays, format } from "date-fns"
-import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -152,7 +151,6 @@ function ConfirmationContent() {
   if (!booking && !fallback) {
     return (
       <div className="min-h-screen flex flex-col">
-        <GuestTopbar />
         <div className="flex-1 flex items-center justify-center" style={{ color: "var(--gray-3)" }}>
           Loading confirmation…
         </div>
@@ -163,8 +161,6 @@ function ConfirmationContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <GuestTopbar />
-
       <main className="flex-1 pt-20 pb-16" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
         <div className="max-w-[660px] mx-auto px-4 flex flex-col gap-6">
 
