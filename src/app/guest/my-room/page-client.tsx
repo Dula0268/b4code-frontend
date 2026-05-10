@@ -30,7 +30,12 @@ function useActiveBooking() {
     .filter(b => b.status === "CONFIRMED")
     .sort((a, b) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime())[0]
 
-  return { active, loading }
+  // If no active stay, find the most recently completed one
+  const completed = bookings
+    .filter(b => b.status === "COMPLETED")
+    .sort((a, b) => new Date(b.checkOut).getTime() - new Date(a.checkOut).getTime())[0]
+
+  return { active, completed, loading }
 }
 
 declare class BarcodeDetector {
@@ -164,8 +169,11 @@ function QrCameraModal({ phase, error, videoRef, onClose, onRetry }: { phase: Ca
 
 function Dashboard() {
   const router = useRouter()
-  const { active, loading } = useActiveBooking()
-  const user   = useAuthStore(s => s.user)
+  const { active, completed, loading } = useActiveBooking()
+  const displayBooking = active || completed
+  const isCompleted = !active && !!completed
+  
+  const user = useAuthStore(s => s.user)
   const firstName = user?.profile?.firstName ?? "Guest"
   const hour      = new Date().getHours()
   const greeting  = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
@@ -229,6 +237,18 @@ function Dashboard() {
 
   const closeCamera = () => { stopCamera(); setShowCamera(false); setCameraPhase("idle") }
 
+  const handleCompleteBooking = async () => {
+    if (!active) return
+    try {
+      const { guestApi } = await import("@/lib/api")
+      await guestApi.completeBooking(Number(active.id))
+      // Force refresh bookings in store
+      if (user?.email) await useGuestBookingStore.getState().fetchUserBookings(user.email)
+    } catch (err) {
+      alert("Failed to complete booking. Please try again.")
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20" style={{ background: "var(--gray-5)" }}>
@@ -237,7 +257,7 @@ function Dashboard() {
     )
   }
 
-  if (!active) {
+  if (!displayBooking) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center pt-20 px-4 text-center" style={{ background: "var(--gray-5)" }}>
         <div className="w-20 h-20 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-6">
@@ -254,13 +274,13 @@ function Dashboard() {
     )
   }
 
-  const nightsDone = Math.max(0, Math.min(active.nights, Math.floor((new Date().getTime() - new Date(active.checkIn).getTime()) / (1000 * 60 * 60 * 24))))
-  const nightsTotal = active.nights
-  const stayProgress = Math.round((nightsDone / nightsTotal) * 100)
-  const stayDates = active.checkInFormatted + " – " + active.checkOutFormatted
-  const balanceDue = `LKR ${active.totalPrice.toLocaleString()}`
-  const wifiNetwork = `${active.property.replace(/\s+/g, "")}_Guest`
-  const wifiPass = `Stay${active.id}!`
+  const nightsDone = Math.max(0, Math.min(displayBooking.nights, Math.floor((new Date().getTime() - new Date(displayBooking.checkIn).getTime()) / (1000 * 60 * 60 * 24))))
+  const nightsTotal = displayBooking.nights
+  const stayProgress = isCompleted ? 100 : Math.round((nightsDone / nightsTotal) * 100)
+  const stayDates = displayBooking.checkInFormatted + " – " + displayBooking.checkOutFormatted
+  const balanceDue = `LKR ${displayBooking.totalPrice.toLocaleString()}`
+  const wifiNetwork = `${displayBooking.property.replace(/\s+/g, "")}_Guest`
+  const wifiPass = `Stay${displayBooking.id}!`
 
   return (
     <>
@@ -270,20 +290,20 @@ function Dashboard() {
             <div className="pointer-events-none absolute -top-20 -right-20 w-80 h-80 rounded-full blur-[80px]" style={{ background: "color-mix(in srgb, var(--brand-secondary) 12%, transparent)" }} />
             <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.625rem] font-black uppercase tracking-widest mb-3 border" style={{ background: "color-mix(in srgb, var(--brand-secondary) 15%, transparent)", borderColor: "color-mix(in srgb, var(--brand-secondary) 20%, transparent)", color: "var(--brand-secondary)" }}>
-                  <Star size={9} fill="currentColor" /> Premium Suite
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.625rem] font-black uppercase tracking-widest mb-3 border" style={{ background: isCompleted ? "rgba(59, 130, 246, 0.15)" : "color-mix(in srgb, var(--brand-secondary) 15%, transparent)", borderColor: isCompleted ? "rgba(59, 130, 246, 0.25)" : "color-mix(in srgb, var(--brand-secondary) 20%, transparent)", color: isCompleted ? "#60a5fa" : "var(--brand-secondary)" }}>
+                  {isCompleted ? <CheckCircle2 size={9} fill="currentColor" /> : <Star size={9} fill="currentColor" />} {isCompleted ? "Stay Completed" : "Premium Suite"}
                 </div>
                 <h1 className="text-3xl sm:text-[2rem] font-black text-white leading-tight tracking-tight" style={{ fontSize: "clamp(1.5rem, 4vw, 2rem)" }}>
-                  {greeting}, <span style={{ color: "var(--brand-secondary)" }}>{firstName}</span>
+                  {isCompleted ? "Hope you enjoyed your stay" : `${greeting}, `}<span style={{ color: "var(--brand-secondary)" }}>{firstName}</span>
                 </h1>
-                <p className="text-sm text-white/40 mt-1">{active.property} · {active.roomName}</p>
+                <p className="text-sm text-white/40 mt-1">{displayBooking.property} · {displayBooking.roomName}</p>
               </div>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                 {[
-                  { icon: BedDouble,     label: "Room",      value: active.roomName  },
-                  { icon: Clock,         label: "Check-in",  value: active.checkInFormatted },
-                  { icon: CalendarClock, label: "Check-out", value: active.checkOutFormatted },
+                  { icon: BedDouble,     label: "Room",      value: displayBooking.roomName  },
+                  { icon: Clock,         label: "Check-in",  value: displayBooking.checkInFormatted },
+                  { icon: CalendarClock, label: "Check-out", value: displayBooking.checkOutFormatted },
                   { icon: DollarSign,    label: "Total",     value: balanceDue, accent: true },
                 ].map(({ icon: Icon, label, value, accent }) => (
                   <div key={label} className="rounded-xl px-3 py-2.5 border" style={{ background: accent ? "color-mix(in srgb, var(--brand-secondary) 10%, transparent)" : "rgba(255,255,255,0.05)", borderColor: accent ? "color-mix(in srgb, var(--brand-secondary) 25%, transparent)" : "rgba(255,255,255,0.08)" }}>
@@ -315,22 +335,33 @@ function Dashboard() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { icon: Utensils,      label: "Order Food",   sub: "Browse menu",   href: "/guest/order/menu",            bg: "bg-amber-50",  border: "border-amber-100",  iconCls: "text-amber-600"  },
-                    { icon: MessageSquare, label: "Staff Chat",   sub: "We reply fast", href: `/guest/messages?type=staff&bookingId=${active.id}`,  bg: "bg-blue-50",   border: "border-blue-100",   iconCls: "text-blue-600"   },
+                    { icon: MessageSquare, label: "Staff Chat",   sub: "We reply fast", href: `/guest/messages?type=staff&bookingId=${displayBooking.id}`,  bg: "bg-blue-50",   border: "border-blue-100",   iconCls: "text-blue-600"   },
                     { icon: ClipboardList, label: "Order Status", sub: "Track your order", href: "/guest/my-room/order-details", bg: "bg-green-50",  border: "border-green-100",  iconCls: "text-green-600"  },
-                    { icon: Pencil,        label: "Write Review", sub: "Share feedback", href: `/guest/reviews?propertyId=${active.propertyId}`, bg: "bg-purple-50", border: "border-purple-100", iconCls: "text-purple-600" },
-                  ].map(({ icon: Icon, label, sub, href, bg, border, iconCls }) => (
-                    <Link key={label} href={href} className={`flex flex-col items-center text-center gap-2.5 p-4 rounded-2xl border ${bg} ${border} hover:shadow-md transition-all no-underline group`}>
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${bg} ${border} border group-hover:scale-110 transition-transform`}><Icon size={20} className={iconCls} /></div>
-                      <div>
-                        <p className="text-[0.8125rem] font-black" style={{ color: "var(--brand-primary)" }}>{label}</p>
-                        <p className="text-[0.6875rem] mt-0.5" style={{ color: "var(--gray-4)" }}>{sub}</p>
-                      </div>
-                    </Link>
-                  ))}
+                    { icon: isCompleted ? Pencil : CheckCircle2,  label: isCompleted ? "Write Review" : "Complete Book", sub: isCompleted ? "Share feedback" : "Finish stay",    onClick: isCompleted ? () => router.push(`/guest/reviews?propertyId=${displayBooking.propertyId}`) : handleCompleteBooking,         bg: isCompleted ? "bg-purple-50" : "bg-emerald-50", border: isCompleted ? "border-purple-100" : "border-emerald-100", iconCls: isCompleted ? "text-purple-600" : "text-emerald-600" },
+                  ].map(({ icon: Icon, label, sub, href, bg, border, iconCls, onClick }) => {
+                    const content = (
+                      <>
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${bg} ${border} border group-hover:scale-110 transition-transform`}><Icon size={20} className={iconCls} /></div>
+                        <div>
+                          <p className="text-[0.8125rem] font-black" style={{ color: "var(--brand-primary)" }}>{label}</p>
+                          <p className="text-[0.6875rem] mt-0.5" style={{ color: "var(--gray-4)" }}>{sub}</p>
+                        </div>
+                      </>
+                    )
+                    return href ? (
+                      <Link key={label} href={href} className={`flex flex-col items-center text-center gap-2.5 p-4 rounded-2xl border ${bg} ${border} hover:shadow-md transition-all no-underline group`}>
+                        {content}
+                      </Link>
+                    ) : (
+                      <button key={label} onClick={onClick} className={`flex flex-col items-center text-center gap-2.5 p-4 rounded-2xl border ${bg} ${border} hover:shadow-md transition-all group cursor-pointer bg-transparent w-full`}>
+                        {content}
+                      </button>
+                    )
+                  })}
                 </div>
-                <button onClick={openCamera} className="mt-4 w-full flex items-center justify-between px-5 py-3.5 rounded-xl border transition-colors cursor-pointer" style={{ background: "var(--gray-5)", borderColor: "var(--border)" }}>
-                  <span className="flex items-center gap-2.5 text-[0.8125rem] font-bold" style={{ color: "var(--fg)" }}><Camera size={16} style={{ color: "var(--gray-3)" }} /> Scan Room QR Code</span>
-                  <ChevronRight size={15} style={{ color: "var(--gray-4)" }} />
+                <button onClick={openCamera} className="mt-4 w-full flex items-center justify-center gap-2.5 px-5 py-4 rounded-xl transition-all cursor-pointer text-white shadow-lg hover:shadow-xl active:scale-[0.98]" style={{ background: "var(--brand-primary)" }}>
+                  <Camera size={18} />
+                  <span className="text-[0.9375rem] font-black uppercase tracking-widest">Scan Room QR Code</span>
                 </button>
               </div>
 
@@ -368,15 +399,15 @@ function Dashboard() {
                     { icon: AlertCircle, label: "Report Issue",  q: "I need to report an issue in my room." },
                     { icon: Bell,        label: "Assistance",   q: "I need general assistance, please." },
                   ].map(({ icon: Icon, label, q }) => (
-                    <Link key={label} href={`/guest/messages?type=staff&bookingId=${active.id}&q=${encodeURIComponent(q)}`} className="flex flex-col items-center gap-2 p-3.5 border rounded-xl transition-all no-underline text-center group" style={{ borderColor: "var(--border)" }}>
+                    <Link key={label} href={`/guest/messages?type=staff&bookingId=${displayBooking.id}&q=${encodeURIComponent(q)}`} className="flex flex-col items-center gap-2 p-3.5 border rounded-xl transition-all no-underline text-center group" style={{ borderColor: "var(--border)" }}>
                       <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}><Icon size={17} style={{ color: "var(--gray-2)" }} /></div>
                       <span className="text-[0.6875rem] font-bold" style={{ color: "var(--gray-2)" }}>{label}</span>
                     </Link>
                   ))}
                 </div>
 
-                <Link href={`/guest/messages?type=staff&bookingId=${active.id}`} className="mt-4 w-full py-3 border rounded-xl text-[0.8125rem] font-bold flex items-center justify-center gap-2 no-underline transition-all" style={{ borderColor: "var(--border)", color: "var(--gray-2)" }}>
-                  <MessageSquare size={14} /> Open Staff Chat <ArrowRight size={13} className="ml-auto" />
+                <Link href={`/guest/messages?type=staff&bookingId=${displayBooking.id}`} className="mt-4 w-full py-4 rounded-xl text-[0.9375rem] font-black flex items-center justify-center gap-2 no-underline transition-all text-white shadow-lg hover:shadow-xl" style={{ background: "var(--brand-primary)" }}>
+                  <MessageSquare size={16} /> Open Staff Chat
                 </Link>
               </div>
             </div>
@@ -386,9 +417,9 @@ function Dashboard() {
                 <p className="text-[0.5625rem] font-black uppercase tracking-widest mb-4 text-white/35">Room Details</p>
                 <div className="space-y-3">
                   {[
-                    { icon: BedDouble,     label: "Room",      value: active.roomName              },
-                    { icon: Clock,         label: "Check-in",  value: `${active.checkInFormatted}, 2:00 PM`   },
-                    { icon: CalendarClock, label: "Check-out", value: `${active.checkOutFormatted}, 11:00 AM` },
+                    { icon: BedDouble,     label: "Room",      value: displayBooking.roomName              },
+                    { icon: Clock,         label: "Check-in",  value: `${displayBooking.checkInFormatted}, 2:00 PM`   },
+                    { icon: CalendarClock, label: "Check-out", value: `${displayBooking.checkOutFormatted}, 11:00 AM` },
                     { icon: TrendingUp,   label: "Stay",      value: `${nightsTotal} nights`  },
                   ].map(({ icon: Icon, label, value }) => (
                     <div key={label} className="flex items-center gap-3">
@@ -425,17 +456,18 @@ function Dashboard() {
                 <p className="text-[0.8125rem] leading-relaxed mb-4" style={{ color: "var(--gray-2)" }}>Need anything? We&apos;re available 24 hours a day.</p>
                 <div className="flex gap-2">
                   <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer" style={{ background: "var(--brand-primary)" }}><Phone size={14} /> Call Ext. 0</button>
-                  <Link href={`/guest/messages?type=staff&bookingId=${active.id}`} className="flex-1 flex items-center justify-center gap-2 py-3 border rounded-xl text-xs font-bold transition-all no-underline" style={{ borderColor: "var(--border)", color: "var(--gray-2)" }}><MessageSquare size={14} /> Message</Link>
+                  <Link href={`/guest/messages?type=staff&bookingId=${displayBooking.id}`} className="flex-1 flex items-center justify-center gap-2 py-3 border rounded-xl text-xs font-bold transition-all no-underline" style={{ borderColor: "var(--border)", color: "var(--gray-2)" }}><MessageSquare size={14} /> Message</Link>
                 </div>
               </div>
 
               <div className="ps-card p-5">
-                <div className="flex items-center gap-2 mb-3"><ThumbsUp size={16} className="text-purple-500" /><p className="text-[0.875rem] font-black" style={{ color: "var(--fg)" }}>Enjoying your stay?</p></div>
-                <div className="flex gap-0.5 mb-3">
-                  {[1, 2, 3, 4, 5].map(s => <Star key={s} size={22} className={s <= 4 ? "text-amber-400 fill-amber-400" : "text-[#ddd]"} />)}
-                </div>
-                <p className="text-xs leading-relaxed mb-4" style={{ color: "var(--gray-3)" }}>Share your experience. Your feedback helps us improve for every guest.</p>
-                <Link href={`/guest/reviews?propertyId=${active.propertyId}`} className="w-full py-3 rounded-xl text-[0.8125rem] font-bold flex items-center justify-center gap-2 no-underline transition-colors" style={{ background: "var(--brand-primary)", color: "white" }}><Pencil size={14} /> Write a Review</Link>
+                <div className="flex items-center gap-2 mb-3"><ThumbsUp size={16} className={isCompleted ? "text-amber-500" : "text-emerald-500"} /><p className="text-[0.875rem] font-black" style={{ color: "var(--fg)" }}>{isCompleted ? "Enjoyed your stay?" : "Ready to checkout?"}</p></div>
+                <p className="text-xs leading-relaxed mb-4" style={{ color: "var(--gray-3)" }}>{isCompleted ? "Your feedback helps us improve for every guest. Please share your experience with us." : "Marking your stay as complete will allow you to share your feedback and help us improve."}</p>
+                {isCompleted ? (
+                   <Link href={`/guest/reviews?propertyId=${displayBooking.propertyId}`} className="w-full py-3.5 rounded-xl text-[0.875rem] font-black flex items-center justify-center gap-2 no-underline transition-all text-white" style={{ background: "var(--brand-primary)" }}><Pencil size={16} /> Write a Review</Link>
+                ) : (
+                   <button onClick={handleCompleteBooking} className="w-full py-3.5 rounded-xl text-[0.875rem] font-black flex items-center justify-center gap-2 transition-all cursor-pointer border-none text-white" style={{ background: "var(--brand-primary)" }}><CheckCircle2 size={16} /> Complete Booking</button>
+                )}
               </div>
             </div>
 
