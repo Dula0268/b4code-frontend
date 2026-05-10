@@ -70,7 +70,7 @@ export default function AdminHeader({
         className="relative w-[42px] h-[42px] flex-shrink-0 cursor-pointer"
       >
         {/* Avatar circle — overflow-hidden so SVG clips cleanly */}
-        <div className="w-[42px] h-[42px] rounded-full overflow-hidden">
+        <div className="w-[42px] h-[42px] rounded-full overflow-hidden bg-[#953002]/10 border-2 border-white shadow-sm ring-1 ring-neutral-100 flex items-center justify-center relative">
           {avatarSrc ? (
             <Image
               src={avatarSrc}
@@ -78,12 +78,20 @@ export default function AdminHeader({
               fill
               className="object-cover"
             />
-          ) : user?.profile ? (
-            <div className="w-full h-full bg-[#953002] flex items-center justify-center text-white text-sm font-bold">
-              {user.profile.firstName[0].toUpperCase()}{user.profile.lastName[0].toUpperCase()}
-            </div>
+          ) : user?.profile?.avatarUrl ? (
+            <img 
+              src={user.profile.avatarUrl} 
+              alt={adminName} 
+              className="absolute inset-0 w-full h-full object-cover" 
+            />
           ) : (
-            <UserIcon size={42} />
+            <div className="absolute inset-0 w-full h-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-extrabold uppercase">
+              {user?.profile ? (
+                `${user.profile.firstName[0]}${user.profile.lastName[0]}`
+              ) : (
+                user?.email?.[0] || "A"
+              )}
+            </div>
           )}
         </div>
 

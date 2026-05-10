@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, ImagePlus, Plus, Trash2, Clock, GripVertical } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, Clock, GripVertical, X, Upload } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
+import { useAuthStore } from "@/store/auth/auth.store";
+import api from "@/lib/axios";
 import type { Variant, Modifier, AvailabilityWindow } from "@/store/staff/menu/staff-menu.store";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,9 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
   const addItem = useStaffMenuStore((s) => s.addItem);
   const updateItem = useStaffMenuStore((s) => s.updateItem);
   const setSuccess = useStaffMenuStore((s) => s.setSuccess);
+  const isLoading = useStaffMenuStore((s) => s.isLoading);
+  const errorMsg = useStaffMenuStore((s) => s.errorMsg);
+  const setError = useStaffMenuStore((s) => s.setError);
 
   const existing = menu?.items.find((i) => i.id === itemId);
   const isEdit = !!itemId;
@@ -45,13 +50,66 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
   const [nameError, setNameError] = useState(false);
   const [priceError, setPriceError] = useState(false);
 
+  type ImageState = { file?: File; preview: string; isExisting?: boolean };
+  const [itemImages, setItemImages] = useState<ImageState[]>(
+    existing?.imageUrls?.map(url => ({ preview: url, isExisting: true })) || []
+  );
+
+  const { user } = useAuthStore();
+  const propertyId = user?.propertyId;
+
   const back = () => router.push(`/staff/menu/${menuId}`);
 
-  const handleSave = () => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setItemImages(prev => [...prev, { file, preview: reader.result as string }]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeSelectedImage = (index: number) => {
+    setItemImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSave = async () => {
     let hasErr = false;
     if (!name.trim()) { setNameError(true); hasErr = true; }
-    if (!price.trim() || isNaN(Number(price)) || Number(price) < 0) { setPriceError(true); hasErr = true; }
+    if (!price.trim() || isNaN(Number(price)) || Number(price) <= 0) { setPriceError(true); hasErr = true; }
     if (hasErr) return;
+
+    const uploadedUrls = itemImages.filter(img => img.isExisting).map(img => img.preview);
+    const newFiles = itemImages.filter(img => !img.isExisting && img.file).map(img => img.file!);
+    
+    if (newFiles.length > 0) {
+      try {
+        for (const file of newFiles) {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("folder", "menu_items");
+          const res = await api.post("/images/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          if (res.data?.url) {
+            uploadedUrls.push(res.data.url);
+          }
+        }
+      } catch (err) {
+        console.error("Image upload failed:", err);
+        setError("One or more images failed to upload. Please try again.");
+        return;
+      }
+    }
+
+    if (!propertyId) {
+      setError("No property identified. Please refresh or log in again.");
+      return;
+    }
 
     const data = {
       name,
@@ -61,19 +119,24 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
       status: isActive ? ("active" as const) : ("draft" as const),
       calories: calories ? Number(calories) : undefined,
       tag: tag || undefined,
+      imageUrls: uploadedUrls,
       availability,
       variants,
       modifiers,
     };
 
-    if (isEdit && itemId) {
-      updateItem(menuId, itemId, data);
-      setSuccess(`Item "${name}" updated.`);
-    } else {
-      addItem(menuId, data);
-      setSuccess(`Item "${name}" added.`);
+    try {
+      if (isEdit && itemId) {
+        await updateItem(menuId, itemId, data);
+        setSuccess(`Item "${name}" updated.`);
+      } else {
+        await addItem(menuId, data, propertyId);
+        setSuccess(`Item "${name}" added.`);
+      }
+      back();
+    } catch {
+      // errorMsg is set by the store
     }
-    back();
   };
 
   /* ─── Variant helpers ─── */
@@ -132,11 +195,19 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={back}>Cancel</Button>
-          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave}>
-            <Save size={12} /> Save Item
+          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave} disabled={isLoading}>
+            <Save size={12} /> {isLoading ? "Saving..." : "Save Item"}
           </Button>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {errorMsg && (
+        <div className="flex-none flex items-center gap-2 bg-[rgba(235,87,87,0.08)] border border-[rgba(235,87,87,0.2)] rounded-[10px] px-4 py-2 text-sm">
+          <span className="text-[#eb5757] font-medium flex-1">{errorMsg}</span>
+          <button onClick={() => setError(null)} className="text-[#eb5757] hover:opacity-70"><X size={14} /></button>
+        </div>
+      )}
 
       {/* Body — 2-column, scrollable left */}
       <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
@@ -363,11 +434,34 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
 
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4">
-            <h3 className="text-xs font-bold text-[var(--black-2)] mb-2">Item Images</h3>
-            <div className="border-2 border-dashed border-[var(--gray-5)] rounded-[8px] py-8 flex flex-col items-center gap-1.5">
-              <ImagePlus size={24} className="text-[var(--gray-4)]" />
-              <p className="text-[10px] text-[var(--gray-3)]"><span className="text-[var(--brand-primary)] font-medium">Upload a file</span> or drag</p>
-              <p className="text-[9px] text-[var(--gray-4)]">PNG, JPG up to 10MB</p>
+            <h3 className="text-xs font-bold text-[var(--black-2)] mb-3 uppercase tracking-wider">Item Images</h3>
+            
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {itemImages.map((img, idx) => (
+                <div key={idx} className="relative aspect-square rounded-[8px] overflow-hidden border border-[var(--gray-5)] group">
+                  <img src={img.preview} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => removeSelectedImage(idx)}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-0 p-0"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+              
+              {itemImages.length < 8 && (
+                <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-[var(--gray-5)] rounded-[8px] cursor-pointer hover:border-[var(--brand-primary)] hover:bg-[rgba(149,48,2,0.02)] transition-colors">
+                  <Upload size={20} className="text-[var(--gray-4)]" />
+                  <span className="text-[10px] text-[var(--gray-4)] mt-1 font-medium">Add Photo</span>
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+                </label>
+              )}
+            </div>
+            
+            <div className="bg-[rgba(0,0,0,0.02)] rounded-[8px] p-2.5">
+              <p className="text-[9px] text-[var(--gray-3)] leading-relaxed">
+                Images help guests choose dishes. High quality photos (1:1 aspect ratio) work best.
+              </p>
             </div>
             </CardContent>
           </Card>

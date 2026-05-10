@@ -48,7 +48,7 @@ function LoginPageContent() {
         return;
       }
 
-      setError("Invalid email or password.");
+      setError(message || "Invalid email or password.");
     }
   }
 
@@ -174,7 +174,15 @@ function LoginPageContent() {
                 <div className="text-center text-sm text-neutral-700">
                   Don&apos;t have an account yet?{" "}
                   <Link
-                    href={searchParams?.get("redirect") ? `/auth/register?role=guest&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "/auth/register"}
+                    href={
+                      searchParams?.get("redirect")?.includes("/staff")
+                        ? `/auth/register?role=staff&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
+                        : searchParams?.get("redirect")?.includes("/owner")
+                        ? `/auth/register?role=owner&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
+                        : searchParams?.get("redirect")
+                        ? `/auth/register?role=guest&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
+                        : "/auth/register"
+                    }
                     className="font-extrabold text-[var(--brand-primary)] hover:underline"
                   >
                     Register for an account

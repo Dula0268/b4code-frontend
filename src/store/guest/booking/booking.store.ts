@@ -94,6 +94,14 @@ export const useGuestBookingStore = create<GuestBookingState & GuestBookingActio
       );
     },
 
+    updateBookingStatus: (code, updates) => {
+      const updated = get().bookings.map((b) =>
+        b.confirmationCode === code ? { ...b, ...updates } : b
+      );
+      saveBookings(updated);
+      set({ bookings: updated });
+    },
+
     cancelBooking: (id) => {
       const updated = get().bookings.map((b) =>
         b.id === id ? { ...b, status: "CANCELLED" as BookingStatus } : b

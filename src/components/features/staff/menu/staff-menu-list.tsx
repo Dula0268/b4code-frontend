@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   UtensilsCrossed,
   Layers,
-  TrendingUp,
   Plus,
   SlidersHorizontal,
   Pencil,
@@ -15,6 +14,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
+import { useAuthStore } from "@/store/auth/auth.store";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ export default function StaffMenuList() {
   const deleteMenu = useStaffMenuStore((s) => s.deleteMenu);
   const successMsg = useStaffMenuStore((s) => s.successMsg);
   const setSuccess = useStaffMenuStore((s) => s.setSuccess);
+  const errorMsg = useStaffMenuStore((s) => s.errorMsg);
+  const setError = useStaffMenuStore((s) => s.setError);
   const isLoading = useStaffMenuStore((s) => s.isLoading);
 
   const [page, setPage] = useState(0);
@@ -39,11 +41,19 @@ export default function StaffMenuList() {
 
   const activeItems = menus.reduce((n, m) => n + (m.status === "active" ? m.itemCount : 0), 0);
 
-  // Fetch menus on mount (assuming property ID is 1 for now - adjust as needed)
+  const { user } = useAuthStore();
+
+  // Fetch menus on mount
   useEffect(() => {
-    const propertyId = 1; // TODO: Get from user context or URL
-    fetchMenus(propertyId);
-  }, [fetchMenus]);
+    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
+    console.log(`🍽️ StaffMenuList mounted, fetching menus for property: ${propertyId}...`);
+    if (propertyId) {
+      fetchMenus(Number(propertyId));
+    } else {
+      console.warn("⚠️ No propertyId found for staff menu list");
+      fetchMenus(1);
+    }
+  }, [user, fetchMenus]);
 
   // Auto-dismiss success banner
   useEffect(() => {
@@ -52,10 +62,12 @@ export default function StaffMenuList() {
     return () => clearTimeout(t);
   }, [successMsg, setSuccess]);
 
-  const handleDeleteMenu = (menuId: string, menuName: string) => {
+  const handleDeleteMenu = async (menuId: string, menuName: string) => {
     if (typeof window !== "undefined" && window.confirm(`Are you sure you want to delete the menu "${menuName}"? This action cannot be undone.`)) {
-      deleteMenu(menuId);
-      setSuccess(`Menu "${menuName}" deleted successfully.`);
+      await deleteMenu(menuId);
+      if (!useStaffMenuStore.getState().errorMsg) {
+        setSuccess(`Menu "${menuName}" deleted successfully.`);
+      }
     }
   };
 
@@ -79,6 +91,14 @@ export default function StaffMenuList() {
           <CheckCircle size={16} className="text-[var(--state-success)]" />
           <span className="text-[var(--black-2)] font-medium flex-1">{successMsg}</span>
           <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setSuccess(null)}><X size={14} /></Button>
+        </div>
+      )}
+
+      {/* ── Error Banner ── */}
+      {errorMsg && (
+        <div className="flex-none flex items-center gap-2 bg-[rgba(235,87,87,0.08)] border border-[rgba(235,87,87,0.2)] rounded-[10px] px-4 py-2 text-sm">
+          <span className="text-[#eb5757] font-medium flex-1">{errorMsg}</span>
+          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setError(null)}><X size={14} /></Button>
         </div>
       )}
 
@@ -106,11 +126,10 @@ export default function StaffMenuList() {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div className="flex-none grid grid-cols-3 gap-3">
+      <div className="flex-none grid grid-cols-2 gap-3">
         {[
-          { label: "Total Menus", value: String(total), sub: "2 added this month", icon: UtensilsCrossed, iconBg: "bg-[rgba(149,48,2,0.08)]", iconColor: "text-[var(--brand-primary)]" },
+          { label: "Total Menus", value: String(total), sub: `${menus.filter(m => m.status === "active").length} active`, icon: UtensilsCrossed, iconBg: "bg-[rgba(149,48,2,0.08)]", iconColor: "text-[var(--brand-primary)]" },
           { label: "Active Items", value: String(activeItems), sub: "Across all menus", icon: Layers, iconBg: "bg-[rgba(39,174,96,0.08)]", iconColor: "text-[var(--state-success)]" },
-          { label: "Most Popular", value: "Seafood Dinner", sub: "45 orders last week", icon: TrendingUp, iconBg: "bg-[rgba(149,48,2,0.08)]", iconColor: "text-[var(--brand-primary)]" },
         ].map((s) => (
           <Card key={s.label} className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="px-4 py-3 flex items-start justify-between">

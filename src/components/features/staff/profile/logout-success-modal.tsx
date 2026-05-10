@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/auth/auth.store";
 
 export default function LogoutSuccessModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
+  const { logout } = useAuthStore();
 
   useEffect(() => {
     const handleLogout = () => {
@@ -38,11 +38,12 @@ export default function LogoutSuccessModal() {
         <Button 
           className="w-full h-12 rounded-full bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-[15px] transition-colors"
           onClick={() => {
+            logout();
             setIsOpen(false);
-            router.push("/auth/login");
+            window.location.href = "/";
           }}
         >
-          Go to Login Page
+          Go to Home Page
         </Button>
       </div>
     </div>
