@@ -9,6 +9,8 @@ export interface FinanceSummaryDto {
   totalRefunds: number;
   pendingRefunds: number;   // same value, alias used by frontend KPI card
   currency: string;
+  revenueGrowth?: string;   // e.g., "+5%", "-3%", "0%"
+  payoutGrowth?: string;    // e.g., "+2%", "-1%", "0%"
 }
 
 export interface RevenueTrendPointDto {
