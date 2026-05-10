@@ -102,7 +102,7 @@ export default function DiscountPage() {
                 <Logo width={120} height={36} />
                 <div className="flex items-center gap-3.5">
                     <a
-                        href="/owner/ownerDashboard/message"
+                        href="/owner/message"
                         className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors"
                     >
                         <Bell size={18} color="#4f4f4f" />

@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { reservationsApi } from "@/api/owner/reservations.api";
 import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
@@ -114,9 +115,50 @@ const reservations = [
 export default function ReservationPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [reservationsData, setReservationsData] = useState<any[]>([]);
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [metrics, setMetrics] = useState({
+        confirmed: 0,
+        pending: 0,
+        checkInsToday: 0,
+        cancellations: 0,
+        totalBookingsThisMonth: 0
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchReservations = async () => {
+            setLoading(true);
+            try {
+                // Hardcoded ownerId=1 for testing
+                const data = await reservationsApi.listReservations(1, currentPage - 1, 10, searchQuery);
+                setReservationsData(data.reservations || []);
+                setTotalItems(data.totalItems || 0);
+                setTotalPages(data.totalPages || 1);
+                setMetrics({
+                    confirmed: data.confirmed || 0,
+                    pending: data.pending || 0,
+                    checkInsToday: data.checkInsToday || 0,
+                    cancellations: data.cancellations || 0,
+                    totalBookingsThisMonth: data.totalBookingsThisMonth || 0
+                });
+            } catch (error) {
+                console.error("Failed to fetch reservations:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        const timeoutId = setTimeout(() => {
+            fetchReservations();
+        }, 300);
+        return () => clearTimeout(timeoutId);
+    }, [currentPage, searchQuery]);
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
         { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
@@ -155,12 +197,12 @@ export default function ReservationPage() {
                 {/* Top Bar */}
                 <div className="flex justify-end items-center py-2 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
-                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
                         </a>
-                        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
+                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </div>
+                        </a>
                     </div>
                 </div>
 
@@ -171,7 +213,7 @@ export default function ReservationPage() {
                         <div>
                             <h1 className="text-[28px] font-black text-[#1d1d1d] m-0 tracking-wide">RESERVATIONS</h1>
                             <div className="mt-1 text-[13px]">
-                                <span className="text-[#953002] font-extrabold text-[18px]">128</span>{" "}
+                                <span className="text-[#953002] font-extrabold text-[18px]">{metrics.totalBookingsThisMonth}</span>{" "}
                                 <span className="text-[#828282]">total bookings this month</span>
                             </div>
                         </div>
@@ -192,29 +234,26 @@ export default function ReservationPage() {
                         <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
                             <div className="text-[10px] font-bold text-[#828282] tracking-[0.8px] mb-1.5">CONFIRMED</div>
                             <div className="flex items-baseline justify-between">
-                                <span className="text-[32px] font-extrabold text-[#1d1d1d]">94</span>
-                                <span className="text-[12px] font-bold text-[#27ae60]">+5%</span>
+                                <span className="text-[32px] font-extrabold text-[#1d1d1d]">{metrics.confirmed}</span>
                             </div>
                         </div>
                         <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
                             <div className="text-[10px] font-bold text-[#828282] tracking-[0.8px] mb-1.5">PENDING CONFIRMATION</div>
                             <div className="flex items-baseline justify-between">
-                                <span className="text-[32px] font-extrabold text-[#1d1d1d]">12</span>
+                                <span className="text-[32px] font-extrabold text-[#1d1d1d]">{metrics.pending}</span>
                                 <span className="text-[9px] font-bold text-[#828282] tracking-wide">NEEDS ATTENTION</span>
                             </div>
                         </div>
                         <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
                             <div className="text-[10px] font-bold text-[#828282] tracking-[0.8px] mb-1.5">CHECK-INS TODAY</div>
                             <div className="flex items-baseline justify-between">
-                                <span className="text-[32px] font-extrabold text-[#1d1d1d]">8</span>
-                                <span className="text-[12px] font-bold text-[#f2994a] bg-[#fff8e1] rounded px-2.5 py-0.5">Busy</span>
+                                <span className="text-[32px] font-extrabold text-[#1d1d1d]">{metrics.checkInsToday}</span>
                             </div>
                         </div>
                         <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
                             <div className="text-[10px] font-bold text-[#828282] tracking-[0.8px] mb-1.5">CANCELLATIONS</div>
                             <div className="flex items-baseline justify-between">
-                                <span className="text-[32px] font-extrabold text-[#1d1d1d]">3</span>
-                                <span className="text-[12px] font-bold text-[#eb5757]">-2%</span>
+                                <span className="text-[32px] font-extrabold text-[#1d1d1d]">{metrics.cancellations}</span>
                             </div>
                         </div>
                     </div>
@@ -261,54 +300,56 @@ export default function ReservationPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {reservations.map((r, i) => (
+                                {reservationsData.map((r, i) => {
+                                    // Generate tailwind classes dynamically for now based on status/tier, or fallback to default
+                                    const paymentColorClass = r.paymentStatus === "Paid" ? "text-[#27ae60]" : r.paymentStatus === "Partial" ? "text-[#f2994a]" : "text-[#eb5757]";
+                                    const paymentDotClass = r.paymentStatus === "Paid" ? "bg-[#27ae60]" : r.paymentStatus === "Partial" ? "bg-[#f2994a]" : "bg-[#eb5757]";
+                                    const statusBgClass = r.status === "CONFIRMED" ? "bg-[#27ae60]" : r.status === "PENDING" ? "bg-[#f2994a]" : "bg-[#eb5757]";
+                                    const initialsBgClass = "bg-[#e8d4c8]";
+                                    const initialsColorClass = "text-[#953002]";
+                                    const tierColorClass = "text-[#828282]";
+
+                                    return (
                                     <tr key={i} className="border-b border-[#f5f5f5] transition-colors hover:bg-[#fafafa]">
-                                        {/* Guest */}
-                                        {/* Guest */}
                                         <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle">
                                             <div className="flex items-center gap-2.5">
-                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 ${r.initialsBgClass} ${r.initialsColorClass}`}>
-                                                    {r.initials}
+                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 ${initialsBgClass} ${initialsColorClass}`}>
+                                                    {r.guestInitials || r.guestName?.substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <div className="text-[13px] font-bold text-[#1d1d1d]">{r.name}</div>
-                                                    <div className={`text-[9px] font-bold tracking-wide ${r.tierColorClass}`}>{r.tier}</div>
+                                                    <div className="text-[13px] font-bold text-[#1d1d1d]">{r.guestName}</div>
+                                                    <div className={`text-[9px] font-bold tracking-wide ${tierColorClass}`}>{r.guestTier || "GUEST"}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        {/* Property */}
                                         <td className="py-3.5 px-4 text-[13px] color-[#4f4f4f] align-middle">
-                                            <div className="text-[13px] font-semibold text-[#1d1d1d]">{r.property}</div>
-                                            <div className="text-[11px] text-[#828282]">{r.room}</div>
+                                            <div className="text-[13px] font-semibold text-[#1d1d1d]">{r.propertyName}</div>
+                                            <div className="text-[11px] text-[#828282]">{r.roomName}</div>
                                         </td>
-                                        {/* Dates */}
                                         <td className="py-3.5 px-4 text-[13px] color-[#4f4f4f] align-middle">
                                             <div className="flex items-center gap-1.5">
                                                 <div>
-                                                    <div className={`text-[13px] font-bold ${r.checkOutHighlight ? 'text-[#27ae60]' : 'text-[#1d1d1d]'}`}>{r.checkIn}</div>
+                                                    <div className={`text-[13px] font-bold text-[#1d1d1d]`}>{r.checkIn}</div>
                                                     <div className="text-[9px] text-[#b0b0b0] font-semibold">CHECK-IN</div>
                                                 </div>
                                                 <span className="text-[#e0e0e0] text-[14px]">→</span>
                                                 <div>
-                                                    <div className={`text-[13px] font-bold ${r.checkOutHighlight ? 'text-[#27ae60]' : 'text-[#1d1d1d]'}`}>{r.checkOut}</div>
+                                                    <div className={`text-[13px] font-bold text-[#1d1d1d]`}>{r.checkOut}</div>
                                                     <div className="text-[9px] text-[#b0b0b0] font-semibold">CHECK-OUT</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        {/* Payment */}
                                         <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle text-center">
-                                            <span className={`text-[11px] font-semibold inline-flex items-center gap-1 ${r.paymentColorClass}`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${r.paymentDotClass}`} />
-                                                {r.payment}
+                                            <span className={`text-[11px] font-semibold inline-flex items-center gap-1 ${paymentColorClass}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${paymentDotClass}`} />
+                                                {r.paymentStatus}
                                             </span>
                                         </td>
-                                        {/* Status */}
                                         <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle text-center">
-                                            <span className={`text-[10px] font-bold text-white rounded px-3 py-1 tracking-wide ${r.statusBgClass}`}>
+                                            <span className={`text-[10px] font-bold text-white rounded px-3 py-1 tracking-wide ${statusBgClass}`}>
                                                 {r.status}
                                             </span>
                                         </td>
-                                        {/* Actions */}
                                         <td className="py-3.5 px-4 text-[13px] color-[#4f4f4f] align-middle text-center">
                                             <div className="flex justify-center gap-1.5">
                                                 <button className="bg-transparent border-none cursor-pointer p-1 rounded"><Eye size={15} color="#828282" /></button>
@@ -323,16 +364,17 @@ export default function ReservationPage() {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
 
                         {/* Pagination */}
                         <div className="flex justify-between items-center py-3.5 px-4 border-t border-[#e8e8e8]">
-                            <span className="text-[12px] text-[#953002]">Showing 1 to 4 of 128 results</span>
+                            <span className="text-[12px] text-[#953002]">Showing {Math.min((currentPage - 1) * 10 + 1, totalItems)} to {Math.min(currentPage * 10, totalItems)} of {totalItems} results</span>
                             <div className="flex items-center gap-1">
                                 <button className="w-7 h-7 flex items-center justify-center bg-transparent border-none cursor-pointer text-[#4f4f4f] rounded-md"><ChevronLeft size={14} /></button>
-                                {[1, 2, 3].map((p) => (
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                                     <button
                                         key={p}
                                         onClick={() => setCurrentPage(p)}
@@ -343,15 +385,6 @@ export default function ReservationPage() {
                                         {p}
                                     </button>
                                 ))}
-                                <span className="text-[12px] text-[#828282] mx-1">...</span>
-                                <button
-                                    onClick={() => setCurrentPage(32)}
-                                    className={`w-7 h-7 flex items-center justify-center border-none cursor-pointer text-[12px] font-semibold rounded-md ${
-                                        currentPage === 32 ? "bg-[#27ae60] text-white" : "bg-transparent text-[#4f4f4f]"
-                                    }`}
-                                >
-                                    32
-                                </button>
                                 <button className="w-7 h-7 flex items-center justify-center bg-transparent border-none cursor-pointer text-[#4f4f4f] rounded-md"><ChevronRight size={14} /></button>
                             </div>
                         </div>

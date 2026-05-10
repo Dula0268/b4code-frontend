@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { propertiesApi } from "@/api/owner/properties.api";
 import Logo from "@/components/shared/branding/logo";
 import {
     Search,
@@ -22,10 +23,11 @@ import {
 
 /* ───────────────────── data ───────────────────── */
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const properties: any[] = [];
 
 const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/owner/ownerDashboard", active: false },
+    { icon: LayoutDashboard, label: "Dashboard", href: "/owner", active: false },
     { icon: Building2, label: "Properties", href: "/owner/properties", active: true },
     { icon: DoorOpen, label: "Rooms", href: "/owner/roomManagement", active: false },
     { icon: CalendarCheck, label: "Availability", href: "/owner/availability/weeklyCalendar", active: false },
@@ -47,12 +49,46 @@ export default function PropertiesPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [statusFilter, setStatusFilter] = useState("All");
     const [locationFilter, setLocationFilter] = useState("All");
-    const [propertyData, setPropertyData] = useState(properties);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [propertyData, setPropertyData] = useState<any[]>([]);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [loading, setLoading] = useState(true);
 
-    const toggleStatus = (id: number) => {
-        setPropertyData((prev) =>
-            prev.map((p) => (p.id === id ? { ...p, statusOn: !p.statusOn, status: !p.statusOn ? "active" : "inactive" } : p))
-        );
+    const fetchProperties = async () => {
+        setLoading(true);
+        try {
+            // Hardcoded ownerId=1 for testing
+            const statusParam = statusFilter === "All" ? undefined : statusFilter.toLowerCase();
+            const data = await propertiesApi.listProperties(1, currentPage - 1, 10, searchText, statusParam);
+            setPropertyData(data.properties);
+            setTotalPages(data.totalPages);
+            setTotalItems(data.totalItems);
+        } catch (error) {
+            console.error("Failed to fetch properties:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        // debounce search
+        const timeoutId = setTimeout(() => {
+            fetchProperties();
+        }, 300);
+        return () => clearTimeout(timeoutId);
+    }, [currentPage, searchText, statusFilter, locationFilter]);
+
+    const toggleStatus = async (id: number) => {
+        try {
+            await propertiesApi.toggleStatus(id, 1);
+            // Optimistic update
+            setPropertyData((prev) =>
+                prev.map((p) => (p.id === id ? { ...p, statusOn: !p.statusOn, status: !p.statusOn ? "active" : "inactive" } : p))
+            );
+        } catch (error) {
+            console.error("Failed to toggle status:", error);
+        }
     };
 
     const statusBadge = (status: string) => {
@@ -110,15 +146,13 @@ export default function PropertiesPage() {
                                 className="border-none bg-transparent outline-none text-[13px] text-[#1d1d1d] w-[160px]"
                             />
                         </div>
-                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center no-underline hover:bg-[#f5f5f5] transition-colors">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={20} color="#4f4f4f" />
                         </a>
                         <div className="w-[34px] h-[34px] rounded-full overflow-hidden border-2 border-[#953002]">
-                            <img
-                                src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
-                                alt="User"
-                                className="w-8 h-8 rounded-full"
-                            />
+                            <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="User" className="w-full h-full rounded-full" />
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -257,10 +291,10 @@ export default function PropertiesPage() {
                 {/* Pagination */}
                 <div className="flex justify-between items-center mt-2 px-1">
                     <span className="text-[13px] text-[#828282]">
-                        Showing <strong className="text-[#1d1d1d]">1-5</strong> of <strong className="text-[#1d1d1d]">24</strong> properties
+                        Showing <strong className="text-[#1d1d1d]">{Math.min((currentPage - 1) * 10 + 1, totalItems)}-{Math.min(currentPage * 10, totalItems)}</strong> of <strong className="text-[#1d1d1d]">{totalItems}</strong> properties
                     </span>
                     <div className="flex gap-1.5">
-                        {[1, 2, 3].map((page) => (
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                             <button
                                 key={page}
                                 onClick={() => setCurrentPage(page)}

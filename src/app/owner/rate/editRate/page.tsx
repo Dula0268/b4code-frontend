@@ -35,7 +35,7 @@ export default function EditRatePage() {
     const [liveOnChannels, setLiveOnChannels] = useState(true);
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
         { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
@@ -74,13 +74,13 @@ export default function EditRatePage() {
                 <header className="flex justify-between items-center py-2.5 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
                     <div />
                     <div className="flex items-center gap-3.5">
-                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
                         </a>
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                            </div>
+                            <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
+                        </a>
                             <span className="text-[13px] font-semibold text-[#1d1d1d]">Admin User</span>
                         </div>
                     </div>

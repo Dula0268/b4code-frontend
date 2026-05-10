@@ -168,7 +168,7 @@ export default function MonthlyCalendarPage() {
     }
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
         { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/monthlyCalendar", active: true },

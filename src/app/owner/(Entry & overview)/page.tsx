@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { dashboardApi } from "@/api/owner/dashboard.api";
 import Logo from "@/components/shared/branding/logo";
 import {
     Search,
@@ -24,7 +25,7 @@ import {
 /* ───────────────────── data ───────────────────── */
 
 const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard", active: true, href: "/owner/ownerDashboard" },
+    { icon: LayoutDashboard, label: "Dashboard", active: true, href: "/owner" },
     { icon: Building2, label: "Properties", active: false, href: "/owner/properties" },
     { icon: DoorOpen, label: "Rooms", active: false, href: "/owner/roomManagement" },
     { icon: CalendarCheck, label: "Availability", active: false, href: "/owner/availability/weeklyCalendar" },
@@ -141,8 +142,39 @@ const highlightDay = 2;
 export default function OwnerDashboardPage() {
     const [calMonth, setCalMonth] = useState(9); // October (0-indexed)
     const [calYear, setCalYear] = useState(2023);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [dashboardData, setDashboardData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboard = async () => {
+            setLoading(true);
+            try {
+                // Hardcoded ownerId=1 for testing integration
+                const data = await dashboardApi.getDashboard(1, calYear, calMonth);
+                setDashboardData(data);
+            } catch (error) {
+                console.error("Failed to fetch dashboard data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboard();
+    }, [calYear, calMonth]);
 
     const calendarDays = getCalendarDays(calYear, calMonth);
+    const currentPeakDays = dashboardData?.availabilityPreview?.peakDays || peakDays;
+    
+    const currentMetricCards = dashboardData ? [
+        { ...metricCards[0], value: dashboardData.totalProperties.value, change: dashboardData.totalProperties.change },
+        { ...metricCards[1], value: dashboardData.totalRooms.value, change: dashboardData.totalRooms.change },
+        { ...metricCards[2], value: dashboardData.activeReservations.value, change: dashboardData.activeReservations.change },
+        { ...metricCards[3], value: dashboardData.todayCheckIns.value, change: dashboardData.todayCheckIns.change },
+        { ...metricCards[4], value: dashboardData.todayCheckOuts.value, change: dashboardData.todayCheckOuts.change },
+        { ...metricCards[5], value: dashboardData.totalRevenue.value, change: dashboardData.totalRevenue.change }
+    ] : metricCards;
+
+    const currentReservations = dashboardData?.recentReservations || reservations;
 
     const prevMonth = () => {
         if (calMonth === 0) { setCalMonth(11); setCalYear((y) => y - 1); }
@@ -195,22 +227,20 @@ export default function OwnerDashboardPage() {
                                 className="border-none bg-transparent outline-none text-[13px] text-[#1d1d1d] w-[160px]"
                             />
                         </div>
-                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center hover:bg-[#f5f5f5] transition-colors" aria-label="Notifications">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center hover:bg-[#f5f5f5] transition-colors" aria-label="Notifications">
                             <Bell size={20} color="#4f4f4f" />
                         </a>
                         <div className="w-[34px] h-[34px] rounded-full overflow-hidden border-2 border-[#953002]">
-                            <img
-                                src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
-                                alt="User"
-                                className="w-8 h-8 rounded-full"
-                            />
+                            <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="User" className="w-full h-full rounded-full" />
+                            </a>
                         </div>
                     </div>
                 </div>
 
                 {/* ───── Metric Cards ───── */}
                 <div className="grid grid-cols-6 gap-3 mb-4">
-                    {metricCards.map((card) => (
+                    {currentMetricCards.map((card) => (
                         <div
                             key={card.label}
                             className={`rounded-xl border px-4 py-3 flex flex-col gap-1 ${
@@ -286,7 +316,7 @@ export default function OwnerDashboardPage() {
                             {/* Calendar Grid */}
                             <div className="grid grid-cols-7 gap-1">
                                 {calendarDays.map((d, i) => {
-                                    const isPeak = d.currentMonth && peakDays.includes(d.day);
+                                    const isPeak = d.currentMonth && currentPeakDays.includes(d.day);
                                     const isHighlight = d.currentMonth && d.day === highlightDay;
                                     return (
                                         <div
@@ -349,7 +379,8 @@ export default function OwnerDashboardPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {reservations.map((r) => (
+                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                    {currentReservations.map((r: any) => (
                                         <tr key={r.name} className="border-b border-[#f5f5f5]">
                                             {/* Guest */}
                                             <td className="py-2.5 px-3 align-middle">
@@ -410,7 +441,7 @@ export default function OwnerDashboardPage() {
                             <span className="text-[10px] font-bold tracking-wider uppercase text-[#828282] block">
                                 NEW REVIEWS
                             </span>
-                            <span className="text-[18px] font-extrabold text-[#1d1d1d]">12 Unread</span>
+                            <span className="text-[18px] font-extrabold text-[#1d1d1d]">{dashboardData?.newReviews?.value || "12 Unread"}</span>
                         </div>
                     </div>
 
@@ -423,7 +454,7 @@ export default function OwnerDashboardPage() {
                             <span className="text-[10px] font-bold tracking-wider uppercase text-[#828282] block">
                                 MAINT. ALERTS
                             </span>
-                            <span className="text-[18px] font-extrabold text-[#1d1d1d]">2 Urgent</span>
+                            <span className="text-[18px] font-extrabold text-[#1d1d1d]">{dashboardData?.maintenanceAlerts?.value || "2 Urgent"}</span>
                         </div>
                     </div>
 
@@ -436,7 +467,7 @@ export default function OwnerDashboardPage() {
                             <span className="text-[10px] font-bold tracking-wider uppercase text-[#828282] block">
                                 GROWTH
                             </span>
-                            <span className="text-[18px] font-extrabold text-[#2e7d32]">+14.2%</span>
+                            <span className="text-[18px] font-extrabold text-[#2e7d32]">{dashboardData?.growth?.value || "+14.2%"}</span>
                         </div>
                     </div>
                 </div>

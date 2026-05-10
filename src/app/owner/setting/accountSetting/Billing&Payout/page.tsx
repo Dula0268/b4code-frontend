@@ -31,7 +31,7 @@ export default function EditBankDetailsPage() {
     const [isPrimary, setIsPrimary] = useState(true);
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
         { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
@@ -70,12 +70,12 @@ export default function EditBankDetailsPage() {
                 {/* Top Header */}
                 <div className="flex justify-end items-center py-2 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
-                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
                         </a>
-                        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
+                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </div>
+                        </a>
                     </div>
                 </div>
 

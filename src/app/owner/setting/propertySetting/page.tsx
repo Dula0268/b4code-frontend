@@ -25,6 +25,7 @@ import {
 
 /* ───────────────────── mock data ───────────────────── */
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const properties: any[] = [];
 
 /* ───────────────────── component ───────────────────── */
@@ -46,7 +47,7 @@ export default function PropertySettingPage() {
     const [autoTax, setAutoTax] = useState(true);
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner/ownerDashboard" },
+        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
         { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
@@ -93,12 +94,12 @@ export default function PropertySettingPage() {
                 {/* Top Bar */}
                 <div className="flex justify-end items-center py-2 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
-                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
                         </a>
-                        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
+                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </div>
+                        </a>
                     </div>
                 </div>
 
@@ -275,10 +276,10 @@ export default function PropertySettingPage() {
 
                             {/* ─── Bottom Actions ─── */}
                             <div className="flex justify-end gap-3 mt-1 pt-4">
-                                <a href="/owner/ownerDashboard" className="no-underline">
+                                <a href="/owner" className="no-underline">
                                     <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">Cancel</button>
                                 </a>
-                                <a href="/owner/ownerDashboard" className="no-underline">
+                                <a href="/owner" className="no-underline">
                                     <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#b03a02] transition-colors">
                                         <Save size={14} /> Save Changes
                                     </button>

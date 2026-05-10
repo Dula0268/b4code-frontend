@@ -57,12 +57,12 @@ export default function PropertyDetailsPage() {
                 <div className="flex justify-between items-center py-1.5">
                     <div />
                     <div className="flex items-center gap-3">
-                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
                         </a>
-                        <div className="w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002]">
+                        <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </div>
+                        </a>
                     </div>
                 </div>
 

@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { roomsApi } from "@/api/owner/rooms.api";
 import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
@@ -29,7 +30,7 @@ import {
 /* ───────────────────── sidebar data ───────────────────── */
 
 const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard, href: "/owner/ownerDashboard" },
+    { label: "Dashboard", icon: LayoutDashboard, href: "/owner" },
     { label: "Properties", icon: Building2, href: "/owner/properties" },
     { label: "Rooms", icon: BedDouble, href: "/owner/roomManagement", active: true },
     { label: "Availability", icon: Calendar, href: "/owner/availability/weeklyCalendar" },
@@ -158,21 +159,44 @@ export default function RoomManagementPage() {
     const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("All Rooms");
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [rooms, setRooms] = useState<any[]>([]);
+    const [totalRooms, setTotalRooms] = useState(0);
+    const [occupied, setOccupied] = useState(0);
+    const [maintenance, setMaintenance] = useState(0);
+    const [vacant, setVacant] = useState(0);
+    const [loading, setLoading] = useState(true);
 
-    const filteredRooms = allRooms.filter((room) => {
+    useEffect(() => {
+        const fetchRooms = async () => {
+            setLoading(true);
+            try {
+                // Hardcoded propertyId=1 for testing
+                const data = await roomsApi.listRooms(1);
+                setRooms(data.rooms || []);
+                setTotalRooms(data.totalRooms || 0);
+                setOccupied(data.occupied || 0);
+                setMaintenance(data.maintenance || 0);
+                setVacant(data.vacant || 0);
+            } catch (error) {
+                console.error("Failed to fetch rooms:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRooms();
+    }, []);
+
+    const filteredRooms = rooms.filter((room) => {
         const matchesTab =
             activeTab === "All Rooms" || room.status === activeTab;
         const matchesSearch =
             searchQuery === "" ||
             room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            room.type.toLowerCase().includes(searchQuery.toLowerCase());
+            room.roomType.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesTab && matchesSearch;
     });
-
-    const totalRooms = 45;
-    const occupied = 32;
-    const maintenance = 3;
-    const vacant = 10;
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
@@ -207,7 +231,7 @@ export default function RoomManagementPage() {
                 {/* Top Bar */}
                 <div className="flex justify-end items-center py-2.5 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
-                        <a href="/owner/ownerDashboard/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
                         </a>
                         <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
@@ -357,7 +381,12 @@ export default function RoomManagementPage() {
                             </thead>
                             <tbody>
                                 {filteredRooms.map((room) => {
-                                    const sConfig = statusConfig[room.status];
+                                    const statusValue = room.status || "Available";
+                                    const sConfig = statusConfig[statusValue as RoomStatus] || statusConfig.Available;
+                                    const iconBg = statusValue === "Occupied" ? "#fdecea" : statusValue === "Maintenance" ? "#fff8e1" : "#e8f5e9";
+                                    const iconColor = statusValue === "Occupied" ? "#eb5757" : statusValue === "Maintenance" ? "#f2994a" : "#27ae60";
+                                    const roomIcon = room.roomType?.toLowerCase().includes("studio") ? "studio" : room.roomType?.toLowerCase().includes("family") ? "family" : "bed";
+
                                     return (
                                         <tr
                                             key={room.id}
@@ -368,11 +397,11 @@ export default function RoomManagementPage() {
                                                 <div className="flex items-center gap-3">
                                                     <div
                                                         className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                                                        style={{ background: room.iconBg }}
+                                                        style={{ background: iconBg }}
                                                     >
                                                         <RoomIcon
-                                                            type={room.icon}
-                                                            color={room.iconColor}
+                                                            type={roomIcon}
+                                                            color={iconColor}
                                                         />
                                                     </div>
                                                     <span className="text-[14px] font-bold text-[#1d1d1d]">
@@ -383,21 +412,21 @@ export default function RoomManagementPage() {
 
                                             {/* Type */}
                                             <td className="py-4 px-4 align-middle text-[13px] text-[#4f4f4f]">
-                                                {room.type}
+                                                {room.roomType}
                                             </td>
 
                                             {/* Occupancy */}
                                             <td className="py-4 px-4 align-middle">
                                                 <div className="flex items-center gap-2 text-[13px] text-[#4f4f4f]">
-                                                    <OccupancyIcon count={room.occupancyCount} />
-                                                    <span>{room.occupancy}</span>
+                                                    <OccupancyIcon count={room.maxOccupancy} />
+                                                    <span>{room.maxOccupancy} Adults</span>
                                                 </div>
                                             </td>
 
                                             {/* Base Price */}
                                             <td className="py-4 px-4 align-middle">
                                                 <span className="text-[14px] font-bold text-[#1d1d1d]">
-                                                    {room.currency} {room.basePrice}
+                                                    {room.currency || "LKR"} {room.baseRate}
                                                 </span>
                                                 <span className="text-[11px] text-[#b0b0b0] ml-1">
                                                     /night
@@ -413,7 +442,7 @@ export default function RoomManagementPage() {
                                                         background: sConfig.bg,
                                                     }}
                                                 >
-                                                    {room.status}
+                                                    {statusValue}
                                                 </span>
                                             </td>
 

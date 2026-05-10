@@ -26,7 +26,7 @@ import {
 /* ───────────────────── data ───────────────────── */
 
 const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard", active: false, href: "/owner/ownerDashboard" },
+    { icon: LayoutDashboard, label: "Dashboard", active: false, href: "/owner" },
     { icon: Building2, label: "Properties", active: false, href: "/owner/properties" },
     { icon: DoorOpen, label: "Rooms", active: false, href: "/owner/roomManagement" },
     { icon: CalendarCheck, label: "Availability", active: false, href: "/owner/availability/weeklyCalendar" },
