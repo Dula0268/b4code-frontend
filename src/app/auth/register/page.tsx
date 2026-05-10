@@ -555,7 +555,7 @@ function RegisterForm() {
                                 <form onSubmit={handleVerifyOtp} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="text-center">
                                         <p className="text-[14px] text-neutral-600 font-medium leading-relaxed">
-                                            We've sent a 6-digit verification code to<br/>
+                                            We&apos;ve sent a 6-digit verification code to<br/>
                                             <span className="font-bold text-[#953002]">{email}</span>
                                         </p>
                                     </div>
@@ -601,7 +601,7 @@ function RegisterForm() {
                                     </div>
 
                                     <p className="text-center text-[12px] text-neutral-400">
-                                        Didn't receive the code? <button type="button" className="text-[#953002] font-bold hover:underline">Resend Code</button>
+                                        Didn&apos;t receive the code? <button type="button" className="text-[#953002] font-bold hover:underline">Resend Code</button>
                                     </p>
                                 </form>
                             )}
