@@ -109,7 +109,10 @@ export default function PropertyDetailsPage() {
 
   useEffect(() => {
     if (id) {
-      getPropertyById(id);
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        getPropertyById(numericId);
+      }
     }
   }, [id, getPropertyById]);
 
