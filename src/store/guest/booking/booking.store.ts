@@ -47,6 +47,7 @@ type GuestBookingActions = {
   getBookingsByEmail: (email: string) => StoredBooking[];
   cancelBooking: (id: string) => void;
   modifyBooking: (id: string, updates: Partial<StoredBooking>) => void;
+  updateBookingStatus: (code: string, updates: Partial<StoredBooking>) => void;
   setLoading: (value: boolean) => void;
   setError: (message: string | null) => void;
   reset: () => void;
