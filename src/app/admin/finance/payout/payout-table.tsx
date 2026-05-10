@@ -21,20 +21,19 @@ function PaymentModelBadge({ model }: { model: string }) {
 }
 
 function PayoutStatusBadge({ status }: { status: string }) {
-  const map: Record<string, { bg: string; text: string; dot: string }> = {
-    Hold: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
-    Pending: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
-    Processed: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]", dot: "bg-[#16A34A]" },
-    Rejected: { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]", dot: "bg-[#DC2626]" },
+  const map: Record<string, { bg: string; text: string; dot: string; label: string }> = {
+    PENDING:   { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]", label: "Pending" },
+    PROCESSED: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]", dot: "bg-[#16A34A]", label: "Processed" },
+    FAILED:    { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]", dot: "bg-[#DC2626]", label: "Failed" },
   };
-  const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", dot: "bg-[#6B7280]" };
+  const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", dot: "bg-[#6B7280]", label: status };
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      {status}
+      {s.label}
     </span>
   );
 }
@@ -180,13 +179,13 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-                      style={{ backgroundColor: getColorForName(p.hostName) }}
+                      style={{ backgroundColor: getColorForName(p.ownerName || '') }}
                     >
-                      {getInitials(p.hostName)}
+                      {getInitials(p.ownerName || '')}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-[#1A1A1A]">
-                        {p.hostName}
+                        {p.ownerName}
                       </p>
                     </div>
                   </div>
@@ -195,7 +194,7 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                 {/* Period */}
                 <td className="px-6 py-4">
                   <span className="text-sm text-[#1A1A1A]">
-                    {p.period}
+                    {p.requestedAt ? new Date(p.requestedAt).toLocaleDateString('en-LK', { month: 'short', year: 'numeric' }) : '-'}
                   </span>
                 </td>
 

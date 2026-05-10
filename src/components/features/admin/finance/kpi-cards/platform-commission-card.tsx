@@ -1,4 +1,4 @@
-import { PieChart, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { PieChart, Loader2 } from "lucide-react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
 export default function PlatformCommissionCard() {
@@ -12,11 +12,6 @@ export default function PlatformCommissionCard() {
         );
     }
 
-    const trendStr = summary.commissionGrowth || "0%";
-    const isUp = !trendStr.startsWith("-");
-    const TrendIcon = isUp ? TrendingUp : TrendingDown;
-    const trendColor = isUp ? "text-[#16A34A]" : "text-[#DC2626]";
-
     return (
         <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between h-[136px]">
             <div className="flex items-start justify-between mb-2">
@@ -26,16 +21,10 @@ export default function PlatformCommissionCard() {
                 </div>
             </div>
             <div className="flex flex-col gap-1.5">
-                <p className="text-3xl font-bold text-gray-900 leading-none tracking-tight">
+                <p className="text-2xl font-bold text-gray-900 leading-none tracking-tight">
                     LKR {summary.platformCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-                <div className="flex items-center gap-1.5 mt-1">
-                    <span className={`flex items-center text-sm font-semibold ${isUp ? "text-emerald-500" : "text-red-500"}`}>
-                        {isUp ? <TrendingUp size={14} className="mr-1" /> : <TrendingDown size={14} className="mr-1" />}
-                        {trendStr}
-                    </span>
-                    <span className="text-sm text-gray-400 font-medium">vs last month</span>
-                </div>
+                <p className="text-xs text-gray-400 font-medium mt-1">Platform earnings (10% of revenue)</p>
             </div>
         </div>
     );

@@ -12,20 +12,20 @@ import {
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
 // ─── Status badge ───────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { bg: string; text: string }> = {
-    Completed: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]" },
-    Pending: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]" },
-    Failed: { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]" },
-    Refunded: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]" },
+function StatusBadge({ type }: { type: string }) {
+  const map: Record<string, { bg: string; text: string; label: string }> = {
+    BOOKING_PAYMENT: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]", label: "Payment" },
+    COMMISSION:      { bg: "bg-[#EFF6FF]", text: "text-[#2563EB]", label: "Commission" },
+    REFUND:          { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]", label: "Refund" },
+    PAYOUT:          { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", label: "Payout" },
   };
-  const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]" };
+  const s = map[type] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: type };
 
   return (
     <span
       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}
     >
-      {status}
+      {s.label}
     </span>
   );
 }
@@ -168,8 +168,8 @@ export default function TransactionTable() {
               >
                 {/* ID + date */}
                 <td className="px-6 py-4">
-                  <p className="text-sm font-bold text-[#1A1A1A]">#{tx.bookingId}</p>
-                  <p className="text-[11px] text-[#9E7B6A] mt-0.5">{new Date(tx.date).toLocaleDateString()}</p>
+                  <p className="text-sm font-bold text-[#1A1A1A]">#{tx.referenceNumber}</p>
+                  <p className="text-[11px] text-[#9E7B6A] mt-0.5">{new Date(tx.createdAt).toLocaleDateString()}</p>
                 </td>
 
                 {/* Property */}
@@ -182,12 +182,12 @@ export default function TransactionTable() {
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-                      style={{ backgroundColor: getColorForName(tx.guestName) }}
+                      style={{ backgroundColor: getColorForName(tx.userName || '') }}
                     >
-                      {getInitials(tx.guestName)}
+                      {getInitials(tx.userName || '')}
                     </div>
                     <span className="text-sm text-[#1A1A1A]">
-                      {tx.guestName}
+                      {tx.userName}
                     </span>
                   </div>
                 </td>
@@ -199,7 +199,7 @@ export default function TransactionTable() {
 
                 {/* Status */}
                 <td className="px-6 py-4">
-                  <StatusBadge status={tx.status} />
+                  <StatusBadge type={tx.type} />
                 </td>
               </tr>
             ))}

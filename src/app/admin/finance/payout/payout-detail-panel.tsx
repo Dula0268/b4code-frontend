@@ -73,8 +73,8 @@ export default function PayoutDetailPanel({
     }
   };
 
-  const isPending = payout.status === "Hold" || payout.status === "Pending";
-  const isProcessed = payout.status === "Processed";
+  const isPending = payout.status === "PENDING";
+  const isProcessed = payout.status === "PROCESSED";
 
   return (
     <>
@@ -126,16 +126,16 @@ export default function PayoutDetailPanel({
             <div className="flex items-center gap-3">
               <div
                 className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold"
-                style={{ backgroundColor: getColorForName(payout.hostName) }}
+                style={{ backgroundColor: getColorForName(payout.ownerName || '') }}
               >
-                {getInitials(payout.hostName)}
+                {getInitials(payout.ownerName || '')}
               </div>
               <div>
                 <p className="text-sm font-bold text-[#1A1A1A]">
-                  {payout.hostName}
+                  {payout.ownerName}
                 </p>
                 <p className="text-[11px] text-[#9E7B6A]">
-                  {payout.propertyName}
+                  Owner ID: #{payout.ownerId}
                 </p>
               </div>
             </div>
@@ -165,7 +165,7 @@ export default function PayoutDetailPanel({
                   <p className="text-sm font-semibold text-[#1A1A1A]">
                     Request Received
                   </p>
-                  <p className="text-[11px] text-[#9E7B6A]">{payout.period}</p>
+                  <p className="text-[11px] text-[#9E7B6A]">{payout.requestedAt ? new Date(payout.requestedAt).toLocaleString() : '-'}</p>
                 </div>
               </div>
 
@@ -182,7 +182,7 @@ export default function PayoutDetailPanel({
                     Balance Validated
                   </p>
                   <p className="text-[11px] text-[#9E7B6A]">
-                    Bank: {payout.bankDetails}
+                    Bank Ref: {payout.bankReference || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -196,7 +196,7 @@ export default function PayoutDetailPanel({
                       Processed Successfully
                     </p>
                     <p className="text-[11px] text-[#16A34A] font-medium">
-                      Ref: {payout.referenceId || "N/A"}
+                      Ref: {payout.bankReference || "N/A"}
                     </p>
                   </div>
                 </div>
