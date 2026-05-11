@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "@/lib/axios";
+import { staffMenuApi } from "@/api/staff/menu.api";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -123,8 +123,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
   fetchMenus: async (propertyId: number) => {
     try {
       set({ isLoading: true, errorMsg: null, propertyId });
-      const response = await api.get(`/menu-items/property/${propertyId}`);
-      const backendItems = response.data as BackendMenuItem[];
+      const backendItems = await staffMenuApi.getMenuItems(propertyId);
 
       // Group items by category to build menus dynamically
       const menuItemMap = backendItems.reduce((acc: Record<string, MenuItem[]>, item) => {
@@ -183,7 +182,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       const category = data.name;
 
       const itemPromises = (initialItems ?? []).map(item => 
-        api.post("/menu-items", {
+        staffMenuApi.createMenuItem({
           propertyId,
           name: item.name,
           description: item.description,
@@ -216,7 +215,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     if (!propertyId || !menu) return;
     try {
       set({ isLoading: true, errorMsg: null });
-      await api.delete(`/menu-items/property/${propertyId}/category/${encodeURIComponent(menu.name)}`);
+      await staffMenuApi.deleteMenuItemByCategory(propertyId, menu.name);
       set((s) => ({ menus: s.menus.filter((m) => m.id !== id), isLoading: false }));
     } catch (error: unknown) {
       set({ errorMsg: extractApiErrorMessage(error, "Failed to delete menu"), isLoading: false });
@@ -230,7 +229,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       const newAvailable = !menu.isVisible;
       await Promise.all(
         menu.items.map((item) =>
-          api.patch(`/menu-items/${item.id}/toggle`)
+          staffMenuApi.toggleAvailability(Number(item.id))
         )
       );
       set((s) => ({
@@ -259,7 +258,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     }
     try {
       set({ isLoading: true, errorMsg: null });
-      const response = await api.post("/menu-items", {
+      const saved = await staffMenuApi.createMenuItem({
         propertyId,
         name: item.name,
         description: item.description,
@@ -270,7 +269,6 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         tag: item.tag,
         calories: item.calories,
       });
-      const saved = response.data as BackendMenuItem;
       const newItem: MenuItem = {
         ...item,
         id: String(saved.id),
@@ -307,7 +305,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         updateData.imageUrls = data.imageUrls;
       }
 
-      await api.put(`/menu-items/${itemId}`, updateData);
+      await staffMenuApi.updateMenuItem(Number(itemId), updateData);
       set((s) => ({
         menus: s.menus.map((m) => {
           if (m.id !== menuId) return m;
@@ -324,7 +322,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
   deleteItem: async (menuId, itemId) => {
     try {
       set({ isLoading: true, errorMsg: null });
-      await api.delete(`/menu-items/${itemId}`);
+      await staffMenuApi.deleteMenuItem(Number(itemId));
       set((s) => ({
         menus: s.menus.map((m) => {
           if (m.id !== menuId) return m;
@@ -340,7 +338,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
 
   toggleItemStatus: async (menuId, itemId) => {
     try {
-      await api.patch(`/menu-items/${itemId}/toggle`);
+      await staffMenuApi.toggleAvailability(Number(itemId));
       set((s) => ({
         menus: s.menus.map((m) => {
           if (m.id !== menuId) return m;

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { guestOrderApi } from "@/api/guest/order.api";
 import api from "@/lib/axios";
 import type { MenuItem } from "./cart-store";
 
@@ -153,13 +154,9 @@ export const useOrderStore = create<OrderState>((set) => ({
       console.log("📤 Request Payload:", {
         propertyId: opts.propertyId,
         guestId: opts.guestId,
-        roomNumber: opts.roomNumber,
-        totalAmount: opts.total,
-        status: "NEW",
       });
-
       // Call backend API
-      const response = await api.post("/orders", {
+      const backendOrder = await guestOrderApi.placeOrder({
         propertyId: opts.propertyId,
         guestId: opts.guestId,
         roomNumber: opts.roomNumber,
@@ -172,8 +169,6 @@ export const useOrderStore = create<OrderState>((set) => ({
         }))
       });
 
-      console.log("✅ Order placed successfully:", response.data);
-      const backendOrder = response.data;
       const now = new Date();
       
       // Map backend response to frontend Order type
@@ -212,8 +207,10 @@ export const useOrderStore = create<OrderState>((set) => ({
   fetchOrderHistory: async (guestId: number) => {
     set({ loading: true, error: null });
     try {
-      const response = await api.get(`/orders/guest/${guestId}`);
-      const backendOrders = response.data;
+      const data = await guestOrderApi.getOrderHistory(guestId);
+      
+      // Handle paginated response
+      const backendOrders = Array.isArray(data) ? data : (data.content || []);
 
       // Map backend orders to frontend format
       interface BackendOrder {

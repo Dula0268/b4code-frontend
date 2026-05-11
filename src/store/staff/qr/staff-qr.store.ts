@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import api, { BASE_URL } from "@/lib/axios";
+import { staffQrApi } from "@/api/staff/qr.api";
+import { BASE_URL } from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -141,15 +142,7 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
   fetchQRs: async (propertyId, page = 0, size = 10) => {
     set({ loading: true, error: null });
     try {
-      // Trying both common patterns observed in the codebase
-      const response = await api.get("/qr/list", {
-        params: { propertyId, page, size },
-      }).catch(async () => {
-        // Fallback to the other common pattern
-        return await api.get(`/staff/qr/property/${propertyId}?skip=${page * size}&limit=${size}`);
-      });
-      
-      const data = response.data;
+      const data = await staffQrApi.getQrList(propertyId, page, size);
       
       // Handle array or paginated response
       const items = Array.isArray(data) ? data : (data.content || []);
@@ -193,9 +186,9 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         roomNumber: data.roomNumber,
       };
 
-      const response = await api.post("/qr/generate", payload);
+      const savedData = await staffQrApi.generateQr(payload);
       const tab = data.type === "Room" ? "Room" : "Table";
-      const newQR = mapQRResponseToContext(response.data, tab);
+      const newQR = mapQRResponseToContext(savedData, tab);
       set((s) => ({
         qrs: [newQR, ...s.qrs],
         successMsg: "QR code created successfully",
@@ -234,12 +227,9 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
       if (data.type) payload.type = typeMap[data.type];
       if (data.description !== undefined) payload.description = data.description;
       if (data.instructionText) payload.instructionText = data.instructionText;
-      if (data.showRoomNumber !== undefined) payload.showRoomNumber = data.showRoomNumber;
-      if (data.showLogo !== undefined) payload.showLogo = data.showLogo;
-
-      const response = await api.put(`/qr/${id}`, payload);
-      const tab = response.data.type === "ROOM" ? "Room" : "Table";
-      const updatedQR = mapQRResponseToContext(response.data, tab);
+      const updatedData = await staffQrApi.updateQr(Number(id), payload);
+      const tab = updatedData.type === "ROOM" ? "Room" : "Table";
+      const updatedQR = mapQRResponseToContext(updatedData, tab);
       set((s) => ({
         qrs: s.qrs.map((q) => (q.id === id ? updatedQR : q)),
         successMsg: "QR code updated successfully",
@@ -255,7 +245,7 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
   deleteQR: async (id) => {
     set({ loading: true, error: null });
     try {
-      await api.delete(`/qr/${id}`);
+      await staffQrApi.deleteQr(Number(id));
       set((s) => ({
         qrs: s.qrs.filter((q) => q.id !== id),
         successMsg: "QR code deleted successfully",
@@ -271,10 +261,10 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
   toggleStatus: async (id) => {
     set({ loading: true, error: null });
     try {
-      const response = await api.post(`/qr/${id}/toggle-status`);
+      const data = await staffQrApi.toggleStatus(Number(id));
       const qr = get().qrs.find((q) => q.id === id);
       const tab = qr ? qr.tab : "Table";
-      const updatedQR = mapQRResponseToContext(response.data, tab);
+      const updatedQR = mapQRResponseToContext(data, tab);
       set((s) => ({
         qrs: s.qrs.map((q) => (q.id === id ? updatedQR : q)),
         successMsg: "QR code status updated successfully",

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "@/lib/axios";
+import { staffOrderApi } from "@/api/staff/order.api";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 export type OrderStatus =
@@ -193,8 +193,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
       set({ loading: true, error: null });
       console.log(`🔄 Fetching orders for property ${propertyId}...`);
       try {
-        const response = await api.get(`/staff/orders/property/${propertyId}`);
-        const backendOrders = response.data;
+        const backendOrders = await staffOrderApi.getOrders(propertyId);
         console.log(`✅ Received ${backendOrders.length} orders from backend:`, backendOrders);
         const orders = backendOrders.map(convertBackendOrder);
         console.log(`✅ Converted to frontend format:`, orders);
@@ -210,7 +209,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
     acceptOrder: async (orderId) => {
       try {
         const orderIdNum = parseInt(orderId.replace("#ORD-", ""));
-        await api.patch(`/staff/orders/${orderIdNum}/accept`);
+        await staffOrderApi.acceptOrder(orderIdNum);
         
         set((state) => ({
           orders: state.orders.map((o) =>
@@ -245,7 +244,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
     rejectOrder: async (orderId, reason) => {
       try {
         const orderIdNum = parseInt(orderId.replace("#ORD-", ""));
-        await api.patch(`/staff/orders/${orderIdNum}/reject`);
+        await staffOrderApi.rejectOrder(orderIdNum);
         
         set((state) => ({
           orders: state.orders.map((o) =>
@@ -284,19 +283,15 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         const currentOrder = get().orders.find((o) => o.id === orderId);
         if (!currentOrder) return;
 
-        let endpoint = "";
         const status = currentOrder.status;
         
         if (status === "placed") {
-          endpoint = `/staff/orders/${orderIdNum}/accept`;
+          await staffOrderApi.acceptOrder(orderIdNum);
         } else if (status === "accepted" || status === "in-progress") {
-          endpoint = `/staff/orders/${orderIdNum}/ready`;
+          await staffOrderApi.markAsReady(orderIdNum);
         } else if (status === "ready") {
-          endpoint = `/staff/orders/${orderIdNum}/deliver`;
+          await staffOrderApi.markAsDelivered(orderIdNum);
         }
-
-        if (endpoint) {
-          await api.patch(endpoint);
           
           set((state) => ({
             orders: state.orders.map((o) => {
@@ -318,7 +313,6 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
               };
             }),
           }));
-        }
       } catch (error: unknown) {
         const errorMessage = extractApiErrorMessage(error, "Failed to advance order status");
         set({ error: errorMessage });

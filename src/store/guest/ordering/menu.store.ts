@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "@/lib/axios";
+import { guestMenuApi } from "@/api/guest/menu.api";
 
 export interface MenuItem {
   id: string;
@@ -50,13 +50,14 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
     try {
       set({ loading: true, error: null, propertyId });
       
-      let url = `/guest/order/menu?propertyId=${propertyId}`;
-      if (tableId) url += `&tableId=${tableId}`;
-      if (roomNumber) url += `&roomNumber=${roomNumber}`;
+      const data = await guestMenuApi.getMenu(
+        propertyId, 
+        tableId ? Number(tableId) : undefined, 
+        roomNumber
+      );
       
-      const response = await api.get(url);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rawItems: any[] = response.data;
+      // Handle paginated response (Spring Data Page) or plain array
+      const rawItems: any[] = Array.isArray(data) ? data : (data.content || []);
 
       // Map backend fields to frontend MenuItem shape
       const items: MenuItem[] = rawItems.map((item) => ({
