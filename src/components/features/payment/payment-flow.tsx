@@ -7,13 +7,26 @@ import PaymentSelection from "./steps/payment-selection";
 import PaymentCardForm from "./steps/payment-card-form";
 import PaymentStatus from "./steps/payment-status";
 import { paymentApi } from "@/lib/api";
+import { useGuestGuard } from "@/hooks/use-guest-guard";
+import AccessDenied from "@/components/shared/auth/access-denied";
 
 export type PaymentStep = "selection" | "card" | "processing" | "success" | "failed";
 
 export default function PaymentFlow() {
+    const { ready, status, userRole } = useGuestGuard();
     const searchParams = useSearchParams();
     const router = useRouter();
     const [step, setStep] = useState<PaymentStep>("selection");
+
+    if (status === "loading") return (
+        <div className="min-h-screen flex items-center justify-center bg-[#1a1a1a]">
+            <div className="w-8 h-8 border-4 border-t-white border-neutral-600 rounded-full animate-spin" />
+        </div>
+    );
+
+    if (status === "unauthorized") {
+        return <AccessDenied userRole={userRole} requiredRole="Guest" />;
+    }
 
     // Read total from URL, fallback to default if not present
     const rawAmount = searchParams?.get("total") || "1990";

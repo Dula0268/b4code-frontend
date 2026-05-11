@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/guest/order/cart-store";
 import { useOrderStore } from "@/store/guest/order/order-store";
+import { useAuthStore } from "@/store/auth/auth.store";
 
 /* ─── Helpers ─── */
 
@@ -17,7 +18,15 @@ type PaymentMethod = "in-app" | "room-charge";
 
 /* ─── Checkout Client ─── */
 
-export default function CheckoutClient({ roomNumber, guestName, propertyId, guestId }: { roomNumber?: string; guestName?: string; propertyId?: number; guestId?: number }) {
+export default function CheckoutClient() {
+  const user = useAuthStore((s) => s.user);
+  
+  // Derived data from session
+  const roomNumber = user?.roomId ? String(user.roomId) : "";
+  const guestName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "";
+  const propertyId = user?.propertyId;
+  const guestId = user?.userId;
+
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
   const remove = useCartStore((s) => s.remove);
@@ -39,6 +48,7 @@ export default function CheckoutClient({ roomNumber, guestName, propertyId, gues
   const handlePlaceOrder = () => {
     if (!roomNumber || !guestName || propertyId === undefined || guestId === undefined) {
       console.error("Missing required order data: roomNumber, guestName, propertyId, or guestId");
+      alert("Please ensure you are logged in with an active booking to place an order.");
       return;
     }
 

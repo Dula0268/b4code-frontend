@@ -11,8 +11,11 @@ import {
 } from "lucide-react"
 import { getPropertyById } from "@/lib/mock-properties"
 import { useGuestBookingStore, type StoredBooking } from "@/store/guest/booking/booking.store"
+import { useAuthStore } from "@/store/auth/auth.store"
 import { differenceInDays, format } from "date-fns"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import { useGuestGuard } from "@/hooks/use-guest-guard"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & Helpers
@@ -29,6 +32,8 @@ interface FallbackData {
   guests:           number
   nights:           number
   totalPrice:       number
+  propertyId:       string
+  roomId:           string
 }
 
 function formatLKR(amount: number) {
@@ -105,11 +110,23 @@ function useBookingConfirmationLogic() {
         guests:           guestCount,
         nights,
         totalPrice:       totalFromUrl > 0 ? totalFromUrl : (room ? room.pricePerNight * nights : 0),
+        propertyId,
+        roomId,
       })
     } catch {
       setErrorMsg("Failed to read confirmation data.");
     }
   }, [searchParams])
+
+  // Assign stay to auth session after confirmation
+  const assignStay = useAuthStore(s => s.assignStay)
+  useEffect(() => {
+    if (booking) {
+      assignStay(Number(booking.propertyId), Number(booking.roomId))
+    } else if (fallback?.propertyId && fallback?.roomId) {
+      assignStay(Number(fallback.propertyId), Number(fallback.roomId))
+    }
+  }, [booking, fallback, assignStay])
 
   const handleCopy = () => {
     const code = booking?.confirmationCode ?? fallback?.confirmationCode ?? ""
@@ -145,12 +162,20 @@ function useBookingConfirmationLogic() {
 // Page Content
 // ─────────────────────────────────────────────────────────────────────────────
 function ConfirmationContent() {
+  const { ready } = useGuestGuard()
   const logic = useBookingConfirmationLogic()
+
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
   const { booking, fallback, code, paidInFull, propertyName, propertyLocation, propertyImage, roomName, checkInDisplay, checkOutDisplay, guestCount, totalPrice, nights, copied, handleCopy } = logic
 
   if (!booking && !fallback) {
     return (
       <div className="min-h-screen flex flex-col">
+        <GuestTopbar />
         <div className="flex-1 flex items-center justify-center" style={{ color: "var(--gray-3)" }}>
           Loading confirmation…
         </div>
@@ -161,6 +186,8 @@ function ConfirmationContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <GuestTopbar />
+
       <main className="flex-1 pt-20 pb-16" style={{ background: "color-mix(in srgb, var(--gray-5) 60%, white)" }}>
         <div className="max-w-[660px] mx-auto px-4 flex flex-col gap-6">
 

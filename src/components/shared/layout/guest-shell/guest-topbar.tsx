@@ -25,6 +25,14 @@ export default function GuestTopbar() {
   const isRestoring = useAuthStore((s) => s.isRestoring)
   const logout = useAuthStore((s) => s.logout)
 
+  // Issue #1 fix: On /guest/* pages, only show profile for GUEST role users.
+  // On the home page (/), any logged-in user sees their profile.
+  // This prevents cross-tab leaks (e.g. staff profile showing on /guest/search)
+  // while still allowing staff/owner/admin to see their avatar on the home screen.
+  const isGuestContextPage = pathname.startsWith("/guest");
+  const isGuestUser = user?.role?.toLowerCase() === "guest";
+  const guestUser = isGuestContextPage ? (isGuestUser ? user : null) : user;
+
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     setMounted(true)
@@ -113,17 +121,17 @@ export default function GuestTopbar() {
           </nav>
 
           {/* Auth buttons OR Account avatar */}
-          {!mounted || (isRestoring && !user) ? (
+          {!mounted || (isRestoring && !guestUser) ? (
             <div className="w-24 h-9 bg-gray-100 animate-pulse rounded-lg" />
-          ) : user ? (
+          ) : guestUser ? (
             <div className="relative" ref={accountMenuRef}>
               <button
                 onClick={() => setAccountMenuOpen((prev) => !prev)}
                 className="relative w-9 h-9 rounded-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-bold ring-2 ring-[#953002]/20 cursor-pointer hover:ring-4 transition-all overflow-hidden"
                 aria-label="Account menu"
               >
-                {user?.profile?.avatarUrl ? (
-                  <img src={user.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                {guestUser?.profile?.avatarUrl ? (
+                  <img src={guestUser.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   getInitials()
                 )}
@@ -137,9 +145,9 @@ export default function GuestTopbar() {
                   {/* User info */}
                   <div className="px-4 py-2.5 border-b border-[#f0f0f0]">
                     <p className="text-[13px] font-semibold text-[#1d1d1d] truncate">
-                      {user.profile ? `${user.profile.firstName} ${user.profile.lastName}` : user.email}
+                      {guestUser!.profile ? `${guestUser!.profile.firstName} ${guestUser!.profile.lastName}` : guestUser!.email}
                     </p>
-                    <p className="text-[11px] text-[#828282] truncate">{user.email}</p>
+                    <p className="text-[11px] text-[#828282] truncate">{guestUser!.email}</p>
                   </div>
 
                   <Link
@@ -216,21 +224,21 @@ export default function GuestTopbar() {
           ))}
 
           {/* Mobile: auth buttons or account info */}
-          {!mounted ? null : user ? (
+          {!mounted ? null : guestUser ? (
             <div className="flex flex-col gap-2 pt-2 border-t border-[#e0e0e0]">
               <div className="flex items-center gap-3 py-2">
                 <div className="w-9 h-9 rounded-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0 overflow-hidden">
-                  {user?.profile?.avatarUrl ? (
-                    <img src={user.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  {guestUser?.profile?.avatarUrl ? (
+                    <img src={guestUser.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     getInitials()
                   )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-[13px] font-semibold text-[#1d1d1d] truncate">
-                    {user.profile ? `${user.profile.firstName} ${user.profile.lastName}` : user.email}
+                    {guestUser!.profile ? `${guestUser!.profile.firstName} ${guestUser!.profile.lastName}` : guestUser!.email}
                   </p>
-                  <p className="text-[11px] text-[#828282] truncate">{user.email}</p>
+                  <p className="text-[11px] text-[#828282] truncate">{guestUser!.email}</p>
                 </div>
               </div>
               <button

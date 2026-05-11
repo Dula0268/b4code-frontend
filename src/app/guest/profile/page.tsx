@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle2, Lock, UploadCloud, User as UserIcon, Camera } from "lucide-react";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { imageApi } from "@/lib/api";
+import { useGuestGuard } from "@/hooks/use-guest-guard";
 
 export default function GuestProfilePage() {
+  const { ready } = useGuestGuard()
   const { user, updateProfile } = useAuthStore();
   const [formData, setFormData] = useState({
     firstName: "",
@@ -24,7 +26,7 @@ export default function GuestProfilePage() {
 
   // Sync form data with user store data
   useEffect(() => {
-    if (user) {
+    if (ready && user) {
       setFormData({
         firstName: user.profile?.firstName || "",
         lastName: user.profile?.lastName || "",
@@ -34,7 +36,13 @@ export default function GuestProfilePage() {
         nationalIdUrl: user.profile?.nationalIdUrl || "",
       });
     }
-  }, [user]);
+  }, [ready, user]);
+
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

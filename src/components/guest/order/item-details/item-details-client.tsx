@@ -59,17 +59,11 @@ export default function ItemDetailsClient({
 
   const itemAddOns = (item as MenuItemDetail).addOns;
   const addOns = React.useMemo(() => itemAddOns ?? [], [itemAddOns]);
-  
-  const gallery = React.useMemo(() => {
-    const images = (item as MenuItem).imageUrls;
-    if (images && images.length > 0) return images;
-    return (item as MenuItemDetail).gallery ?? (item.imageUrl ? [item.imageUrl] : []);
-  }, [item]);
-
+  const gallery = (item as MenuItemDetail).gallery ?? (item.imageUrl ? [item.imageUrl] : []);
   const heroSrc = gallery[activeImage] ?? item.imageUrl;
-  const itemTitle = item.title ?? item.name ?? "Item";
+  const itemTitle = (item as { title?: string }).title ?? item.name ?? "Item";
   const detailItem = item as MenuItemDetail;
-  const itemPrice = item.priceLkr ?? item.price ?? 0;
+  const itemPrice = (item as { priceLkr?: number }).priceLkr ?? item.price ?? 0;
 
   const addOnPrice = React.useMemo(() => {
     return addOns.reduce((sum, addon) => {

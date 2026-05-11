@@ -32,8 +32,11 @@ export default function AdminHeader({
   const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const adminName = adminNameProp || 
-    (user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Admin");
+  // Only show profile data if the logged-in user is actually ADMIN (cross-tab guard)
+  const adminUser = user?.role?.toLowerCase() === "admin" ? user : null;
+
+  const adminName = adminNameProp ||
+    (adminUser?.profile ? `${adminUser.profile.firstName} ${adminUser.profile.lastName}` : "Admin");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -78,18 +81,18 @@ export default function AdminHeader({
               fill
               className="object-cover"
             />
-          ) : user?.profile?.avatarUrl ? (
+          ) : adminUser?.profile?.avatarUrl ? (
             <img 
-              src={user.profile.avatarUrl} 
+              src={adminUser.profile.avatarUrl} 
               alt={adminName} 
               className="absolute inset-0 w-full h-full object-cover" 
             />
           ) : (
             <div className="absolute inset-0 w-full h-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-extrabold uppercase">
-              {user?.profile ? (
-                `${user.profile.firstName[0]}${user.profile.lastName[0]}`
+              {adminUser?.profile ? (
+                `${adminUser.profile.firstName[0]}${adminUser.profile.lastName[0]}`
               ) : (
-                user?.email?.[0] || "A"
+                adminUser?.email?.[0] || "A"
               )}
             </div>
           )}

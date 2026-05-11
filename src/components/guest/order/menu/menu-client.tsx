@@ -46,7 +46,6 @@ export default function MenuClient() {
 
   // QR context provides the propertyId
   const qrContext = useOrderContextStore((s) => s.qrContext);
-  const authUser = useAuthStore((s) => s.user);
 
   // Local UI state
   const [activeCategory, setActiveCategory] = React.useState<string>("All Items");
@@ -59,43 +58,19 @@ export default function MenuClient() {
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const filterRef = React.useRef<HTMLDivElement>(null);
 
-  // Fetch menu from API when propertyId is available
+  const user = useAuthStore((s) => s.user);
+
+  // Fetch menu from API when propertyId is available (from QR or Session)
   React.useEffect(() => {
-    // 1. Try to get propertyId from URL search params first
-    const searchParams = new URLSearchParams(window.location.search);
-    const urlPropertyId = searchParams.get("propertyId");
-    const urlTableId = searchParams.get("tableId");
-    const urlRoomNumber = searchParams.get("roomNumber");
-
-    console.log("🔍 MenuClient: Resolving propertyId...", { urlPropertyId, qrContextPId: qrContext?.propertyId, authUserPId: authUser?.propertyId });
-
-    if (urlPropertyId) {
-      const pId = parseInt(urlPropertyId, 10);
-      console.log("📍 Using propertyId from URL:", pId);
-      if (!qrContext || qrContext.propertyId !== pId) {
-        useOrderContextStore.getState().setQRContext({
-          qrId: "url-direct",
-          propertyId: pId,
-          propertyName: "Property",
-          locationLabel: urlTableId ? `Table ${urlTableId}` : (urlRoomNumber ? `Room ${urlRoomNumber}` : "Direct Link"),
-          type: urlTableId ? "DINING_TABLE" : (urlRoomNumber ? "ROOM" : "DIRECT"),
-          name: "Direct Access",
-          status: "ACTIVE",
-          tableId: urlTableId || undefined,
-          roomNumber: urlRoomNumber || undefined
-        });
-      }
-      fetchMenu(pId, urlTableId || undefined, urlRoomNumber || undefined);
-      return;
+    const propertyId = qrContext?.propertyId || user?.propertyId;
+    const roomId = qrContext?.roomId || user?.roomId;
+    
+    if (propertyId && !isNaN(Number(propertyId))) {
+      fetchMenu(Number(propertyId), roomId ? Number(roomId) : undefined);
     }
+  }, [qrContext?.propertyId, qrContext?.roomId, user?.propertyId, user?.roomId, fetchMenu]);
 
-    // 2. Fallback to existing qrContext
-    const propertyId = qrContext?.propertyId || authUser?.propertyId;
-    console.log("📍 Using propertyId from context/auth:", propertyId);
-    if (propertyId && propertyId > 0) {
-      fetchMenu(Number(propertyId), qrContext?.tableId, qrContext?.roomNumber);
-    }
-  }, [qrContext?.propertyId, fetchMenu, qrContext, authUser?.propertyId]);
+  // Close filter dropdown on outside click
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
@@ -206,8 +181,13 @@ export default function MenuClient() {
           <p className="text-lg font-bold text-[var(--black-2)]">Unable to load menu</p>
           <p className="text-sm text-[var(--gray-3)] mt-1">{menuError}</p>
           <Button
-            className="mt-4 bg-[var(--brand-primary)] text-white"
-            onClick={() => qrContext?.propertyId && fetchMenu(qrContext.propertyId)}
+            onClick={() => {
+              const pId = qrContext?.propertyId || user?.propertyId;
+              const rId = qrContext?.roomId || user?.roomId;
+              if (pId && !isNaN(Number(pId))) {
+                fetchMenu(Number(pId), rId ? Number(rId) : undefined);
+              }
+            }}
           >
             Try Again
           </Button>

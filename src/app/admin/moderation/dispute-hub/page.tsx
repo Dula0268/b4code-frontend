@@ -61,15 +61,8 @@ function StatusBadge({ status }: { status: string }) {
 
 // ─── Resolution Summary Panel ─────────────────────────────────────────────────
 function ResolutionSummary({ dispute }: { dispute: Dispute }) {
-  const { setSelectedDispute, setDisputeResolved, resolveDispute, saveDisputeNote, actionLoading } = useAdminModerationStore();
-  const [note, setNote] = useState(dispute.internalNote || "");
-  const [noteSaved, setNoteSaved] = useState(false);
-
-  const handleSaveNote = async () => {
-    await saveDisputeNote(dispute.id, note);
-    setNoteSaved(true);
-    setTimeout(() => setNoteSaved(false), 2000);
-  };
+  const { setSelectedDispute, setDisputeResolved, resolveDispute, actionLoading } = useAdminModerationStore();
+  const [note, setNote] = useState("");
 
   const handleApprove = async () => {
     await resolveDispute(dispute.id, "Refund Approved", true);
@@ -212,9 +205,20 @@ function ResolutionSummary({ dispute }: { dispute: Dispute }) {
           EVIDENCE
         </p>
         <div className="flex gap-3">
-          <div className="flex flex-col items-center justify-center w-22.5 h-22.5 rounded-xl border border-[#E8DDD8] bg-[#FAFAF8]">
+          <div className="relative w-30 h-22.5 rounded-xl overflow-hidden border border-[#E8DDD8]">
+            <Image
+              src="/evidence-photo.png"
+              alt="Evidence Photo"
+              fill
+              className="object-cover"
+            />
+            <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded">
+              Photo
+            </span>
+          </div>
+          <div className="flex flex-col items-center justify-center w-22.5 h-22.5 rounded-xl border border-[#E8DDD8] bg-[#FAFAF8] cursor-pointer hover:bg-[#f5efec] transition-colors">
             <FileText size={22} className="text-[#9E7B6A] mb-1" />
-            <span className="text-[10px] text-[#9E7B6A]">No evidence files</span>
+            <span className="text-[10px] text-[#9E7B6A]">chat_log.pdf</span>
           </div>
         </div>
       </div>
@@ -256,12 +260,8 @@ function ResolutionSummary({ dispute }: { dispute: Dispute }) {
             className="w-full h-17.5 border-none outline-none resize-none text-[13px] text-[#1A1A1A] bg-transparent placeholder:text-[#C4B5AC] box-border"
           />
           <div className="flex justify-end">
-            <button 
-              onClick={handleSaveNote}
-              disabled={actionLoading}
-              className={`text-[12px] font-bold bg-transparent border-none cursor-pointer transition-colors disabled:opacity-50 ${noteSaved ? 'text-[#16A34A]' : 'text-[#C05621] hover:underline'}`}
-            >
-              {noteSaved ? '✓ SAVED' : 'SAVE NOTE'}
+            <button className="text-[12px] font-bold text-[#C05621] bg-transparent border-none cursor-pointer hover:underline">
+              SAVE NOTE
             </button>
           </div>
         </div>

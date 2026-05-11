@@ -5,18 +5,25 @@ import { useRouter } from "next/navigation";
 import WelcomeModal from "@/components/features/guest/ordering/landing/welcome-modal";
 import MenuClient from "@/components/guest/order/menu/menu-client";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
+import { useGuestGuard } from "@/hooks/use-guest-guard";
 
 export default function GuestOrderLanding() {
+  const { ready } = useGuestGuard();
   const router = useRouter();
   const qrContext = useOrderContextStore((s) => s.qrContext);
   const loading = useOrderContextStore((s) => s.loading);
 
-  // Redirect to scanner if no QR context
   useEffect(() => {
-    if (!loading && !qrContext) {
+    if (ready && !loading && !qrContext) {
       router.push("/guest/my-room/qr-scanner");
     }
-  }, [qrContext, loading, router]);
+  }, [ready, qrContext, loading, router]);
+
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
 
   if (loading) {
     return (

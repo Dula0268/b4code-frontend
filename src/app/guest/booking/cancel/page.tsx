@@ -9,16 +9,18 @@ import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import { useAuthStore } from "@/store/auth/auth.store"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import { useGuestGuard } from "@/hooks/use-guest-guard"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration & Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Fallback configuration if no valid booking is found. */
 const APP_CONFIG = {
   cancellationFeePercent: 10,
   defaultCardSuffix: "4242",
   defaultCurrency: "LKR",
-  apiBaseUrl: (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080").replace(/\/$/, "") + "/api",
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
 } as const
 
 const MOCK_DEMO_BOOKING = {
@@ -129,14 +131,8 @@ function useCancelBookingLogic() {
       if (targetBookingId && !targetBookingId.startsWith("bk-")) {
         type AuthUserLike = { id?: number }
         const guestIdToUse = (useAuthStore.getState().user as AuthUserLike | null)?.id ?? 1;
-        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${targetBookingId}/cancel`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              reason: reason.trim(), 
-              guestId: guestIdToUse, 
-              comments: comments.trim() 
-            }),
+        const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${targetBookingId}/cancel?guestId=${guestIdToUse}`, {
+            method: "PATCH"
         });
         if (!res.ok) {
             throw new Error("Failed to cancel booking on server.");
@@ -182,7 +178,14 @@ function useCancelBookingLogic() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function CancelBookingContent() {
+  const { ready } = useGuestGuard()
   const logic = useCancelBookingLogic()
+
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
 
   return (
     <div className="min-h-screen flex flex-col">

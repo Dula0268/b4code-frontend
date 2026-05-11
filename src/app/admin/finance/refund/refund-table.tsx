@@ -7,18 +7,17 @@ import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 // ─── Status badge ───────────────────────────────────────────────────────────────
 function RefundStatusBadge({ status }: { status: string }) {
   const map: Record<string, { bg: string; text: string }> = {
-    PENDING:  { bg: "bg-[#FFFBEB]", text: "text-[#D97706]" },
-    APPROVED: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]" },
-    REJECTED: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]" },
+    Pending: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]" },
+    Approved: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]" },
+    Rejected: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]" },
   };
   const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]" };
-  const label = status.charAt(0) + status.slice(1).toLowerCase();
 
   return (
     <span
       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}
     >
-      {label}
+      {status}
     </span>
   );
 }
@@ -47,13 +46,13 @@ export default function RefundTable() {
     });
   }, [fetchRefunds, currentPage, debouncedSearch]);
 
-  const handleApprove = async (id: number) => {
+  const handleApprove = async (id: string) => {
     if (confirm("Are you sure you want to approve this refund?")) {
       await approveRefund(id);
     }
   };
 
-  const handleReject = async (id: number) => {
+  const handleReject = async (id: string) => {
     const note = prompt("Please provide a reason for rejection:");
     if (note !== null) {
       await rejectRefund(id, note || "Rejected by Admin");
@@ -136,7 +135,7 @@ export default function RefundTable() {
                 className="border-b border-[#F0EBE7] last:border-b-0 hover:bg-[#FDFAF8] transition-colors"
               >
                 <td className="px-6 py-4 text-sm font-bold text-[#1A1A1A]">
-                  #{r.transactionId}
+                  #{r.bookingId}
                 </td>
                 <td className="px-6 py-4 text-sm font-bold text-[#1A1A1A]">
                   LKR {r.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -145,13 +144,13 @@ export default function RefundTable() {
                   {r.reason}
                 </td>
                 <td className="px-6 py-4 text-sm text-[#9E7B6A]">
-                  {new Date(r.requestedAt).toLocaleDateString()}
+                  {new Date(r.requestDate).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4">
                   <RefundStatusBadge status={r.status} />
                 </td>
                 <td className="px-6 py-4 text-right">
-                  {r.status === 'PENDING' ? (
+                  {r.status === 'Pending' ? (
                     <div className="flex justify-end gap-2">
                       <button 
                         onClick={() => handleApprove(r.id)}

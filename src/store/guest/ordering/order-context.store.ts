@@ -5,13 +5,12 @@ import { create } from "zustand";
 export interface QRContextData {
   qrId: string; // Unique QR ID
   propertyId: number; // Property ID for fetching menu
+  roomId?: number; // Optional Room ID from QR
   propertyName: string; // Name of the property
   locationLabel: string; // Location/Table name or Room number
   type: string; // QR type (DINING_TABLE, ROOM, etc.)
   name: string; // Full name of the QR context
   status: string; // ACTIVE or INACTIVE
-  tableId?: string;
-  roomNumber?: string;
 }
 
 type OrderContextState = {

@@ -10,23 +10,18 @@ import { useAuthStore } from "@/store/auth/auth.store"
 import { guestApi } from "@/lib/api"
 import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/booking.store"
 import BookingCard, { type BookingCardData } from "@/components/features/guest/booking/booking-card"
-import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
-import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import { useGuestGuard } from "@/hooks/use-guest-guard"
+import AccessDenied from "@/components/shared/auth/access-denied"
 
 const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
 export default function MyBookingsPage() {
+  const { status, userRole } = useGuestGuard()
   const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
   const localBookings = useGuestBookingStore(s => s.bookings)
-
-  const normalizeStatus = (s?: string): "UPCOMING" | "COMPLETED" | "CANCELLED" => {
-    if (s === "COMPLETED") return "COMPLETED"
-    if (s === "CANCELLED") return "CANCELLED"
-    return "UPCOMING"
-  }
 
   useEffect(() => {
     async function loadBookings() {
@@ -57,8 +52,13 @@ export default function MyBookingsPage() {
                   totalAmount?: number
                   status?: string
                   paymentMethod?: string
-                  propertyImage?: string
                   createdAt?: string
+                }
+
+                const normalizeStatus = (s?: string): BookingStatus => {
+                  if (s === "COMPLETED") return "COMPLETED"
+                  if (s === "CANCELLED") return "CANCELLED"
+                  return "UPCOMING"
                 }
 
                 apiBookings = (data as ApiBooking[]).map((b) => ({
@@ -69,7 +69,7 @@ export default function MyBookingsPage() {
                     status: normalizeStatus(b.status),
                     property: b.propertyName || "Prime Stay Property",
                     location: b.propertyAddress || "Sri Lanka",
-                    imageSrc: b.propertyImage || "/images/properties/property-1.jpg",
+                    imageSrc: "/images/properties/property-1.jpg",
                     checkIn: b.checkIn || "",
                     checkOut: b.checkOut || "",
                     guests: `${b.guestCount ?? 2} Guests`,
@@ -79,7 +79,7 @@ export default function MyBookingsPage() {
                     paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
                     roomName: b.roomName,
                     isFromStore: false,
-                })) as BookingCardData[]
+                }))
             } catch (err) {
                 console.warn("API booking fetch failed or empty:", err)
             }
@@ -90,7 +90,7 @@ export default function MyBookingsPage() {
                 propertyId: String(b.propertyId),
                 orderId: b.confirmationCode,
                 orderNumber: b.confirmationCode,
-                status: normalizeStatus(b.status),
+                status: b.status,
                 property: b.property,
                 location: b.location,
                 imageSrc: b.imageSrc,
@@ -127,10 +127,19 @@ export default function MyBookingsPage() {
 
     if (user) loadBookings();
   }, [user, localBookings]);
+  
+  if (status === "loading") return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
+
+  if (status === "unauthorized") {
+    return <AccessDenied userRole={userRole} requiredRole="Guest" />;
+  }
 
   return (
     <div className="min-h-screen relative bg-[#faf6f1] overflow-hidden">
-      <GuestTopbar />
       {/* Immersive Background */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -215,7 +224,6 @@ export default function MyBookingsPage() {
           </p>
         </div>
       </div>
-      <GuestFooter />
     </div>
   )
 }

@@ -10,10 +10,12 @@ import Link from "next/link"
 import { differenceInDays, format } from "date-fns"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
+import { useGuestGuard } from "@/hooks/use-guest-guard"
 import { guestApi } from "@/lib/api"
 import { getPropertyById } from "@/lib/mock-properties"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import AccessDenied from "@/components/shared/auth/access-denied";
 
 // ─── Zod Validation Schema ────────────────────────────────────────────────────
 const checkoutSchema = z.object({
@@ -66,13 +68,6 @@ function useCheckoutLogic() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const { user, logout } = useAuthStore()
-  const isLoggedIn = !!user
-
-  useEffect(() => {
-    if (!isLoggedIn) {
-      router.push(`/auth/login?role=guest&redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`)
-    }
-  }, [isLoggedIn, router])
 
   useEffect(() => {
     if (!searchParams) return
@@ -281,15 +276,32 @@ function useCheckoutLogic() {
   }
 
   return {
-    isSubmitting, bookingDetails, errorMsg, isLoggedIn, user, logout,
+    isSubmitting, bookingDetails, errorMsg, user, logout,
     register, handleSubmit, errors, resetForm, paymentMethod, discountAmount, total, onSubmit, searchParams
   };
 }
 
+
 function CheckoutContent() {
+  const { ready, status, userRole } = useGuestGuard();
   const logic = useCheckoutLogic();
-  const { isSubmitting, bookingDetails, errorMsg, isLoggedIn, user, logout, register, handleSubmit, errors, resetForm, paymentMethod, discountAmount, total, onSubmit, searchParams } = logic;
-  
+  const { isSubmitting, bookingDetails, errorMsg, user, logout, register, handleSubmit, errors, resetForm, paymentMethod, discountAmount, total, onSubmit, searchParams } = logic;
+
+  // 1. Loading state
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  // 2. Unauthorized state (logged in as wrong role)
+  if (status === "unauthorized") {
+    return <AccessDenied userRole={userRole} requiredRole="Guest" />;
+  }
+
+  // 3. Ready but missing data
   if (!bookingDetails) {
     return <div className="min-h-screen flex items-center justify-center">Loading booking details...</div>
   }
@@ -314,7 +326,7 @@ function CheckoutContent() {
         <div className="flex-1 min-w-0">
           <h1 className="text-3xl font-bold text-[var(--fg)] mb-8">Secure your booking</h1>
 
-          {isLoggedIn ? (
+          {!!user ? (
             <div className="mb-6 flex items-center justify-between gap-4 bg-[var(--state-success)]/5 border border-[var(--state-success)]/20 rounded-[var(--radius-lg)] px-5 py-3.5">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-[var(--state-success)]/10 flex items-center justify-center">

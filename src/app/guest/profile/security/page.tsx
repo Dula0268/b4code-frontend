@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Lock } from "lucide-react";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { useGuestGuard } from "@/hooks/use-guest-guard";
 
 export default function GuestSecurityPage() {
+  const { ready } = useGuestGuard();
   const router = useRouter();
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -19,6 +21,12 @@ export default function GuestSecurityPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

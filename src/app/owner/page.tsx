@@ -1,16 +1,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import RoleGuard from "@/components/shared/auth/role-guard";
+import { useOwnerGuard } from "@/hooks/use-owner-guard";
+import AccessDenied from "@/components/shared/auth/access-denied";
 
 export default function OwnerPage() {
+  const { ready, status, userRole } = useOwnerGuard();
   const router = useRouter();
 
+  if (status === "loading") return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
+
+  if (status === "unauthorized") {
+    return <AccessDenied userRole={userRole} requiredRole="Owner" />;
+  }
+
   return (
-    <RoleGuard allowedRoles={["owner", "admin"]}>
-      <div className="flex items-center justify-center min-h-screen bg-[#F6F8F7]">
-        <div className="text-center flex flex-col gap-4">
-          <h1 className="text-[28px] font-bold text-[#282828]">Owner Portal</h1>
+    <div className="flex items-center justify-center min-h-screen bg-[#F6F8F7]">
+      <div className="text-center flex flex-col gap-4">
+        <h1 className="text-[28px] font-bold text-[#282828]">Owner Portal</h1>
         <p className="text-sm text-[#666]">Manage your properties, availability and payouts.</p>
         <div className="flex gap-3 justify-center mt-2">
           <button
@@ -40,6 +51,5 @@ export default function OwnerPage() {
         </div>
       </div>
     </div>
-    </RoleGuard>
   );
 }
