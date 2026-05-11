@@ -79,7 +79,7 @@ export default function MyBookingsPage() {
                     paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
                     roomName: b.roomName,
                     isFromStore: false,
-                }))
+                })) as BookingCardData[]
             } catch (err) {
                 console.warn("API booking fetch failed or empty:", err)
             }
