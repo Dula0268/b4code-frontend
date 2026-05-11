@@ -169,6 +169,11 @@ export const useOrderStore = create<OrderState>((set) => ({
         roomNumber: opts.roomNumber,
         totalAmount: opts.total,
         status: "NEW",
+        items: opts.lines.map(line => ({
+          menuItemId: line.item.id,
+          quantity: line.qty,
+          priceAtOrder: line.item.price
+        }))
       });
 
       console.log("✅ Order placed successfully:", response.data);
