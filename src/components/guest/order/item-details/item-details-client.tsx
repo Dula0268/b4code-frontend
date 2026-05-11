@@ -67,9 +67,9 @@ export default function ItemDetailsClient({
   }, [item]);
 
   const heroSrc = gallery[activeImage] ?? item.imageUrl;
-  const itemTitle = (item as any).title ?? item.name ?? "Item";
+  const itemTitle = item.title ?? item.name ?? "Item";
   const detailItem = item as MenuItemDetail;
-  const itemPrice = (item as any).priceLkr ?? item.price ?? 0;
+  const itemPrice = item.priceLkr ?? item.price ?? 0;
 
   const addOnPrice = React.useMemo(() => {
     return addOns.reduce((sum, addon) => {
