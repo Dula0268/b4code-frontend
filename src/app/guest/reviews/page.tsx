@@ -109,7 +109,7 @@ function useReviewLogic() {
   const searchParams = useSearchParams()
   const propertyId = searchParams?.get("propertyId")
   const bookingId = searchParams?.get("bookingId")
-  const { bookings, fetchUserBookings, loading, updateBookingStatus, modifyBooking } = useGuestBookingStore()
+  const { bookings, fetchUserBookings, loading, modifyBooking } = useGuestBookingStore()
   const user = useAuthStore(s => s.user)
 
   useEffect(() => {
@@ -165,8 +165,9 @@ function useReviewLogic() {
       modifyBooking(activeBooking.id, { status: "COMPLETED" })
       
       setSubmitted(true)
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to submit review. You may have already reviewed this booking.")
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to submit review. You may have already reviewed this booking."
+      setErrorMsg(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

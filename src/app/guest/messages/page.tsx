@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation"
 import {
     Send, Paperclip, Clock, CalendarCheck, ParkingCircle, Building2,
     CalendarDays, BadgeCheck, Lightbulb, CheckCircle2, ChevronLeft,
-    Smile, Phone, Video, Star, MapPin, Info, Home, Utensils, Sparkles,
+    Smile, Phone, Video, Star, MapPin, MessageSquare, Utensils, Sparkles,
     AlertCircle, HelpCircle, DoorOpen, User
 } from "lucide-react"
 

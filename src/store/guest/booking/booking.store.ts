@@ -130,7 +130,26 @@ export const useGuestBookingStore = create<GuestBookingState & GuestBookingActio
         const data = await guestApi.getGuestBookings(email);
         
         // Map backend BookingResponse to StoredBooking
-        const mapped: StoredBooking[] = data.map((b: any) => ({
+        const mapped: StoredBooking[] = data.map((b: {
+          bookingId: number | string;
+          confirmationNumber: string;
+          status: BookingStatus;
+          propertyName: string;
+          propertyId: number | string;
+          propertyAddress: string;
+          propertyImage?: string;
+          roomName: string;
+          roomId: number | string;
+          checkIn: string;
+          checkOut: string;
+          guestCount: number;
+          nights: number;
+          totalAmount: number;
+          paymentMethod: string;
+          createdAt: string;
+          guestEmail: string;
+          hostName?: string;
+        }) => ({
           id: String(b.bookingId),
           confirmationCode: b.confirmationNumber,
           status: b.status,
@@ -162,8 +181,9 @@ export const useGuestBookingStore = create<GuestBookingState & GuestBookingActio
 
         set({ bookings: mapped, loading: false });
         saveBookings(mapped);
-      } catch (err: any) {
-        set({ error: err.message || "Failed to fetch bookings", loading: false });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch bookings";
+        set({ error: errorMessage, loading: false });
       }
     },
 
