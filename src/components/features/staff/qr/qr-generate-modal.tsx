@@ -43,6 +43,8 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
   const [location, setLocation] = useState(existingQR?.location ?? "");
   const [description, setDescription] = useState(existingQR?.description ?? "");
   const [isActive, setIsActive] = useState(existingQR?.status === "active" || !existingQR);
+  const [tableId, setTableId] = useState<string>(existingQR?.tableId?.toString() ?? "");
+  const [roomNumber, setRoomNumber] = useState(existingQR?.roomNumber ?? "");
   const [nameError, setNameError] = useState(false);
 
   const handleSave = async () => {
@@ -67,6 +69,8 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
           instructionText: "Scan to Order Food",
           showRoomNumber: true,
           showLogo: true,
+          tableId: tableId ? parseInt(tableId, 10) : undefined,
+          roomNumber: roomNumber || undefined,
         }, propertyId);
         setSuccess(`QR "${name}" has been added to your QR management.`);
         router.push(`/staff/qr/${id}?propertyId=${propertyId}`);
@@ -139,6 +143,33 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
                   className={`mt-1 text-xs rounded-[8px] ${nameError ? "border-[var(--state-error)] bg-[rgba(235,87,87,0.04)]" : "border-[var(--gray-5)]"}`}
                 />
                 {nameError && <p className="text-[10px] text-[var(--state-error)] mt-0.5">Name is required</p>}
+              </div>
+
+              {/* Table ID or Room Number */}
+              <div className="grid grid-cols-2 gap-3">
+                {TYPE_TAB[type] === "Table" && (
+                  <div>
+                    <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Table ID / Number</Label>
+                    <Input
+                      type="number"
+                      value={tableId}
+                      onChange={(e) => setTableId(e.target.value)}
+                      placeholder="e.g. 5"
+                      className="mt-1 text-xs rounded-[8px] border-[var(--gray-5)]"
+                    />
+                  </div>
+                )}
+                {TYPE_TAB[type] === "Room" && (
+                  <div>
+                    <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Room Number</Label>
+                    <Input
+                      value={roomNumber}
+                      onChange={(e) => setRoomNumber(e.target.value)}
+                      placeholder="e.g. 101"
+                      className="mt-1 text-xs rounded-[8px] border-[var(--gray-5)]"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Location */}

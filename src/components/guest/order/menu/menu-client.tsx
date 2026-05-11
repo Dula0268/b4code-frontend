@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useCartStore, type MenuItem } from "@/store/guest/order/cart-store";
 import { useGuestMenuStore } from "@/store/guest/ordering/menu.store";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
+import { useAuthStore } from "@/store/auth/auth.store";
 import MenuItemCard from "./menu-item-card";
 import OrderSidebar from "./order-sidebar";
 
@@ -45,6 +46,7 @@ export default function MenuClient() {
 
   // QR context provides the propertyId
   const qrContext = useOrderContextStore((s) => s.qrContext);
+  const authUser = useAuthStore((s) => s.user);
 
   // Local UI state
   const [activeCategory, setActiveCategory] = React.useState<string>("All Items");
@@ -59,13 +61,41 @@ export default function MenuClient() {
 
   // Fetch menu from API when propertyId is available
   React.useEffect(() => {
-    const propertyId = qrContext?.propertyId;
-    if (propertyId && propertyId > 0) {
-      fetchMenu(propertyId);
-    }
-  }, [qrContext?.propertyId, fetchMenu]);
+    // 1. Try to get propertyId from URL search params first
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlPropertyId = searchParams.get("propertyId");
+    const urlTableId = searchParams.get("tableId");
+    const urlRoomNumber = searchParams.get("roomNumber");
 
-  // Close filter dropdown on outside click
+    console.log("🔍 MenuClient: Resolving propertyId...", { urlPropertyId, qrContextPId: qrContext?.propertyId, authUserPId: authUser?.propertyId });
+
+    if (urlPropertyId) {
+      const pId = parseInt(urlPropertyId, 10);
+      console.log("📍 Using propertyId from URL:", pId);
+      if (!qrContext || qrContext.propertyId !== pId) {
+        useOrderContextStore.getState().setQRContext({
+          qrId: "url-direct",
+          propertyId: pId,
+          propertyName: "Property",
+          locationLabel: urlTableId ? `Table ${urlTableId}` : (urlRoomNumber ? `Room ${urlRoomNumber}` : "Direct Link"),
+          type: urlTableId ? "DINING_TABLE" : (urlRoomNumber ? "ROOM" : "DIRECT"),
+          name: "Direct Access",
+          status: "ACTIVE",
+          tableId: urlTableId || undefined,
+          roomNumber: urlRoomNumber || undefined
+        });
+      }
+      fetchMenu(pId, urlTableId || undefined, urlRoomNumber || undefined);
+      return;
+    }
+
+    // 2. Fallback to existing qrContext
+    const propertyId = qrContext?.propertyId || authUser?.propertyId;
+    console.log("📍 Using propertyId from context/auth:", propertyId);
+    if (propertyId && propertyId > 0) {
+      fetchMenu(Number(propertyId), qrContext?.tableId, qrContext?.roomNumber);
+    }
+  }, [qrContext?.propertyId, fetchMenu, qrContext, authUser?.propertyId]);
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) {

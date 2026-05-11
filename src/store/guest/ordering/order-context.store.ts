@@ -10,6 +10,8 @@ export interface QRContextData {
   type: string; // QR type (DINING_TABLE, ROOM, etc.)
   name: string; // Full name of the QR context
   status: string; // ACTIVE or INACTIVE
+  tableId?: string;
+  roomNumber?: string;
 }
 
 type OrderContextState = {

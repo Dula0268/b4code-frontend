@@ -9,6 +9,7 @@ export interface MenuItem {
   price: number;
   priceLkr: number;
   imageUrl?: string;
+  imageUrls: string[];
   category: string;
   isAvailable: boolean;
   tag?: string;
@@ -30,7 +31,7 @@ type GuestMenuState = {
 };
 
 type GuestMenuActions = {
-  fetchMenu: (propertyId: number) => Promise<void>;
+  fetchMenu: (propertyId: number, tableId?: string, roomNumber?: string) => Promise<void>;
   getItemById: (id: string) => MenuItem | undefined;
   getCategoryItems: (categoryName: string) => MenuItem[];
   searchItems: (query: string) => MenuItem[];
@@ -45,10 +46,15 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
   error: null,
   propertyId: null,
 
-  fetchMenu: async (propertyId: number) => {
+  fetchMenu: async (propertyId: number, tableId?: string, roomNumber?: string) => {
     try {
       set({ loading: true, error: null, propertyId });
-      const response = await api.get(`/menu-items/property/${propertyId}`);
+      
+      let url = `/guest/order/menu?propertyId=${propertyId}`;
+      if (tableId) url += `&tableId=${tableId}`;
+      if (roomNumber) url += `&roomNumber=${roomNumber}`;
+      
+      const response = await api.get(url);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rawItems: any[] = response.data;
 
@@ -60,7 +66,8 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         description: item.description || "",
         price: item.price || 0,
         priceLkr: item.price || 0,
-        imageUrl: item.imageUrl,
+        imageUrl: (item.imageUrls && item.imageUrls.length > 0) ? item.imageUrls[0] : item.imageUrl,
+        imageUrls: item.imageUrls || (item.imageUrl ? [item.imageUrl] : []),
         category: item.category || "Other",
         isAvailable: item.isAvailable !== false,
         tag: item.tag,
