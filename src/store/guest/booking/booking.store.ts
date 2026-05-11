@@ -127,10 +127,7 @@ export const useGuestBookingStore = create<GuestBookingState & GuestBookingActio
       set({ loading: true, error: null });
       try {
         const { guestApi } = await import("@/lib/api");
-        const data = await guestApi.getGuestBookings(email);
-        
-        // Map backend BookingResponse to StoredBooking
-        const mapped: StoredBooking[] = data.map((b: {
+        const data = await guestApi.getGuestBookings(email) as Array<{
           bookingId: number | string;
           confirmationNumber: string;
           status: BookingStatus;
@@ -149,7 +146,10 @@ export const useGuestBookingStore = create<GuestBookingState & GuestBookingActio
           createdAt: string;
           guestEmail: string;
           hostName?: string;
-        }) => ({
+        }>;
+        
+        // Map backend BookingResponse to StoredBooking
+        const mapped: StoredBooking[] = data.map((b) => ({
           id: String(b.bookingId),
           confirmationCode: b.confirmationNumber,
           status: b.status,
