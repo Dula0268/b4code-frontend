@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Camera, ExternalLink, HelpCircle, X, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react"
+import { useOrderContextStore } from "@/store/guest/ordering/order-context.store"
 
 const QR_CODE_CONFIG = {
-  QR_IMAGE_URL: `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=16&data=${encodeURIComponent("https://primestay.lk/guest/my-room/menu")}&color=000000&bgcolor=ffffff`
+  QR_IMAGE_URL: `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=16&data=${encodeURIComponent("http://localhost:3000/guest/order/menu?propertyId=2&tableId=5")}&color=000000&bgcolor=ffffff`
 } as const;
 
 declare class BarcodeDetector {
@@ -30,6 +32,36 @@ function useQrScannerLogic() {
     if (videoRef.current) videoRef.current.srcObject = null
   }, [])
 
+  const router = useRouter()
+  const setQRContext = useOrderContextStore(s => s.setQRContext)
+
+  const handleDetectedUrl = useCallback((url: string) => {
+    try {
+      const parsedUrl = new URL(url)
+      const propertyId = parsedUrl.searchParams.get("propertyId")
+      const tableId = parsedUrl.searchParams.get("tableId")
+      const roomNumber = parsedUrl.searchParams.get("roomNumber")
+
+      if (propertyId) {
+        setQRContext({
+          qrId: "scanned",
+          propertyId: parseInt(propertyId, 10),
+          propertyName: "Scanned Property",
+          locationLabel: tableId ? `Table ${tableId}` : (roomNumber ? `Room ${roomNumber}` : "Unknown Location"),
+          type: tableId ? "DINING_TABLE" : (roomNumber ? "ROOM" : "UNKNOWN"),
+          name: "Scanned QR",
+          status: "ACTIVE"
+        })
+        
+        router.push(`/guest/order/menu?propertyId=${propertyId}${tableId ? `&tableId=${tableId}` : (roomNumber ? `&roomNumber=${roomNumber}` : "")}`)
+      } else {
+        alert("Scanned: " + url)
+      }
+    } catch (e) {
+      alert("Scanned (Invalid URL): " + url)
+    }
+  }, [router, setQRContext])
+
   const startScanLoop = useCallback(() => {
     if (!("BarcodeDetector" in window)) return
     const detector = new BarcodeDetector({ formats: ["qr_code"] })
@@ -45,7 +77,7 @@ function useQrScannerLogic() {
           setTimeout(() => {
             setShowCamera(false)
             setPhase("idle")
-            alert("Scanned: " + codes[0].rawValue)
+            handleDetectedUrl(codes[0].rawValue)
           }, 1000)
           return
         }
@@ -53,7 +85,7 @@ function useQrScannerLogic() {
       rafRef.current = requestAnimationFrame(loop)
     }
     rafRef.current = requestAnimationFrame(loop)
-  }, [stopCamera])
+  }, [stopCamera, handleDetectedUrl])
 
   const startCamera = useCallback(async () => {
     setShowCamera(true)
@@ -118,7 +150,11 @@ export default function QrScannerPageClient() {
             </button>
           </div>
 
-          <button className="w-[280px] flex items-center justify-center gap-2 text-white font-bold text-[0.9375rem] py-[15px] rounded-xl transition-colors cursor-pointer mb-6" style={{ background: "var(--brand-primary)" }}>
+          <button 
+            onClick={() => router.push("/guest/order/menu")}
+            className="w-[280px] flex items-center justify-center gap-2 text-white font-bold text-[0.9375rem] py-[15px] rounded-xl transition-colors cursor-pointer mb-6" 
+            style={{ background: "var(--brand-primary)" }}
+          >
             Visit Menu Directly <ExternalLink size={17} />
           </button>
 
