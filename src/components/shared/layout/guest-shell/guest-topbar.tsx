@@ -47,9 +47,8 @@ export default function GuestTopbar() {
   }, [accountMenuOpen])
 
   const handleLogout = () => {
-    logout()
     setAccountMenuOpen(false)
-    router.push("/")
+    router.push(`/auth/logout?redirect=${encodeURIComponent(pathname)}`)
   }
 
   // Get user initials for avatar
@@ -120,10 +119,14 @@ export default function GuestTopbar() {
             <div className="relative" ref={accountMenuRef}>
               <button
                 onClick={() => setAccountMenuOpen((prev) => !prev)}
-                className="relative w-9 h-9 rounded-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-bold ring-2 ring-[#953002]/20 cursor-pointer hover:ring-4 transition-all"
+                className="relative w-9 h-9 rounded-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-bold ring-2 ring-[#953002]/20 cursor-pointer hover:ring-4 transition-all overflow-hidden"
                 aria-label="Account menu"
               >
-                {getInitials()}
+                {user?.profile?.avatarUrl ? (
+                  <img src={user.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  getInitials()
+                )}
                 {/* Online dot */}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#27AE60] border-2 border-white" />
               </button>
@@ -216,8 +219,12 @@ export default function GuestTopbar() {
           {!mounted ? null : user ? (
             <div className="flex flex-col gap-2 pt-2 border-t border-[#e0e0e0]">
               <div className="flex items-center gap-3 py-2">
-                <div className="w-9 h-9 rounded-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0">
-                  {getInitials()}
+                <div className="w-9 h-9 rounded-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0 overflow-hidden">
+                  {user?.profile?.avatarUrl ? (
+                    <img src={user.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    getInitials()
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-[13px] font-semibold text-[#1d1d1d] truncate">

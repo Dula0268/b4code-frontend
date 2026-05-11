@@ -35,6 +35,8 @@ function formatCurrency(amount: number) {
 function useRefundRequestLogic() {
   const searchParams = useSearchParams()
   const bookingIdParam = searchParams.get("bookingId")
+   const source = searchParams.get("source")
+   const refundAmountParam = searchParams.get("refundAmount")
 
   // For a real app, you would fetch refund details using bookingIdParam.
   // Here we use mock data representing the initiated refund.
@@ -42,8 +44,10 @@ function useRefundRequestLogic() {
     return {
       ...MOCK_REFUND,
       bookingId: bookingIdParam || MOCK_REFUND.bookingId,
+       source: source || "cancel",
+       amount: refundAmountParam ? Number(refundAmountParam) : MOCK_REFUND.amount,
     }
-  }, [bookingIdParam])
+    }, [bookingIdParam, source, refundAmountParam])
 
   return { refundData }
 }
@@ -69,7 +73,9 @@ function RefundRequestContent() {
             </div>
             <h1 className="text-[1.875rem] font-black leading-tight mb-2" style={{ color: "var(--fg)" }}>Refund Initiated</h1>
             <p className="text-sm leading-relaxed max-w-[400px]" style={{ color: "var(--gray-3)" }}>
-              Your cancellation was successful. We have initiated your refund to your original payment method.
+               {refundData.source === "modify"
+                 ? "Your reservation was updated and the refund difference has been initiated to your original payment method."
+                 : "Your cancellation was successful. We have initiated your refund to your original payment method."}
             </p>
           </div>
 

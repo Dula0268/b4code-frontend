@@ -212,6 +212,18 @@ export const authApi = {
         }
         return response.text();
     },
+
+    verifyEmail: async (email: string, otp: string) => {
+        const response = await apiFetch("/api/auth/verify-email", {
+            method: "POST",
+            body: JSON.stringify({ email, otp }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Invalid or expired verification code.");
+        }
+        return response.text();
+    },
 };
 
 // User Management APIs
@@ -262,8 +274,8 @@ export const userApi = {
     },
 
     updateProfile: async (updates: UserProfileUpdate) => {
-        const response = await apiFetch("/api/users/me/profile", {
-            method: "PATCH",
+        const response = await apiFetch("/api/users/profile", {
+            method: "PUT",
             body: JSON.stringify(updates),
         });
         if (!response.ok) throw new Error("Failed to update profile");
@@ -293,6 +305,7 @@ export const paymentApi = {
         lastName?: string;
         email?: string;
         phone?: string;
+        returnParams?: string;
     }) => {
         const response = await apiFetch("/api/payments", {
             method: "POST",
@@ -466,4 +479,37 @@ export const ownerApi = {
         if (!response.ok) throw new Error("Failed to reject staff");
         return response.json();
     },
+};
+
+export const imageApi = {
+    upload: async (file: File, folder: string = "profiles") => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("folder", folder);
+
+        const token = getToken();
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/images/upload`, {
+            method: "POST",
+            headers,
+            body: formData,
+        });
+
+        if (!response.ok) {
+            let errorMessage = `Server error ${response.status}`;
+            try {
+                const error = await response.json();
+                errorMessage = error.message || error.error || `Error ${response.status}`;
+            } catch (e) {
+                // Not JSON or empty body
+            }
+            throw new Error(errorMessage);
+        }
+
+        return response.json();
+    }
 };

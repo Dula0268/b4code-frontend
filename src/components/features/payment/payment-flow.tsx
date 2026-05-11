@@ -7,7 +7,6 @@ import PaymentSelection from "./steps/payment-selection";
 import PaymentCardForm from "./steps/payment-card-form";
 import PaymentStatus from "./steps/payment-status";
 import { paymentApi } from "@/lib/api";
-import Image from "next/image";
 
 export type PaymentStep = "selection" | "card" | "processing" | "success" | "failed";
 
@@ -15,12 +14,17 @@ export default function PaymentFlow() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [step, setStep] = useState<PaymentStep>("selection");
-    
+
     // Read total from URL, fallback to default if not present
     const rawAmount = searchParams?.get("total") || "1990";
     const amount = Number(rawAmount).toLocaleString("en-US", { minimumFractionDigits: 2 });
 
     const handleMethodSelect = async (method: string) => {
+        // Collect all current booking params to pass through the payment flow
+        // so confirmation page works after PayHere redirects back
+        const returnParams = searchParams ? searchParams.toString() : "";
+        sessionStorage.setItem("pendingBookingParams", returnParams);
+
         if (method === "card") {
             setStep("card");
         } else {
@@ -33,11 +37,29 @@ export default function PaymentFlow() {
                     firstName: searchParams?.get("firstName") || "Guest",
                     lastName: searchParams?.get("lastName") || "User",
                     email: searchParams?.get("email") || "",
+                    returnParams,
                 });
 
                 if (response.checkoutUrl && response.payHereParams) {
-                    window.location.href = `${response.checkoutUrl}?${response.payHereParams}`;
+                    const form = document.createElement("form");
+                    form.method = "POST";
+                    form.action = response.checkoutUrl;
+                    form.style.display = "none";
+
+                    // Parse the param string from the backend and add each as a hidden input
+                    const params = new URLSearchParams(response.payHereParams);
+                    params.forEach((value, key) => {
+                        const input = document.createElement("input");
+                        input.type = "hidden";
+                        input.name = key;
+                        input.value = value;
+                        form.appendChild(input);
+                    });
+
+                    document.body.appendChild(form);
+                    form.submit();
                 } else {
+                    // Fallback: simulate success if no PayHere URL returned
                     setTimeout(() => setStep("success"), 2000);
                 }
             } catch (err) {
@@ -53,23 +75,17 @@ export default function PaymentFlow() {
 
     return (
         <div className="relative min-h-screen w-full flex items-center justify-center font-sans overflow-hidden py-12 px-4">
-            {/* Immersive Background Image with Overlay */}
-            <div className="absolute inset-0 z-0">
-                <Image 
-                    src="/payment_page_background_1778058273069.png" 
-                    alt="Luxury Background" 
-                    fill 
-                    className="object-cover scale-110 blur-[2px]" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1a0f0a]/90 via-[#1a0f0a]/60 to-[#1a0f0a]/80"></div>
+            {/* Immersive Background — CSS gradient (no external image dependency) */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#1a0a05] via-[#2d1208] to-[#0d0604]">
+                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(ellipse at 30% 50%, #9a3300 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #c44a00 0%, transparent 50%)' }} />
             </div>
 
             {/* Main Payment Container */}
             <div className="relative z-10 w-full max-w-[480px] bg-white/95 backdrop-blur-xl rounded-[28px] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)] flex flex-col animate-in fade-in zoom-in-95 duration-500">
-                
+
                 {/* Premium Header */}
                 <div className="px-8 pt-8 pb-6 bg-gradient-to-b from-white to-[#fafafa] border-b border-neutral-100 relative">
-                    <button 
+                    <button
                         onClick={handleCancel}
                         className="absolute right-6 top-6 w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-all cursor-pointer"
                     >
@@ -109,18 +125,18 @@ export default function PaymentFlow() {
                     {step === "selection" && (
                         <PaymentSelection onSelectMethod={handleMethodSelect} onCancel={handleCancel} />
                     )}
-                    
+
                     {step === "card" && (
-                        <PaymentCardForm 
-                            onBack={() => setStep("selection")} 
+                        <PaymentCardForm
+                            onBack={() => setStep("selection")}
                             onSubmit={(success) => setStep(success ? "success" : "failed")}
                             amount={amount}
                         />
                     )}
 
                     {(step === "processing" || step === "success" || step === "failed") && (
-                        <PaymentStatus 
-                            step={step} 
+                        <PaymentStatus
+                            step={step}
                             onRetry={() => setStep("card")}
                             onChangeMethod={() => setStep("selection")}
                         />

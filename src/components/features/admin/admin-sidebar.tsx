@@ -130,7 +130,7 @@ export default function AdminSidebar() {
           {/* Log Out */}
           <button
             onClick={() => {
-              router.push("/auth/logout");
+              router.push(`/auth/logout?redirect=${encodeURIComponent(pathname)}`);
             }}
             className="flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] border-none bg-transparent cursor-pointer text-sm font-normal text-[var(--black-1)] w-full text-left transition-colors hover:bg-[rgba(235,87,87,0.08)] hover:text-[var(--state-error)]"
           >

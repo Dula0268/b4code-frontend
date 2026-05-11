@@ -185,6 +185,11 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
     setError: (message) => set({ error: message }),
 
     fetchOrders: async (propertyId: number) => {
+      if (!propertyId || isNaN(propertyId)) {
+        console.warn("⚠️ fetchOrders called with invalid propertyId:", propertyId);
+        set({ loading: false });
+        return;
+      }
       set({ loading: true, error: null });
       console.log(`🔄 Fetching orders for property ${propertyId}...`);
       try {

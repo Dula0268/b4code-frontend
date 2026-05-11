@@ -62,8 +62,10 @@ function RegisterForm() {
     const [properties, setProperties] = useState<Array<{ id: number; name: string }>>([]);
 
     const [localError, setLocalError] = useState<string | null>(null);
+    const [showOtpInput, setShowOtpInput] = useState(false);
+    const [otp, setOtp] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [countdown, setCountdown] = useState(2);
+    const [countdown, setCountdown] = useState(3);
 
     const displayError = localError || authError;
 
@@ -124,11 +126,11 @@ function RegisterForm() {
         }
 
         const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+=\[\]{}|\\:;"'<>,.?/~`])[A-Za-z\d@$!%*?&#^()_+=\[\]{}|\\:;"'<>,.?/~`]{8,}$/;
 
         if (!passwordRegex.test(password)) {
             setLocalError(
-                "Password must be at least 8 characters and include uppercase, lowercase, number and special character (@$!%*?&)."
+                "Password must be at least 8 characters and include uppercase, lowercase, number and a special character."
             );
             return;
         }
@@ -157,9 +159,29 @@ function RegisterForm() {
                 role, 
                 role === "staff" ? Number(selectedPropertyId) : undefined
             );
-            setShowSuccessModal(true);
+            // Instead of showing success modal immediately, switch to OTP input
+            setShowOtpInput(true);
         } catch {
             // Error handled by store
+        }
+    };
+
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setLocalError(null);
+
+        if (otp.length !== 6) {
+            setLocalError("Please enter a valid 6-digit code.");
+            return;
+        }
+
+        try {
+            const { verifyEmail } = useAuthStore.getState();
+            await verifyEmail(email, otp);
+            setShowSuccessModal(true);
+        } catch (err) {
+            setLocalError(err instanceof Error ? err.message : "Verification failed");
         }
     };
 
@@ -231,21 +253,27 @@ function RegisterForm() {
                             {/* ROLE DISPLAY (HIDDEN TOGGLE) */}
                             <div className="mb-6">
                                 <div className="flex items-center justify-between mb-2">
-                                    <Label className="text-[12px] font-extrabold text-[#282828] uppercase tracking-wider block">JOIN AS A</Label>
-                                    <button
-                                        type="button"
-                                        onClick={handleFillMockData}
-                                        className="text-[11px] font-bold text-[#953002] hover:underline bg-[rgba(149,48,2,0.1)] px-2 py-1 rounded-full"
-                                    >
-                                        Auto-fill Mock Data
-                                    </button>
+                                    <Label className="text-[12px] font-extrabold text-[#282828] uppercase tracking-wider block">
+                                        {showOtpInput ? "SECURITY CHECK" : "JOIN AS A"}
+                                    </Label>
+                                    {!showOtpInput && (
+                                        <button
+                                            type="button"
+                                            onClick={handleFillMockData}
+                                            className="text-[11px] font-bold text-[#953002] hover:underline bg-[rgba(149,48,2,0.1)] px-2 py-1 rounded-full"
+                                        >
+                                            Auto-fill Mock Data
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="flex p-3 bg-[#f0e8e4] rounded-2xl items-center justify-center">
                                     <span className="text-[#953002] text-lg font-black uppercase tracking-widest">
-                                        {role}
+                                        {showOtpInput ? "Verify Email" : role}
                                     </span>
                                 </div>
                             </div>
+
+                            {!showOtpInput ? (
 
                             <form onSubmit={handleRegister} className="space-y-4">
                                 {/* Common Fields */}
@@ -523,6 +551,60 @@ function RegisterForm() {
                                     </Button>
                                 </div>
                             </form>
+                        ) : (
+                                <form onSubmit={handleVerifyOtp} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="text-center">
+                                        <p className="text-[14px] text-neutral-600 font-medium leading-relaxed">
+                                            We&apos;ve sent a 6-digit verification code to<br/>
+                                            <span className="font-bold text-[#953002]">{email}</span>
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-center block text-[13px] font-bold text-[#282828]">Enter Verification Code</Label>
+                                        <div className="flex justify-center">
+                                            <Input
+                                                type="text"
+                                                maxLength={6}
+                                                placeholder="000000"
+                                                value={otp}
+                                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                                                className="h-[60px] w-[240px] text-center text-[28px] font-black tracking-[12px] rounded-2xl bg-[#f0e8e4] border-0 focus-visible:ring-2 focus-visible:ring-[#953002]/50 placeholder:text-neutral-300 placeholder:tracking-normal"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {displayError && (
+                                        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                            {displayError}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-3">
+                                        <Button 
+                                            type="submit" 
+                                            disabled={loading || otp.length !== 6} 
+                                            size="lg" 
+                                            className="w-full h-[52px] text-[15px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] transition-all"
+                                        >
+                                            {loading ? "Verifying…" : "Verify & Complete →"}
+                                        </Button>
+                                        
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowOtpInput(false)}
+                                            className="w-full text-[13px] font-bold text-neutral-500 hover:text-[#953002] transition-colors"
+                                        >
+                                            ← Back to Registration
+                                        </button>
+                                    </div>
+
+                                    <p className="text-center text-[12px] text-neutral-400">
+                                        Didn&apos;t receive the code? <button type="button" className="text-[#953002] font-bold hover:underline">Resend Code</button>
+                                    </p>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>

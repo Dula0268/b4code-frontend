@@ -2,30 +2,27 @@ import { ArrowUpRight, RotateCcw, ArrowDown, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
-type TransactionType = "payout" | "booking" | "refund" | "fee" | string;
-
 // ─── Icon helpers ─────────────────────────────────────────────────────────────
-function TransactionIcon({ type }: { type: TransactionType }) {
+function TransactionIcon({ type }: { type: string }) {
   const base =
     "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0";
-  const normalizedType = type.toLowerCase();
+  const t = (type || "").toUpperCase();
 
-  if (normalizedType.includes("booking") || normalizedType === "payment") {
+  if (t === "BOOKING_PAYMENT") {
     return (
       <div className={`${base} bg-[#DCFCE7]`}>
         <ArrowUpRight size={16} className="text-[#16A34A]" />
       </div>
     );
   }
-  if (normalizedType.includes("refund")) {
+  if (t === "REFUND") {
     return (
       <div className={`${base} bg-[#FEE2E2]`}>
         <RotateCcw size={15} className="text-[#DC2626]" />
       </div>
     );
   }
-  // payout / fee
+  // COMMISSION / PAYOUT / etc.
   return (
     <div className={`${base} bg-[#F3F4F6]`}>
       <ArrowDown size={15} className="text-[#6B7280]" />
@@ -33,16 +30,21 @@ function TransactionIcon({ type }: { type: TransactionType }) {
   );
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  BOOKING_PAYMENT: "Booking Payment",
+  COMMISSION:      "Commission",
+  REFUND:          "Refund",
+  PAYOUT:          "Payout",
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function RecentTransactions() {
   const { transactions, fetchTransactions, transactionsLoading } = useAdminFinanceStore();
 
   useEffect(() => {
-    // Only fetch if we don't have enough data or specifically need recent ones
     fetchTransactions({ page: 0, size: 5 });
   }, [fetchTransactions]);
 
-  // We only show top 5 here
   const recent = transactions.slice(0, 5);
 
   return (
@@ -52,7 +54,7 @@ export default function RecentTransactions() {
           <Loader2 className="animate-spin text-[#C05621]" size={32} />
         </div>
       )}
-      
+
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <h2 className="text-[16px] font-bold text-[#1A1A1A]">
@@ -69,21 +71,25 @@ export default function RecentTransactions() {
            <li className="text-[13px] text-[#9E7B6A] text-center py-4">No recent transactions.</li>
         )}
         {recent.map((tx) => {
-          // Attempt to map backend response to UI
-          const title = tx.status === 'Refunded' ? 'Refund Processed' : `Booking #${tx.bookingId}`;
-          const isPositive = tx.status !== 'Refunded' && !tx.status.includes('Payout');
-          const amountDisplay = `${isPositive ? '+' : '-'}LKR ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-          
+          // Use correct backend fields: type, referenceNumber, createdAt, amount
+          const typeStr = (tx.type || "").toString().toUpperCase();
+          const label = TYPE_LABELS[typeStr] || typeStr;
+          const isPositive = typeStr === "BOOKING_PAYMENT" || typeStr === "COMMISSION";
+          const amountDisplay = `${isPositive ? '+' : '-'}LKR ${Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+          const dateStr = tx.createdAt
+            ? new Date(tx.createdAt).toLocaleDateString()
+            : "—";
+
           return (
             <li key={tx.id} className="flex items-center gap-3">
-              <TransactionIcon type={tx.status} />
+              <TransactionIcon type={typeStr} />
 
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-[#1A1A1A] truncate">
-                  {title}
+                  {label}
                 </p>
                 <p className="text-[11px] text-[#9E7B6A]">
-                  {new Date(tx.date).toLocaleDateString()}
+                  {tx.referenceNumber || "—"} · {dateStr}
                 </p>
               </div>
 

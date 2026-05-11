@@ -29,6 +29,7 @@ export interface Dispute {
   stayDates: string;
   cancellationPolicy: string;
   daysUntilAutoClose: number;
+  internalNote?: string;
 }
 
 export interface ModerationHistory {
@@ -55,7 +56,7 @@ export const ModerationApi = {
   getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number }> =>
     api.get('/admin/moderation/counts').then((res) => res.data),
 
-  getReviews: (params: { flagReason?: string; search?: string; page?: number; size?: number }): Promise<PageResponse<FlaggedReview>> =>
+  getReviews: (params: { status?: string; flagReason?: string; rating?: number; search?: string; page?: number; size?: number }): Promise<PageResponse<FlaggedReview>> =>
     api.get('/admin/moderation/reviews', { params }).then((res) => res.data),
 
   approveReview: (id: number): Promise<FlaggedReview> =>
@@ -69,6 +70,9 @@ export const ModerationApi = {
 
   resolveDispute: (id: string, resolution: string, refundApproved: boolean): Promise<Dispute> =>
     api.put(`/admin/moderation/disputes/${id}/resolve`, { resolution, refundApproved }).then((res) => res.data),
+
+  saveDisputeNote: (id: string, note: string): Promise<Dispute> =>
+    api.put(`/admin/moderation/disputes/${id}/note`, { note }).then((res) => res.data),
 
   getHistory: (params: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }): Promise<PageResponse<ModerationHistory>> =>
     api.get('/admin/moderation/history', { params }).then((res) => res.data),

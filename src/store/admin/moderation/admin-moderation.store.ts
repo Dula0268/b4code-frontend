@@ -42,12 +42,13 @@ type AdminModerationActions = {
   
   fetchBadgeCounts: () => Promise<void>;
   
-  fetchReviews: (params?: { flagReason?: string; search?: string; page?: number; size?: number }) => Promise<void>;
+  fetchReviews: (params?: { flagReason?: string; rating?: number; search?: string; page?: number; size?: number }) => Promise<void>;
   approveReview: (id: number) => Promise<void>;
   removeReview: (id: number, adminNote: string) => Promise<void>;
 
   fetchDisputes: (params?: { status?: string; search?: string; page?: number; size?: number }) => Promise<void>;
   resolveDispute: (id: string, resolution: string, refundApproved: boolean) => Promise<void>;
+  saveDisputeNote: (id: string, note: string) => Promise<void>;
 
   fetchHistory: (params?: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }) => Promise<void>;
 };
@@ -91,7 +92,8 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
   fetchReviews: async (params) => {
     set({ reviewsLoading: true, error: null });
     try {
-      const res = await ModerationApi.getReviews(params || {});
+      // Always filter to FLAGGED status so actioned reviews disappear from queue
+      const res = await ModerationApi.getReviews({ status: 'FLAGGED', ...(params || {}) });
       set({ reviews: res.content, reviewsTotalPages: res.totalPages, reviewsLoading: false });
     } catch (err) {
       console.error('fetchReviews error:', err);
@@ -105,6 +107,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
       await ModerationApi.approveReview(id);
       get().fetchBadgeCounts(); // Update counts
       await get().fetchReviews(); // Refetch to update the queue UI
+      get().fetchHistory();       // Update history tab
       set({ actionLoading: false });
     } catch (err) {
       console.error('approveReview error:', err);
@@ -118,6 +121,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
       await ModerationApi.removeReview(id, adminNote);
       get().fetchBadgeCounts();
       await get().fetchReviews(); // Refetch to update the queue UI
+      get().fetchHistory();       // Update history tab
       set({ actionLoading: false });
     } catch (err) {
       console.error('removeReview error:', err);
@@ -146,6 +150,22 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
     } catch (err) {
       console.error('resolveDispute error:', err);
       set({ error: 'Failed to resolve dispute', actionLoading: false });
+    }
+  },
+
+  saveDisputeNote: async (id, note) => {
+    set({ actionLoading: true, error: null });
+    try {
+      const updated = await ModerationApi.saveDisputeNote(id, note);
+      // Update the note on the currently selected dispute and in the list
+      set((state) => ({
+        selectedDispute: state.selectedDispute?.id === id ? { ...state.selectedDispute, internalNote: updated.internalNote } : state.selectedDispute,
+        disputes: state.disputes.map(d => d.id === id ? { ...d, internalNote: updated.internalNote } : d),
+        actionLoading: false,
+      }));
+    } catch (err) {
+      console.error('saveDisputeNote error:', err);
+      set({ error: 'Failed to save note', actionLoading: false });
     }
   },
 

@@ -41,9 +41,9 @@ interface FinanceState {
   fetchRefunds: (params: { search?: string; status?: string; page?: number; size?: number }) => Promise<void>;
   fetchPayouts: (params: { search?: string; status?: string; page?: number; size?: number }) => Promise<void>;
   
-  approveRefund: (id: string) => Promise<void>;
-  rejectRefund: (id: string, adminNote: string) => Promise<void>;
-  processPayout: (id: string, bankReference: string) => Promise<void>;
+  approveRefund: (id: number) => Promise<void>;
+  rejectRefund: (id: number, adminNote: string) => Promise<void>;
+  processPayout: (id: number, bankReference: string) => Promise<void>;
 }
 
 export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
@@ -137,7 +137,7 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
     }
   },
 
-  approveRefund: async (id: string) => {
+  approveRefund: async (id: number) => {
     set({ actionLoading: true, error: null });
     try {
       const updated = await FinanceApi.approveRefund(id);
@@ -152,7 +152,7 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
     }
   },
 
-  rejectRefund: async (id: string, adminNote: string) => {
+  rejectRefund: async (id: number, adminNote: string) => {
     set({ actionLoading: true, error: null });
     try {
       const updated = await FinanceApi.rejectRefund(id, adminNote);
@@ -167,14 +167,14 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
     }
   },
 
-  processPayout: async (id: string, bankReference: string) => {
+  processPayout: async (id: number, bankReference: string) => {
     set({ actionLoading: true, error: null });
     try {
-      const updated = await FinanceApi.processPayout(id, bankReference);
-      set((state) => ({
-        payouts: state.payouts.map(p => p.id === id ? updated : p),
-        actionLoading: false
-      }));
+      await FinanceApi.processPayout(id, bankReference);
+      // Refresh both the payout list and summary KPIs
+      await get().fetchPayouts({});
+      get().fetchSummary();
+      set({ actionLoading: false });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to process payout";
       set({ error: message, actionLoading: false });
