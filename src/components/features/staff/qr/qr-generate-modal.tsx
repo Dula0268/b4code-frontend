@@ -149,7 +149,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
               <div className="grid grid-cols-2 gap-3">
                 {TYPE_TAB[type] === "Table" && (
                   <div>
-                    <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Table ID / Number</Label>
+                    <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Table Number</Label>
                     <Input
                       type="number"
                       value={tableId}

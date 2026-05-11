@@ -1,5 +1,14 @@
 import { apiFetch } from "@/lib/api";
 
+interface ReviewData {
+  bookingId?: number;
+  propertyId?: number;
+  rating: number;
+  title: string;
+  comment: string;
+  guestName?: string;
+}
+
 export const guestReviewApi = {
   /**
    * Get paginated reviews for a property.
@@ -13,7 +22,7 @@ export const guestReviewApi = {
   /**
    * Submit a new review for a booking.
    */
-  createReview: async (reviewData: any) => {
+  createReview: async (reviewData: ReviewData) => {
     const response = await apiFetch("/api/guest/reviews", {
       method: "POST",
       body: JSON.stringify(reviewData),

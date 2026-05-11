@@ -1,5 +1,28 @@
 import { apiFetch } from "@/lib/api";
 
+interface MenuItem {
+  propertyId?: number;
+  name: string;
+  price: number;
+  description?: string;
+  category?: string;
+  isAvailable?: boolean;
+  imageUrls?: string[];
+  tag?: string;
+  calories?: number;
+}
+
+interface MenuItemDetails {
+  name?: string;
+  price?: number;
+  description?: string;
+  category?: string;
+  isAvailable?: boolean;
+  imageUrls?: string[];
+  tag?: string;
+  calories?: number;
+}
+
 export const staffMenuApi = {
   /**
    * List all menu items for a specific property.
@@ -13,7 +36,7 @@ export const staffMenuApi = {
   /**
    * Create a new menu item.
    */
-  createMenuItem: async (menuItem: any) => {
+  createMenuItem: async (menuItem: MenuItem) => {
     const response = await apiFetch("/api/menu-items", {
       method: "POST",
       body: JSON.stringify(menuItem),
@@ -25,7 +48,7 @@ export const staffMenuApi = {
   /**
    * Update details of an existing menu item.
    */
-  updateMenuItem: async (id: number, details: any) => {
+  updateMenuItem: async (id: number, details: MenuItemDetails) => {
     const response = await apiFetch(`/api/menu-items/${id}`, {
       method: "PUT",
       body: JSON.stringify(details),

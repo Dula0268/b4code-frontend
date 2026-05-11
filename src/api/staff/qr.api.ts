@@ -1,10 +1,33 @@
 import { apiFetch } from "@/lib/api";
 
+interface QrRequest {
+  propertyId: number;
+  name: string;
+  location: string;
+  type: string;
+  description: string;
+  instructionText: string;
+  showRoomNumber: boolean;
+  showLogo: boolean;
+  tableId?: number;
+  roomNumber?: string;
+}
+
+interface QrUpdates {
+  name?: string;
+  location?: string;
+  type?: string;
+  description?: string;
+  instructionText?: string;
+  showRoomNumber?: boolean;
+  showLogo?: boolean;
+}
+
 export const staffQrApi = {
   /**
    * Generate a new QR code for a table or room.
    */
-  generateQr: async (request: any) => {
+  generateQr: async (request: QrRequest) => {
     const response = await apiFetch("/api/qr/generate", {
       method: "POST",
       body: JSON.stringify(request),
@@ -47,7 +70,7 @@ export const staffQrApi = {
   /**
    * Update details of an existing QR code.
    */
-  updateQr: async (id: number, updates: any) => {
+  updateQr: async (id: number, updates: QrUpdates) => {
     const response = await apiFetch(`/api/qr/${id}`, {
       method: "PUT",
       body: JSON.stringify(updates),

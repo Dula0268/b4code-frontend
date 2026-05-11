@@ -199,17 +199,20 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
             </div>
             {/* Type */}
             <div>
-              <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Menu Type</Label>
+              <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase tracking-wider">Menu Type <span className="text-[var(--gray-3)] normal-case font-normal">(Optional)</span></Label>
               <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="w-full mt-1 text-xs rounded-[8px] border-[var(--gray-5)] focus:border-[var(--brand-primary)]">
+                <SelectTrigger className="w-full mt-2 text-xs rounded-[8px] border-2 border-[var(--gray-5)] hover:border-[var(--brand-primary)] focus:border-[var(--brand-primary)] bg-white transition-colors h-10">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="bg-white border-[var(--gray-5)] rounded-[8px] shadow-lg z-[100]">
                   {["Sri Lankan", "Western", "Buffet", "Snacks", "Drinks", "Desserts"].map((t) => (
-                    <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
+                    <SelectItem key={t} value={t} className="text-xs py-2.5 px-3 hover:bg-[rgba(149,48,2,0.08)] cursor-pointer">
+                      <span className="font-medium">{t}</span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-[10px] text-[var(--gray-4)] mt-1">Select the cuisine type or meal category for this menu.</p>
             </div>
             {/* Description */}
             <div>
@@ -340,14 +343,18 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
               <div>
                 <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Category</Label>
                 <Select value={itemCategory} onValueChange={setItemCategory}>
-                  <SelectTrigger className="w-full mt-1 text-xs rounded-[8px] border-[var(--gray-5)]">
+                  <SelectTrigger className="w-full mt-2 text-xs rounded-[8px] border-2 border-[var(--gray-5)] hover:border-[var(--brand-primary)] focus:border-[var(--brand-primary)] bg-white transition-colors h-10">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" className="bg-white border-[var(--gray-5)] rounded-[8px] shadow-lg z-[100]">
                     {["Main", "Starter", "Dessert", "Drink", "Side"].map((c) => (
-                      <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+                      <SelectItem key={c} value={c} className="text-xs py-2.5 px-3 hover:bg-[rgba(149,48,2,0.08)] cursor-pointer">
+                        <span className="font-medium">{c}</span>
+                      </SelectItem>
                     ))}
                   </SelectContent>
+                </Select>
+              </div>
                 </Select>
               </div>
             </div>

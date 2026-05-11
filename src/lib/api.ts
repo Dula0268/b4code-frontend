@@ -504,7 +504,7 @@ export const imageApi = {
             try {
                 const error = await response.json();
                 errorMessage = error.message || error.error || `Error ${response.status}`;
-            } catch (e) {
+            } catch {
                 // Not JSON or empty body
             }
             throw new Error(errorMessage);

@@ -1,10 +1,23 @@
 import { apiFetch } from "@/lib/api";
 
+interface OrderData {
+  propertyId: number;
+  guestId: number;
+  roomNumber: string;
+  totalAmount: number;
+  status: string;
+  items: Array<{
+    menuItemId: number;
+    quantity: number;
+    priceAtOrder: number;
+  }>;
+}
+
 export const guestOrderApi = {
   /**
    * Place a new order for a guest.
    */
-  placeOrder: async (orderData: any) => {
+  placeOrder: async (orderData: OrderData) => {
     const response = await apiFetch("/api/orders", {
       method: "POST",
       body: JSON.stringify(orderData),

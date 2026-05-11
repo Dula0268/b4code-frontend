@@ -94,7 +94,9 @@ async function apiFetch<T>(endpoint: string): Promise<T> {
     try {
       const errData = await res.json();
       if (errData && errData.message) errMsg = errData.message;
-    } catch (_) {}
+    } catch {
+      // Not JSON or empty body
+    }
     throw new Error(errMsg);
   }
   return res.json();

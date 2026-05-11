@@ -23,6 +23,20 @@ export interface MenuCategory {
   items: MenuItem[];
 }
 
+interface BackendMenuItem {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  imageUrls?: string[];
+  imageUrl?: string;
+  category?: string;
+  isAvailable: boolean;
+  tag?: string;
+  variants?: { id: string; label: string; price: number }[];
+  modifiers?: { id: string; name: string; options: { label: string; price: number }[] }[];
+}
+
 type GuestMenuState = {
   categories: MenuCategory[];
   loading: boolean;
@@ -57,7 +71,7 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
       );
       
       // Handle paginated response (Spring Data Page) or plain array
-      const rawItems: any[] = Array.isArray(data) ? data : (data.content || []);
+      const rawItems: BackendMenuItem[] = Array.isArray(data) ? data : (data.content || []);
 
       // Map backend fields to frontend MenuItem shape
       const items: MenuItem[] = rawItems.map((item) => ({
