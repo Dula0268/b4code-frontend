@@ -35,19 +35,21 @@ export default function AdminDashboardPage() {
   const { kpis, recentVerifications, loading, error, fetchDashboardData } =
     useAdminDashboardStore();
 
+  useEffect(() => {
+    if (status === "ready") {
+      fetchDashboardData();
+    }
+  }, [status, fetchDashboardData]);
+
   if (status === "loading") return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
     </div>
   )
 
-  if (status === "unauthorized") {
+  if (status === "unauthorized" || status === "unauthenticated") {
     return <AccessDenied userRole={userRole} requiredRole="Admin" />;
   }
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
 
   return (
     <AdminPageLayout>
@@ -96,7 +98,7 @@ export default function AdminDashboardPage() {
 
             {/* ── Recent Verification Requests ── */}
             <RecentVerificationRequests
-              requests={recentVerifications.map(mapToVerificationRequest)}
+              requests={(recentVerifications || []).map(mapToVerificationRequest)}
             />
           </>
         )}

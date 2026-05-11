@@ -11,19 +11,18 @@ export default function ItemDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { ready } = useGuestGuard();
-  
-  if (!ready) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
-    </div>
-  )
-  
   const [id, setId] = useState<string | null>(null);
   const { categories } = useGuestMenuStore();
 
   useEffect(() => {
     params.then((p) => setId(p.id));
   }, [params]);
+  
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
 
   // Find item from menu store
   const item = id

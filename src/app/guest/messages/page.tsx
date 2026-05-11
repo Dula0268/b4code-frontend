@@ -119,12 +119,15 @@ function MessagingContent() {
     // Determine variant from searchParams
     const searchParams = useSearchParams()
     const isStaff = searchParams?.get("type") === "staff"
+    const messagingLogic = useMessagingLogic(isStaff);
 
     if (!ready) return (
         <div className="min-h-screen flex items-center justify-center bg-white">
             <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
         </div>
     )
+
+    const { messages, input, setInput, isTyping, bottomRef, sendMessage } = messagingLogic;
 
     const data = isStaff ? {
         title: "Contact Hotel Staff",
@@ -160,7 +163,6 @@ function MessagingContent() {
         hint: "The property owner will reply as soon as possible."
     }
 
-    const { messages, input, setInput, isTyping, bottomRef, sendMessage } = useMessagingLogic(isStaff);
 
     return (
         <div className="max-w-[1100px] mx-auto px-4 lg:px-6 pt-6 pt-10">
