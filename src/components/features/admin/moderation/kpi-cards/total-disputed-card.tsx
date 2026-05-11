@@ -24,7 +24,7 @@ export default function TotalDisputedCard() {
         </div>
       </div>
       <p className="text-[28px] font-bold text-[#1A1A1A] leading-none tracking-tight m-0">
-        {totalAmount > 0 ? `$${formattedAmount}` : '-'}
+        {totalAmount > 0 ? `LKR ${formattedAmount}` : '-'}
       </p>
       <div className="flex items-center gap-1 text-xs font-semibold text-[#16A34A]">
         <TrendingUp size={13} />

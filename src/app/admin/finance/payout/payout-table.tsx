@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import {
+  Search,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 import type { PayoutDto } from "@/api/admin/finance.api";
 
@@ -21,20 +27,42 @@ function PaymentModelBadge({ model }: { model: string }) {
 }
 
 function PayoutStatusBadge({ status }: { status: string }) {
-  const map: Record<string, { bg: string; text: string; dot: string }> = {
-    Hold: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
-    Pending: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
-    Processed: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]", dot: "bg-[#16A34A]" },
-    Rejected: { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]", dot: "bg-[#DC2626]" },
+  const map: Record<
+    string,
+    { bg: string; text: string; dot: string; label: string }
+  > = {
+    PENDING: {
+      bg: "bg-[#FFFBEB]",
+      text: "text-[#D97706]",
+      dot: "bg-[#D97706]",
+      label: "Pending",
+    },
+    PROCESSED: {
+      bg: "bg-[#F0FDF4]",
+      text: "text-[#16A34A]",
+      dot: "bg-[#16A34A]",
+      label: "Processed",
+    },
+    FAILED: {
+      bg: "bg-[#FEF2F2]",
+      text: "text-[#DC2626]",
+      dot: "bg-[#DC2626]",
+      label: "Failed",
+    },
   };
-  const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", dot: "bg-[#6B7280]" };
+  const s = map[status] || {
+    bg: "bg-[#F3F4F6]",
+    text: "text-[#6B7280]",
+    dot: "bg-[#6B7280]",
+    label: status,
+  };
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      {status}
+      {s.label}
     </span>
   );
 }
@@ -50,7 +78,15 @@ function getInitials(name: string) {
 }
 
 function getColorForName(name: string) {
-  const colors = ["#C05621", "#2563EB", "#7C3AED", "#059669", "#DC2626", "#0891B2", "#CA8A04"];
+  const colors = [
+    "#C05621",
+    "#2563EB",
+    "#7C3AED",
+    "#059669",
+    "#DC2626",
+    "#0891B2",
+    "#CA8A04",
+  ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -69,7 +105,13 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const perPage = 10;
 
-  const { payouts, payoutsTotalElements, payoutsTotalPages, fetchPayouts, payoutsLoading } = useAdminFinanceStore();
+  const {
+    payouts,
+    payoutsTotalElements,
+    payoutsTotalPages,
+    fetchPayouts,
+    payoutsLoading,
+  } = useAdminFinanceStore();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -82,7 +124,7 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
     fetchPayouts({
       page: currentPage - 1,
       size: perPage,
-      search: debouncedSearch
+      search: debouncedSearch,
     });
   }, [fetchPayouts, currentPage, debouncedSearch]);
 
@@ -93,7 +135,7 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
           <Loader2 className="animate-spin text-[#C05621]" size={32} />
         </div>
       )}
-      
+
       {/* ── Search & Filter ── */}
       <div className="p-5 flex items-center justify-between gap-4 flex-wrap">
         <div className="relative flex-1 min-w-62.5 max-w-105">
@@ -124,10 +166,10 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
           <thead>
             <tr className="border-y border-[#F0EBE7]">
               <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Property
+                Owner
               </th>
               <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Owner
+                Owner Details
               </th>
               <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
                 Period
@@ -142,11 +184,16 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
           </thead>
           <tbody className="relative">
             {payoutsLoading && payouts.length > 0 && (
-               <tr className="absolute inset-0 bg-white/50 z-10"><td colSpan={5}></td></tr>
+              <tr className="absolute inset-0 bg-white/50 z-10">
+                <td colSpan={5}></td>
+              </tr>
             )}
             {payouts.length === 0 && !payoutsLoading && (
               <tr>
-                <td colSpan={5} className="py-12 text-center text-[#9E7B6A] text-sm">
+                <td
+                  colSpan={5}
+                  className="py-12 text-center text-[#9E7B6A] text-sm"
+                >
                   No payout requests found.
                 </td>
               </tr>
@@ -157,18 +204,19 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                 className="border-b border-[#F0EBE7] last:border-b-0 hover:bg-[#FDFAF8] transition-colors cursor-pointer"
                 onClick={() => onRowClick(p)}
               >
-                {/* Property */}
+                {/* Owner */}
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div
                       className="w-10 h-10 rounded-lg shrink-0"
                       style={{
-                        backgroundColor: PROPERTY_COLORS[idx % PROPERTY_COLORS.length],
+                        backgroundColor:
+                          PROPERTY_COLORS[idx % PROPERTY_COLORS.length],
                       }}
                     />
                     <div>
                       <p className="text-sm font-semibold text-[#1A1A1A]">
-                        {p.propertyName}
+                        {p.ownerName}
                       </p>
                       <p className="text-[11px] text-[#9E7B6A]">ID: #{p.id}</p>
                     </div>
@@ -180,13 +228,15 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-                      style={{ backgroundColor: getColorForName(p.hostName) }}
+                      style={{
+                        backgroundColor: getColorForName(p.ownerName || ""),
+                      }}
                     >
-                      {getInitials(p.hostName)}
+                      {getInitials(p.ownerName || "")}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-[#1A1A1A]">
-                        {p.hostName}
+                        {p.ownerName}
                       </p>
                     </div>
                   </div>
@@ -195,13 +245,21 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                 {/* Period */}
                 <td className="px-6 py-4">
                   <span className="text-sm text-[#1A1A1A]">
-                    {p.period}
+                    {p.requestedAt
+                      ? new Date(p.requestedAt).toLocaleDateString("en-LK", {
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "-"}
                   </span>
                 </td>
 
                 {/* Req. Balance */}
                 <td className="px-6 py-4 text-sm text-[#1A1A1A] font-medium">
-                  LKR {p.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  LKR{" "}
+                  {p.amount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })}
                 </td>
 
                 {/* Status */}
@@ -218,9 +276,18 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
       {payoutsTotalPages > 0 && (
         <div className="px-6 py-4 flex items-center justify-between border-t border-[#F0EBE7]">
           <p className="text-sm text-[#9E7B6A]">
-            Showing <span className="font-semibold text-[#1A1A1A]">{(currentPage - 1) * perPage + 1}</span> to{" "}
-            <span className="font-semibold text-[#1A1A1A]">{Math.min(currentPage * perPage, payoutsTotalElements)}</span> of{" "}
-            <span className="font-semibold text-[#C05621]">{payoutsTotalElements}</span>{" "}
+            Showing{" "}
+            <span className="font-semibold text-[#1A1A1A]">
+              {(currentPage - 1) * perPage + 1}
+            </span>{" "}
+            to{" "}
+            <span className="font-semibold text-[#1A1A1A]">
+              {Math.min(currentPage * perPage, payoutsTotalElements)}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-[#C05621]">
+              {payoutsTotalElements}
+            </span>{" "}
             entries
           </p>
 
@@ -234,36 +301,40 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
             </button>
 
             {/* Simple page numbers */}
-            {Array.from({ length: Math.min(5, payoutsTotalPages) }).map((_, i) => {
-              let pageNum = i + 1;
-              if (payoutsTotalPages > 5 && currentPage > 3) {
-                pageNum = currentPage - 2 + i;
-                if (pageNum > payoutsTotalPages) return null;
-              }
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${
-                    currentPage === pageNum
-                      ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
-                      : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
+            {Array.from({ length: Math.min(5, payoutsTotalPages) }).map(
+              (_, i) => {
+                let pageNum = i + 1;
+                if (payoutsTotalPages > 5 && currentPage > 3) {
+                  pageNum = currentPage - 2 + i;
+                  if (pageNum > payoutsTotalPages) return null;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-9 h-9 rounded-xl text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                      currentPage === pageNum
+                        ? "bg-[#F59E0B] text-white border border-[#F59E0B]"
+                        : "border border-[#E8DDD8] text-[#1A1A1A] hover:bg-[#FAF5F2]"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              },
+            )}
 
             {payoutsTotalPages > 5 && currentPage < payoutsTotalPages - 2 && (
-               <span className="w-9 h-9 flex items-center justify-center text-sm text-[#9E7B6A] font-bold">
-                 …
-               </span>
+              <span className="w-9 h-9 flex items-center justify-center text-sm text-[#9E7B6A] font-bold">
+                …
+              </span>
             )}
 
             <button
               disabled={currentPage === payoutsTotalPages}
-              onClick={() => setCurrentPage((p) => Math.min(payoutsTotalPages, p + 1))}
+              onClick={() =>
+                setCurrentPage((p) => Math.min(payoutsTotalPages, p + 1))
+              }
               className="w-9 h-9 rounded-xl border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] disabled:opacity-40 transition-colors cursor-pointer"
             >
               <ChevronRight size={16} />
