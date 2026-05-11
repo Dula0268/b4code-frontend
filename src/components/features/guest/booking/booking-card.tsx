@@ -5,7 +5,7 @@ import Link from "next/link"
 import {
   MapPin, MessageSquare, Download,
   Star, ChevronRight, RefreshCw, FileText, BedDouble,
-  CreditCard, Wallet, Calendar, CheckCircle2
+  CreditCard, Wallet, Calendar
 } from "lucide-react"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -106,21 +106,11 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
 
   const cancelHref = `/guest/booking/cancel?${bookingContext}`
   const modifyHref = `/guest/booking/modify?${bookingContext}`
+  const reviewHref = `/guest/reviews?${bookingContext}`
 
   const rebookHref = booking.propertyId
     ? `/guest/property/${encodeURIComponent(booking.propertyId)}`
     : `/guest/search?property=${encodeURIComponent(booking.property)}&location=${encodeURIComponent(booking.location)}`
-
-  const handleComplete = async () => {
-    if (!window.confirm("Are you sure you want to complete this stay?")) return
-    try {
-      const { guestApi } = await import("@/lib/api")
-      await guestApi.completeBooking(Number(booking.id))
-      window.location.reload()
-    } catch (err) {
-      alert("Failed to complete booking")
-    }
-  }
 
   return (
     <div className="relative group overflow-hidden rounded-[24px] bg-white border border-[#eadfce] transition-all duration-300 hover:shadow-xl hover:shadow-[#cbb89e]/35 flex flex-col sm:flex-row">
@@ -184,9 +174,9 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
               <Link href={`/guest/messages?type=host&bookingId=${booking.id}`} className={btnOutline}>
                 <MessageSquare size={14} /> Message
               </Link>
-              <button onClick={handleComplete} className={btnOutline}>
-                <CheckCircle2 size={14} /> Complete
-              </button>
+              <Link href={reviewHref} className={btnOutline}>
+                <Star size={14} /> Review
+              </Link>
               <Link href={cancelHref} className={`${btnGhost} sm:ml-auto`}>
                 Cancel Stay
               </Link>

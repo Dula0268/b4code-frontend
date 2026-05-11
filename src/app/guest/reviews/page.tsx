@@ -108,7 +108,8 @@ function useReviewLogic() {
 
   const searchParams = useSearchParams()
   const propertyId = searchParams?.get("propertyId")
-  const { bookings, fetchUserBookings, loading } = useGuestBookingStore()
+  const bookingId = searchParams?.get("bookingId")
+  const { bookings, fetchUserBookings, loading, updateBookingStatus, modifyBooking } = useGuestBookingStore()
   const user = useAuthStore(s => s.user)
 
   useEffect(() => {
@@ -117,9 +118,11 @@ function useReviewLogic() {
     }
   }, [user?.email, bookings.length, fetchUserBookings])
 
-  const activeBooking = propertyId 
-    ? bookings.find(b => b.propertyId === propertyId) 
-    : bookings.find(b => b.status === "COMPLETED") || bookings[0]
+  const activeBooking = bookingId
+    ? bookings.find(b => b.id === bookingId)
+    : propertyId 
+      ? bookings.find(b => b.propertyId === propertyId) 
+      : bookings.find(b => b.status === "COMPLETED") || bookings[0]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -157,6 +160,10 @@ function useReviewLogic() {
         valueRating: categoryRatings.value,
         photoUrls
       })
+      
+      // 3. Update booking status to COMPLETED
+      modifyBooking(activeBooking.id, { status: "COMPLETED" })
+      
       setSubmitted(true)
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to submit review. You may have already reviewed this booking.")
