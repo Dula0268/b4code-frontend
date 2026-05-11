@@ -22,7 +22,7 @@ export default function MyBookingsPage() {
   const user = useAuthStore(s => s.user)
   const localBookings = useGuestBookingStore(s => s.bookings)
 
-  const normalizeStatus = (s?: string): BookingStatus => {
+  const normalizeStatus = (s?: string): "UPCOMING" | "COMPLETED" | "CANCELLED" => {
     if (s === "COMPLETED") return "COMPLETED"
     if (s === "CANCELLED") return "CANCELLED"
     return "UPCOMING"
