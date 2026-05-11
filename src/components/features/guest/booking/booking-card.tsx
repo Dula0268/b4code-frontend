@@ -106,6 +106,7 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
 
   const cancelHref = `/guest/booking/cancel?${bookingContext}`
   const modifyHref = `/guest/booking/modify?${bookingContext}`
+  const reviewHref = `/guest/reviews?${bookingContext}`
 
   const rebookHref = booking.propertyId
     ? `/guest/property/${encodeURIComponent(booking.propertyId)}`
@@ -168,13 +169,16 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
                 <BedDouble size={14} /> My Room
               </Link>
               <Link href={modifyHref} className={btnOutline}>
-                <RefreshCw size={14} /> Modify Booking
+                <RefreshCw size={14} /> Modify
               </Link>
-              <Link href="/guest/messages?type=host" className={btnOutline}>
-                <MessageSquare size={14} /> Message Host
+              <Link href={`/guest/messages?type=host&bookingId=${booking.id}`} className={btnOutline}>
+                <MessageSquare size={14} /> Message
+              </Link>
+              <Link href={reviewHref} className={btnOutline}>
+                <Star size={14} /> Review
               </Link>
               <Link href={cancelHref} className={`${btnGhost} sm:ml-auto`}>
-                Cancel Booking
+                Cancel Stay
               </Link>
             </>
           )}

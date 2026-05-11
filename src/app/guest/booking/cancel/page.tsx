@@ -14,12 +14,11 @@ import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 // Configuration & Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Fallback configuration if no valid booking is found. */
 const APP_CONFIG = {
   cancellationFeePercent: 10,
   defaultCardSuffix: "4242",
   defaultCurrency: "LKR",
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
+  apiBaseUrl: (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080").replace(/\/$/, "") + "/api",
 } as const
 
 const MOCK_DEMO_BOOKING = {
@@ -133,7 +132,11 @@ function useCancelBookingLogic() {
         const res = await fetch(`${APP_CONFIG.apiBaseUrl}/guest/bookings/${targetBookingId}/cancel`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reason: reason.trim(), guestId: guestIdToUse, comments: comments.trim() }),
+            body: JSON.stringify({ 
+              reason: reason.trim(), 
+              guestId: guestIdToUse, 
+              comments: comments.trim() 
+            }),
         });
         if (!res.ok) {
             throw new Error("Failed to cancel booking on server.");

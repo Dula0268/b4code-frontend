@@ -22,6 +22,12 @@ export default function MyBookingsPage() {
   const user = useAuthStore(s => s.user)
   const localBookings = useGuestBookingStore(s => s.bookings)
 
+  const normalizeStatus = (s?: string): "UPCOMING" | "COMPLETED" | "CANCELLED" => {
+    if (s === "COMPLETED") return "COMPLETED"
+    if (s === "CANCELLED") return "CANCELLED"
+    return "UPCOMING"
+  }
+
   useEffect(() => {
     async function loadBookings() {
         try {
@@ -51,13 +57,8 @@ export default function MyBookingsPage() {
                   totalAmount?: number
                   status?: string
                   paymentMethod?: string
+                  propertyImage?: string
                   createdAt?: string
-                }
-
-                const normalizeStatus = (s?: string): BookingStatus => {
-                  if (s === "COMPLETED") return "COMPLETED"
-                  if (s === "CANCELLED") return "CANCELLED"
-                  return "UPCOMING"
                 }
 
                 apiBookings = (data as ApiBooking[]).map((b) => ({
@@ -68,7 +69,7 @@ export default function MyBookingsPage() {
                     status: normalizeStatus(b.status),
                     property: b.propertyName || "Prime Stay Property",
                     location: b.propertyAddress || "Sri Lanka",
-                    imageSrc: "/images/properties/property-1.jpg",
+                    imageSrc: b.propertyImage || "/images/properties/property-1.jpg",
                     checkIn: b.checkIn || "",
                     checkOut: b.checkOut || "",
                     guests: `${b.guestCount ?? 2} Guests`,
@@ -78,7 +79,7 @@ export default function MyBookingsPage() {
                     paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
                     roomName: b.roomName,
                     isFromStore: false,
-                }))
+                })) as BookingCardData[]
             } catch (err) {
                 console.warn("API booking fetch failed or empty:", err)
             }
@@ -89,7 +90,7 @@ export default function MyBookingsPage() {
                 propertyId: String(b.propertyId),
                 orderId: b.confirmationCode,
                 orderNumber: b.confirmationCode,
-                status: b.status,
+                status: normalizeStatus(b.status),
                 property: b.property,
                 location: b.location,
                 imageSrc: b.imageSrc,

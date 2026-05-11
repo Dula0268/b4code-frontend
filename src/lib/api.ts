@@ -455,6 +455,15 @@ export const guestApi = {
         if (!response.ok) throw new Error("Failed to send message");
         return response.json();
     },
+
+    // Booking Completion
+    completeBooking: async (bookingId: number) => {
+        const response = await apiFetch(`/api/guest/bookings/${bookingId}/complete`, {
+            method: "POST",
+        });
+        if (!response.ok) throw new Error("Failed to complete booking");
+        return response.json();
+    },
 };
 
 export const ownerApi = {
