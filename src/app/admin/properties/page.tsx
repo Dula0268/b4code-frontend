@@ -117,7 +117,6 @@ export default function PropertiesPage() {
   const statusOptions = [
     "All",
     "Pending",
-    "Under Review",
     "Approved",
     "Rejected",
   ];

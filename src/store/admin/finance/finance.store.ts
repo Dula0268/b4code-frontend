@@ -170,11 +170,11 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
   processPayout: async (id: number, bankReference: string) => {
     set({ actionLoading: true, error: null });
     try {
-      const updated = await FinanceApi.processPayout(id, bankReference);
-      set((state) => ({
-        payouts: state.payouts.map(p => p.id === id ? updated : p),
-        actionLoading: false
-      }));
+      await FinanceApi.processPayout(id, bankReference);
+      // Refresh both the payout list and summary KPIs
+      await get().fetchPayouts({});
+      get().fetchSummary();
+      set({ actionLoading: false });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to process payout";
       set({ error: message, actionLoading: false });

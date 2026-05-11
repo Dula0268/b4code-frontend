@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Search, Download, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight, ChevronDown, Search, Download, Loader2 } from "lucide-react";
 import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
 
 // ─── Action Badge ─────────────────────────────────────────────────────────────
@@ -28,6 +28,18 @@ export default function HistoryTabPage() {
   const [actionFilter, setActionFilter] = useState("All Actions");
   const [actionOpen, setActionOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const actionDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (actionDropdownRef.current && !actionDropdownRef.current.contains(e.target as Node)) {
+        setActionOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const actionOptions = [
     "All Actions",
@@ -95,13 +107,13 @@ export default function HistoryTabPage() {
         </div>
 
         {/* Action Filter */}
-        <div className="relative">
+        <div className="relative" ref={actionDropdownRef}>
           <button
             onClick={() => setActionOpen(!actionOpen)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-[10px] border-[1.5px] border-[#E8DDD8] bg-white text-[13px] font-semibold text-[#1A1A1A] cursor-pointer"
           >
             {actionFilter}
-            <ChevronRight size={14} className="rotate-90" />
+            <ChevronDown size={14} className={`transition-transform ${actionOpen ? "rotate-180" : ""}`} />
           </button>
           {actionOpen && (
             <div className="absolute top-[calc(100%+6px)] right-0 bg-white border-[1.5px] border-[#E8DDD8] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-50 min-w-45 overflow-hidden">

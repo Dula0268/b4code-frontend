@@ -56,7 +56,7 @@ export const ModerationApi = {
   getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number }> =>
     api.get('/admin/moderation/counts').then((res) => res.data),
 
-  getReviews: (params: { flagReason?: string; rating?: number; search?: string; page?: number; size?: number }): Promise<PageResponse<FlaggedReview>> =>
+  getReviews: (params: { status?: string; flagReason?: string; rating?: number; search?: string; page?: number; size?: number }): Promise<PageResponse<FlaggedReview>> =>
     api.get('/admin/moderation/reviews', { params }).then((res) => res.data),
 
   approveReview: (id: number): Promise<FlaggedReview> =>

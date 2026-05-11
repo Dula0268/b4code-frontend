@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Search,
   SlidersHorizontal,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -103,7 +104,23 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
   const perPage = 10;
+
+  const statusOptions = ["All", "Pending", "Processed", "Failed"];
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
+        setStatusDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const {
     payouts,
@@ -125,8 +142,9 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
       page: currentPage - 1,
       size: perPage,
       search: debouncedSearch,
+      status: statusFilter !== "All" ? statusFilter.toUpperCase() : undefined,
     });
-  }, [fetchPayouts, currentPage, debouncedSearch]);
+  }, [fetchPayouts, currentPage, debouncedSearch, statusFilter]);
 
   return (
     <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm overflow-hidden relative">
@@ -154,10 +172,38 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] placeholder:text-[#C4B5AB] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm font-medium text-[#1A1A1A] hover:bg-[#FAF5F2] transition">
-          <SlidersHorizontal size={15} />
-          Filter by Status
-        </button>
+        {/* Filter by Status Dropdown */}
+        <div className="relative" ref={statusDropdownRef}>
+          <button
+            onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm font-medium text-[#1A1A1A] hover:bg-[#FAF5F2] transition cursor-pointer bg-white"
+          >
+            <SlidersHorizontal size={15} />
+            {statusFilter === "All" ? "Filter by Status" : statusFilter}
+            <ChevronDown size={14} className={`transition-transform ${statusDropdownOpen ? "rotate-180" : ""}`} />
+          </button>
+          {statusDropdownOpen && (
+            <div className="absolute top-[calc(100%+6px)] right-0 bg-white border-[1.5px] border-[#E8DDD8] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.10)] z-50 min-w-[160px] overflow-hidden">
+              {statusOptions.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    setStatusFilter(opt);
+                    setStatusDropdownOpen(false);
+                    setCurrentPage(1);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 border-none text-[13px] cursor-pointer ${
+                    statusFilter === opt
+                      ? "bg-[rgba(149,48,2,0.05)] text-[#953002] font-semibold"
+                      : "bg-white text-[#6B7280] font-normal hover:bg-gray-50"
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Table ── */}

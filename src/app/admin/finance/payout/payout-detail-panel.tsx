@@ -51,17 +51,18 @@ export default function PayoutDetailPanel({
   payout,
 }: PayoutDetailPanelProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [bankRef, setBankRef] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
   const { processPayout, actionLoading } = useAdminFinanceStore();
 
   if (!isOpen || !payout) return null;
 
   const handleApprove = async () => {
     try {
-      const ref = prompt("Enter bank reference ID (optional):");
-      if (ref === null) return; // cancelled
-
-      await processPayout(payout.id, ref);
+      await processPayout(payout.id, bankRef.trim());
       setToastMessage("Payout approved successfully.");
+      setShowConfirm(false);
+      setBankRef("");
       setTimeout(() => {
         setToastMessage(null);
         onClose();
@@ -69,7 +70,7 @@ export default function PayoutDetailPanel({
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to process payout";
-      alert(message);
+      setToastMessage(message);
     }
   };
 
@@ -305,21 +306,57 @@ export default function PayoutDetailPanel({
           {/* ── Action Buttons ── */}
           {isPending && (
             <div className="flex flex-col gap-3 pt-2">
-              <button
-                onClick={handleApprove}
-                disabled={actionLoading}
-                className="w-full py-3.5 rounded-xl bg-[#C05621] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#A04A1C] disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
-              >
-                <CircleCheck size={18} />
-                Approve Payout
-              </button>
-              <button
-                disabled={actionLoading}
-                className="w-full py-3.5 rounded-xl border border-[#E8DDD8] text-[#1A1A1A] text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#FEF2F2] disabled:opacity-50 transition-colors cursor-pointer"
-              >
-                <XCircle size={18} className="text-[#DC2626]" />
-                Reject Payout
-              </button>
+              {!showConfirm ? (
+                <>
+                  <button
+                    onClick={() => setShowConfirm(true)}
+                    disabled={actionLoading}
+                    className="w-full py-3.5 rounded-xl bg-[#C05621] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#A04A1C] disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+                  >
+                    <CircleCheck size={18} />
+                    Approve Payout
+                  </button>
+                  <button
+                    disabled={actionLoading}
+                    className="w-full py-3.5 rounded-xl border border-[#E8DDD8] text-[#1A1A1A] text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#FEF2F2] disabled:opacity-50 transition-colors cursor-pointer"
+                  >
+                    <XCircle size={18} className="text-[#DC2626]" />
+                    Reject Payout
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#FDFAF8] border border-[#F0EBE7]">
+                  <p className="text-sm font-semibold text-[#1A1A1A]">Confirm Approval</p>
+                  <div>
+                    <label className="text-xs font-medium text-[#6B7280] mb-1 block">
+                      Bank Reference ID <span className="text-[#9E7B6A]">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={bankRef}
+                      onChange={(e) => setBankRef(e.target.value)}
+                      placeholder="e.g. BOC-REF-20240501"
+                      className="w-full px-3 py-2 rounded-lg border border-[#E8DDD8] text-sm text-[#1A1A1A] outline-none focus:border-[#C05621] transition"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setShowConfirm(false); setBankRef(""); }}
+                      className="flex-1 py-2.5 rounded-xl border border-[#E8DDD8] text-sm font-semibold text-[#6B7280] hover:bg-[#F3F4F6] transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleApprove}
+                      disabled={actionLoading}
+                      className="flex-1 py-2.5 rounded-xl bg-[#16A34A] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#15803D] disabled:opacity-50 transition cursor-pointer"
+                    >
+                      {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <CircleCheck size={16} />}
+                      Confirm
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

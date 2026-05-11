@@ -92,7 +92,8 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
   fetchReviews: async (params) => {
     set({ reviewsLoading: true, error: null });
     try {
-      const res = await ModerationApi.getReviews(params || {});
+      // Always filter to FLAGGED status so actioned reviews disappear from queue
+      const res = await ModerationApi.getReviews({ status: 'FLAGGED', ...(params || {}) });
       set({ reviews: res.content, reviewsTotalPages: res.totalPages, reviewsLoading: false });
     } catch (err) {
       console.error('fetchReviews error:', err);
@@ -106,6 +107,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
       await ModerationApi.approveReview(id);
       get().fetchBadgeCounts(); // Update counts
       await get().fetchReviews(); // Refetch to update the queue UI
+      get().fetchHistory();       // Update history tab
       set({ actionLoading: false });
     } catch (err) {
       console.error('approveReview error:', err);
@@ -119,6 +121,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
       await ModerationApi.removeReview(id, adminNote);
       get().fetchBadgeCounts();
       await get().fetchReviews(); // Refetch to update the queue UI
+      get().fetchHistory();       // Update history tab
       set({ actionLoading: false });
     } catch (err) {
       console.error('removeReview error:', err);
