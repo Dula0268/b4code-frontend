@@ -212,6 +212,18 @@ export const authApi = {
         }
         return response.text();
     },
+
+    verifyEmail: async (email: string, otp: string) => {
+        const response = await apiFetch("/api/auth/verify-email", {
+            method: "POST",
+            body: JSON.stringify({ email, otp }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Invalid or expired verification code.");
+        }
+        return response.text();
+    },
 };
 
 // User Management APIs

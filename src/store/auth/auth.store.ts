@@ -68,6 +68,7 @@ type AuthActions = {
     password: string,
     profile: UserProfile
   ) => Promise<void>;
+  verifyEmail: (email: string, otp: string) => Promise<void>;
   checkEmailExists: () => boolean;
   logout: () => void;
   setError: (message: string | null) => void;
@@ -229,6 +230,20 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
 
       set({ loading: false, error: message });
 
+      throw new Error(message);
+    }
+  },
+
+  // ─── VERIFY EMAIL (OTP) ─────────────────────────────
+  verifyEmail: async (email, otp) => {
+    set({ loading: true, error: null });
+
+    try {
+      await authApi.verifyEmail(email, otp);
+      set({ loading: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Verification failed";
+      set({ loading: false, error: message });
       throw new Error(message);
     }
   },
