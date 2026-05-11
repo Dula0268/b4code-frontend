@@ -116,11 +116,11 @@ function useQrScannerLogic() {
 
   const closeCamera = () => { stopCamera(); setShowCamera(false); setPhase("idle") }
 
-  return { videoRef, showCamera, phase, errorMsg, startCamera, closeCamera }
+  return { videoRef, showCamera, phase, errorMsg, startCamera, closeCamera, router }
 }
 
 export default function QrScannerPageClient() {
-  const { videoRef, showCamera, phase, errorMsg, startCamera, closeCamera } = useQrScannerLogic();
+  const { videoRef, showCamera, phase, errorMsg, startCamera, closeCamera, router } = useQrScannerLogic();
 
   return (
     <>
