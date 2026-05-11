@@ -3,12 +3,21 @@
 import { useEffect, useState } from "react";
 import ItemDetailsClient from "@/components/guest/order/item-details/item-details-client";
 import { useGuestMenuStore } from "@/store/guest/ordering/menu.store";
+import { useGuestGuard } from "@/hooks/use-guest-guard";
 
 export default function ItemDetailsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { ready } = useGuestGuard();
+  
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
+  
   const [id, setId] = useState<string | null>(null);
   const { categories } = useGuestMenuStore();
 

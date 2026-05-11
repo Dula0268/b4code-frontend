@@ -19,8 +19,11 @@ export default function StaffHeader({
   const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const staffName = staffNameProp || 
-    (user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Staff Member");
+  // Only show profile data if the logged-in user is actually STAFF (cross-tab guard)
+  const staffUser = user?.role?.toLowerCase() === "staff" ? user : null;
+
+  const staffName = staffNameProp ||
+    (staffUser?.profile ? `${staffUser.profile.firstName} ${staffUser.profile.lastName}` : "Staff Member");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -52,15 +55,15 @@ export default function StaffHeader({
               fill
               className="object-cover"
             />
-          ) : user?.profile?.avatarUrl ? (
+          ) : staffUser?.profile?.avatarUrl ? (
             <img 
-              src={user.profile.avatarUrl} 
+              src={staffUser.profile.avatarUrl} 
               alt={staffName} 
               className="w-full h-full object-cover" 
             />
-          ) : user?.profile ? (
+          ) : staffUser?.profile ? (
             <div className="w-full h-full bg-[#953002] flex items-center justify-center text-white text-sm font-bold">
-              {user.profile.firstName[0].toUpperCase()}{user.profile.lastName[0].toUpperCase()}
+              {staffUser.profile.firstName[0].toUpperCase()}{staffUser.profile.lastName[0].toUpperCase()}
             </div>
           ) : (
             <User size={20} className="text-neutral-500" />

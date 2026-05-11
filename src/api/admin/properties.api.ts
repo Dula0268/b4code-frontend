@@ -1,20 +1,17 @@
 import api from '@/lib/axios';
 
-// DTOs — exactly match what backend PropertyDto sends
+// DTOs
 export interface PropertyDto {
-  id: number;            // Long in backend
+  id: string;
   name: string;
-  pvId: string;
-  imageUrl?: string;     // Cloudinary URL from infrastructure
-  ownerId: number;
-  ownerName: string;
-  ownerRole?: string;
-  ownerInitial?: string;
-  ownerColor?: string;
-  status: string;        // PropertyStatus enum string: PENDING|UNDER_REVIEW|APPROVED|REJECTED
+  location: string;
+  hostName: string;
+  hostEmail: string;
+  status: string;
+  submissionDate: string;
+  verificationId?: string;
   rejectionReason?: string;
-  submittedDate?: string;  // formatted "May 10, 2024" string
-  submittedTime?: string;  // formatted "09:30 AM" string
+  documentUrl?: string;
 }
 
 export interface PropertyPageDto {
@@ -33,15 +30,15 @@ export const PropertyApi = {
   getAllProperties: (params: { search?: string; status?: string; page?: number; size?: number }): Promise<PropertyPageDto> =>
     api.get('/admin/properties', { params }).then((res) => res.data),
 
-  getPropertyById: (id: number): Promise<PropertyDto> =>
+  getPropertyById: (id: string): Promise<PropertyDto> =>
     api.get(`/admin/properties/${id}`).then((res) => res.data),
 
-  approveProperty: (id: number): Promise<PropertyDto> =>
+  approveProperty: (id: string): Promise<PropertyDto> =>
     api.put(`/admin/properties/${id}/approve`).then((res) => res.data),
 
-  rejectProperty: (id: number, reason: string): Promise<PropertyDto> =>
+  rejectProperty: (id: string, reason: string): Promise<PropertyDto> =>
     api.put(`/admin/properties/${id}/reject`, { reason }).then((res) => res.data),
 
-  markUnderReview: (id: number): Promise<PropertyDto> =>
+  markUnderReview: (id: string): Promise<PropertyDto> =>
     api.put(`/admin/properties/${id}/review`).then((res) => res.data),
 };

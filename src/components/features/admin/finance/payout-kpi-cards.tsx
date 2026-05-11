@@ -6,7 +6,7 @@ import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 export default function PayoutKpiCards() {
   const { summary, summaryLoading, payoutsTotalElements, payouts } = useAdminFinanceStore();
 
-  const pendingPayouts = payouts.filter(p => p.status === "PENDING").length;
+  const pendingPayouts = payouts.filter(p => p.status === "Hold" || p.status === "Pending").length;
 
   if (summaryLoading || !summary) {
     return (

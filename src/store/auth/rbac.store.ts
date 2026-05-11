@@ -18,7 +18,7 @@ type RBACActions = {
   updateRolePermissions: (role: string, updates: Record<string, boolean>) => Promise<void>;
 };
 
-export const useRBACStore = create<RBACState & RBACActions>((set) => ({
+export const useRBACStore = create<RBACState & RBACActions>((set, get) => ({
   loading: false,
   actionLoading: false,
   error: null,

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation"
 import { CheckCircle2, FileText, Download, MessageSquare, AlertCircle, ChevronRight, Hash } from "lucide-react"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import { useGuestGuard } from "@/hooks/use-guest-guard"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration & Constants
@@ -35,8 +36,6 @@ function formatCurrency(amount: number) {
 function useRefundRequestLogic() {
   const searchParams = useSearchParams()
   const bookingIdParam = searchParams.get("bookingId")
-   const source = searchParams.get("source")
-   const refundAmountParam = searchParams.get("refundAmount")
 
   // For a real app, you would fetch refund details using bookingIdParam.
   // Here we use mock data representing the initiated refund.
@@ -44,10 +43,8 @@ function useRefundRequestLogic() {
     return {
       ...MOCK_REFUND,
       bookingId: bookingIdParam || MOCK_REFUND.bookingId,
-       source: source || "cancel",
-       amount: refundAmountParam ? Number(refundAmountParam) : MOCK_REFUND.amount,
     }
-    }, [bookingIdParam, source, refundAmountParam])
+  }, [bookingIdParam])
 
   return { refundData }
 }
@@ -56,7 +53,14 @@ function useRefundRequestLogic() {
 // Page Content
 // ─────────────────────────────────────────────────────────────────────────────
 function RefundRequestContent() {
+  const { ready } = useGuestGuard()
   const { refundData } = useRefundRequestLogic()
+
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -73,9 +77,7 @@ function RefundRequestContent() {
             </div>
             <h1 className="text-[1.875rem] font-black leading-tight mb-2" style={{ color: "var(--fg)" }}>Refund Initiated</h1>
             <p className="text-sm leading-relaxed max-w-[400px]" style={{ color: "var(--gray-3)" }}>
-               {refundData.source === "modify"
-                 ? "Your reservation was updated and the refund difference has been initiated to your original payment method."
-                 : "Your cancellation was successful. We have initiated your refund to your original payment method."}
+              Your cancellation was successful. We have initiated your refund to your original payment method.
             </p>
           </div>
 

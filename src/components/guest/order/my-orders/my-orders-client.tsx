@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOrderStore, type Order, type OrderStatus } from "@/store/guest/order/order-store";
-import { useAuthStore } from "@/store/auth/auth.store";
 
 /* ─── Helpers ─── */
 
@@ -62,16 +61,8 @@ const PAGE_SIZE = 5;
 
 export default function MyOrdersClient() {
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
   const orderHistory = useOrderStore((s) => s.orderHistory);
   const currentOrder = useOrderStore((s) => s.currentOrder);
-  const fetchHistory = useOrderStore((s) => s.fetchOrderHistory);
-
-  React.useEffect(() => {
-    if (user?.userId) {
-      fetchHistory(user.userId);
-    }
-  }, [user?.userId, fetchHistory]);
 
   // Combine current order (if any) with history
   const allOrders = React.useMemo(() => {

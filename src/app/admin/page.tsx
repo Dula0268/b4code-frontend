@@ -12,6 +12,8 @@ import RecentVerificationRequests, {
 import { useAdminDashboardStore } from "@/store/admin/dashboard/admin-dashboard.store";
 import type { RecentVerification } from "@/api/admin/dashboard.api";
 import { Loader2 } from "lucide-react";
+import { useAdminGuard } from "@/hooks/use-admin-guard";
+import AccessDenied from "@/components/shared/auth/access-denied";
 
 // ─── Helper Functions ─────────────────────────────────────────────────────────
 const mapToVerificationRequest = (
@@ -29,8 +31,19 @@ const mapToVerificationRequest = (
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
+  const { ready, status, userRole } = useAdminGuard();
   const { kpis, recentVerifications, loading, error, fetchDashboardData } =
     useAdminDashboardStore();
+
+  if (status === "loading") return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
+
+  if (status === "unauthorized") {
+    return <AccessDenied userRole={userRole} requiredRole="Admin" />;
+  }
 
   useEffect(() => {
     fetchDashboardData();

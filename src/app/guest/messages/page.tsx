@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation"
 import {
     Send, Paperclip, Clock, CalendarCheck, ParkingCircle, Building2,
     CalendarDays, BadgeCheck, Lightbulb, CheckCircle2, ChevronLeft,
-    Smile, Phone, Video, Star, MapPin, MessageSquare, Utensils, Sparkles,
+    Smile, Phone, Video, Star, MapPin, Info, Home, Utensils, Sparkles,
     AlertCircle, HelpCircle, DoorOpen, User
 } from "lucide-react"
 
@@ -41,8 +41,9 @@ const QUICK_REPLY_BUTTONS = {
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import { guestApi } from "@/lib/api"
+import { useGuestGuard } from "@/hooks/use-guest-guard"
 
-function useMessagingLogic(bookingId: number | null) {
+function useMessagingLogic(isStaff: boolean) {
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
     const [isTyping, setIsTyping] = useState(false)
@@ -52,9 +53,15 @@ function useMessagingLogic(bookingId: number | null) {
 
     useEffect(() => {
         async function loadMessages() {
-            if (!bookingId) return;
             try {
-                const data = await guestApi.getConversation(bookingId)
+                const bookingStore = useGuestBookingStore.getState()
+                const latestBooking = bookingStore.bookings[0]
+                if (!latestBooking) {
+                    setMessages([])
+                    return
+                }
+
+                const data = await guestApi.getConversation(Number(latestBooking.id))
                 type ApiMessage = { id: number | string; senderType?: string; senderName?: string; content: string; sentAt: string }
                 const apiMsgs = Array.isArray((data as { messages?: ApiMessage[] }).messages)
                     ? (data as { messages?: ApiMessage[] }).messages!.map((m) => ({
@@ -65,23 +72,25 @@ function useMessagingLogic(bookingId: number | null) {
                     }))
                     : []
 
-                setMessages(apiMsgs)
+                setMessages(apiMsgs.length > 0 ? apiMsgs : [])
             } catch(e) {
                 setMessages([])
             }
         }
         loadMessages();
-    }, [bookingId]);
+    }, []);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages, isTyping])
 
     const sendMessage = async (text: string) => {
-        if (!text.trim() || !bookingId) return
+        if (!text.trim()) return
         const guest = useAuthStore.getState().user
+        const booking = useGuestBookingStore.getState().bookings[0]
+        if (!booking) return
+
         const guestName = guest?.profile?.firstName ? `${guest.profile.firstName} ${guest.profile.lastName}` : guest?.email?.split("@")[0] ?? "Guest"
-        
         const newMsg = { id: Date.now().toString(), sender: "guest" as const, text: text.trim(), time: getTime() };
         setMessages(prev => [...prev, newMsg]);
         setInput("")
@@ -89,13 +98,14 @@ function useMessagingLogic(bookingId: number | null) {
 
         try {
             await guestApi.sendMessage({
-                bookingId: bookingId,
+                bookingId: Number(booking.id),
                 senderType: "GUEST",
                 senderName: guestName,
                 content: text.trim(),
             })
         } catch (e) {}
 
+        // Don't generate automatic replies - wait for actual backend response
         setTimeout(() => {
             setIsTyping(false)
         }, 500)
@@ -105,50 +115,25 @@ function useMessagingLogic(bookingId: number | null) {
 }
 
 function MessagingContent() {
+    const { ready } = useGuestGuard()
+    // Determine variant from searchParams
     const searchParams = useSearchParams()
     const isStaff = searchParams?.get("type") === "staff"
-    const bookingIdParam = searchParams?.get("bookingId")
-    
-    const { bookings, fetchUserBookings, loading } = useGuestBookingStore()
-    const user = useAuthStore(s => s.user)
 
-    useEffect(() => {
-        if (user?.email && bookings.length === 0) {
-            fetchUserBookings(user.email)
-        }
-    }, [user?.email, bookings.length, fetchUserBookings])
-
-    const activeBooking = bookingIdParam 
-        ? bookings.find(b => b.id === bookingIdParam) 
-        : bookings.find(b => b.status === "CONFIRMED") || bookings[0]
-
-    const { messages, input, setInput, isTyping, bottomRef, sendMessage } = useMessagingLogic(activeBooking ? Number(activeBooking.id) : null);
-
-    if (loading) {
-        return <div className="p-20 text-center text-[#888]">Loading conversation...</div>
-    }
-
-    if (!activeBooking) {
-        return (
-            <div className="max-w-[1100px] mx-auto px-4 lg:px-6 py-20 text-center">
-                <div className="w-20 h-20 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center mx-auto mb-6">
-                    <MessageSquare size={40} className="text-[#bbb]" />
-                </div>
-                <h2 className="text-2xl font-black mb-2">No active booking found</h2>
-                <p className="text-gray-500 mb-8">You need an active booking to message {isStaff ? "staff" : "the host"}.</p>
-                <Link href="/guest/booking/my-bookings" className="px-8 py-4 bg-[var(--brand-primary)] text-white rounded-2xl font-black no-underline">View My Bookings</Link>
-            </div>
-        )
-    }
+    if (!ready) return (
+        <div className="min-h-screen flex items-center justify-center bg-white">
+            <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+        </div>
+    )
 
     const data = isStaff ? {
         title: "Contact Hotel Staff",
         desc: "Message our team for room service, cleaning, maintenance or any assistance.",
         backHref: "/guest/my-room",
         backText: "Back to My Room",
-        img: activeBooking.imageSrc,
+        img: "/images/room/resort-exterior.png",
         status: "Staff Online",
-        agentName: "Hotel Staff",
+        agentName: "Amal — Front Desk",
         quick: QUICK_REPLY_BUTTONS.STAFF,
         agentIcon: () => <User size={18} className="text-[var(--brand-secondary)]" />,
         agentAvatarBg: "bg-[#1a1a1a]",
@@ -162,9 +147,9 @@ function MessagingContent() {
         desc: "Message the host directly about your booking or any pre-arrival requests.",
         backHref: "/guest/booking/my-bookings",
         backText: "Back to Bookings",
-        img: activeBooking.imageSrc,
+        img: "/images/booking/sunset-peak-resort.png",
         status: "Online now",
-        agentName: activeBooking.hostName || "Property Owner",
+        agentName: "Property Owner",
         quick: QUICK_REPLY_BUTTONS.HOST,
         agentIcon: () => <span className="text-white font-black text-[15px]">P</span>,
         agentAvatarBg: "bg-gradient-to-br from-[var(--brand-primary)] to-orange-600",
@@ -174,6 +159,8 @@ function MessagingContent() {
         inputPlaceholder: "Type your message to the property owner…",
         hint: "The property owner will reply as soon as possible."
     }
+
+    const { messages, input, setInput, isTyping, bottomRef, sendMessage } = useMessagingLogic(isStaff);
 
     return (
         <div className="max-w-[1100px] mx-auto px-4 lg:px-6 pt-6 pt-10">
@@ -200,10 +187,10 @@ function MessagingContent() {
                             </div>
                         </div>
                         <div className="p-4">
-                            <h3 className="text-[15px] font-black text-[#1a1a1a] mb-0.5">{activeBooking.property}</h3>
+                            <h3 className="text-[15px] font-black text-[#1a1a1a] mb-0.5">{isStaff ? "Luxe Horizon Resort" : "Sunset Peak Resort"}</h3>
                             <div className="flex items-center gap-1.5 text-[12px] text-[#888] mb-4">
                                 {isStaff ? (
-                                    <><DoorOpen size={13} className="text-[#bbb]" /> {activeBooking.roomName}</>
+                                    <><DoorOpen size={13} className="text-[#bbb]" /> Suite 402</>
                                 ) : (
                                     <><Star size={12} className="text-[var(--brand-secondary)] fill-[var(--brand-secondary)]" /> <span className="font-bold text-[#1a1a1a]">4.8</span> · Superhost</>
                                 )}
@@ -229,11 +216,11 @@ function MessagingContent() {
                                         <CalendarDays size={14} className="text-[var(--brand-secondary)] flex-shrink-0" />
                                         <div>
                                             <p className="text-[10px] font-semibold text-[#aaa] uppercase tracking-wide">Dates</p>
-                                            <p className="text-[12px] font-bold text-[#1a1a1a]">{activeBooking.checkInFormatted} – {activeBooking.checkOutFormatted}</p>
+                                            <p className="text-[12px] font-bold text-[#1a1a1a]">Oct 12 – Oct 15</p>
                                         </div>
                                     </div>
                                 </div>
-                                <Link href={`/guest/booking/confirmation?code=${activeBooking.confirmationCode}`} className="mt-4 w-full flex items-center justify-center text-[12px] font-bold text-[#444] border border-[#ebebeb] hover:border-[#ccc] hover:bg-[#f8f7f5] rounded-xl py-2.5 transition-colors no-underline block text-center">
+                                <Link href="/guest/booking/confirmation" className="mt-4 w-full flex items-center justify-center text-[12px] font-bold text-[#444] border border-[#ebebeb] hover:border-[#ccc] hover:bg-[#f8f7f5] rounded-xl py-2.5 transition-colors no-underline block text-center">
                                     View Booking Receipt
                                 </Link>
                             </>
@@ -252,7 +239,6 @@ function MessagingContent() {
                         )}
                     </div>
                 </div>
-
 
                 {/* ── CHAT AREA ───────────────────────────────────────────────── */}
                 <div className="flex-1 bg-white rounded-[20px] border border-[#ebebeb] shadow-sm flex flex-col overflow-hidden min-h-0">

@@ -117,6 +117,7 @@ export default function PropertiesPage() {
   const statusOptions = [
     "All",
     "Pending",
+    "Under Review",
     "Approved",
     "Rejected",
   ];
@@ -224,18 +225,8 @@ export default function PropertiesPage() {
                       {/* Property */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          {/* Property image */}
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-[#F3F4F6] flex items-center justify-center">
-                            {property.imageUrl ? (
-                              <Image
-                                src={property.imageUrl}
-                                alt={property.name}
-                                fill
-                                className="object-cover"
-                              />
-                            ) : (
-                              <ImageIcon className="text-[#C4B5AB]" size={20} />
-                            )}
+                            <ImageIcon className="text-[#C4B5AB]" size={20} />
                           </div>
                           <div>
                             <p className="m-0 font-semibold text-[13px] text-[#1A1A1A]">
@@ -254,15 +245,15 @@ export default function PropertiesPage() {
                             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[12px] shrink-0"
                             style={{
                               backgroundColor: getColorForName(
-                                property.ownerName,
+                                property.hostName,
                               ),
                             }}
                           >
-                            {getInitials(property.ownerName)}
+                            {getInitials(property.hostName)}
                           </div>
                           <div>
                             <p className="m-0 font-semibold text-[13px] text-[#1A1A1A]">
-                              {property.ownerName}
+                              {property.hostName}
                             </p>
                             <p className="m-0 text-[11px] text-[#9E7B6A]">
                               Owner
@@ -273,10 +264,15 @@ export default function PropertiesPage() {
                       {/* Submitted */}
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         <p className="m-0 text-[13px] text-[#1A1A1A]">
-                          {property.submittedDate || '—'}
+                          {new Date(
+                            property.submissionDate,
+                          ).toLocaleDateString()}
                         </p>
                         <p className="m-0 text-[11px] text-[#9E7B6A]">
-                          {property.submittedTime || ''}
+                          {new Date(property.submissionDate).toLocaleTimeString(
+                            [],
+                            { hour: "2-digit", minute: "2-digit" },
+                          )}
                         </p>
                       </td>
                       {/* Status */}

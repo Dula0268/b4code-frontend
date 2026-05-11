@@ -9,7 +9,6 @@ export type MenuItem = {
   price: number;
   priceLkr: number;
   imageUrl?: string;
-  imageUrls?: string[];
   tag?: string;
   category: string;
   variants?: { id: string; label: string; price: number }[];

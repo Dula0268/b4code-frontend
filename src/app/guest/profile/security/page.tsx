@@ -6,9 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Lock } from "lucide-react";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { useGuestGuard } from "@/hooks/use-guest-guard";
 
 export default function GuestSecurityPage() {
+  const { ready } = useGuestGuard();
   const router = useRouter();
+
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+    </div>
+  )
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",

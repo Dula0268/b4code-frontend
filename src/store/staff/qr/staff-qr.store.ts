@@ -21,8 +21,6 @@ export interface QRContext {
   showRoomNumber: boolean;
   showLogo: boolean;
   qrImageUrl?: string;
-  tableId?: number;
-  roomNumber?: string;
 }
 
 // API Response types
@@ -46,8 +44,6 @@ interface QRResponse {
   lastScannedAt: string | null;
   qrImageUrl: string;
   qr_image_url?: string;
-  tableId?: number;
-  roomNumber?: string;
 }
 
 // ─── Store ─────────────────────────────────────────────────────────────────────
@@ -124,8 +120,6 @@ function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
     showRoomNumber: !!data.showRoomNumber,
     showLogo: data.showLogo !== false,
     qrImageUrl: qrImageUrl,
-    tableId: data.tableId,
-    roomNumber: data.roomNumber,
   };
 }
 
@@ -189,8 +183,6 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         instructionText: data.instructionText,
         showRoomNumber: data.showRoomNumber,
         showLogo: data.showLogo,
-        tableId: data.tableId,
-        roomNumber: data.roomNumber,
       };
 
       const response = await api.post("/qr/generate", payload);

@@ -1,4 +1,4 @@
-import { Send, Loader2 } from "lucide-react";
+import { Send, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
 export default function TotalPayoutCard() {
@@ -12,19 +12,30 @@ export default function TotalPayoutCard() {
         );
     }
 
+    const trendStr = summary.payoutGrowth || "0%";
+    const isUp = !trendStr.startsWith("-");
+    const TrendIcon = isUp ? TrendingUp : TrendingDown;
+    const trendColor = isUp ? "text-[#16A34A]" : "text-[#DC2626]";
+
     return (
-        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between h-[136px] min-w-0 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm flex flex-col justify-between h-[136px]">
             <div className="flex items-start justify-between mb-2">
-                <h3 className="text-sm text-gray-500 font-medium truncate">Total Payouts</h3>
-                <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] flex items-center justify-center shrink-0">
+                <h3 className="text-sm text-gray-500 font-medium">Total Payouts</h3>
+                <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] flex items-center justify-center">
                     <Send size={16} className="text-[#3B82F6]" />
                 </div>
             </div>
-            <div className="flex flex-col gap-1 min-w-0">
-                <p className="text-xl font-bold text-gray-900 leading-none tracking-tight truncate">
+            <div className="flex flex-col gap-1.5">
+                <p className="text-3xl font-bold text-gray-900 leading-none tracking-tight">
                     LKR {summary.totalPayouts.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-                <p className="text-xs text-gray-400 font-medium mt-1 truncate">Processed host payouts</p>
+                <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`flex items-center text-sm font-semibold ${isUp ? "text-emerald-500" : "text-red-500"}`}>
+                        {isUp ? <TrendingUp size={14} className="mr-1" /> : <TrendingDown size={14} className="mr-1" />}
+                        {trendStr}
+                    </span>
+                    <span className="text-sm text-gray-400 font-medium">vs last month</span>
+                </div>
             </div>
         </div>
     );

@@ -16,7 +16,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, loading, error, setError } = useAuthStore();
+  const { login, logout, loading, error, setError, isAuthenticated, user, isRestoring } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,14 +27,45 @@ function LoginPageContent() {
     setError(null);
   }, [setError]);
 
+  // If already authenticated, redirect immediately to role-based dashboard.
+  // This handles the case where the guest guard redirects a staff/owner to /auth/login
+  // — they shouldn't have to log in again.
+  useEffect(() => {
+    if (isRestoring || !isAuthenticated || !user) return;
+    const rolePaths: Record<string, string> = {
+      guest: "/guest/booking/my-bookings",
+      staff: "/staff",
+      owner: "/owner",
+      admin: "/admin",
+    };
+    router.replace(rolePaths[user.role.toLowerCase()] ?? "/");
+  }, [isAuthenticated, user, isRestoring, router]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     try {
+      // login() returns the role-based home path (e.g. "/guest/booking/my-bookings", "/staff", "/owner")
       const path = await login(email, password);
       const redirect = searchParams?.get("redirect");
-      const validRedirect = redirect && redirect !== "/" ? redirect : null;
-      router.push(validRedirect || path);
+
+      // Derive the role prefix from the returned path (e.g. "/guest", "/staff", "/owner", "/admin")
+      const rolePrefix = "/" + (path.split("/")[1] ?? "");
+
+      // GUEST CONTEXT BLOCK: If the user clicked Login from a guest page (/guest/...)
+      // but logged in with a non-guest account, don't logout — just send them to their
+      // own dashboard. Avoids unexpectedly logging out a staff/owner/admin user.
+      if (redirect?.startsWith("/guest") && rolePrefix !== "/guest") {
+        router.push(path);
+        return;
+      }
+
+      // Only honor the redirect if it belongs to the same role's URL space.
+      // Prevents staff/owner/admin from being routed into guest pages (and vice versa).
+      const isRedirectValidForRole =
+        redirect && redirect !== "/" && redirect.startsWith(rolePrefix);
+
+      router.push(isRedirectValidForRole ? redirect : path);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed.";
 

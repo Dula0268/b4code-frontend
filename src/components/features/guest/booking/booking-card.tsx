@@ -80,7 +80,7 @@ function PaymentBadge({ paidInFull, method }: { paidInFull?: boolean, method?: s
 // ─────────────────────────────────────────────────────────────────────────────
 const btnPrimary = "inline-flex items-center gap-2 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer no-underline"
 const btnOutline = "inline-flex items-center gap-2 border border-[#e8ddcf] hover:border-[#9a3300] text-[#6f6254] hover:text-[#9a3300] text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer no-underline bg-white"
-const btnGhost   = "inline-flex items-center gap-1.5 text-xs font-bold text-[var(--state-error)] hover:opacity-80 transition-colors cursor-pointer"
+const btnGhost   = "inline-flex items-center gap-1.5 text-xs font-bold text-[#8b7d6d] hover:text-[#9a3300] transition-colors cursor-pointer"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BookingCard — reusable card for displaying a single booking
@@ -106,7 +106,6 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
 
   const cancelHref = `/guest/booking/cancel?${bookingContext}`
   const modifyHref = `/guest/booking/modify?${bookingContext}`
-  const reviewHref = `/guest/reviews?${bookingContext}`
 
   const rebookHref = booking.propertyId
     ? `/guest/property/${encodeURIComponent(booking.propertyId)}`
@@ -169,16 +168,13 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
                 <BedDouble size={14} /> My Room
               </Link>
               <Link href={modifyHref} className={btnOutline}>
-                <RefreshCw size={14} /> Modify
+                <RefreshCw size={14} /> Modify Booking
               </Link>
-              <Link href={`/guest/messages?type=host&bookingId=${booking.id}`} className={btnOutline}>
-                <MessageSquare size={14} /> Message
-              </Link>
-              <Link href={reviewHref} className={btnOutline}>
-                <Star size={14} /> Review
+              <Link href="/guest/messages?type=host" className={btnOutline}>
+                <MessageSquare size={14} /> Message Host
               </Link>
               <Link href={cancelHref} className={`${btnGhost} sm:ml-auto`}>
-                Cancel Stay
+                Cancel Booking
               </Link>
             </>
           )}

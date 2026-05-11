@@ -9,7 +9,6 @@ export interface MenuItem {
   price: number;
   priceLkr: number;
   imageUrl?: string;
-  imageUrls: string[];
   category: string;
   isAvailable: boolean;
   tag?: string;
@@ -28,10 +27,11 @@ type GuestMenuState = {
   loading: boolean;
   error: string | null;
   propertyId: number | null;
+  roomId: number | null;
 };
 
 type GuestMenuActions = {
-  fetchMenu: (propertyId: number, tableId?: string, roomNumber?: string) => Promise<void>;
+  fetchMenu: (propertyId: number, roomId?: number) => Promise<void>;
   getItemById: (id: string) => MenuItem | undefined;
   getCategoryItems: (categoryName: string) => MenuItem[];
   searchItems: (query: string) => MenuItem[];
@@ -45,14 +45,16 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
   loading: false,
   error: null,
   propertyId: null,
+  roomId: null,
 
-  fetchMenu: async (propertyId: number, tableId?: string, roomNumber?: string) => {
+  fetchMenu: async (propertyId: number, roomId?: number) => {
     try {
-      set({ loading: true, error: null, propertyId });
+      set({ loading: true, error: null, propertyId, roomId: roomId || null });
       
-      let url = `/guest/order/menu?propertyId=${propertyId}`;
-      if (tableId) url += `&tableId=${tableId}`;
-      if (roomNumber) url += `&roomNumber=${roomNumber}`;
+      let url = `/menu-items/property/${propertyId}`;
+      if (roomId) {
+        url += `?roomId=${roomId}`;
+      }
       
       const response = await api.get(url);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,8 +68,7 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         description: item.description || "",
         price: item.price || 0,
         priceLkr: item.price || 0,
-        imageUrl: (item.imageUrls && item.imageUrls.length > 0) ? item.imageUrls[0] : item.imageUrl,
-        imageUrls: item.imageUrls || (item.imageUrl ? [item.imageUrl] : []),
+        imageUrl: item.imageUrl,
         category: item.category || "Other",
         isAvailable: item.isAvailable !== false,
         tag: item.tag,
@@ -144,5 +145,5 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
 
   setLoading: (value) => set({ loading: value }),
   setError: (message) => set({ error: message }),
-  reset: () => set({ loading: false, error: null, categories: [], propertyId: null }),
+  reset: () => set({ loading: false, error: null, categories: [], propertyId: null, roomId: null }),
 }));

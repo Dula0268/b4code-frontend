@@ -62,11 +62,10 @@ export default function ReviewsQueue() {
   useEffect(() => {
     fetchReviews({
       flagReason: flagFilter !== "All" ? flagFilter : undefined,
-      rating: ratingFilter !== "Any" ? parseInt(ratingFilter) : undefined,
       page: currentPage - 1,
       size: 4,
     });
-  }, [fetchReviews, flagFilter, ratingFilter, currentPage]);
+  }, [fetchReviews, flagFilter, currentPage]);
 
   const goPage = (p: number) => setCurrentPage(Math.max(1, Math.min(reviewsTotalPages, p)));
 

@@ -17,6 +17,7 @@ type AuthUser = {
   role: Role;
   userId?: number;
   propertyId?: number;
+  roomId?: number;
   profile?: UserProfile;
 };
 
@@ -84,6 +85,7 @@ type AuthActions = {
   ) => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
   restoreSession: (user: AuthUser) => void;
+  assignStay: (propertyId: number, roomId: number) => void;
 };
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => {
@@ -110,6 +112,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         role,
         userId: data.userId,
         propertyId: data.propertyId,
+        roomId: data.roomId,
         profile: data.profile,
       };
 
@@ -156,6 +159,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         role,
         userId: data.userId,
         propertyId: data.propertyId,
+        roomId: data.roomId,
         profile: data.profile
       };
 
@@ -263,6 +267,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
       localStorage.removeItem("authEmail");
       localStorage.removeItem("authRole");
       localStorage.removeItem("authUserId");
+      localStorage.removeItem("auth_user");
     }
 
     set({ user: null, isAuthenticated: false, error: null });
@@ -328,6 +333,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
       throw new Error(message);
     }
   },
+
+  assignStay: (propertyId, roomId) =>
+    set((state) => {
+      if (!state.user) return state;
+
+      const updatedUser = { ...state.user, propertyId, roomId };
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+      }
+
+      console.log("📍 Stay Assigned to Session:", { propertyId, roomId });
+
+      return { user: updatedUser };
+    }),
 
   // ─── FETCH CURRENT USER ────────────────────────────
   fetchCurrentUser: async () => {
