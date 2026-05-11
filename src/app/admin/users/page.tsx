@@ -497,6 +497,7 @@ export default function UsersManagementPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, email or role..."
                 className="w-full py-[9px] pr-3 pl-9 rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] bg-white outline-none box-border"
               />
             </div>
