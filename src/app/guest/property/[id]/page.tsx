@@ -109,7 +109,7 @@ export async function fetchProperty(id: string) {
 }
 
 export async function generateMetadata({ params }: Props) {
-    const { id } = params
+    const { id } = await params
     const property = await fetchProperty(id)
     if (!property) return {}
     return {
@@ -119,7 +119,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function PropertyPage({ params }: Props) {
-    const { id } = params
+    const { id } = await params
     const property = await fetchProperty(id)
     if (!property) notFound()
 

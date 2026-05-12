@@ -98,7 +98,7 @@ function findRoom(property: PropertyDetail, roomId: string): Room | undefined {
 
 // ── Metadata ─────────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: Props) {
-    const { id, roomId } = params
+    const { id, roomId } = await params
     const property = await fetchProperty(id)
     if (!property) return {}
     const room = findRoom(property, roomId)
@@ -111,7 +111,7 @@ export async function generateMetadata({ params }: Props) {
 
 // ── Page ──────────────────────────────────────────────────────────────────
 export default async function RoomPage({ params }: Props) {
-    const { id, roomId } = params
+    const { id, roomId } = await params
     const property = await fetchProperty(id)
     if (!property) notFound()
     const room = findRoom(property, roomId)
