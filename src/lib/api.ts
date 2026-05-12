@@ -93,19 +93,19 @@ const normalizePropertyDetail = (property: PropertyData) => ({
     lng: property?.lng == null ? undefined : toNumber(property.lng),
 });
 
-// Store token in localStorage
+// Store token in sessionStorage
 export const getToken = (): string | null => {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem("auth_token");
+    return sessionStorage.getItem("auth_token");
 };
 
 export const setToken = (token: string): void => {
-    localStorage.setItem("auth_token", token);
+    sessionStorage.setItem("auth_token", token);
 };
 
 export const removeToken = (): void => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
+    sessionStorage.removeItem("auth_token");
+    sessionStorage.removeItem("auth_user");
 };
 
 export const staffApi = {
