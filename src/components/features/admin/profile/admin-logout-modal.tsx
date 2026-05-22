@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AdminLogoutModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {

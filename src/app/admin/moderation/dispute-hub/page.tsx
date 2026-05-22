@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import {
   ChevronLeft,
   ChevronRight,
@@ -342,7 +341,6 @@ export default function DisputeHubPage() {
   const goPage = (p: number) => setCurrentPage(Math.max(1, Math.min(disputesTotalPages, p)));
 
   const startIndex = (currentPage - 1) * 4 + 1;
-  const endIndex = Math.max(0, startIndex + disputes.length - 1);
 
   // ── Resolved View ──
   if (disputeResolved) {

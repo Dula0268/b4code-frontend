@@ -15,9 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const TYPE_TAB: Record<QRType, QRTab> = {
-  "Dining Table": "Table",
-  Outdoor: "Table",
-  Bar: "Table",
+  Table: "Table",
   Room: "Room",
 };
 
@@ -38,7 +36,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
 
   const isEdit = !!qrId;
 
-  const [type, setType] = useState<QRType>(existingQR?.type ?? "Dining Table");
+  const [type, setType] = useState<QRType>(existingQR?.type ?? "Table");
   const [name, setName] = useState(existingQR?.name ?? "");
   const [location, setLocation] = useState(existingQR?.location ?? "");
   const [description, setDescription] = useState(existingQR?.description ?? "");
@@ -50,7 +48,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
   const handleSave = async () => {
     if (!name.trim()) { setNameError(true); return; }
     if (!propertyId) return;
-    
+
     localStorage.setItem("selected_property_id", String(propertyId));
 
     try {
@@ -125,7 +123,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" className="bg-white border-[var(--gray-5)] z-[100]">
-                    {(["Dining Table", "Room", "Outdoor", "Bar"] as QRType[]).map((t) => (
+                    {(["Table", "Room"] as QRType[]).map((t) => (
                       <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
                     ))}
                   </SelectContent>
@@ -139,7 +137,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
                 <Input
                   value={name}
                   onChange={(e) => { setName(e.target.value); setNameError(false); }}
-                  placeholder="e.g. Table 5, Room 101, Poolside Area"
+                  placeholder="e.g. Table 5, Room 101"
                   className={`mt-1 text-xs rounded-[8px] ${nameError ? "border-[var(--state-error)] bg-[rgba(235,87,87,0.04)]" : "border-[var(--gray-5)]"}`}
                 />
                 {nameError && <p className="text-[10px] text-[var(--state-error)] mt-0.5">Name is required</p>}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Calendar, ChevronLeft, ChevronRight, Loader2, Check, X } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Loader2, Check, X } from "lucide-react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
 // ─── Status badge ───────────────────────────────────────────────────────────────

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Lock, UploadCloud, User as UserIcon, Camera } from "lucide-react";
+import { CheckCircle2, UploadCloud } from "lucide-react";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { imageApi } from "@/lib/api";
 
@@ -180,7 +181,13 @@ export default function AdminProfilePage() {
           <div className="relative">
             {formData.nationalIdUrl ? (
               <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-[#e5e7eb] group">
-                <img src={formData.nationalIdUrl} alt="National ID" className="w-full h-full object-cover" />
+                <Image
+                  src={formData.nationalIdUrl}
+                  alt="National ID"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 720px"
+                  className="object-cover"
+                />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <label className="cursor-pointer bg-white text-[#1c1917] px-4 py-2 rounded-lg font-bold text-sm hover:bg-neutral-100 transition-colors">
                     Change ID Photo

@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, Smartphone, Landmark, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 interface PaymentSelectionProps {
     onSelectMethod: (method: string) => void;

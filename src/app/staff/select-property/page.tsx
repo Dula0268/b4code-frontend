@@ -15,7 +15,7 @@ export default function SelectPropertyPage() {
     const router = useRouter();
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [error] = useState("");
 
     useEffect(() => {
         loadProperties();

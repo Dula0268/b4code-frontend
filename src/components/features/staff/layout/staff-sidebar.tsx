@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Logo from "@/components/shared/branding/logo";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -118,9 +119,15 @@ export default function StaffSidebar() {
             href="/staff/profile"
             className="flex items-center gap-3 p-2 rounded-[10px] hover:bg-[rgba(109,34,0,0.08)] transition-colors cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-sm uppercase overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-sm uppercase overflow-hidden relative">
               {user?.profile?.avatarUrl ? (
-                <img src={user.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                <Image
+                  src={user.profile.avatarUrl}
+                  alt="Avatar"
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
               ) : (
                 initials
               )}

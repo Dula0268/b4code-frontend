@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2, UserCircle2, HelpCircle, LifeBuoy } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, UserCircle2 } from "lucide-react";
 import Link from "next/link";
 import Logo from "@/components/shared/branding/logo";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { Suspense } from "react";
 
 function LogoutPageContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const logout = useAuthStore((state) => state.logout);
     const [countdown, setCountdown] = useState(2);
 

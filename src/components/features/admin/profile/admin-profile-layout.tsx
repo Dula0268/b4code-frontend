@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import AdminLogoutModal from "./admin-logout-modal";
 import { useAuthStore } from "@/store/auth/auth.store";
@@ -54,7 +55,13 @@ export default function AdminProfileLayout({ children }: AdminProfileLayoutProps
             <div className="relative group">
               <div className="w-24 h-24 rounded-full bg-[#953002]/10 flex items-center justify-center text-[#953002] text-2xl font-bold mb-3 shadow-md overflow-hidden uppercase border-[3px] border-white relative">
                 {user?.profile?.avatarUrl ? (
-                  <img src={user.profile.avatarUrl} alt="Admin" className="absolute inset-0 w-full h-full object-cover" />
+                  <Image
+                    src={user.profile.avatarUrl}
+                    alt="Admin"
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                  />
                 ) : (
                   <span>{initials}</span>
                 )}

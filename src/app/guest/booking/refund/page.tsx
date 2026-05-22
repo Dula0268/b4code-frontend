@@ -3,7 +3,7 @@
 import { useMemo, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { CheckCircle2, FileText, Download, MessageSquare, AlertCircle, ChevronRight, Hash } from "lucide-react"
+import { CheckCircle2, Download, MessageSquare, AlertCircle, Hash } from "lucide-react"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 

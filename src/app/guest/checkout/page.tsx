@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
+import Image from "next/image"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -81,7 +82,6 @@ function useCheckoutLogic() {
     const checkInDate = parseIsoDate(searchParams.get("checkIn"))
     const checkOutDate = parseIsoDate(searchParams.get("checkOut"))
     const guests = searchParams.get("guests") || "2"
-    const totalFromQuery = Number(searchParams.get("total") || "0")
 
     async function loadData() {
         let property = null as Awaited<ReturnType<typeof guestApi.getPropertyDetail>> | null
@@ -90,7 +90,7 @@ function useCheckoutLogic() {
         if (propertyId) {
             try {
                 property = await guestApi.getPropertyDetail(propertyId)
-            } catch (e) {
+            } catch {
                 const fallback = getPropertyById(propertyId)
                 if (fallback) {
                     property = {
@@ -173,14 +173,13 @@ function useCheckoutLogic() {
     loadData()
   }, [searchParams])
 
-  const { register, handleSubmit, watch, formState: { errors }, setValue, reset: resetForm } = useForm<CheckoutFormValues>({
+  const { register, handleSubmit, watch, formState: { errors }, reset: resetForm } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { paymentMethod: "online", promoCode: searchParams?.get("promoCode") || "", nationalId: "" }
   })
 
   const paymentMethod = watch("paymentMethod")
   const total = bookingDetails ? bookingDetails.price.total : 0
-  const discountAmount = bookingDetails ? bookingDetails.price.discount : 0
 
   const onSubmit = async (data: CheckoutFormValues) => {
     if (!bookingDetails) return;
@@ -273,7 +272,7 @@ function useCheckoutLogic() {
       } else {
           router.push(`/guest/booking/confirmation?${returnParams.toString()}`)
       }
-    } catch (e: unknown) {
+    } catch {
       setErrorMsg("Failed to process booking. Please try again.")
     } finally {
       setIsSubmitting(false);
@@ -282,13 +281,13 @@ function useCheckoutLogic() {
 
   return {
     isSubmitting, bookingDetails, errorMsg, isLoggedIn, user, logout,
-    register, handleSubmit, errors, resetForm, paymentMethod, discountAmount, total, onSubmit, searchParams
+    register, handleSubmit, errors, resetForm, paymentMethod, total, onSubmit, searchParams
   };
 }
 
 function CheckoutContent() {
   const logic = useCheckoutLogic();
-  const { isSubmitting, bookingDetails, errorMsg, isLoggedIn, user, logout, register, handleSubmit, errors, resetForm, paymentMethod, discountAmount, total, onSubmit, searchParams } = logic;
+  const { isSubmitting, bookingDetails, errorMsg, isLoggedIn, user, logout, register, handleSubmit, errors, resetForm, paymentMethod, total, onSubmit, searchParams } = logic;
   
   if (!bookingDetails) {
     return <div className="min-h-screen flex items-center justify-center">Loading booking details...</div>
@@ -407,7 +406,13 @@ function CheckoutContent() {
             <div className="ps-card p-6">
               <div className="flex gap-4 mb-6 pb-6 border-b border-[var(--border)]">
                 <div className="w-[100px] h-[100px] rounded-[var(--radius)] overflow-hidden bg-[var(--gray-5)] flex-shrink-0 relative">
-                  <img src={bookingDetails.property.imageSrc} alt={bookingDetails.property.title} className="w-full h-full object-cover" />
+                  <Image
+                    src={bookingDetails.property.imageSrc}
+                    alt={bookingDetails.property.title}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 420px"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="flex flex-col justify-center">
                   <p className="text-[11px] font-semibold text-[var(--brand-primary)] uppercase tracking-wider mb-1">Entire Property</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { User, Lock, LogOut, Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,8 +52,14 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
           {/* User Info */}
           <div className="flex flex-col items-center justify-center mb-8">
             <div className="relative group">
-              <div className="w-20 h-20 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center text-[var(--brand-primary)] text-2xl font-bold mb-3 border-[3px] border-white shadow-sm overflow-hidden">
-                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+              <div className="w-20 h-20 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center text-[var(--brand-primary)] text-2xl font-bold mb-3 border-[3px] border-white shadow-sm overflow-hidden relative">
+                <Image
+                  src={avatarUrl}
+                  alt="Profile"
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                />
                 
                 {isUploading && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">

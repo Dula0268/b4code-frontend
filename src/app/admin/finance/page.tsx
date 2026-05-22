@@ -19,7 +19,7 @@ export default function FinancePage() {
     "overview" | "transaction" | "refunds"
   >("overview");
 
-  const { summary, fetchSummary, fetchRevenueTrend } = useAdminFinanceStore();
+  const { fetchSummary, fetchRevenueTrend } = useAdminFinanceStore();
 
   useEffect(() => {
     fetchSummary();

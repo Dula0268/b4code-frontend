@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, Loader2 } from "lucide-react";
 
 export default function WaitingPage() {
     const router = useRouter();
 
-    const checkStatus = async () => {
+    const checkStatus = useCallback(async () => {
         try {
             const user = JSON.parse(localStorage.getItem("auth_user") || "{}");
             const propertyId = localStorage.getItem("selected_property_id");
@@ -29,7 +29,7 @@ export default function WaitingPage() {
         } catch (err) {
             console.error("Status check failed", err);
         }
-    };
+    }, [router]);
 
     useEffect(() => {
         // check immediately
@@ -39,7 +39,7 @@ export default function WaitingPage() {
         const interval = setInterval(checkStatus, 5000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [checkStatus]);
 
     return (
         <div className="min-h-screen bg-[#F6F8F7] flex items-center justify-center p-4">

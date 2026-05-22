@@ -27,22 +27,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-// ─── Gross Booking Value Chart Data ───────────────────────────────────────────
-const bookingData = [
-  { month: "Jan", value: 820000 },
-  { month: "Feb", value: 940000 },
-  { month: "Mar", value: 680000 },
-  { month: "Apr", value: 1050000 },
-  { month: "May", value: 780000 },
-  { month: "Jun", value: 1100000 },
-  { month: "Jul", value: 1284500 },
-  { month: "Aug", value: 960000 },
-  { month: "Sep", value: 840000 },
-  { month: "Oct", value: 1020000 },
-  { month: "Nov", value: 1180000 },
-  { month: "Dec", value: 1090000 },
-];
-
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
 interface TooltipPayload {
   payload: { month: string };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Plus, Search, Pencil, Trash2, LayoutGrid, List, UtensilsCrossed, Flame, CheckCircle, X, Loader2 } from "lucide-react";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 
 export default function StaffMenuEdit({ menuId }: { menuId: string }) {
   const router = useRouter();
@@ -30,6 +32,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [togglingItemId, setTogglingItemId] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string, name: string } | null>(null);
 
   const categories = useMemo(() => {
     if (!menu) return [];
@@ -46,26 +49,31 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
     });
   }, [menu, search, category]);
 
-  const handleDeleteItem = async (itemId: string, itemName: string) => {
-    if (typeof window !== "undefined" && window.confirm(`Remove "${itemName}" from this menu? This action cannot be undone.`)) {
-      setDeletingItemId(itemId);
-      try {
-        await deleteItem(menuId, itemId);
-        setSuccess(`Item "${itemName}" removed.`);
-      } catch (_err) {
-        // Error handled by store
-      } finally {
-        setDeletingItemId(null);
-      }
+  const handleDeleteItem = (itemId: string, itemName: string) => {
+    setItemToDelete({ id: itemId, name: itemName });
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    const { id, name } = itemToDelete;
+    setDeletingItemId(id);
+    try {
+      await deleteItem(menuId, id);
+      setSuccess(`Item "${name}" removed.`);
+    } catch {
+      // Error handled by store
+    } finally {
+      setDeletingItemId(null);
+      setItemToDelete(null);
     }
   };
 
-  const handleToggleStatus = async (itemId: string, _itemName: string) => {
+  const handleToggleStatus = async (itemId: string) => {
     setTogglingItemId(itemId);
     try {
       await toggleItemStatus(menuId, itemId);
       // No success message for simple toggle to avoid clutter
-    } catch (_err) {
+    } catch {
       // Error handled by store
     } finally {
       setTogglingItemId(null);
@@ -255,7 +263,13 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                 {/* Image display */}
                 <div className="h-24 bg-gradient-to-br from-[var(--gray-5)] to-[rgba(149,48,2,0.05)] relative flex items-center justify-center overflow-hidden">
                   {item.imageUrls && item.imageUrls.length > 0 ? (
-                    <img src={item.imageUrls[0]} alt={item.name} className="w-full h-full object-cover" />
+                    <Image
+                      src={item.imageUrls[0]}
+                      alt={item.name}
+                      fill
+                      sizes="(max-width: 1024px) 33vw, 200px"
+                      className="object-cover"
+                    />
                   ) : (
                     <UtensilsCrossed size={20} className="text-[var(--gray-4)]" />
                   )}
@@ -278,7 +292,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={item.status === "active"}
-                        onCheckedChange={() => handleToggleStatus(item.id, item.name)}
+                        onCheckedChange={() => handleToggleStatus(item.id)}
                         disabled={togglingItemId === item.id}
                         className="data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)]"
                       />
@@ -305,9 +319,15 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
           <div className="flex flex-col gap-2">
             {filteredItems.map((item) => (
               <div key={item.id} className="bg-white border border border-[var(--gray-5)] rounded-[10px] px-3 py-2.5 flex items-center gap-3 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--gray-5)] to-[rgba(149,48,2,0.05)] flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="relative w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--gray-5)] to-[rgba(149,48,2,0.05)] flex items-center justify-center shrink-0 overflow-hidden">
                   {item.imageUrls && item.imageUrls.length > 0 ? (
-                    <img src={item.imageUrls[0]} alt={item.name} className="w-full h-full object-cover" />
+                    <Image
+                      src={item.imageUrls[0]}
+                      alt={item.name}
+                      fill
+                      sizes="40px"
+                      className="object-cover"
+                    />
                   ) : (
                     <UtensilsCrossed size={14} className="text-[var(--gray-4)]" />
                   )}
@@ -322,7 +342,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                 <div className="flex items-center gap-2 shrink-0">
                   <Switch
                     checked={item.status === "active"}
-                    onCheckedChange={() => handleToggleStatus(item.id, item.name)}
+                    onCheckedChange={() => handleToggleStatus(item.id)}
                     disabled={togglingItemId === item.id}
                     className="data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)]"
                   />
@@ -341,6 +361,14 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
           </div>
         )}
       </div>
+      <DeleteConfirmationDialog
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmDeleteItem}
+        loading={!!deletingItemId}
+        title="Remove Item?"
+        description={`Are you sure you want to remove "${itemToDelete?.name}" from this menu? This action cannot be undone.`}
+      />
     </div>
   );
 }

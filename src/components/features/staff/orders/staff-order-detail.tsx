@@ -16,8 +16,6 @@ import {
   CircleCheckBig,
   ArrowRight,
   MessageCircle,
-  Send,
-  AlertCircle,
 } from "lucide-react";
 import {
   useStaffOrdersStore,

@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import type { ReadonlyURLSearchParams } from "next/navigation"
-import { ChevronRight, Home, Users, BedDouble, SquareDot, CheckCircle2, Star, ArrowRight, Grid2X2, MapPin } from "lucide-react"
+import { ChevronRight, Home, Users, SquareDot, CheckCircle2, Star, ArrowRight, Grid2X2, MapPin } from "lucide-react"
 import type { PropertyDetail, Room } from "@/lib/mock-properties"
 import { Calendar } from "@/components/ui/calendar"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
@@ -17,10 +17,6 @@ import { guestApi } from "@/lib/api"
 function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
 }
-
-const ROOM_DETAIL_CONFIG = {
-    baseGuests: 2,
-} as const;
 
 function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | null) {
     const today = new Date();

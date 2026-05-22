@@ -7,7 +7,6 @@ import UrgentCard from "./kpi-cards/urgent-card";
 import RemovedTodayCard from "./kpi-cards/removed-today-card";
 import AvgTimeCard from "./kpi-cards/avg-time-card";
 import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
-import type { FlaggedReview } from "@/api/admin/moderation.api";
 
 // ─── Flag Badge ───────────────────────────────────────────────────────────────
 function FlagBadge({ status }: { status: string }) {
@@ -57,7 +56,6 @@ export default function ReviewsQueue() {
   
   const { reviews, reviewsTotalPages, reviewsLoading, fetchReviews, setSelectedReview } = useAdminModerationStore();
   const startIndex = (currentPage - 1) * 4 + 1;
-  const endIndex = Math.max(0, startIndex + reviews.length - 1);
 
   useEffect(() => {
     fetchReviews({

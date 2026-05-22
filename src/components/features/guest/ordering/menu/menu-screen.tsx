@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Search, Settings } from "lucide-react";
 import { useGuestMenuStore } from "@/store/guest/ordering/menu.store";
 import { useCartStore } from "@/store/guest/order/cart-store";
@@ -115,10 +116,12 @@ export default function MenuScreen() {
               >
                 <div className="aspect-square bg-gray-200 relative overflow-hidden">
                   {item.imageUrl && (
-                    <img
+                    <Image
                       src={item.imageUrl}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 1024px) 50vw, 33vw"
+                      className="object-cover"
                     />
                   )}
                   {item.tag && (

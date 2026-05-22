@@ -16,10 +16,10 @@ import {
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 
 export default function StaffMenuList() {
   const menus = useStaffMenuStore((s) => s.menus);
@@ -34,6 +34,7 @@ export default function StaffMenuList() {
 
   const [page, setPage] = useState(0);
   const [deletingMenuId, setDeletingMenuId] = useState<string | null>(null);
+  const [menuToDelete, setMenuToDelete] = useState<{ id: string, name: string } | null>(null);
   const perPage = 4;
   const total = menus.length;
   const paged = menus.slice(page * perPage, (page + 1) * perPage);
@@ -45,14 +46,9 @@ export default function StaffMenuList() {
 
   // Fetch menus on mount
   useEffect(() => {
-    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
-    console.log(`🍽️ StaffMenuList mounted, fetching menus for property: ${propertyId}...`);
-    if (propertyId) {
-      fetchMenus(Number(propertyId));
-    } else {
-      console.warn("⚠️ No propertyId found for staff menu list");
-      fetchMenus(1);
-    }
+    const pId = user?.propertyId || 1;
+    console.log(`🍽️ StaffMenuList: Fetching menus for property ${pId}`);
+    fetchMenus(Number(pId));
   }, [user, fetchMenus]);
 
   // Auto-dismiss success banner
@@ -62,12 +58,22 @@ export default function StaffMenuList() {
     return () => clearTimeout(t);
   }, [successMsg, setSuccess]);
 
-  const handleDeleteMenu = async (menuId: string, menuName: string) => {
-    if (typeof window !== "undefined" && window.confirm(`Are you sure you want to delete the menu "${menuName}"? This action cannot be undone.`)) {
-      await deleteMenu(menuId);
+  const handleDeleteMenu = (menuId: string, menuName: string) => {
+    setMenuToDelete({ id: menuId, name: menuName });
+  };
+
+  const confirmDelete = async () => {
+    if (!menuToDelete) return;
+    const { id, name } = menuToDelete;
+    try {
+      setDeletingMenuId(id);
+      await deleteMenu(id);
       if (!useStaffMenuStore.getState().errorMsg) {
-        setSuccess(`Menu "${menuName}" deleted successfully.`);
+        setSuccess(`Menu "${name}" deleted successfully.`);
       }
+    } finally {
+      setDeletingMenuId(null);
+      setMenuToDelete(null);
     }
   };
 
@@ -245,6 +251,14 @@ export default function StaffMenuList() {
       </div>
       </>
       )}
+      <DeleteConfirmationDialog
+        isOpen={!!menuToDelete}
+        onClose={() => setMenuToDelete(null)}
+        onConfirm={confirmDelete}
+        loading={!!deletingMenuId}
+        title="Delete Menu?"
+        description={`This action cannot be undone. The menu "${menuToDelete?.name}" and its associated settings will be removed.`}
+      />
     </div>
   );
 }

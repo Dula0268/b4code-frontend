@@ -355,8 +355,6 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
                   </SelectContent>
                 </Select>
               </div>
-                </Select>
-              </div>
             </div>
             <div>
               <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Description <span className="text-[var(--gray-3)] normal-case font-normal">(Optional)</span></Label>

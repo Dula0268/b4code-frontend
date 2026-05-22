@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Building, X, ShieldCheck, Lock, ArrowLeft } from "lucide-react";
+import { Building, X, ShieldCheck, Lock } from "lucide-react";
 import PaymentSelection from "./steps/payment-selection";
 import PaymentCardForm from "./steps/payment-card-form";
 import PaymentStatus from "./steps/payment-status";

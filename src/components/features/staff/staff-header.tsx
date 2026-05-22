@@ -53,10 +53,12 @@ export default function StaffHeader({
               className="object-cover"
             />
           ) : user?.profile?.avatarUrl ? (
-            <img 
-              src={user.profile.avatarUrl} 
-              alt={staffName} 
-              className="w-full h-full object-cover" 
+            <Image
+              src={user.profile.avatarUrl}
+              alt={staffName}
+              fill
+              sizes="40px"
+              className="object-cover"
             />
           ) : user?.profile ? (
             <div className="w-full h-full bg-[#953002] flex items-center justify-center text-white text-sm font-bold">

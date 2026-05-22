@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, QrCode, Printer } from "lucide-react";
+import { ArrowLeft, QrCode, Printer } from "lucide-react";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -114,10 +115,15 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
                     {showRoom && (
                       <p className="text-xs font-bold text-[var(--black-2)]">{qr.name}</p>
                     )}
-                    <div className="w-[140px] h-[140px] bg-white border border-[var(--gray-5)] rounded-[8px] flex items-center justify-center overflow-hidden p-2">
+                    <div className="relative w-[140px] h-[140px] bg-white border border-[var(--gray-5)] rounded-[8px] flex items-center justify-center overflow-hidden p-2">
                       {qr.qrImageUrl ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={qr.qrImageUrl} alt={`QR Code for ${qr.name}`} className="w-full h-full object-contain" />
+                        <Image
+                          src={qr.qrImageUrl}
+                          alt={`QR Code for ${qr.name}`}
+                          fill
+                          sizes="140px"
+                          className="object-contain"
+                        />
                       ) : (
                         <QrCode size={64} className="text-[var(--gray-2)]" />
                       )}

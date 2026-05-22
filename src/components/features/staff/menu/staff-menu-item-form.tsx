@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Plus, Trash2, Clock, GripVertical, X, Upload } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
@@ -439,7 +440,13 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
             <div className="grid grid-cols-2 gap-2 mb-3">
               {itemImages.map((img, idx) => (
                 <div key={idx} className="relative aspect-square rounded-[8px] overflow-hidden border border-[var(--gray-5)] group">
-                  <img src={img.preview} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                  <Image
+                    src={img.preview}
+                    alt={`Preview ${idx}`}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 120px"
+                    className="object-cover"
+                  />
                   <button
                     onClick={() => removeSelectedImage(idx)}
                     className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-0 p-0"

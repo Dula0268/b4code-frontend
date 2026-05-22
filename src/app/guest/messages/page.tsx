@@ -6,8 +6,8 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import {
     Send, Paperclip, Clock, CalendarCheck, ParkingCircle, Building2,
-    CalendarDays, BadgeCheck, Lightbulb, CheckCircle2, ChevronLeft,
-    Smile, Phone, Video, Star, MapPin, Info, Home, Utensils, Sparkles,
+    CalendarDays, CheckCircle2, ChevronLeft,
+    Smile, Phone, Video, Star, Info, Home, Utensils, Sparkles,
     AlertCircle, HelpCircle, DoorOpen, User
 } from "lucide-react"
 
@@ -72,7 +72,7 @@ function useMessagingLogic(isStaff: boolean) {
                     : []
 
                 setMessages(apiMsgs.length > 0 ? apiMsgs : [])
-            } catch(e) {
+            } catch {
                 setMessages([])
             }
         }
@@ -102,7 +102,7 @@ function useMessagingLogic(isStaff: boolean) {
                 senderName: guestName,
                 content: text.trim(),
             })
-        } catch (e) {}
+        } catch {}
 
         // Don't generate automatic replies - wait for actual backend response
         setTimeout(() => {

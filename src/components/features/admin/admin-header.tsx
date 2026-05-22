@@ -4,7 +4,6 @@ import { Search } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth/auth.store";
-import UserIcon from "@/components/features/admin/user-icon";
 import Link from "next/link";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -79,10 +78,12 @@ export default function AdminHeader({
               className="object-cover"
             />
           ) : user?.profile?.avatarUrl ? (
-            <img 
-              src={user.profile.avatarUrl} 
-              alt={adminName} 
-              className="absolute inset-0 w-full h-full object-cover" 
+            <Image
+              src={user.profile.avatarUrl}
+              alt={adminName}
+              fill
+              sizes="42px"
+              className="object-cover"
             />
           ) : (
             <div className="absolute inset-0 w-full h-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-extrabold uppercase">

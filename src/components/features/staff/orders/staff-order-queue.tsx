@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const STATUS_TABS: { label: string; value: OrderStatus }[] = [
   { label: "Placed", value: "placed" },
@@ -282,14 +281,9 @@ export default function StaffOrderQueue() {
 
   // Fetch orders when component mounts
   useEffect(() => {
-    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
-    console.log(`📦 StaffOrderQueue mounted, fetching orders for property: ${propertyId}...`);
-    if (propertyId) {
-      fetchOrders(Number(propertyId));
-    } else {
-      console.warn("⚠️ No propertyId found for staff order queue");
-      fetchOrders(1);
-    }
+    const pId = user?.propertyId || 1;
+    console.log(`📦 StaffOrderQueue: Fetching orders for property ${pId}`);
+    fetchOrders(Number(pId));
   }, [user, fetchOrders]);
 
   const filteredOrders = orders.filter(

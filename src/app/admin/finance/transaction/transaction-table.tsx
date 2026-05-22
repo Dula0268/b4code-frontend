@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import {
   Search,
-  Calendar,
-  Filter,
   ChevronLeft,
   ChevronRight,
   Loader2

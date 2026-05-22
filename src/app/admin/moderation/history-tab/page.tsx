@@ -66,7 +66,6 @@ export default function HistoryTabPage() {
   const goPage = (p: number) => setCurrentPage(Math.max(1, Math.min(historyTotalPages, p)));
 
   const startIndex = (currentPage - 1) * 5 + 1;
-  const endIndex = Math.max(0, startIndex + history.length - 1);
 
   return (
     <div className="flex flex-col gap-5">

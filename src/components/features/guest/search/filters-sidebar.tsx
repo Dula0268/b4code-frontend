@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ChevronDown, ChevronUp, Map, Home, Building2, BedDouble, Hotel, Palmtree, TreePine } from "lucide-react"
-import type { FilterOptionsResponse, PropertyTypeOption, RatingOption, SortOption } from "@/api/guest/search.api"
+import type { FilterOptionsResponse, PropertyTypeOption, RatingOption } from "@/api/guest/search.api"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface FilterState {
@@ -32,10 +32,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 function resolveIcon(name: string): React.ElementType {
     return ICON_MAP[name] || Home
-}
-
-function formatCurrency(v: number, currency?: string) {
-    return `${currency || "LKR"} ${v.toLocaleString("en-US")}`
 }
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────

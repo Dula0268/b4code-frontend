@@ -4,7 +4,7 @@ import { BASE_URL } from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-export type QRType = "Dining Table" | "Room" | "Outdoor" | "Bar";
+export type QRType = "Table" | "Room";
 export type QRStatus = "active" | "inactive";
 export type QRTab = "Table" | "Room";
 
@@ -107,7 +107,7 @@ function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
     id: (data.id || "").toString(),
     name: data.name || "",
     location: data.location || "",
-    type: (data.type || "Dining Table") as QRType,
+    type: (data.type === "ROOM" ? "Room" : "Table") as QRType,
     tab,
     status: (data.status?.toLowerCase() === "active" ? "active" : "inactive") as QRStatus,
     description: data.description || "",
@@ -167,10 +167,8 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
     set({ loading: true, error: null });
     try {
       const typeMap: Record<QRType, string> = {
-        "Dining Table": "DINING_TABLE",
+        Table: "TABLE",
         Room: "ROOM",
-        Outdoor: "OUTDOOR",
-        Bar: "BAR",
       };
 
       const payload = {
@@ -206,10 +204,8 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
     set({ loading: true, error: null });
     try {
       const typeMap: Record<QRType, string> = {
-        "Dining Table": "DINING_TABLE",
+        Table: "TABLE",
         Room: "ROOM",
-        Outdoor: "OUTDOOR",
-        Bar: "BAR",
       };
 
       interface QRUpdatePayload {

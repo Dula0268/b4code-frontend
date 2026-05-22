@@ -5,9 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Search,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   Image as ImageIcon,
 } from "lucide-react";
@@ -43,7 +40,6 @@ function getColorForName(name: string) {
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
   const isUnderReview = status === "Under Review" || status === "UNDER_REVIEW";
-  const isPending = status === "Pending" || status === "PENDING";
   const isApproved = status === "Approved" || status === "APPROVED";
   const isRejected = status === "Rejected" || status === "REJECTED";
 

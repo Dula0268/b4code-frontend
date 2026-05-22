@@ -61,7 +61,7 @@ function useOrderDetailsLogic() {
         setLoading(true)
         await new Promise(resolve => setTimeout(resolve, APP_CONFIG.apiDelayMs))
         if (active) setOrder(MOCK_ORDER)
-      } catch (err) {
+      } catch {
         if (active) setErrorMsg("Failed to load order. Please try again later.")
       } finally {
         if (active) setLoading(false)
@@ -77,7 +77,7 @@ function useOrderDetailsLogic() {
     try {
       await new Promise(resolve => setTimeout(resolve, APP_CONFIG.apiDelayMs))
       setOrder({ ...MOCK_ORDER })
-    } catch (err) {
+    } catch {
       setErrorMsg("Refresh failed. Retrying...")
     } finally {
       setRefreshing(false)
@@ -89,7 +89,7 @@ function useOrderDetailsLogic() {
     try {
       await new Promise(resolve => setTimeout(resolve, 500))
       alert("Front desk has been alerted regarding this order.")
-    } catch (err) {
+    } catch {
       setErrorMsg("Failed to report issue. Please call front desk.")
     }
   }

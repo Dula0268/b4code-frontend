@@ -12,21 +12,6 @@ import {
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 import type { PayoutDto } from "@/api/admin/finance.api";
 
-// ─── Badges ─────────────────────────────────────────────────────────────────────
-function PaymentModelBadge({ model }: { model: string }) {
-  return (
-    <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-        model === "Commission"
-          ? "bg-[#EFF6FF] text-[#2563EB]"
-          : "bg-[#FFF7ED] text-[#EA580C]"
-      }`}
-    >
-      {model}
-    </span>
-  );
-}
-
 function PayoutStatusBadge({ status }: { status: string }) {
   const map: Record<
     string,
