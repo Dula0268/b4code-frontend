@@ -9,13 +9,13 @@ import {
   CheckCircle2,
   ArrowLeft,
 } from "lucide-react";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import UserProfileHeader from "@/components/features/admin/users/user-profile-header";
-import UserAccountInformation from "@/components/features/admin/users/user-account-information";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import UserProfileHeader from "@/components/admin/users/user-profile-header";
+import UserAccountInformation from "@/components/admin/users/user-account-information";
 import { UsersApi } from "@/api/admin/users.api";
 import UserActivityLog, {
   type ActivityLogEntry,
-} from "@/components/features/admin/users/user-activity-log";
+} from "@/components/admin/users/user-activity-log";
 
 // ─── User Type ───────────────────────────────
 type User = {

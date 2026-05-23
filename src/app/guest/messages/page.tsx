@@ -40,7 +40,7 @@ const QUICK_REPLY_BUTTONS = {
 
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
-import { guestApi } from "@/lib/api"
+import { guestApi } from "@/api/guest/guest.api";
 import { useGuestGuard } from "@/hooks/use-guest-guard"
 
 function useMessagingLogic(isStaff: boolean) {

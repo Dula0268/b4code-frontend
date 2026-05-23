@@ -2,8 +2,8 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import RoomPageClient from "@/components/features/guest/property/room/room-detail-client"
-import { guestApi } from "@/lib/api"
+import RoomPageClient from "@/components/guest/property/room/room-detail-client"
+import { guestApi } from "@/api/guest/guest.api";
 import { getPropertyById, type PropertyDetail, type Room } from "@/lib/mock-properties"
 
 interface Props {

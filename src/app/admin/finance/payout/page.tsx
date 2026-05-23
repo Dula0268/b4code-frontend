@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import PayoutKpiCards from "@/components/features/admin/finance/payout-kpi-cards";
-import PayoutTable from "@/components/features/admin/finance/payout/payout-table";
-import PayoutDetailPanel from "@/components/features/admin/finance/payout/payout-detail-panel";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import PayoutKpiCards from "@/components/admin/finance/payout-kpi-cards";
+import PayoutTable from "@/components/admin/finance/payout/payout-table";
+import PayoutDetailPanel from "@/components/admin/finance/payout/payout-detail-panel";
 import type { PayoutDto } from "@/api/admin/finance.api";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 import { useEffect } from "react";

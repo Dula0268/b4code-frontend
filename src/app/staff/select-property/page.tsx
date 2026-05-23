@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, ChevronRight, MapPin } from "lucide-react";
-import { staffApi } from "@/lib/api";
+import { staffApi } from "@/api/staff/staff.api";
 
 interface Property {
     id: number;

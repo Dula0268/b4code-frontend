@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAnalyticsStore } from "@/store/admin/analytics/admin-analytics.store";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
 import {
   AreaChart,
   Area,

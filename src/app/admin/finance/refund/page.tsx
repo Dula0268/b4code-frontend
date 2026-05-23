@@ -1,8 +1,8 @@
 "use client";
 
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import FinanceHeader from "@/components/features/admin/finance/finance-header";
-import RefundTable from "@/components/features/admin/finance/refund/refund-table";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import FinanceHeader from "@/components/admin/finance/finance-header";
+import RefundTable from "@/components/admin/finance/refund/refund-table";
 
 export default function RefundPage() {
   return (

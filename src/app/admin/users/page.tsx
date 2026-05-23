@@ -16,7 +16,7 @@ import {
   Ban,
   ShieldCheck,
 } from "lucide-react";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
 import {
   useAdminUsersStore,
   type User,

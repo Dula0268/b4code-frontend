@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import PaymentFlow from "@/components/features/payment/payment-flow";
+import PaymentFlow from "@/components/payment/payment-flow";
 
 export const metadata: Metadata = {
     title: "Secure Payment — Prime Stay",

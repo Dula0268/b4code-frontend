@@ -1,6 +1,6 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import LandingContent from "@/components/features/landing/landing-content"
+import LandingContent from "@/components/landing/landing-content"
 
 export const metadata = {
   title: "Prime Stay — Find, Book, and Stay with Confidence",

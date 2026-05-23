@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Lock, UploadCloud, User as UserIcon, Camera } from "lucide-react";
 import { useAuthStore } from "@/store/auth/auth.store";
-import { imageApi } from "@/lib/api";
+import { imageApi } from "@/api/image/image.api";
 
 export default function AdminProfilePage() {
   const { user, updateProfile } = useAuthStore();

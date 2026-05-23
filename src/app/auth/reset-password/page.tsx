@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
-import { authApi } from "@/lib/api";
+import { authApi } from "@/api/auth/auth.api";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

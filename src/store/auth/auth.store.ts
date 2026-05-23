@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { authApi, setToken, removeToken } from "@/lib/api";
+import { authApi } from "@/api/auth/auth.api";
+import { setToken, removeToken } from "@/lib/token";
 import { userApi } from "@/api/user/user.api";
 
 type Role = "guest" | "owner" | "admin" | "staff";

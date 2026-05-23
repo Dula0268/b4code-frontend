@@ -7,9 +7,9 @@ import { ChevronLeft, ChevronRight, Loader2, SearchX, WifiOff } from "lucide-rea
 
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import FiltersSidebar, { type FilterState } from "@/components/features/guest/search/filters-sidebar"
-import PropertyCard from "@/components/features/guest/search/property-card"
-import ResultsHeader from "@/components/features/guest/search/results-header"
+import FiltersSidebar, { type FilterState } from "@/components/guest/search/filters-sidebar"
+import PropertyCard from "@/components/guest/search/property-card"
+import ResultsHeader from "@/components/guest/search/results-header"
 import {
     searchProperties,
     getFilterOptions,
@@ -18,7 +18,7 @@ import {
     type FilterOptionsResponse,
 } from "@/api/guest/search.api"
 
-const MapView = dynamic(() => import("@/components/features/guest/search/map-view"), { ssr: false })
+const MapView = dynamic(() => import("@/components/guest/search/map-view"), { ssr: false })
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatLKR(amount: number) {

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { authApi } from "@/lib/api";
+import { authApi } from "@/api/auth/auth.api";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

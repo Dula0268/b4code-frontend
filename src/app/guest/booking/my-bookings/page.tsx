@@ -7,9 +7,9 @@ import {
   Calendar, ChevronRight, Lock
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth/auth.store"
-import { guestApi } from "@/lib/api"
+import { guestApi } from "@/api/guest/guest.api";
 import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/booking.store"
-import BookingCard, { type BookingCardData } from "@/components/features/guest/booking/booking-card"
+import BookingCard, { type BookingCardData } from "@/components/guest/booking/booking-card"
 import { useGuestGuard } from "@/hooks/use-guest-guard"
 import AccessDenied from "@/components/shared/auth/access-denied"
 

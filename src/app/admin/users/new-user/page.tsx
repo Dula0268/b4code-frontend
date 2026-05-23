@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import ActiveUser from "@/components/features/admin/users/new-user/active-user";
-import UserForm from "@/components/features/admin/users/new-user/user-form";
+import ActiveUser from "@/components/admin/users/new-user/active-user";
+import UserForm from "@/components/admin/users/new-user/user-form";
 
 const mockUser = {
   name: "Alex Doe",

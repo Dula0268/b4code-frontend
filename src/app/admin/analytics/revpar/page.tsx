@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
 import Image from "next/image";
 import {
   ChevronLeft,

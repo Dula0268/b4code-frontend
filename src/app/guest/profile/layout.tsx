@@ -1,6 +1,6 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar";
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer";
-import GuestProfileLayout from "@/components/features/guest/profile/guest-profile-layout";
+import GuestProfileLayout from "@/components/guest/profile/guest-profile-layout";
 
 export default function GuestProfileRouteLayout({
   children,

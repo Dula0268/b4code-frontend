@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Check, X, User, Building, Clock, ArrowLeft } from "lucide-react";
-import { ownerApi } from "@/lib/api";
+import { ownerApi } from "@/api/owner/owner.api";
 import { Button } from "@/components/ui/button";
 
 interface StaffMember {

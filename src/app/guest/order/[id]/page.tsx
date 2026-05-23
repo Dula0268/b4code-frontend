@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ItemDetailsClient from "@/components/features/guest/ordering/item-details/item-details-client";
+import ItemDetailsClient from "@/components/guest/ordering/item-details/item-details-client";
 import { useGuestMenuStore } from "@/store/guest/ordering/menu.store";
 import { useGuestGuard } from "@/hooks/use-guest-guard";
 

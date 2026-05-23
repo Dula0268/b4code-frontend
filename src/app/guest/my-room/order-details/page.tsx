@@ -1,6 +1,6 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import OrderDetailsPageClient from "@/components/features/guest/my-room/order-details/order-details-client"
+import OrderDetailsPageClient from "@/components/guest/my-room/order-details/order-details-client"
 
 export const metadata = {
     title: "Order Details — Prime Stay Sri Lanka",

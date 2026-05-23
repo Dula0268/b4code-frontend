@@ -1,8 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import StaffPageLayout from "@/components/features/staff/layout/staff-page-layout";
-import QrList from "@/components/features/staff/qr/qr-list";
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
+import QrList from "@/components/staff/qr/qr-list";
 
 import React, { Suspense, useState, useEffect } from "react";
 import { useAuthStore } from "@/store/auth/auth.store";

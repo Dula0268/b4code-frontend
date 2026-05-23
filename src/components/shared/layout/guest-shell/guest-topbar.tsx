@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Menu, X, CalendarCheck, User, LogOut, Settings } from "lucide-react"
 import Logo from "@/components/shared/branding/logo"
-import SearchBar from "@/components/features/guest/search/search-bar"
+import SearchBar from "@/components/guest/search/search-bar"
 import { useAuthStore } from "@/store/auth/auth.store"
 
 const NAV_LINKS = [

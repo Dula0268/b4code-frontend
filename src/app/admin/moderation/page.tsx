@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import ReviewsQueue from "@/components/features/admin/moderation/reports-table";
-import DisputesHub from "@/components/features/admin/moderation/disputes-hub";
-import HistoryTab from "@/components/features/admin/moderation/history-tab";
-import FlaggedReviewDetail from "@/components/features/admin/moderation/action-panel";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import ReviewsQueue from "@/components/admin/moderation/reports-table";
+import DisputesHub from "@/components/admin/moderation/disputes-hub";
+import HistoryTab from "@/components/admin/moderation/history-tab";
+import FlaggedReviewDetail from "@/components/admin/moderation/action-panel";
 import {
   useAdminModerationStore,
   type ModerationTab,

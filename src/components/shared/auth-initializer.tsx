@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth/auth.store";
-import { getToken } from "@/lib/api";
+import { getToken } from "@/lib/token";
 
 export default function AuthInitializer() {
   const { restoreSession } = useAuthStore();

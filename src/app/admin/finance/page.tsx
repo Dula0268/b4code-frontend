@@ -3,15 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import RevenueCard from "@/components/features/admin/finance/kpi-cards/revenue-card";
-import PlatformCommissionCard from "@/components/features/admin/finance/kpi-cards/platform-commission-card";
-import TotalPayoutCard from "@/components/features/admin/finance/kpi-cards/total-payout";
-import RefundsCard from "@/components/features/admin/finance/kpi-cards/refunds";
-import RevenueTrendChart from "@/components/features/admin/finance/revenue-trend-chart";
-import RecentTransactions from "@/components/features/admin/finance/recent-transaction";
-import TransactionTable from "@/components/features/admin/finance/transaction";
-import RefundTable from "@/components/features/admin/finance/refund";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import RevenueCard from "@/components/admin/finance/kpi-cards/revenue-card";
+import PlatformCommissionCard from "@/components/admin/finance/kpi-cards/platform-commission-card";
+import TotalPayoutCard from "@/components/admin/finance/kpi-cards/total-payout";
+import RefundsCard from "@/components/admin/finance/kpi-cards/refunds";
+import RevenueTrendChart from "@/components/admin/finance/revenue-trend-chart";
+import RecentTransactions from "@/components/admin/finance/recent-transaction";
+import TransactionTable from "@/components/admin/finance/transaction";
+import RefundTable from "@/components/admin/finance/refund";
 
 export default function FinancePage() {
   const router = useRouter();
