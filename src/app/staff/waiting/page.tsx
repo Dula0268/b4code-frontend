@@ -9,8 +9,8 @@ export default function WaitingPage() {
 
     const checkStatus = async () => {
         try {
-            const user = JSON.parse(localStorage.getItem("auth_user") || "{}");
-            const propertyId = localStorage.getItem("selected_property_id");
+            const user = JSON.parse(sessionStorage.getItem("auth_user") || "{}");
+            const propertyId = sessionStorage.getItem("selected_property_id");
 
             if (!user.userId || !propertyId) return;
 

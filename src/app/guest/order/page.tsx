@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import WelcomeModal from "@/components/features/guest/ordering/landing/welcome-modal";
-import MenuClient from "@/components/guest/order/menu/menu-client";
+import MenuClient from "@/components/features/guest/ordering/menu/menu-client";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 import { useGuestGuard } from "@/hooks/use-guest-guard";
 

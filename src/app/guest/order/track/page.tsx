@@ -1,4 +1,4 @@
-import TrackOrderClient from "@/components/guest/order/track/track-order-client";
+import TrackOrderClient from "@/components/features/guest/ordering/track/track-order-client";
 
 export default function TrackOrderPage() {
   return <TrackOrderClient />;

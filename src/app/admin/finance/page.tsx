@@ -10,8 +10,8 @@ import TotalPayoutCard from "@/components/features/admin/finance/kpi-cards/total
 import RefundsCard from "@/components/features/admin/finance/kpi-cards/refunds";
 import RevenueTrendChart from "@/components/features/admin/finance/revenue-trend-chart";
 import RecentTransactions from "@/components/features/admin/finance/recent-transaction";
-import TransactionTable from "./transaction/transaction-table";
-import RefundTable from "./refund/refund-table";
+import TransactionTable from "@/components/features/admin/finance/transaction";
+import RefundTable from "@/components/features/admin/finance/refund";
 
 export default function FinancePage() {
   const router = useRouter();

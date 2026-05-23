@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import { getToken } from './token';
+
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 const api = axios.create({
@@ -10,10 +12,8 @@ const api = axios.create({
 
 // Attach JWT token to every outgoing request automatically
 api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-  }
+  const token = getToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
@@ -23,11 +23,11 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('authEmail');
-        localStorage.removeItem('authRole');
-        localStorage.removeItem('authUserId');
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('authEmail');
+        sessionStorage.removeItem('authRole');
+        sessionStorage.removeItem('authUserId');
         const currentPath = window.location.pathname;
         // Only redirect if we're on a protected page to avoid loop
         if (!currentPath.startsWith('/auth')) {

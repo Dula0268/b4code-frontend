@@ -2,12 +2,12 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import RoomPageClient from "./page-client"
+import RoomPageClient from "@/components/features/guest/property/room/room-detail-client"
 import { guestApi } from "@/lib/api"
 import { getPropertyById, type PropertyDetail, type Room } from "@/lib/mock-properties"
 
 interface Props {
-    params: { id: string; roomId: string }
+    params: Promise<{ id: string; roomId: string }>
 }
 
 // ── Same types & helpers as the property page ──────────────────────────────
@@ -98,7 +98,7 @@ function findRoom(property: PropertyDetail, roomId: string): Room | undefined {
 
 // ── Metadata ─────────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: Props) {
-    const { id, roomId } = params
+    const { id, roomId } = await params
     const property = await fetchProperty(id)
     if (!property) return {}
     const room = findRoom(property, roomId)
@@ -111,7 +111,7 @@ export async function generateMetadata({ params }: Props) {
 
 // ── Page ──────────────────────────────────────────────────────────────────
 export default async function RoomPage({ params }: Props) {
-    const { id, roomId } = params
+    const { id, roomId } = await params
     const property = await fetchProperty(id)
     if (!property) notFound()
     const room = findRoom(property, roomId)

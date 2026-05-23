@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import ReviewsQueue from "@/components/features/admin/moderation/reports-table";
-import DisputesHub from "@/app/admin/moderation/dispute-hub/page";
-import HistoryTab from "@/app/admin/moderation/history-tab/page";
+import DisputesHub from "@/components/features/admin/moderation/disputes-hub";
+import HistoryTab from "@/components/features/admin/moderation/history-tab";
 import FlaggedReviewDetail from "@/components/features/admin/moderation/action-panel";
 import {
   useAdminModerationStore,

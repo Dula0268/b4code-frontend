@@ -1,6 +1,6 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import MyRoomPageClient from "./page-client"
+import MyRoomPageClient from "@/components/features/guest/my-room/my-room-client"
 
 export const metadata = {
     title: "My Room — Prime Stay Sri Lanka",

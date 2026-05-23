@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { authApi, setToken, removeToken } from "@/lib/api";
-import { userApi } from "@/api/user.api";
+import { userApi } from "@/api/user/user.api";
 
 type Role = "guest" | "owner" | "admin" | "staff";
 
@@ -28,20 +28,19 @@ const REDIRECT_MAP: Record<Role, string> = {
   admin: "/admin",
 };
 
-// ─── Hydrate from localStorage on load ───────────────────────────────────────
 function hydrateUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
   try {
-    const stored = localStorage.getItem("auth_user");
+    const stored = sessionStorage.getItem("auth_user");
     if (stored) {
       return JSON.parse(stored);
     }
 
     // Legacy support
-    const token = localStorage.getItem("accessToken");
-    const email = localStorage.getItem("authEmail");
-    const role = localStorage.getItem("authRole") as Role | null;
-    const userId = localStorage.getItem("authUserId");
+    const token = sessionStorage.getItem("accessToken");
+    const email = sessionStorage.getItem("authEmail");
+    const role = sessionStorage.getItem("authRole") as Role | null;
+    const userId = sessionStorage.getItem("authUserId");
     if (token && email && role) {
       return { email, role, userId: userId ? Number(userId) : undefined };
     }
@@ -117,12 +116,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
       };
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("auth_user", JSON.stringify(userData));
+        sessionStorage.setItem("auth_user", JSON.stringify(userData));
         // Also keep legacy keys for compatibility
-        localStorage.setItem("accessToken", data.token);
-        localStorage.setItem("authEmail", data.email);
-        localStorage.setItem("authRole", role);
-        localStorage.setItem("authUserId", String(data.userId));
+        sessionStorage.setItem("accessToken", data.token);
+        sessionStorage.setItem("authEmail", data.email);
+        sessionStorage.setItem("authRole", role);
+        sessionStorage.setItem("authUserId", String(data.userId));
       }
 
       set({
@@ -164,7 +163,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
       };
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("auth_user", JSON.stringify(userData));
+        sessionStorage.setItem("auth_user", JSON.stringify(userData));
       }
 
       set({
@@ -262,12 +261,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
   logout: () => {
     removeToken();
     if (typeof window !== "undefined") {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("authEmail");
-      localStorage.removeItem("authRole");
-      localStorage.removeItem("authUserId");
-      localStorage.removeItem("auth_user");
+      sessionStorage.removeItem("accessToken");
+      sessionStorage.removeItem("refreshToken");
+      sessionStorage.removeItem("authEmail");
+      sessionStorage.removeItem("authRole");
+      sessionStorage.removeItem("authUserId");
+      sessionStorage.removeItem("auth_user");
     }
 
     set({ user: null, isAuthenticated: false, error: null });
@@ -317,7 +316,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         const updatedUser = { ...state.user, profile };
 
         if (typeof window !== "undefined") {
-          localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+          sessionStorage.setItem("auth_user", JSON.stringify(updatedUser));
         }
 
         return {
@@ -341,7 +340,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
       const updatedUser = { ...state.user, propertyId, roomId };
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+        sessionStorage.setItem("auth_user", JSON.stringify(updatedUser));
       }
 
       console.log("📍 Stay Assigned to Session:", { propertyId, roomId });
@@ -387,7 +386,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         // Token is invalid/expired — quietly clear state
         set({ user: null, isAuthenticated: false, isRestoring: false });
         if (typeof window !== "undefined") {
-          localStorage.removeItem("auth-storage");
+          sessionStorage.removeItem("auth-storage");
         }
       } else {
         console.error("Failed to fetch user:", err);

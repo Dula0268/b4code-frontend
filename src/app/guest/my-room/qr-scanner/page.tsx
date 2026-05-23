@@ -1,6 +1,6 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import QrScannerPageClient from "./page-client"
+import QrScannerPageClient from "@/components/features/guest/my-room/qr-scanner/qr-scanner-client"
 
 export const metadata = {
     title: "Scan to Order — Prime Stay Sri Lanka",

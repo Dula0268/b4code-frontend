@@ -2,7 +2,7 @@
 
 import AdminPageLayout from "@/components/features/admin/admin-page-layout";
 import FinanceHeader from "@/components/features/admin/finance/finance-header";
-import RefundTable from "./refund-table";
+import RefundTable from "@/components/features/admin/finance/refund/refund-table";
 
 export default function RefundPage() {
   return (
