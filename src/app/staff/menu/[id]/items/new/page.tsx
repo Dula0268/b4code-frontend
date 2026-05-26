@@ -1,12 +1,16 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import StaffPageLayout from "@/components/features/staff/layout/staff-page-layout";
-import StaffMenuItemForm from "@/components/features/staff/menu/staff-menu-item-form";
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
+import StaffMenuItemForm from "@/components/staff/menu/staff-menu-item-form";
 
-export default function NewItemPage() {
-  const params = useParams();
-  const menuId = params.id as string;
+export default function NewItemPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const paramsResolved = useParams();
+  const menuId = paramsResolved.id as string;
 
   return (
     <StaffPageLayout>

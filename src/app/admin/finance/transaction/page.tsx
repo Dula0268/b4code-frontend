@@ -1,8 +1,8 @@
 "use client";
 
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import FinanceHeader from "@/components/features/admin/finance/finance-header";
-import TransactionTable from "./transaction-table";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import FinanceHeader from "@/components/admin/finance/finance-header";
+import TransactionTable from "@/components/admin/finance/transaction/transaction-table";
 
 export default function TransactionPage() {
   return (

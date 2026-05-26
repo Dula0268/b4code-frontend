@@ -14,9 +14,9 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import PaymentModel from "@/components/features/admin/properties/payment-model";
-import HostInformation from "@/components/features/admin/properties/host-information";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import PaymentModel from "@/components/admin/properties/payment-model";
+import HostInformation from "@/components/admin/properties/host-information";
 import { useAdminPropertiesStore } from "@/store/admin/properties/properties.store";
 
 // ─── Document Card ────────────────────────────────────────────────────────────

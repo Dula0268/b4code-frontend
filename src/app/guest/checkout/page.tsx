@@ -11,7 +11,7 @@ import { differenceInDays, format } from "date-fns"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import { useGuestGuard } from "@/hooks/use-guest-guard"
-import { guestApi } from "@/lib/api"
+import { guestApi } from "@/api/guest/guest.api";
 import { getPropertyById } from "@/lib/mock-properties"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"

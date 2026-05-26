@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import TotalRevenueCard from "@/components/features/admin/dashboard/kpi-cards/total-revenue-card";
-import OccupancyRateCard from "@/components/features/admin/dashboard/kpi-cards/occupancy-rate-card";
-import ActiveBookingsCard from "@/components/features/admin/dashboard/kpi-cards/active-bookings-card";
-import RevenueTrendChart from "@/components/features/admin/finance/revenue-trend-chart";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import TotalRevenueCard from "@/components/admin/dashboard/kpi-cards/total-revenue-card";
+import OccupancyRateCard from "@/components/admin/dashboard/kpi-cards/occupancy-rate-card";
+import ActiveBookingsCard from "@/components/admin/dashboard/kpi-cards/active-bookings-card";
+import RevenueTrendChart from "@/components/admin/finance/revenue-trend-chart";
 import RecentVerificationRequests, {
   type VerificationRequest,
-} from "@/components/features/admin/dashboard/recent-verification-requests";
+} from "@/components/admin/dashboard/recent-verification-requests";
 import { useAdminDashboardStore } from "@/store/admin/dashboard/admin-dashboard.store";
 import type { RecentVerification } from "@/api/admin/dashboard.api";
 import { Loader2 } from "lucide-react";

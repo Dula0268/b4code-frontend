@@ -11,7 +11,7 @@ import {
   Loader2,
   Image as ImageIcon,
 } from "lucide-react";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
 import { useAdminPropertiesStore } from "@/store/admin/properties/properties.store";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

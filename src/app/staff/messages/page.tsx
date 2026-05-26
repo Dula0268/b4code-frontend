@@ -1,5 +1,5 @@
-import StaffPageLayout from "@/components/features/staff/layout/staff-page-layout";
-import StaffMessages from "@/components/features/staff/messages/staff-messages";
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
+import StaffMessages from "@/components/staff/messages/staff-messages";
 
 export default function MessagesPage() {
   return (

@@ -7,7 +7,7 @@ import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
-import { guestApi } from "@/lib/api"
+import { guestApi } from "@/api/guest/guest.api";
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 import { useGuestGuard } from "@/hooks/use-guest-guard"

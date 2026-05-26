@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Search, ChevronDown, Loader2 } from "lucide-react";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import AuditLogsHeader from "@/components/features/admin/audit-logs/audit-logs-header";
-import AuditLogsTable from "@/components/features/admin/audit-logs/audit-logs-table";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import AuditLogsHeader from "@/components/admin/audit-logs/audit-logs-header";
+import AuditLogsTable from "@/components/admin/audit-logs/audit-logs-table";
 import { useAdminAuditLogsStore } from "@/store/admin/audit-logs/audit-logs.store";
 
 // ─── Helper Functions ──────────────────────────────────────────────────────────

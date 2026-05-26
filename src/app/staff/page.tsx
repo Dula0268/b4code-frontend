@@ -1,8 +1,8 @@
 "use client";
 
-import StaffPageLayout from "@/components/features/staff/layout/staff-page-layout";
-import StaffHeader from "@/components/features/staff/layout/staff-header";
-import StaffDashboard from "@/components/features/staff/dashboard/staff-dashboard";
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
+import StaffHeader from "@/components/staff/layout/staff-header";
+import StaffDashboard from "@/components/staff/dashboard/staff-dashboard";
 import { useStaffGuard } from "@/hooks/use-staff-guard";
 import AccessDenied from "@/components/shared/auth/access-denied";
 

@@ -1,5 +1,5 @@
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
-import AdminProfileLayout from "@/components/features/admin/profile/admin-profile-layout";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
+import AdminProfileLayout from "@/components/admin/profile/admin-profile-layout";
 
 export default function AdminProfileRouteLayout({
   children,

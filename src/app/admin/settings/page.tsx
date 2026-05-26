@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import React from "react";
 import { Search, Users, CreditCard, Settings, Loader2 } from "lucide-react";
-import AdminPageLayout from "@/components/features/admin/admin-page-layout";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
 import { useRBACStore } from "@/store/auth/rbac.store";
 import type { Permission } from "@/api/admin/settings.api";
 

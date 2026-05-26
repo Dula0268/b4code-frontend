@@ -1,4 +1,4 @@
-import OwnerProfileLayout from "@/components/features/owner/profile/owner-profile-layout";
+import OwnerProfileLayout from "@/components/owner/profile/owner-profile-layout";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 

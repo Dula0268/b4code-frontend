@@ -1,13 +1,13 @@
-import StaffPageLayout from "@/components/features/staff/layout/staff-page-layout";
-import StaffOrderDetail from "@/components/features/staff/orders/staff-order-detail";
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
+import StaffOrderDetail from "@/components/staff/orders/staff-order-detail";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 
 export default async function StaffOrderDetailPage({ params }: PageProps) {
-  const { id } = params;
+  const { id } = await params;
 
   return (
     <StaffPageLayout>

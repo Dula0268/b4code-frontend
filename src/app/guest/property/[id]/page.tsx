@@ -2,12 +2,12 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import PropertyClient from "./page-client"
-import { guestApi } from "@/lib/api"
+import PropertyClient from "@/components/guest/property/property-detail-client"
+import { guestApi } from "@/api/guest/guest.api";
 import { getPropertyById, type PropertyDetail, type Room } from "@/lib/mock-properties"
 
 interface Props {
-    params: { id: string }
+    params: Promise<{ id: string }>
 }
 
 type BackendRoom = {
@@ -96,7 +96,7 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: BackendProperty
     }
 }
 
-export async function fetchProperty(id: string) {
+async function fetchProperty(id: string) {
     const fallback = getPropertyById(id)
     if (!fallback) return null
 
@@ -109,7 +109,7 @@ export async function fetchProperty(id: string) {
 }
 
 export async function generateMetadata({ params }: Props) {
-    const { id } = params
+    const { id } = await params
     const property = await fetchProperty(id)
     if (!property) return {}
     return {
@@ -119,7 +119,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function PropertyPage({ params }: Props) {
-    const { id } = params
+    const { id } = await params
     const property = await fetchProperty(id)
     if (!property) notFound()
 

@@ -1,6 +1,6 @@
-import StaffPageLayout from "@/components/features/staff/layout/staff-page-layout";
-import StaffHeader from "@/components/features/staff/layout/staff-header";
-import ProfileLayout from "@/components/features/staff/profile/profile-layout";
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
+import StaffHeader from "@/components/staff/layout/staff-header";
+import ProfileLayout from "@/components/staff/profile/profile-layout";
 
 export default function StaffProfileLayout({
   children,

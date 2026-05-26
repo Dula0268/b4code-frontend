@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth/auth.store";
-import { propertiesApi } from "@/lib/api";
+import { propertiesApi } from "@/api/properties/properties.api";
 
 type Role = "guest" | "owner" | "staff";
 

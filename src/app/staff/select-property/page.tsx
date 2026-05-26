@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, ChevronRight, MapPin } from "lucide-react";
-import { staffApi } from "@/lib/api";
+import { staffApi } from "@/api/staff/staff.api";
 
 interface Property {
     id: number;
@@ -39,13 +39,13 @@ export default function SelectPropertyPage() {
 
     const handleSelect = async (id: number, name: string) => {
         try {
-            // Save selected property to localStorage
-            localStorage.setItem("selected_property_id", String(id));
-            localStorage.setItem("selected_property_name", name);
+            // Save selected property to sessionStorage
+            sessionStorage.setItem("selected_property_id", String(id));
+            sessionStorage.setItem("selected_property_name", name);
 
             // Try to notify backend (optional - don't block if fails)
             try {
-                const user = JSON.parse(localStorage.getItem("auth_user") || "{}");
+                const user = JSON.parse(sessionStorage.getItem("auth_user") || "{}");
                 if (user.userId) {
                     await fetch(
                         `http://localhost:8080/api/staff/select-property?staffId=${user.userId}&propertyId=${id}`,

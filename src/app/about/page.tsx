@@ -1,6 +1,6 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
-import AboutContent from "@/components/features/about/about-content"
+import AboutContent from "@/components/about/about-content"
 
 export const metadata = {
   title: "About Us — Prime Stay | Sri Lanka's Premier Booking Platform",

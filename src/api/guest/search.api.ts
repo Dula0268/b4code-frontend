@@ -3,7 +3,7 @@
  * All search page data comes from the backend — zero hardcoded values.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+import api from "@/lib/axios";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -84,22 +84,6 @@ export interface SearchParams {
 
 // ─── API Functions ───────────────────────────────────────────────────────────
 
-async function apiFetch<T>(endpoint: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    headers: { "Content-Type": "application/json" },
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    let errMsg = `API error ${res.status}: ${res.statusText}`;
-    try {
-      const errData = await res.json();
-      if (errData && errData.message) errMsg = errData.message;
-    } catch (_) {}
-    throw new Error(errMsg);
-  }
-  return res.json();
-}
-
 /**
  * Search properties with pagination and filters.
  */
@@ -123,14 +107,12 @@ export async function searchProperties(
   params.amenities?.forEach((a) => query.append("amenities", a));
 
   const qs = query.toString();
-  return apiFetch<PaginatedResponse<PropertyListing>>(
-    `/api/guest/properties${qs ? `?${qs}` : ""}`
-  );
+  return api.get(`/guest/properties${qs ? `?${qs}` : ""}`).then((r) => r.data);
 }
 
 /**
  * Fetch dynamic filter options from backend.
  */
 export async function getFilterOptions(): Promise<FilterOptionsResponse> {
-  return apiFetch<FilterOptionsResponse>("/api/guest/search/filters");
+  return api.get("/guest/search/filters").then((r) => r.data);
 }
