@@ -123,6 +123,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         sessionStorage.setItem("authEmail", data.email);
         sessionStorage.setItem("authRole", role);
         sessionStorage.setItem("authUserId", String(data.userId));
+
+        // Auto-set selected property for staff so dashboard loads directly
+        if (role === "staff" && data.propertyId) {
+          const pid = String(data.propertyId);
+          sessionStorage.setItem("selected_property_id", pid);
+          localStorage.setItem("selected_property_id", pid);
+        }
       }
 
       set({
@@ -368,6 +375,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         avatarUrl: data.avatarUrl,
         nationalIdUrl: data.nationalIdUrl,
       };
+
+      // Auto-set selected property for staff so dashboard loads directly
+      if (typeof window !== "undefined" && role === "staff" && data.propertyId) {
+        const pid = String(data.propertyId);
+        sessionStorage.setItem("selected_property_id", pid);
+        localStorage.setItem("selected_property_id", pid);
+      }
 
       set({
         user: {
