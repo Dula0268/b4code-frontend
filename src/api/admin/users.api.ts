@@ -2,9 +2,9 @@ import api from '@/lib/axios';
 
 // ─── Types (matching Spring Boot UserDto) ─────────────────────────────────────
 // Backend enums: OWNER, STAFF, ADMIN, GUEST  (uppercase)
-// Backend statuses: ACTIVE, SUSPENDED        (uppercase)
+// Backend statuses: ACTIVE, PENDING, APPROVED, REJECTED, SUSPENDED        (uppercase)
 export type UserRole = 'OWNER' | 'STAFF' | 'ADMIN' | 'GUEST';
-export type UserStatus = 'ACTIVE' | 'SUSPENDED';
+export type UserStatus = 'ACTIVE' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 
 export interface User {
   id: number;
