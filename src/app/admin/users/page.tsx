@@ -90,6 +90,18 @@ function StatusBadge({ status }: { status: UserStatus }) {
       class: "bg-[rgba(235,87,87,0.12)] text-[#b83030]",
       dot: "#eb5757",
     },
+    PENDING: {
+      class: "bg-[rgba(242,201,76,0.12)] text-[#b38600]",
+      dot: "#f2c94c",
+    },
+    APPROVED: {
+      class: "bg-[rgba(39,174,96,0.12)] text-[#1a7a45]",
+      dot: "#27ae60",
+    },
+    REJECTED: {
+      class: "bg-[rgba(130,130,130,0.12)] text-[#4f4f4f]",
+      dot: "#828282",
+    },
   };
   const s = cfg[status] ?? cfg.ACTIVE;
   return (

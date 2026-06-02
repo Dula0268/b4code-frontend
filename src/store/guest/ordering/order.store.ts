@@ -79,11 +79,6 @@ type OrderState = {
 
 /* ─── Helpers ─── */
 
-function generateOrderId(): string {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `#ORD-${num}`;
-}
-
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("en-US", {
     hour: "numeric",
