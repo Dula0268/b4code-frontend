@@ -23,7 +23,8 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
         if (!mounted || isRestoring) return;
 
         if (!isAuthenticated || !user) {
-            router.replace("/auth/login");
+            const redirectPath = encodeURIComponent(window.location.pathname + window.location.search);
+            router.replace(`/auth/login?redirect=${redirectPath}`);
             return;
         }
 

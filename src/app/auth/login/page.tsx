@@ -202,23 +202,25 @@ function LoginPageContent() {
                 </Button>
 
 
-                <div className="text-center text-sm text-neutral-700">
-                  Don&apos;t have an account yet?{" "}
-                  <Link
-                    href={
-                      searchParams?.get("redirect")?.includes("/staff")
-                        ? `/auth/register?role=staff&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
-                        : searchParams?.get("redirect")?.includes("/owner")
-                        ? `/auth/register?role=owner&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
-                        : searchParams?.get("redirect")
-                        ? `/auth/register?role=guest&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
-                        : "/auth/register"
-                    }
-                    className="font-extrabold text-[var(--brand-primary)] hover:underline"
-                  >
-                    Register for an account
-                  </Link>
-                </div>
+                {!searchParams?.get("redirect")?.includes("/admin") && (
+                  <div className="text-center text-sm text-neutral-700">
+                    Don&apos;t have an account yet?{" "}
+                    <Link
+                      href={
+                        searchParams?.get("redirect")?.includes("/staff")
+                          ? `/auth/register?role=staff&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
+                          : searchParams?.get("redirect")?.includes("/owner")
+                          ? `/auth/register?role=owner&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
+                          : searchParams?.get("redirect")
+                          ? `/auth/register?role=guest&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
+                          : "/auth/register"
+                      }
+                      className="font-extrabold text-[var(--brand-primary)] hover:underline"
+                    >
+                      Register for an account
+                    </Link>
+                  </div>
+                )}
 
                 <div className="text-center">
                   <Link

@@ -88,26 +88,6 @@ function RegisterForm() {
 
     const strength = getPasswordStrength();
 
-    const handleFillMockData = () => {
-        const randomStr = Math.random().toString(36).substring(2, 6);
-        setFullName(`Mock ${role.charAt(0).toUpperCase() + role.slice(1)}`);
-        setEmail(`demo_${role}_${randomStr}@primestay.com`);
-        setPhone("0777646946");
-        setPassword("Pass1234");
-        setConfirmPassword("Pass1234");
-        setAgreedToTerms(true);
-
-        if (role === "owner") {
-            setPropertyName("Sunset Villa");
-            setPropertyAddress("123 Ocean Dr, Miami, FL");
-            setNationalId("981234567V");
-        } else if (role === "staff") {
-            setStaffRole("Kitchen Staff");
-            if (properties.length > 0) {
-                setSelectedPropertyId(properties[0].id);
-            }
-        }
-    };
 
 
     const handleRegister = async (e: React.FormEvent) => {
@@ -256,15 +236,7 @@ function RegisterForm() {
                                     <Label className="text-[12px] font-extrabold text-[#282828] uppercase tracking-wider block">
                                         {showOtpInput ? "SECURITY CHECK" : "JOIN AS A"}
                                     </Label>
-                                    {!showOtpInput && (
-                                        <button
-                                            type="button"
-                                            onClick={handleFillMockData}
-                                            className="text-[11px] font-bold text-[#953002] hover:underline bg-[rgba(149,48,2,0.1)] px-2 py-1 rounded-full"
-                                        >
-                                            Auto-fill Mock Data
-                                        </button>
-                                    )}
+
                                 </div>
                                 <div className="flex p-3 bg-[#f0e8e4] rounded-2xl items-center justify-center">
                                     <span className="text-[#953002] text-lg font-black uppercase tracking-widest">
