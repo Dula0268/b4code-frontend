@@ -165,7 +165,7 @@ export default function OrderingTopbar() {
               ) : (
                 <div className="flex items-center gap-2">
                   <Link
-                    href="/auth/login"
+                    href={`/auth/login?redirect=${encodeURIComponent(pathname)}`}
                     className="px-4 py-2 text-sm font-semibold text-white bg-[#953002] rounded-lg hover:bg-[#6d2200] transition-colors no-underline whitespace-nowrap"
                   >
                     Login
@@ -239,7 +239,7 @@ export default function OrderingTopbar() {
                   </div>
                 ) : (
                   <Link
-                    href="/auth/login"
+                    href={`/auth/login?redirect=${encodeURIComponent(pathname)}`}
                     className="block px-4 py-2 text-sm font-semibold text-center text-white bg-[#953002] rounded-lg no-underline"
                     onClick={() => setMobileOpen(false)}
                   >
