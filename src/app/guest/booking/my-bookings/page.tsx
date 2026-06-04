@@ -12,6 +12,7 @@ import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/
 import BookingCard, { type BookingCardData } from "@/components/guest/booking/booking-card"
 import { useGuestGuard } from "@/hooks/use-guest-guard"
 import AccessDenied from "@/components/shared/auth/access-denied"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 
 const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
@@ -152,7 +153,11 @@ export default function MyBookingsPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#fff7ef]/95 via-[#faf6f1]/80 to-[#faf6f1]" />
       </div>
 
-      <div className="relative z-10 max-w-[900px] mx-auto px-6 pt-32 pb-20">
+      <div className="relative z-20">
+         <GuestTopbar />
+      </div>
+
+      <div className="relative z-10 max-w-[900px] mx-auto px-6 pt-12 pb-20">
         {/* Header Section */}
         <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="flex items-center gap-3 mb-4">
