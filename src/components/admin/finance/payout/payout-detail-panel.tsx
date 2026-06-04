@@ -53,7 +53,9 @@ export default function PayoutDetailPanel({
 }: PayoutDetailPanelProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const { processPayout, rejectPayout, actionLoading } = useAdminFinanceStore();
-  const [customCommissionRate, setCustomCommissionRate] = useState<number | "">("");
+  const [customCommissionRate, setCustomCommissionRate] = useState<number | "">(
+    "",
+  );
 
   useEffect(() => {
     if (payout) {
@@ -65,7 +67,8 @@ export default function PayoutDetailPanel({
 
   const handleApprove = async () => {
     try {
-      const rateToSend = customCommissionRate !== "" ? Number(customCommissionRate) : undefined;
+      const rateToSend =
+        customCommissionRate !== "" ? Number(customCommissionRate) : undefined;
       await processPayout(payout.id, "Auto-processed", rateToSend);
       setToastMessage("Payout approved successfully.");
       setTimeout(() => {
@@ -211,7 +214,7 @@ export default function PayoutDetailPanel({
                     Processed Successfully
                   </p>
                   <p className="text-[11px] text-[#16A34A] font-medium">
-                    Ref: {payout.referenceId || "N/A"}
+                    Ref: {payout.id || "N/A"}
                   </p>
                 </div>
               </div>
@@ -267,9 +270,15 @@ export default function PayoutDetailPanel({
 
             {/* Hotel Revenue */}
             <div className="flex items-center px-4 py-3 border-b border-[#F0EBE7]">
-              <span className="flex-1 text-sm text-[#1A1A1A]">Hotel Booking Revenue</span>
+              <span className="flex-1 text-sm text-[#1A1A1A]">
+                Hotel Booking Revenue
+              </span>
               <span className="text-sm font-medium text-[#1A1A1A]">
-                LKR {payout.hotelAmount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}
+                LKR{" "}
+                {payout.hotelAmount?.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }) || "0.00"}
               </span>
             </div>
 
@@ -279,33 +288,51 @@ export default function PayoutDetailPanel({
                 <p className="text-sm text-[#1A1A1A] font-medium flex items-center gap-2">
                   Platform Commission
                 </p>
-                <p className="text-[11px] text-[#C05621] mt-1">Applies to hotel bookings only</p>
-                
+                <p className="text-[11px] text-[#C05621] mt-1">
+                  Applies to hotel bookings only
+                </p>
+
                 {isPending ? (
                   <div className="flex items-center gap-2 mt-2">
                     <div className="relative">
-                      <input 
+                      <input
                         type="number"
                         value={customCommissionRate}
-                        onChange={(e) => setCustomCommissionRate(e.target.value === "" ? "" : Number(e.target.value))}
+                        onChange={(e) =>
+                          setCustomCommissionRate(
+                            e.target.value === "" ? "" : Number(e.target.value),
+                          )
+                        }
                         className="w-16 pl-2 pr-5 py-1 text-sm border border-[#E8DDD8] rounded focus:outline-none focus:border-[#C05621]"
                       />
-                      <Percent size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9E7B6A]" />
+                      <Percent
+                        size={12}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9E7B6A]"
+                      />
                     </div>
-                    <span className="text-xs text-[#9E7B6A]">override rate for this payout</span>
+                    <span className="text-xs text-[#9E7B6A]">
+                      override rate for this payout
+                    </span>
                   </div>
                 ) : (
-                  <p className="text-xs text-[#6B7280] mt-1">Rate: {payout.commissionRate}%</p>
+                  <p className="text-xs text-[#6B7280] mt-1">
+                    Rate: {payout.commissionRate}%
+                  </p>
                 )}
               </div>
               <span className="text-sm font-bold text-[#DC2626] whitespace-nowrap">
-                -LKR {
-                  (() => {
-                    const rate = customCommissionRate !== "" ? Number(customCommissionRate) : (payout.commissionRate || 20);
-                    const amt = (payout.hotelAmount || 0) * (rate / 100);
-                    return amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                  })()
-                }
+                -LKR{" "}
+                {(() => {
+                  const rate =
+                    customCommissionRate !== ""
+                      ? Number(customCommissionRate)
+                      : payout.commissionRate || 20;
+                  const amt = (payout.hotelAmount || 0) * (rate / 100);
+                  return amt.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
+                })()}
               </span>
             </div>
 
@@ -313,10 +340,16 @@ export default function PayoutDetailPanel({
             <div className="flex items-center px-4 py-3 border-b border-[#F0EBE7]">
               <div className="flex-1 pr-4">
                 <p className="text-sm text-[#1A1A1A]">Food & F&B Revenue</p>
-                <p className="text-[11px] text-[#16A34A] mt-1">Commission-free</p>
+                <p className="text-[11px] text-[#16A34A] mt-1">
+                  Commission-free
+                </p>
               </div>
               <span className="text-sm font-medium text-[#1A1A1A] whitespace-nowrap">
-                LKR {payout.foodAmount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}
+                LKR{" "}
+                {payout.foodAmount?.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }) || "0.00"}
               </span>
             </div>
 
@@ -331,14 +364,19 @@ export default function PayoutDetailPanel({
                 NET PAYOUT
               </span>
               <span className="text-lg font-bold text-[#C05621] whitespace-nowrap">
-                LKR {
-                  (() => {
-                    const rate = customCommissionRate !== "" ? Number(customCommissionRate) : (payout.commissionRate || 20);
-                    const hotelNet = (payout.hotelAmount || 0) * (1 - rate / 100);
-                    const totalNet = hotelNet + (payout.foodAmount || 0);
-                    return totalNet.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                  })()
-                }
+                LKR{" "}
+                {(() => {
+                  const rate =
+                    customCommissionRate !== ""
+                      ? Number(customCommissionRate)
+                      : payout.commissionRate || 20;
+                  const hotelNet = (payout.hotelAmount || 0) * (1 - rate / 100);
+                  const totalNet = hotelNet + (payout.foodAmount || 0);
+                  return totalNet.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
+                })()}
               </span>
             </div>
           </div>

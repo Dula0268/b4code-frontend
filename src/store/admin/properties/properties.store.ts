@@ -66,8 +66,8 @@ export const useAdminPropertiesStore = create<PropertiesState>((set) => ({
     try {
       const updated = await PropertyApi.approveProperty(id);
       set((state) => ({
-        properties: state.properties.map(p => p.id === id ? updated : p),
-        selectedProperty: state.selectedProperty?.id === id ? updated : state.selectedProperty,
+        properties: state.properties.map((p) => (String(p.id) === id ? updated : p)),
+        selectedProperty: state.selectedProperty && String(state.selectedProperty.id) === id ? updated : state.selectedProperty,
         actionLoading: false
       }));
     } catch (err: unknown) {
@@ -81,8 +81,8 @@ export const useAdminPropertiesStore = create<PropertiesState>((set) => ({
     try {
       const updated = await PropertyApi.rejectProperty(id, reason);
       set((state) => ({
-        properties: state.properties.map(p => p.id === id ? updated : p),
-        selectedProperty: state.selectedProperty?.id === id ? updated : state.selectedProperty,
+        properties: state.properties.map((p) => (String(p.id) === id ? updated : p)),
+        selectedProperty: state.selectedProperty && String(state.selectedProperty.id) === id ? updated : state.selectedProperty,
         actionLoading: false
       }));
     } catch (err: unknown) {
@@ -96,8 +96,8 @@ export const useAdminPropertiesStore = create<PropertiesState>((set) => ({
     try {
       const updated = await PropertyApi.markUnderReview(id);
       set((state) => ({
-        properties: state.properties.map(p => p.id === id ? updated : p),
-        selectedProperty: state.selectedProperty?.id === id ? updated : state.selectedProperty,
+        properties: state.properties.map((p) => (String(p.id) === id ? updated : p)),
+        selectedProperty: state.selectedProperty && String(state.selectedProperty.id) === id ? updated : state.selectedProperty,
         actionLoading: false
       }));
     } catch (err: unknown) {
