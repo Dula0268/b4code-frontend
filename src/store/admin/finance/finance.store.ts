@@ -43,7 +43,8 @@ interface FinanceState {
   
   approveRefund: (id: string) => Promise<void>;
   rejectRefund: (id: string, adminNote: string) => Promise<void>;
-  processPayout: (id: string, bankReference: string) => Promise<void>;
+  processPayout: (id: string, bankReference: string, commissionRate?: number) => Promise<void>;
+  rejectPayout: (id: string) => Promise<void>;
 }
 
 export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
@@ -167,16 +168,33 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
     }
   },
 
-  processPayout: async (id: string, bankReference: string) => {
+  processPayout: async (id: string, bankReference: string, commissionRate?: number) => {
     set({ actionLoading: true, error: null });
     try {
-      const updated = await FinanceApi.processPayout(id, bankReference);
+      const updated = await FinanceApi.processPayout(id, { bankReference, commissionRate });
       set((state) => ({
         payouts: state.payouts.map(p => p.id === id ? updated : p),
         actionLoading: false
       }));
+      get().fetchSummary();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to process payout";
+      set({ error: message, actionLoading: false });
+      throw err;
+    }
+  },
+
+  rejectPayout: async (id: string) => {
+    set({ actionLoading: true, error: null });
+    try {
+      const updated = await FinanceApi.rejectPayout(id);
+      set((state) => ({
+        payouts: state.payouts.map(p => p.id === id ? updated : p),
+        actionLoading: false
+      }));
+      get().fetchSummary();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to reject payout";
       set({ error: message, actionLoading: false });
       throw err;
     }

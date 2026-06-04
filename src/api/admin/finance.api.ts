@@ -19,6 +19,11 @@ export interface RevenueTrendPointDto {
   commission: number;
 }
 
+export interface CommissionConfigDto {
+  commissionRate: number;
+  description: string;
+}
+
 export interface TransactionDto {
   id: string;
   bookingId: string;
@@ -60,14 +65,22 @@ export interface RefundPageDto {
 
 export interface PayoutDto {
   id: string;
-  hostName: string;
-  propertyName: string;
+  ownerId?: number;
+  ownerName?: string;
+  propertyId?: number;
+  propertyName?: string;
   amount: number;
+  hotelAmount?: number;
+  foodAmount?: number;
+  commissionAmount?: number;
+  commissionRate?: number;
+  hostName: string;
   period: string;
   status: string;
   bankDetails: string;
-  processedDate?: string;
-  referenceId?: string;
+  bankReference?: string;
+  requestedAt?: string;
+  processedAt?: string;
 }
 
 export interface PayoutPageDto {
@@ -103,6 +116,15 @@ export const FinanceApi = {
   getAllPayouts: (params: { search?: string; status?: string; page?: number; size?: number }): Promise<PayoutPageDto> =>
     api.get('/admin/finance/payouts', { params }).then((res) => res.data),
 
-  processPayout: (id: string, bankReference: string): Promise<PayoutDto> =>
-    api.put(`/admin/finance/payouts/${id}/process`, { bankReference }).then((res) => res.data),
+  processPayout: (id: string, payload: { bankReference: string, commissionRate?: number }): Promise<PayoutDto> =>
+    api.put(`/admin/finance/payouts/${id}/process`, payload).then((res) => res.data),
+
+  rejectPayout: (id: string): Promise<PayoutDto> =>
+    api.put(`/admin/finance/payouts/${id}/reject`).then((res) => res.data),
+
+  getCommissionRate: (): Promise<CommissionConfigDto> =>
+    api.get('/admin/finance/commission').then((res) => res.data),
+
+  updateCommissionRate: (commissionRate: number): Promise<{ commissionRate: number; message: string }> =>
+    api.put('/admin/finance/commission', { commissionRate }).then((res) => res.data),
 };

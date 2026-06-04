@@ -2,24 +2,30 @@ import api from '@/lib/axios';
 
 // DTOs
 export interface PropertyDto {
-  id: string;
+  id: number;
   name: string;
-  location: string;
-  hostName: string;
-  hostEmail: string;
+  pvId?: string;
+  city?: string;
+  propertyType?: string;
+  imageUrl?: string;
+  imageSrc?: string;
+  ownerName?: string;
+  ownerInitial?: string;
+  ownerColor?: string;
+  ownerRole?: string;
+  ownerId?: number;
   status: string;
-  submissionDate: string;
-  verificationId?: string;
   rejectionReason?: string;
-  documentUrl?: string;
+  submittedDate?: string;
+  submittedTime?: string;
 }
 
 export interface PropertyPageDto {
   content: PropertyDto[];
   totalElements: number;
   totalPages: number;
-  size: number;
-  number: number;
+  pageSize: number;
+  currentPage: number;
 }
 
 export interface PropertyRejectionDto {

@@ -22,12 +22,12 @@ function PaymentModelBadge({ model }: { model: string }) {
 
 function PayoutStatusBadge({ status }: { status: string }) {
   const map: Record<string, { bg: string; text: string; dot: string }> = {
-    Hold: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
-    Pending: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
-    Processed: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]", dot: "bg-[#16A34A]" },
-    Rejected: { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]", dot: "bg-[#DC2626]" },
+    HOLD: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
+    PENDING: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", dot: "bg-[#D97706]" },
+    PROCESSED: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]", dot: "bg-[#16A34A]" },
+    REJECTED: { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]", dot: "bg-[#DC2626]" },
   };
-  const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", dot: "bg-[#6B7280]" };
+  const s = map[status?.toUpperCase()] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", dot: "bg-[#6B7280]" };
 
   return (
     <span
@@ -61,12 +61,14 @@ function getColorForName(name: string) {
 // ─── Component ──────────────────────────────────────────────────────────────────
 interface PayoutTableProps {
   onRowClick: (payout: PayoutDto) => void;
+  selectedPayoutId?: string;
 }
 
-export default function PayoutTable({ onRowClick }: PayoutTableProps) {
+export default function PayoutTable({ onRowClick, selectedPayoutId }: PayoutTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const perPage = 10;
 
   const { payouts, payoutsTotalElements, payoutsTotalPages, fetchPayouts, payoutsLoading } = useAdminFinanceStore();
@@ -79,12 +81,15 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
   }, [searchQuery]);
 
   useEffect(() => {
-    fetchPayouts({
+    const params: any = {
       page: currentPage - 1,
       size: perPage,
-      search: debouncedSearch
-    });
-  }, [fetchPayouts, currentPage, debouncedSearch]);
+    };
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (statusFilter) params.status = statusFilter;
+    
+    fetchPayouts(params);
+  }, [fetchPayouts, currentPage, debouncedSearch, statusFilter]);
 
   return (
     <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm overflow-hidden relative">
@@ -112,10 +117,22 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] placeholder:text-[#C4B5AB] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm font-medium text-[#1A1A1A] hover:bg-[#FAF5F2] transition">
-          <SlidersHorizontal size={15} />
-          Filter by Status
-        </button>
+        <div className="relative">
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="appearance-none flex items-center gap-2 pl-9 pr-10 py-2.5 rounded-xl border border-[#E8DDD8] text-sm font-medium text-[#1A1A1A] hover:bg-[#FAF5F2] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition cursor-pointer bg-white"
+          >
+            <option value="">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="PROCESSED">Processed</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+          <SlidersHorizontal size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A1A1A] pointer-events-none" />
+        </div>
       </div>
 
       {/* ── Table ── */}
@@ -123,21 +140,17 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
         <table className="w-full">
           <thead>
             <tr className="border-y border-[#F0EBE7]">
-              <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Property
-              </th>
-              <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Owner
-              </th>
-              <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Period
-              </th>
-              <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Req. Balance
-              </th>
-              <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Status
-              </th>
+              {(selectedPayoutId
+                ? ["Property", "Owner", "Period", "Req. Balance"]
+                : ["Property", "Owner", "Period", "Req. Balance", "Status"]
+              ).map((h) => (
+                <th
+                  key={h}
+                  className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider whitespace-nowrap"
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="relative">
@@ -151,10 +164,14 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                 </td>
               </tr>
             )}
-            {payouts.map((p, idx) => (
+            {payouts.map((p, idx) => {
+              const isSelected = selectedPayoutId === p.id;
+              return (
               <tr
                 key={p.id}
-                className="border-b border-[#F0EBE7] last:border-b-0 hover:bg-[#FDFAF8] transition-colors cursor-pointer"
+                className={`border-b border-[#F0EBE7] last:border-b-0 transition-colors cursor-pointer hover:bg-[#f5efec] ${
+                  isSelected ? "border-l-[3px] border-l-[#C05621] bg-[#FFF8F5]" : "bg-white"
+                }`}
                 onClick={() => onRowClick(p)}
               >
                 {/* Property */}
@@ -200,16 +217,19 @@ export default function PayoutTable({ onRowClick }: PayoutTableProps) {
                 </td>
 
                 {/* Req. Balance */}
-                <td className="px-6 py-4 text-sm text-[#1A1A1A] font-medium">
+                <td className="px-6 py-4 text-sm text-[#1A1A1A] font-medium whitespace-nowrap">
                   LKR {p.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
 
                 {/* Status */}
-                <td className="px-6 py-4">
-                  <PayoutStatusBadge status={p.status} />
-                </td>
+                {!selectedPayoutId && (
+                  <td className="px-6 py-4">
+                    <PayoutStatusBadge status={p.status} />
+                  </td>
+                )}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

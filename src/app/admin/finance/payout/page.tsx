@@ -1,20 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import AdminPageLayout from "@/components/admin/admin-page-layout";
 import PayoutKpiCards from "@/components/admin/finance/payout-kpi-cards";
 import PayoutTable from "@/components/admin/finance/payout/payout-table";
 import PayoutDetailPanel from "@/components/admin/finance/payout/payout-detail-panel";
 import type { PayoutDto } from "@/api/admin/finance.api";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
-import { useEffect } from "react";
+import AdminPageLayout from "@/components/admin/admin-page-layout";
 
 export default function PayoutPage() {
   const [selectedPayout, setSelectedPayout] = useState<PayoutDto | null>(null);
   const router = useRouter();
-  const { fetchSummary } = useAdminFinanceStore();
+  const { payouts, fetchSummary } = useAdminFinanceStore();
+
+  useEffect(() => {
+    if (selectedPayout) {
+      const updated = payouts.find((p) => p.id === selectedPayout.id);
+      if (updated && updated.status !== selectedPayout.status) {
+        setSelectedPayout(updated);
+      }
+    }
+  }, [payouts, selectedPayout]);
 
   useEffect(() => {
     fetchSummary();
@@ -41,15 +49,18 @@ export default function PayoutPage() {
         {/* ── KPI Cards ── */}
         <PayoutKpiCards />
 
-        {/* ── Payout Table ── */}
-        <PayoutTable onRowClick={(p) => setSelectedPayout(p)} />
+        {/* ── Main Content Area ── */}
+        <div className="flex gap-6 items-start">
+          <div className={`transition-all duration-300 ${selectedPayout ? "flex-1 min-w-0" : "w-full"}`}>
+            <PayoutTable onRowClick={(p) => setSelectedPayout(p)} selectedPayoutId={selectedPayout?.id} />
+          </div>
 
-        {/* ── Detail Panel ── */}
-        <PayoutDetailPanel
-          isOpen={!!selectedPayout}
-          onClose={() => setSelectedPayout(null)}
-          payout={selectedPayout}
-        />
+          <PayoutDetailPanel
+            isOpen={!!selectedPayout}
+            onClose={() => setSelectedPayout(null)}
+            payout={selectedPayout}
+          />
+        </div>
       </div>
     </AdminPageLayout>
   );
