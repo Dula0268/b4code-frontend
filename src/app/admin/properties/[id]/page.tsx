@@ -159,6 +159,9 @@ export default function PropertyDetailsPage() {
     selectedProperty.status === "Under Review" ||
     selectedProperty.status === "UNDER_REVIEW";
   const isActionRequired = isPending || isUnderReview;
+  const submittedDateLabel = selectedProperty.submittedDate
+    ? new Date(selectedProperty.submittedDate).toLocaleDateString()
+    : "N/A";
 
   return (
     <AdminPageLayout>
@@ -203,9 +206,7 @@ export default function PropertyDetailsPage() {
             </span>
           </div>
           <p className="text-[13px] text-[#9E7B6A] mt-1.5 m-0">
-            Submitted on{" "}
-            {new Date(selectedProperty.submissionDate).toLocaleDateString()} •
-            ID: #{selectedProperty.id}
+            Submitted on {submittedDateLabel} • ID: #{selectedProperty.id}
           </p>
         </div>
 
@@ -224,10 +225,14 @@ export default function PropertyDetailsPage() {
             <div className="grid grid-cols-2 gap-3">
               <DetailCard
                 icon={<MapPin size={18} />}
-                label="Address"
-                value={selectedProperty.location || "N/A"}
+                label="City"
+                value={selectedProperty.city || "N/A"}
               />
-              <DetailCard icon={<Home size={18} />} label="Type" value="N/A" />
+              <DetailCard
+                icon={<Home size={18} />}
+                label="Type"
+                value={selectedProperty.propertyType || "N/A"}
+              />
               <DetailCard
                 icon={<BedDouble size={18} />}
                 label="Configuration"
@@ -265,7 +270,9 @@ export default function PropertyDetailsPage() {
 
             <div className="flex flex-col gap-4">
               <DocumentCard
-                image={selectedProperty.documentUrl || ""}
+                image={
+                  selectedProperty.imageUrl || selectedProperty.imageSrc || ""
+                }
                 label="Property Document"
                 type="DOC"
                 updated="Submitted with application"
