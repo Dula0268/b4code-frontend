@@ -180,32 +180,7 @@ function AmenitiesFilter({ allAmenities, selected, onChange }: { allAmenities: s
     )
 }
 
-function PropertyTypeFilter({ types, selected, onChange }: { types: PropertyTypeOption[]; selected: string[]; onChange: (next: string[]) => void }) {
-    const toggle = (label: string) => {
-        onChange(selected.includes(label) ? selected.filter(t => t !== label) : [...selected, label])
-    }
 
-    if (types.length === 0) return null
-
-    return (
-        <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
-            <h4 className="text-[15px] font-semibold text-[#1d1d1d] mb-4">Property Type</h4>
-            <div className="grid grid-cols-2 gap-2">
-                {types.map(({ value, label, icon, count }) => {
-                    const active = selected.includes(value)
-                    const Icon = resolveIcon(icon)
-                    return (
-                        <button key={value} id={`property-type-${value.toLowerCase()}`} onClick={() => toggle(value)} className={["flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer text-left", active ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5" : "border-[#e0e0e0] bg-white hover:border-[var(--brand-primary)]/40"].join(" ")}>
-                            <Icon size={20} className={active ? "text-[var(--brand-primary)]" : "text-[#828282]"} />
-                            <span className={`text-[13px] font-medium ${active ? "text-[var(--brand-primary)]" : "text-[#333333]"}`}>{label}</span>
-                            <span className="text-[11px] text-[#828282]">{count} properties</span>
-                        </button>
-                    )
-                })}
-            </div>
-        </section>
-    )
-}
 
 function GuestRatingFilter({ options, selected, onChange }: { options: RatingOption[]; selected: string | null; onChange: (next: string | null) => void }) {
     const toggle = (value: string) => onChange(selected === value ? null : value)
@@ -256,7 +231,7 @@ export default function FiltersSidebar(props: FiltersSidebarProps) {
                 onChange={({ priceMin, priceMax }) => onChange({ ...filters, priceMin, priceMax })}
             />
             <AdvancedFilters selected={filters.amenities} onChange={amenities => onChange({ ...filters, amenities })} />
-            <PropertyTypeFilter types={propertyTypes} selected={filters.propertyTypes} onChange={propertyTypes => onChange({ ...filters, propertyTypes })} />
+
             <GuestRatingFilter options={ratingOptions} selected={filters.guestRating} onChange={guestRating => onChange({ ...filters, guestRating })} />
             
             <div className="mt-8">

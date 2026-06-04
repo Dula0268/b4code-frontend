@@ -65,10 +65,7 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
 
                 {/* Content */}
                 <div className="p-3 sm:p-4 flex flex-col gap-1.5">
-                    {/* Property type label */}
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-[var(--brand-primary)] uppercase tracking-wider">
-                        {listing.propertyType}
-                    </span>
+
 
                     {/* Title + Rating */}
                     <div className="flex items-start justify-between gap-2">
@@ -98,24 +95,6 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                         <span>{listing.reviewCount.toLocaleString()} reviews</span>
                     </div>
 
-                    {/* Amenity chips */}
-                    {visibleAmenities.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-0.5">
-                            {visibleAmenities.map(am => (
-                                <span
-                                    key={am}
-                                    className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-[var(--gray-2)] bg-[var(--gray-5)]/60 rounded-md"
-                                >
-                                    {am}
-                                </span>
-                            ))}
-                            {moreCount > 0 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-[var(--brand-primary)] bg-[var(--brand-primary)]/5 rounded-md">
-                                    +{moreCount} more
-                                </span>
-                            )}
-                        </div>
-                    )}
 
                     {/* Price */}
                     <div className="border-t border-[var(--border)] mt-1 pt-2">

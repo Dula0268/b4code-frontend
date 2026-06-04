@@ -175,7 +175,7 @@ function SearchResultsContent() {
     const [mapOpen, setMapOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
 
-    const PAGE_SIZE = 6
+    const PAGE_SIZE = 9
 
     // Load filter options once
     useEffect(() => {
