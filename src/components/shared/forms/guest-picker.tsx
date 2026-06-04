@@ -6,6 +6,7 @@ import { Minus, Plus } from "lucide-react"
 export interface GuestCounts {
     adults: number
     children: number
+    rooms: number
 }
 
 export interface GuestPickerProps {
@@ -22,6 +23,7 @@ const ROWS: {
 }[] = [
         { key: "adults", label: "Adults", sub: "Age 13+", min: 1 },
         { key: "children", label: "Children", sub: "Ages 2–12", min: 0 },
+        { key: "rooms", label: "Rooms", sub: "Number of rooms", min: 1 },
     ]
 
 // ─── Component ────────────────────────────────────────────────────────────
@@ -36,9 +38,6 @@ export default function GuestPicker({ value, onChange }: GuestPickerProps) {
 
     return (
         <div className="p-4 w-[240px]">
-            <p className="text-[10px] font-semibold text-[#828282] uppercase tracking-wide mb-3">
-                Guests
-            </p>
 
             {ROWS.map(({ key, label, sub, min }) => (
                 <div
@@ -81,10 +80,7 @@ export default function GuestPicker({ value, onChange }: GuestPickerProps) {
                 </div>
             ))}
 
-            {/* Total */}
-            <p className="mt-2 text-xs text-[#828282] text-center">
-                {total} guest{total !== 1 ? "s" : ""} total
-            </p>
+
         </div>
     )
 }

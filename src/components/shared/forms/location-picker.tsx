@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapPin, Loader2 } from "lucide-react";
-import { getFilterOptions } from "@/api/guest/search.api";
+import { MapPin, Building2, Loader2 } from "lucide-react";
+import { getFilterOptions, LocationSuggestion } from "@/api/guest/search.api";
 
 // ─── Props ────────────────────────────────────────────────────────────────
 export interface LocationPickerProps {
@@ -26,7 +26,7 @@ export default function LocationPicker({
   open,
   maxSuggestions = 7,
 }: LocationPickerProps) {
-  const [locations, setLocations] = useState<string[]>([]);
+  const [locations, setLocations] = useState<LocationSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -40,7 +40,7 @@ export default function LocationPicker({
     getFilterOptions()
       .then((opts) => {
         if (active) {
-          setLocations(opts.locations || []);
+          setLocations(opts.locationSuggestions || []);
           setLoaded(true);
         }
       })
@@ -61,7 +61,7 @@ export default function LocationPicker({
   const filtered =
     value.trim().length > 0
       ? locations.filter((l) =>
-          l.toLowerCase().includes(value.toLowerCase()),
+          l.name.toLowerCase().includes(value.toLowerCase()),
         )
       : locations;
 
@@ -72,9 +72,6 @@ export default function LocationPicker({
       className="absolute top-full left-0 mt-2 bg-white rounded-xl z-50 w-[220px] overflow-hidden
                  shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]"
     >
-      <p className="text-[10px] font-semibold text-[#828282] uppercase tracking-wide px-4 pt-3 pb-1">
-        {loading ? "Loading..." : "Suggested"}
-      </p>
 
       {loading ? (
         <div className="flex items-center justify-center py-4">
@@ -87,16 +84,20 @@ export default function LocationPicker({
       ) : (
         suggestions.map((loc) => (
           <div
-            key={loc}
+            key={loc.name}
             onMouseDown={(e) => {
               // Prevent the parent onBlur from firing before onSelect
               e.preventDefault();
-              onSelect(loc);
+              onSelect(loc.name);
             }}
             className="flex items-center gap-2 px-4 py-2.5 hover:bg-[#953002]/5 cursor-pointer transition-colors"
           >
-            <MapPin size={13} className="text-[#953002] flex-shrink-0" />
-            <span className="text-sm text-[#333333]">{loc}</span>
+            {loc.type === 'district' ? (
+              <MapPin size={13} className="text-[#953002] flex-shrink-0" />
+            ) : (
+              <Building2 size={13} className="text-[#953002] flex-shrink-0" />
+            )}
+            <span className="text-sm text-[#333333] truncate">{loc.name}</span>
           </div>
         ))
       )}

@@ -11,6 +11,7 @@ export interface PropertyListing {
   id: number;
   title: string;
   location: string;
+  district?: string;
   propertyType: string;
   pricePerNight: number;
   maxGuests: number;
@@ -23,6 +24,7 @@ export interface PropertyListing {
   amenities: string[];
   lat?: number;
   lng?: number;
+  matchingRoomsCount?: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -58,6 +60,11 @@ export interface SortOption {
   label: string;
 }
 
+export interface LocationSuggestion {
+  name: string;
+  type: string; // 'district' or 'property'
+}
+
 export interface FilterOptionsResponse {
   propertyTypes: PropertyTypeOption[];
   amenities: string[];
@@ -65,6 +72,7 @@ export interface FilterOptionsResponse {
   priceRange: PriceRangeOption;
   sortOptions: SortOption[];
   locations: string[];
+  locationSuggestions: LocationSuggestion[];
 }
 
 export interface SearchParams {
@@ -72,6 +80,7 @@ export interface SearchParams {
   checkIn?: string;
   checkOut?: string;
   guests?: number;
+  rooms?: number;
   minPrice?: number;
   maxPrice?: number;
   minRating?: number;
@@ -96,6 +105,7 @@ export async function searchProperties(
   if (params.checkIn) query.set("checkIn", params.checkIn);
   if (params.checkOut) query.set("checkOut", params.checkOut);
   if (params.guests) query.set("guests", String(params.guests));
+  if (params.rooms) query.set("rooms", String(params.rooms));
   if (params.minPrice != null) query.set("minPrice", String(params.minPrice));
   if (params.maxPrice != null) query.set("maxPrice", String(params.maxPrice));
   if (params.minRating != null) query.set("minRating", String(params.minRating));

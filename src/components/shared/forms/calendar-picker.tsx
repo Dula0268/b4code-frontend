@@ -190,20 +190,7 @@ export default function CalendarPicker({
                 })}
             </div>
 
-            {/* ── Status footer ── */}
-            <div className="mt-3 flex items-center justify-between text-xs text-[#828282] border-t border-[#f0f0f0] pt-3">
-                <span>
-                    {checkIn
-                        ? checkIn.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                        : "Select check-in"}
-                </span>
-                <span className="text-[#953002]">→</span>
-                <span>
-                    {checkOut
-                        ? checkOut.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                        : "Select check-out"}
-                </span>
-            </div>
+
         </div>
     )
 }

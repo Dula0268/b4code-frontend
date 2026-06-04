@@ -20,6 +20,7 @@ export interface PropertyListing {
     badge?: string
     imageSrc: string
     amenities?: string[]
+    matchingRoomsCount?: number
 }
 
 function formatLKR(amount: number) {
@@ -60,22 +61,6 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                         </div>
                     )}
 
-                    {/* Badge */}
-                    {listing.badge && (
-                        <span className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-[var(--bg)] text-[var(--fg)] text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm backdrop-blur-sm">
-                            {listing.badge}
-                        </span>
-                    )}
-
-                    {/* Wishlist */}
-                    <button
-                        id={`wishlist-${listing.id}`}
-                        aria-label={liked ? "Remove from wishlist" : "Save to wishlist"}
-                        onClick={e => { e.preventDefault(); e.stopPropagation(); setLiked(p => !p) }}
-                        className={["absolute top-2 sm:top-3 right-2 sm:right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer", liked ? "bg-[var(--brand-primary)] text-[var(--white)] shadow-md" : "bg-[var(--white)]/90 text-[var(--gray-2)] hover:bg-[var(--white)] hover:text-[var(--brand-primary)] shadow-sm"].join(" ")}
-                    >
-                        <Heart size={15} fill={liked ? "currentColor" : "none"} />
-                    </button>
                 </div>
 
                 {/* Content */}
@@ -101,16 +86,16 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                     </div>
 
                     {/* Location */}
-                    <p className="text-[11px] sm:text-[12px] text-[var(--muted)] flex items-center gap-1">
-                        <MapPin size={11} className="flex-shrink-0" />
-                        {listing.location}
-                    </p>
+                    <div className="flex flex-col gap-0.5">
+                        <p className="text-[11px] sm:text-[12px] text-[var(--muted)] flex items-center gap-1">
+                            <MapPin size={11} className="flex-shrink-0" />
+                            {listing.district && listing.district !== listing.location ? `${listing.location}, ${listing.district}` : listing.location}
+                        </p>
+                    </div>
 
-                    {/* Review count + guests */}
+                    {/* Review count */}
                     <div className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--muted)]">
                         <span>{listing.reviewCount.toLocaleString()} reviews</span>
-                        <span className="text-[var(--gray-4)]">·</span>
-                        <span>Up to {listing.maxGuests} guest{listing.maxGuests !== 1 ? "s" : ""}</span>
                     </div>
 
                     {/* Amenity chips */}
