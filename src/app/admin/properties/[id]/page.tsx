@@ -126,7 +126,7 @@ export default function PropertyDetailsPage() {
   const handleApprove = async () => {
     if (confirm("Are you sure you want to approve this property?")) {
       try {
-        await approveProperty(selectedProperty.id);
+        await approveProperty(selectedProperty.id.toString());
       } catch (e: unknown) {
         alert(getErrorMessage(e) || "Failed to approve property.");
       }
@@ -137,7 +137,7 @@ export default function PropertyDetailsPage() {
     const reason = prompt("Enter rejection reason:");
     if (reason) {
       try {
-        await rejectProperty(selectedProperty.id, reason);
+        await rejectProperty(selectedProperty.id.toString(), reason);
       } catch (e: unknown) {
         alert(getErrorMessage(e) || "Failed to reject property.");
       }
@@ -146,7 +146,7 @@ export default function PropertyDetailsPage() {
 
   const handleUnderReview = async () => {
     try {
-      await markUnderReview(selectedProperty.id);
+      await markUnderReview(selectedProperty.id.toString());
     } catch (e: unknown) {
       alert(getErrorMessage(e) || "Failed to mark under review.");
     }
