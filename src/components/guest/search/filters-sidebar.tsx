@@ -68,11 +68,11 @@ function PriceRangeFilter({
     priceMin: number; priceMax: number; absMin: number; absMax: number; currency: string;
     onChange: (next: Pick<FilterState, "priceMin" | "priceMax">) => void
 }) {
-    const [minInput, setMinInput] = useState(priceMin.toLocaleString("en-US"))
-    const [maxInput, setMaxInput] = useState(priceMax.toLocaleString("en-US"))
 
-    useEffect(() => setMinInput(priceMin.toLocaleString("en-US")), [priceMin])
-    useEffect(() => setMaxInput(priceMax.toLocaleString("en-US")), [priceMax])
+
+    // Generate histogram heights dynamically based on range
+    const bars = 14
+    const heights = Array.from({ length: bars }, (_, i) => 18 + Math.round(Math.sin((i / bars) * Math.PI) * 42))
 
     const range = absMax - absMin || 1
     const leftPct = ((priceMin - absMin) / range) * 100
@@ -86,37 +86,14 @@ function PriceRangeFilter({
         const val = Number(e.target.value)
         if (val >= priceMin) onChange({ priceMin, priceMax: val })
     }
-    const handleMinBlur = () => {
-        let val = parseInt(minInput.replace(/\D/g, ''), 10)
-        if (isNaN(val)) val = absMin
-        val = Math.max(absMin, Math.min(val, priceMax))
-        onChange({ priceMin: val, priceMax })
-        setMinInput(val.toLocaleString("en-US"))
-    }
-    const handleMaxBlur = () => {
-        let val = parseInt(maxInput.replace(/\D/g, ''), 10)
-        if (isNaN(val)) val = absMax
-        val = Math.max(priceMin, Math.min(val, absMax))
-        onChange({ priceMin, priceMax: val })
-        setMaxInput(val.toLocaleString("en-US"))
-    }
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") e.currentTarget.blur() }
-
-    // Generate histogram heights dynamically based on range
-    const bars = 14
-    const heights = Array.from({ length: bars }, (_, i) => 18 + Math.round(Math.sin((i / bars) * Math.PI) * 42))
 
     return (
         <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
             <h4 className="text-[15px] font-semibold text-[#1d1d1d] mb-1">Price range</h4>
-            <p className="text-[12px] text-[#828282] mb-4">Nightly prices before fees and taxes</p>
-            <div className="flex items-end gap-[3px] h-[60px] mb-3">
-                {heights.map((h, i) => {
-                    const barPct = (i / (bars - 1)) * 100
-                    const inRange = barPct >= leftPct && barPct <= rightPct
-                    return <div key={i} className="flex-1 rounded-sm transition-colors duration-200" style={{ height: `${h}px`, backgroundColor: inRange ? "var(--brand-primary)" : "#e0e0e0" }} />
-                })}
-            </div>
+            <p className="text-[14px] text-[#333333] mb-4 font-medium">
+                {currency} {priceMin.toLocaleString("en-US")} - {currency} {priceMax.toLocaleString("en-US")}{priceMax >= absMax ? "+" : ""}
+            </p>
+
             <div className="relative h-6 flex items-center mb-4">
                 <div className="absolute left-0 right-0 h-1 rounded bg-[#e0e0e0]" />
                 <div className="absolute h-1 rounded bg-[var(--brand-primary)]" style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }} />
@@ -127,21 +104,41 @@ function PriceRangeFilter({
                 </div>
                 <div className="absolute w-5 h-5 rounded-full bg-white border-2 border-[var(--brand-primary)] shadow-md -translate-x-1/2" style={{ left: `${rightPct}%`, zIndex: 2, pointerEvents: "none" }} />
             </div>
-            <div className="flex gap-3">
-                <div className="flex-1">
-                    <label className="block text-[10px] font-medium text-[#828282] uppercase tracking-wide mb-1">Min</label>
-                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[var(--brand-primary)] transition-colors">
-                        <span className="text-[13px] text-[#828282]">{currency}</span>
-                        <input type="text" value={minInput} onChange={e => setMinInput(e.target.value)} onBlur={handleMinBlur} onKeyDown={handleKeyDown} className="text-[13px] text-[#1d1d1d] font-medium bg-transparent outline-none w-full min-w-0" />
-                    </div>
-                </div>
-                <div className="flex-1">
-                    <label className="block text-[10px] font-medium text-[#828282] uppercase tracking-wide mb-1">Max</label>
-                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[var(--brand-primary)] transition-colors">
-                        <span className="text-[13px] text-[#828282]">{currency}</span>
-                        <input type="text" value={maxInput} onChange={e => setMaxInput(e.target.value)} onBlur={handleMaxBlur} onKeyDown={handleKeyDown} className="text-[13px] text-[#1d1d1d] font-medium bg-transparent outline-none w-full min-w-0" />
-                    </div>
-                </div>
+        </section>
+    )
+}
+
+function AdvancedFilters({ selected, onChange }: { selected: string[]; onChange: (next: string[]) => void }) {
+    const toggles = [
+        { label: "Free cancellation", value: "Free cancellation" },
+        { label: "Breakfast included", value: "Breakfast included" },
+        { label: "Pet-friendly", value: "Pet-friendly" },
+        { label: "Accessibility", value: "Accessibility" }
+    ]
+
+    const handleToggle = (val: string, checked: boolean) => {
+        if (checked) {
+            onChange([...selected, val])
+        } else {
+            onChange(selected.filter(a => a !== val))
+        }
+    }
+
+    return (
+        <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
+            <h4 className="text-[15px] font-semibold text-[#1d1d1d] mb-3">Popular filters</h4>
+            <div className="flex flex-col gap-1">
+                {toggles.map(t => {
+                    const checked = selected.includes(t.value)
+                    return (
+                        <label key={t.value} className="flex items-center justify-between cursor-pointer group py-2" onClick={(e) => { e.preventDefault(); handleToggle(t.value, !checked) }}>
+                            <span className="text-[14px] text-[#333333]">{t.label}</span>
+                            <div className={[`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors`, checked ? 'bg-[var(--brand-primary)]' : 'bg-[#e0e0e0] group-hover:bg-[#d0d0d0]'].join(" ")}>
+                                <span className={[`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform`, checked ? 'translate-x-[18px]' : 'translate-x-[2px]'].join(" ")} />
+                            </div>
+                        </label>
+                    )
+                })}
             </div>
         </section>
     )
@@ -248,27 +245,7 @@ export default function FiltersSidebar(props: FiltersSidebarProps) {
 
     return (
         <aside className="w-full min-w-0">
-            <div className="flex items-center justify-between mb-5 sm:mb-6">
-                <span className="text-[16px] sm:text-[17px] font-bold text-[#1d1d1d]">Filters</span>
-                <button onClick={onClear} className="text-[12px] sm:text-[13px] text-[var(--brand-primary)] font-medium hover:underline cursor-pointer bg-transparent border-none p-0">
-                    Clear all
-                </button>
-            </div>
 
-            <div className="flex flex-col gap-4 mb-6 pb-6 border-b border-[#f0f0f0]">
-                <div>
-                    <span className="text-[13px] font-bold text-[#828282] uppercase tracking-wider mb-2 block">Sort By</span>
-                    <select value={sortBy} onChange={e => onSortChange(e.target.value)} className="w-full text-[14px] bg-white border border-[#e0e0e0] rounded-xl px-3 py-2.5 outline-none text-[#1d1d1d] font-medium cursor-pointer hover:border-[var(--brand-primary)]/40 transition-colors">
-                        {sortOptions.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                    </select>
-                </div>
-                <button onClick={onToggleMap} className={["flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[14px] font-bold transition-all shadow-sm cursor-pointer whitespace-nowrap border-2 w-full", mapOpen ? "bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] hover:bg-[#6d2200]" : "bg-[#fff4eb] text-[var(--brand-primary)] border-transparent hover:border-[var(--brand-primary)]/20"].join(" ")}>
-                    <Map size={18} />
-                    {mapOpen ? "Hide Map" : "Show Map"}
-                </button>
-            </div>
 
             <PriceRangeFilter
                 priceMin={filters.priceMin}
@@ -278,9 +255,15 @@ export default function FiltersSidebar(props: FiltersSidebarProps) {
                 currency={priceRange.currency}
                 onChange={({ priceMin, priceMax }) => onChange({ ...filters, priceMin, priceMax })}
             />
-            <AmenitiesFilter allAmenities={allAmenities} selected={filters.amenities} onChange={amenities => onChange({ ...filters, amenities })} />
+            <AdvancedFilters selected={filters.amenities} onChange={amenities => onChange({ ...filters, amenities })} />
             <PropertyTypeFilter types={propertyTypes} selected={filters.propertyTypes} onChange={propertyTypes => onChange({ ...filters, propertyTypes })} />
             <GuestRatingFilter options={ratingOptions} selected={filters.guestRating} onChange={guestRating => onChange({ ...filters, guestRating })} />
+            
+            <div className="mt-8">
+                <button onClick={onClear} className="w-full py-3 rounded-xl border-2 border-[var(--brand-primary)] text-[var(--brand-primary)] font-bold text-[15px] hover:bg-[var(--brand-primary)]/5 transition-colors cursor-pointer">
+                    Clear all
+                </button>
+            </div>
         </aside>
     )
 }
