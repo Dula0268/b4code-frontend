@@ -195,21 +195,7 @@ function SubmitReviewContent() {
         <ChevronLeft size={16} /> Back to Dashboard
       </Link>
 
-      {/* Hero banner */}
-      <div className="relative rounded-[1.5rem] overflow-hidden mb-8 h-[180px] sm:h-[200px]">
-        <Image src="/images/room/review-stay.png" alt="Your stay" fill className="object-cover" />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.8), transparent)" }} />
-        <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[0.6875rem] font-bold uppercase tracking-wide mb-3 w-fit border"
-            style={{ background: "color-mix(in srgb, var(--brand-secondary) 20%, transparent)", borderColor: "color-mix(in srgb, var(--brand-secondary) 30%, transparent)", color: "var(--brand-secondary)" }}>
-            <ThumbsUp size={11} /> Post-Stay Review
-          </div>
-          <h1 className="text-[1.75rem] font-black text-white mb-1 tracking-tight" style={{ fontSize: "clamp(1.25rem, 4vw, 1.75rem)" }}>
-            How was your stay?
-          </h1>
-          <p className="text-sm text-white/60">Luxe Horizon Resort · Suite 402 · Oct 12–16, 2024</p>
-        </div>
-      </div>
+
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="ps-card p-5 sm:p-6">
@@ -233,19 +219,7 @@ function SubmitReviewContent() {
           </div>
         </div>
 
-        <div className="ps-card p-5 sm:p-6">
-          <h2 className="text-[0.9375rem] font-black mb-1" style={{ color: "var(--fg)" }}>Rate Categories</h2>
-          <p className="text-xs mb-5" style={{ color: "var(--gray-3)" }}>Help future guests with detailed ratings.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {RATING_CATEGORIES.map(({ key, label, description }) => (
-              <div key={key}>
-                <p className="text-[0.8125rem] font-black mb-0.5" style={{ color: "var(--fg)" }}>{label}</p>
-                <p className="text-[0.625rem] mb-2" style={{ color: "var(--gray-4)" }}>{description}</p>
-                <StarRating id={key} rating={categoryRatings[key] ?? 0} onChange={v => setCategoryRating(key, v)} size={22} />
-              </div>
-            ))}
-          </div>
-        </div>
+
 
         <div className="ps-card p-5 sm:p-6">
           <h2 className="text-[0.9375rem] font-black mb-1" style={{ color: "var(--fg)" }}>Your Review</h2>

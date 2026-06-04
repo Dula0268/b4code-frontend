@@ -102,7 +102,9 @@ function PriceRangeFilter({
                 <div className="absolute w-5 h-5 rounded-full bg-white border-2 border-[var(--brand-primary)] shadow-md -translate-x-1/2" style={{ left: `${leftPct}%`, zIndex: 2, pointerEvents: "none" }}>
                     <div className="w-2 h-2 rounded-full bg-[var(--brand-primary)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
-                <div className="absolute w-5 h-5 rounded-full bg-white border-2 border-[var(--brand-primary)] shadow-md -translate-x-1/2" style={{ left: `${rightPct}%`, zIndex: 2, pointerEvents: "none" }} />
+                <div className="absolute w-5 h-5 rounded-full bg-white border-2 border-[var(--brand-primary)] shadow-md -translate-x-1/2" style={{ left: `${rightPct}%`, zIndex: 2, pointerEvents: "none" }}>
+                    <div className="w-2 h-2 rounded-full bg-[var(--brand-primary)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </div>
             </div>
         </section>
     )
