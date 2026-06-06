@@ -8,11 +8,12 @@ import {
     Dumbbell, Car, Utensils, Coffee, Leaf, Bike, BookOpen,
     Monitor, SquareDot, Grid2X2, X,
 } from "lucide-react"
-import type { PropertyDetail, Room } from "@/lib/mock-properties"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import { RoomCard, RatingBar } from "@/components/guest/property/property-components"
+import CalendarPicker from "@/components/shared/forms/calendar-picker"
+import { useEffect, useRef } from "react"
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
     Wifi, Wind, Waves, Dumbbell, Car, Utensils, ShieldCheck, Coffee,
@@ -25,7 +26,7 @@ function AmenityIcon({ name, size = 18 }: { name: string; size?: number }) {
 }
 
 export default function PropertyClient({ property }: { property: PropertyDetail }) {
-    const [selectedRooms, setSelectedRooms] = useState<Room[]>([])
+    const [selectedRooms, setSelectedRooms] = useState<{room: Room; quantity: number}[]>([])
     const [paymentMethod, setPaymentMethod] = useState<"card" | "property">("card")
     const [nicNumber, setNicNumber] = useState("")
     const [saved, setSaved] = useState(false)
@@ -35,9 +36,47 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
     const [shareToast, setShareToast] = useState<"copied" | "shared" | null>(null)
     const [isBooking, setIsBooking] = useState(false)
     const [showSuccess, setShowSuccess] = useState(false)
+    const [promoCodeInput, setPromoCodeInput] = useState("")
+    const [discountPercentage, setDiscountPercentage] = useState(0)
+    const [promoMessage, setPromoMessage] = useState("")
+    const [promoError, setPromoError] = useState("")
+    const [isApplyingPromo, setIsApplyingPromo] = useState(false)
     
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const pathname = usePathname()
     const user = useAuthStore(s => s.user)
+    
+    const initCheckIn = searchParams?.get("checkIn") ? new Date(searchParams.get("checkIn")! + "T00:00:00") : new Date()
+    const initCheckOut = searchParams?.get("checkOut") ? new Date(searchParams.get("checkOut")! + "T00:00:00") : new Date(Date.now() + 86400000)
+    
+    const [checkIn, setCheckIn] = useState<Date | null>(initCheckIn)
+    const [checkOut, setCheckOut] = useState<Date | null>(initCheckOut)
+    const [calOpen, setCalOpen] = useState(false)
+    const calRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (calRef.current && !calRef.current.contains(e.target as Node)) {
+                setCalOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handler)
+        return () => document.removeEventListener("mousedown", handler)
+    }, [])
+
+    const handleDateChange = (ci: Date | null, co: Date | null) => {
+        setCheckIn(ci)
+        setCheckOut(co)
+        if (ci && co && ci < co) {
+            setCalOpen(false)
+            const params = new URLSearchParams(searchParams?.toString())
+            params.set("checkIn", ci.toISOString().split("T")[0])
+            params.set("checkOut", co.toISOString().split("T")[0])
+            router.replace(`${pathname}?${params.toString()}`)
+            setSelectedRooms([]) // Clear rooms on date change
+        }
+    }
     const addBooking = useGuestBookingStore(s => s.addBooking)
 
     const handleShare = async () => {
@@ -57,12 +96,38 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
         setTimeout(() => setShareToast(null), 2800)
     }
 
-    const toggleRoom = (room: Room) => {
-        setSelectedRooms(prev => 
-            prev.find(r => r.id === room.id) 
-                ? prev.filter(r => r.id !== room.id)
-                : [...prev, room]
-        )
+    const handleApplyPromo = async () => {
+        if (!promoCodeInput.trim()) return
+        setIsApplyingPromo(true)
+        setPromoError("")
+        setPromoMessage("")
+        
+        try {
+            const res = await fetch(`http://localhost:8080/api/promotions/validate?code=${encodeURIComponent(promoCodeInput.trim())}`)
+            const data = await res.json()
+            
+            if (res.ok) {
+                setDiscountPercentage(data.discountPercentage)
+                setPromoMessage(`${data.discountPercentage}% off applied!`)
+            } else {
+                setPromoError(data.message || "Invalid code")
+                setDiscountPercentage(0)
+            }
+        } catch (err) {
+            setPromoError("Failed to validate code")
+            setDiscountPercentage(0)
+        } finally {
+            setIsApplyingPromo(false)
+        }
+    }
+
+    const handleRoomQuantityChange = (room: Room, qty: number) => {
+        setSelectedRooms(prev => {
+            if (qty === 0) return prev.filter(r => r.room.id !== room.id)
+            const existing = prev.find(r => r.room.id === room.id)
+            if (existing) return prev.map(r => r.room.id === room.id ? { ...r, quantity: qty } : r)
+            return [...prev, { room, quantity: qty }]
+        })
     }
 
     const handleBook = () => {
@@ -81,8 +146,8 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
         
         setIsBooking(true)
         
-        const roomNames = selectedRooms.map(r => r.name).join(", ")
-        const totalGuests = selectedRooms.reduce((sum, r) => sum + r.maxGuests, 0)
+        const roomNames = selectedRooms.map(r => `${r.quantity}x ${r.room.name}`).join(", ")
+        const totalGuests = selectedRooms.reduce((sum, r) => sum + (r.room.maxGuests * r.quantity), 0)
         
         setTimeout(() => {
             const bookingId = crypto.randomUUID()
@@ -96,15 +161,15 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                 location: `${property.city}, ${property.country}`,
                 imageSrc: property.imageSrc,
                 roomName: roomNames,
-                roomId: selectedRooms.map(r => r.id).join(","),
-                checkIn: "2026-06-07",
-                checkOut: "2026-06-08",
-                checkInFormatted: "Jun 7",
-                checkOutFormatted: "Jun 8, 2026",
+                roomId: selectedRooms.map(r => r.room.id).join(","),
+                checkIn: checkIn ? checkIn.toISOString().split("T")[0] : "",
+                checkOut: checkOut ? checkOut.toISOString().split("T")[0] : "",
+                checkInFormatted: checkIn ? checkIn.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "",
+                checkOutFormatted: checkOut ? checkOut.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "",
                 guests: totalGuests,
                 guestsLabel: `${totalGuests} Adults`,
-                nights: 1,
-                nightsLabel: "1 night",
+                nights: nights,
+                nightsLabel: `${nights} night${nights > 1 ? "s" : ""}`,
                 totalPrice: total,
                 basePrice: currentPrice,
                 taxes: taxes,
@@ -126,12 +191,19 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
         }, 1200)
     }
 
+    const nights = checkIn && checkOut && checkOut > checkIn
+        ? Math.max(1, Math.round((checkOut.getTime() - checkIn.getTime()) / 86400000))
+        : 1
+
     const allImages = [property.imageSrc, ...(property.galleryImages || [])]
     const currentPrice = selectedRooms.length > 0 
-        ? selectedRooms.reduce((sum, r) => sum + r.pricePerNight, 0) 
+        ? selectedRooms.reduce((sum, r) => sum + (r.room.pricePerNight * r.quantity), 0) 
         : property.pricePerNight
-    const taxes = currentPrice * 0.1
-    const total = currentPrice + taxes
+    const subtotal = currentPrice * nights
+    const discountAmount = subtotal * (discountPercentage / 100)
+    const priceAfterDiscount = subtotal - discountAmount
+    const taxes = priceAfterDiscount * 0.1
+    const total = priceAfterDiscount + taxes
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -218,8 +290,8 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                         key={room.id} 
                                         room={room} 
                                         propertyId={property.id} 
-                                        isSelected={selectedRooms.some(r => r.id === room.id)}
-                                        onSelect={toggleRoom} 
+                                        selectedQuantity={selectedRooms.find(r => r.room.id === room.id)?.quantity || 0}
+                                        onQuantityChange={(qty) => handleRoomQuantityChange(room, qty)} 
                                     />
                                 ))}
                             </div>
@@ -256,9 +328,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                     </div>
                                 ))}
                             </div>
-                            <div className="flex flex-col gap-2.5 mt-6 p-4 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm">
-                                {(property.reviewBreakdown || []).map(r => <RatingBar key={r.label} label={r.label} score={r.score} />)}
-                            </div>
+
                         </div>
 
                     </div>
@@ -285,11 +355,11 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
 
                             {selectedRooms.length > 0 && (
                                 <div className="mb-4 bg-orange-50 border border-orange-100 rounded-xl p-3 flex flex-col gap-2">
-                                    <p className="text-[11px] font-bold text-[var(--brand-primary)] uppercase tracking-wider">Selected Rooms ({selectedRooms.length})</p>
+                                    <p className="text-[11px] font-bold text-[var(--brand-primary)] uppercase tracking-wider">Selected Rooms ({selectedRooms.reduce((sum, r) => sum + r.quantity, 0)})</p>
                                     {selectedRooms.map(r => (
-                                        <div key={r.id} className="flex items-center justify-between">
-                                            <p className="text-[13px] font-semibold text-[#1d1d1d]">{r.name}</p>
-                                            <button onClick={() => toggleRoom(r)} className="text-red-500 hover:text-red-700 text-[18px] leading-none cursor-pointer p-1">×</button>
+                                        <div key={r.room.id} className="flex items-center justify-between">
+                                            <p className="text-[13px] font-semibold text-[#1d1d1d]">{r.quantity}x {r.room.name}</p>
+                                            <button onClick={() => handleRoomQuantityChange(r.room, 0)} className="text-red-500 hover:text-red-700 text-[18px] leading-none cursor-pointer p-1">×</button>
                                         </div>
                                     ))}
                                 </div>
@@ -301,15 +371,34 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                             </div>
 
                             <div className="border border-[#e0e0e0] rounded-xl overflow-hidden mb-5">
-                                <div className="flex border-b border-[#e0e0e0]">
-                                    <div className="flex-1 p-3 border-r border-[#e0e0e0]">
-                                        <p className="text-[10px] font-bold text-[#555] uppercase tracking-wider mb-1">Check-in</p>
-                                        <p className="text-[14px] font-semibold text-[#1d1d1d]">Jun 7, 2026</p>
+                                <div ref={calRef} className="relative">
+                                    <div 
+                                        onClick={() => setCalOpen(!calOpen)}
+                                        className="flex border-b border-[#e0e0e0] cursor-pointer hover:bg-gray-50 transition-colors"
+                                    >
+                                        <div className="flex-1 p-3 border-r border-[#e0e0e0]">
+                                            <p className="text-[10px] font-bold text-[#555] uppercase tracking-wider mb-1">Check-in</p>
+                                            <p className="text-[14px] font-semibold text-[#1d1d1d]">
+                                                {checkIn ? checkIn.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Select date"}
+                                            </p>
+                                        </div>
+                                        <div className="flex-1 p-3">
+                                            <p className="text-[10px] font-bold text-[#555] uppercase tracking-wider mb-1">Check-out</p>
+                                            <p className="text-[14px] font-semibold text-[#1d1d1d]">
+                                                {checkOut ? checkOut.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Select date"}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="flex-1 p-3">
-                                        <p className="text-[10px] font-bold text-[#555] uppercase tracking-wider mb-1">Check-out</p>
-                                        <p className="text-[14px] font-semibold text-[#1d1d1d]">Jun 8, 2026</p>
-                                    </div>
+                                    {calOpen && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl z-50 shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0] p-4 flex justify-center">
+                                            <CalendarPicker
+                                                checkIn={checkIn}
+                                                checkOut={checkOut}
+                                                onChange={handleDateChange}
+                                                onComplete={() => {}}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="p-3 flex items-center justify-between">
                                     <div>
@@ -322,9 +411,15 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
 
                             <div className="flex flex-col gap-3 mb-5 pb-5 border-b border-[#e0e0e0]">
                                 <div className="flex items-center justify-between text-[14px] text-[#555]">
-                                    <span>LKR {currentPrice.toLocaleString("en-US")} × 1 nights</span>
-                                    <span className="font-semibold text-[#1d1d1d]">LKR {currentPrice.toLocaleString("en-US")}</span>
+                                    <span>LKR {currentPrice.toLocaleString("en-US")} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                                    <span className="font-semibold text-[#1d1d1d]">LKR {subtotal.toLocaleString("en-US")}</span>
                                 </div>
+                                {discountPercentage > 0 && (
+                                    <div className="flex items-center justify-between text-[14px] text-emerald-600 font-medium">
+                                        <span>Discount ({discountPercentage}%)</span>
+                                        <span>- LKR {discountAmount.toLocaleString("en-US")}</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center justify-between text-[14px] text-[#555]">
                                     <span>Taxes & Fees (10%)</span>
                                     <span className="font-semibold text-[#1d1d1d]">LKR {taxes.toLocaleString("en-US")}</span>
@@ -334,9 +429,11 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                             <div className="mb-6 pb-6 border-b border-[#e0e0e0]">
                                 <p className="text-[13px] font-bold text-[#b03a00] mb-2">Have a promo code?</p>
                                 <div className="flex gap-2">
-                                    <input type="text" placeholder="Enter code" className="flex-1 border border-[#e0e0e0] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)]" />
-                                    <button className="bg-[#1d1d1d] hover:bg-black text-white px-4 py-2 rounded-lg text-[13px] font-bold transition-colors cursor-pointer">Apply</button>
+                                    <input type="text" placeholder="Enter code" value={promoCodeInput} onChange={(e) => setPromoCodeInput(e.target.value)} className="flex-1 border border-[#e0e0e0] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)]" />
+                                    <button onClick={handleApplyPromo} disabled={isApplyingPromo || !promoCodeInput} className="bg-[#1d1d1d] hover:bg-black text-white px-4 py-2 rounded-lg text-[13px] font-bold transition-colors cursor-pointer disabled:opacity-50">Apply</button>
                                 </div>
+                                {promoError && <p className="text-[12px] text-red-500 mt-2 font-medium">{promoError}</p>}
+                                {promoMessage && <p className="text-[12px] text-emerald-600 mt-2 font-medium">{promoMessage}</p>}
                             </div>
 
                             <div className="mb-6 pb-6 border-b border-[#e0e0e0]">

@@ -8,9 +8,12 @@ function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
 }
 
-export function RoomCard({ room, propertyId, isSelected, onSelect }: { room: Room; propertyId: string, isSelected?: boolean, onSelect?: (room: Room) => void }) {
+export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityChange }: { room: Room; propertyId: string, selectedQuantity?: number, onQuantityChange?: (qty: number) => void }) {
     const searchParams = useSearchParams()
     const query = searchParams && searchParams.toString() ? `?${searchParams.toString()}` : ""
+
+    const handleIncrement = () => onQuantityChange && onQuantityChange(selectedQuantity + 1)
+    const handleDecrement = () => onQuantityChange && onQuantityChange(Math.max(0, selectedQuantity - 1))
 
 
     return (
@@ -27,32 +30,33 @@ export function RoomCard({ room, propertyId, isSelected, onSelect }: { room: Roo
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[#828282]">
                     <span className="flex items-center gap-1"><Users size={13} /> {room.maxGuests} Guests</span>
                     <span className="flex items-center gap-1"><BedDouble size={13} /> {room.bedType}</span>
-                    <span className="flex items-center gap-1"><SquareDot size={13} /> {room.sqft} sq ft</span>
+                    <span className="flex items-center gap-1 text-[var(--brand-primary)] font-semibold"><SquareDot size={13} /> {room.numberOfRooms} available</span>
                 </div>
 
-                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 mb-2">
-                    {room.features.map(f => (
-                        <span key={f} className="text-[12px] text-[#555] flex items-center gap-1">
-                            <CheckCircle2 size={12} className="text-[var(--brand-primary)]" /> {f}
-                        </span>
-                    ))}
-                </div>
+
 
                 <div className="mt-auto pt-3 border-t border-[var(--border)] flex items-end justify-between gap-2">
                     <div>
-                        {room.originalPrice && (
-                            <p className="text-[12px] text-[#aaa] line-through">{formatLKR(room.originalPrice)}</p>
-                        )}
                         <p className="text-[18px] font-bold text-[#1d1d1d]">{formatLKR(room.pricePerNight)}</p>
                         <p className="text-[11px] text-[#828282]">per night</p>
                     </div>
-                    <button
-                        onClick={() => onSelect && onSelect(room)}
-                        id={`select-room-${room.id}`}
-                        className={`px-4 py-2 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap border-none ${isSelected ? 'bg-red-600 hover:bg-red-700' : 'bg-[var(--brand-primary)] hover:bg-[#6d2200]'}`}
-                    >
-                        {isSelected ? 'Remove' : 'Select Room'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {selectedQuantity > 0 ? (
+                            <div className="flex items-center bg-white border border-[#e0e0e0] rounded-xl overflow-hidden shadow-sm">
+                                <button onClick={handleDecrement} className="px-3 py-2 hover:bg-[#f5f5f5] text-[#1d1d1d] font-bold transition-colors cursor-pointer border-r border-[#e0e0e0]">-</button>
+                                <span className="px-4 py-2 font-semibold text-[14px] min-w-[40px] text-center">{selectedQuantity}</span>
+                                <button onClick={handleIncrement} disabled={selectedQuantity >= room.numberOfRooms} className="px-3 py-2 hover:bg-[#f5f5f5] text-[#1d1d1d] font-bold transition-colors cursor-pointer border-l border-[#e0e0e0] disabled:opacity-50">+</button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => onQuantityChange && onQuantityChange(1)}
+                                disabled={room.numberOfRooms <= 0}
+                                className={`px-4 py-2 text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap border-none bg-[var(--brand-primary)] hover:bg-[#6d2200] disabled:opacity-50`}
+                            >
+                                {room.numberOfRooms > 0 ? "Select Room" : "Select"}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

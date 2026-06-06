@@ -14,10 +14,8 @@ export default function GuestOrderLanding() {
   const loading = useOrderContextStore((s) => s.loading);
 
   useEffect(() => {
-    if (ready && !loading && !qrContext) {
-      router.push("/guest/my-room/qr-scanner");
-    }
-  }, [ready, qrContext, loading, router]);
+    // If not ready or still loading, wait
+  }, [ready, qrContext, loading]);
 
   if (!ready) return (
     <div className="min-h-screen flex items-center justify-center bg-white">

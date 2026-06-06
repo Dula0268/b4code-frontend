@@ -86,10 +86,6 @@ const btnGhost   = "inline-flex items-center gap-1.5 text-xs font-bold text-[#8b
 // BookingCard — reusable card for displaying a single booking
 // ─────────────────────────────────────────────────────────────────────────────
 export default function BookingCard({ booking }: { booking: BookingCardData }) {
-  const isUpcoming  = booking.status === "UPCOMING"
-  const isCompleted = booking.status === "COMPLETED"
-  const isCancelled = booking.status === "CANCELLED"
-
   const bookingContext = new URLSearchParams({
     bookingId: booking.id,
     bookingRef: booking.orderId || booking.orderNumber || booking.id,
@@ -104,103 +100,42 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
     isFromStore: booking.isFromStore ? "1" : "0",
   }).toString()
 
-  const cancelHref = `/guest/booking/cancel?${bookingContext}`
-  const modifyHref = `/guest/booking/modify?${bookingContext}`
-
-  const rebookHref = booking.propertyId
-    ? `/guest/property/${encodeURIComponent(booking.propertyId)}`
-    : `/guest/search?property=${encodeURIComponent(booking.property)}&location=${encodeURIComponent(booking.location)}`
-
   return (
-    <div className="relative group overflow-hidden rounded-[24px] bg-white border border-[#eadfce] transition-all duration-300 hover:shadow-xl hover:shadow-[#cbb89e]/35 flex flex-col sm:flex-row">
+    <div className="flex flex-col bg-white border border-[#e8e8e8] rounded-2xl overflow-hidden hover:shadow-md transition-all duration-300">
       {/* Property image */}
-      <div className="relative w-full sm:w-52 h-48 sm:h-auto flex-shrink-0 overflow-hidden">
+      <div className="relative w-full aspect-[4/3] bg-[#f3ede8]">
         <Image
           src={booking.imageSrc}
           alt={booking.property}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-110"
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, 50vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-60" />
-        <div className="absolute top-4 left-4">
-          <StatusBadge status={booking.status} />
-        </div>
       </div>
 
       {/* Card body */}
-      <div className="flex-1 p-6 flex flex-col justify-between">
-        {/* Header: Order ID + Price */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex flex-col gap-1">
-             <span className="text-[10px] font-black text-[#9f8f7c] uppercase tracking-widest">
-              Ref: {booking.orderId || booking.orderNumber}
-            </span>
-            <div className="flex items-center gap-2 mt-1">
-              <PaymentBadge paidInFull={booking.paidInFull} method={booking.paymentMethod} />
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-[20px] font-black text-[#2d2116] leading-tight">{formatLKR(booking.totalPrice)}</p>
-            <p className="text-[10px] font-bold text-[#9f8f7c] uppercase tracking-tighter">{booking.nightsLabel}</p>
-          </div>
-        </div>
-
-        {/* Property Info */}
-        <div className="mb-6">
-          <h3 className="text-[22px] font-black text-[#2d2116] mb-1 tracking-tight">{booking.property}</h3>
-          <div className="flex items-center gap-4 mt-3">
-            <div className="flex items-center gap-1.5 text-[#6f6254]">
-              <Calendar size={14} className="text-[#9a3300]" />
-              <span className="text-[12px] font-medium">{booking.checkIn} — {booking.checkOut}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[#6f6254]">
-              <MapPin size={14} className="text-[#9a3300]" />
-              <span className="text-[12px] font-medium">{booking.location}</span>
-            </div>
-          </div>
+      <div className="flex flex-col flex-1 p-4 gap-3">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-[16px] font-bold text-[#1d1d1d] leading-snug">{booking.property}</h3>
+          <PaymentBadge paidInFull={booking.paidInFull} method={booking.paymentMethod} />
         </div>
 
         {/* Action row */}
-        <div className="flex items-center gap-3 mt-auto pt-6 border-t border-[#f2e7d9] flex-wrap">
-          {isUpcoming && (
-            <>
-              <Link href="/guest/my-room" className={btnPrimary} style={{ background: "#9a3300" }}>
-                <BedDouble size={14} /> My Room
-              </Link>
-              <Link href={modifyHref} className={btnOutline}>
-                <RefreshCw size={14} /> Modify Booking
-              </Link>
-              <Link href="/guest/messages?type=host" className={btnOutline}>
-                <MessageSquare size={14} /> Message Host
-              </Link>
-              <Link href={cancelHref} className={`${btnGhost} sm:ml-auto`}>
-                Cancel Booking
-              </Link>
-            </>
-          )}
-          {isCompleted && (
-            <>
-              <Link href="/guest/booking/confirmation" className={btnOutline}>
-                <Download size={14} /> Invoice
-              </Link>
-              <Link href={`/guest/reviews?propertyId=${booking.propertyId}`} className={btnOutline}>
-                <Star size={14} /> Rate Stay
-              </Link>
-              <Link href="/guest/booking/confirmation" className={btnGhost}>
-                Details <ChevronRight size={14} />
-              </Link>
-            </>
-          )}
-          {isCancelled && (
-            <>
-              <Link href={rebookHref} className={btnPrimary} style={{ background: "#9a3300" }}>
-                <RefreshCw size={14} /> Rebook
-              </Link>
-              <Link href="/guest/booking/cancel" className={btnOutline}>
-                <FileText size={14} /> Policy
-              </Link>
-            </>
-          )}
+        <div className="mt-auto pt-3 border-t border-[#e8e8e8] flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2">
+            <Link href={`/guest/booking/confirmation?${bookingContext}`} className="text-center py-2 bg-[#9a3300] hover:bg-[#852900] text-white text-[12px] font-bold rounded-xl transition-colors">
+              More Info
+            </Link>
+            <Link href="/guest/messages?type=host" className="text-center py-2 border border-[#e0e0e0] hover:bg-[#f5f5f5] text-[#1d1d1d] text-[12px] font-bold rounded-xl transition-colors">
+              Message
+            </Link>
+            <Link href={`/guest/reviews?propertyId=${booking.propertyId || ""}&bookingId=${booking.id}`} className="text-center py-2 border border-[#e0e0e0] hover:bg-[#f5f5f5] text-[#1d1d1d] text-[12px] font-bold rounded-xl transition-colors">
+              Keep Review
+            </Link>
+            <Link href="/guest/order/menu" className="text-center py-2 border border-[#e0e0e0] hover:bg-[#f5f5f5] text-[#1d1d1d] text-[12px] font-bold rounded-xl transition-colors">
+              Order Food
+            </Link>
+          </div>
         </div>
       </div>
     </div>

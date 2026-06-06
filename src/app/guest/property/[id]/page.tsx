@@ -8,6 +8,7 @@ import { getPropertyById, type PropertyDetail, type Room } from "@/lib/mock-prop
 
 interface Props {
     params: Promise<{ id: string }>
+    searchParams?: Promise<{ checkIn?: string; checkOut?: string; guests?: string }>
 }
 
 type BackendRoom = {
@@ -96,19 +97,19 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: BackendProperty
     }
 }
 
-async function fetchProperty(id: string) {
+async function fetchProperty(id: string, checkIn?: string, checkOut?: string) {
     const fallback = getPropertyById(id)
     if (!fallback) return null
 
     try {
-        const backend = await guestApi.getPropertyDetail(id) as BackendPropertyDetail
+        const backend = await guestApi.getPropertyDetail(id, checkIn, checkOut) as BackendPropertyDetail
         return mergePropertyDetails(fallback, backend)
     } catch {
         return fallback
     }
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params, searchParams }: Props) {
     const { id } = await params
     const property = await fetchProperty(id)
     if (!property) return {}
@@ -118,9 +119,12 @@ export async function generateMetadata({ params }: Props) {
     }
 }
 
-export default async function PropertyPage({ params }: Props) {
+export default async function PropertyPage({ params, searchParams }: Props) {
     const { id } = await params
-    const property = await fetchProperty(id)
+    const sp = searchParams ? await searchParams : {}
+    const { checkIn, checkOut } = sp
+    
+    const property = await fetchProperty(id, checkIn, checkOut)
     if (!property) notFound()
 
     return (

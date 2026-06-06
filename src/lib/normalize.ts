@@ -42,6 +42,8 @@ export const normalizeRoom = (room: RoomData) => ({
     id: String(room?.id ?? room?.roomId ?? ""),
     name: room?.name ?? room?.roomName ?? "Room",
     maxGuests: toNumber(room?.maxGuests ?? room?.maxOccupancy),
+    bedType: room?.bedType ?? "Standard",
+    numberOfRooms: toNumber(room?.numberOfRooms, 1),
     sqft: toNumber(room?.sqft),
     pricePerNight: toNumber(room?.pricePerNight),
     originalPrice: room?.originalPrice == null ? undefined : toNumber(room.originalPrice),

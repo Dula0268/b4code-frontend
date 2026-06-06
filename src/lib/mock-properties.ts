@@ -51,6 +51,7 @@ export interface Room {
     name: string
     maxGuests: number
     bedType: string
+    numberOfRooms: number
     sqft: number
     pricePerNight: number
     originalPrice?: number
