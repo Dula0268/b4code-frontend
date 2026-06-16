@@ -181,16 +181,18 @@ export interface ModerationHistory {
   outcome: string;
 }
 
-// ── Properties ─────────────────────────────────────────────────────────────
 export interface PropertyDto {
-  id: string;
+  id: number;
   name: string;
-  location: string;
-  hostName: string;
-  hostEmail: string;
+  description: string;
+  addressLine1: string;
+  city: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  ownerId: number;
+  ownerName: string;
+  createdAt: string;
   status: string;
-  submissionDate: string;
-  verificationId?: string;
-  rejectionReason?: string;
-  documentUrl?: string;
+  mainImageUrl: string;
 }

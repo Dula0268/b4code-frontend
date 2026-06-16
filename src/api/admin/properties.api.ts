@@ -4,20 +4,17 @@ import api from '@/lib/axios';
 export interface PropertyDto {
   id: number;
   name: string;
-  pvId?: string;
+  description?: string;
+  addressLine1?: string;
   city?: string;
-  propertyType?: string;
-  imageUrl?: string;
-  imageSrc?: string;
-  ownerName?: string;
-  ownerInitial?: string;
-  ownerColor?: string;
-  ownerRole?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
   ownerId?: number;
+  ownerName?: string;
+  createdAt?: string;
   status: string;
-  rejectionReason?: string;
-  submittedDate?: string;
-  submittedTime?: string;
+  mainImageUrl?: string;
 }
 
 export interface PropertyPageDto {
