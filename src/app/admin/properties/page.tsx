@@ -174,7 +174,7 @@ export default function PropertiesPage() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-[#F6F8F7]">
-                  {["PROPERTY", "TYPE", "OWNER", "SUBMITTED", "STATUS", "ACTION"].map((h) => (
+                  {["PROPERTY", "OWNER", "SUBMITTED", "STATUS", "ACTION"].map((h) => (
                     <th
                       key={h}
                       className="px-5 py-2.5 text-left text-[11px] font-bold text-[#9E7B6A] tracking-wider uppercase whitespace-nowrap"
@@ -194,7 +194,7 @@ export default function PropertiesPage() {
                 )}
                 {properties.length === 0 && !loading ? (
                   <tr>
-                    <td colSpan={6} className="py-16 text-center text-[#9E7B6A] text-sm">
+                    <td colSpan={5} className="py-16 text-center text-[#9E7B6A] text-sm">
                       No properties found.
                     </td>
                   </tr>
@@ -208,7 +208,7 @@ export default function PropertiesPage() {
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <PropertyThumb
-                            src={property.imageSrc || property.imageUrl}
+                            src={property.mainImageUrl}
                             alt={property.name}
                           />
                           <div>
@@ -216,17 +216,11 @@ export default function PropertiesPage() {
                               {property.name}
                             </p>
                             <p className="m-0 text-[11px] text-[#9E7B6A]">
-                              {property.pvId ?? `ID: ${property.id}`}
+                              {`ID: ${property.id}`}
                               {property.city ? ` · ${property.city}` : ""}
                             </p>
                           </div>
                         </div>
-                      </td>
-                      {/* Type */}
-                      <td className="px-5 py-3.5">
-                        <span className="text-[12px] text-[#6B7280] bg-[#F3F4F6] px-2 py-1 rounded-md whitespace-nowrap">
-                          {property.propertyType ?? "—"}
-                        </span>
                       </td>
                       {/* Owner */}
                       <td className="px-5 py-3.5">
@@ -234,13 +228,10 @@ export default function PropertiesPage() {
                           <div
                             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[12px] shrink-0"
                             style={{
-                              backgroundColor:
-                                property.ownerColor ||
-                                getColorForName(property.ownerName),
+                              backgroundColor: getColorForName(property.ownerName),
                             }}
                           >
-                            {property.ownerInitial ||
-                              getInitials(property.ownerName)}
+                            {getInitials(property.ownerName)}
                           </div>
                           <div>
                             <p className="m-0 font-semibold text-[13px] text-[#1A1A1A]">
@@ -252,10 +243,14 @@ export default function PropertiesPage() {
                       </td>
                       {/* Submitted */}
                       <td className="px-5 py-3.5 whitespace-nowrap">
-                        {property.submittedDate ? (
+                        {property.createdAt ? (
                           <>
-                            <p className="m-0 text-[13px] text-[#1A1A1A]">{property.submittedDate}</p>
-                            <p className="m-0 text-[11px] text-[#9E7B6A]">{property.submittedTime}</p>
+                            <p className="m-0 text-[13px] text-[#1A1A1A]">
+                              {new Date(property.createdAt).toLocaleDateString()}
+                            </p>
+                            <p className="m-0 text-[11px] text-[#9E7B6A]">
+                              {new Date(property.createdAt).toLocaleTimeString()}
+                            </p>
                           </>
                         ) : (
                           <p className="m-0 text-[13px] text-[#9E7B6A]">—</p>

@@ -78,7 +78,6 @@ export default function AuditLogsTable({
             <tr className="bg-[#F6F8F7]">
               {[
                 "USER / ROLE",
-                "IP ADDRESS",
                 "ACTION",
                 "ENTITY / DETAILS",
                 "TIMESTAMP",
@@ -96,7 +95,7 @@ export default function AuditLogsTable({
             {logs.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={4}
                   className="py-12 text-center text-[var(--gray-3)] text-sm"
                 >
                   No audit logs found.
@@ -123,10 +122,6 @@ export default function AuditLogsTable({
                         </p>
                       </div>
                     </div>
-                  </td>
-                  {/* IP */}
-                  <td className="px-5 py-[14px] text-[var(--gray-2)] font-mono text-[13px] whitespace-nowrap">
-                    {log.ip}
                   </td>
                   {/* Action */}
                   <td className="px-5 py-[14px]">

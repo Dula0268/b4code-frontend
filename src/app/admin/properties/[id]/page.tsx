@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -13,6 +13,10 @@ import {
   Eye,
   CheckCircle2,
   Loader2,
+  ArrowLeft,
+  Clock,
+  Info,
+  XCircle,
 } from "lucide-react";
 import AdminPageLayout from "@/components/admin/admin-page-layout";
 import PaymentModel from "@/components/admin/properties/payment-model";
@@ -93,6 +97,72 @@ function DetailCard({
 const getErrorMessage = (e: unknown): string =>
   e instanceof Error ? e.message : "An unexpected error occurred.";
 
+// ─── Success Screen Component ─────────────────────────────────────────────────
+function SuccessScreen({
+  state,
+  propertyName,
+  propertyId,
+  onBack,
+}: {
+  state: "APPROVED" | "REJECTED" | "UNDER_REVIEW";
+  propertyName: string;
+  propertyId: number;
+  onBack: () => void;
+}) {
+  const config = {
+    APPROVED: {
+      icon: <CheckCircle2 className="text-[#16A34A]" size={32} strokeWidth={2.5} />,
+      bg: "bg-[#DCFCE7]",
+      title: "Property Approved Successfully",
+      desc: `Property ${propertyName} has been approved for listing.`,
+    },
+    REJECTED: {
+      icon: <XCircle className="text-[#DC2626]" size={32} strokeWidth={2.5} />,
+      bg: "bg-[#FEE2E2]",
+      title: "Property Rejected",
+      desc: `Property ${propertyName} has been rejected and will not be listed.`,
+    },
+    UNDER_REVIEW: {
+      icon: <Info className="text-[#3B82F6]" size={32} strokeWidth={2.5} />,
+      bg: "bg-[#DBEAFE]",
+      title: "Property Under Review",
+      desc: `Property ${propertyName} is currently being reviewed.`,
+    },
+  };
+
+  const { icon, bg, title, desc } = config[state];
+  const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <div className="flex items-center justify-center h-[80vh]">
+      <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[#E8DDD8] w-full max-w-md overflow-hidden text-center">
+        <div className="p-10 flex flex-col items-center">
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 ${bg}`}>
+            {icon}
+          </div>
+          <h2 className="text-[22px] font-bold text-[#1A1A1A] m-0 mb-3">{title}</h2>
+          <p className="text-[14px] text-[#6B7280] m-0 mb-8 max-w-[280px]">
+            {desc}
+          </p>
+          <button
+            onClick={onBack}
+            className="w-full flex items-center justify-center gap-2 bg-[#8C3A21] hover:bg-[#722F1B] text-white py-3.5 rounded-xl font-bold transition-colors cursor-pointer border-none"
+          >
+            <ArrowLeft size={18} /> Back to Properties
+          </button>
+        </div>
+        <div className="border-t border-[#F3F4F6] px-6 py-4 flex items-center justify-between bg-[#FAFAFA]">
+          <div className="flex items-center gap-2 text-[#9E7B6A]">
+            <Clock size={14} />
+            <span className="text-[12px] font-medium">Action recorded at {currentTime}</span>
+          </div>
+          <span className="text-[12px] font-medium text-[#9E7B6A]">Property ID: {propertyId}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PropertyDetailsPage() {
   const router = useRouter();
@@ -106,6 +176,8 @@ export default function PropertyDetailsPage() {
     rejectProperty,
     markUnderReview,
   } = useAdminPropertiesStore();
+
+  const [successState, setSuccessState] = useState<"APPROVED" | "REJECTED" | "UNDER_REVIEW" | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -124,29 +196,27 @@ export default function PropertyDetailsPage() {
   }
 
   const handleApprove = async () => {
-    if (confirm("Are you sure you want to approve this property?")) {
-      try {
-        await approveProperty(selectedProperty.id.toString());
-      } catch (e: unknown) {
-        alert(getErrorMessage(e) || "Failed to approve property.");
-      }
+    try {
+      await approveProperty(selectedProperty.id.toString());
+      setSuccessState("APPROVED");
+    } catch (e: unknown) {
+      alert(getErrorMessage(e) || "Failed to approve property.");
     }
   };
 
   const handleReject = async () => {
-    const reason = prompt("Enter rejection reason:");
-    if (reason) {
-      try {
-        await rejectProperty(selectedProperty.id.toString(), reason);
-      } catch (e: unknown) {
-        alert(getErrorMessage(e) || "Failed to reject property.");
-      }
+    try {
+      await rejectProperty(selectedProperty.id.toString(), "Rejected by Admin");
+      setSuccessState("REJECTED");
+    } catch (e: unknown) {
+      alert(getErrorMessage(e) || "Failed to reject property.");
     }
   };
 
   const handleUnderReview = async () => {
     try {
       await markUnderReview(selectedProperty.id.toString());
+      setSuccessState("UNDER_REVIEW");
     } catch (e: unknown) {
       alert(getErrorMessage(e) || "Failed to mark under review.");
     }
@@ -159,14 +229,23 @@ export default function PropertyDetailsPage() {
     selectedProperty.status === "Under Review" ||
     selectedProperty.status === "UNDER_REVIEW";
   const isActionRequired = isPending || isUnderReview;
-  const submittedDateLabel = selectedProperty.submittedDate
-    ? new Date(selectedProperty.submittedDate).toLocaleDateString()
+  const submittedDateLabel = selectedProperty.createdAt
+    ? new Date(selectedProperty.createdAt).toLocaleDateString()
     : "N/A";
 
   return (
     <AdminPageLayout>
-      <div className="flex flex-col gap-6 pb-24 relative">
-        {actionLoading && (
+      {successState ? (
+        <SuccessScreen
+          state={successState}
+          propertyName={selectedProperty.name}
+          propertyId={selectedProperty.id}
+          onBack={() => router.push("/admin/properties")}
+        />
+      ) : (
+        <>
+          <div className="flex flex-col gap-6 pb-24 relative">
+          {actionLoading && (
           <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-50">
             <Loader2 className="animate-spin text-[#C05621]" size={48} />
           </div>
@@ -231,7 +310,7 @@ export default function PropertyDetailsPage() {
               <DetailCard
                 icon={<Home size={18} />}
                 label="Type"
-                value={selectedProperty.propertyType || "N/A"}
+                value={"N/A"}
               />
               <DetailCard
                 icon={<BedDouble size={18} />}
@@ -271,7 +350,7 @@ export default function PropertyDetailsPage() {
             <div className="flex flex-col gap-4">
               <DocumentCard
                 image={
-                  selectedProperty.imageUrl || selectedProperty.imageSrc || ""
+                  selectedProperty.mainImageUrl || ""
                 }
                 label="Property Document"
                 type="DOC"
@@ -321,6 +400,8 @@ export default function PropertyDetailsPage() {
             </button>
           </div>
         </div>
+      )}
+        </>
       )}
     </AdminPageLayout>
   );

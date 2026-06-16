@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown, Loader2 } from "lucide-react";
 import AdminPageLayout from "@/components/admin/admin-page-layout";
 import AuditLogsHeader from "@/components/admin/audit-logs/audit-logs-header";
@@ -37,6 +37,22 @@ function AuditLogsFilters({
   onRoleOpenChange,
 }: AuditLogsFiltersProps) {
   const roles = ["All", "Admin", "Staff", "Owner"];
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onRoleOpenChange(false);
+      }
+    }
+    
+    if (roleOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [roleOpen, onRoleOpenChange]);
 
   return (
     <div className="flex gap-3 items-center flex-wrap">
@@ -47,7 +63,7 @@ function AuditLogsFilters({
           size={14}
         />
         <input
-          placeholder="Search by User, IP, or Entity ID"
+          placeholder="Search by User or Entity ID"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full py-2 px-3 pl-9 rounded-[10px] border-[1.5px] border-(--gray-5) text-[13px] text-(--black-2) bg-white outline-none box-border focus:border-(--brand-primary)"
@@ -55,7 +71,7 @@ function AuditLogsFilters({
       </div>
 
       {/* Role Filter */}
-      <div className="relative">
+      <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => onRoleOpenChange(!roleOpen)}
           className={`flex items-center gap-2 px-4 py-2 rounded-[10px] border-[1.5px] border-(--gray-5) bg-white text-[13px] font-semibold cursor-pointer ${roleCfg(roleFilter)}`}
