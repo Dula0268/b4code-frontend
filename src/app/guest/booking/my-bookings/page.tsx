@@ -22,7 +22,7 @@ export default function MyBookingsPage() {
         return (
             <div className="min-h-screen flex flex-col bg-[#fafafa]">
                 <GuestTopbar />
-                <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-10 mt-16 flex items-center justify-center">
+                <main className="flex-1 w-full px-6 xl:px-12 py-10 mt-16 flex items-center justify-center">
                     <div className="w-8 h-8 border-4 border-[#9a3300] border-t-transparent rounded-full animate-spin"></div>
                 </main>
                 <GuestFooter />
@@ -36,7 +36,7 @@ export default function MyBookingsPage() {
     return (
         <div className="min-h-screen flex flex-col bg-[#fafafa]">
             <GuestTopbar />
-            <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-10 mt-16">
+            <main className="flex-1 w-full px-6 xl:px-12 py-10 mt-16">
                 <h1 className="text-[32px] font-bold text-[#1d1d1d] mb-2">My Bookings</h1>
                 <p className="text-[14px] text-[#555] mb-6">View and manage all your upcoming and past stays.</p>
                 
@@ -68,7 +68,7 @@ export default function MyBookingsPage() {
                         <p className="text-[#888] mb-4">No {activeTab.toLowerCase()} bookings found.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="flex flex-col gap-4">
                         {filteredBookings.map(booking => (
                             <BookingCard 
                                 key={booking.id} 

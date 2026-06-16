@@ -14,6 +14,8 @@ import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import { RoomCard, RatingBar } from "@/components/guest/property/property-components"
 import CalendarPicker from "@/components/shared/forms/calendar-picker"
 import { useEffect, useRef } from "react"
+import { type PropertyDetail, type Room } from "@/lib/mock-properties"
+
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
     Wifi, Wind, Waves, Dumbbell, Car, Utensils, ShieldCheck, Coffee,
@@ -158,7 +160,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                 status: "UPCOMING",
                 property: property.title,
                 propertyId: property.id,
-                location: `${property.city}, ${property.country}`,
+                location: property.location,
                 imageSrc: property.imageSrc,
                 roomName: roomNames,
                 roomId: selectedRooms.map(r => r.room.id).join(","),
@@ -175,7 +177,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                 taxes: taxes,
                 serviceFee: 0,
                 discount: 0,
-                paymentMethod: paymentMethod,
+                paymentMethod: paymentMethod === 'card' ? 'online' : 'property',
                 paidInFull: paymentMethod === 'card',
                 nationalId: nicNumber || undefined,
                 bookedAt: new Date().toISOString(),
@@ -219,7 +221,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                 {shareToast === "shared" ? "Shared successfully!" : "Link copied to clipboard"}
             </div>
             
-            <div className="max-w-[1200px] mx-auto px-6 pt-8 pb-20">
+            <div className="w-full px-6 xl:px-12 pt-8 pb-20">
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-1.5 text-[13px] mb-5">
                     <Link href="/" aria-label="Home" className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors flex items-center"><Home size={15} /></Link>
@@ -236,29 +238,63 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                     <div>
                         <p className="text-[12px] font-semibold text-[var(--brand-primary)] uppercase tracking-wider mb-1">{property.propertyType}</p>
                         <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">{property.title}</h1>
-                        <div className="flex items-center gap-1.5 text-[14px] text-[#555]"><MapPin size={15} className="text-[var(--brand-primary)]" /><span>{property.fullAddress}</span></div>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14px] text-[#555]">
+                            <div className="flex items-center gap-1">
+                                <Star size={16} className="text-[var(--brand-secondary)]" fill="var(--brand-secondary)" />
+                                <span className="font-bold text-gray-900">{property.rating.toFixed(1)}</span>
+                            </div>
+                            <span className="text-gray-300">·</span>
+                            <span className="font-semibold underline text-gray-700">{property.reviewCount} Reviews</span>
+                            <span className="text-gray-300">·</span>
+                            <div className="flex items-center gap-1.5"><MapPin size={15} className="text-[var(--brand-primary)]" /><span>{property.fullAddress}</span></div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Map Card at Top */}
-                <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-sm overflow-hidden mb-8 w-full">
-                    <div className="relative h-[350px] sm:h-[450px] bg-[#e8f4f8]">
-                        <iframe
-                            title="Property location map"
-                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${property.lng - 0.05},${property.lat - 0.05},${property.lng + 0.05},${property.lat + 0.05}&layer=mapnik&marker=${property.lat},${property.lng}`}
-                            className="w-full h-full border-none"
-                            loading="lazy"
-                        />
-                    </div>
-                    <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <p className="text-[14px] font-bold text-[#1d1d1d] mb-1">Location</p>
-                            <p className="text-[13px] text-[#555]">{property.fullAddress}</p>
+                {/* Standard Hero Image Gallery */}
+                <div className="mb-10 rounded-2xl overflow-hidden hidden md:grid grid-cols-2 gap-2 h-[400px] lg:h-[500px]">
+                    {allImages.length > 0 && (
+                        <div 
+                            className="relative h-full cursor-pointer group"
+                            onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true); }}
+                        >
+                            <Image src={allImages[0]} alt="Property image 1" fill className="object-cover group-hover:opacity-90 transition-opacity" sizes="50vw" />
                         </div>
-                        <a href={`https://www.google.com/maps/search/?api=1&query=${property.lat},${property.lng}`} target="_blank" rel="noopener noreferrer" className="inline-block px-5 py-2.5 bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer text-center">
-                            Get Directions →
-                        </a>
-                    </div>
+                    )}
+                    {allImages.length > 1 ? (
+                        <div className={`grid gap-2 h-full ${allImages.length > 2 ? 'grid-cols-2 grid-rows-2' : 'grid-cols-1'}`}>
+                            {allImages.slice(1, 5).map((img, i) => (
+                                <div 
+                                    key={i} 
+                                    className="relative h-full cursor-pointer group"
+                                    onClick={() => { setActiveGalleryIdx(i+1); setGalleryOpen(true); }}
+                                >
+                                    <Image src={img} alt={`Property image ${i + 2}`} fill className="object-cover group-hover:opacity-90 transition-opacity" sizes="25vw" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="relative h-full bg-[#f3ede8]"></div>
+                    )}
+                </div>
+
+                {/* Mobile Gallery */}
+                <div className="md:hidden mb-8 -mx-6 px-6 flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+                    {allImages.map((img, i) => (
+                        <div 
+                            key={i} 
+                            onClick={() => { setActiveGalleryIdx(i); setGalleryOpen(true); }}
+                            className="relative w-[280px] h-[180px] shrink-0 rounded-2xl overflow-hidden cursor-pointer shadow-sm snap-start border border-[#e8e8e8]"
+                        >
+                            <Image
+                                src={img}
+                                alt={`Property image ${i + 1}`}
+                                fill
+                                className="object-cover"
+                                sizes="280px"
+                            />
+                        </div>
+                    ))}
                 </div>
 
                 {/* Main Content Layout */}
@@ -270,7 +306,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                         <div>
                             <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">What this place offers</h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {(property.amenities || []).map(a => (
+                                {(property.amenities || []).map((a: any) => (
                                     <div key={a.label} className="flex items-center gap-2.5 text-[13px] text-[#333]">
                                         <AmenityIcon name={a.icon} /><span>{a.label}</span>
                                     </div>
@@ -284,8 +320,8 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                 <h2 className="text-[20px] font-bold text-[#1d1d1d]">Available Rooms</h2>
                                 <p className="text-[12px] text-[#828282]">☑ Prices include taxes and fees</p>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {(property.rooms || []).map(room => (
+                            <div className="flex flex-col gap-4">
+                                {(property.rooms || []).map((room: any) => (
                                     <RoomCard 
                                         key={room.id} 
                                         room={room} 
@@ -298,15 +334,23 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                         </div>
 
                         {/* Reviews summary */}
-                        <div>
-                            <div className="flex items-center gap-3 mb-5">
-                                <Star size={20} className="text-[var(--brand-secondary)]" fill="var(--brand-secondary)" />
-                                <span className="text-[22px] font-bold text-[#1d1d1d]">{property.rating.toFixed(1)}</span>
-                                <span className="text-[14px] text-[#828282]">{property.reviewCount.toLocaleString()} Reviews</span>
-                            </div>
+                        <div className="pt-8 mt-2 border-t border-[#e8e8e8]">
+                            <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-6 flex items-center gap-3">
+                                <Star size={24} className="text-[var(--brand-secondary)]" fill="var(--brand-secondary)" />
+                                <span>{property.rating.toFixed(1)}</span>
+                                <span className="text-[16px] text-[#555] font-medium">· {property.reviewCount.toLocaleString()} Reviews</span>
+                            </h2>
 
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {(property.reviews || []).map(rev => (
+                            {property.reviewBreakdown && property.reviewBreakdown.length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-4 mb-8 bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                    {property.reviewBreakdown.map((item: any, idx: number) => (
+                                        <RatingBar key={idx} label={item.label} score={item.score} />
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                                {(property.reviews || []).map((rev: any) => (
                                     <div key={rev.id} className="p-4 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0" style={{ background: rev.avatarColor }}>{rev.avatarInitials}</div>
@@ -329,6 +373,30 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                 ))}
                             </div>
 
+                        </div>
+
+                        {/* Map Location */}
+                        <div>
+                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Where you'll be</h2>
+                            <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-sm overflow-hidden w-full">
+                                <div className="relative h-[300px] bg-[#e8f4f8]">
+                                    <iframe
+                                        title="Property location map"
+                                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${property.lng - 0.05},${property.lat - 0.05},${property.lng + 0.05},${property.lat + 0.05}&layer=mapnik&marker=${property.lat},${property.lng}`}
+                                        className="w-full h-full border-none"
+                                        loading="lazy"
+                                    />
+                                </div>
+                                <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <p className="text-[14px] font-bold text-[#1d1d1d] mb-1">Location</p>
+                                        <p className="text-[13px] text-[#555]">{property.fullAddress}</p>
+                                    </div>
+                                    <a href={`https://www.google.com/maps/search/?api=1&query=${property.lat},${property.lng}`} target="_blank" rel="noopener noreferrer" className="inline-block px-5 py-2.5 bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer text-center">
+                                        Get Directions →
+                                    </a>
+                                </div>
+                            </div>
                         </div>
 
                     </div>

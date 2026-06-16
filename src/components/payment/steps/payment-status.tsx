@@ -29,7 +29,7 @@ export default function PaymentStatus({ step, onRetry, onChangeMethod }: Payment
                     params.set("confirmationCode", "B4C-" + Math.random().toString(36).substring(2, 9).toUpperCase());
                 }
                 
-                const finalUrl = `/guest/booking/confirmation?${params.toString()}`;
+                const finalUrl = `/guest/booking/my-bookings`;
                 router.push(finalUrl);
             }, 3000);
             return () => clearTimeout(timer);
@@ -73,7 +73,7 @@ export default function PaymentStatus({ step, onRetry, onChangeMethod }: Payment
                     </div>
                     <div className="text-left">
                         <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Next Step</p>
-                        <p className="text-[13px] font-bold text-[#1a1a1a]">View Confirmation</p>
+                        <p className="text-[13px] font-bold text-[#1a1a1a]">View My Bookings</p>
                     </div>
                     <ArrowRight size={16} className="ml-auto text-neutral-300 animate-pulse" />
                 </div>

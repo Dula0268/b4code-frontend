@@ -386,7 +386,7 @@ export default function SearchPage() {
                     <SearchResultsContent />
                 </Suspense>
             </main>
-            <GuestFooter />
+            <GuestFooter variant="full" />
         </div>
     )
 }

@@ -100,44 +100,85 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
     isFromStore: booking.isFromStore ? "1" : "0",
   }).toString()
 
+  const paymentText = booking.paidInFull || booking.paymentMethod === "online" || booking.paymentMethod === "ONLINE_CARD" 
+    ? "Pay Online (Paid)" 
+    : "Pay at Property"
+
+  // Attempt to parse guests if needed, though usually just a number or string
+  // If we only have a total number of guests, we'll format it nicely.
+  const guestText = booking.guests ? booking.guests : "2 Adults, 0 Children"
+
   return (
-    <div className="flex flex-col bg-white border border-[#e8e8e8] rounded-2xl overflow-hidden hover:shadow-md transition-all duration-300">
+    <div className="flex flex-col sm:flex-row bg-white border border-[#e8e8e8] rounded-2xl overflow-hidden hover:shadow-md transition-all duration-300">
       {/* Property image */}
-      <div className="relative w-full aspect-[4/3] bg-[#f3ede8]">
+      <div className="relative w-full sm:w-[30%] sm:min-w-[240px] aspect-[4/3] sm:aspect-auto bg-[#f3ede8] shrink-0">
         <Image
           src={booking.imageSrc}
           alt={booking.property}
           fill
           className="object-cover"
-          sizes="(max-width: 640px) 100vw, 50vw"
+          sizes="(max-width: 640px) 100vw, 30vw"
         />
       </div>
 
       {/* Card body */}
-      <div className="flex flex-col flex-1 p-4 gap-3">
+      <div className="flex flex-col flex-1 p-5 gap-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-[16px] font-bold text-[#1d1d1d] leading-snug">{booking.property}</h3>
-          <PaymentBadge paidInFull={booking.paidInFull} method={booking.paymentMethod} />
+          <div>
+            <h3 className="text-[18px] font-bold text-[#1d1d1d] leading-snug">{booking.property}</h3>
+            <p className="text-[#555] text-[14px] mt-1 flex items-center gap-1">
+              <MapPin size={14} className="text-[#9a3300]" />
+              {booking.location}
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2 shrink-0">
+             <PaymentBadge paidInFull={booking.paidInFull} method={booking.paymentMethod} />
+             {/* Removed StatusBadge */}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-4 text-[13px] text-[#666] mt-2 mb-2">
+          {booking.roomName && (
+             <div className="flex items-center gap-1.5 bg-[#f8f7f5] px-3 py-1.5 rounded-lg w-full sm:w-auto">
+               <BedDouble size={14} className="text-[#9a3300]" />
+               <span className="font-medium">1 Room - {booking.roomName}</span>
+             </div>
+          )}
+          <div className="flex items-center gap-1.5 bg-[#f8f7f5] px-3 py-1.5 rounded-lg">
+            <Calendar size={14} className="text-[#9a3300]" />
+            <span className="font-medium">{booking.checkIn} — {booking.checkOut}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-[#f8f7f5] px-3 py-1.5 rounded-lg">
+            <span className="font-medium text-[#9a3300]">🌙</span>
+            <span className="font-medium">{booking.nightsLabel}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-[#f8f7f5] px-3 py-1.5 rounded-lg">
+            <span className="font-medium text-[#9a3300]">👤</span>
+            <span className="font-medium">{guestText}</span>
+          </div>
+        </div>
+
+        <div className="text-[16px] font-bold text-[#1d1d1d] mt-1 mb-2">
+          Total Price: {formatLKR(booking.totalPrice)}
         </div>
 
         {/* Action row */}
-        <div className="mt-auto pt-3 border-t border-[#e8e8e8] flex flex-col gap-2">
-          <div className="grid grid-cols-2 gap-2">
-            <Link href={`/guest/booking/confirmation?${bookingContext}`} className="text-center py-2 bg-[#9a3300] hover:bg-[#852900] text-white text-[12px] font-bold rounded-xl transition-colors">
-              More Info
-            </Link>
-            <Link href="/guest/messages?type=host" className="text-center py-2 border border-[#e0e0e0] hover:bg-[#f5f5f5] text-[#1d1d1d] text-[12px] font-bold rounded-xl transition-colors">
-              Message
-            </Link>
-            <Link href={`/guest/reviews?propertyId=${booking.propertyId || ""}&bookingId=${booking.id}`} className="text-center py-2 border border-[#e0e0e0] hover:bg-[#f5f5f5] text-[#1d1d1d] text-[12px] font-bold rounded-xl transition-colors">
-              Keep Review
-            </Link>
-            <Link href="/guest/order/menu" className="text-center py-2 border border-[#e0e0e0] hover:bg-[#f5f5f5] text-[#1d1d1d] text-[12px] font-bold rounded-xl transition-colors">
-              Order Food
-            </Link>
-          </div>
+        <div className="mt-auto pt-4 border-t border-[#e8e8e8] flex flex-col sm:flex-row sm:justify-end gap-2">
+          <Link href={`/guest/booking/modify?${bookingContext}`} className={`${btnPrimary} bg-[#9a3300] hover:bg-[#852900] justify-center`}>
+            <RefreshCw size={14} /> Edit Booking
+          </Link>
+          <Link href="/guest/messages?type=host" className={`${btnOutline} justify-center`}>
+            <MessageSquare size={14} /> Message
+          </Link>
+          <Link href={`/guest/reviews?propertyId=${booking.propertyId || ""}&bookingId=${booking.id}`} className={`${btnOutline} justify-center`}>
+            <Star size={14} /> Keep Review
+          </Link>
+          <Link href="/guest/order/menu" className={`${btnOutline} justify-center`}>
+            <Calendar size={14} /> Order Food
+          </Link>
         </div>
       </div>
     </div>
   )
 }
+
