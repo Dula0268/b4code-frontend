@@ -10,6 +10,7 @@ import { useCartStore, type MenuItem } from "@/store/guest/ordering/cart.store";
 import { useGuestMenuStore } from "@/store/guest/ordering/menu.store";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { useSearchParams } from "next/navigation";
 import MenuItemCard from "./menu-item-card";
 import OrderSidebar from "./order-sidebar";
 
@@ -59,6 +60,147 @@ export default function MenuClient() {
   const filterRef = React.useRef<HTMLDivElement>(null);
 
   const user = useAuthStore((s) => s.user);
+  const searchParams = useSearchParams();
+  const setQRContext = useOrderContextStore((s) => s.setQRContext);
+  const [isInitializing, setIsInitializing] = React.useState(true);
+  const [paramError, setParamError] = React.useState<string | null>(null);
+
+  // Validate parameters and initialize context on landing
+  React.useEffect(() => {
+    async function initializeContext() {
+      if (!searchParams) {
+        setIsInitializing(false);
+        return;
+      }
+
+      const propIdStr = searchParams.get("propertyId");
+      const roomNumStr = searchParams.get("roomNumber");
+      const tabIdStr = searchParams.get("tableId");
+      const qrIdStr = searchParams.get("qrId");
+
+      let hasRoom = !!roomNumStr;
+      let hasTable = !!tabIdStr;
+      let parsedTableId: number | undefined = undefined;
+      let parsedRoomNumber: string | undefined = roomNumStr || undefined;
+      let qrName = "";
+      let qrType = "";
+      let propId = propIdStr ? Number(propIdStr) : undefined;
+
+      if (qrIdStr) {
+        try {
+          const { default: api } = await import("@/lib/axios");
+          const response = await api.get(`/qr/unique/${qrIdStr}`);
+          const qrData = response.data;
+          
+          if (qrData) {
+            qrName = qrData.name || "QR Location";
+            qrType = qrData.type?.toUpperCase() || "TABLE";
+            propId = qrData.propertyId;
+            
+            if (qrType === "ROOM") {
+              hasRoom = true;
+              parsedRoomNumber = qrData.roomNumber;
+            } else {
+              hasTable = true;
+              parsedTableId = qrData.tableId;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch QR details:", e);
+        }
+      }
+
+      // If no query parameters are provided and we failed to get one, check logged-in context
+      if (!propId && !hasRoom && !hasTable) {
+        const currentPropId = qrContext?.propertyId || user?.propertyId;
+        if (currentPropId) {
+          setIsInitializing(false);
+          return;
+        }
+        setParamError("Invalid request. Missing property identifier.");
+        setIsInitializing(false);
+        return;
+      }
+
+      // 1. Validate propertyId
+      if (!propId || isNaN(propId)) {
+        setParamError("Invalid request. Missing property identifier.");
+        setIsInitializing(false);
+        return;
+      }
+
+      // QR data already fetched if qrIdStr exists.
+
+      // 2. Validate roomNumber and tableId (exactly one must be provided)
+      if (hasRoom && hasTable) {
+        setParamError("Invalid request. Cannot specify both room number and table ID.");
+        setIsInitializing(false);
+        return;
+      }
+
+      if (!hasRoom && !hasTable) {
+        setParamError("Invalid request. Missing location identifier (must provide either roomNumber or tableId).");
+        setIsInitializing(false);
+        return;
+      }
+
+      if (hasTable && tabIdStr && !parsedTableId) {
+        parsedTableId = Number(tabIdStr);
+        if (isNaN(parsedTableId)) {
+          setParamError("Invalid request. Table ID must be a valid number.");
+          setIsInitializing(false);
+          return;
+        }
+      }
+
+      // Check if current context already matches the parsed parameters to prevent redundant updates
+      if (qrContext &&
+          qrContext.propertyId === propId &&
+          qrContext.tableId === parsedTableId &&
+          (hasRoom ? qrContext.roomNumber === parsedRoomNumber : true)) {
+        setIsInitializing(false);
+        return;
+      }
+
+      // 3. Verify property existence and fetch its name
+      try {
+        let propertyName = "Property Name";
+        const { propertiesApi } = await import("@/api/properties/properties.api");
+        const list = await propertiesApi.getPublicList();
+        const prop = list.find((p) => p.id === propId);
+        
+        if (prop) {
+          propertyName = prop.name;
+        } else {
+          setParamError("Invalid request. The specified property does not exist.");
+          setIsInitializing(false);
+          return;
+        }
+
+        // Set the Order/QR context in the store
+        setQRContext({
+          qrId: qrIdStr || `scan-${propId}-${parsedRoomNumber || parsedTableId}`,
+          propertyId: propId,
+          roomId: parsedRoomNumber ? parseInt(parsedRoomNumber, 10) : undefined,
+          roomNumber: parsedRoomNumber || undefined,
+          tableId: parsedTableId,
+          propertyName: propertyName,
+          locationLabel: qrName || (hasTable ? `Table ${tabIdStr || parsedTableId}` : `Room ${parsedRoomNumber}`),
+          type: qrType || (hasTable ? "TABLE" : "ROOM"),
+          name: qrName || (hasTable ? `Table ${tabIdStr || parsedTableId}` : `Room ${parsedRoomNumber}`),
+          status: "ACTIVE",
+        });
+
+        setIsInitializing(false);
+      } catch (err) {
+        console.error("Error resolving property context:", err);
+        setParamError("Failed to verify property details. Please try again.");
+        setIsInitializing(false);
+      }
+    }
+
+    initializeContext();
+  }, [searchParams, setQRContext, qrContext, user?.propertyId]);
 
   // Fetch menu from API when propertyId is available (from QR or Session)
   React.useEffect(() => {
@@ -155,6 +297,35 @@ export default function MenuClient() {
   }, [allItems, activeCategory, searchQuery, tagFilters, sortBy]);
 
   const hasActiveFilters = tagFilters.size > 0 || sortBy !== "default";
+
+  // Parameter Initialization loading state
+  if (isInitializing) {
+    return (
+      <div className="ps-container flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[var(--gray-5)] border-t-[var(--brand-primary)]" />
+          <p className="text-sm text-[var(--gray-3)] mt-4">Initializing menu context...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Parameter validation error state
+  if (paramError) {
+    return (
+      <div className="ps-container flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-sm">
+          <div className="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <p className="text-lg font-bold text-[var(--black-2)]">Invalid Request</p>
+          <p className="text-sm text-[var(--gray-3)] mt-1">{paramError}</p>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (menuLoading) {

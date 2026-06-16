@@ -1,55 +1,112 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import WelcomeModal from "@/components/guest/ordering/landing/welcome-modal";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import MenuClient from "@/components/guest/ordering/menu/menu-client";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
-import { useGuestGuard } from "@/hooks/use-guest-guard";
+import api from "@/lib/axios";
 
-export default function GuestOrderLanding() {
-  const { ready } = useGuestGuard();
+import { Suspense } from "react";
+
+function GuestOrderLandingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const qrId = searchParams.get("qrId");
+
+  const setQRContext = useOrderContextStore((s) => s.setQRContext);
   const qrContext = useOrderContextStore((s) => s.qrContext);
-  const loading = useOrderContextStore((s) => s.loading);
+
+  const [localLoading, setLocalLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (ready && !loading && !qrContext) {
+    async function loadQRContext() {
+      if (!qrId) {
+        setLocalLoading(false);
+        return;
+      }
+
+      try {
+        const response = await api.get(`/api/qr/unique/${qrId}`);
+        const data = response.data;
+
+        if (data.status === "INACTIVE") {
+          setErrorMsg("This QR code is currently inactive.");
+          setLocalLoading(false);
+          return;
+        }
+
+        setQRContext({
+          qrId: data.uniqueQrId,
+          propertyId: data.propertyId,
+          roomId: data.roomNumber ? parseInt(data.roomNumber) : undefined, // Assuming roomId is mapped or can be ignored if we just use roomNumber
+          tableId: data.tableId,
+          propertyName: data.name || "Property Name", // Backend currently doesn't send property name inside QR? We might need to fetch it later if not available.
+          locationLabel: data.tableId ? `Table ${data.tableId}` : (data.roomNumber ? `Room ${data.roomNumber}` : data.location),
+          type: data.type,
+          name: data.name,
+          status: data.status,
+        });
+
+        setLocalLoading(false);
+      } catch (error) {
+        console.error("Error loading QR context", error);
+        setErrorMsg("Invalid QR code or QR code not found.");
+        setLocalLoading(false);
+      }
+    }
+
+    // Only load if we don't have the context or if qrId differs
+    if (qrId && (!qrContext || qrContext.qrId !== qrId)) {
+      loadQRContext();
+    } else {
+      setLocalLoading(false);
+    }
+  }, [qrId, qrContext, setQRContext]);
+
+  // If no qrId provided and no existing context
+  useEffect(() => {
+    if (!localLoading && !qrId && !qrContext) {
       router.push("/guest/my-room/qr-scanner");
     }
-  }, [ready, qrContext, loading, router]);
+  }, [localLoading, qrId, qrContext, router]);
 
-  if (!ready) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
-    </div>
-  )
-
-  if (loading) {
+  if (localLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-center text-gray-600">Loading...</p>
+        <div className="w-8 h-8 border-4 border-t-[var(--brand-primary)] border-neutral-200 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
+        <h2 className="text-2xl font-bold text-[var(--state-error)] mb-2">QR Code Error</h2>
+        <p className="text-gray-600 mb-6">{errorMsg}</p>
       </div>
     );
   }
 
   if (!qrContext) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-center text-gray-600">Invalid QR code or session data. Please scan a valid QR code.</p>
-      </div>
-    );
+    return null; // Will redirect in useEffect
   }
 
   return (
     <div className="relative">
-      {/* Menu page shown behind the overlay (non-interactive) */}
-      <div className="pointer-events-none select-none" aria-hidden="true">
-        <MenuClient />
-      </div>
-
-      {/* Welcome overlay modal */}
-      <WelcomeModal propertyName={qrContext.propertyName} locationLabel={qrContext.locationLabel} />
+      <MenuClient />
     </div>
+  );
+}
+
+export default function GuestOrderLanding() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-t-[var(--brand-primary)] border-neutral-200 rounded-full animate-spin" />
+      </div>
+    }>
+      <GuestOrderLandingContent />
+    </Suspense>
   );
 }

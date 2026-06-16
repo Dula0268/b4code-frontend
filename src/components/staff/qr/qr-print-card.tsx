@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuthStore } from "@/store/auth/auth.store";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, QrCode, Printer } from "lucide-react";
+import { ArrowLeft, QrCode, Printer } from "lucide-react";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,21 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
   const updateQR = useStaffQRStore((s) => s.updateQR);
 
   const [instruction, setInstruction] = useState(qr?.instructionText ?? "Scan to Order Food");
+  const { user } = useAuthStore();
+  const [propertyName, setPropertyName] = useState<string>("Hotel B4Code");
+
+  useEffect(() => {
+    const pid = sessionStorage.getItem("selected_property_id") || user?.propertyId;
+    if (pid) {
+      import("@/api/properties/properties.api").then(({ propertiesApi }) => {
+        propertiesApi.getPublicList().then((list) => {
+          const prop = list.find((p) => p.id === Number(pid));
+          if (prop) setPropertyName(prop.name);
+        }).catch(console.error);
+      });
+    }
+  }, [user?.propertyId]);
+
   const [showRoom, setShowRoom] = useState(qr?.showRoomNumber ?? true);
   const [showLogo, setShowLogo] = useState(qr?.showLogo ?? true);
 
@@ -103,9 +119,9 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
                   {showLogo && (
                     <div className="bg-[var(--brand-primary)] px-4 py-3 flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white">H</span>
+                        <span className="text-[8px] font-bold text-white">{propertyName ? propertyName[0].toUpperCase() : "H"}</span>
                       </div>
-                      <span className="text-[10px] font-bold text-white">Hotel B4Code</span>
+                      <span className="text-[10px] font-bold text-white">{propertyName}</span>
                     </div>
                   )}
 

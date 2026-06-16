@@ -3,7 +3,7 @@ import api, { BASE_URL } from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-export type QRType = "Dining Table" | "Room" | "Outdoor" | "Bar";
+export type QRType = "Table" | "Room";
 export type QRStatus = "active" | "inactive";
 export type QRTab = "Table" | "Room";
 
@@ -21,6 +21,8 @@ export interface QRContext {
   showRoomNumber: boolean;
   showLogo: boolean;
   qrImageUrl?: string;
+  roomNumber?: string;
+  tableId?: number;
 }
 
 // API Response types
@@ -44,6 +46,8 @@ interface QRResponse {
   lastScannedAt: string | null;
   qrImageUrl: string;
   qr_image_url?: string;
+  roomNumber?: string;
+  tableId?: number;
 }
 
 // ─── Store ─────────────────────────────────────────────────────────────────────
@@ -98,11 +102,20 @@ function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
 
   console.log('Mapping QR Response:', { original: data.qrImageUrl || data.qr_image_url, mapped: qrImageUrl });
 
+  // Normalize incoming backend types to displayType
+  let displayType: QRType = "Table";
+  if (data.type) {
+    const upperType = data.type.toUpperCase();
+    if (upperType === "ROOM") {
+      displayType = "Room";
+    }
+  }
+
   return {
     id: (data.id || "").toString(),
     name: data.name || "",
     location: data.location || "",
-    type: (data.type || "Dining Table") as QRType,
+    type: displayType,
     tab,
     status: (data.status?.toLowerCase() === "active" ? "active" : "inactive") as QRStatus,
     description: data.description || "",
@@ -120,6 +133,8 @@ function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
     showRoomNumber: !!data.showRoomNumber,
     showLogo: data.showLogo !== false,
     qrImageUrl: qrImageUrl,
+    roomNumber: data.roomNumber,
+    tableId: data.tableId,
   };
 }
 
@@ -168,10 +183,8 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
     set({ loading: true, error: null });
     try {
       const typeMap: Record<QRType, string> = {
-        "Dining Table": "DINING_TABLE",
+        Table: "TABLE",
         Room: "ROOM",
-        Outdoor: "OUTDOOR",
-        Bar: "BAR",
       };
 
       const payload = {
@@ -183,6 +196,8 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         instructionText: data.instructionText,
         showRoomNumber: data.showRoomNumber,
         showLogo: data.showLogo,
+        roomNumber: data.roomNumber,
+        tableId: data.tableId,
       };
 
       const response = await api.post("/qr/generate", payload);
@@ -205,10 +220,8 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
     set({ loading: true, error: null });
     try {
       const typeMap: Record<QRType, string> = {
-        "Dining Table": "DINING_TABLE",
+        Table: "TABLE",
         Room: "ROOM",
-        Outdoor: "OUTDOOR",
-        Bar: "BAR",
       };
 
       interface QRUpdatePayload {
@@ -219,6 +232,8 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         instructionText?: string;
         showRoomNumber?: boolean;
         showLogo?: boolean;
+        roomNumber?: string;
+        tableId?: number;
       }
       const payload: QRUpdatePayload = {};
       if (data.name) payload.name = data.name;
@@ -228,6 +243,8 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
       if (data.instructionText) payload.instructionText = data.instructionText;
       if (data.showRoomNumber !== undefined) payload.showRoomNumber = data.showRoomNumber;
       if (data.showLogo !== undefined) payload.showLogo = data.showLogo;
+      if (data.roomNumber !== undefined) payload.roomNumber = data.roomNumber;
+      if (data.tableId !== undefined) payload.tableId = data.tableId;
 
       const response = await api.put(`/qr/${id}`, payload);
       const tab = response.data.type === "ROOM" ? "Room" : "Table";

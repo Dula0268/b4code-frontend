@@ -6,6 +6,8 @@ export interface QRContextData {
   qrId: string; // Unique QR ID
   propertyId: number; // Property ID for fetching menu
   roomId?: number; // Optional Room ID from QR
+  roomNumber?: string; // Optional Room Number string from QR
+  tableId?: number; // Optional Table ID from QR
   propertyName: string; // Name of the property
   locationLabel: string; // Location/Table name or Room number
   type: string; // QR type (DINING_TABLE, ROOM, etc.)

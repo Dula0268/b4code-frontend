@@ -51,11 +51,14 @@ type OrderState = {
     serviceCharge: number;
     tax: number;
     total: number;
-    roomNumber: string;
-    guestName: string;
+    roomNumber?: string;
+    tableId?: number;
+    tableNumber?: string;
+    guestName?: string;
+    guestPhone?: string;
     paymentMethod: "card" | "room-charge";
     propertyId: number;
-    guestId: number;
+    guestId?: number;
   }) => Promise<string | null>; // Returns order ID or null on error
 
   /** Fetch order history for a guest */
@@ -153,6 +156,10 @@ export const useOrderStore = create<OrderState>((set) => ({
         propertyId: opts.propertyId,
         guestId: opts.guestId,
         roomNumber: opts.roomNumber,
+        tableId: opts.tableId,
+        tableNumber: opts.tableNumber,
+        guestName: opts.guestName,
+        guestPhone: opts.guestPhone,
         totalAmount: opts.total,
         status: "NEW",
       });
@@ -162,6 +169,10 @@ export const useOrderStore = create<OrderState>((set) => ({
         propertyId: opts.propertyId,
         guestId: opts.guestId,
         roomNumber: opts.roomNumber,
+        tableId: opts.tableId,
+        tableNumber: opts.tableNumber,
+        guestName: opts.guestName,
+        guestPhone: opts.guestPhone,
         totalAmount: opts.total,
         status: "NEW",
       });
@@ -173,8 +184,8 @@ export const useOrderStore = create<OrderState>((set) => ({
       // Map backend response to frontend Order type
       const order: Order = {
         id: `#ORD-${backendOrder.id}`,
-        roomNumber: opts.roomNumber,
-        guestName: opts.guestName,
+        roomNumber: opts.roomNumber || opts.tableNumber || "",
+        guestName: opts.guestName || "Guest",
         paymentMethod: opts.paymentMethod,
         lines: opts.lines,
         subtotal: opts.subtotal,
