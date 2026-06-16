@@ -10,7 +10,7 @@ export interface PropertyListing {
     id: string
     title: string
     location: string
-    propertyType: string
+    propertyType?: string
     pricePerNight: number
     maxGuests: number
     baseGuests: number

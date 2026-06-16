@@ -351,7 +351,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                         { label: "Value for Money", description: "Did the stay meet expectations for the price paid?" }
                                     ].map((cat, idx) => {
                                         // Match by start of string or use overall rating as fallback
-                                        const match = property.reviewBreakdown.find((r: any) => 
+                                        const match = property.reviewBreakdown.find((r: { label: string; score: number }) => 
                                             r.label.toLowerCase().includes(cat.label.split(' ')[0].toLowerCase())
                                         )
                                         const score = match ? match.score : Math.max(0, property.rating - (Math.random() * 0.2))

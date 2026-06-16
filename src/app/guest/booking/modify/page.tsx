@@ -164,7 +164,7 @@ export default function ModifyBookingPage() {
             cancelBooking(storedBooking.id)
             setIsSaving(false)
             setModal("success-cancel")
-            const isRefundable = storedBooking.paidInFull || storedBooking.paymentMethod === "card"
+            const isRefundable = storedBooking.paidInFull || storedBooking.paymentMethod === "online"
             setModalMsg(isRefundable
                 ? `Your booking has been cancelled. A full refund of ${formatLKR(storedBooking.totalPrice)} is on its way to your card.`
                 : "Your booking has been cancelled. No payments were processed."
@@ -172,7 +172,7 @@ export default function ModifyBookingPage() {
         }, 1200)
     }
 
-    const isRefundable = storedBooking.paidInFull || storedBooking.paymentMethod === "card"
+    const isRefundable = storedBooking.paidInFull || storedBooking.paymentMethod === "online"
 
     return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc] text-[#0f172a]">
@@ -273,7 +273,7 @@ export default function ModifyBookingPage() {
                                     <div className="flex justify-between">
                                         <span className="text-gray-400 font-semibold">Payment Method</span>
                                         <span className="font-bold text-[#9a3300] uppercase tracking-wide">
-                                            {storedBooking.paymentMethod === "card" ? "Pay Online" : "Pay at Property"}
+                                            {storedBooking.paymentMethod === "online" ? "Pay Online" : "Pay at Property"}
                                         </span>
                                     </div>
                                 </div>

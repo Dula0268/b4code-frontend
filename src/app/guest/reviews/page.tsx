@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useRef, Suspense, useEffect } from "react"
-import { Star, X, Camera, ImagePlus, ChevronLeft, CheckCircle2, RefreshCw, MapPin, Home, AlertCircle, Info, ShieldCheck, PenTool, AlertTriangle } from "lucide-react"
+import { useState, useRef, Suspense } from "react"
+import { Star, X, Camera, ImagePlus, ChevronLeft, CheckCircle2, RefreshCw, MapPin, Home, AlertCircle, ShieldCheck, PenTool } from "lucide-react"
 import Link from "next/link"
-import { useSearchParams, useRouter } from "next/navigation"
-import { useAuthStore } from "@/store/auth/auth.store"
+import { useSearchParams } from "next/navigation"
+
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import { guestApi } from "@/api/guest/guest.api"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
@@ -78,7 +78,6 @@ function StarRating({
 
 function SubmitReviewContent() {
   const { ready } = useGuestGuard()
-  const router = useRouter()
   const searchParams = useSearchParams()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -86,7 +85,7 @@ function SubmitReviewContent() {
   const bookingRef = searchParams?.get("bookingRef") || ""
 
   const getBookingByCode = useGuestBookingStore(s => s.getBookingByCode)
-  const updateBookingStatus = useGuestBookingStore(s => s.updateBookingStatus)
+
   const storedBooking = getBookingByCode(bookingRef) || useGuestBookingStore.getState().bookings.find(b => b.propertyId === propertyId)
 
   // Form State
@@ -157,7 +156,7 @@ function SubmitReviewContent() {
         photoUrls: photos.map(p => p.url)
       })
       setSubmitted(true)
-    } catch (err) {
+    } catch {
       setErrorMsg("Failed to submit your review. Please try again.")
     } finally {
       setIsSubmitting(false)

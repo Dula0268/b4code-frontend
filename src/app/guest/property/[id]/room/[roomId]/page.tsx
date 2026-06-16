@@ -18,6 +18,7 @@ type BackendRoom = {
     roomType?: string
     maxGuests?: number
     maxOccupancy?: number
+    numberOfRooms?: number
     pricePerNight?: number
     amenities?: string
     imageSrc?: string
@@ -44,6 +45,7 @@ function mapBackendRoom(room: BackendRoom, fallback?: Room): Room {
         name: room.name ?? fallback?.name ?? "Room",
         maxGuests: Number(room.maxGuests ?? room.maxOccupancy ?? fallback?.maxGuests ?? 2),
         bedType: fallback?.bedType ?? room.roomType ?? "1 Bed",
+        numberOfRooms: Number(room.numberOfRooms ?? fallback?.numberOfRooms ?? 1),
         sqft: fallback?.sqft ?? 0,
         pricePerNight: Number(room.pricePerNight ?? fallback?.pricePerNight ?? 0),
         originalPrice: fallback?.originalPrice,

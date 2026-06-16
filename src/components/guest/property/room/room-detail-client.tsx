@@ -41,7 +41,7 @@ function useRoomDetailLogic(room: Room, searchParams: ReadonlyURLSearchParams | 
         to: initialCheckOut,
     })
 
-    const [guests, setGuests] = useState<GuestCounts>({ adults: initialGuestCount, children: 0 })
+    const [guests, setGuests] = useState<GuestCounts>({ adults: initialGuestCount, children: 0, rooms: 1 })
     const [guestOpen, setGuestOpen] = useState(false)
 
     const [promoCode, setPromoCode] = useState("")
