@@ -108,8 +108,7 @@ function SubmitReviewContent() {
 
   const isFormValid = overallRating > 0 && 
                       reviewText.trim().length >= 20 && 
-                      Object.values(categoryRatings).every(r => r > 0) &&
-                      storedBooking?.status === "COMPLETED"
+                      Object.values(categoryRatings).every(r => r > 0)
 
   const handleCategoryRatingChange = (key: string, rating: number) => {
     setCategoryRatings(prev => ({
@@ -331,31 +330,7 @@ function SubmitReviewContent() {
         <div className="lg:col-span-8 flex flex-col gap-6 w-full">
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             
-            {/* Warning banner if booking status is not completed */}
-            {storedBooking.status !== "COMPLETED" && (
-              <div className="bg-amber-50 border border-amber-250 rounded-3xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <AlertTriangle size={20} />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-extrabold text-[#0f172a]">Stay Not Completed Yet</h4>
-                    <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                      This booking is currently marked as <strong className="uppercase">{storedBooking.status}</strong>. To submit a review, please mark your stay as completed.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateBookingStatus(storedBooking.confirmationCode, { status: "COMPLETED" })
-                  }}
-                  className="px-5 py-2.5 bg-amber-600 hover:bg-amber-750 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-amber-600/10 whitespace-nowrap cursor-pointer hover:scale-102 active:scale-98 self-start sm:self-auto"
-                >
-                  Mark Stay as Completed
-                </button>
-              </div>
-            )}
+
 
             {/* Overall Experience */}
             <div className="bg-white border border-[#e2e8f0] rounded-3xl p-6 shadow-sm flex flex-col gap-4">

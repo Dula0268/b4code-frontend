@@ -61,17 +61,22 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
     )
 }
 
-export function RatingBar({ label, score }: { label: string; score: number }) {
+export function RatingBar({ label, score, description }: { label: string; score: number; description?: string }) {
     return (
-        <div className="flex items-center gap-3">
-            <span className="text-[13px] text-[#555] w-28 flex-shrink-0">{label}</span>
-            <div className="flex-1 h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
-                <div
-                    className="h-full bg-[var(--brand-primary)] rounded-full transition-all"
-                    style={{ width: `${(score / 5) * 100}%` }}
-                />
+        <div className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+            <div className="flex-1 pr-4">
+                <span className="text-[14px] font-bold text-[#1d1d1d] block">{label}</span>
+                {description && <p className="text-[12px] text-[#828282] mt-0.5 leading-snug">{description}</p>}
             </div>
-            <span className="text-[13px] font-semibold text-[#1d1d1d] w-8 text-right">{score.toFixed(1)}</span>
+            <div className="flex items-center gap-3 w-[120px] shrink-0">
+                <div className="flex-1 h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-[var(--brand-primary)] rounded-full transition-all"
+                        style={{ width: `${(score / 5) * 100}%` }}
+                    />
+                </div>
+                <span className="text-[13px] font-semibold text-[#1d1d1d] w-6 text-right">{score.toFixed(1)}</span>
+            </div>
         </div>
     )
 }
