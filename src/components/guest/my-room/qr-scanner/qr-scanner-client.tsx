@@ -1,11 +1,7 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect, useMemo } from "react"
 import { Camera, ExternalLink, HelpCircle, X, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react"
-
-const QR_CODE_CONFIG = {
-  QR_IMAGE_URL: `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=16&data=${encodeURIComponent("https://primestay.lk/guest/my-room/menu")}&color=000000&bgcolor=ffffff`
-} as const;
 
 declare class BarcodeDetector {
   constructor(options: { formats: string[] })
@@ -45,7 +41,12 @@ function useQrScannerLogic() {
           setTimeout(() => {
             setShowCamera(false)
             setPhase("idle")
-            alert("Scanned: " + codes[0].rawValue)
+            const rawValue = codes[0].rawValue
+            if (rawValue.startsWith("http://") || rawValue.startsWith("https://") || rawValue.startsWith("/")) {
+              window.location.href = rawValue
+            } else {
+              alert("Scanned: " + rawValue)
+            }
           }, 1000)
           return
         }
@@ -89,10 +90,28 @@ function useQrScannerLogic() {
 
 export default function QrScannerPageClient() {
   const { videoRef, showCamera, phase, errorMsg, startCamera, closeCamera } = useQrScannerLogic();
+  const [directMenuUrl, setDirectMenuUrl] = useState("")
+
+  useEffect(() => {
+    setDirectMenuUrl(`${window.location.origin}/guest/order/menu?propertyId=1&roomNumber=304`)
+  }, [])
+
+  const qrImageUrl = useMemo(() => {
+    if (!directMenuUrl) return ""
+    return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=16&data=${encodeURIComponent(directMenuUrl)}&color=000000&bgcolor=ffffff`
+  }, [directMenuUrl])
 
   return (
     <>
-      <div className="min-h-screen pt-24 pb-16 flex flex-col items-center justify-center px-4" style={{ background: "transparent" }}>
+      <div className="hidden md:flex min-h-screen flex-col items-center justify-center px-4 bg-[#f8f6f5]">
+        <AlertCircle size={48} className="text-[var(--brand-primary)] mb-4" />
+        <h1 className="text-2xl font-bold text-[#1f1f1f] mb-2 text-center">Mobile Device Required</h1>
+        <p className="text-[#6b7280] text-center max-w-md">
+          Please use a mobile device to scan QR codes and access our digital menu.
+        </p>
+      </div>
+
+      <div className="md:hidden min-h-screen pt-24 pb-16 flex flex-col items-center justify-center px-4" style={{ background: "transparent" }}>
         <div className="w-full max-w-[420px] flex flex-col items-center text-center">
           <div className="w-12 h-1 rounded-full mb-6" style={{ background: "var(--brand-primary)" }} />
 
@@ -106,19 +125,27 @@ export default function QrScannerPageClient() {
           <div className="relative mb-10">
             <div className="rounded-3xl p-8 flex items-center justify-center w-[280px] h-[280px]" style={{ background: "white", boxShadow: "0 12px 40px rgba(0,0,0,0.06)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={QR_CODE_CONFIG.QR_IMAGE_URL}
-                alt="Scan this QR code to access the digital menu"
-                className="w-full h-full object-contain"
-                onError={e => { (e.target as HTMLImageElement).style.display = "none" }}
-              />
+              {qrImageUrl ? (
+                <img
+                  src={qrImageUrl}
+                  alt="Scan this QR code to access the digital menu"
+                  className="w-full h-full object-contain"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none" }}
+                />
+              ) : (
+                <div className="w-10 h-10 border-4 border-t-[var(--brand-primary)] border-neutral-200 rounded-full animate-spin" />
+              )}
             </div>
             <button onClick={startCamera} aria-label="Open camera to scan QR code" className="absolute -top-3 -right-3 w-[46px] h-[46px] rounded-xl flex items-center justify-center shadow-lg transition-colors cursor-pointer text-white" style={{ background: "var(--brand-primary)" }}>
               <Camera size={22} />
             </button>
           </div>
 
-          <button className="w-[280px] flex items-center justify-center gap-2 text-white font-bold text-[0.9375rem] py-[15px] rounded-xl transition-colors cursor-pointer mb-6" style={{ background: "var(--brand-primary)" }}>
+          <button 
+            onClick={() => { if (directMenuUrl) window.location.href = directMenuUrl }}
+            className="w-[280px] flex items-center justify-center gap-2 text-white font-bold text-[0.9375rem] py-[15px] rounded-xl transition-colors cursor-pointer mb-6" 
+            style={{ background: "var(--brand-primary)" }}
+          >
             Visit Menu Directly <ExternalLink size={17} />
           </button>
 

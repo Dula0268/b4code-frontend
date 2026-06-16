@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/guest/ordering/cart.store";
 import { useOrderStore } from "@/store/guest/ordering/order.store";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 
 /* ─── Helpers ─── */
 
@@ -22,10 +23,19 @@ export default function CheckoutClient() {
   const user = useAuthStore((s) => s.user);
   
   // Derived data from session
-  const roomNumber = user?.roomId ? String(user.roomId) : "";
-  const guestName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "";
-  const propertyId = user?.propertyId;
+  const qrContext = useOrderContextStore((s) => s.qrContext);
+  const roomNumber = user?.roomId ? String(user.roomId) : (qrContext?.roomNumber || (qrContext?.roomId ? String(qrContext.roomId) : ""));
+  const authGuestName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "";
+  const propertyId = user?.propertyId || qrContext?.propertyId;
   const guestId = user?.userId;
+  const tableId = qrContext?.tableId;
+  const tableNumber = qrContext?.locationLabel;
+
+  const [walkInName, setWalkInName] = React.useState("");
+  const [walkInPhone, setWalkInPhone] = React.useState("");
+  
+  const isWalkIn = !user;
+  const finalGuestName = isWalkIn ? walkInName : authGuestName;
 
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
@@ -46,9 +56,8 @@ export default function CheckoutClient() {
   const placeOrder = useOrderStore((s) => s.placeOrder);
 
   const handlePlaceOrder = () => {
-    if (!roomNumber || !guestName || propertyId === undefined || guestId === undefined) {
-      console.error("Missing required order data: roomNumber, guestName, propertyId, or guestId");
-      alert("Please ensure you are logged in with an active booking to place an order.");
+    if ((!roomNumber && !tableId) || !finalGuestName || !propertyId) {
+      alert("Please provide your name and ensure you have scanned a valid QR code.");
       return;
     }
 
@@ -59,7 +68,10 @@ export default function CheckoutClient() {
       tax,
       total,
       roomNumber,
-      guestName,
+      tableId,
+      tableNumber,
+      guestName: finalGuestName,
+      guestPhone: walkInPhone,
       paymentMethod: paymentMethod === "room-charge" ? "room-charge" : "card",
       propertyId,
       guestId,
@@ -338,6 +350,26 @@ export default function CheckoutClient() {
                   Payment Method
                 </p>
 
+                {isWalkIn && (
+                  <div className="space-y-3 mb-4">
+                    <p className="text-[14px] font-medium text-[#1f1f1f]">Guest Details (Walk-in)</p>
+                    <input
+                      type="text"
+                      placeholder="Your Full Name *"
+                      value={walkInName}
+                      onChange={(e) => setWalkInName(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Phone Number (Optional)"
+                      value={walkInPhone}
+                      onChange={(e) => setWalkInPhone(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
+                    />
+                  </div>
+                )}
+
                 {/* Pay In-App option */}
                 <button
                   onClick={() => setPaymentMethod("in-app")}
@@ -389,47 +421,49 @@ export default function CheckoutClient() {
                   />
                 </button>
 
-                {/* Charge to Room option */}
-                <button
-                  onClick={() => setPaymentMethod("room-charge")}
-                  className={`w-full flex items-center gap-3 rounded-lg border transition cursor-pointer ${
-                    paymentMethod === "room-charge"
-                      ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)] p-[14px]"
-                      : "bg-[#f8f6f5] border-[#e5e7eb] p-[13px]"
-                  }`}
-                >
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M10 21V17a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4M3 7l9-4 9 4"
-                        stroke={paymentMethod === "room-charge" ? "#953002" : "#1f1f1f"}
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p
-                      className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "room-charge" ? "text-[#953002]" : "text-[#1f1f1f]"}`}
-                    >
-                      Charge to Room
-                    </p>
-                    <p
-                      className={`text-[12px] leading-[16px] ${paymentMethod === "room-charge" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}
-                    >
-                      Room {roomNumber} • Verified
-                    </p>
-                  </div>
-                  {/* Radio indicator */}
-                  <div
-                    className={`shrink-0 w-5 h-5 rounded-full border ${
+                {/* Charge to Room option (Only for authenticated users) */}
+                {!isWalkIn && (
+                  <button
+                    onClick={() => setPaymentMethod("room-charge")}
+                    className={`w-full flex items-center gap-3 rounded-lg border transition cursor-pointer ${
                       paymentMethod === "room-charge"
-                        ? "bg-[#953002] border-[#953002]"
-                        : "border-[#d1d5db]"
+                        ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)] p-[14px]"
+                        : "bg-[#f8f6f5] border-[#e5e7eb] p-[13px]"
                     }`}
-                  />
-                </button>
+                  >
+                    <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path
+                          d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M10 21V17a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4M3 7l9-4 9 4"
+                          stroke={paymentMethod === "room-charge" ? "#953002" : "#1f1f1f"}
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p
+                        className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "room-charge" ? "text-[#953002]" : "text-[#1f1f1f]"}`}
+                      >
+                        Charge to Room
+                      </p>
+                      <p
+                        className={`text-[12px] leading-[16px] ${paymentMethod === "room-charge" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}
+                      >
+                        Room {roomNumber} • Verified
+                      </p>
+                    </div>
+                    {/* Radio indicator */}
+                    <div
+                      className={`shrink-0 w-5 h-5 rounded-full border ${
+                        paymentMethod === "room-charge"
+                          ? "bg-[#953002] border-[#953002]"
+                          : "border-[#d1d5db]"
+                      }`}
+                    />
+                  </button>
+                )}
               </div>
             </div>
 

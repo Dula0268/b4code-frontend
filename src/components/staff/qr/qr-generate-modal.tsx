@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Save, Info } from "lucide-react";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
@@ -15,9 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const TYPE_TAB: Record<QRType, QRTab> = {
-  "Dining Table": "Table",
-  Outdoor: "Table",
-  Bar: "Table",
+  Table: "Table",
   Room: "Room",
 };
 
@@ -38,12 +36,26 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
 
   const isEdit = !!qrId;
 
-  const [type, setType] = useState<QRType>(existingQR?.type ?? "Dining Table");
+  const [type, setType] = useState<QRType>(existingQR?.type ?? "Table");
   const [name, setName] = useState(existingQR?.name ?? "");
   const [location, setLocation] = useState(existingQR?.location ?? "");
   const [description, setDescription] = useState(existingQR?.description ?? "");
   const [isActive, setIsActive] = useState(existingQR?.status === "active" || !existingQR);
   const [nameError, setNameError] = useState(false);
+  const [roomNumber, setRoomNumber] = useState(existingQR?.roomNumber ?? "");
+  const [tableId, setTableId] = useState<number | undefined>(existingQR?.tableId ?? undefined);
+  const [rooms, setRooms] = useState<{id: number, roomType: string}[]>([]);
+
+  // Fetch rooms dynamically when property is selected
+  useEffect(() => {
+    if (propertyId && type === "Room") {
+      import("@/lib/axios").then(({ default: api }) => {
+        api.get(`/rooms/property/${propertyId}`)
+          .then(res => setRooms(res.data || []))
+          .catch(err => console.error("Failed to fetch rooms:", err));
+      });
+    }
+  }, [propertyId, type]);
 
   const handleSave = async () => {
     if (!name.trim()) { setNameError(true); return; }
@@ -53,7 +65,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
 
     try {
       if (isEdit && qrId) {
-        await updateQR(qrId, { type, name, location, description, status: isActive ? "active" : "inactive", tab: TYPE_TAB[type] });
+        await updateQR(qrId, { type, name, location, description, status: isActive ? "active" : "inactive", tab: TYPE_TAB[type], roomNumber: type === "Room" ? roomNumber : undefined, tableId: type === "Table" ? tableId : undefined });
         setSuccess(`QR "${name}" updated successfully.`);
         router.push(`/staff/qr?propertyId=${propertyId}`);
       } else {
@@ -67,6 +79,8 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
           instructionText: "Scan to Order Food",
           showRoomNumber: true,
           showLogo: true,
+          roomNumber: type === "Room" ? roomNumber : undefined,
+          tableId: type === "Table" ? tableId : undefined,
         }, propertyId);
         setSuccess(`QR "${name}" has been added to your QR management.`);
         router.push(`/staff/qr/${id}?propertyId=${propertyId}`);
@@ -121,7 +135,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" className="bg-white border-[var(--gray-5)] z-[100]">
-                    {(["Dining Table", "Room", "Outdoor", "Bar"] as QRType[]).map((t) => (
+                    {(["Table", "Room"] as QRType[]).map((t) => (
                       <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
                     ))}
                   </SelectContent>
@@ -140,6 +154,41 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
                 />
                 {nameError && <p className="text-[10px] text-[var(--state-error)] mt-0.5">Name is required</p>}
               </div>
+
+              {/* Room Number / Table ID */}
+              {type === "Room" ? (
+                <div>
+                  <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Room <span className="text-[var(--state-error)]">*</span></Label>
+                  <Select value={roomNumber} onValueChange={setRoomNumber}>
+                    <SelectTrigger className="w-full mt-1 text-xs rounded-[8px] border-[var(--gray-5)] bg-white">
+                      <SelectValue placeholder="Select a room" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" className="bg-white border-[var(--gray-5)] z-[100]">
+                      {rooms.map(r => (
+                        <SelectItem key={r.id} value={String(r.id)} className="text-xs">
+                          Room ID {r.id} ({r.roomType})
+                        </SelectItem>
+                      ))}
+                      {rooms.length === 0 && (
+                        <SelectItem disabled value="none" className="text-xs">No rooms available</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-[var(--gray-4)] mt-0.5">Select from available rooms.</p>
+                </div>
+              ) : (
+                <div>
+                  <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Table ID <span className="text-[var(--state-error)]">*</span></Label>
+                  <Input
+                    type="number"
+                    value={tableId ?? ""}
+                    onChange={(e) => setTableId(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                    placeholder="e.g. 5"
+                    className="mt-1 text-xs rounded-[8px] border-[var(--gray-5)]"
+                  />
+                  <p className="text-[10px] text-[var(--gray-4)] mt-0.5">The exact table number or identifier.</p>
+                </div>
+              )}
 
               {/* Location */}
               <div>

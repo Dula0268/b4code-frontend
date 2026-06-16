@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Search, Pencil, Trash2, QrCode, UtensilsCrossed, Home, TreePalm, Wine, CheckCircle, X, ChevronLeft, ChevronRight, AlertCircle, Loader } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, QrCode, UtensilsCrossed, Home, CheckCircle, X, ChevronLeft, ChevronRight, AlertCircle, Loader } from "lucide-react";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
 import type { QRTab } from "@/store/staff/qr/staff-qr.store";
 import { Switch } from "@/components/ui/switch";
@@ -17,16 +17,12 @@ const TAB_ICONS: Record<QRTab, React.ReactNode> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  "Dining Table": "bg-[rgba(149,48,2,0.08)] text-[var(--brand-primary)]",
-  Outdoor: "bg-[rgba(255,180,1,0.12)] text-[#b57d00]",
-  Bar: "bg-[rgba(47,128,237,0.08)] text-[#2F80ED]",
+  Table: "bg-[rgba(149,48,2,0.08)] text-[var(--brand-primary)]",
   Room: "bg-[rgba(39,174,96,0.08)] text-[var(--state-success)]",
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  "Dining Table": <UtensilsCrossed size={16} className="text-[var(--brand-primary)]" />,
-  Outdoor: <TreePalm size={16} className="text-[#b57d00]" />,
-  Bar: <Wine size={16} className="text-[#2F80ED]" />,
+  Table: <UtensilsCrossed size={16} className="text-[var(--brand-primary)]" />,
   Room: <Home size={16} className="text-[var(--state-success)]" />,
 };
 
@@ -202,7 +198,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
                     </div>
                     {/* Type */}
                     <Badge variant="outline" className={`text-[9px] font-bold border-0 w-fit ${TYPE_COLORS[qr.type] ?? "bg-[rgba(0,0,0,0.04)] text-[var(--gray-2)]"}`}>
-                      {qr.type === "Dining Table" ? "Dining" : qr.type}
+                      {qr.type}
                     </Badge>
                     {/* Status */}
                     <Badge variant="outline" className={`text-[9px] font-bold border-0 w-fit ${

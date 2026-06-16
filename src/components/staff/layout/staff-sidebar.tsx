@@ -32,10 +32,20 @@ export default function StaffSidebar() {
   const { user } = useAuthStore();
   const unreadMessages = useStaffChatStore((s) => s.conversations.reduce((acc, conv) => acc + conv.unread, 0));
   const [mounted, setMounted] = useState(false);
+  const [propertyName, setPropertyName] = useState<string>("");
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    const pid = sessionStorage.getItem("selected_property_id") || user?.propertyId;
+    if (pid) {
+      import("@/api/properties/properties.api").then(({ propertiesApi }) => {
+        propertiesApi.getPublicList().then((list) => {
+          const prop = list.find((p) => p.id === Number(pid));
+          if (prop) setPropertyName(prop.name);
+        }).catch(console.error);
+      });
+    }
+  }, [user?.propertyId]);
 
   const displayName = user?.email?.split("@")[0] || "Alex Moore";
   const names = displayName.split(" ");
@@ -52,9 +62,16 @@ export default function StaffSidebar() {
       {/* Logo + Role Label */}
       <div className="px-5 pb-6">
         <Logo href="/staff" variant="default" width={140} height={48} />
-        <p className="mt-1.5 text-[15px] font-medium text-[rgba(241, 90, 20, 0.7)] tracking-[0.01em]">
-          Staff Portal
-        </p>
+        <div className="mt-5 flex flex-col justify-center items-center text-center px-3 py-2.5 rounded-lg bg-[rgba(149,48,2,0.04)] border border-[rgba(149,48,2,0.12)] shadow-sm">
+          {propertyName && (
+            <span className="text-[12px] uppercase font-bold text-[var(--brand-primary)] whitespace-normal break-words leading-tight mb-1">
+              {propertyName}
+            </span>
+          )}
+          <span className="text-[12px] uppercase tracking-widest font-semibold text-[rgba(149,48,2,0.7)] leading-none">
+            STAFF DASHBOARD
+          </span>
+        </div>
       </div>
 
       <Separator className="mx-5 mb-4" />

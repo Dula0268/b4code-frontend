@@ -196,7 +196,21 @@ function Dashboard() {
         if (codes.length > 0) {
           setCameraPhase("detected")
           stopCamera()
-          setTimeout(() => { setShowCamera(false); setCameraPhase("idle"); router.push("/guest/order") }, 1000)
+          setTimeout(() => {
+            setShowCamera(false)
+            setCameraPhase("idle")
+            const rawValue = codes[0].rawValue
+            if (rawValue.startsWith("http://") || rawValue.startsWith("https://") || rawValue.startsWith("/")) {
+              if (rawValue.includes(window.location.host) || rawValue.startsWith("/")) {
+                const path = rawValue.startsWith("/") ? rawValue : new URL(rawValue).pathname + new URL(rawValue).search
+                router.push(path)
+              } else {
+                window.location.href = rawValue
+              }
+            } else {
+              router.push("/guest/order")
+            }
+          }, 1000)
           return
         }
       } catch { }
