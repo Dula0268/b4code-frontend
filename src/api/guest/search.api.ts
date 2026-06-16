@@ -12,6 +12,7 @@ export interface PropertyListing {
   title: string;
   location: string;
   district?: string;
+  propertyType?: string;
 
   pricePerNight: number;
   maxGuests: number;

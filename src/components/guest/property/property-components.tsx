@@ -43,15 +43,15 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                             <div className="flex items-center bg-white border border-[#e0e0e0] rounded-xl overflow-hidden shadow-sm">
                                 <button onClick={handleDecrement} className="px-4 py-2 hover:bg-[#f5f5f5] text-[#1d1d1d] font-bold transition-colors cursor-pointer border-r border-[#e0e0e0]">-</button>
                                 <span className="px-5 py-2 font-semibold text-[15px] min-w-[50px] text-center">{selectedQuantity}</span>
-                                <button onClick={handleIncrement} disabled={selectedQuantity >= room.numberOfRooms} className="px-4 py-2 hover:bg-[#f5f5f5] text-[#1d1d1d] font-bold transition-colors cursor-pointer border-l border-[#e0e0e0] disabled:opacity-50">+</button>
+                                <button onClick={handleIncrement} disabled={selectedQuantity >= (room.numberOfRooms ?? 1)} className="px-4 py-2 hover:bg-[#f5f5f5] text-[#1d1d1d] font-bold transition-colors cursor-pointer border-l border-[#e0e0e0] disabled:opacity-50">+</button>
                             </div>
                         ) : (
                             <button
                                 onClick={() => onQuantityChange && onQuantityChange(1)}
-                                disabled={room.numberOfRooms <= 0}
+                                disabled={(room.numberOfRooms ?? 1) <= 0}
                                 className={`px-6 py-2.5 text-white text-[14px] font-bold rounded-xl transition-colors cursor-pointer whitespace-nowrap border-none bg-[var(--brand-primary)] hover:bg-[#6d2200] disabled:opacity-50`}
                             >
-                                {room.numberOfRooms > 0 ? "Select Room" : "Select"}
+                                {(room.numberOfRooms ?? 1) > 0 ? "Select Room" : "Select"}
                             </button>
                         )}
                     </div>

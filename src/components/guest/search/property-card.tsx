@@ -10,6 +10,7 @@ export interface PropertyListing {
     id: string
     title: string
     location: string
+    district?: string
     propertyType?: string
     pricePerNight: number
     maxGuests: number

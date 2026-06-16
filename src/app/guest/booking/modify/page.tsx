@@ -10,7 +10,7 @@ import {
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import CalendarPicker from "@/components/shared/forms/calendar-picker"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, Suspense } from "react"
 
 function formatLKR(n: number) {
     return `LKR ${Math.abs(n).toLocaleString("en-US")}`
@@ -26,7 +26,7 @@ const CANCEL_REASONS = [
     { id: "other", label: "Other reason" },
 ]
 
-export default function ModifyBookingPage() {
+function ModifyBookingContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
 
@@ -677,6 +677,21 @@ export default function ModifyBookingPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function ModifyBookingPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+                <GuestTopbar />
+                <main className="flex-1 w-full px-6 xl:px-12 py-10 mt-16 flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-[#9a3300] border-t-transparent rounded-full animate-spin" />
+                </main>
+            </div>
+        }>
+            <ModifyBookingContent />
+        </Suspense>
     )
 }
 
