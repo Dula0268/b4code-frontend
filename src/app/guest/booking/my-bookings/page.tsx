@@ -44,7 +44,7 @@ export default function MyBookingsPage() {
                     {["ALL", "UPCOMING", "COMPLETED", "CANCELLED"].map(tab => (
                         <button
                             key={tab}
-                            onClick={() => setActiveTab(tab as any)}
+                            onClick={() => setActiveTab(tab as "ALL" | "UPCOMING" | "COMPLETED" | "CANCELLED")}
                             className={`px-5 py-2 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors cursor-pointer ${
                                 activeTab === tab 
                                     ? "bg-[#9a3300] text-white" 

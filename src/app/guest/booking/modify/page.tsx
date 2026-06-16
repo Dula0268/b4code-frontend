@@ -106,7 +106,7 @@ export default function ModifyBookingPage() {
                     <div className="max-w-md mx-auto bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
                         <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
                         <h1 className="text-2xl font-bold text-[#0f172a] mb-4">Booking Not Found</h1>
-                        <p className="text-gray-500 mb-6">We couldn't retrieve details for this booking code. It may have expired or been removed.</p>
+                        <p className="text-gray-500 mb-6">We couldn&apos;t retrieve details for this booking code. It may have expired or been removed.</p>
                         <Link href="/guest/booking/my-bookings" className="inline-block px-6 py-2.5 bg-[#9a3300] hover:bg-[#852900] text-white font-bold rounded-xl transition-all">
                             Return to My Bookings
                         </Link>

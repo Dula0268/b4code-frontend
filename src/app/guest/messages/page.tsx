@@ -157,7 +157,7 @@ function MessagingContent() {
                     propertyTitle: b.property,
                     propertyImage: b.imageSrc || "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=200&auto=format&fit=crop",
                     bookingId: b.confirmationCode,
-                    bookingStatus: b.status as any,
+                    bookingStatus: b.status as "UPCOMING" | "COMPLETED" | "CANCELLED",
                     hostName: existing ? existing.hostName : "Property Manager",
                     hostAvatar: existing ? existing.hostAvatar : b.property.charAt(0),
                     staffName: existing ? existing.staffName : "On-site Receptionist",

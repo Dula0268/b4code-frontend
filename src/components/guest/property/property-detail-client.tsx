@@ -306,7 +306,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                         <div>
                             <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">What this place offers</h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {(property.amenities || []).map((a: any) => (
+                                {(property.amenities || []).map((a: { label: string; icon: string }) => (
                                     <div key={a.label} className="flex items-center gap-2.5 text-[13px] text-[#333]">
                                         <AmenityIcon name={a.icon} /><span>{a.label}</span>
                                     </div>
@@ -321,7 +321,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                 <p className="text-[12px] text-[#828282]">☑ Prices include taxes and fees</p>
                             </div>
                             <div className="flex flex-col gap-4">
-                                {(property.rooms || []).map((room: any) => (
+                                {(property.rooms || []).map((room: Room) => (
                                     <RoomCard 
                                         key={room.id} 
                                         room={room} 
@@ -343,14 +343,14 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
 
                             {property.reviewBreakdown && property.reviewBreakdown.length > 0 && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-4 mb-8 bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm">
-                                    {property.reviewBreakdown.map((item: any, idx: number) => (
+                                    {property.reviewBreakdown.map((item: { label: string; score: number }, idx: number) => (
                                         <RatingBar key={idx} label={item.label} score={item.score} />
                                     ))}
                                 </div>
                             )}
 
                             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                                {(property.reviews || []).map((rev: any) => (
+                                {(property.reviews || []).map((rev: { id: string; avatarColor: string; avatarInitials: string; author: string; date: string; rating: number; text: string; ownerReply?: string }) => (
                                     <div key={rev.id} className="p-4 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0" style={{ background: rev.avatarColor }}>{rev.avatarInitials}</div>
@@ -377,7 +377,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
 
                         {/* Map Location */}
                         <div>
-                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Where you'll be</h2>
+                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Where you&apos;ll be</h2>
                             <div className="bg-white border border-[#e8e8e8] rounded-2xl shadow-sm overflow-hidden w-full">
                                 <div className="relative h-[300px] bg-[#e8f4f8]">
                                     <iframe
