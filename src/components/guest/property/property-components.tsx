@@ -19,6 +19,8 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                 ? "bg-amber-50 text-amber-700 border-amber-200"
                 : "bg-red-50 text-red-700 border-red-200"
 
+    const availableCount = room.availableCount ?? 3;
+
     return (
         <div className="flex flex-col sm:flex-row gap-4 p-4 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white">
             <div className="relative w-full sm:w-[140px] h-[180px] sm:h-[100px] flex-shrink-0 rounded-xl overflow-hidden bg-[#f3ede8]">
@@ -33,6 +35,9 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#828282]">
                     <span className="flex items-center gap-1"><Users size={12} /> {room.maxGuests} Guests</span>
                     <span className="flex items-center gap-1"><BedDouble size={12} /> {room.bedType}</span>
+                    <span className="flex items-center gap-1 text-[var(--state-success)] font-medium">
+                        <CheckCircle2 size={12} /> {availableCount} {availableCount === 1 ? 'room' : 'rooms'} available
+                    </span>
                 </div>
             </div>
 
@@ -46,7 +51,7 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                     onChange={(e) => onQuantityChange?.(Number(e.target.value))}
                     className="px-4 py-2 border border-[#e8e8e8] text-[13px] font-semibold rounded-xl focus:outline-none focus:border-[var(--brand-primary)] bg-white cursor-pointer"
                 >
-                    {[0, 1, 2, 3, 4, 5].map((num) => (
+                    {Array.from({ length: availableCount + 1 }, (_, i) => i).map((num) => (
                         <option key={num} value={num}>
                             {num === 0 ? "Select Rooms" : `${num} ${num === 1 ? 'Room' : 'Rooms'}`}
                         </option>

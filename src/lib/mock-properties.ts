@@ -57,6 +57,7 @@ export interface Room {
     tag?: string
     features: string[]
     imageSrc: string
+    availableCount?: number
 }
 
 // ─── Amenity icon names (Lucide) ─────────────────────────────────────────────

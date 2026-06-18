@@ -6,7 +6,7 @@ import Link from "next/link"
 import {
     MapPin, Share2, Heart, Star, ChevronRight, Home, Wifi, Wind, Waves,
     Dumbbell, Car, Utensils, ShieldCheck, Coffee, Leaf, Bike, BookOpen,
-    Monitor, SquareDot, Grid2X2, X,
+    Monitor, SquareDot, Grid2X2, X, Clock, AlertTriangle, Ban, Users
 } from "lucide-react"
 import type { PropertyDetail } from "@/lib/mock-properties"
 import { RoomCard, RatingBar } from "@/components/guest/property/property-components"
@@ -27,6 +27,14 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
     const [shareToast, setShareToast] = useState<"copied" | "shared" | null>(null)
     const [selectedRooms, setSelectedRooms] = useState<Record<string, { quantity: number, price: number, name: string }>>({})
+
+    const [bookingStep, setBookingStep] = useState<"select" | "checkout" | "confirmation">("select")
+    const [promoCodeInput, setPromoCodeInput] = useState("")
+    const [appliedPromo, setAppliedPromo] = useState("")
+    const [paymentMethod, setPaymentMethod] = useState<"online" | "property">("online")
+    const [nicNumber, setNicNumber] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [bookingRef, setBookingRef] = useState("")
 
     const handleShare = async () => {
         const url = typeof window !== "undefined" ? window.location.href : ""
@@ -61,7 +69,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                 {shareToast === "shared" ? "Shared successfully!" : "Link copied to clipboard"}
             </div>
             
-            <div className="max-w-[1200px] mx-auto px-6 pt-8 pb-20">
+            <div className="w-full max-w-[1440px] mx-auto px-6 pt-8 pb-20">
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-1.5 text-[13px] mb-5">
                     <Link href="/" aria-label="Home" className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors flex items-center"><Home size={15} /></Link>
@@ -94,7 +102,9 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                     <button onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }} className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#e0e0e0] rounded-xl px-4 py-2 text-[13px] font-semibold text-[#1d1d1d] shadow-sm hover:bg-white transition-colors cursor-pointer"><Grid2X2 size={14} />Show all photos</button>
                 </div>
 
-                <div className="flex flex-col gap-8 w-full max-w-[900px]">
+                <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+                    {/* Left Column */}
+                    <div className="flex-1 min-w-0 flex flex-col gap-8">
                     {/* About */}
                     <div>
                         <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-3">About this property</h2>
@@ -113,10 +123,10 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                             </div>
                         </div>
 
-                        {/* Available Rooms */}
+                        {/* Room Types */}
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-[20px] font-bold text-[#1d1d1d]">Available Rooms</h2>
+                                <h2 className="text-[20px] font-bold text-[#1d1d1d]">Room Types</h2>
                             </div>
                             <div className="flex flex-col gap-3">
                                 {(property.rooms || []).map(room => (
@@ -189,7 +199,208 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                 />
                             </div>
                         </div>
+
+                        {/* Policies */}
+                        <div className="pt-8 border-t border-[#e8e8e8]">
+                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Property Policies</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
+                                        <Clock size={16} className="text-[var(--brand-primary)]" /> Check-in / Check-out
+                                    </h3>
+                                    <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
+                                        <li>Check-in time: 14:00 - 22:00</li>
+                                        <li>Check-out time: Until 11:00</li>
+                                        <li>Early check-in subject to availability</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
+                                        <AlertTriangle size={16} className="text-[var(--brand-primary)]" /> Cancellation
+                                    </h3>
+                                    <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
+                                        <li>Free cancellation until 48 hours before</li>
+                                        <li>50% refund within 48 hours</li>
+                                        <li>No-shows will be charged full amount</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
+                                        <Users size={16} className="text-[var(--brand-primary)]" /> Age & Children
+                                    </h3>
+                                    <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
+                                        <li>Children of any age are welcome</li>
+                                        <li>No age restriction for check-in</li>
+                                        <li>Extra beds available upon request</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
+                                        <Ban size={16} className="text-[var(--brand-primary)]" /> House Rules
+                                    </h3>
+                                    <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
+                                        <li>No smoking indoors</li>
+                                        <li>No pets allowed</li>
+                                        <li>No parties or events</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    {/* Right Column (Checkout Panel) */}
+                    <div className="lg:w-[420px] flex-shrink-0">
+                        <div className="sticky top-28 bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-sm flex flex-col gap-6">
+                            {bookingStep === "confirmation" ? (
+                                <div className="flex flex-col items-center text-center py-4">
+                                    <div className="w-16 h-16 bg-[var(--state-success)]/10 text-[var(--state-success)] rounded-full flex items-center justify-center mb-5">
+                                        <ShieldCheck size={32} />
+                                    </div>
+                                    <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2">Booking Confirmed!</h2>
+                                    <p className="text-[14px] text-[#555] mb-6">Your rooms at {property.title} have been successfully reserved.</p>
+                                    
+                                    <div className="bg-[#f8f8f8] p-4 rounded-xl w-full mb-8">
+                                        <p className="text-[12px] text-[#828282] uppercase tracking-wider font-semibold mb-1">Booking Reference</p>
+                                        <p className="text-[20px] font-mono font-bold text-[var(--brand-primary)]">{bookingRef}</p>
+                                    </div>
+
+                                    <div className="flex flex-col gap-3 w-full">
+                                        <Link
+                                            href="/guest/booking/my-bookings"
+                                            className="w-full bg-[#8b4513] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl transition-colors cursor-pointer text-center"
+                                        >
+                                            Go to My Bookings
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                setBookingStep("select");
+                                                setSelectedRooms({});
+                                                setAppliedPromo("");
+                                                setPromoCodeInput("");
+                                            }}
+                                            className="w-full bg-[#1d1d1d] hover:bg-black text-white font-bold py-3.5 rounded-xl transition-colors cursor-pointer"
+                                        >
+                                            Book More Rooms
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : Object.keys(selectedRooms).length > 0 ? (
+                                <>
+                                    <h2 className="text-[20px] font-bold text-[#1d1d1d]">Complete Booking</h2>
+                                    
+                                    {/* Price Breakdown */}
+                                    <div>
+                                        <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Price Breakdown</h3>
+                                        <div className="flex flex-col gap-2 text-[14px] text-[#555]">
+                                            <div className="flex justify-between">
+                                                <span>Base Price</span>
+                                                <span>LKR {Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0).toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Taxes & Fees (10%)</span>
+                                                <span>LKR {(Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0) * 0.1).toLocaleString()}</span>
+                                            </div>
+                                            {appliedPromo && (
+                                                <div className="flex justify-between text-[var(--state-success)] font-medium">
+                                                    <span>Discount ({appliedPromo})</span>
+                                                    <span>- LKR {(Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0) * 0.05).toLocaleString()}</span>
+                                                </div>
+                                            )}
+                                            <div className="border-t border-[#e8e8e8] pt-2 mt-2 flex justify-between font-bold text-[#1d1d1d] text-[16px]">
+                                                <span>Total</span>
+                                                <span className="text-[var(--brand-primary)]">
+                                                    LKR {(() => {
+                                                        const base = Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0);
+                                                        const tax = base * 0.1;
+                                                        const discount = appliedPromo ? base * 0.05 : 0;
+                                                        return (base + tax - discount).toLocaleString();
+                                                    })()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Promo Code */}
+                                    <div>
+                                        <h3 className="font-semibold text-[#1d1d1d] mb-2 text-[14px]">Promo Code</h3>
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                value={promoCodeInput}
+                                                onChange={(e) => setPromoCodeInput(e.target.value)}
+                                                placeholder="Enter code" 
+                                                className="flex-1 border border-[#e8e8e8] rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)]"
+                                            />
+                                            <button 
+                                                onClick={() => setAppliedPromo(promoCodeInput)}
+                                                className="bg-[#f0f0f0] hover:bg-[#e0e0e0] text-[#1d1d1d] font-semibold px-4 py-2 rounded-xl text-[14px] transition-colors cursor-pointer"
+                                            >
+                                                Apply
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Payment Options */}
+                                    <div>
+                                        <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Payment Method</h3>
+                                        <div className="flex flex-col gap-3">
+                                            <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'online' ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-[#e8e8e8] hover:border-[#ccc]'}`}>
+                                                <input type="radio" name="payment" checked={paymentMethod === 'online'} onChange={() => setPaymentMethod('online')} className="mt-1 cursor-pointer" />
+                                                <div>
+                                                    <p className="font-semibold text-[#1d1d1d] text-[14px]">Pay online now</p>
+                                                    <p className="text-[12px] text-[#828282]">Securely pay the full amount instantly.</p>
+                                                </div>
+                                            </label>
+                                            <div className="flex flex-col gap-2">
+                                                <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'property' ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-[#e8e8e8] hover:border-[#ccc]'}`}>
+                                                    <input type="radio" name="payment" checked={paymentMethod === 'property'} onChange={() => setPaymentMethod('property')} className="mt-1 cursor-pointer" />
+                                                    <div>
+                                                        <p className="font-semibold text-[#1d1d1d] text-[14px]">Pay at property</p>
+                                                        <p className="text-[12px] text-[#828282]">Your room is held, settle the bill on arrival.</p>
+                                                    </div>
+                                                </label>
+                                                {paymentMethod === 'property' && (
+                                                    <div className="px-4 py-3 bg-[#f8f8f8] rounded-xl border border-[#e8e8e8] animate-in fade-in slide-in-from-top-2">
+                                                        <label className="text-[13px] font-semibold text-[#1d1d1d] block mb-1.5">National Identity Card (NIC) <span className="text-[#e53935]">*</span></label>
+                                                        <input 
+                                                            type="text" 
+                                                            value={nicNumber}
+                                                            onChange={(e) => setNicNumber(e.target.value)}
+                                                            placeholder="e.g. 199012345678 or 901234567V" 
+                                                            className="w-full border border-[#d8d8d8] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)] bg-white"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        disabled={isSubmitting || (paymentMethod === 'property' && !nicNumber.trim())}
+                                        onClick={async () => {
+                                            setIsSubmitting(true);
+                                            await new Promise(r => setTimeout(r, 1500));
+                                            setBookingRef(`B4C-${Math.floor(Math.random() * 1000000)}`);
+                                            setIsSubmitting(false);
+                                            setBookingStep("confirmation");
+                                        }}
+                                        className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 disabled:opacity-70 transition-colors cursor-pointer mt-2"
+                                    >
+                                        {isSubmitting ? "Processing..." : "Confirm Booking"}
+                                    </button>
+                                </>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <div className="w-16 h-16 bg-[#f0f0f0] rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Home size={24} className="text-[#aaa]" />
+                                    </div>
+                                    <h3 className="text-[18px] font-bold text-[#1d1d1d] mb-2">Ready to book?</h3>
+                                    <p className="text-[14px] text-[#828282]">Select one or more rooms from the available options to view your price breakdown and proceed with booking.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Fullscreen Gallery Modal */}
@@ -214,34 +425,6 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                 </div>
             )}
 
-            {/* Booking Action Bar */}
-            {Object.keys(selectedRooms).length > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#e8e8e8] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40 p-4">
-                    <div className="max-w-[900px] mx-auto flex items-center justify-between">
-                        <div>
-                            <p className="text-[16px] font-bold text-[#1d1d1d]">
-                                {Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity, 0)} Room(s) Selected
-                            </p>
-                            <p className="text-[13px] text-[#555]">
-                                Total: LKR {Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0).toLocaleString()} / night
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => {
-                                const selectedRoomId = Object.keys(selectedRooms)[0];
-                                const searchParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-                                searchParams.set("propertyId", property.id);
-                                searchParams.set("roomId", selectedRoomId);
-                                searchParams.set("multiRoomData", JSON.stringify(selectedRooms));
-                                window.location.href = `/guest/checkout?${searchParams.toString()}`;
-                            }}
-                            className="bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white px-8 py-3 rounded-xl font-bold text-[15px] transition-colors cursor-pointer"
-                        >
-                            Reserve
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }
