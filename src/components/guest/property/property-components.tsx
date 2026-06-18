@@ -8,7 +8,7 @@ function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
 }
 
-export function RoomCard({ room, propertyId }: { room: Room; propertyId: string }) {
+export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityChange }: { room: Room; propertyId: string; selectedQuantity?: number; onQuantityChange?: (qty: number) => void }) {
     const searchParams = useSearchParams()
     const query = searchParams && searchParams.toString() ? `?${searchParams.toString()}` : ""
 
@@ -25,46 +25,33 @@ export function RoomCard({ room, propertyId }: { room: Room; propertyId: string 
                 <Image src={room.imageSrc} alt={room.name} fill className="object-cover" sizes="140px" />
             </div>
 
-            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+            <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
                 <div className="flex items-start justify-between gap-2">
                     <h3 className="text-[15px] font-semibold text-[#1d1d1d] leading-snug">{room.name}</h3>
-                    {room.tag && (
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border flex-shrink-0 ${tagStyle}`}>
-                            {room.tag}
-                        </span>
-                    )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#828282]">
                     <span className="flex items-center gap-1"><Users size={12} /> {room.maxGuests} Guests</span>
                     <span className="flex items-center gap-1"><BedDouble size={12} /> {room.bedType}</span>
-                    <span className="flex items-center gap-1"><SquareDot size={12} /> {room.sqft} sq ft</span>
-                </div>
-
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                    {room.features.map(f => (
-                        <span key={f} className="text-[12px] text-[#555] flex items-center gap-1">
-                            <CheckCircle2 size={11} className="text-[var(--brand-primary)]" /> {f}
-                        </span>
-                    ))}
                 </div>
             </div>
 
             <div className="flex-shrink-0 flex sm:flex-col items-center sm:items-end justify-between gap-2 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#e8e8e8]">
                 <div className="text-left sm:text-right">
-                    {room.originalPrice && (
-                        <p className="text-[12px] text-[#aaa] line-through">{formatLKR(room.originalPrice)}</p>
-                    )}
                     <p className="text-[18px] font-bold text-[#1d1d1d]">{formatLKR(room.pricePerNight)}</p>
                     <p className="text-[11px] text-[#828282]">per night</p>
                 </div>
-                <Link
-                    href={`/guest/property/${propertyId}/room/${room.id}${query}`}
-                    id={`select-room-${room.id}`}
-                    className="px-4 py-2 bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white text-[13px] font-semibold rounded-xl transition-colors cursor-pointer whitespace-nowrap block"
+                <select
+                    value={selectedQuantity}
+                    onChange={(e) => onQuantityChange?.(Number(e.target.value))}
+                    className="px-4 py-2 border border-[#e8e8e8] text-[13px] font-semibold rounded-xl focus:outline-none focus:border-[var(--brand-primary)] bg-white cursor-pointer"
                 >
-                    Select Room
-                </Link>
+                    {[0, 1, 2, 3, 4, 5].map((num) => (
+                        <option key={num} value={num}>
+                            {num === 0 ? "Select Rooms" : `${num} ${num === 1 ? 'Room' : 'Rooms'}`}
+                        </option>
+                    ))}
+                </select>
             </div>
         </div>
     )

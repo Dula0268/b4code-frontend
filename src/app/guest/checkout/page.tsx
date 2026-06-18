@@ -134,16 +134,34 @@ function useCheckoutLogic() {
             }
         }
 
-        const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1
-        const basePrice = priceData?.subtotal ?? (room ? room.pricePerNight * nights : (property?.pricePerNight ?? 0) * nights)
-        const taxes = priceData?.taxAmount ?? 0
-        const discountAmount = priceData?.discountAmount ?? 0
-        const total = priceData?.totalAmount ?? basePrice
+        const nights = checkInDate && checkOutDate ? Math.max(1, differenceInDays(checkOutDate, checkInDate)) : 1;
+        const multiRoomDataStr = searchParams.get("multiRoomData");
+        let multiRooms: Record<string, { quantity: number, price: number, name: string }> | null = null;
+        if (multiRoomDataStr) {
+            try { multiRooms = JSON.parse(multiRoomDataStr); } catch (e) {}
+        }
+
+        let basePrice = 0;
+        let roomInfoStr = "";
+
+        if (multiRooms && Object.keys(multiRooms).length > 0) {
+            const roomsList = Object.values(multiRooms);
+            basePrice = roomsList.reduce((acc, r) => acc + (r.price * r.quantity * nights), 0);
+            const totalRooms = roomsList.reduce((acc, r) => acc + r.quantity, 0);
+            roomInfoStr = `${totalRooms} Room(s) Selected`;
+        } else {
+            basePrice = priceData?.subtotal ?? (room ? room.pricePerNight * nights : (property?.pricePerNight ?? 0) * nights);
+            roomInfoStr = `${room ? room.name : "Premium Room"} • ${guests} Guests`;
+        }
+
+        const taxes = priceData?.taxAmount ?? (basePrice * 0.1);
+        const discountAmount = priceData?.discountAmount ?? 0;
+        const total = priceData?.totalAmount ?? (basePrice + taxes - discountAmount);
 
         setBookingDetails({
           property: property ? {
             title: String(property.title),
-            roomInfo: `${room ? room.name : "Premium Room"} • ${guests} Guests`,
+            roomInfo: roomInfoStr,
             rating: Number(property.rating),
             reviews: Number(property.reviewCount),
             imageSrc: String(property.imageSrc)
