@@ -26,7 +26,6 @@ export default function ResultsHeader({ destination, totalCount, checkIn, checkO
                     <h1 className="text-[clamp(24px,5vw,28px)] font-bold text-[var(--fg)] mb-0.5" style={{ lineHeight: "1.2" }}>
                         Stays in {destination || "Sri Lanka"}
                     </h1>
-                    {subtitle && <p className="text-[12px] sm:text-[13px] text-[var(--muted)]">{subtitle}</p>}
                 </div>
             </div>
             {activeFilters.length > 0 && (

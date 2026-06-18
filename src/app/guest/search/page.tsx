@@ -10,6 +10,7 @@ import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 import FiltersSidebar, { type FilterState } from "@/components/guest/search/filters-sidebar"
 import PropertyCard from "@/components/guest/search/property-card"
 import ResultsHeader from "@/components/guest/search/results-header"
+import SearchBar from "@/components/guest/search/search-bar"
 import {
     searchProperties,
     getFilterOptions,
@@ -110,12 +111,12 @@ function Pagination({
     for (let i = startPage; i <= endPage; i++) pages.push(i)
 
     return (
-        <div className="mt-10 flex flex-col items-center gap-3">
+        <div className="mt-12 flex flex-col items-center gap-4">
             <div className="flex items-center gap-2">
                 <button
                     onClick={() => onPageChange(page - 1)}
                     disabled={page === 0}
-                    className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-[#333333] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer border border-[#e0e0e0]"
                 >
                     <ChevronLeft size={16} />
                 </button>
@@ -124,9 +125,9 @@ function Pagination({
                         key={p}
                         onClick={() => onPageChange(p)}
                         className={[
-                            "w-9 h-9 rounded-xl text-[14px] font-medium transition-colors cursor-pointer border",
+                            "w-9 h-9 rounded-xl text-[14px] font-medium transition-colors cursor-pointer border flex items-center justify-center",
                             p === page
-                                ? "bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]"
+                                ? "bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-sm"
                                 : "bg-white text-[#333333] border-[#e0e0e0] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)]",
                         ].join(" ")}
                     >
@@ -136,13 +137,13 @@ function Pagination({
                 <button
                     onClick={() => onPageChange(page + 1)}
                     disabled={page >= totalPages - 1}
-                    className="w-9 h-9 rounded-xl border border-[#e0e0e0] flex items-center justify-center text-[#333333] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer"
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-[#333333] hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white cursor-pointer border border-[#e0e0e0]"
                 >
                     <ChevronRight size={16} />
                 </button>
             </div>
-            <p className="text-[12px] text-[#828282]">
-                {start}–{end} of {totalElements} stays
+            <p className="text-[13px] text-[#828282] font-medium">
+                {start} – {end} of {totalElements} stays
             </p>
         </div>
     )
@@ -166,7 +167,7 @@ function SearchResultsContent() {
     const [filters, setFilters] = useState<FilterState>({
         priceMin: 0,
         priceMax: 1000000,
-        amenities: [],
+        advancedFilters: [],
         propertyTypes: [],
         guestRating: null,
     })
@@ -215,7 +216,7 @@ function SearchResultsContent() {
                 maxPrice: filterOptions ? filters.priceMax : undefined,
                 minRating: filters.guestRating ? parseFloat(filters.guestRating) : undefined,
                 propertyTypes: filters.propertyTypes.length > 0 ? filters.propertyTypes : undefined,
-                amenities: filters.amenities.length > 0 ? filters.amenities : undefined,
+                amenities: filters.advancedFilters.length > 0 ? filters.advancedFilters : undefined,
                 sortBy,
                 page,
                 size: PAGE_SIZE,
@@ -245,8 +246,8 @@ function SearchResultsContent() {
     }
 
     const defaultFilters: FilterState = filterOptions
-        ? { priceMin: filterOptions.priceRange.min, priceMax: filterOptions.priceRange.max, amenities: [], propertyTypes: [], guestRating: null }
-        : { priceMin: 0, priceMax: 1000000, amenities: [], propertyTypes: [], guestRating: null }
+        ? { priceMin: filterOptions.priceRange.min, priceMax: filterOptions.priceRange.max, advancedFilters: [], propertyTypes: [], guestRating: null }
+        : { priceMin: 0, priceMax: 1000000, advancedFilters: [], propertyTypes: [], guestRating: null }
 
     const handleClearFilters = () => {
         setFilters(defaultFilters)
@@ -265,7 +266,7 @@ function SearchResultsContent() {
         }
     }
     filters.propertyTypes.forEach(pt => activeFilters.push({ id: `type-${pt}`, label: `Type: ${pt}` }))
-    filters.amenities.forEach(am => activeFilters.push({ id: `amenity-${am}`, label: am }))
+    filters.advancedFilters.forEach(am => activeFilters.push({ id: `advanced-${am}`, label: am }))
     if (filters.guestRating) activeFilters.push({ id: "rating", label: `Rating: ${filters.guestRating}+` })
 
     const handleRemoveFilter = (filterId: string) => {
@@ -273,7 +274,7 @@ function SearchResultsContent() {
             if (filterId === "price") return { ...prev, priceMin: defaultFilters.priceMin, priceMax: defaultFilters.priceMax }
             if (filterId === "rating") return { ...prev, guestRating: null }
             if (filterId.startsWith("type-")) return { ...prev, propertyTypes: prev.propertyTypes.filter(t => t !== filterId.replace("type-", "")) }
-            if (filterId.startsWith("amenity-")) return { ...prev, amenities: prev.amenities.filter(a => a !== filterId.replace("amenity-", "")) }
+            if (filterId.startsWith("advanced-")) return { ...prev, advancedFilters: prev.advancedFilters.filter(a => a !== filterId.replace("advanced-", "")) }
             return prev
         })
         setPage(0)
@@ -289,19 +290,21 @@ function SearchResultsContent() {
     const totalPages = results?.totalPages || 0
 
     return (
-        <div className="w-full px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="w-full pb-16 pt-16">
+            <div className="sticky top-[32px] z-[60] w-full flex justify-center mt-[-28px] pb-4 px-4 pointer-events-none">
+                <div className="pointer-events-auto">
+                    <SearchBar />
+                </div>
+            </div>
+            
+            <div className="px-4 sm:px-6 lg:px-8 pt-4 flex flex-col lg:flex-row gap-6 lg:gap-8 w-full">
                 {/* Filters Sidebar */}
                 <div className="w-full lg:w-[260px] xl:w-[280px] flex-shrink-0">
-                    <div className="sticky top-24">
+                    <div className="sticky top-[130px]">
                         <FiltersSidebar
                             filters={filters}
                             onChange={handleFiltersChange}
                             onClear={handleClearFilters}
-                            sortBy={sortBy}
-                            onSortChange={handleSortChange}
-                            mapOpen={mapOpen}
-                            onToggleMap={() => setMapOpen(o => !o)}
                             filterOptions={filterOptions}
                             loading={filtersLoading}
                         />
@@ -347,7 +350,7 @@ function SearchResultsContent() {
                         </div>
 
                         {mapOpen && (
-                            <div className="flex-1 sticky top-20" style={{ height: "calc(100vh - 100px)" }}>
+                            <div className="flex-1 sticky top-[130px]" style={{ height: "calc(100vh - 140px)" }}>
                                 <MapView listings={mapListings} hoveredId={hoveredId} />
                             </div>
                         )}
@@ -384,7 +387,7 @@ export default function SearchPage() {
                     <SearchResultsContent />
                 </Suspense>
             </main>
-            <GuestFooter />
+            <GuestFooter variant="full" />
         </div>
     )
 }

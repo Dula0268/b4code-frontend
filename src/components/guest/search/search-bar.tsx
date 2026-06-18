@@ -27,6 +27,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
     ? new Date(searchParams.get("checkOut")! + "T00:00:00")
     : null
   const initGuests = isCompact ? Number(searchParams.get("guests") ?? 1) : 1
+  const initRooms = isCompact ? Number(searchParams.get("rooms") ?? 1) : 1
 
   // ── State ──────────────────────────────────────────────────────────────
   // Location
@@ -41,7 +42,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const calRef = useRef<HTMLDivElement>(null)
 
   // Guests
-  const [guests, setGuests] = useState<GuestCounts>({ adults: Math.max(1, initGuests), children: 0 })
+  const [guests, setGuests] = useState<GuestCounts>({ adults: Math.max(1, initGuests), children: 0, rooms: Math.max(1, initRooms) })
   const [guestOpen, setGuestOpen] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
 
@@ -61,11 +62,12 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       ? new Date(searchParams.get("checkOut")! + "T00:00:00")
       : null
     const nextGuests = Math.max(1, Number(searchParams.get("guests") ?? 1))
+    const nextRooms = Math.max(1, Number(searchParams.get("rooms") ?? 1))
 
     setDestination(nextDestination)
     setCheckIn(nextCheckIn)
     setCheckOut(nextCheckOut)
-    setGuests({ adults: nextGuests, children: 0 })
+    setGuests({ adults: nextGuests, children: 0, rooms: nextRooms })
   }, [isCompact, searchParams])
 
   // ── Close on outside click ─────────────────────────────────────────────
@@ -96,16 +98,18 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   })()
 
   const guestTotal = guests.adults + guests.children
-  const guestLabel = !mounted ? "1 guest" : `${guestTotal} guest${guestTotal !== 1 ? "s" : ""}`
+  const guestLabel = !mounted ? "1 guest, 1 room" : `${guestTotal} guest${guestTotal !== 1 ? "s" : ""}, ${guests.rooms} room${guests.rooms !== 1 ? "s" : ""}`
 
   // Keep search results in sync when guest count changes on compact search bar.
   useEffect(() => {
     if (!isCompact || !pathname.startsWith("/guest/search")) return
     const currentGuests = Number(searchParams.get("guests") ?? 1)
-    if (currentGuests === guestTotal) return
+    const currentRooms = Number(searchParams.get("rooms") ?? 1)
+    if (currentGuests === guestTotal && currentRooms === guests.rooms) return
 
     const params = new URLSearchParams(searchParams.toString())
     params.set("guests", String(Math.max(1, guestTotal)))
+    params.set("rooms", String(Math.max(1, guests.rooms)))
     router.replace(`/guest/search?${params.toString()}`)
   }, [guestTotal, isCompact, pathname, router, searchParams])
 
@@ -121,6 +125,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
     if (checkIn) params.set("checkIn", checkIn.toISOString().split("T")[0])
     if (checkOut) params.set("checkOut", checkOut.toISOString().split("T")[0])
     params.set("guests", String(Math.max(1, guestTotal)))
+    params.set("rooms", String(Math.max(1, guests.rooms)))
     const url = `/guest/search?${params.toString()}`
     // Replace history entry when already on search page to avoid stacking
     if (pathname.startsWith("/guest/search")) {
@@ -158,7 +163,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
             onChange={e => { setDestination(e.target.value); setLocationOpen(true) }}
             onFocus={() => { closeAll(); setLocationOpen(true) }}
             placeholder="Where are you going?"
-            className="border-none outline-none text-sm text-[#333333] placeholder:text-[#828282] bg-transparent w-full"
+            className="border-none outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-sm text-[#333333] placeholder:text-[#828282] bg-transparent w-full"
             suppressHydrationWarning
           />
         </div>
@@ -241,14 +246,13 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
         )}
       </div>
 
-      {/* ── Search button ─────────────────────────────────────────────── */}
       <button
         onClick={handleSearch}
         aria-label="Search"
-        className="bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white rounded-lg w-11 h-11 flex items-center justify-center transition-all duration-300 active:scale-95 group shadow-md hover:shadow-lg flex-shrink-0"
+        className="bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white rounded-lg px-8 h-12 flex items-center justify-center gap-2 font-bold text-[15px] transition-all duration-300 active:scale-95 shadow-md hover:shadow-lg flex-shrink-0"
         suppressHydrationWarning
       >
-        <Search size={18} />
+        <span>Search</span>
       </button>
     </div>
   )
