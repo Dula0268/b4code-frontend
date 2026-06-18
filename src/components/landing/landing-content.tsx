@@ -16,10 +16,10 @@ import { useInView } from "@/hooks/use-in-view"
    ───────────────────────────────────────── */
 
 const DESTINATIONS = [
-  { name: "Sigiriya", tagline: "The Ancient Rock Fortress", image: "/images/destinations/sigiriya.png", price: "From LKR 45,000/night", href: "/guest/search?destination=Sigiriya" },
-  { name: "Mirissa", tagline: "Sun, Surf & Whale Watching", image: "/images/destinations/mirissa.png", price: "From LKR 35,000/night", href: "/guest/search?destination=Mirissa" },
-  { name: "Kandy", tagline: "Cultural Heart of Lanka", image: "/images/destinations/kandy.png", price: "From LKR 40,000/night", href: "/guest/search?destination=Kandy" },
-  { name: "Ella", tagline: "Tea Country Paradise", image: "/images/destinations/ella.png", price: "From LKR 30,000/night", href: "/guest/search?destination=Ella" },
+  { name: "Sigiriya", tagline: "The Ancient Rock Fortress", image: "https://res.cloudinary.com/dfydjkjw8/image/upload/v1781799210/landing_assets/t8buxrktqyjfq8gs3yra.png", price: "From LKR 45,000/night", href: "/guest/search?destination=Sigiriya" },
+  { name: "Mirissa", tagline: "Sun, Surf & Whale Watching", image: "https://res.cloudinary.com/dfydjkjw8/image/upload/v1781799212/landing_assets/nb4hotwohifksncv91jl.png", price: "From LKR 35,000/night", href: "/guest/search?destination=Mirissa" },
+  { name: "Kandy", tagline: "Cultural Heart of Lanka", image: "https://res.cloudinary.com/dfydjkjw8/image/upload/v1781799214/landing_assets/l3dokxrr71ou29mo0rjo.png", price: "From LKR 40,000/night", href: "/guest/search?destination=Kandy" },
+  { name: "Ella", tagline: "Tea Country Paradise", image: "https://res.cloudinary.com/dfydjkjw8/image/upload/v1781799216/landing_assets/yixft0qttbhiwxjrirsx.png", price: "From LKR 30,000/night", href: "/guest/search?destination=Ella" },
 ]
 
 const FEATURES = [
@@ -172,7 +172,7 @@ export default function LandingContent() {
     <>
       {/* ═══════════════ HERO ═══════════════ */}
       <section className="relative min-h-screen md:h-screen flex flex-col items-center justify-center overflow-hidden bg-[#0d1a0f] py-16 md:py-0">
-        <Image src="/images/backgrounds/hero-bg-new.png" alt="Luxury tropical resort at sunset" fill className="object-cover object-center scale-105 animate-slow-zoom" priority />
+        <Image src="https://res.cloudinary.com/dfydjkjw8/image/upload/v1781799204/landing_assets/holayh42jhwz37pi5kp6.png" alt="Luxury tropical resort at sunset" fill className="object-cover object-center scale-105 animate-slow-zoom" priority />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
 
@@ -387,7 +387,7 @@ export default function LandingContent() {
 
       {/* ═══════════════ OWNER CTA ═══════════════ */}
       <CtaSection
-        bgImage="/images/backgrounds/owner-bg-new.png"
+        bgImage="https://res.cloudinary.com/dfydjkjw8/image/upload/v1781799207/landing_assets/jykkxudqvr7jlcohkqjj.png"
         bgAlt="Luxury boutique hotel interior"
         bgColor="bg-[#1a0f0a]"
         tag="For Property Owners"
@@ -402,7 +402,7 @@ export default function LandingContent() {
 
       {/* ═══════════════ STAFF CTA ═══════════════ */}
       <CtaSection
-        bgImage="/images/backgrounds/staff-bg-new.png"
+        bgImage="https://res.cloudinary.com/dfydjkjw8/image/upload/v1781799209/landing_assets/dddfq1hfxhzixdj7ixyh.png"
         bgAlt="Professional hotel staff welcoming guests"
         bgColor="bg-[#0d0d1a]"
         tag="For Hotel Staff"

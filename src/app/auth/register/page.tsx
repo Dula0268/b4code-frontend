@@ -172,8 +172,8 @@ function RegisterForm() {
                 setCountdown((prev) => prev - 1);
             }, 1000);
         } else if (showSuccessModal && countdown === 0) {
-            const redirectParams = searchParams.get("redirect") ? `?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
-            router.push(`/auth/login${redirectParams}`);
+            const redirectParam = searchParams.get("redirect") ? `&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
+            router.push(`/auth/login?role=${role}${redirectParam}`);
         }
         return () => clearTimeout(timer);
     }, [showSuccessModal, countdown, router, searchParams]);
@@ -231,19 +231,20 @@ function RegisterForm() {
                             </div>
 
                             {/* ROLE DISPLAY (HIDDEN TOGGLE) */}
-                            <div className="mb-6">
-                                <div className="flex items-center justify-between mb-2">
-                                    <Label className="text-[12px] font-extrabold text-[#282828] uppercase tracking-wider block">
-                                        {showOtpInput ? "SECURITY CHECK" : "JOIN AS A"}
-                                    </Label>
-
+                            {showOtpInput && (
+                                <div className="mb-6">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <Label className="text-[12px] font-extrabold text-[#282828] uppercase tracking-wider block">
+                                            SECURITY CHECK
+                                        </Label>
+                                    </div>
+                                    <div className="flex p-3 bg-[#f0e8e4] rounded-2xl items-center justify-center">
+                                        <span className="text-[#953002] text-lg font-black uppercase tracking-widest">
+                                            Verify Email
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="flex p-3 bg-[#f0e8e4] rounded-2xl items-center justify-center">
-                                    <span className="text-[#953002] text-lg font-black uppercase tracking-widest">
-                                        {showOtpInput ? "Verify Email" : role}
-                                    </span>
-                                </div>
-                            </div>
+                            )}
 
                             {!showOtpInput ? (
 
@@ -492,7 +493,13 @@ function RegisterForm() {
                                 <div className="mt-4 text-center text-[13px] font-medium text-neutral-600 pb-2">
                                     Already have an account?{" "}
                                     <Link
-                                        href={searchParams.get("redirect") ? `/auth/login?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "/auth/login"}
+                                        href={(() => {
+                                            const redirectParam = searchParams.get("redirect");
+                                            const roleSuffix = `?role=${role}`;
+                                            return redirectParam
+                                                ? `/auth/login${roleSuffix}&redirect=${encodeURIComponent(redirectParam)}`
+                                                : `/auth/login${roleSuffix}`;
+                                        })()}
                                         className="font-extrabold text-[#953002] hover:underline"
                                     >
                                         Log in
@@ -608,8 +615,11 @@ function RegisterForm() {
 
                             <Button
                                 onClick={() => {
-                                    const redirectParams = searchParams.get("redirect") ? `?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
-                                    router.push(`/auth/login${redirectParams}`);
+                                    const redirectParam = searchParams.get("redirect");
+                                    const url = redirectParam
+                                        ? `/auth/login?role=${role}&redirect=${encodeURIComponent(redirectParam)}`
+                                        : `/auth/login?role=${role}`;
+                                    router.push(url);
                                 }}
                                 className="w-full h-[52px] rounded-full bg-[#953002] hover:bg-[#7a2600] text-white font-extrabold text-[15px] mb-4"
                             >
@@ -618,8 +628,11 @@ function RegisterForm() {
 
                             <p className="text-[12px] text-neutral-500 font-medium pb-2">
                                 If you are not redirected, <button onClick={() => {
-                                    const redirectParams = searchParams.get("redirect") ? `?redirect=${encodeURIComponent(searchParams.get("redirect") as string)}` : "";
-                                    router.push(`/auth/login${redirectParams}`);
+                                    const redirectParam = searchParams.get("redirect");
+                                    const url = redirectParam
+                                        ? `/auth/login?role=${role}&redirect=${encodeURIComponent(redirectParam)}`
+                                        : `/auth/login?role=${role}`;
+                                    router.push(url);
                                 }} className="text-[#953002] font-bold hover:underline cursor-pointer">click here</button>
                             </p>
                         </div>

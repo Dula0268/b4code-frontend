@@ -17,14 +17,50 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useStaffChatStore } from "@/store/staff/messages/staff-chat.store";
+import { usePermission } from "@/hooks/use-permission";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/staff", icon: LayoutDashboard },
-  { label: "Order Management", href: "/staff/orders", icon: ClipboardList },
-  { label: "Menu Management", href: "/staff/menu", icon: Package },
-  { label: "QR Management", href: "/staff/qr", icon: QrCode },
-  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, isChat: true },
+  { label: "Dashboard", href: "/staff", icon: LayoutDashboard, permKey: null },
+  { label: "Order Management", href: "/staff/orders", icon: ClipboardList, permKey: "order_management" },
+  { label: "Menu Management", href: "/staff/menu", icon: Package, permKey: "menu_management" },
+  { label: "QR Management", href: "/staff/qr", icon: QrCode, permKey: "qr_management" },
+  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, isChat: true, permKey: "guest_messages" },
 ];
+
+function NavItem({ item, isActive, badge }: {
+  item: typeof NAV_ITEMS[0];
+  isActive: boolean;
+  badge: number | null;
+}) {
+  const Icon = item.icon;
+  const allowed = usePermission(item.permKey ?? "__always__", true);
+  // Dashboard (permKey null) is always visible
+  if (item.permKey !== null && !allowed) return null;
+
+  return (
+    <li>
+      <Link
+        href={item.href}
+        className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
+          ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
+          : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
+          }`}
+      >
+        <Icon
+          size={18}
+          className={`flex-shrink-0 ${isActive ? "text-[var(--brand-primary)]" : "text-[var(--black-1)]"
+            }`}
+        />
+        <span className="flex-1">{item.label}</span>
+        {badge ? (
+          <Badge variant="destructive" className="text-[11px] font-bold min-w-[20px] h-[20px] px-1">
+            {badge}
+          </Badge>
+        ) : null}
+      </Link>
+    </li>
+  );
+}
 
 export default function StaffSidebar() {
   const pathname = usePathname();
@@ -63,35 +99,17 @@ export default function StaffSidebar() {
       <nav className="flex-1 px-3 overflow-y-auto">
         <ul className="list-none m-0 p-0 flex flex-col gap-1">
           {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
             const isActive =
               pathname === item.href ||
               (item.href !== "/staff" && pathname.startsWith(item.href + "/"));
-
             const badge = item.isChat ? unreadMessages : null;
-
             return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
-                    ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
-                    : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
-                    }`}
-                >
-                  <Icon
-                    size={18}
-                    className={`flex-shrink-0 ${isActive ? "text-[var(--brand-primary)]" : "text-[var(--black-1)]"
-                      }`}
-                  />
-                  <span className="flex-1">{item.label}</span>
-                  {badge ? (
-                    <Badge variant="destructive" className="text-[11px] font-bold min-w-[20px] h-[20px] px-1">
-                      {badge}
-                    </Badge>
-                  ) : null}
-                </Link>
-              </li>
+              <NavItem
+                key={item.href}
+                item={item}
+                isActive={isActive}
+                badge={badge}
+              />
             );
           })}
         </ul>
@@ -135,3 +153,4 @@ export default function StaffSidebar() {
     </aside>
   );
 }
+
