@@ -62,7 +62,7 @@ function getDaysToStart(checkIn: string): string {
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: string }) {
+export function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     UPCOMING: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
     COMPLETED: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -199,9 +199,9 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
         <div className="flex items-center gap-3 mt-auto pt-6 border-t border-[#f2e7d9] flex-wrap">
           {isUpcoming && (
             <>
-              <button className={btnPrimary} style={{ background: "#9a3300" }}>
+              <Link href={`/guest/booking/${booking.id}`} className={btnPrimary} style={{ background: "#9a3300" }}>
                 <Info size={14} /> More Info
-              </button>
+              </Link>
               <Link href="/guest/order" className={btnOutline}>
                 <Utensils size={14} /> Order Food
               </Link>
