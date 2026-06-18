@@ -177,8 +177,8 @@ function SubmitReviewContent() {
             Thank you for your feedback! Your review has been submitted and will be published after a brief review.
           </p>
           <div className="flex flex-col gap-3">
-            <Link href="/guest/my-room" className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 no-underline" style={{ background: "var(--brand-primary)", color: "white" }}>
-              Back to Dashboard
+            <Link href="/guest/booking/my-bookings" className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 no-underline" style={{ background: "var(--brand-primary)", color: "white" }}>
+              Back to My Bookings
             </Link>
             <button onClick={resetForm} className="text-sm font-bold cursor-pointer transition-colors" style={{ color: "var(--gray-3)" }}>
               Submit another review
@@ -191,8 +191,8 @@ function SubmitReviewContent() {
 
   return (
     <div className="max-w-[820px] mx-auto px-4 pt-6">
-      <Link href="/guest/my-room" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline" style={{ color: "var(--gray-3)" }}>
-        <ChevronLeft size={16} /> Back to Dashboard
+      <Link href="/guest/booking/my-bookings" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline" style={{ color: "var(--gray-3)" }}>
+        <ChevronLeft size={16} /> Back to My Bookings
       </Link>
 
       {/* Hero banner */}
