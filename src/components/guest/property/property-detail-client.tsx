@@ -266,22 +266,11 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
 
                                     <div className="flex flex-col gap-3 w-full">
                                         <Link
-                                            href="/guest/booking/my-bookings"
+                                            href="/guest/booking"
                                             className="w-full bg-[#8b4513] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl transition-colors cursor-pointer text-center"
                                         >
                                             Go to My Bookings
                                         </Link>
-                                        <button
-                                            onClick={() => {
-                                                setBookingStep("select");
-                                                setSelectedRooms({});
-                                                setAppliedPromo("");
-                                                setPromoCodeInput("");
-                                            }}
-                                            className="w-full bg-[#1d1d1d] hover:bg-black text-white font-bold py-3.5 rounded-xl transition-colors cursor-pointer"
-                                        >
-                                            Book More Rooms
-                                        </button>
                                     </div>
                                 </div>
                             ) : Object.keys(selectedRooms).length > 0 ? (

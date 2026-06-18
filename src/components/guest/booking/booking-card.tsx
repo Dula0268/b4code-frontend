@@ -5,7 +5,7 @@ import Link from "next/link"
 import {
   MapPin, MessageSquare, Download,
   Star, ChevronRight, RefreshCw, FileText, BedDouble,
-  CreditCard, Wallet, Calendar, User, Clock, Utensils, CheckCircle2, XCircle
+  CreditCard, Wallet, Calendar, User, Clock, Utensils, CheckCircle2, XCircle, Info
 } from "lucide-react"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,9 +121,6 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
     isFromStore: booking.isFromStore ? "1" : "0",
   }).toString()
 
-  const cancelHref = `/guest/booking/cancel?${bookingContext}`
-  const modifyHref = `/guest/booking/modify?${bookingContext}`
-
   const rebookHref = booking.propertyId
     ? `/guest/property/${encodeURIComponent(booking.propertyId)}`
     : `/guest/search?property=${encodeURIComponent(booking.property)}&location=${encodeURIComponent(booking.location)}`
@@ -202,9 +199,9 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
         <div className="flex items-center gap-3 mt-auto pt-6 border-t border-[#f2e7d9] flex-wrap">
           {isUpcoming && (
             <>
-              <Link href={modifyHref} className={btnPrimary} style={{ background: "#9a3300" }}>
-                <RefreshCw size={14} /> Edit Booking
-              </Link>
+              <button className={btnPrimary} style={{ background: "#9a3300" }}>
+                <Info size={14} /> More Info
+              </button>
               <Link href="/guest/order" className={btnOutline}>
                 <Utensils size={14} /> Order Food
               </Link>
@@ -227,9 +224,6 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
             <>
               <Link href={rebookHref} className={btnPrimary} style={{ background: "#9a3300" }}>
                 <RefreshCw size={14} /> Rebook
-              </Link>
-              <Link href="/guest/booking/cancel" className={btnOutline}>
-                <FileText size={14} /> Policy
               </Link>
             </>
           )}

@@ -11,7 +11,7 @@ import { useAuthStore } from "@/store/auth/auth.store"
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Search", href: "/guest/search" },
-  { label: "My Bookings", href: "/guest/booking/my-bookings" },
+  { label: "My Bookings", href: "/guest/booking" },
   { label: "About", href: "/about" },
 ]
 
@@ -91,7 +91,7 @@ export default function GuestTopbar() {
               const isActive =
                 pathname === href ||
                 (href === "/guest/search" && pathname.startsWith("/guest/search")) ||
-                (href === "/guest/booking/my-bookings" && pathname.startsWith("/guest/booking"))
+                (href === "/guest/booking" && pathname.startsWith("/guest/booking"))
               return (
                 <Link
                   key={href}

@@ -42,7 +42,7 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
         const homePath = 
             userRole === "admin" || userRole === "owner" ? "/owner" :
             userRole === "staff" ? "/staff" :
-            "/guest/booking/my-bookings";
+            "/guest/booking";
 
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#fcfaf9] p-6 text-center">
