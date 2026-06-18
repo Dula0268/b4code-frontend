@@ -70,8 +70,7 @@ function StatusBadge({ status, isModified }: { status: string, isModified?: bool
 // Client Component
 // ─────────────────────────────────────────────────────────────────────────────
 export default function BookingDetailsClient({ id }: { id: string }) {
-  const router = useRouter()
-  const { bookings, cancelBooking, updateBookingStatus } = useGuestBookingStore()
+  const { bookings, updateBookingStatus } = useGuestBookingStore()
   
   const [booking, setBooking] = useState<StoredBooking | null>(null)
   
@@ -108,9 +107,9 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     
     // Rough mock calculation based on original unit price
     const baseUnitPrice = booking.basePrice / origNights / origGuests;
-    let newBasePrice = baseUnitPrice * newNights * editGuests;
-    let newTaxes = newBasePrice * 0.2; // approx 20%
-    let newTotal = newBasePrice + newTaxes - booking.discount;
+    const newBasePrice = baseUnitPrice * newNights * editGuests;
+    const newTaxes = newBasePrice * 0.2; // approx 20%
+    const newTotal = newBasePrice + newTaxes - booking.discount;
     
     return {
       newPrice: newTotal,
@@ -237,7 +236,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
           <span className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1 block">
-            Ref: {booking.orderId || booking.confirmationCode}
+            Ref: {booking.confirmationCode}
           </span>
           <h1 className="text-[2rem] font-black text-white mb-2 tracking-tight sm:text-[3rem] leading-none">
             {booking.property}
