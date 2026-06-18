@@ -15,6 +15,7 @@ type RBACActions = {
   setError: (message: string | null) => void;
   reset: () => void;
   fetchRolePermissions: (role: string) => Promise<void>;
+  fetchMyPermissions: (role: string) => Promise<void>;
   updateRolePermissions: (role: string, updates: Record<string, boolean>) => Promise<void>;
 };
 
@@ -41,6 +42,24 @@ export const useRBACStore = create<RBACState & RBACActions>((set) => ({
       }));
     } catch (err: unknown) {
       console.error("Failed to fetch role permissions:", err);
+      const message = err instanceof Error ? err.message : "Failed to fetch permissions";
+      set({ error: message, loading: false });
+    }
+  },
+
+  fetchMyPermissions: async (role: string) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await SettingsApi.getMyPermissions();
+      set((state) => ({
+        permissionsData: {
+          ...state.permissionsData,
+          [role]: data,
+        },
+        loading: false,
+      }));
+    } catch (err: unknown) {
+      console.error("Failed to fetch my permissions:", err);
       const message = err instanceof Error ? err.message : "Failed to fetch permissions";
       set({ error: message, loading: false });
     }

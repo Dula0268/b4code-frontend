@@ -202,19 +202,26 @@ function LoginPageContent() {
                 </Button>
 
 
-                {!searchParams?.get("redirect")?.includes("/admin") && (
+                {!searchParams?.get("redirect")?.includes("/admin") && searchParams?.get("role") !== "admin" && (
                   <div className="text-center text-sm text-neutral-700">
                     Don&apos;t have an account yet?{" "}
                     <Link
-                      href={
-                        searchParams?.get("redirect")?.includes("/staff")
-                          ? `/auth/register?role=staff&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
-                          : searchParams?.get("redirect")?.includes("/owner")
-                          ? `/auth/register?role=owner&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
-                          : searchParams?.get("redirect")
-                          ? `/auth/register?role=guest&redirect=${encodeURIComponent(searchParams.get("redirect") as string)}`
-                          : "/auth/register"
-                      }
+                      href={(() => {
+                        const roleParam = searchParams?.get("role");
+                        const redirectParam = searchParams?.get("redirect");
+                        // Determine role: prefer explicit ?role= param, then fall back to redirect path
+                        const detectedRole =
+                          roleParam === "staff" || redirectParam?.includes("/staff") ? "staff"
+                          : roleParam === "owner" || redirectParam?.includes("/owner") ? "owner"
+                          : redirectParam ? "guest"
+                          : roleParam ?? null;
+
+                        if (!detectedRole) return "/auth/register";
+                        const redirectSuffix = redirectParam
+                          ? `&redirect=${encodeURIComponent(redirectParam)}`
+                          : "";
+                        return `/auth/register?role=${detectedRole}${redirectSuffix}`;
+                      })()}
                       className="font-extrabold text-[var(--brand-primary)] hover:underline"
                     >
                       Register for an account

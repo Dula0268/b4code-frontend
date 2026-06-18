@@ -22,6 +22,7 @@ import { useStaffChatStore } from "@/store/staff/messages/staff-chat.store";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { usePermission } from "@/hooks/use-permission";
 
 function useStats() {
   const queueCount = useStaffOrdersStore((s) => s.getCountByStatus("placed"));
@@ -128,6 +129,21 @@ export default function StaffDashboard() {
   const fetchMenus = useStaffMenuStore((s) => s.fetchMenus);
   const fetchQRs = useStaffQRStore((s) => s.fetchQRs);
 
+  // Permission gates
+  const canOrders = usePermission("order_management");
+  const canMenu = usePermission("menu_management");
+  const canQR = usePermission("qr_management");
+  const canMessages = usePermission("guest_messages");
+
+  const permMap: Record<string, boolean> = {
+    "/staff/orders": canOrders,
+    "/staff/menu": canMenu,
+    "/staff/qr": canQR,
+    "/staff/messages": canMessages,
+  };
+
+  const visibleCards = managementCards.filter((c) => permMap[c.href] !== false);
+
   // Fetch all dashboard data when component mounts
   useEffect(() => {
     const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
@@ -175,7 +191,7 @@ export default function StaffDashboard() {
 
       {/* Management Cards Grid */}
       <div className="grid grid-cols-2 gap-3 flex-1 min-h-[300px]">
-        {managementCards.map((card) => {
+        {visibleCards.map((card) => {
           const Icon = card.icon;
           const ButtonIcon = card.buttonIcon;
           return (
@@ -203,6 +219,12 @@ export default function StaffDashboard() {
             </Card>
           );
         })}
+        {visibleCards.length === 0 && (
+          <div className="col-span-2 flex flex-col items-center justify-center py-20 text-[var(--gray-3)]">
+            <p className="text-sm font-medium">No features are currently enabled for your role.</p>
+            <p className="text-xs mt-1">Contact your administrator to enable access.</p>
+          </div>
+        )}
       </div>
     </div>
   );

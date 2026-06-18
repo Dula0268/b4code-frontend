@@ -1,13 +1,34 @@
+"use client";
+
+import { useEffect } from "react";
 import StaffSidebar from "@/components/staff/layout/staff-sidebar";
 import RoleGuard from "@/components/shared/auth/role-guard";
+import { useAuthStore } from "@/store/auth/auth.store";
+import { useRBACStore } from "@/store/auth/rbac.store";
 
 interface StaffPageLayoutProps {
   children: React.ReactNode;
 }
 
+function PermissionLoader() {
+  const { user } = useAuthStore();
+  const { permissionsData, loading, fetchMyPermissions } = useRBACStore();
+
+  useEffect(() => {
+    if (!user?.role || loading) return;
+    const role = user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase();
+    if (!permissionsData[role]) {
+      fetchMyPermissions(role);
+    }
+  }, [user, permissionsData, loading, fetchMyPermissions]);
+
+  return null;
+}
+
 export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
   return (
     <RoleGuard allowedRoles={["staff", "admin", "owner"]}>
+      <PermissionLoader />
       <div className="flex h-screen overflow-hidden bg-[#f8f6f5]">
         {/* Fixed Sidebar */}
         <StaffSidebar />
@@ -20,3 +41,4 @@ export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
     </RoleGuard>
   );
 }
+

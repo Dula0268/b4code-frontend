@@ -16,6 +16,7 @@ import { differenceInDays, format } from "date-fns"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 import { useGuestGuard } from "@/hooks/use-guest-guard"
+import api from "@/lib/axios"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & Helpers
@@ -159,11 +160,38 @@ function useBookingConfirmationLogic() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Receipt Email Hook — fires once when PayHere redirects back (order_id in URL)
+// ─────────────────────────────────────────────────────────────────────────────
+function useSendReceiptOnReturn(confirmationCode: string) {
+  const searchParams = useSearchParams()
+  const [hasFired, setHasFired] = useState(false)
+
+  useEffect(() => {
+    const orderId = searchParams?.get("order_id")
+    if (!orderId || !confirmationCode || confirmationCode === "—") return
+    if (hasFired) return
+
+    setHasFired(true)
+
+    // Fire-and-forget — backend is idempotent so duplicate calls are safe
+    api
+      .post(`/guest/bookings/${confirmationCode}/send-receipt`)
+      .then(() => console.log("[RECEIPT] Confirmation email sent for", confirmationCode))
+      .catch((err) => console.warn("[RECEIPT] Could not send receipt email:", err?.response?.data ?? err.message))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, confirmationCode])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Page Content
 // ─────────────────────────────────────────────────────────────────────────────
 function ConfirmationContent() {
   const { ready } = useGuestGuard()
   const logic = useBookingConfirmationLogic()
+
+  // Trigger confirmation email when PayHere redirects back (order_id present in URL)
+  // Must be called unconditionally before early returns to follow Rules of Hooks
+  useSendReceiptOnReturn(logic.code)
 
   if (!ready) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -171,6 +199,7 @@ function ConfirmationContent() {
     </div>
   )
   const { booking, fallback, code, paidInFull, propertyName, propertyLocation, propertyImage, roomName, checkInDisplay, checkOutDisplay, guestCount, totalPrice, nights, copied, handleCopy } = logic
+
 
   if (!booking && !fallback) {
     return (
