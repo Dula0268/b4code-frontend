@@ -11,7 +11,7 @@ import { useAuthStore } from "@/store/auth/auth.store"
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Search", href: "/guest/search" },
-  { label: "My Bookings", href: "/guest/booking/my-bookings" },
+  { label: "My Bookings", href: "/guest/booking" },
   { label: "About", href: "/about" },
 ]
 
@@ -82,26 +82,16 @@ export default function GuestTopbar() {
           <Logo />
         </div>
 
-        {/* ── Compact Search Bar (search page only) ── */}
-        {isSearchPage && (
-          <div className="hidden md:flex flex-1 justify-center px-4">
-            <Suspense fallback={<div className="h-10 w-[580px] rounded-xl bg-gray-100 animate-pulse" />}>
-              <SearchBar variant="compact" />
-            </Suspense>
-          </div>
-        )}
+        {/* ── Compact Search Bar (removed from search page header as requested) ── */}
 
         {/* ── Nav + Auth/Account ── */}
-        <div className={[
-          "hidden md:flex items-center gap-6",
-          !isSearchPage && "ml-auto",
-        ].join(" ")}>
+        <div className="hidden md:flex items-center gap-6 ml-auto">
           <nav className="flex items-center gap-6">
             {NAV_LINKS.map(({ label, href }) => {
               const isActive =
                 pathname === href ||
                 (href === "/guest/search" && pathname.startsWith("/guest/search")) ||
-                (href === "/guest/booking/my-bookings" && pathname.startsWith("/guest/booking"))
+                (href === "/guest/booking" && pathname.startsWith("/guest/booking"))
               return (
                 <Link
                   key={href}
@@ -200,14 +190,7 @@ export default function GuestTopbar() {
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="md:hidden border-t border-[#e0e0e0] bg-white px-6 py-4 flex flex-col gap-4">
-          {/* Compact search on mobile search page */}
-          {isSearchPage && (
-            <div className="pb-2 border-b border-[#e0e0e0]">
-              <Suspense fallback={<div className="h-10 rounded-xl bg-gray-100 animate-pulse" />}>
-                <SearchBar variant="compact" />
-              </Suspense>
-            </div>
-          )}
+          {/* Compact search removed from mobile search page header as requested */}
 
           {NAV_LINKS.map(({ label, href }) => (
             <Link

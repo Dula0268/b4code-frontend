@@ -33,7 +33,7 @@ function LoginPageContent() {
   useEffect(() => {
     if (isRestoring || !isAuthenticated || !user) return;
     const rolePaths: Record<string, string> = {
-      guest: "/guest/booking/my-bookings",
+      guest: "/guest/booking",
       staff: "/staff",
       owner: "/owner",
       admin: "/admin",
@@ -45,7 +45,7 @@ function LoginPageContent() {
     e.preventDefault();
     setError(null);
     try {
-      // login() returns the role-based home path (e.g. "/guest/booking/my-bookings", "/staff", "/owner")
+      // login() returns the role-based home path (e.g. "/guest/booking", "/staff", "/owner")
       const path = await login(email, password);
       const redirect = searchParams?.get("redirect");
 

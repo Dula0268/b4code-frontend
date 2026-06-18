@@ -17,7 +17,7 @@ export default function AccessDenied({ userRole, requiredRole }: AccessDeniedPro
       case "staff": return "/staff";
       case "admin": return "/admin";
       case "owner": return "/owner";
-      case "guest": return "/guest/booking/my-bookings";
+      case "guest": return "/guest/booking";
       default: return "/";
     }
   };

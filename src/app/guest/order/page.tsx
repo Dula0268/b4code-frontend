@@ -67,7 +67,7 @@ function GuestOrderLandingContent() {
   // If no qrId provided and no existing context
   useEffect(() => {
     if (!localLoading && !qrId && !qrContext) {
-      router.push("/guest/my-room/qr-scanner");
+      router.push("/guest/booking");
     }
   }, [localLoading, qrId, qrContext, router]);
 

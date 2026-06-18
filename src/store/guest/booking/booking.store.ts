@@ -32,6 +32,9 @@ export interface StoredBooking {
   nationalId?: string;
   bookedAt: string;      // ISO timestamp
   userEmail: string;
+  isModified?: boolean;
+  cancelReason?: string;
+  refundStatus?: "PENDING" | "PROCESSED";
 }
 
 // ─── State & Actions ──────────────────────────────────────────────────────────

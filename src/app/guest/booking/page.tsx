@@ -12,6 +12,8 @@ import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/
 import BookingCard, { type BookingCardData } from "@/components/guest/booking/booking-card"
 import { useGuestGuard } from "@/hooks/use-guest-guard"
 import AccessDenied from "@/components/shared/auth/access-denied"
+import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
+import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 
 const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
@@ -139,36 +141,14 @@ export default function MyBookingsPage() {
   }
 
   return (
-    <div className="min-h-screen relative bg-[#faf6f1] overflow-hidden">
-      {/* Immersive Background */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/payment_page_background_1778058273069.png"
-          alt="Luxury background"
-          fill
-          className="object-cover opacity-15 scale-105 blur-sm"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#fff7ef]/95 via-[#faf6f1]/80 to-[#faf6f1]" />
-      </div>
+    <div className="min-h-screen flex flex-col bg-[#fafafa]">
+      <GuestTopbar />
 
-      <div className="relative z-10 max-w-[900px] mx-auto px-6 pt-32 pb-20">
-        {/* Header Section */}
-        <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-1 bg-[#9a3300] rounded-full" />
-            <span className="text-[12px] font-black text-[#9a3300] uppercase tracking-[0.2em]">Guest Portal</span>
-          </div>
-          <h1 className="text-[42px] font-black text-[#2b2218] leading-none tracking-tight mb-4">
-            My Luxury <span className="text-[#9c8a76] italic font-medium">Stays</span>
-          </h1>
-          <p className="text-[#6f6254] text-[15px] font-medium max-w-md leading-relaxed">
-            Manage your upcoming escapes and relive your past memories with Prime Stay.
-          </p>
-        </div>
+      <div className="flex-1 max-w-[900px] w-full mx-auto px-6 pt-16 pb-20">
+
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 p-1 bg-white border border-[#e8ddcf] rounded-[18px] backdrop-blur-md mb-8 w-fit animate-in fade-in slide-in-from-left-4 duration-700 shadow-sm">
+        <div className="flex items-center gap-1 p-1 bg-white border border-[#e8ddcf] rounded-[18px] backdrop-blur-md mb-12 w-fit animate-in fade-in slide-in-from-left-4 duration-700 shadow-sm">
           {TABS.map(tab => (
             <button
               key={tab}
@@ -224,6 +204,7 @@ export default function MyBookingsPage() {
           </p>
         </div>
       </div>
+      <GuestFooter />
     </div>
   )
 }

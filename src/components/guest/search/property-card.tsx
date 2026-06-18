@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
-import { Heart, Star, MapPin } from "lucide-react"
+import { Star, MapPin } from "lucide-react"
 
 export interface PropertyListing {
     id: string
@@ -27,14 +27,11 @@ function formatLKR(amount: number) {
 }
 
 export default function PropertyCard({ listing }: { listing: PropertyListing }) {
-    const [liked, setLiked] = useState(false)
     const [imgError, setImgError] = useState(false)
     const searchParams = useSearchParams()
     const query = searchParams && searchParams.toString() ? `?${searchParams.toString()}` : ""
 
-    // Show max 3 amenities on card
-    const visibleAmenities = listing.amenities?.slice(0, 3) || []
-    const moreCount = (listing.amenities?.length || 0) - visibleAmenities.length
+    const maxPrice = listing.pricePerNight + (Math.max(0, listing.maxGuests - listing.baseGuests) * listing.extraGuestFee)
 
     return (
         <Link
@@ -67,23 +64,10 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                         </span>
                     )}
 
-                    {/* Wishlist */}
-                    <button
-                        id={`wishlist-${listing.id}`}
-                        aria-label={liked ? "Remove from wishlist" : "Save to wishlist"}
-                        onClick={e => { e.preventDefault(); e.stopPropagation(); setLiked(p => !p) }}
-                        className={["absolute top-2 sm:top-3 right-2 sm:right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer", liked ? "bg-[var(--brand-primary)] text-[var(--white)] shadow-md" : "bg-[var(--white)]/90 text-[var(--gray-2)] hover:bg-[var(--white)] hover:text-[var(--brand-primary)] shadow-sm"].join(" ")}
-                    >
-                        <Heart size={15} fill={liked ? "currentColor" : "none"} />
-                    </button>
                 </div>
 
                 {/* Content */}
                 <div className="p-3 sm:p-4 flex flex-col gap-1.5">
-                    {/* Property type label */}
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-[var(--brand-primary)] uppercase tracking-wider">
-                        {listing.propertyType}
-                    </span>
 
                     {/* Title + Rating */}
                     <div className="flex items-start justify-between gap-2">
@@ -106,36 +90,16 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                         {listing.location}
                     </p>
 
-                    {/* Review count + guests */}
+                    {/* Review count */}
                     <div className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--muted)]">
-                        <span>{listing.reviewCount.toLocaleString()} reviews</span>
-                        <span className="text-[var(--gray-4)]">·</span>
-                        <span>Up to {listing.maxGuests} guest{listing.maxGuests !== 1 ? "s" : ""}</span>
+                        <span>{listing.reviewCount.toLocaleString()} total reviews</span>
                     </div>
 
-                    {/* Amenity chips */}
-                    {visibleAmenities.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-0.5">
-                            {visibleAmenities.map(am => (
-                                <span
-                                    key={am}
-                                    className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-[var(--gray-2)] bg-[var(--gray-5)]/60 rounded-md"
-                                >
-                                    {am}
-                                </span>
-                            ))}
-                            {moreCount > 0 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-[var(--brand-primary)] bg-[var(--brand-primary)]/5 rounded-md">
-                                    +{moreCount} more
-                                </span>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Price */}
-                    <div className="border-t border-[var(--border)] mt-1 pt-2">
-                        <p className="text-[12px] sm:text-[13px] text-[var(--muted)]">
-                            Starting from <span className="text-[14px] sm:text-[15px] font-bold text-[var(--fg)]">{formatLKR(listing.pricePerNight)}</span><span className="text-[11px] sm:text-[12px] font-normal text-[var(--muted)]"> / night</span>
+                    {/* Price Range */}
+                    <div className="border-t border-[var(--border)] mt-1 pt-2 flex flex-col">
+                        <span className="text-[10px] sm:text-[11px] text-[var(--muted)] uppercase tracking-wide font-semibold mb-0.5">Price Range</span>
+                        <p className="text-[14px] sm:text-[15px] font-bold text-[var(--fg)]">
+                            {formatLKR(listing.pricePerNight)} <span className="text-[12px] font-medium text-[var(--muted)]">to</span> {formatLKR(maxPrice)}
                         </p>
                     </div>
                 </div>
