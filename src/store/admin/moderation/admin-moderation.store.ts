@@ -41,9 +41,8 @@ type AdminModerationActions = {
   setDisputeResolved: (data: { amount: string; bookingId: string; caseId: string; time: string } | null) => void;
   
   fetchBadgeCounts: () => Promise<void>;
-  
-  fetchReviews: (params?: { flagReason?: string; search?: string; page?: number; size?: number }) => Promise<void>;
-  approveReview: (id: number) => Promise<void>;
+  fetchReviews: (params?: { flagType?: string; search?: string; page?: number; size?: number; rating?: number }) => Promise<void>;
+  approveReview: (id: number, adminNote?: string) => Promise<void>;
   removeReview: (id: number, adminNote: string) => Promise<void>;
 
   fetchDisputes: (params?: { status?: string; search?: string; page?: number; size?: number }) => Promise<void>;
@@ -99,10 +98,10 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
     }
   },
 
-  approveReview: async (id) => {
+  approveReview: async (id, adminNote) => {
     set({ actionLoading: true, error: null });
     try {
-      await ModerationApi.approveReview(id);
+      await ModerationApi.approveReview(id, adminNote);
       get().fetchBadgeCounts(); // Update counts
       await get().fetchReviews(); // Refetch to update the queue UI
       set({ actionLoading: false });

@@ -3,7 +3,7 @@ import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderati
 
 export default function UrgentCard() {
   const { reviews } = useAdminModerationStore();
-  const urgentCount = reviews.filter(r => r.flagReason === 'Harassment' || r.flagReason === 'Spam / Scam').length;
+  const urgentCount = reviews.filter(r => r.flagType === 'HARASSMENT' || r.flagType === 'SPAM_SCAM').length;
 
   return (
     <div className="flex-1 min-w-0 bg-white rounded-2xl border border-[#F0EBE7] p-5 flex flex-col gap-2 shadow-sm">

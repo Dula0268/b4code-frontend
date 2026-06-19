@@ -11,7 +11,8 @@ export interface FlaggedReview {
   guestAvatarColor: string;
   reviewText: string;
   rating: number;
-  flagReason: string;
+  flagType: string;
+  ownerName?: string;
   status: string;
   adminNote?: string;
   flaggedAt: string;
@@ -55,11 +56,11 @@ export const ModerationApi = {
   getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number }> =>
     api.get('/admin/moderation/counts').then((res) => res.data),
 
-  getReviews: (params: { flagReason?: string; search?: string; page?: number; size?: number }): Promise<PageResponse<FlaggedReview>> =>
+  getReviews: (params: { flagType?: string; search?: string; page?: number; size?: number; rating?: number }): Promise<PageResponse<FlaggedReview>> =>
     api.get('/admin/moderation/reviews', { params }).then((res) => res.data),
 
-  approveReview: (id: number): Promise<FlaggedReview> =>
-    api.put(`/admin/moderation/reviews/${id}/approve`).then((res) => res.data),
+  approveReview: (id: number, adminNote?: string): Promise<FlaggedReview> =>
+    api.put(`/admin/moderation/reviews/${id}/approve`, { adminNote }).then((res) => res.data),
 
   removeReview: (id: number, adminNote: string): Promise<FlaggedReview> =>
     api.put(`/admin/moderation/reviews/${id}/remove`, { adminNote }).then((res) => res.data),
