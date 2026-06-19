@@ -33,7 +33,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
 
   const categories = useMemo(() => {
     if (!menu) return [];
-    const cats = new Set(menu.items.map((i) => i.category));
+    const cats = new Set(menu.items.map((i) => i.categoryName));
     return ["All Categories", ...Array.from(cats)];
   }, [menu]);
 
@@ -41,7 +41,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
     if (!menu) return [];
     return menu.items.filter((item) => {
       const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || item.description.toLowerCase().includes(search.toLowerCase());
-      const matchCat = category === "All Categories" || item.category === category;
+      const matchCat = category === "All Categories" || item.categoryName === category;
       return matchSearch && matchCat;
     });
   }, [menu, search, category]);
@@ -181,7 +181,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
             </div>
             <div>
               <p className="text-xs font-bold text-[var(--black-2)]">{menu.name}</p>
-              <p className="text-[10px] text-[var(--gray-3)]">{menu.type}</p>
+              <p className="text-[10px] text-[var(--gray-3)]">Dining Menu</p>
             </div>
           </div>
           <div className="h-6 w-px bg-[var(--gray-5)]" />

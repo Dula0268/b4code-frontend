@@ -99,17 +99,14 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
 
             {/* Description */}
             <div>
-              <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Description <span className={descError && !isEdit ? "text-[var(--state-error)]" : "text-[var(--gray-3)] normal-case font-normal"}>(Optional)</span></Label>
+              <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Description <span className="text-[var(--gray-3)] normal-case font-normal">(Optional)</span></Label>
               <Textarea
                 value={description}
-                onChange={(e) => { setDescription(e.target.value); setDescError(false); }}
+                onChange={(e) => { setDescription(e.target.value); }}
                 placeholder="Provide details about the menu items, serving times, or dietary notes..."
                 rows={3}
-                className={`mt-1 text-xs rounded-[8px] resize-none focus:border-[var(--brand-primary)] ${
-                  descError && !isEdit ? "border-[var(--state-error)] bg-[rgba(235,87,87,0.04)]" : "border-[var(--gray-5)]"
-                }`}
+                className="mt-1 text-xs rounded-[8px] resize-none focus:border-[var(--brand-primary)] border-[var(--gray-5)]"
               />
-              {descError && !isEdit && <p className="text-[10px] text-[var(--state-error)] mt-0.5">Description is required for new menus.</p>}
               <p className="text-[10px] text-[var(--gray-4)] mt-0.5">Briefly describe what this menu offers to guests.</p>
             </div>
             </CardContent>
