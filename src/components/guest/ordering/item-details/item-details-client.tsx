@@ -28,7 +28,10 @@ export default function ItemDetailsClient({
   roomNumber?: string;
 }) {
   const [qty, setQty] = React.useState(1);
-  const [selectedAddOns, setSelectedAddOns] = React.useState<Record<string, boolean>>({});
+  const [selectedVariantId, setSelectedVariantId] = React.useState<string>(
+    item.variants && item.variants.length > 0 ? item.variants[0].id : ""
+  );
+  const [selectedOptions, setSelectedOptions] = React.useState<Record<string, Record<string, boolean>>>({});
   const [specialInstructions, setSpecialInstructions] = React.useState("");
   const [activeImage, setActiveImage] = React.useState(0);
   const [sortBy, setSortBy] = React.useState<"newest" | "rating-high" | "helpful">("newest");
@@ -57,26 +60,59 @@ export default function ItemDetailsClient({
     return arr;
   }, [itemReviews, sortBy]);
 
-  const itemAddOns = (item as MenuItemDetail).addOns;
-  const addOns = React.useMemo(() => itemAddOns ?? [], [itemAddOns]);
-  const gallery = (item as MenuItemDetail).gallery ?? (item.imageUrl ? [item.imageUrl] : []);
+  const gallery = React.useMemo(() => {
+    if (item.imageUrls && item.imageUrls.length > 0) return item.imageUrls;
+    const detail = item as MenuItemDetail;
+    if (detail.gallery && detail.gallery.length > 0) return detail.gallery;
+    return item.imageUrl ? [item.imageUrl] : [];
+  }, [item.imageUrls, item.imageUrl]);
+
   const heroSrc = gallery[activeImage] ?? item.imageUrl;
   const itemTitle = (item as { title?: string }).title ?? item.name ?? "Item";
   const detailItem = item as MenuItemDetail;
-  const itemPrice = (item as { priceLkr?: number }).priceLkr ?? item.price ?? 0;
 
-  const addOnPrice = React.useMemo(() => {
-    return addOns.reduce((sum, addon) => {
-      return selectedAddOns[addon.id] ? sum + addon.price : sum;
-    }, 0);
-  }, [selectedAddOns, addOns]);
+  const selectedVariant = React.useMemo(() => {
+    if (!selectedVariantId || !item.variants) return null;
+    return item.variants.find((v) => v.id === selectedVariantId);
+  }, [selectedVariantId, item.variants]);
 
-  const totalPrice = itemPrice * qty + addOnPrice;
+  const basePrice = selectedVariant ? selectedVariant.price : (item.price || 0);
+
+  const modifiersPrice = React.useMemo(() => {
+    let sum = 0;
+    if (!item.modifiers) return sum;
+    item.modifiers.forEach((m) => {
+      const selections = selectedOptions[m.id];
+      if (selections) {
+        m.options.forEach((o) => {
+          if (selections[o.label]) {
+            sum += o.price;
+          }
+        });
+      }
+    });
+    return sum;
+  }, [selectedOptions, item.modifiers]);
+
+  const unitPrice = basePrice + modifiersPrice;
+  const totalPrice = unitPrice * qty;
 
   const handleAddToCart = () => {
-    for (let i = 0; i < qty; i++) {
-      addToCart(item);
+    const selMods: { modifierId: string; optionLabel: string }[] = [];
+    if (item.modifiers) {
+      item.modifiers.forEach((m) => {
+        const selections = selectedOptions[m.id];
+        if (selections) {
+          m.options.forEach((o) => {
+            if (selections[o.label]) {
+              selMods.push({ modifierId: String(m.id), optionLabel: o.label });
+            }
+          });
+        }
+      });
     }
+
+    addToCart(item, qty, selectedVariantId || undefined, selMods);
   };
 
   return (
@@ -123,10 +159,15 @@ export default function ItemDetailsClient({
             </div>
             {/* Badge overlay */}
             {item.tag ? (
-              <div className="absolute left-4 top-3">
-                <span className="inline-block rounded bg-white/90 backdrop-blur-sm px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#923002] shadow-sm">
-                  {TAG_LABELS[item.tag] ?? item.tag}
-                </span>
+              <div className="absolute left-4 top-3 flex flex-wrap gap-1.5">
+                {item.tag.split(",").map((tagStr) => {
+                  const tagTrimmed = tagStr.trim();
+                  return (
+                    <span key={tagTrimmed} className="inline-block rounded bg-white/90 backdrop-blur-sm px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#923002] shadow-sm">
+                      {TAG_LABELS[tagTrimmed] ?? tagTrimmed}
+                    </span>
+                  );
+                })}
               </div>
             ) : null}
           </div>
@@ -134,7 +175,7 @@ export default function ItemDetailsClient({
           {/* Thumbnail gallery */}
           {gallery.length > 1 && (
             <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
-              {gallery.map((src, idx) => (
+              {gallery.map((src: string, idx: number) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImage(idx)}
@@ -164,7 +205,7 @@ export default function ItemDetailsClient({
                 {itemTitle}
               </h1>
               <span className="text-xl md:text-3xl font-bold text-[#923002] leading-7 md:leading-9 whitespace-nowrap">
-                {formatLkr(itemPrice)}
+                {formatLkr(unitPrice)}
               </span>
             </div>
 
@@ -182,10 +223,15 @@ export default function ItemDetailsClient({
                 </div>
               ) : null}
               {item.tag ? (
-                <>
-                  <Dot />
-                  <span>{TAG_LABELS[item.tag] ?? item.tag}</span>
-                </>
+                item.tag.split(",").map((tagStr) => {
+                  const tagTrimmed = tagStr.trim();
+                  return (
+                    <React.Fragment key={tagTrimmed}>
+                      <Dot />
+                      <span>{TAG_LABELS[tagTrimmed] ?? tagTrimmed}</span>
+                    </React.Fragment>
+                  );
+                })
               ) : null}
               {detailItem.prepTime ? (
                 <>
@@ -257,43 +303,84 @@ export default function ItemDetailsClient({
               </div>
             </div>
 
-            {/* Add-ons */}
-            {addOns.length > 0 ? (
-              <div className="space-y-4">
-                <p className="text-sm font-semibold uppercase tracking-wider text-[#6b7280]">
-                  Add-ons
+            {/* Portion/Size selector */}
+            {item.variants && item.variants.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6b7280]">
+                  Portion / Size
                 </p>
-                <div className="space-y-1">
-                  {addOns.map((addon) => (
+                <div className="space-y-2">
+                  {item.variants.map((v) => (
                     <label
-                      key={addon.id}
-                      className="flex cursor-pointer items-center justify-between rounded-lg p-3.5 hover:bg-[#f9fafb] transition-colors"
+                      key={v.id}
+                      className="flex cursor-pointer items-center justify-between rounded-lg border border-[#e5e7eb] p-3.5 hover:bg-[#f9fafb] transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <Checkbox
-                          checked={selectedAddOns[addon.id] || false}
-                          onCheckedChange={(checked) =>
-                            setSelectedAddOns((prev) => ({
-                              ...prev,
-                              [addon.id]: !!checked,
-                            }))
-                          }
-                          className="border-[#d1d5db] data-[state=checked]:bg-[#923002] data-[state=checked]:border-[#923002]"
+                        <input
+                          type="radio"
+                          name="variant"
+                          checked={selectedVariantId === v.id}
+                          onChange={() => setSelectedVariantId(v.id)}
+                          className="h-4 w-4 border-gray-300 text-[#923002] focus:ring-[#923002]"
                         />
-                        <span className="text-base text-[#374151]">
-                          {addon.label}
+                        <span className="text-sm font-semibold text-[#374151]">
+                          {v.label}
                         </span>
                       </div>
-                      <span className="text-sm font-medium text-[#6b7280]">
-                        {addon.price === 0
-                          ? "Free"
-                          : `+${formatLkr(addon.price)}`}
+                      <span className="text-sm font-semibold text-[#923002]">
+                        {formatLkr(v.price)}
                       </span>
                     </label>
                   ))}
                 </div>
               </div>
-            ) : null}
+            )}
+
+            {/* Customisable Modifiers */}
+            {item.modifiers && item.modifiers.length > 0 && (
+              <div className="space-y-4">
+                {item.modifiers.map((m) => (
+                  <div key={m.id} className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#6b7280]">
+                      {m.name}
+                    </p>
+                    <div className="space-y-1">
+                      {m.options.map((o) => {
+                        const isSelected = selectedOptions[m.id]?.[o.label] || false;
+                        return (
+                          <label
+                            key={o.label}
+                            className="flex cursor-pointer items-center justify-between rounded-lg p-2.5 hover:bg-[#f9fafb] transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) =>
+                                  setSelectedOptions((prev) => ({
+                                    ...prev,
+                                    [m.id]: {
+                                      ...(prev[m.id] || {}),
+                                      [o.label]: !!checked,
+                                    },
+                                  }))
+                                }
+                                className="border-[#d1d5db] data-[state=checked]:bg-[#923002] data-[state=checked]:border-[#923002]"
+                              />
+                              <span className="text-sm text-[#374151]">
+                                {o.label}
+                              </span>
+                            </div>
+                            <span className="text-xs font-medium text-[#6b7280]">
+                              {o.price === 0 ? "Free" : `+${formatLkr(o.price)}`}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Special Instructions */}
             <div className="space-y-2">

@@ -9,6 +9,7 @@ export interface MenuItem {
   price: number;
   priceLkr: number;
   imageUrl?: string;
+  imageUrls?: string[];
   category: string;
   categoryName?: string; // From normalized backend DTO
   isAvailable: boolean;
@@ -74,8 +75,20 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         category: item.categoryName || item.category || "Other",
         isAvailable: item.isAvailable !== false,
         tag: item.tag,
-        variants: item.variants,
-        modifiers: item.modifiers,
+        imageUrls: item.imageUrls || [],
+        variants: item.variants?.map((v: any, idx: number) => ({
+          id: v.id || `var-${idx}`,
+          label: v.label || "",
+          price: v.price || 0,
+        })) || [],
+        modifiers: item.modifiers?.map((m: any, mIdx: number) => ({
+          id: String(m.id || `mod-${mIdx}`),
+          name: m.name || "",
+          options: m.options?.map((o: any) => ({
+            label: o.label || "",
+            price: o.price || 0,
+          })) || [],
+        })) || [],
       }));
 
       // Group items by categoryName (dynamic categories created by staff)

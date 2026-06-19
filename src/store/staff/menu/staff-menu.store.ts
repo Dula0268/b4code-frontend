@@ -75,6 +75,8 @@ export interface BackendMenuItem {
   imageUrl?: string;
   tag?: string;
   calories?: number;
+  variants?: Variant[];
+  modifiers?: Modifier[];
 }
 
 export interface BackendMenu {
@@ -180,8 +182,8 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
             tag: bi.tag,
             calories: bi.calories,
             availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
-            variants: [],
-            modifiers: [],
+            variants: bi.variants || [],
+            modifiers: bi.modifiers || [],
           }));
 
         return {
@@ -354,6 +356,8 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         tag: item.tag,
         calories: item.calories,
         imageUrls: item.imageUrls,
+        variants: item.variants,
+        modifiers: item.modifiers,
       });
       const saved = response.data as BackendMenuItem;
       const newItem: MenuItem = {
@@ -401,6 +405,8 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       if (data.menuId !== undefined) updateData.menuId = Number(data.menuId);
       if (data.status !== undefined) updateData.isAvailable = data.status === "active";
       if (data.imageUrls !== undefined) updateData.imageUrls = data.imageUrls;
+      if (data.variants !== undefined) updateData.variants = data.variants;
+      if (data.modifiers !== undefined) updateData.modifiers = data.modifiers;
 
       await api.put(`/menu-items/${itemId}`, updateData);
       set((s) => ({
