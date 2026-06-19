@@ -10,6 +10,7 @@ export interface MenuItem {
   priceLkr: number;
   imageUrl?: string;
   category: string;
+  categoryName?: string; // From normalized backend DTO
   isAvailable: boolean;
   tag?: string;
   variants?: { id: string; label: string; price: number }[];
@@ -69,14 +70,15 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         price: item.price || 0,
         priceLkr: item.price || 0,
         imageUrl: item.imageUrl,
-        category: item.category || "Other",
+        // Use categoryName (from normalized schema) as the category for tab grouping
+        category: item.categoryName || item.category || "Other",
         isAvailable: item.isAvailable !== false,
         tag: item.tag,
         variants: item.variants,
         modifiers: item.modifiers,
       }));
 
-      // Group items by category
+      // Group items by categoryName (dynamic categories created by staff)
       const categoryMap = new Map<string, MenuItem[]>();
       items.forEach((item) => {
         const category = item.category || "Other";
@@ -93,8 +95,8 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         items: catItems.filter((item) => item.isAvailable),
       }));
 
-
       set({ categories, loading: false });
+
     } catch (error: unknown) {
       let errorMsg = "Failed to fetch menu";
       if (typeof error === "object" && error !== null) {
