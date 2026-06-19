@@ -149,7 +149,8 @@ export interface FlaggedReview {
   guestAvatarColor: string;
   reviewText: string;
   rating: number;
-  flagReason: string;
+  flagType: string;
+  ownerName?: string;
   status: string;
   adminNote?: string;
   flaggedAt: string;

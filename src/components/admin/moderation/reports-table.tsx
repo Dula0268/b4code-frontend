@@ -12,10 +12,10 @@ import type { FlaggedReview } from "@/api/admin/moderation.api";
 // ─── Flag Badge ───────────────────────────────────────────────────────────────
 function FlagBadge({ status }: { status: string }) {
   const cfg: Record<string, { bg: string; text: string; icon: string }> = {
-    Harassment: { bg: "bg-red-50", text: "text-red-600", icon: "🚩" },
-    "Spam / Scam": { bg: "bg-yellow-50", text: "text-yellow-700", icon: "⚠" },
-    Profanity: { bg: "bg-orange-50", text: "text-orange-600", icon: "🚫" },
-    "Policy Violation": { bg: "bg-blue-50", text: "text-blue-600", icon: "⊘" },
+    HARASSMENT: { bg: "bg-red-50", text: "text-red-600", icon: "🚩" },
+    SPAM_SCAM: { bg: "bg-yellow-50", text: "text-yellow-700", icon: "⚠" },
+    PROFANITY: { bg: "bg-orange-50", text: "text-orange-600", icon: "🚫" },
+    POLICY_VIOLATION: { bg: "bg-blue-50", text: "text-blue-600", icon: "⊘" },
   };
   const c = cfg[status] || { bg: "bg-gray-50", text: "text-gray-600", icon: "•" };
   return (
@@ -61,20 +61,21 @@ export default function ReviewsQueue() {
 
   useEffect(() => {
     fetchReviews({
-      flagReason: flagFilter !== "All" ? flagFilter : undefined,
+      flagType: flagFilter !== "All" ? flagFilter : undefined,
+      rating: ratingFilter !== "Any" ? parseInt(ratingFilter) : undefined,
       page: currentPage - 1,
       size: 4,
     });
-  }, [fetchReviews, flagFilter, currentPage]);
+  }, [fetchReviews, flagFilter, ratingFilter, currentPage]);
 
   const goPage = (p: number) => setCurrentPage(Math.max(1, Math.min(reviewsTotalPages, p)));
 
   const flagOptions: string[] = [
     "All",
-    "Harassment",
-    "Spam / Scam",
-    "Profanity",
-    "Policy Violation",
+    "HARASSMENT",
+    "SPAM_SCAM",
+    "PROFANITY",
+    "POLICY_VIOLATION",
   ];
   const ratingOptions: string[] = ["Any", "1", "2", "3", "4", "5"];
 
@@ -179,7 +180,7 @@ export default function ReviewsQueue() {
             <thead>
               <tr className="bg-[#F6F8F7]">
                 {[
-                  "REVIEWER",
+                  "FLAGGED BY",
                   "RATING",
                   "PROPERTY",
                   "CONTENT SNIPPET",
@@ -219,18 +220,17 @@ export default function ReviewsQueue() {
                       idx % 2 === 0 ? "bg-white" : "bg-[#fafafa]"
                     } hover:bg-[#f5efec]`}
                   >
-                    {/* Reviewer */}
+                    {/* Flagged By */}
                     <td className="px-5 py-3.5 min-w-40">
                       <div className="flex items-center gap-2.5">
                         <div 
-                          className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0"
-                          style={{ backgroundColor: review.guestAvatarColor || '#C05621' }}
+                          className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0 bg-[#C05621]"
                         >
-                          {review.guestInitial || (review.guestName ? review.guestName.charAt(0) : '?')}
+                          {review.ownerName ? review.ownerName.charAt(0) : '?'}
                         </div>
                         <div>
                           <p className="m-0 font-semibold text-[#1A1A1A]">
-                            {review.guestName}
+                            {review.ownerName || "Unknown Owner"}
                           </p>
                           <p className="m-0 text-xs text-[#9E7B6A]">
                             {review.flaggedAt}
@@ -259,7 +259,7 @@ export default function ReviewsQueue() {
                     </td>
                     {/* Flag Status */}
                     <td className="px-5 py-3.5">
-                      <FlagBadge status={review.flagReason} />
+                      <FlagBadge status={review.flagType} />
                     </td>
                   </tr>
                 ))

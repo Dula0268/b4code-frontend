@@ -13,10 +13,10 @@ import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderati
 // ─── Flag Badge (Larger) ──────────────────────────────────────────────────────
 function FlagBadge({ status }: { status: string }) {
   const cfg: Record<string, { bg: string; text: string; icon: string }> = {
-    Harassment: { bg: "bg-red-50 border-red-200", text: "text-red-600", icon: "🚩" },
-    "Spam / Scam": { bg: "bg-yellow-50 border-yellow-200", text: "text-yellow-700", icon: "⚠" },
-    Profanity: { bg: "bg-orange-50 border-orange-200", text: "text-orange-600", icon: "🚫" },
-    "Policy Violation": { bg: "bg-blue-50 border-blue-200", text: "text-blue-600", icon: "⊘" },
+    HARASSMENT: { bg: "bg-red-50 border-red-200", text: "text-red-600", icon: "🚩" },
+    SPAM_SCAM: { bg: "bg-yellow-50 border-yellow-200", text: "text-yellow-700", icon: "⚠" },
+    PROFANITY: { bg: "bg-orange-50 border-orange-200", text: "text-orange-600", icon: "🚫" },
+    POLICY_VIOLATION: { bg: "bg-blue-50 border-blue-200", text: "text-blue-600", icon: "⊘" },
   };
   const c = cfg[status] || { bg: "bg-gray-50 border-gray-200", text: "text-gray-600", icon: "•" };
   return (
@@ -60,11 +60,12 @@ export default function FlaggedReviewDetail() {
 
   const [toast, setToast] = useState<{ type: string; title: string; message: string } | null>(null);
   const [banner, setBanner] = useState<{ message: string } | null>(null);
+  const [adminNote, setAdminNote] = useState("");
 
   if (!selectedReview) return null;
 
   const handleKeepReview = async () => {
-    await approveReview(selectedReview.id);
+    await approveReview(selectedReview.id, adminNote);
     setToast({
       type: "success",
       title: "Success",
@@ -73,11 +74,12 @@ export default function FlaggedReviewDetail() {
     setTimeout(() => {
       setToast(null);
       setSelectedReview(null);
+      setAdminNote("");
     }, 2000);
   };
 
   const handleRemoveContent = async () => {
-    await removeReview(selectedReview.id, "Removed by admin due to policy violation");
+    await removeReview(selectedReview.id, adminNote || "Removed by admin due to policy violation");
     setToast({
       type: "success",
       title: "Success",
@@ -90,6 +92,7 @@ export default function FlaggedReviewDetail() {
       setToast(null);
       setSelectedReview(null);
       setBanner(null);
+      setAdminNote("");
     }, 3000);
   };
 
@@ -102,6 +105,7 @@ export default function FlaggedReviewDetail() {
             setSelectedReview(null);
             setToast(null);
             setBanner(null);
+            setAdminNote("");
           }}
           className="flex items-center gap-1.5 text-[13px] font-semibold text-[#9E7B6A] cursor-pointer bg-transparent border-none hover:text-[#C05621] transition-colors"
         >
@@ -155,14 +159,13 @@ export default function FlaggedReviewDetail() {
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               <div 
-                className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-[15px] shrink-0"
-                style={{ backgroundColor: selectedReview.guestAvatarColor || '#C05621' }}
+                className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-[15px] shrink-0 bg-[#C05621]"
               >
-                {selectedReview.guestInitial || (selectedReview.guestName ? selectedReview.guestName.charAt(0) : '?')}
+                {selectedReview.ownerName ? selectedReview.ownerName.charAt(0) : '?'}
               </div>
               <div>
                 <p className="m-0 font-bold text-[15px] text-[#1A1A1A]">
-                  {selectedReview.guestName}
+                  Flagged by: {selectedReview.ownerName || "Unknown Owner"}
                 </p>
                 <p className="m-0 text-[12px] text-[#9E7B6A]">
                   {selectedReview.flaggedAt}
@@ -174,7 +177,7 @@ export default function FlaggedReviewDetail() {
                 </p>
               </div>
             </div>
-            <FlagBadge status={selectedReview.flagReason} />
+            <FlagBadge status={selectedReview.flagType} />
           </div>
 
           {/* Star Rating */}
@@ -187,6 +190,19 @@ export default function FlaggedReviewDetail() {
             <p className="m-0 text-[14px] text-[#4B5563] leading-relaxed">
               {selectedReview.reviewText}
             </p>
+          </div>
+
+          {/* Admin Note Input */}
+          <div className="mb-6">
+            <label className="block text-[13px] font-semibold text-[#1A1A1A] mb-2">
+              Admin Note (Optional)
+            </label>
+            <textarea
+              value={adminNote}
+              onChange={(e) => setAdminNote(e.target.value)}
+              placeholder="Add a note explaining the moderation action..."
+              className="w-full px-4 py-3 rounded-xl border border-[#E8DDD8] bg-[#F9F7F6] text-[14px] text-[#1A1A1A] placeholder-[#9CA3AF] outline-none transition-colors focus:border-[#C05621] focus:bg-white resize-none h-24"
+            />
           </div>
 
           {/* Action Buttons */}
