@@ -44,6 +44,7 @@ export default function MyBookingsPage() {
                   confirmationNumber?: string
                   propertyName?: string
                   propertyAddress?: string
+                  propertyImage?: string
                   roomName?: string
                   guestName?: string
                   guestEmail?: string
@@ -55,6 +56,7 @@ export default function MyBookingsPage() {
                   status?: string
                   paymentMethod?: string
                   createdAt?: string
+                  propertyId?: number | string
                 }
 
                 const normalizeStatus = (s?: string): BookingStatus => {
@@ -65,13 +67,15 @@ export default function MyBookingsPage() {
 
                 apiBookings = (data as ApiBooking[]).map((b) => ({
                     id: String(b.bookingId ?? b.id ?? b.confirmationNumber ?? crypto.randomUUID()),
-                    propertyId: String(b.bookingId ?? b.id ?? ""),
+                    propertyId: String(b.propertyId ?? b.bookingId ?? b.id ?? ""),
                     orderId: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
                     orderNumber: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
                     status: normalizeStatus(b.status),
                     property: b.propertyName || "Prime Stay Property",
                     location: b.propertyAddress || "Sri Lanka",
-                    imageSrc: "/images/properties/property-1.jpg",
+                    // Use the actual property image from the backend; fall back to a
+                    // local placeholder only if the backend returned nothing.
+                    imageSrc: b.propertyImage || "/images/properties/property-1.jpg",
                     checkIn: b.checkIn || "",
                     checkOut: b.checkOut || "",
                     guests: `${b.guestCount ?? 2} Guests`,

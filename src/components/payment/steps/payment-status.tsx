@@ -17,20 +17,24 @@ export default function PaymentStatus({ step, onRetry, onChangeMethod }: Payment
     useEffect(() => {
         if (step === "success") {
             const timer = setTimeout(() => {
-                // Get existing search params to preserve booking info
                 const params = new URLSearchParams(window.location.search);
-                
-                // IMPORTANT: Ensure we mark it as paid
-                params.set("paidInFull", "1");
-                
-                // If we don't have a code in the URL, only then generate one
-                // (This helps if the user arrived here without a pre-generated code)
+
+                // Generate a confirmation code if not already present
                 if (!params.has("confirmationCode")) {
                     params.set("confirmationCode", "B4C-" + Math.random().toString(36).substring(2, 9).toUpperCase());
                 }
-                
-                const finalUrl = `/guest/booking/confirmation?${params.toString()}`;
-                router.push(finalUrl);
+
+                // If a returnUrl was passed (e.g. /guest/property/1), go back there
+                // with paymentSuccess=true so the property page shows the inline confirmation panel
+                const returnUrl = params.get("returnUrl");
+                if (returnUrl) {
+                    const separator = returnUrl.includes("?") ? "&" : "?";
+                    router.push(`${returnUrl}${separator}paymentSuccess=true&confirmationCode=${params.get("confirmationCode")}`);
+                } else {
+                    // Fallback: go to the booking confirmation page
+                    params.set("paidInFull", "1");
+                    router.push(`/guest/booking/confirmation?${params.toString()}`);
+                }
             }, 3000);
             return () => clearTimeout(timer);
         }

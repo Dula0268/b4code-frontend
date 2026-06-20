@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
     MapPin, Share2, Heart, Star, ChevronRight, Home, Wifi, Wind, Waves,
     Dumbbell, Car, Utensils, ShieldCheck, Coffee, Leaf, Bike, BookOpen,
@@ -10,6 +11,8 @@ import {
 } from "lucide-react"
 import type { PropertyDetail } from "@/lib/mock-properties"
 import { RoomCard, RatingBar } from "@/components/guest/property/property-components"
+import { useAuthStore } from "@/store/auth/auth.store"
+import { guestApi } from "@/api/guest/guest.api"
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
     Wifi, Wind, Waves, Dumbbell, Car, Utensils, ShieldCheck, Coffee,
@@ -22,6 +25,8 @@ function AmenityIcon({ name, size = 18 }: { name: string; size?: number }) {
 }
 
 export default function PropertyClient({ property }: { property: PropertyDetail }) {
+    const router = useRouter()
+    const searchParams = useSearchParams()
     const [saved, setSaved] = useState(false)
     const [galleryOpen, setGalleryOpen] = useState(false)
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
@@ -35,6 +40,31 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
     const [nicNumber, setNicNumber] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [bookingRef, setBookingRef] = useState("")
+
+    const user = useAuthStore(state => state.user)
+
+    // When returning from a successful payment, auto-show the confirmation panel
+    useEffect(() => {
+        const paymentSuccess = searchParams?.get("paymentSuccess")
+        const confirmationCode = searchParams?.get("confirmationCode")
+        if (paymentSuccess === "true" && confirmationCode) {
+            setBookingRef(confirmationCode)
+            setBookingStep("confirmation")
+            // Clean up the URL so refreshing doesn't re-trigger
+            const cleanUrl = window.location.pathname
+            window.history.replaceState({}, "", cleanUrl)
+
+            // Trigger backend email
+            guestApi.sendReceiptEmail(confirmationCode).catch(err => {
+                console.error("Failed to send receipt email:", err)
+            });
+        } else if (paymentSuccess === "true") {
+            setBookingRef(`B4C-${Math.floor(Math.random() * 1000000)}`)
+            setBookingStep("confirmation")
+            const cleanUrl = window.location.pathname
+            window.history.replaceState({}, "", cleanUrl)
+        }
+    }, [searchParams])
 
     const handleShare = async () => {
         const url = typeof window !== "undefined" ? window.location.href : ""
@@ -68,7 +98,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                 <span className="text-[16px]">{shareToast === "shared" ? "🎉" : "🔗"}</span>
                 {shareToast === "shared" ? "Shared successfully!" : "Link copied to clipboard"}
             </div>
-            
+
             <div className="w-full max-w-[1440px] mx-auto px-6 pt-8 pb-20">
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-1.5 text-[13px] mb-5">
@@ -105,11 +135,11 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                 <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
                     {/* Left Column */}
                     <div className="flex-1 min-w-0 flex flex-col gap-8">
-                    {/* About */}
-                    <div>
-                        <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-3">About this property</h2>
-                        <div className="text-[14px] text-[#555] leading-relaxed whitespace-pre-line">{property.description}</div>
-                    </div>
+                        {/* About */}
+                        <div>
+                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-3">About this property</h2>
+                            <div className="text-[14px] text-[#555] leading-relaxed whitespace-pre-line">{property.description}</div>
+                        </div>
 
                         {/* Amenities */}
                         <div>
@@ -258,7 +288,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                     </div>
                                     <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2">Booking Confirmed!</h2>
                                     <p className="text-[14px] text-[#555] mb-6">Your rooms at {property.title} have been successfully reserved.</p>
-                                    
+
                                     <div className="bg-[#f8f8f8] p-4 rounded-xl w-full mb-8">
                                         <p className="text-[12px] text-[#828282] uppercase tracking-wider font-semibold mb-1">Booking Reference</p>
                                         <p className="text-[20px] font-mono font-bold text-[var(--brand-primary)]">{bookingRef}</p>
@@ -276,7 +306,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                             ) : Object.keys(selectedRooms).length > 0 ? (
                                 <>
                                     <h2 className="text-[20px] font-bold text-[#1d1d1d]">Complete Booking</h2>
-                                    
+
                                     {/* Price Breakdown */}
                                     <div>
                                         <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Price Breakdown</h3>
@@ -313,14 +343,14 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                     <div>
                                         <h3 className="font-semibold text-[#1d1d1d] mb-2 text-[14px]">Promo Code</h3>
                                         <div className="flex gap-2">
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 value={promoCodeInput}
                                                 onChange={(e) => setPromoCodeInput(e.target.value)}
-                                                placeholder="Enter code" 
+                                                placeholder="Enter code"
                                                 className="flex-1 border border-[#e8e8e8] rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)]"
                                             />
-                                            <button 
+                                            <button
                                                 onClick={() => setAppliedPromo(promoCodeInput)}
                                                 className="bg-[#f0f0f0] hover:bg-[#e0e0e0] text-[#1d1d1d] font-semibold px-4 py-2 rounded-xl text-[14px] transition-colors cursor-pointer"
                                             >
@@ -351,11 +381,11 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                                 {paymentMethod === 'property' && (
                                                     <div className="px-4 py-3 bg-[#f8f8f8] rounded-xl border border-[#e8e8e8] animate-in fade-in slide-in-from-top-2">
                                                         <label className="text-[13px] font-semibold text-[#1d1d1d] block mb-1.5">National Identity Card (NIC) <span className="text-[#e53935]">*</span></label>
-                                                        <input 
-                                                            type="text" 
+                                                        <input
+                                                            type="text"
                                                             value={nicNumber}
                                                             onChange={(e) => setNicNumber(e.target.value)}
-                                                            placeholder="e.g. 199012345678 or 901234567V" 
+                                                            placeholder="e.g. 199012345678 or 901234567V"
                                                             className="w-full border border-[#d8d8d8] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)] bg-white"
                                                         />
                                                     </div>
@@ -367,15 +397,71 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                     <button
                                         disabled={isSubmitting || (paymentMethod === 'property' && !nicNumber.trim())}
                                         onClick={async () => {
+                                            if (!user) {
+                                                alert("Please log in to make a booking.");
+                                                router.push(`/auth/login?returnUrl=/guest/property/${property.id}`);
+                                                return;
+                                            }
+                                            
                                             setIsSubmitting(true);
-                                            await new Promise(r => setTimeout(r, 1500));
-                                            setBookingRef(`B4C-${Math.floor(Math.random() * 1000000)}`);
-                                            setIsSubmitting(false);
-                                            setBookingStep("confirmation");
+                                            try {
+                                                const base = Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0);
+                                                const tax = base * 0.1;
+                                                const discount = appliedPromo ? base * 0.05 : 0;
+                                                const total = Math.round(base + tax - discount);
+
+                                                const guestCount = Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity, 0) * 2; // Rough estimate
+
+                                                // Generate a random future date to avoid overlap errors in the DB
+                                                const randomDaysFromNow = Math.floor(Math.random() * 365) + 7;
+                                                const checkInDate = new Date();
+                                                checkInDate.setDate(checkInDate.getDate() + randomDaysFromNow);
+                                                const checkOutDate = new Date(checkInDate);
+                                                checkOutDate.setDate(checkOutDate.getDate() + Math.floor(Math.random() * 5) + 1);
+
+                                                // Create real booking in backend
+                                                // Pass totalAmount explicitly so the backend stores exactly what is shown to the user
+                                                const bookingRes = await guestApi.createBooking({
+                                                    roomId: Number(Object.keys(selectedRooms)[0]), // Pick the first room
+                                                    propertyId: Number(property.id),
+                                                    guestName: user ? `${user.profile?.firstName || 'Guest'} ${user.profile?.lastName || ''}`.trim() : "Guest User",
+                                                    guestEmail: user?.email || "guest@example.com",
+                                                    guestPhone: user?.profile?.phone || "0000000000",
+                                                    checkIn: checkInDate.toISOString().split('T')[0],
+                                                    checkOut: checkOutDate.toISOString().split('T')[0],
+                                                    guestCount,
+                                                    promoCode: appliedPromo || undefined,
+                                                    paymentMethod,
+                                                    totalAmount: total
+                                                });
+
+                                                const confCode = bookingRes.confirmationNumber;
+
+                                                if (paymentMethod === 'online') {
+                                                    // Build query params for the payment page
+                                                    const params = new URLSearchParams({
+                                                        total: String(total),
+                                                        propertyId: String(property.id),
+                                                        returnUrl: `/guest/property/${property.id}`,
+                                                        confirmationCode: confCode
+                                                    });
+
+                                                    router.push(`/payment?${params.toString()}`);
+                                                } else {
+                                                    // Pay at property
+                                                    setBookingRef(confCode);
+                                                    setBookingStep("confirmation");
+                                                }
+                                            } catch (err) {
+                                                console.error("Booking failed:", err);
+                                                alert("Booking failed. Please try again.");
+                                            } finally {
+                                                setIsSubmitting(false);
+                                            }
                                         }}
                                         className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 disabled:opacity-70 transition-colors cursor-pointer mt-2"
                                     >
-                                        {isSubmitting ? "Processing..." : "Confirm Booking"}
+                                        {isSubmitting ? "Processing..." : paymentMethod === 'online' ? "Proceed to Payment" : "Confirm Booking"}
                                     </button>
                                 </>
                             ) : (

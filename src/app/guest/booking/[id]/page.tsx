@@ -8,12 +8,13 @@ export const metadata: Metadata = {
   description: "View and manage your booking details.",
 }
 
-export default function BookingDetailsPage({ params }: { params: { id: string } }) {
+export default async function BookingDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa]">
       <GuestTopbar />
       <main className="flex-1 pt-24 px-4 sm:px-6">
-        <BookingDetailsClient id={params.id} />
+        <BookingDetailsClient id={id} />
       </main>
       <GuestFooter />
     </div>

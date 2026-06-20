@@ -28,6 +28,7 @@ export const guestApi = {
 
   createBooking: (bookingData: {
     roomId: number;
+    propertyId: number;
     guestName: string;
     guestEmail: string;
     guestPhone: string;
@@ -36,20 +37,52 @@ export const guestApi = {
     guestCount: number;
     promoCode?: string;
     paymentMethod: "online" | "property";
+    totalAmount?: number;
   }) =>
     api
       .post("/guest/bookings", {
         roomId: bookingData.roomId,
+        propertyId: bookingData.propertyId,
         guestName: bookingData.guestName,
         guestEmail: bookingData.guestEmail,
         guestPhone: bookingData.guestPhone,
         checkIn: bookingData.checkIn,
         checkOut: bookingData.checkOut,
-        guestCount: bookingData.guestCount,
+        adults: bookingData.guestCount, // Assume all are adults for now
+        children: 0,
         promoCode: bookingData.promoCode,
         paymentMethod: bookingData.paymentMethod === "online" ? "ONLINE_CARD" : "PAY_AT_PROPERTY",
+        totalAmount: bookingData.totalAmount,
       })
       .then((r) => r.data),
+
+  sendReceiptEmail: (confirmationCode: string) =>
+    api.post(`/guest/bookings/${confirmationCode}/send-receipt`).then((r) => r.data),
+
+  getBookingByConfirmation: (confirmationCode: string) =>
+    api.get(`/guest/bookings/confirmation/${confirmationCode}`).then((r) => r.data),
+
+  getBookingById: (id: number | string) =>
+    api.get(`/guest/bookings/${id}`).then((r) => r.data),
+
+  modifyBooking: (bookingId: number | string, data: {
+    roomId: number;
+    propertyId: number;
+    checkInDate: string;
+    checkOutDate: string;
+    guests: number;
+    paymentMethod?: string;
+    totalAmount?: number;
+  }) =>
+    api.put(`/guest/bookings/${bookingId}`, {
+      roomId: data.roomId,
+      propertyId: data.propertyId,
+      checkInDate: data.checkInDate,
+      checkOutDate: data.checkOutDate,
+      guests: data.guests,
+      paymentMethod: data.paymentMethod,
+      totalAmount: data.totalAmount,
+    }).then((r) => r.data),
 
   // Review Methods
   getPropertyReviews: (propertyId: number) =>
