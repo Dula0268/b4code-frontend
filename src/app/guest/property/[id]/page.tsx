@@ -8,52 +8,17 @@ import { getPropertyById, type PropertyDetail, type Room } from "@/lib/mock-prop
 
 interface Props {
     params: Promise<{ id: string }>
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-type BackendRoom = {
-    id?: number | string
-    roomId?: number | string
-    name?: string
-    roomType?: string
-    maxGuests?: number
-    maxOccupancy?: number
-    pricePerNight?: number
-    amenities?: string
-    imageSrc?: string
-    imageUrl?: string
-}
-
-type BackendPropertyDetail = {
-    [key: string]: unknown
-    id?: string | number
-    rooms?: unknown
-}
+// Removed manual room mapping since guestApi already normalizes it
 
 function isStringArray(value: unknown): value is string[] {
     return Array.isArray(value) && value.every(item => typeof item === "string")
 }
 
-function isBackendRoomArray(value: unknown): value is BackendRoom[] {
-    return Array.isArray(value) && value.every(item => typeof item === "object" && item !== null)
-}
-
-function mapBackendRoom(room: BackendRoom, fallback?: Room): Room {
-    return {
-        id: String(room.id ?? room.roomId ?? fallback?.id ?? ""),
-        name: room.name ?? fallback?.name ?? "Room",
-        maxGuests: Number(room.maxGuests ?? room.maxOccupancy ?? fallback?.maxGuests ?? 2),
-        bedType: fallback?.bedType ?? room.roomType ?? "1 Bed",
-        sqft: fallback?.sqft ?? 0,
-        pricePerNight: Number(room.pricePerNight ?? fallback?.pricePerNight ?? 0),
-        originalPrice: fallback?.originalPrice,
-        tag: fallback?.tag,
-        features: fallback?.features ?? (room.amenities ? room.amenities.split(",").map(part => part.trim()).filter(Boolean) : []),
-        imageSrc: room.imageSrc ?? room.imageUrl ?? fallback?.imageSrc ?? "/images/rooms/room-ocean-king.jpg",
-    }
-}
-
-function mergePropertyDetails(fallback: PropertyDetail, backend: BackendPropertyDetail): PropertyDetail {
-    const backendRooms = isBackendRoomArray(backend.rooms) ? backend.rooms : []
+function mergePropertyDetails(fallback: PropertyDetail, backend: any): PropertyDetail {
+    const backendRooms = Array.isArray(backend.rooms) ? backend.rooms : []
     const title = typeof backend.title === "string" ? backend.title : fallback.title
     const location = typeof backend.location === "string" ? backend.location : fallback.location
     const fullAddress = typeof backend.fullAddress === "string" ? backend.fullAddress : fallback.fullAddress
@@ -89,28 +54,31 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: BackendProperty
         reviewBreakdown,
         reviews,
         rooms: backendRooms.length > 0
-            ? backendRooms.map((room, index) => mapBackendRoom(room, fallback.rooms[index] ?? fallback.rooms[0]))
+            ? backendRooms
             : fallback.rooms,
         lat,
         lng,
     }
 }
 
-async function fetchProperty(id: string) {
+async function fetchProperty(id: string, checkIn?: string, checkOut?: string) {
     const fallback = getPropertyById(id)
     if (!fallback) return null
 
     try {
-        const backend = await guestApi.getPropertyDetail(id) as BackendPropertyDetail
+        const backend = await guestApi.getPropertyDetail(id, checkIn, checkOut)
         return mergePropertyDetails(fallback, backend)
     } catch {
         return fallback
     }
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params, searchParams }: Props) {
     const { id } = await params
-    const property = await fetchProperty(id)
+    const resolvedSearchParams = await searchParams;
+    const checkIn = resolvedSearchParams?.checkIn as string | undefined;
+    const checkOut = resolvedSearchParams?.checkOut as string | undefined;
+    const property = await fetchProperty(id, checkIn, checkOut)
     if (!property) return {}
     return {
         title: `${property.title} — Prime Stay Sri Lanka`,
@@ -118,9 +86,12 @@ export async function generateMetadata({ params }: Props) {
     }
 }
 
-export default async function PropertyPage({ params }: Props) {
+export default async function PropertyPage({ params, searchParams }: Props) {
     const { id } = await params
-    const property = await fetchProperty(id)
+    const resolvedSearchParams = await searchParams;
+    const checkIn = resolvedSearchParams?.checkIn as string | undefined;
+    const checkOut = resolvedSearchParams?.checkOut as string | undefined;
+    const property = await fetchProperty(id, checkIn, checkOut)
     if (!property) notFound()
 
     return (

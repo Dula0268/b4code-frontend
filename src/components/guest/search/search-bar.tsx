@@ -42,7 +42,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const calRef = useRef<HTMLDivElement>(null)
 
   // Guests
-  const [guests, setGuests] = useState<GuestCounts>({ adults: Math.max(1, initGuests), children: 0, rooms: Math.max(1, initRooms) })
+  const [guests, setGuests] = useState<GuestCounts>({ adults: Math.max(1, initGuests), rooms: Math.max(1, initRooms) })
   const [guestOpen, setGuestOpen] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
 
@@ -67,7 +67,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
     setDestination(nextDestination)
     setCheckIn(nextCheckIn)
     setCheckOut(nextCheckOut)
-    setGuests({ adults: nextGuests, children: 0, rooms: nextRooms })
+    setGuests({ adults: nextGuests, rooms: nextRooms })
   }, [isCompact, searchParams])
 
   // ── Close on outside click ─────────────────────────────────────────────
@@ -97,7 +97,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
     return ""
   })()
 
-  const guestTotal = guests.adults + guests.children
+  const guestTotal = guests.adults
   const guestLabel = !mounted ? "1 guest, 1 room" : `${guestTotal} guest${guestTotal !== 1 ? "s" : ""}, ${guests.rooms} room${guests.rooms !== 1 ? "s" : ""}`
 
   // Keep search results in sync when guest count changes on compact search bar.
@@ -162,7 +162,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
             value={destination}
             onChange={e => { setDestination(e.target.value); setLocationOpen(true) }}
             onFocus={() => { closeAll(); setLocationOpen(true) }}
-            placeholder="Where are you going?"
+            placeholder="Search destination or property"
             className="border-none outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-sm text-[#333333] placeholder:text-[#828282] bg-transparent w-full"
             suppressHydrationWarning
           />

@@ -58,6 +58,11 @@ export interface SortOption {
   label: string;
 }
 
+export interface LocationSuggestionDTO {
+  name: string;
+  type: string;
+}
+
 export interface FilterOptionsResponse {
   propertyTypes: PropertyTypeOption[];
   amenities: string[];
@@ -65,6 +70,7 @@ export interface FilterOptionsResponse {
   priceRange: PriceRangeOption;
   sortOptions: SortOption[];
   locations: string[];
+  locationSuggestions: LocationSuggestionDTO[];
 }
 
 export interface SearchParams {
@@ -72,6 +78,7 @@ export interface SearchParams {
   checkIn?: string;
   checkOut?: string;
   guests?: number;
+  rooms?: number;
   minPrice?: number;
   maxPrice?: number;
   minRating?: number;
@@ -96,6 +103,7 @@ export async function searchProperties(
   if (params.checkIn) query.set("checkIn", params.checkIn);
   if (params.checkOut) query.set("checkOut", params.checkOut);
   if (params.guests) query.set("guests", String(params.guests));
+  if (params.rooms) query.set("rooms", String(params.rooms));
   if (params.minPrice != null) query.set("minPrice", String(params.minPrice));
   if (params.maxPrice != null) query.set("maxPrice", String(params.maxPrice));
   if (params.minRating != null) query.set("minRating", String(params.minRating));

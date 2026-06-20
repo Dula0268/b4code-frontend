@@ -13,8 +13,13 @@ export const guestApi = {
       return items.map(normalizePropertyListing);
     }),
 
-  getPropertyDetail: (propertyId: number | string) =>
-    api.get(`/guest/properties/${propertyId}`).then((r) => normalizePropertyDetail(r.data)),
+  getPropertyDetail: (propertyId: number | string, checkIn?: string, checkOut?: string) => {
+    const query = new URLSearchParams();
+    if (checkIn) query.set("checkIn", checkIn);
+    if (checkOut) query.set("checkOut", checkOut);
+    const qs = query.toString();
+    return api.get(`/guest/properties/${propertyId}${qs ? `?${qs}` : ""}`).then((r) => normalizePropertyDetail(r.data));
+  },
 
   // Booking Methods
   getPricePreview: (roomId: number, checkIn: string, checkOut: string, promoCode?: string) => {

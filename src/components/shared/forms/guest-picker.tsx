@@ -5,7 +5,6 @@ import { Minus, Plus } from "lucide-react"
 // ─── Types ────────────────────────────────────────────────────────────────
 export interface GuestCounts {
     adults: number
-    children: number
     rooms: number
 }
 
@@ -23,12 +22,11 @@ const ROWS: {
 }[] = [
         { key: "rooms", label: "Rooms", sub: "Bedrooms needed", min: 1 },
         { key: "adults", label: "Adults", sub: "Age 13+", min: 1 },
-        { key: "children", label: "Children", sub: "Ages 2–12", min: 0 },
     ]
 
 // ─── Component ────────────────────────────────────────────────────────────
 export default function GuestPicker({ value, onChange }: GuestPickerProps) {
-    const total = value.adults + value.children
+    const total = value.adults
 
     const adjust = (key: keyof GuestCounts, delta: number, min: number) => {
         const next = value[key] + delta
