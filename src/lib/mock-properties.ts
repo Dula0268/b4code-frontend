@@ -6,6 +6,11 @@ export interface Review {
     date: string
     text: string
     rating: number
+    cleanlinessRating?: number
+    accuracyRating?: number
+    communicationRating?: number
+    locationRating?: number
+    valueRating?: number
     ownerReply?: string
 }
 

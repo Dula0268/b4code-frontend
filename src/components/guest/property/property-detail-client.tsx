@@ -151,16 +151,31 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                             </div>
                         </div>
 
-                        {/* Reviews summary */}
-                        <div>
+                        {/* Ratings & Reviews */}
+                        <div className="pt-8 border-t border-[#e8e8e8]">
+                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Guest Ratings</h2>
                             <div className="flex items-center gap-3 mb-5">
                                 <Star size={20} className="text-[var(--brand-secondary)]" fill="var(--brand-secondary)" />
                                 <span className="text-[22px] font-bold text-[#1d1d1d]">{property.rating.toFixed(1)}</span>
-                                <span className="text-[14px] text-[#828282]">{property.reviewCount.toLocaleString()} Reviews</span>
                             </div>
-                            <div className="flex flex-col gap-2.5 mb-6 p-4 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm">
-                                {(property.reviewBreakdown || []).map(r => <RatingBar key={r.label} label={r.label} score={r.score} />)}
+                            <div className="flex flex-col gap-2.5 mb-8 p-5 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm">
+                                {(() => {
+                                    const standardTypes = ["Cleanliness", "Accuracy", "Communication", "Location", "Value"];
+                                    const extraTypes = (property.reviewBreakdown || [])
+                                        .filter(r => !standardTypes.includes(r.label))
+                                        .map(r => r.label);
+                                    const allTypesToDisplay = [...standardTypes, ...extraTypes];
+                                    
+                                    return allTypesToDisplay.map(type => {
+                                        const found = (property.reviewBreakdown || []).find(r => r.label === type);
+                                        return <RatingBar key={type} label={type} score={found ? found.score : 0} />
+                                    });
+                                })()}
                             </div>
+
+                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4 flex items-baseline gap-2">
+                                Guest Reviews <span className="text-[15px] font-medium text-[#828282]">({property.reviewCount.toLocaleString()} reviews)</span>
+                            </h2>
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 {(property.reviews || []).map(rev => (
                                     <div key={rev.id} className="p-4 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm hover:shadow-md transition-shadow">
@@ -175,6 +190,15 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                             </div>
                                         </div>
                                         <p className="text-[13px] text-[#555] leading-relaxed mb-3">&quot;{rev.text}&quot;</p>
+                                        
+                                        <div className="flex flex-wrap gap-1.5 mb-3">
+                                            {rev.cleanlinessRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Cleanliness: {rev.cleanlinessRating}★</span>}
+                                            {rev.accuracyRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Accuracy: {rev.accuracyRating}★</span>}
+                                            {rev.communicationRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Communication: {rev.communicationRating}★</span>}
+                                            {rev.locationRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Location: {rev.locationRating}★</span>}
+                                            {rev.valueRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Value: {rev.valueRating}★</span>}
+                                        </div>
+
                                         {rev.ownerReply && (
                                             <div className="mt-2 p-3 bg-[#f8f8f8] rounded-xl border border-[#ebebeb]">
                                                 <p className="text-[11px] font-bold text-[#1d1d1d] mb-1">Response from {property.hostName.split(' ')[0]}</p>
@@ -281,7 +305,13 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                     <div>
                                         <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Price Breakdown</h3>
                                         <div className="flex flex-col gap-2 text-[14px] text-[#555]">
-                                            <div className="flex justify-between">
+                                            {Object.values(selectedRooms).map((r, i) => (
+                                                <div key={i} className="flex justify-between">
+                                                    <span>{r.quantity}x {r.name}</span>
+                                                    <span>LKR {(r.quantity * r.price).toLocaleString()}</span>
+                                                </div>
+                                            ))}
+                                            <div className="border-t border-[#e8e8e8] pt-2 mt-2 flex justify-between font-medium">
                                                 <span>Base Price</span>
                                                 <span>LKR {Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0).toLocaleString()}</span>
                                             </div>
