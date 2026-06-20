@@ -31,11 +31,51 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
 
     const [bookingStep, setBookingStep] = useState<"select" | "checkout" | "confirmation">("select")
     const [promoCodeInput, setPromoCodeInput] = useState("")
-    const [appliedPromo, setAppliedPromo] = useState("")
+    const [appliedPromos, setAppliedPromos] = useState<string[]>([])
+    const [promoError, setPromoError] = useState("")
+    const [priceBreakdown, setPriceBreakdown] = useState<any>(null)
     const [paymentMethod, setPaymentMethod] = useState<"online" | "property">("online")
     const [nicNumber, setNicNumber] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [bookingRef, setBookingRef] = useState("")
+
+    const [checkInDate] = useState(() => {
+        const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0];
+    });
+    const [checkOutDate] = useState(() => {
+        const d = new Date(); d.setDate(d.getDate() + 2); return d.toISOString().split('T')[0];
+    });
+
+    useEffect(() => {
+        const fetchBreakdown = async () => {
+            const roomId = Object.keys(selectedRooms)[0];
+            if (!roomId) {
+                setPriceBreakdown(null);
+                setPromoError("");
+                return;
+            }
+            
+            try {
+                const qty = selectedRooms[roomId].quantity;
+                let url = `/guest/bookings/price-preview?roomId=${roomId}&checkIn=${checkInDate}&checkOut=${checkOutDate}&roomQuantity=${qty}`;
+                if (appliedPromos.length > 0) {
+                    url += `&promoCodes=${appliedPromos.join(",")}`;
+                }
+                
+                const res = await api.get(url);
+                setPriceBreakdown(res.data);
+                setPromoError("");
+            } catch (error: any) {
+                if (appliedPromos.length > 0) {
+                    setPromoError(error.response?.data?.message || "Invalid promo code");
+                    // Assuming the last added one was the invalid one, pop it off
+                    setAppliedPromos(prev => prev.slice(0, -1)); 
+                }
+                console.error("Failed to fetch price preview", error);
+            }
+        };
+        fetchBreakdown();
+    }, [selectedRooms, appliedPromos, checkInDate, checkOutDate]);
 
     const handleShare = async () => {
         const url = typeof window !== "undefined" ? window.location.href : ""
@@ -321,27 +361,22 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                             ))}
                                             <div className="border-t border-[#e8e8e8] pt-2 mt-2 flex justify-between font-medium">
                                                 <span>Base Price</span>
-                                                <span>LKR {Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0).toLocaleString()}</span>
+                                                <span>LKR {priceBreakdown ? priceBreakdown.subtotal.toLocaleString() : "..."}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span>Taxes & Fees (10%)</span>
-                                                <span>LKR {(Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0) * 0.1).toLocaleString()}</span>
+                                                <span>LKR {priceBreakdown ? priceBreakdown.taxAmount.toLocaleString() : "..."}</span>
                                             </div>
-                                            {appliedPromo && (
+                                            {priceBreakdown && priceBreakdown.discountAmount > 0 && (
                                                 <div className="flex justify-between text-[var(--state-success)] font-medium">
-                                                    <span>Discount ({appliedPromo})</span>
-                                                    <span>- LKR {(Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0) * 0.05).toLocaleString()}</span>
+                                                    <span>Discounts ({priceBreakdown.promosApplied?.join(", ")})</span>
+                                                    <span>- LKR {priceBreakdown.discountAmount.toLocaleString()}</span>
                                                 </div>
                                             )}
                                             <div className="border-t border-[#e8e8e8] pt-2 mt-2 flex justify-between font-bold text-[#1d1d1d] text-[16px]">
                                                 <span>Total</span>
                                                 <span className="text-[var(--brand-primary)]">
-                                                    LKR {(() => {
-                                                        const base = Object.values(selectedRooms).reduce((acc, r) => acc + r.quantity * r.price, 0);
-                                                        const tax = base * 0.1;
-                                                        const discount = appliedPromo ? base * 0.05 : 0;
-                                                        return (base + tax - discount).toLocaleString();
-                                                    })()}
+                                                    LKR {priceBreakdown ? priceBreakdown.totalAmount.toLocaleString() : "..."}
                                                 </span>
                                             </div>
                                         </div>
@@ -350,20 +385,47 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                     {/* Promo Code */}
                                     <div>
                                         <h3 className="font-semibold text-[#1d1d1d] mb-2 text-[14px]">Promo Code</h3>
-                                        <div className="flex gap-2">
-                                            <input 
-                                                type="text" 
-                                                value={promoCodeInput}
-                                                onChange={(e) => setPromoCodeInput(e.target.value)}
-                                                placeholder="Enter code" 
-                                                className="flex-1 border border-[#e8e8e8] rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)]"
-                                            />
-                                            <button 
-                                                onClick={() => setAppliedPromo(promoCodeInput)}
-                                                className="bg-[#f0f0f0] hover:bg-[#e0e0e0] text-[#1d1d1d] font-semibold px-4 py-2 rounded-xl text-[14px] transition-colors cursor-pointer"
-                                            >
-                                                Apply
-                                            </button>
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex gap-2">
+                                                <input 
+                                                    type="text" 
+                                                    value={promoCodeInput}
+                                                    onChange={(e) => setPromoCodeInput(e.target.value)}
+                                                    placeholder="Enter code" 
+                                                    className={`flex-1 border ${promoError ? 'border-red-400' : 'border-[#e8e8e8]'} rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)]`}
+                                                />
+                                                <button 
+                                                    onClick={() => {
+                                                        const code = promoCodeInput.trim().toUpperCase();
+                                                        if (code && !appliedPromos.includes(code)) {
+                                                            setAppliedPromos(prev => [...prev, code]);
+                                                            setPromoCodeInput("");
+                                                        }
+                                                    }}
+                                                    disabled={!promoCodeInput.trim() || appliedPromos.includes(promoCodeInput.trim().toUpperCase())}
+                                                    className="bg-[#f0f0f0] hover:bg-[#e0e0e0] text-[#1d1d1d] font-semibold px-4 py-2 rounded-xl text-[14px] transition-colors cursor-pointer disabled:opacity-50"
+                                                >
+                                                    Apply
+                                                </button>
+                                            </div>
+                                            
+                                            {appliedPromos.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mt-1">
+                                                    {appliedPromos.map(code => (
+                                                        <span key={code} className="inline-flex items-center gap-1 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] px-3 py-1 rounded-full text-[12px] font-semibold">
+                                                            {code}
+                                                            <button 
+                                                                onClick={() => setAppliedPromos(prev => prev.filter(c => c !== code))}
+                                                                className="hover:text-red-500 transition-colors ml-1"
+                                                            >
+                                                                <X size={12} />
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {promoError && <span className="text-[12px] text-red-500 font-medium ml-1">{promoError}</span>}
                                         </div>
                                     </div>
 
@@ -411,24 +473,18 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                                 const roomData = selectedRooms[roomId];
                                                 if (!roomId) return;
                                                 
-                                                const today = new Date();
-                                                const tomorrow = new Date(today);
-                                                tomorrow.setDate(tomorrow.getDate() + 1);
-                                                const dayAfter = new Date(today);
-                                                dayAfter.setDate(dayAfter.getDate() + 2);
-                                                
                                                 const payload = {
                                                     roomId: Number(roomId),
                                                     propertyId: Number(property.id),
                                                     roomQuantity: roomData.quantity,
-                                                    checkIn: tomorrow.toISOString().split('T')[0],
-                                                    checkOut: dayAfter.toISOString().split('T')[0],
+                                                    checkIn: checkInDate,
+                                                    checkOut: checkOutDate,
                                                     adults: 1,
                                                     children: 0,
                                                     guestName: "Guest User", // TODO: Get from auth context or input
                                                     guestEmail: "guest@example.com", // TODO: Get from auth context or input
                                                     nicNumber: nicNumber || null,
-                                                    promoCode: appliedPromo || null,
+                                                    promoCodes: appliedPromos.length > 0 ? appliedPromos : null,
                                                     paymentMethod: paymentMethod === 'property' ? 'PAY_AT_PROPERTY' : 'ONLINE_CARD'
                                                 };
                                                 
