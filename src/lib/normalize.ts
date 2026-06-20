@@ -25,7 +25,7 @@ export interface RoomData {
 export interface PropertyData {
     id?: unknown; propertyId?: unknown; title?: unknown; name?: unknown;
     location?: unknown; city?: unknown; propertyType?: unknown;
-    pricePerNight?: unknown; lowestPricePerNight?: unknown;
+    pricePerNight?: unknown; lowestPricePerNight?: unknown; highestPricePerNight?: unknown;
     maxGuests?: unknown; availableRooms?: RoomData[];
     baseGuests?: unknown; extraGuestFee?: unknown; rating?: unknown;
     averageRating?: unknown; reviewCount?: unknown; badge?: unknown;
@@ -56,6 +56,7 @@ export const normalizePropertyListing = (property: PropertyData) => ({
     location: property?.location ?? property?.city ?? "Sri Lanka",
     propertyType: property?.propertyType ?? "Property",
     pricePerNight: toNumber(property?.pricePerNight ?? property?.lowestPricePerNight),
+    highestPricePerNight: property?.highestPricePerNight != null ? toNumber(property.highestPricePerNight) : undefined,
     maxGuests: toNumber(property?.maxGuests ?? property?.availableRooms?.[0]?.maxOccupancy, 2),
     baseGuests: toNumber(property?.baseGuests, 2),
     extraGuestFee: toNumber(property?.extraGuestFee),

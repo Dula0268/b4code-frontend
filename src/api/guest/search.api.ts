@@ -13,6 +13,7 @@ export interface PropertyListing {
   location: string;
   propertyType: string;
   pricePerNight: number;
+  highestPricePerNight?: number;
   maxGuests: number;
   baseGuests: number;
   extraGuestFee: number;
