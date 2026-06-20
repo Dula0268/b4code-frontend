@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import api from "@/lib/axios"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -136,15 +137,13 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                         propertyId={property.id}
                                         selectedQuantity={selectedRooms[room.id]?.quantity || 0}
                                         onQuantityChange={(qty) => {
-                                            setSelectedRooms(prev => {
-                                                const newRooms = { ...prev };
-                                                if (qty === 0) {
-                                                    delete newRooms[room.id];
-                                                } else {
-                                                    newRooms[room.id] = { quantity: qty, price: room.pricePerNight, name: room.name };
-                                                }
-                                                return newRooms;
-                                            });
+                                            if (qty === 0) {
+                                                setSelectedRooms({});
+                                            } else {
+                                                setSelectedRooms({
+                                                    [room.id]: { quantity: qty, price: room.pricePerNight, name: room.name }
+                                                });
+                                            }
                                         }}
                                     />
                                 ))}
@@ -305,10 +304,19 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                     <div>
                                         <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Price Breakdown</h3>
                                         <div className="flex flex-col gap-2 text-[14px] text-[#555]">
-                                            {Object.values(selectedRooms).map((r, i) => (
-                                                <div key={i} className="flex justify-between">
+                                            {Object.entries(selectedRooms).map(([id, r]) => (
+                                                <div key={id} className="flex justify-between items-center group">
                                                     <span>{r.quantity}x {r.name}</span>
-                                                    <span>LKR {(r.quantity * r.price).toLocaleString()}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span>LKR {(r.quantity * r.price).toLocaleString()}</span>
+                                                        <button 
+                                                            onClick={() => setSelectedRooms({})} 
+                                                            className="text-[#aaa] hover:text-[#e53935] opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            title="Remove room"
+                                                        >
+                                                            <X size={16}/>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ))}
                                             <div className="border-t border-[#e8e8e8] pt-2 mt-2 flex justify-between font-medium">
@@ -398,10 +406,41 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                         disabled={isSubmitting || (paymentMethod === 'property' && !nicNumber.trim())}
                                         onClick={async () => {
                                             setIsSubmitting(true);
-                                            await new Promise(r => setTimeout(r, 1500));
-                                            setBookingRef(`B4C-${Math.floor(Math.random() * 1000000)}`);
-                                            setIsSubmitting(false);
-                                            setBookingStep("confirmation");
+                                            try {
+                                                const roomId = Object.keys(selectedRooms)[0];
+                                                const roomData = selectedRooms[roomId];
+                                                if (!roomId) return;
+                                                
+                                                const today = new Date();
+                                                const tomorrow = new Date(today);
+                                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                                const dayAfter = new Date(today);
+                                                dayAfter.setDate(dayAfter.getDate() + 2);
+                                                
+                                                const payload = {
+                                                    roomId: Number(roomId),
+                                                    propertyId: Number(property.id),
+                                                    roomQuantity: roomData.quantity,
+                                                    checkIn: tomorrow.toISOString().split('T')[0],
+                                                    checkOut: dayAfter.toISOString().split('T')[0],
+                                                    adults: 1,
+                                                    children: 0,
+                                                    guestName: "Guest User", // TODO: Get from auth context or input
+                                                    guestEmail: "guest@example.com", // TODO: Get from auth context or input
+                                                    nicNumber: nicNumber || null,
+                                                    promoCode: appliedPromo || null,
+                                                    paymentMethod: paymentMethod === 'property' ? 'PAY_AT_PROPERTY' : 'ONLINE_CARD'
+                                                };
+                                                
+                                                const res = await api.post('/guest/bookings', payload);
+                                                setBookingRef(res.data.confirmationCode);
+                                                setBookingStep("confirmation");
+                                            } catch (error) {
+                                                console.error("Booking failed:", error);
+                                                alert("Failed to confirm booking. Please try again.");
+                                            } finally {
+                                                setIsSubmitting(false);
+                                            }
                                         }}
                                         className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 disabled:opacity-70 transition-colors cursor-pointer mt-2"
                                     >

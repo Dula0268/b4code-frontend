@@ -46,17 +46,25 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                     <p className="text-[18px] font-bold text-[#1d1d1d]">{formatLKR(room.pricePerNight)}</p>
                     <p className="text-[11px] text-[#828282]">per night</p>
                 </div>
-                <select
-                    value={selectedQuantity}
-                    onChange={(e) => onQuantityChange?.(Number(e.target.value))}
-                    className="px-4 py-2 border border-[#e8e8e8] text-[13px] font-semibold rounded-xl focus:outline-none focus:border-[var(--brand-primary)] bg-white cursor-pointer"
-                >
-                    {Array.from({ length: availableCount + 1 }, (_, i) => i).map((num) => (
-                        <option key={num} value={num}>
-                            {num === 0 ? "Select Rooms" : `${num} ${num === 1 ? 'Room' : 'Rooms'}`}
-                        </option>
-                    ))}
-                </select>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => onQuantityChange?.(Math.max(0, selectedQuantity - 1))}
+                        disabled={selectedQuantity === 0}
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-[#e8e8e8] text-[#1d1d1d] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                        -
+                    </button>
+                    <span className="text-[14px] font-semibold text-[#1d1d1d] w-4 text-center">
+                        {selectedQuantity}
+                    </span>
+                    <button
+                        onClick={() => onQuantityChange?.(Math.min(availableCount, selectedQuantity + 1))}
+                        disabled={selectedQuantity >= availableCount}
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-[#e8e8e8] text-[#1d1d1d] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                        +
+                    </button>
+                </div>
             </div>
         </div>
     )
