@@ -42,15 +42,17 @@ export default function MyBookingsPage() {
                   bookingId?: number | string
                   id?: number | string
                   confirmationNumber?: string
+                  confirmationCode?: string
                   propertyName?: string
                   propertyAddress?: string
+                  propertyImage?: string
                   roomName?: string
                   guestName?: string
                   guestEmail?: string
-                  guestCount?: number
+                  adults?: number
+                  children?: number
                   checkIn?: string
                   checkOut?: string
-                  nights?: number
                   totalAmount?: number
                   status?: string
                   paymentMethod?: string
@@ -63,25 +65,31 @@ export default function MyBookingsPage() {
                   return "UPCOMING"
                 }
 
-                apiBookings = (data as ApiBooking[]).map((b) => ({
-                    id: String(b.bookingId ?? b.id ?? b.confirmationNumber ?? crypto.randomUUID()),
-                    propertyId: String(b.bookingId ?? b.id ?? ""),
-                    orderId: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
-                    orderNumber: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
-                    status: normalizeStatus(b.status),
-                    property: b.propertyName || "Prime Stay Property",
-                    location: b.propertyAddress || "Sri Lanka",
-                    imageSrc: "/images/properties/property-1.jpg",
-                    checkIn: b.checkIn || "",
-                    checkOut: b.checkOut || "",
-                    guests: `${b.guestCount ?? 2} Guests`,
-                    totalPrice: b.totalAmount ?? 0,
-                    nightsLabel: `${b.nights ?? 1} night${(b.nights ?? 1) > 1 ? "s" : ""}`,
-                    paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
-                    paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
-                    roomName: b.roomName,
-                    isFromStore: false,
-                }))
+                apiBookings = (data as ApiBooking[]).map((b) => {
+                    const checkInDate = b.checkIn ? new Date(b.checkIn) : new Date();
+                    const checkOutDate = b.checkOut ? new Date(b.checkOut) : new Date(checkInDate.getTime() + 86400000);
+                    const diffDays = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
+                    
+                    return {
+                        id: String(b.bookingId ?? b.id ?? b.confirmationCode ?? b.confirmationNumber ?? crypto.randomUUID()),
+                        propertyId: String((b as any).propertyId ?? b.bookingId ?? b.id ?? ""),
+                        orderId: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
+                        orderNumber: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
+                        status: normalizeStatus(b.status),
+                        property: b.propertyName || "Prime Stay Property",
+                        location: b.propertyAddress || "Sri Lanka",
+                        imageSrc: b.propertyImage || "/images/properties/property-1.jpg",
+                        checkIn: b.checkIn || "",
+                        checkOut: b.checkOut || "",
+                        guests: `${b.adults ?? 1} Guest${(b.adults ?? 1) > 1 ? "s" : ""}`,
+                        totalPrice: b.totalAmount ?? 0,
+                        nightsLabel: `${diffDays} night${diffDays > 1 ? "s" : ""}`,
+                        paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
+                        paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
+                        roomName: b.roomName,
+                        isFromStore: false,
+                    };
+                })
             } catch (err) {
                 console.warn("API booking fetch failed or empty:", err)
             }

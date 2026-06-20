@@ -47,6 +47,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const guestRef = useRef<HTMLDivElement>(null)
 
   const [mounted, setMounted] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
   useEffect(() => { setMounted(true) }, [])
 
   // Keep the compact search bar aligned with the current URL when navigating
@@ -115,10 +116,25 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
 
   // ── Search ─────────────────────────────────────────────────────────────
   const handleSearch = () => {
-    if (checkIn && checkOut && checkOut <= checkIn) {
-      alert("Check-out date must be after check-in date")
+    if (!destination.trim() || !checkIn || !checkOut) {
+      setErrorMsg("Please enter a destination and select your check-in and check-out dates.")
+      setTimeout(() => setErrorMsg(""), 4000)
       return
     }
+
+    if (guests.adults < 1 || guests.rooms < 1) {
+      setErrorMsg("Please select at least 1 guest and 1 room.")
+      setTimeout(() => setErrorMsg(""), 4000)
+      return
+    }
+
+    if (checkIn && checkOut && checkOut <= checkIn) {
+      setErrorMsg("Check-out date must be after check-in date.")
+      setTimeout(() => setErrorMsg(""), 4000)
+      return
+    }
+
+    setErrorMsg("")
 
     const params = new URLSearchParams()
     if (destination.trim()) params.set("destination", destination.trim())
@@ -139,10 +155,23 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const closeAll = () => { setLocationOpen(false); setCalOpen(false); setGuestOpen(false) }
 
   return (
-    <div
-      role="search"
-      className={[
-        "bg-white rounded-xl flex flex-col md:flex-row gap-1",
+    <div className="relative">
+      {/* Error Notification */}
+      <div
+        className={[
+          "absolute -top-12 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 bg-[#e53935] text-white text-[13px] font-medium",
+          "px-4 py-2.5 rounded-xl shadow-lg transition-all duration-300 whitespace-nowrap",
+          errorMsg ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
+        ].join(" ")}
+      >
+        <span className="text-[16px]">⚠️</span>
+        {errorMsg}
+      </div>
+
+      <div
+        role="search"
+        className={[
+          "bg-white rounded-xl flex flex-col md:flex-row gap-1",
         isCompact
           ? "p-1 border border-[#e0e0e0] shadow-[0_2px_12px_rgba(0,0,0,0.08)] w-full max-w-[580px]"
           : "p-2 shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-[640px]",
@@ -254,6 +283,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       >
         <span>Search</span>
       </button>
+    </div>
     </div>
   )
 }

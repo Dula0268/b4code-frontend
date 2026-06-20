@@ -9,8 +9,8 @@ import {
     Dumbbell, Car, Utensils, ShieldCheck, Coffee, Leaf, Bike, BookOpen,
     Monitor, SquareDot, Grid2X2, X, Clock, AlertTriangle, Ban, Users
 } from "lucide-react"
-import type { PropertyDetail } from "@/lib/mock-properties"
 import { RoomCard, RatingBar } from "@/components/guest/property/property-components"
+import { useAuthStore } from "@/store/auth/auth.store"
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
     Wifi, Wind, Waves, Dumbbell, Car, Utensils, ShieldCheck, Coffee,
@@ -29,7 +29,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
     const [shareToast, setShareToast] = useState<"copied" | "shared" | null>(null)
     const [selectedRooms, setSelectedRooms] = useState<Record<string, { quantity: number, price: number, name: string }>>({})
 
-    const [bookingStep, setBookingStep] = useState<"select" | "checkout" | "confirmation">("select")
+    const [bookingStep, setBookingStep] = useState<"select" | "checkout" | "confirmation" | "failed">("select")
     const [promoCodeInput, setPromoCodeInput] = useState("")
     const [appliedPromos, setAppliedPromos] = useState<string[]>([])
     const [promoError, setPromoError] = useState("")
@@ -38,6 +38,10 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
     const [nicNumber, setNicNumber] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [bookingRef, setBookingRef] = useState("")
+    const [errorMsg, setErrorMsg] = useState("")
+    const [successMsg, setSuccessMsg] = useState("")
+
+    const { user } = useAuthStore()
 
     const [checkInDate] = useState(() => {
         const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0];
@@ -109,6 +113,30 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                 <span className="text-[16px]">{shareToast === "shared" ? "🎉" : "🔗"}</span>
                 {shareToast === "shared" ? "Shared successfully!" : "Link copied to clipboard"}
             </div>
+
+            {/* Error Notification */}
+            <div
+                className={[
+                    "fixed top-20 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 bg-[#e53935] text-white text-[13px] font-medium",
+                    "px-4 py-3 rounded-xl shadow-xl transition-all duration-300",
+                    errorMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none",
+                ].join(" ")}
+            >
+                <span className="text-[16px]">⚠️</span>
+                {errorMsg}
+            </div>
+
+            {/* Success Notification */}
+            <div
+                className={[
+                    "fixed top-20 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 bg-emerald-600 text-white text-[13px] font-medium",
+                    "px-4 py-3 rounded-xl shadow-xl transition-all duration-300",
+                    successMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none",
+                ].join(" ")}
+            >
+                <span className="text-[16px]">✅</span>
+                {successMsg}
+            </div>
             
             <div className="w-full max-w-[1440px] mx-auto px-6 pt-8 pb-20">
                 {/* Breadcrumb */}
@@ -169,25 +197,33 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-[20px] font-bold text-[#1d1d1d]">Room Types</h2>
                             </div>
-                            <div className="flex flex-col gap-3">
-                                {(property.rooms || []).map(room => (
-                                    <RoomCard
-                                        key={room.id}
-                                        room={room}
-                                        propertyId={property.id}
-                                        selectedQuantity={selectedRooms[room.id]?.quantity || 0}
-                                        onQuantityChange={(qty) => {
-                                            if (qty === 0) {
-                                                setSelectedRooms({});
-                                            } else {
-                                                setSelectedRooms({
-                                                    [room.id]: { quantity: qty, price: room.pricePerNight, name: room.name }
-                                                });
-                                            }
-                                        }}
-                                    />
-                                ))}
-                            </div>
+                            {(!property.rooms || property.rooms.length === 0) ? (
+                                <div className="p-8 bg-[#fff5f5] border border-[#ffe0e0] rounded-2xl text-[#d32f2f] flex flex-col items-center justify-center text-center">
+                                    <AlertTriangle size={40} className="mb-3 opacity-80" />
+                                    <h3 className="font-bold text-[18px] mb-1">No Rooms Available</h3>
+                                    <p className="text-[14px] opacity-90 max-w-sm">Sorry, there are no rooms available at this property for your selected dates. Try changing your dates.</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-3">
+                                    {property.rooms.map(room => (
+                                        <RoomCard
+                                            key={room.id}
+                                            room={room}
+                                            propertyId={property.id}
+                                            selectedQuantity={selectedRooms[room.id]?.quantity || 0}
+                                            onQuantityChange={(qty) => {
+                                                if (qty === 0) {
+                                                    setSelectedRooms({});
+                                                } else {
+                                                    setSelectedRooms({
+                                                        [room.id]: { quantity: qty, price: room.pricePerNight, name: room.name }
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Ratings & Reviews */}
@@ -315,26 +351,12 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                     <div className="lg:w-[420px] flex-shrink-0">
                         <div className="sticky top-28 bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-sm flex flex-col gap-6">
                             {bookingStep === "confirmation" ? (
-                                <div className="flex flex-col items-center text-center py-4">
-                                    <div className="w-16 h-16 bg-[var(--state-success)]/10 text-[var(--state-success)] rounded-full flex items-center justify-center mb-5">
-                                        <ShieldCheck size={32} />
+                                <div className="text-center py-8">
+                                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <ShieldCheck size={24} className="text-emerald-500" />
                                     </div>
-                                    <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2">Booking Confirmed!</h2>
-                                    <p className="text-[14px] text-[#555] mb-6">Your rooms at {property.title} have been successfully reserved.</p>
-                                    
-                                    <div className="bg-[#f8f8f8] p-4 rounded-xl w-full mb-8">
-                                        <p className="text-[12px] text-[#828282] uppercase tracking-wider font-semibold mb-1">Booking Reference</p>
-                                        <p className="text-[20px] font-mono font-bold text-[var(--brand-primary)]">{bookingRef}</p>
-                                    </div>
-
-                                    <div className="flex flex-col gap-3 w-full">
-                                        <Link
-                                            href="/guest/booking"
-                                            className="w-full bg-[#8b4513] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl transition-colors cursor-pointer text-center"
-                                        >
-                                            Go to My Bookings
-                                        </Link>
-                                    </div>
+                                    <h3 className="text-[18px] font-bold text-[#1d1d1d] mb-2">Booking Complete</h3>
+                                    <p className="text-[14px] text-[#828282]">Your booking was successful. Check your email for the itinerary.</p>
                                 </div>
                             ) : Object.keys(selectedRooms).length > 0 ? (
                                 <>
@@ -481,8 +503,8 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                                     checkOut: checkOutDate,
                                                     adults: 1,
                                                     children: 0,
-                                                    guestName: "Guest User", // TODO: Get from auth context or input
-                                                    guestEmail: "guest@example.com", // TODO: Get from auth context or input
+                                                    guestName: user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Guest User",
+                                                    guestEmail: user?.email || "guest@example.com",
                                                     nicNumber: nicNumber || null,
                                                     promoCodes: appliedPromos.length > 0 ? appliedPromos : null,
                                                     paymentMethod: paymentMethod === 'property' ? 'PAY_AT_PROPERTY' : 'ONLINE_CARD'
@@ -491,9 +513,13 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                                 const res = await api.post('/guest/bookings', payload);
                                                 setBookingRef(res.data.confirmationCode);
                                                 setBookingStep("confirmation");
-                                            } catch (error) {
+                                                setSuccessMsg("Booking Confirmed Successfully!");
+                                                setTimeout(() => setSuccessMsg(""), 5000);
+                                            } catch (error: any) {
                                                 console.error("Booking failed:", error);
-                                                alert("Failed to confirm booking. Please try again.");
+                                                const msg = error.response?.data?.message || "Failed to confirm booking. Please try again.";
+                                                setErrorMsg(msg);
+                                                setBookingStep("failed");
                                             } finally {
                                                 setIsSubmitting(false);
                                             }
@@ -535,6 +561,51 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                 <Image src={img} alt={`thumbnail ${i + 1}`} fill className="object-cover" sizes="64px" />
                             </button>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Booking Confirmation Modal */}
+            {bookingStep === "confirmation" && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+                        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
+                            <ShieldCheck size={40} />
+                        </div>
+                        <h2 className="text-[28px] font-bold text-[#1d1d1d] mb-2">Booking Confirmed!</h2>
+                        <p className="text-[15px] text-[#555] mb-8">Your rooms at {property.title} have been successfully reserved. An itinerary has been sent to your email.</p>
+                        
+                        <div className="bg-[#f8f8f8] border border-[#e8e8e8] p-5 rounded-2xl w-full mb-8">
+                            <p className="text-[12px] text-[#828282] uppercase tracking-widest font-bold mb-2">Booking Reference</p>
+                            <p className="text-[24px] font-mono font-black text-[var(--brand-primary)]">{bookingRef}</p>
+                        </div>
+
+                        <Link
+                            href="/guest/booking"
+                            className="w-full bg-[#8b4513] hover:bg-[#6d2200] text-white font-bold py-4 rounded-xl transition-colors cursor-pointer text-center text-[16px] shadow-lg shadow-[#8b4513]/20"
+                        >
+                            Go to My Bookings
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* Booking Failed Modal */}
+            {bookingStep === "failed" && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+                        <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
+                            <AlertTriangle size={40} />
+                        </div>
+                        <h2 className="text-[28px] font-bold text-[#1d1d1d] mb-2">Booking Failed</h2>
+                        <p className="text-[15px] text-[#555] mb-8">{errorMsg || "We couldn't process your booking at this time. Please try again."}</p>
+
+                        <button
+                            onClick={() => { setBookingStep("select"); setErrorMsg(""); }}
+                            className="w-full bg-[#1d1d1d] hover:bg-black text-white font-bold py-4 rounded-xl transition-colors cursor-pointer text-center text-[16px] shadow-lg shadow-black/20"
+                        >
+                            Try Again
+                        </button>
                     </div>
                 </div>
             )}

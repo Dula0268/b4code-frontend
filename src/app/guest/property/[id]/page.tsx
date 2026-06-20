@@ -59,9 +59,8 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: any): PropertyD
         amenities,
         reviewBreakdown,
         reviews,
-        rooms: backendRooms.length > 0
-            ? backendRooms
-            : fallback.rooms,
+        reviews,
+        rooms: Array.isArray(backend.rooms) ? backend.rooms : fallback.rooms,
         lat,
         lng,
         checkInTime,
