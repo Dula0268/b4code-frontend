@@ -49,6 +49,11 @@ export interface PropertyDetail {
     // Map coords (for embed)
     lat: number
     lng: number
+    checkInTime?: string
+    checkOutTime?: string
+    cancellationPolicy?: string
+    childPolicy?: string
+    houseRules?: string
 }
 
 export interface Room {

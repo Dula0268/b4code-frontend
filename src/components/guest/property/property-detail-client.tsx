@@ -233,8 +233,8 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                         <Clock size={16} className="text-[var(--brand-primary)]" /> Check-in / Check-out
                                     </h3>
                                     <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        <li>Check-in time: 14:00 - 22:00</li>
-                                        <li>Check-out time: Until 11:00</li>
+                                        <li>Check-in time: {property.checkInTime || "14:00 - 22:00"}</li>
+                                        <li>Check-out time: Until {property.checkOutTime || "11:00"}</li>
                                         <li>Early check-in subject to availability</li>
                                     </ul>
                                 </div>
@@ -243,9 +243,9 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                         <AlertTriangle size={16} className="text-[var(--brand-primary)]" /> Cancellation
                                     </h3>
                                     <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        <li>Free cancellation until 48 hours before</li>
-                                        <li>50% refund within 48 hours</li>
-                                        <li>No-shows will be charged full amount</li>
+                                        {(property.cancellationPolicy || "Free cancellation until 48 hours before.\n50% refund within 48 hours.\nNo-shows will be charged full amount.").split('\n').map((line, i) => (
+                                            <li key={i}>{line}</li>
+                                        ))}
                                     </ul>
                                 </div>
                                 <div>
@@ -253,9 +253,9 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                         <Users size={16} className="text-[var(--brand-primary)]" /> Age & Children
                                     </h3>
                                     <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        <li>Children of any age are welcome</li>
-                                        <li>No age restriction for check-in</li>
-                                        <li>Extra beds available upon request</li>
+                                        {(property.childPolicy || "Children of any age are welcome.\nNo age restriction for check-in.\nExtra beds available upon request.").split('\n').map((line, i) => (
+                                            <li key={i}>{line}</li>
+                                        ))}
                                     </ul>
                                 </div>
                                 <div>
@@ -263,9 +263,9 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                         <Ban size={16} className="text-[var(--brand-primary)]" /> House Rules
                                     </h3>
                                     <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        <li>No smoking indoors</li>
-                                        <li>No pets allowed</li>
-                                        <li>No parties or events</li>
+                                        {(property.houseRules || "No smoking indoors.\nNo pets allowed.\nNo parties or events.").split('\n').map((line, i) => (
+                                            <li key={i}>{line}</li>
+                                        ))}
                                     </ul>
                                 </div>
                             </div>

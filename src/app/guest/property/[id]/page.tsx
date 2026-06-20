@@ -27,14 +27,20 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: any): PropertyD
     const rating = typeof backend.rating === "number" ? backend.rating : fallback.rating
     const reviewCount = typeof backend.reviewCount === "number" ? backend.reviewCount : fallback.reviewCount
     const badge = backend.badge === "Superhost" || backend.badge === "Guest favorite" ? backend.badge : fallback.badge
-    const imageSrc = typeof backend.imageSrc === "string" ? backend.imageSrc : fallback.imageSrc
-    const galleryImages = isStringArray(backend.galleryImages) && backend.galleryImages.length > 0 ? backend.galleryImages : fallback.galleryImages
+    const imageSrc = typeof backend.imageSrc === "string" && backend.imageSrc.trim() !== "" ? backend.imageSrc : "/images/placeholder-property.jpg"
+    const galleryImages = Array.isArray(backend.galleryImages) ? backend.galleryImages : []
     const description = typeof backend.description === "string" ? backend.description : fallback.description
     const amenities = Array.isArray(backend.amenities) && backend.amenities.length > 0 ? backend.amenities : fallback.amenities
     const reviewBreakdown = Array.isArray(backend.reviewBreakdown) && backend.reviewBreakdown.length > 0 ? backend.reviewBreakdown : fallback.reviewBreakdown
     const reviews = Array.isArray(backend.reviews) && backend.reviews.length > 0 ? backend.reviews : fallback.reviews
     const lat = typeof backend.lat === "number" ? backend.lat : fallback.lat
     const lng = typeof backend.lng === "number" ? backend.lng : fallback.lng
+
+    const checkInTime = typeof backend.checkInTime === "string" ? backend.checkInTime : fallback.checkInTime
+    const checkOutTime = typeof backend.checkOutTime === "string" ? backend.checkOutTime : fallback.checkOutTime
+    const cancellationPolicy = typeof backend.cancellationPolicy === "string" ? backend.cancellationPolicy : fallback.cancellationPolicy
+    const childPolicy = typeof backend.childPolicy === "string" ? backend.childPolicy : fallback.childPolicy
+    const houseRules = typeof backend.houseRules === "string" ? backend.houseRules : fallback.houseRules
 
     return {
         ...fallback,
@@ -58,6 +64,11 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: any): PropertyD
             : fallback.rooms,
         lat,
         lng,
+        checkInTime,
+        checkOutTime,
+        cancellationPolicy,
+        childPolicy,
+        houseRules
     }
 }
 

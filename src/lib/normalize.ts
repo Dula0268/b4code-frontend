@@ -34,6 +34,8 @@ export interface PropertyData {
     hostBio?: unknown; hostYears?: unknown; hostSuperhost?: unknown;
     description?: unknown; reviewBreakdown?: unknown; reviews?: unknown;
     rooms?: RoomData[]; lat?: unknown; lng?: unknown; amenities?: unknown;
+    checkInTime?: unknown; checkOutTime?: unknown;
+    cancellationPolicy?: unknown; childPolicy?: unknown; houseRules?: unknown;
     [key: string]: unknown;
 }
 
@@ -97,4 +99,9 @@ export const normalizePropertyDetail = (property: PropertyData) => ({
     rooms: Array.isArray(property?.rooms) ? property.rooms.map(normalizeRoom) : Array.isArray(property?.availableRooms) ? property.availableRooms.map(normalizeRoom) : [],
     lat: property?.lat == null ? undefined : toNumber(property.lat),
     lng: property?.lng == null ? undefined : toNumber(property.lng),
+    checkInTime: property?.checkInTime ?? "14:00",
+    checkOutTime: property?.checkOutTime ?? "11:00",
+    cancellationPolicy: property?.cancellationPolicy ?? "Free cancellation until 48 hours before.\n50% refund within 48 hours.\nNo-shows will be charged full amount.",
+    childPolicy: property?.childPolicy ?? "Children of any age are welcome.\nNo age restriction for check-in.\nExtra beds available upon request.",
+    houseRules: property?.houseRules ?? "No smoking indoors.\nNo pets allowed.\nNo parties or events.",
 });
