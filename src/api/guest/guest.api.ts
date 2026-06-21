@@ -33,25 +33,29 @@ export const guestApi = {
 
   createBooking: (bookingData: {
     roomId: number;
+    propertyId: number;
+    roomQuantity: number;
     guestName: string;
     guestEmail: string;
-    guestPhone: string;
     checkIn: string;
     checkOut: string;
-    guestCount: number;
+    adults: number;
+    children?: number;
     promoCode?: string;
     paymentMethod: "online" | "property";
   }) =>
     api
       .post("/guest/bookings", {
         roomId: bookingData.roomId,
+        propertyId: bookingData.propertyId,
+        roomQuantity: bookingData.roomQuantity,
         guestName: bookingData.guestName,
         guestEmail: bookingData.guestEmail,
-        guestPhone: bookingData.guestPhone,
         checkIn: bookingData.checkIn,
         checkOut: bookingData.checkOut,
-        guestCount: bookingData.guestCount,
-        promoCode: bookingData.promoCode,
+        adults: bookingData.adults,
+        children: bookingData.children || 0,
+        promoCodes: bookingData.promoCode ? [bookingData.promoCode] : undefined,
         paymentMethod: bookingData.paymentMethod === "online" ? "ONLINE_CARD" : "PAY_AT_PROPERTY",
       })
       .then((r) => r.data),

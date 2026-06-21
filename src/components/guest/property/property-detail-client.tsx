@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import api from "@/lib/axios"
 import Image from "next/image"
 import Link from "next/link"
@@ -44,6 +44,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
 
     const { user } = useAuthStore()
     const searchParams = useSearchParams()
+    const router = useRouter()
 
     // Use dates from URL search params (passed from search bar), fallback to tomorrow/day-after
     const checkInDate = searchParams.get("checkIn") || (() => {
@@ -514,6 +515,22 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                                 };
                                                 
                                                 const res = await api.post('/guest/bookings', payload);
+                                                
+                                                if (paymentMethod === 'online') {
+                                                    const params = new URLSearchParams();
+                                                    params.set("total", priceBreakdown.totalAmount.toString());
+                                                    params.set("confirmationCode", res.data.confirmationCode);
+                                                    if (user?.profile) {
+                                                        params.set("firstName", user.profile.firstName);
+                                                        params.set("lastName", user.profile.lastName);
+                                                    }
+                                                    if (user?.email) {
+                                                        params.set("email", user.email);
+                                                    }
+                                                    router.push(`/payment?${params.toString()}`);
+                                                    return;
+                                                }
+
                                                 setBookingRef(res.data.confirmationCode);
                                                 setBookingStep("confirmation");
                                                 setSuccessMsg("Booking Confirmed Successfully!");

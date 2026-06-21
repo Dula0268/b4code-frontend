@@ -19,7 +19,7 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                 ? "bg-amber-50 text-amber-700 border-amber-200"
                 : "bg-red-50 text-red-700 border-red-200"
 
-    const availableCount = room.availableCount ?? 3;
+    const availableCount = room.availableCount ?? 1;
 
     return (
         <div className="flex flex-col sm:flex-row gap-4 p-4 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white">
