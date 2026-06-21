@@ -66,6 +66,14 @@ export const guestApi = {
   cancelBooking: (id: string | number, reason: string) =>
     api.patch(`/guest/bookings/${id}/cancel`, { reason }).then((r) => r.data),
 
+  modifyBooking: (id: string | number, payload: {
+    roomId: number;
+    propertyId: number;
+    checkInDate: string;
+    checkOutDate: string;
+    guests: number;
+  }) => api.put(`/guest/bookings/${id}`, payload).then((r) => r.data),
+
   // Review Methods
   getPropertyReviews: (propertyId: number) =>
     api.get(`/guest/reviews/property/${propertyId}`).then((r) => r.data),

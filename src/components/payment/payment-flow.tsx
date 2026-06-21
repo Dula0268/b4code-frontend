@@ -48,6 +48,7 @@ export default function PaymentFlow() {
                     firstName: searchParams?.get("firstName") || "Guest",
                     lastName: searchParams?.get("lastName") || "User",
                     email: searchParams?.get("email") || "",
+                    bookingId: searchParams?.get("bookingId") ? Number(searchParams.get("bookingId")) : undefined,
                     returnParams: `payment_success=true&bookingRef=${searchParams?.get("confirmationCode") || ""}`,
                 });
 

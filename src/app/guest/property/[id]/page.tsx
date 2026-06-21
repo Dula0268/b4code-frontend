@@ -97,8 +97,15 @@ export async function generateMetadata({ params, searchParams }: Props) {
 export default async function PropertyPage({ params, searchParams }: Props) {
     const { id } = await params
     const resolvedSearchParams = await searchParams;
-    const checkIn = resolvedSearchParams?.checkIn as string | undefined;
-    const checkOut = resolvedSearchParams?.checkOut as string | undefined;
+    
+    // Default to tomorrow and day-after if dates are not provided in URL
+    const checkIn = (resolvedSearchParams?.checkIn as string | undefined) || (() => {
+        const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0];
+    })();
+    const checkOut = (resolvedSearchParams?.checkOut as string | undefined) || (() => {
+        const d = new Date(); d.setDate(d.getDate() + 2); return d.toISOString().split('T')[0];
+    })();
+    
     const property = await fetchProperty(id, checkIn, checkOut)
     if (!property) notFound()
 

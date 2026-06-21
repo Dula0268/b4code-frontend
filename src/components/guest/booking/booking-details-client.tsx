@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
+import CalendarPicker from "@/components/shared/forms/calendar-picker"
 import {
   ChevronLeft, Calendar, User, MapPin, CheckCircle2,
   Clock, XCircle, Download, Star, RefreshCw, FileText,
@@ -15,6 +16,7 @@ import { guestApi } from "@/api/guest/guest.api"
 export interface StoredBooking {
   id: string
   propertyId: string
+  roomId: string
   userEmail: string
   property: string
   location: string
@@ -100,16 +102,39 @@ function StatusBadge({ status, isModified }: { status: string, isModified?: bool
 export default function BookingDetailsClient({ id }: { id: string }) {
   const [booking, setBooking] = useState<StoredBooking | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
   
   // UI States
   const [isEditing, setIsEditing] = useState(false)
   const [isCanceling, setIsCanceling] = useState(false)
   
   // Edit Form States
+  const [propertyDetail, setPropertyDetail] = useState<any>(null)
+  const [editRoomId, setEditRoomId] = useState<string>("")
   const [editGuests, setEditGuests] = useState<number>(2)
   const [editCheckIn, setEditCheckIn] = useState<string>("")
   const [editCheckOut, setEditCheckOut] = useState<string>("")
+  const [calOpen, setCalOpen] = useState(false)
+  const calRef = useRef<HTMLDivElement>(null)
   
+  // Close calendar on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (calRef.current && !calRef.current.contains(e.target as Node)) {
+        setCalOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  // Fetch property details when editing starts
+  useEffect(() => {
+    if (isEditing && booking && !propertyDetail) {
+      guestApi.getPropertyDetail(booking.propertyId).then(setPropertyDetail).catch(console.error)
+    }
+  }, [isEditing, booking, propertyDetail])
+
   // Cancel Form States
   const [cancelReason, setCancelReason] = useState("")
 
@@ -127,6 +152,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         const mappedBooking: StoredBooking = {
           id: String(b.id),
           propertyId: String(b.propertyId),
+          roomId: String(b.roomId),
           userEmail: b.guestEmail || "",
           property: b.propertyName || "Property",
           location: b.propertyAddress || "Location",
@@ -201,8 +227,36 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   // Action Handlers
   // ─────────────────────────────────────────────────────────────────────────────
   const handleSaveChanges = async () => {
-    // In a real implementation, you would call guestApi.modifyBooking(booking.id, payload)
-    setIsEditing(false)
+    if (!booking) return;
+    try {
+      setLoading(true);
+      const res = await guestApi.modifyBooking(booking.id, {
+        roomId: Number(editRoomId || booking.roomId),
+        propertyId: Number(booking.propertyId),
+        checkInDate: editCheckIn,
+        checkOutDate: editCheckOut,
+        guests: editGuests
+      });
+
+      if (res.additionalAmountDue > 0) {
+        const params = new URLSearchParams();
+        params.set("total", res.additionalAmountDue.toString());
+        params.set("confirmationCode", booking.confirmationCode);
+        params.set("bookingId", booking.id);
+        params.set("email", booking.userEmail);
+        router.push(`/payment?${params.toString()}`);
+        return;
+      }
+
+      setBooking(prev => prev ? { ...prev, guests: editGuests, checkIn: editCheckIn, checkOut: editCheckOut, roomId: editRoomId || prev.roomId } : null);
+      setIsEditing(false);
+    } catch (error: any) {
+      console.error("Failed to modify booking:", error);
+      const msg = error.response?.data?.message || "Failed to modify booking. Please try again.";
+      alert(msg);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const handleConfirmCancel = async () => {
@@ -323,21 +377,44 @@ export default function BookingDetailsClient({ id }: { id: string }) {
             
             {isEditing ? (
               <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-6 mb-6">
-                <p className="text-xs font-medium text-[#828282] mb-4">Update your dates or guest count. Price changes will be reflected in the payment summary.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <p className="text-xs font-medium text-[#828282] mb-4">Update your dates, room type, or guest count. Price changes will be reflected in the payment summary.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 relative" ref={calRef}>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Check-in</label>
-                    <input type="date" value={editCheckIn} onChange={(e) => setEditCheckIn(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]" />
+                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Dates</label>
+                    <div 
+                      onClick={() => setCalOpen(!calOpen)}
+                      className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium cursor-pointer flex justify-between items-center hover:border-[#9a3300] transition-colors"
+                    >
+                      <span>{editCheckIn && editCheckOut ? `${new Date(editCheckIn + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${new Date(editCheckOut + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : 'Select Dates'}</span>
+                      <Calendar size={16} className="text-[#9a3300]" />
+                    </div>
+                    {calOpen && (
+                      <div className="absolute top-[70px] left-0 z-50 bg-white shadow-2xl border border-[#e8ddcf] rounded-xl">
+                        <CalendarPicker
+                          checkIn={editCheckIn ? new Date(editCheckIn + "T00:00:00") : null}
+                          checkOut={editCheckOut ? new Date(editCheckOut + "T00:00:00") : null}
+                          onChange={(ci, co) => {
+                            setEditCheckIn(ci ? ci.toISOString().split("T")[0] : "");
+                            setEditCheckOut(co ? co.toISOString().split("T")[0] : "");
+                          }}
+                          onComplete={() => setCalOpen(false)}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Check-out</label>
-                    <input type="date" value={editCheckOut} onChange={(e) => setEditCheckOut(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]" />
+                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Room Type</label>
+                    <select value={editRoomId || booking.roomId} onChange={(e) => setEditRoomId(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
+                      {propertyDetail?.rooms?.map((r: any) => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      )) || <option value={booking.roomId}>{booking.roomName}</option>}
+                    </select>
                   </div>
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 mb-2">
                   <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Guests</label>
                   <select value={editGuests} onChange={(e) => setEditGuests(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
-                    {[1, 2, 3, 4, 5, 6].map(num => (
+                    {Array.from({ length: propertyDetail?.rooms?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.maxGuests || 6 }, (_, i) => i + 1).map(num => (
                       <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
                     ))}
                   </select>
