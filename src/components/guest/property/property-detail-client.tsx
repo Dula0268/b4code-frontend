@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import api from "@/lib/axios"
 import Image from "next/image"
 import Link from "next/link"
@@ -42,13 +43,16 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
     const [successMsg, setSuccessMsg] = useState("")
 
     const { user } = useAuthStore()
+    const searchParams = useSearchParams()
 
-    const [checkInDate] = useState(() => {
+    // Use dates from URL search params (passed from search bar), fallback to tomorrow/day-after
+    const checkInDate = searchParams.get("checkIn") || (() => {
         const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0];
-    });
-    const [checkOutDate] = useState(() => {
+    })();
+    const checkOutDate = searchParams.get("checkOut") || (() => {
         const d = new Date(); d.setDate(d.getDate() + 2); return d.toISOString().split('T')[0];
-    });
+    })();
+    const guestsFromSearch = Number(searchParams.get("guests")) || 1;
 
     useEffect(() => {
         const fetchBreakdown = async () => {
@@ -501,8 +505,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                                     roomQuantity: roomData.quantity,
                                                     checkIn: checkInDate,
                                                     checkOut: checkOutDate,
-                                                    adults: 1,
-                                                    children: 0,
+                                                    adults: guestsFromSearch,
                                                     guestName: user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Guest User",
                                                     guestEmail: user?.email || "guest@example.com",
                                                     nicNumber: nicNumber || null,

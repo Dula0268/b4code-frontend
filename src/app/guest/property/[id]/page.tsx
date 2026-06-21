@@ -18,7 +18,6 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function mergePropertyDetails(fallback: PropertyDetail, backend: any): PropertyDetail {
-    const backendRooms = Array.isArray(backend.rooms) ? backend.rooms : []
     const title = typeof backend.title === "string" ? backend.title : fallback.title
     const location = typeof backend.location === "string" ? backend.location : fallback.location
     const fullAddress = typeof backend.fullAddress === "string" ? backend.fullAddress : fallback.fullAddress
@@ -58,7 +57,6 @@ function mergePropertyDetails(fallback: PropertyDetail, backend: any): PropertyD
         description,
         amenities,
         reviewBreakdown,
-        reviews,
         reviews,
         rooms: Array.isArray(backend.rooms) ? backend.rooms : fallback.rooms,
         lat,

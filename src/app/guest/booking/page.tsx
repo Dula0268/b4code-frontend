@@ -50,7 +50,6 @@ export default function MyBookingsPage() {
                   guestName?: string
                   guestEmail?: string
                   adults?: number
-                  children?: number
                   checkIn?: string
                   checkOut?: string
                   totalAmount?: number
