@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { 
@@ -18,7 +18,7 @@ import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 
 const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
-export default function MyBookingsPage() {
+function BookingsContent() {
   const { status, userRole } = useGuestGuard()
   const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
   const [bookings, setBookings] = useState<BookingCardData[]>([])
@@ -226,5 +226,17 @@ export default function MyBookingsPage() {
           </div>
       )}
     </div>
+  )
+}
+
+export default function MyBookingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+      </div>
+    }>
+      <BookingsContent />
+    </Suspense>
   )
 }

@@ -379,12 +379,12 @@ export default function PropertyClient({ property }: { property: any }) {
                                 {(() => {
                                     const standardTypes = ["Cleanliness", "Comfort", "Service", "Dining", "Location", "Value"];
                                     const extraTypes = (property.reviewBreakdown || [])
-                                        .filter(r => !standardTypes.includes(r.label))
-                                        .map(r => r.label);
+                                        .filter((r: any) => !standardTypes.includes(r.label))
+                                        .map((r: any) => r.label);
                                     const allTypesToDisplay = [...standardTypes, ...extraTypes];
                                     
                                     return allTypesToDisplay.map(type => {
-                                        const found = (property.reviewBreakdown || []).find(r => r.label === type);
+                                        const found = (property.reviewBreakdown || []).find((r: any) => r.label === type);
                                         return <RatingBar key={type} label={type} score={found ? found.score : 0} />
                                     });
                                 })()}
@@ -394,7 +394,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                 Guest Reviews <span className="text-[15px] font-medium text-[#828282]">({property.reviewCount.toLocaleString()} reviews)</span>
                             </h2>
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {(property.reviews || []).map(rev => (
+                                {(property.reviews || []).map((rev: any) => (
                                     <div key={rev.id} className="p-4 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0" style={{ background: rev.avatarColor }}>{rev.avatarInitials}</div>
@@ -471,7 +471,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                         <AlertTriangle size={16} className="text-[var(--brand-primary)]" /> Cancellation
                                     </h3>
                                     <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        {(property.cancellationPolicy || "Free cancellation until 48 hours before.\n50% refund within 48 hours.\nNo-shows will be charged full amount.").split('\n').map((line, i) => (
+                                        {(property.cancellationPolicy || "Free cancellation until 48 hours before.\n50% refund within 48 hours.\nNo-shows will be charged full amount.").split('\n').map((line: string, i: number) => (
                                             <li key={i}>{line}</li>
                                         ))}
                                     </ul>
@@ -481,7 +481,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                         <Users size={16} className="text-[var(--brand-primary)]" /> Age & Children
                                     </h3>
                                     <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        {(property.childPolicy || "Children of any age are welcome.\nNo age restriction for check-in.\nExtra beds available upon request.").split('\n').map((line, i) => (
+                                        {(property.childPolicy || "Children of any age are welcome.\nNo age restriction for check-in.\nExtra beds available upon request.").split('\n').map((line: string, i: number) => (
                                             <li key={i}>{line}</li>
                                         ))}
                                     </ul>
@@ -491,7 +491,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                         <Ban size={16} className="text-[var(--brand-primary)]" /> House Rules
                                     </h3>
                                     <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        {(property.houseRules || "No smoking indoors.\nNo pets allowed.\nNo parties or events.").split('\n').map((line, i) => (
+                                        {(property.houseRules || "No smoking indoors.\nNo pets allowed.\nNo parties or events.").split('\n').map((line: string, i: number) => (
                                             <li key={i}>{line}</li>
                                         ))}
                                     </ul>
