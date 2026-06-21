@@ -25,7 +25,7 @@ function AmenityIcon({ name, size = 18 }: { name: string; size?: number }) {
     return <Icon size={size} className="text-[var(--brand-primary)] flex-shrink-0" />
 }
 
-export default function PropertyClient({ property }: { property: PropertyDetail }) {
+export default function PropertyClient({ property }: { property: any }) {
     const [saved, setSaved] = useState(false)
     const [galleryOpen, setGalleryOpen] = useState(false)
     const [activeGalleryIdx, setActiveGalleryIdx] = useState(0)
@@ -230,7 +230,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                         <div className="col-span-2 row-span-2 relative cursor-pointer group" onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }}>
                             <Image src={property.imageSrc} alt={property.title} fill className="object-cover group-hover:brightness-90 transition" priority sizes="(max-width: 768px) 100vw, 600px" />
                         </div>
-                        {(property.galleryImages || []).slice(0, 4).map((img, i) => (
+                        {(property.galleryImages || []).slice(0, 4).map((img: string, i: number) => (
                             <div key={i} className="relative cursor-pointer group" onClick={() => { setActiveGalleryIdx(i + 1); setGalleryOpen(true) }}>
                                 <Image src={img} alt={`${property.title} photo ${i + 2}`} fill className="object-cover group-hover:brightness-90 transition" sizes="(max-width: 768px) 50vw, 300px" />
                             </div>
@@ -742,12 +742,12 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                         <button onClick={() => setGalleryOpen(false)} className="text-white hover:text-white/70 cursor-pointer" aria-label="Close gallery"><X size={26} /></button>
                     </div>
                     <div className="flex-1 relative flex items-center justify-center">
-                        <div className="relative w-full max-w-4xl h-full max-h-[70vh]">
+                                <div className="relative w-full max-w-4xl h-full max-h-[70vh]">
                             <Image src={allImages[activeGalleryIdx]} alt={`Gallery image ${activeGalleryIdx + 1}`} fill className="object-contain" sizes="100vw" />
                         </div>
                     </div>
                     <div className="flex-shrink-0 px-6 py-4 flex gap-2 overflow-x-auto justify-center">
-                        {allImages.map((img, i) => (
+                        {allImages.map((img: string, i: number) => (
                             <button key={i} onClick={() => setActiveGalleryIdx(i)} className={["relative w-16 h-12 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer", i === activeGalleryIdx ? "border-[var(--brand-primary)]" : "border-transparent opacity-60 hover:opacity-100"].join(" ")}>
                                 <Image src={img} alt={`thumbnail ${i + 1}`} fill className="object-cover" sizes="64px" />
                             </button>

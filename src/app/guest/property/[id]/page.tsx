@@ -15,7 +15,7 @@ async function fetchProperty(id: string, checkIn?: string, checkOut?: string) {
         const backend = await guestApi.getPropertyDetail(id, checkIn, checkOut)
         
         // Ensure images exist to avoid breaking UI
-        if (!backend.imageSrc || backend.imageSrc.trim() === "") {
+        if (!backend.imageSrc || typeof backend.imageSrc !== "string" || backend.imageSrc.trim() === "") {
             backend.imageSrc = "/images/placeholder-property.jpg";
         }
         if (!backend.galleryImages || backend.galleryImages.length === 0) {
@@ -37,7 +37,7 @@ export async function generateMetadata({ params, searchParams }: Props) {
     if (!property) return {}
     return {
         title: `${property.title} — Prime Stay Sri Lanka`,
-        description: property.description ? `${property.description.slice(0, 155)}…` : '',
+        description: property.description && typeof property.description === 'string' ? `${property.description.slice(0, 155)}…` : '',
     }
 }
 
