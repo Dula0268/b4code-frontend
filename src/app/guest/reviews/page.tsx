@@ -144,7 +144,8 @@ function useReviewLogic() {
 
       // 2. Submit the full review
       await guestApi.createReview({ 
-        bookingId: Number(booking.id.replace(/\D/g, '')) || 1, 
+        bookingId: 1, 
+        propertyId: Number(propertyId) || undefined,
         overallRating, 
         cleanlinessRating: categoryRatings.cleanliness,
         comfortRating: categoryRatings.comfort,
@@ -156,9 +157,11 @@ function useReviewLogic() {
         photoUrls 
       })
       setSubmitted(true)
-    } catch (err) {
-      setErrorMsg("Failed to submit review. Please try again later.")
-      setTimeout(() => setErrorMsg(null), 3500)
+    } catch (err: any) {
+      console.error("Submission error:", err.response?.data || err);
+      const backendMsg = err.response?.data?.message || err.response?.data?.error || err.message;
+      setErrorMsg(`Failed to submit review: ${backendMsg}`);
+      setTimeout(() => setErrorMsg(null), 5000);
     } finally {
       setIsSubmitting(false)
     }

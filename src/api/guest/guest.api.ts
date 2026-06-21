@@ -90,6 +90,7 @@ export const guestApi = {
 
   createReview: (reviewData: {
     bookingId: number;
+    propertyId?: number;
     overallRating: number;
     cleanlinessRating?: number;
     comfortRating?: number;
