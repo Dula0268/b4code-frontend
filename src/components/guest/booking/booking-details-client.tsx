@@ -40,7 +40,8 @@ export interface StoredBooking {
   confirmationCode: string
   isModified?: boolean
   cancelReason?: string
-  refundStatus?: "PENDING" | "PROCESSED" | "REJECTED"
+  disputeStatus?: string
+  disputeAmount?: number
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // Format Helpers
@@ -105,8 +106,9 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   const router = useRouter()
   
   // UI States
-  const [isEditing, setIsEditing] = useState(false)
-  const [isCanceling, setIsCanceling] = useState(false)
+  const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "complete" | "refund">("modify")
+  const [successMessage, setSuccessMessage] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
   
   // Edit Form States
   const [propertyDetail, setPropertyDetail] = useState<any>(null)
@@ -128,12 +130,12 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
-  // Fetch property details when editing starts
+  // Fetch property details when booking loads
   useEffect(() => {
-    if (isEditing && booking && !propertyDetail) {
+    if (booking && !propertyDetail) {
       guestApi.getPropertyDetail(booking.propertyId).then(setPropertyDetail).catch(console.error)
     }
-  }, [isEditing, booking, propertyDetail])
+  }, [booking, propertyDetail])
 
   // Cancel Form States
   const [cancelReason, setCancelReason] = useState("")
@@ -173,6 +175,8 @@ export default function BookingDetailsClient({ id }: { id: string }) {
           status: (b.status === "COMPLETED" ? "COMPLETED" : b.status === "CANCELLED" ? "CANCELLED" : "UPCOMING") as any,
           roomName: b.roomName || "Room",
           confirmationCode: b.confirmationCode,
+          disputeStatus: b.disputeStatus,
+          disputeAmount: b.disputeAmount,
         }
 
         setBooking(mappedBooking)
@@ -189,25 +193,59 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   }, [id])
 
   // Real-time calculation of new price when editing
-  const { newPrice, diffAmount } = useMemo(() => {
-    if (!booking) return { newPrice: 0, diffAmount: 0 }
-    if (!isEditing) return { newPrice: booking.totalPrice, diffAmount: 0 }
+  const { newPrice, diffAmount, hasChanges, newBasePrice, newTaxes, origBasePrice, origTaxes, pricePerNight, newNights } = useMemo(() => {
+    if (!booking) return { newPrice: 0, diffAmount: 0, hasChanges: false, newBasePrice: 0, newTaxes: 0, origBasePrice: 0, origTaxes: 0, pricePerNight: 0, newNights: 1 }
     
     const origNights = booking.nights || 1;
-    const origGuests = booking.guests || 2;
-    const newNights = calculateNights(editCheckIn, editCheckOut);
+    const newNights = calculateNights(editCheckIn, editCheckOut) || 1; // prevent 0 nights
     
-    // Rough mock calculation based on original unit price
-    const baseUnitPrice = booking.basePrice / origNights / origGuests;
-    const newBasePrice = baseUnitPrice * newNights * editGuests;
-    const newTaxes = newBasePrice * 0.2; // approx 20%
-    const newTotal = newBasePrice + newTaxes - booking.discount;
+    const origBasePrice = booking.totalPrice * 0.8;
+    const origTaxes = booking.totalPrice * 0.2;
+    
+    const changes = editCheckIn !== booking.checkIn || 
+                    editCheckOut !== booking.checkOut || 
+                    editGuests !== (booking.guests || 2) || 
+                    (editRoomId && editRoomId !== booking.roomId);
+
+    if (!changes) return { newPrice: booking.totalPrice, diffAmount: 0, hasChanges: false, newBasePrice: origBasePrice, newTaxes: origTaxes, origBasePrice, origTaxes }
+
+    // Use actual room data from backend
+    const currentRoomId = editRoomId || booking.roomId;
+    const room = propertyDetail?.rooms?.find((r: any) => String(r.id) === String(currentRoomId));
+    
+    // Fallback if property details haven't loaded yet
+    const fallbackPricePerNight = booking.totalPrice / origNights * 0.8;
+    const pricePerNight = room?.pricePerNight || fallbackPricePerNight;
+
+    // Price is now calculated solely on Room Price * Nights (Ignoring Guests)
+    const newBasePriceMock = pricePerNight * newNights;
+    const newTaxesMock = origTaxes; // Tax remains the same, do not add new tax
+    
+    const newTotalBeforeDiscount = newBasePriceMock + newTaxesMock;
+    const newTotal = newTotalBeforeDiscount - booking.discount;
     
     return {
       newPrice: newTotal,
-      diffAmount: newTotal - booking.totalPrice
+      diffAmount: newTotal - booking.totalPrice,
+      hasChanges: true,
+      newBasePrice: newBasePriceMock,
+      newTaxes: newTaxesMock,
+      origBasePrice,
+      origTaxes,
+      pricePerNight,
+      newNights
     }
-  }, [booking, isEditing, editCheckIn, editCheckOut, editGuests])
+  }, [booking, editCheckIn, editCheckOut, editGuests, editRoomId, propertyDetail])
+
+  useEffect(() => {
+    if (successMessage || errorMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage("");
+        setErrorMessage("");
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, errorMessage]);
 
   if (!booking) {
     return (
@@ -223,11 +261,18 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   const isCancelled = booking.status === "CANCELLED"
   const daysToStartText = getDaysToStart(booking.checkIn)
 
+  // Calculate cancellation fee based on property's freeCancellation policy
+  const isFreeCancellation = propertyDetail?.freeCancellation ?? false;
+  const cancellationFee = isFreeCancellation ? 0 : booking.totalPrice * 0.20;
+  const eligibleRefund = Math.max(0, booking.totalPrice - cancellationFee);
+
   // ─────────────────────────────────────────────────────────────────────────────
   // Action Handlers
   // ─────────────────────────────────────────────────────────────────────────────
   const handleSaveChanges = async () => {
     if (!booking) return;
+    setErrorMessage("");
+    setSuccessMessage("");
     try {
       setLoading(true);
       const res = await guestApi.modifyBooking(booking.id, {
@@ -248,24 +293,77 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         return;
       }
 
-      setBooking(prev => prev ? { ...prev, guests: editGuests, checkIn: editCheckIn, checkOut: editCheckOut, roomId: editRoomId || prev.roomId } : null);
-      setIsEditing(false);
+      // Re-fetch booking from backend
+      const updated = await guestApi.getBookingByConfirmation(id);
+      
+      const checkInDate = new Date(updated.checkIn);
+      const checkOutDate = new Date(updated.checkOut);
+      const diffDays = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / 86400000));
+      
+      const mappedBooking: StoredBooking = {
+        ...booking,
+        roomId: String(updated.roomId),
+        roomName: updated.roomName || booking.roomName,
+        checkIn: updated.checkIn,
+        checkOut: updated.checkOut,
+        checkInFormatted: checkInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        checkOutFormatted: checkOutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        guests: updated.adults || booking.guests,
+        totalPrice: updated.totalAmount || booking.totalPrice,
+        nights: diffDays,
+        nightsLabel: `${diffDays} Night(s)`,
+        isModified: true,
+        disputeStatus: updated.disputeStatus,
+        disputeAmount: updated.disputeAmount,
+      };
+      
+      setBooking(mappedBooking);
+      setEditCheckIn(updated.checkIn);
+      setEditCheckOut(updated.checkOut);
+      setEditGuests(updated.adults || 2);
+
+      if (res.refundAmount > 0) {
+        setSuccessMessage("Modification saved. Request for refund submitted!");
+      } else {
+        setSuccessMessage("Modification saved successfully.");
+      }
+
     } catch (error: any) {
       console.error("Failed to modify booking:", error);
-      const msg = error.response?.data?.message || "Failed to modify booking. Please try again.";
-      alert(msg);
+      setErrorMessage(error.response?.data?.message || "Failed to save changes. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
   const handleConfirmCancel = async () => {
+    setErrorMessage("");
+    setSuccessMessage("");
     try {
-      await guestApi.cancelBooking(booking.id, cancelReason)
-      setBooking(prev => prev ? { ...prev, status: "CANCELLED", cancelReason } : null)
-      setIsCanceling(false)
-    } catch (error) {
+      const res = await guestApi.cancelBooking(booking.id, cancelReason)
+      
+      const mappedBooking: StoredBooking = {
+        ...booking,
+        status: res.status,
+        cancelReason: res.cancellationReason || cancelReason,
+        disputeStatus: res.disputeStatus,
+        disputeAmount: res.disputeAmount
+      }
+
+      setBooking(mappedBooking)
+      
+      if (res.disputeStatus) {
+        setSuccessMessage("Booking cancelled. Request for refund submitted!");
+        setActiveTab("refund" as any);
+      } else {
+        setSuccessMessage("Booking cancelled successfully.");
+        // Switch to a safe tab so it doesn't stay on the cancel form
+        setActiveTab("complete");
+      }
+      
+    } catch (error: any) {
       console.error("Failed to cancel booking:", error)
+      setErrorMessage(error.response?.data?.message || "Failed to cancel booking. Please try again.")
     }
   }
 
@@ -276,58 +374,33 @@ export default function BookingDetailsClient({ id }: { id: string }) {
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Render Helpers
-  // ─────────────────────────────────────────────────────────────────────────────
-  const renderStatusBanner = () => {
-    if (isUpcoming) {
-      return (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-start gap-3 mb-6">
-          <Clock className="text-emerald-600 mt-0.5 shrink-0" size={20} />
-          <div className="flex-1">
-            <h4 className="text-sm font-black text-emerald-900">Upcoming Stay ({daysToStartText})</h4>
-            <p className="text-xs font-medium text-emerald-700 mt-1">Your reservation is confirmed. We look forward to hosting you!</p>
-          </div>
-          {/* Manual Complete Action (for testing/flow purposes) */}
-          <button 
-            onClick={handleCompleteBooking}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors"
-          >
-            Mark Completed
-          </button>
-        </div>
-      )
-    }
-    if (isCompleted) {
-      return (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 mb-6">
-          <CheckCircle2 className="text-blue-600 mt-0.5 shrink-0" size={20} />
-          <div>
-            <h4 className="text-sm font-black text-blue-900">Stay Completed</h4>
-            <p className="text-xs font-medium text-blue-700 mt-1">Thank you for staying with us. We hope to see you again soon.</p>
-          </div>
-        </div>
-      )
-    }
-    if (isCancelled) {
-      return (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-start gap-3 mb-6">
-          <XCircle className="text-red-600 mt-0.5 shrink-0" size={20} />
-          <div>
-            <h4 className="text-sm font-black text-red-900">Booking Cancelled</h4>
-            <p className="text-xs font-medium text-red-700 mt-1">
-              This reservation has been cancelled. {booking.cancelReason && `Reason: "${booking.cancelReason}"`}
-            </p>
-            {booking.refundStatus === "PENDING" && (
-              <p className="text-xs font-bold text-red-800 mt-2">Refund Status: Pending review by property.</p>
-            )}
-          </div>
-        </div>
-      )
-    }
-    return null
-  }
 
   return (
-    <div className="max-w-7xl mx-auto pb-16">
+    <div className="max-w-7xl mx-auto pb-16 relative">
+      {/* Error Notification */}
+      <div
+        className={[
+          "fixed top-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-[#e53935] text-white text-[13px] font-medium",
+          "px-5 py-3.5 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 whitespace-nowrap",
+          errorMessage ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
+        ].join(" ")}
+      >
+        <span className="text-[16px]">⚠️</span>
+        {errorMessage}
+      </div>
+
+      {/* Success Notification */}
+      <div
+        className={[
+          "fixed top-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-emerald-600 text-white text-[13px] font-medium",
+          "px-5 py-3.5 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 whitespace-nowrap",
+          successMessage ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
+        ].join(" ")}
+      >
+        <span className="text-[16px]">✅</span>
+        {successMessage}
+      </div>
+
       <Link href="/guest/booking" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors">
         <ChevronLeft size={16} /> Back to My Bookings
       </Link>
@@ -354,29 +427,59 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         </div>
       </div>
 
-      {renderStatusBanner()}
+      {(isUpcoming || (isCancelled && booking.disputeStatus)) && (
+        <div className="flex bg-white rounded-[20px] border border-[#e8ddcf] p-2 mb-6 gap-2 overflow-x-auto">
+          {isUpcoming && (
+            <>
+              <button 
+                onClick={() => setActiveTab("modify")}
+                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "modify" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+              >
+                Modify Booking
+              </button>
+              <button 
+                onClick={() => setActiveTab("cancel")}
+                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "cancel" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+              >
+                Cancel Booking
+              </button>
+            </>
+          )}
+          {booking.disputeStatus && (
+            <button 
+              onClick={() => setActiveTab("refund" as any)}
+              className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "refund" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+            >
+              Refund Status
+            </button>
+          )}
+        </div>
+      )}
+
+      {isCompleted && (
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 mb-6">
+          <CheckCircle2 className="text-blue-600 mt-0.5 shrink-0" size={20} />
+          <div>
+            <h4 className="text-sm font-black text-blue-900">Stay Completed</h4>
+            <p className="text-xs font-medium text-blue-700 mt-1">Thank you for staying with us. We hope to see you again soon.</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Column (Details & Actions) */}
-        <div className="lg:col-span-2 flex flex-col gap-8">
+        <div className={`flex flex-col gap-8 ${activeTab === "refund" ? "lg:col-span-3" : "lg:col-span-2"}`}>
           
           {/* Reservation Details */}
-          <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-[#1d1d1d]">Reservation Details</h2>
-              {isUpcoming && !isEditing && !isCanceling && (
-                <button 
-                  onClick={() => setIsEditing(true)} 
-                  className="text-[#9a3300] hover:bg-[#9a3300]/10 px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-2"
-                >
-                  <Edit3 size={16} /> Modify
-                </button>
-              )}
-            </div>
-            
-            {isEditing ? (
-              <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-6 mb-6">
+          {(!isUpcoming || activeTab === "modify") && activeTab !== "refund" && (
+            <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 animate-in fade-in duration-300">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-black text-[#1d1d1d]">Reservation Details</h2>
+              </div>
+              
+              {isUpcoming ? (
+                <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-6 mb-6">
                 <p className="text-xs font-medium text-[#828282] mb-4">Update your dates, room type, or guest count. Price changes will be reflected in the payment summary.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 relative" ref={calRef}>
                   <div className="flex flex-col gap-1.5">
@@ -389,7 +492,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                       <Calendar size={16} className="text-[#9a3300]" />
                     </div>
                     {calOpen && (
-                      <div className="absolute top-[70px] left-0 z-50 bg-white shadow-2xl border border-[#e8ddcf] rounded-xl">
+                      <div className="absolute top-[70px] left-0 z-[100] bg-white shadow-2xl border border-[#e8ddcf] rounded-xl">
                         <CalendarPicker
                           checkIn={editCheckIn ? new Date(editCheckIn + "T00:00:00") : null}
                           checkOut={editCheckOut ? new Date(editCheckOut + "T00:00:00") : null}
@@ -435,89 +538,89 @@ export default function BookingDetailsClient({ id }: { id: string }) {
               </div>
             )}
 
-            <div className="flex flex-col gap-5 border-t border-[#f2e7d9] pt-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#f2e7d9] flex items-center justify-center shrink-0">
-                  <User size={20} className="text-[#9a3300]" />
-                </div>
-                <div>
-                  <p className="text-base font-black text-[#1d1d1d]">{isEditing ? editGuests : booking.guests || 2} Guests</p>
-                  <p className="text-sm font-medium text-[#828282]">{isEditing ? calculateNights(editCheckIn, editCheckOut) : booking.nights} Nights</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#f2e7d9] flex items-center justify-center shrink-0">
-                  <MapPin size={20} className="text-[#9a3300]" />
-                </div>
-                <div>
-                  <p className="text-base font-black text-[#1d1d1d]">Location</p>
-                  <p className="text-sm font-medium text-[#828282]">{booking.location}</p>
-                </div>
-              </div>
             </div>
-          </div>
+          )}
 
           {/* Cancellation Module */}
-          {isUpcoming && !isEditing && (
-            <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8">
-              {!isCanceling ? (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-black text-[#1d1d1d]">Need to cancel?</h3>
-                    <p className="text-sm text-[#828282]">Review our cancellation policy and request a refund if applicable.</p>
-                  </div>
-                  <button onClick={() => setIsCanceling(true)} className="px-6 py-3 rounded-xl border-2 border-red-100 hover:bg-red-50 text-red-600 font-bold transition-colors">
-                    Start Cancellation
-                  </button>
+          {isUpcoming && activeTab === "cancel" && (
+            <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 animate-in fade-in duration-300">
+              <div className="flex flex-col gap-5">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-lg font-black text-[#1d1d1d] flex items-center gap-2">
+                    <AlertTriangle className="text-red-500" /> Cancel Booking
+                  </h3>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-5 animate-in fade-in duration-300">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-lg font-black text-[#1d1d1d] flex items-center gap-2">
-                      <AlertTriangle className="text-red-500" /> Cancel Booking
-                    </h3>
-                    <button onClick={() => setIsCanceling(false)} className="text-[#828282] hover:text-[#1d1d1d]">
-                      <X size={20} />
-                    </button>
-                  </div>
+                
+                <div className="bg-[#fdfaf6] rounded-xl p-4 border border-[#e8ddcf]">
+                  <h4 className="text-xs font-bold text-[#1d1d1d] mb-2 uppercase tracking-wider">Cancellation Policy</h4>
+                  <p className="text-sm text-[#828282] leading-relaxed">
+                    {isFreeCancellation ? (
+                      <>This property allows free cancellation. You will not be charged a cancellation fee. A refund request will automatically be submitted for the full amount paid: <span className="font-bold text-emerald-600">{formatLKR(eligibleRefund)}</span>.</>
+                    ) : (
+                      <>Cancellations made right now are subject to a 20% cancellation fee ({formatLKR(cancellationFee)}). A refund request will automatically be submitted for the eligible amount: <span className="font-bold text-[#1d1d1d]">{formatLKR(eligibleRefund)}</span>.</>
+                    )}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-bold text-[#1d1d1d]">Reason for cancellation <span className="text-red-500">*</span></label>
+                  <textarea 
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Please tell us why you are canceling..."
+                    className="w-full p-4 rounded-xl border border-[#e8ddcf] min-h-[100px] resize-none focus:border-red-300 focus:outline-none"
+                  />
+                </div>
+
+                {/* Button moved to Payment Summary */}
+              </div>
+            </div>
+          )}
+
+          {/* Complete Stay Module Removed */}
+
+          {/* Refund Status Module */}
+          {booking.disputeStatus && activeTab === "refund" && (
+            <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 animate-in fade-in duration-300">
+              <div className="flex flex-col gap-5">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-lg font-black text-[#1d1d1d] flex items-center gap-2">
+                    <Wallet className="text-[#9a3300]" /> Refund Details
+                  </h3>
+                  <span className={`px-3 py-1 text-xs font-black uppercase tracking-widest rounded-md ${
+                    booking.disputeStatus === 'RESOLVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {booking.disputeStatus === 'RESOLVED' ? 'Processed' : 'Pending'}
+                  </span>
+                </div>
+                
+                <div className="bg-[#fdfaf6] rounded-xl p-4 border border-[#e8ddcf]">
+                  <p className="text-sm text-[#828282] leading-relaxed mb-4">
+                    You have requested a refund of <span className="font-bold text-[#1d1d1d]">{formatLKR(booking.disputeAmount || 0)}</span> due to a booking modification or cancellation.
+                  </p>
                   
-                  <div className="bg-[#fdfaf6] rounded-xl p-4 border border-[#e8ddcf]">
-                    <h4 className="text-xs font-bold text-[#1d1d1d] mb-2 uppercase tracking-wider">Cancellation Policy</h4>
-                    <p className="text-sm text-[#828282] leading-relaxed">
-                      Cancellations made right now may be subject to a partial fee. Your base price will be fully refunded, but service fees are non-refundable. A refund request will automatically be submitted for the eligible amount: <span className="font-bold text-[#1d1d1d]">{formatLKR(booking.basePrice)}</span>.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-bold text-[#1d1d1d]">Reason for cancellation <span className="text-red-500">*</span></label>
-                    <textarea 
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
-                      placeholder="Please tell us why you are canceling..."
-                      className="w-full p-4 rounded-xl border border-[#e8ddcf] min-h-[100px] resize-none focus:border-red-300 focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-3 mt-2">
-                    <button onClick={() => setIsCanceling(false)} className="px-6 py-3 rounded-xl border border-[#e8ddcf] font-bold text-[#4f4f4f] hover:bg-[#fdfaf6]">
-                      Keep Booking
-                    </button>
-                    <button 
-                      onClick={handleConfirmCancel} 
-                      disabled={!cancelReason.trim()}
-                      className="px-6 py-3 rounded-xl bg-red-600 font-bold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Confirm Cancel & Refund
-                    </button>
-                  </div>
+                  {booking.disputeStatus !== 'RESOLVED' ? (
+                    <div className="flex gap-3 items-start bg-amber-50 p-3 rounded-lg border border-amber-100">
+                      <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+                      <p className="text-xs text-amber-800">
+                        <strong>Pending Admin Review:</strong> Your request has been received and is currently being reviewed by our moderation team. You will be notified once it is processed.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3 items-start bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                      <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={18} />
+                      <p className="text-xs text-emerald-800">
+                        <strong>Refund Approved & Processed:</strong> Your refund has been approved by the admin and processed. It may take a few business days to reflect in your original payment method.
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           )}
 
           {/* Completed / Cancelled Actions */}
-          {(isCompleted || isCancelled) && (
+          {(isCompleted || isCancelled) && activeTab !== "refund" && (
             <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 flex flex-wrap gap-4">
               {isCompleted && (
                 <>
@@ -540,7 +643,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         </div>
 
         {/* Right Column (Payment & Price) */}
-        <div className="flex flex-col gap-6">
+        <div className={`flex flex-col gap-6 ${activeTab === "refund" ? "hidden" : ""}`}>
           <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8">
             <h2 className="text-xl font-black text-[#1d1d1d] mb-6">Payment Summary</h2>
             
@@ -554,9 +657,9 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                   )}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-[#828282] font-medium uppercase tracking-wider">Method</span>
+                  <span className="text-xs text-[#828282] font-medium uppercase tracking-wider">Payment Status</span>
                   <span className="text-sm font-bold text-[#1d1d1d]">
-                    {booking.paymentMethod === "online" ? "Online Card" : "Pay at Property"}
+                    {booking.paidInFull ? "Fully Paid" : "Pending Payment"}
                   </span>
                 </div>
               </div>
@@ -565,64 +668,133 @@ export default function BookingDetailsClient({ id }: { id: string }) {
               </span>
             </div>
 
-            {/* Standard Price Breakdown */}
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[#828282] font-medium">Base Price</span>
-                <span className="text-[#1d1d1d] font-bold">{formatLKR(isEditing ? newPrice * 0.8 : booking.basePrice)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[#828282] font-medium">Taxes & Fees</span>
-                <span className="text-[#1d1d1d] font-bold">{formatLKR(isEditing ? newPrice * 0.2 : booking.taxes)}</span>
-              </div>
-              {booking.discount > 0 && !isEditing && (
+            {/* Original Price Breakdown (Always shown for modify & cancel) */}
+            {(activeTab === "modify" || activeTab === "cancel") && (
+              <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-emerald-600 font-medium">Discount</span>
-                  <span className="text-emerald-700 font-bold">-{formatLKR(booking.discount)}</span>
+                  <span className="text-[#828282] font-medium">Original Base Price</span>
+                  <span className="text-[#1d1d1d] font-bold">{formatLKR(origBasePrice)}</span>
                 </div>
-              )}
-              <div className="flex justify-between items-center pt-4 border-t border-[#f2e7d9] mt-2">
-                <span className="text-lg text-[#1d1d1d] font-black">Total</span>
-                <span className="text-[#9a3300] font-black text-2xl">{formatLKR(isEditing ? newPrice : booking.totalPrice)}</span>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-[#828282] font-medium">Original Taxes</span>
+                  <span className="text-[#1d1d1d] font-bold">{formatLKR(origTaxes)}</span>
+                </div>
+                {booking.discount > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-emerald-600 font-medium">Original Discount</span>
+                    <span className="text-emerald-700 font-bold">-{formatLKR(booking.discount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-4 border-t border-[#f2e7d9] mt-2 mb-6">
+                  <span className="text-sm text-[#1d1d1d] font-black">Original Total</span>
+                  <span className="text-[#1d1d1d] font-black text-lg">{formatLKR(booking.totalPrice)}</span>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Editing Action Area */}
-            {isEditing && (
-              <div className="mt-8 pt-6 border-t-2 border-dashed border-[#e8ddcf] animate-in slide-in-from-bottom-4 duration-300">
-                <h4 className="text-xs font-bold text-[#828282] uppercase tracking-wider mb-4">Price Difference</h4>
-                <div className="flex justify-between items-center mb-6">
-                  <span className="text-sm font-medium text-[#1d1d1d]">Original Paid</span>
-                  <span className="text-sm font-bold text-[#828282] line-through">{formatLKR(booking.totalPrice)}</span>
+            {/* Cancel Section specific logic */}
+            {activeTab === "cancel" && (
+              <div className="flex flex-col gap-4 animate-in fade-in duration-300 border-t border-[#f2e7d9] pt-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-[#828282] font-medium">Cancellation Fee</span>
+                  <span className={`font-bold ${isFreeCancellation ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {isFreeCancellation ? 'Free' : formatLKR(cancellationFee)}
+                  </span>
                 </div>
                 
-                {diffAmount > 0 && (
-                  <div className="bg-amber-50 rounded-xl p-4 mb-6 border border-amber-200">
-                    <p className="text-xs font-medium text-amber-800 mb-2">New total is higher. Please pay the difference to confirm modifications.</p>
-                    <div className="flex justify-between items-center text-amber-900 font-black text-lg">
-                      <span>Due Now</span>
-                      <span>+{formatLKR(diffAmount)}</span>
-                    </div>
+                {!booking.paidInFull ? (
+                  <div className="bg-amber-50 rounded-xl p-4 mt-2 border border-amber-200">
+                    <p className="text-sm font-bold text-amber-900 mb-1">Amount to Pay</p>
+                    <p className="text-xl font-black text-amber-700">{formatLKR(cancellationFee)}</p>
+                    <p className="text-xs text-amber-800/80 mt-2">You need to pay this amount to cancel the booking.</p>
+                    <button 
+                      onClick={handleConfirmCancel} 
+                      disabled={!cancelReason.trim() || loading}
+                      className="w-full mt-4 py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Pay for Changes"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-emerald-50 rounded-xl p-4 mt-2 border border-emerald-200">
+                    <p className="text-sm font-bold text-emerald-900 mb-1">Eligible Refund</p>
+                    <p className="text-xl font-black text-emerald-700">{formatLKR(eligibleRefund)}</p>
+                    <p className="text-xs text-emerald-800/80 mt-2">You can request a refund for this amount.</p>
+                    <button 
+                      onClick={handleConfirmCancel} 
+                      disabled={!cancelReason.trim() || loading}
+                      className="w-full mt-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Request Refund"}
+                    </button>
                   </div>
                 )}
-                {diffAmount < 0 && (
+              </div>
+            )}
+
+            {/* Modify Section specific logic */}
+            {activeTab === "modify" && hasChanges && (
+              <div className="animate-in fade-in duration-300 border-t border-[#f2e7d9] pt-4">
+                <div className="flex flex-col gap-4 mb-6">
+                  <div className="flex flex-col gap-1 mb-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-[#828282] font-medium">Price Change</span>
+                      <span className={`font-bold ${newBasePrice - origBasePrice > 0 ? 'text-amber-600' : newBasePrice - origBasePrice < 0 ? 'text-emerald-600' : 'text-[#1d1d1d]'}`}>
+                        {newBasePrice - origBasePrice > 0 ? '+' : ''}{formatLKR(newBasePrice - origBasePrice)}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-[#828282] bg-[#fdfaf6] p-2 rounded-lg border border-[#e8ddcf] mt-1">
+                      <div className="flex justify-between items-center mb-1">
+                        <span>New Base Price ({formatLKR(pricePerNight)} × {newNights} nights)</span>
+                        <span className="font-medium text-[#1d1d1d]">{formatLKR(newBasePrice)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Original Base Price</span>
+                        <span className="font-medium text-[#1d1d1d]">- {formatLKR(origBasePrice)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-[#1d1d1d] font-black">New Total Price</span>
+                    <span className="text-[#9a3300] font-black text-lg">{formatLKR(newPrice)}</span>
+                  </div>
+                </div>
+
+                {diffAmount < 0 && booking.paidInFull ? (
                   <div className="bg-emerald-50 rounded-xl p-4 mb-6 border border-emerald-200">
-                    <p className="text-xs font-medium text-emerald-800 mb-2">New total is lower. A refund will be issued to your original payment method.</p>
-                    <div className="flex justify-between items-center text-emerald-900 font-black text-lg">
-                      <span>Refund Amount</span>
-                      <span>{formatLKR(Math.abs(diffAmount))}</span>
+                    <p className="text-sm font-bold text-emerald-900 mb-1">Refund Amount</p>
+                    <p className="text-xl font-black text-emerald-700">{formatLKR(Math.abs(diffAmount))}</p>
+                    <p className="text-xs text-emerald-800/80 mt-2">You can request a refund for this difference.</p>
+                    <div className="flex flex-col gap-3 mt-4">
+                      <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Request Refund"}
+                      </button>
+                      <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
+                    </div>
+                  </div>
+                ) : diffAmount > 0 || !booking.paidInFull ? (
+                  <div className="bg-amber-50 rounded-xl p-4 mb-6 border border-amber-200">
+                    <p className="text-sm font-bold text-amber-900 mb-1">Amount to Pay</p>
+                    <p className="text-xl font-black text-amber-700">{formatLKR(!booking.paidInFull ? newPrice : diffAmount)}</p>
+                    <p className="text-xs text-amber-800/80 mt-2">You need to pay for these changes.</p>
+                    <div className="flex flex-col gap-3 mt-4">
+                      <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Pay for Changes"}
+                      </button>
+                      <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-200">
+                    <p className="text-sm font-bold text-blue-900 mb-1">No price difference</p>
+                    <div className="flex flex-col gap-3 mt-4">
+                      <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Save Changes"}
+                      </button>
+                      <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>
                   </div>
                 )}
-                
-                <div className="flex flex-col gap-3">
-                  <button onClick={handleSaveChanges} className="w-full py-4 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2">
-                    {diffAmount > 0 ? "Pay Added Value" : diffAmount < 0 ? "Confirm & Request Refund" : "Save Changes"} <ArrowRight size={16} />
-                  </button>
-                  <button onClick={() => setIsEditing(false)} className="w-full py-3.5 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">
-                    Discard Changes
-                  </button>
-                </div>
               </div>
             )}
           </div>
