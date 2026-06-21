@@ -16,11 +16,11 @@ import AccessDenied from "@/components/shared/auth/access-denied"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 
-const TABS: ("UPCOMING" | "CANCELLED")[] = ["UPCOMING", "CANCELLED"]
+const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
 export default function MyBookingsPage() {
   const { status, userRole } = useGuestGuard()
-  const [activeTab, setActiveTab] = useState<"UPCOMING" | "CANCELLED">("UPCOMING")
+  const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
@@ -177,7 +177,7 @@ export default function MyBookingsPage() {
             </div>
           ) : (
             bookings
-              .filter(b => activeTab === "UPCOMING" ? (b.status === "UPCOMING" || b.status === "COMPLETED") : b.status === activeTab)
+              .filter(b => b.status === activeTab)
               .map(booking => <BookingCard key={booking.id} booking={booking} />)
           )}
         </div>

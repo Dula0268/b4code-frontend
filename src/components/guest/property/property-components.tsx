@@ -2,7 +2,20 @@ import { CheckCircle2, BedDouble, Users, SquareDot } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import type { Room } from "@/lib/mock-properties"
+
+export interface Room {
+    id: string;
+    name: string;
+    maxGuests: number;
+    bedType: string;
+    sqft: number;
+    pricePerNight: number;
+    originalPrice?: number;
+    tag?: string;
+    features: string[];
+    imageSrc: string;
+    availableCount?: number;
+}
 
 function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`

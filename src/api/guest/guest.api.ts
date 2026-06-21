@@ -66,6 +66,9 @@ export const guestApi = {
   cancelBooking: (id: string | number, reason: string) =>
     api.patch(`/guest/bookings/${id}/cancel`, { reason }).then((r) => r.data),
 
+  completeBooking: (id: string | number) =>
+    api.patch(`/guest/bookings/${id}/complete`).then((r) => r.data),
+
   modifyBooking: (id: string | number, payload: {
     roomId: number;
     propertyId: number;

@@ -367,7 +367,26 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     }
   }
 
+  const handleCompleteBooking = async () => {
+    setErrorMessage("");
+    setSuccessMessage("");
+    try {
+      const res = await guestApi.completeBooking(booking.id)
+      
+      const mappedBooking: StoredBooking = {
+        ...booking,
+        status: res.status
+      }
 
+      setBooking(mappedBooking)
+      setSuccessMessage("Booking marked as completed! You can now leave a review.");
+      setActiveTab("modify"); // switch off cancel tab if they were on it
+      
+    } catch (error: any) {
+      console.error("Failed to complete booking:", error)
+      setErrorMessage(error.response?.data?.message || "Failed to complete booking.")
+    }
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Render Helpers
@@ -439,6 +458,12 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                 className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "cancel" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
               >
                 Cancel Booking
+              </button>
+              <button 
+                onClick={handleCompleteBooking}
+                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors text-emerald-600 border border-emerald-200 hover:bg-emerald-50`}
+              >
+                Complete Stay (Test)
               </button>
             </>
           )}

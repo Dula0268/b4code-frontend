@@ -113,6 +113,7 @@ function useReviewLogic() {
 
   const searchParams = useSearchParams()
   const propertyId = searchParams?.get("propertyId") || "1"
+  const bookingId = searchParams?.get("bookingId") || ""
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -146,7 +147,7 @@ function useReviewLogic() {
 
       // 2. Submit the full review
       await guestApi.createReview({ 
-        bookingId: 1, 
+        bookingId: Number(bookingId), 
         propertyId: Number(propertyId) || undefined,
         overallRating, 
         cleanlinessRating: categoryRatings.cleanliness,
