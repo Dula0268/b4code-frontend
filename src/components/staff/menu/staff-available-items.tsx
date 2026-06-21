@@ -50,7 +50,7 @@ export default function StaffAvailableItems() {
     if (statusFilter === "unavailable") list = list.filter((i) => i.status === "draft");
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((i) => i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
+      list = list.filter((i) => i.name.toLowerCase().includes(q) || i.categoryName.toLowerCase().includes(q));
     }
     return list;
   }, [allItems, menuFilter, statusFilter, search]);
@@ -164,7 +164,7 @@ export default function StaffAvailableItems() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-bold text-[var(--black-2)] truncate">{item.name}</p>
-                      <Badge variant="outline" className="text-[8px] border-0 bg-[rgba(149,48,2,0.06)] text-[var(--brand-primary)] px-1.5 py-0">{item.category}</Badge>
+                      <Badge variant="outline" className="text-[8px] border-0 bg-[rgba(149,48,2,0.06)] text-[var(--brand-primary)] px-1.5 py-0">{item.categoryName}</Badge>
                       {live && <Badge className="text-[8px] border-0 bg-[rgba(39,174,96,0.1)] text-[var(--state-success)] px-1.5 py-0">Serving Now</Badge>}
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">

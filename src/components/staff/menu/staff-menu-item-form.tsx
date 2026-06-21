@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Plus, Trash2, Clock, GripVertical, X, Upload } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
@@ -22,6 +22,8 @@ let modifierUid = 2000;
 export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; itemId?: string }) {
   const router = useRouter();
   const menu = useStaffMenuStore((s) => s.getMenu(menuId));
+  const categories = useStaffMenuStore((s) => s.categories);
+  const fetchCategories = useStaffMenuStore((s) => s.fetchCategories);
   const addItem = useStaffMenuStore((s) => s.addItem);
   const updateItem = useStaffMenuStore((s) => s.updateItem);
   const setSuccess = useStaffMenuStore((s) => s.setSuccess);
@@ -35,7 +37,8 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
   const [name, setName] = useState(existing?.name ?? "");
   const [price, setPrice] = useState(existing?.price?.toString() ?? "");
   const [description, setDescription] = useState(existing?.description ?? "");
-  const [category, setCategory] = useState(existing?.category ?? "Main");
+  // categoryId stored as string (matches MenuCategory.id)
+  const [categoryId, setCategoryId] = useState(existing?.categoryId ?? "");
   const [calories, setCalories] = useState(existing?.calories?.toString() ?? "");
   const [tag, setTag] = useState(existing?.tag ?? "");
   const [isActive, setIsActive] = useState(existing?.status === "active" || !existing);
@@ -49,6 +52,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
 
   const [nameError, setNameError] = useState(false);
   const [priceError, setPriceError] = useState(false);
+  const [categoryError, setCategoryError] = useState(false);
 
   type ImageState = { file?: File; preview: string; isExisting?: boolean };
   const [itemImages, setItemImages] = useState<ImageState[]>(
@@ -58,12 +62,18 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
   const { user } = useAuthStore();
   const propertyId = user?.propertyId;
 
+  // Fetch categories on mount
+  useEffect(() => {
+    if (propertyId && categories.length === 0) {
+      fetchCategories(Number(propertyId));
+    }
+  }, [propertyId, categories.length, fetchCategories]);
+
   const back = () => router.push(`/staff/menu/${menuId}`);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    
     files.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -81,11 +91,12 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
     let hasErr = false;
     if (!name.trim()) { setNameError(true); hasErr = true; }
     if (!price.trim() || isNaN(Number(price)) || Number(price) <= 0) { setPriceError(true); hasErr = true; }
+    if (!categoryId) { setCategoryError(true); hasErr = true; }
     if (hasErr) return;
 
     const uploadedUrls = itemImages.filter(img => img.isExisting).map(img => img.preview);
     const newFiles = itemImages.filter(img => !img.isExisting && img.file).map(img => img.file!);
-    
+
     if (newFiles.length > 0) {
       try {
         for (const file of newFiles) {
@@ -95,9 +106,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
           const res = await api.post("/images/upload", formData, {
             headers: { "Content-Type": "multipart/form-data" },
           });
-          if (res.data?.url) {
-            uploadedUrls.push(res.data.url);
-          }
+          if (res.data?.url) uploadedUrls.push(res.data.url);
         }
       } catch (err) {
         console.error("Image upload failed:", err);
@@ -115,7 +124,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
       name,
       price: Number(price),
       description,
-      category,
+      categoryId,
       status: isActive ? ("active" as const) : ("draft" as const),
       calories: calories ? Number(calories) : undefined,
       tag: tag || undefined,
@@ -216,197 +225,181 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
           {/* Basic Details */}
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4 flex flex-col gap-2.5">
-            <h3 className="text-xs font-bold text-[var(--black-2)]">Basic Details</h3>
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <Label className={labelCls}>Item Name <span className="text-[var(--state-error)]">*</span></Label>
-                <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(false); }} placeholder="e.g. Margherita Pizza" className={nameError ? errCls : inputCls} />
+              <h3 className="text-xs font-bold text-[var(--black-2)]">Basic Details</h3>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <Label className={labelCls}>Item Name <span className="text-[var(--state-error)]">*</span></Label>
+                  <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(false); }} placeholder="e.g. Margherita Pizza" className={nameError ? errCls : inputCls} />
+                </div>
+                <div>
+                  <Label className={labelCls}>Price (LKR) <span className="text-[var(--state-error)]">*</span></Label>
+                  <Input value={price} onChange={(e) => { setPrice(e.target.value); setPriceError(false); }} placeholder="e.g. 3000" className={priceError ? errCls : inputCls} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <Label className={labelCls}>Category <span className="text-[var(--state-error)]">*</span></Label>
+                  {categories.length === 0 ? (
+                    <div className={`${categoryError ? errCls : inputCls} h-9 flex items-center px-3 text-[var(--gray-4)] border rounded-[8px]`}>
+                      <span className="text-xs">No categories — add one on the Menu list page</span>
+                    </div>
+                  ) : (
+                    <Select value={categoryId} onValueChange={(val) => { setCategoryId(val); setCategoryError(false); }}>
+                      <SelectTrigger className={categoryError ? errCls : inputCls}>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((c) => (
+                          <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {categoryError && <p className="text-[10px] text-[var(--state-error)] mt-0.5">Please select a category.</p>}
+                </div>
+                <div>
+                  <Label className={labelCls}>Calories <span className="text-[var(--gray-3)] normal-case font-normal">(optional)</span></Label>
+                  <Input value={calories} onChange={(e) => setCalories(e.target.value)} placeholder="e.g. 450" className={inputCls} />
+                </div>
               </div>
               <div>
-                <Label className={labelCls}>Price (LKR) <span className="text-[var(--state-error)]">*</span></Label>
-                <Input value={price} onChange={(e) => { setPrice(e.target.value); setPriceError(false); }} placeholder="e.g. 3000" className={priceError ? errCls : inputCls} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <Label className={labelCls}>Category</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className={inputCls}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["Main", "Starter", "Dessert", "Drink", "Side"].map((c) => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Label className={labelCls}>Tag <span className="text-[var(--gray-3)] normal-case font-normal">(optional)</span></Label>
+                <Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="e.g. POPULAR, VEG, SPICY" className={inputCls} />
               </div>
               <div>
-                <Label className={labelCls}>Calories <span className="text-[var(--gray-3)] normal-case font-normal">(optional)</span></Label>
-                <Input value={calories} onChange={(e) => setCalories(e.target.value)} placeholder="e.g. 450" className={inputCls} />
+                <Label className={labelCls}>Description</Label>
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of the dish..." rows={2} className={`${inputCls} resize-none`} />
               </div>
-            </div>
-            <div>
-              <Label className={labelCls}>Tag <span className="text-[var(--gray-3)] normal-case font-normal">(optional)</span></Label>
-              <Input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="e.g. Seasonal, Drink" className={inputCls} />
-            </div>
-            <div>
-              <Label className={labelCls}>Description</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of the dish..." rows={2} className={`${inputCls} resize-none`} />
-            </div>
             </CardContent>
           </Card>
 
           {/* Availability Settings */}
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4 flex flex-col gap-2.5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-[var(--black-2)]">Availability Settings</h3>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-[var(--gray-3)]">{isActive ? "Active" : "Inactive"}</span>
-                <Switch checked={isActive} onCheckedChange={setIsActive} className="data-[state=checked]:bg-[var(--brand-primary)] scale-90" />
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-[var(--black-2)]">Availability Settings</h3>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-[var(--gray-3)]">{isActive ? "Active" : "Inactive"}</span>
+                  <Switch checked={isActive} onCheckedChange={setIsActive} className="data-[state=checked]:bg-[var(--brand-primary)] scale-90" />
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <Label className={labelCls}><Clock size={10} className="inline mr-1" />Start Time</Label>
-                <Input type="time" value={availability.startTime} onChange={(e) => setAvailability((a) => ({ ...a, startTime: e.target.value }))} className={inputCls} />
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <Label className={labelCls}><Clock size={10} className="inline mr-1" />Start Time</Label>
+                  <Input type="time" value={availability.startTime} onChange={(e) => setAvailability((a) => ({ ...a, startTime: e.target.value }))} className={inputCls} />
+                </div>
+                <div>
+                  <Label className={labelCls}><Clock size={10} className="inline mr-1" />End Time</Label>
+                  <Input type="time" value={availability.endTime} onChange={(e) => setAvailability((a) => ({ ...a, endTime: e.target.value }))} className={inputCls} />
+                </div>
               </div>
-              <div>
-                <Label className={labelCls}><Clock size={10} className="inline mr-1" />End Time</Label>
-                <Input type="time" value={availability.endTime} onChange={(e) => setAvailability((a) => ({ ...a, endTime: e.target.value }))} className={inputCls} />
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    checked={availability.allDays}
+                    onCheckedChange={(checked) => setAvailability((a) => ({ ...a, allDays: !!checked, days: checked ? [] : a.days }))}
+                    className="data-[state=checked]:bg-[var(--brand-primary)] data-[state=checked]:border-[var(--brand-primary)]"
+                  />
+                  <span className="text-[10px] text-[var(--black-2)] font-medium">Apply to all days</span>
+                </label>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <Checkbox
-                  checked={availability.allDays}
-                  onCheckedChange={(checked) => setAvailability((a) => ({ ...a, allDays: !!checked, days: checked ? [] : a.days }))}
-                  className="data-[state=checked]:bg-[var(--brand-primary)] data-[state=checked]:border-[var(--brand-primary)]"
-                />
-                <span className="text-[10px] text-[var(--black-2)] font-medium">Apply to all days</span>
-              </label>
-            </div>
-            {!availability.allDays && (
-              <div className="flex gap-1.5 flex-wrap">
-                {DAYS.map((d) => (
-                  <Button
-                    key={d}
-                    variant={availability.days.includes(d) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => toggleDay(d)}
-                    className={`px-2 py-1 h-auto text-[10px] font-medium ${availability.days.includes(d) ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary)]/90" : "text-[var(--gray-2)]"}`}
-                  >
-                    {d}
-                  </Button>
-                ))}
-              </div>
-            )}
+              {!availability.allDays && (
+                <div className="flex gap-1.5 flex-wrap">
+                  {DAYS.map((d) => (
+                    <Button
+                      key={d}
+                      variant={availability.days.includes(d) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => toggleDay(d)}
+                      className={`px-2 py-1 h-auto text-[10px] font-medium ${availability.days.includes(d) ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary)]/90" : "text-[var(--gray-2)]"}`}
+                    >
+                      {d}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Variants */}
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4 flex flex-col gap-2.5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-bold text-[var(--black-2)]">Variants</h3>
-                <p className="text-[10px] text-[var(--gray-3)]">Size or portion options with different pricing.</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-[var(--black-2)]">Variants</h3>
+                  <p className="text-[10px] text-[var(--gray-3)]">Size or portion options with different pricing.</p>
+                </div>
+                <button onClick={addVariant} className="flex items-center gap-1 text-[10px] font-bold text-[var(--brand-primary)] hover:underline">
+                  <Plus size={12} /> Add Variant
+                </button>
               </div>
-              <button onClick={addVariant} className="flex items-center gap-1 text-[10px] font-bold text-[var(--brand-primary)] hover:underline">
-                <Plus size={12} /> Add Variant
-              </button>
-            </div>
-            {variants.length === 0 ? (
-              <p className="text-[10px] text-[var(--gray-4)] text-center py-2 border border-dashed border-[var(--gray-5)] rounded-lg">No variants configured. Click &quot;Add Variant&quot; to create one.</p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {variants.map((v) => (
-                  <div key={v.id} className="flex items-center gap-2 bg-[rgba(0,0,0,0.015)] rounded-lg px-2.5 py-2">
-                    <GripVertical size={12} className="text-[var(--gray-4)] shrink-0" />
-                    <div className="flex-1">
-                      <Input
-                        value={v.label}
-                        onChange={(e) => updateVariant(v.id, "label", e.target.value)}
-                        placeholder="Label (e.g. Small)"
-                        className="px-2 py-1 text-xs rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]"
-                      />
+              {variants.length === 0 ? (
+                <p className="text-[10px] text-[var(--gray-4)] text-center py-2 border border-dashed border-[var(--gray-5)] rounded-lg">No variants configured. Click &quot;Add Variant&quot; to create one.</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {variants.map((v) => (
+                    <div key={v.id} className="flex items-center gap-2 bg-[rgba(0,0,0,0.015)] rounded-lg px-2.5 py-2">
+                      <GripVertical size={12} className="text-[var(--gray-4)] shrink-0" />
+                      <div className="flex-1">
+                        <Input value={v.label} onChange={(e) => updateVariant(v.id, "label", e.target.value)} placeholder="Label (e.g. Small)" className="px-2 py-1 text-xs rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]" />
+                      </div>
+                      <div className="w-[100px]">
+                        <Input value={v.price || ""} onChange={(e) => updateVariant(v.id, "price", Number(e.target.value) || 0)} placeholder="Price" className="px-2 py-1 text-xs rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]" />
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-[var(--gray-4)] hover:text-[var(--state-error)]" onClick={() => removeVariant(v.id)}>
+                        <Trash2 size={12} />
+                      </Button>
                     </div>
-                    <div className="w-[100px]">
-                      <Input
-                        value={v.price || ""}
-                        onChange={(e) => updateVariant(v.id, "price", Number(e.target.value) || 0)}
-                        placeholder="Price"
-                        className="px-2 py-1 text-xs rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]"
-                      />
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-[var(--gray-4)] hover:text-[var(--state-error)]" onClick={() => removeVariant(v.id)}>
-                      <Trash2 size={12} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Modifiers */}
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4 flex flex-col gap-2.5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-bold text-[var(--black-2)]">Add-ons &amp; Modifiers</h3>
-                <p className="text-[10px] text-[var(--gray-3)]">Extra options guests can select (e.g. spice level, toppings).</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-[var(--black-2)]">Add-ons &amp; Modifiers</h3>
+                  <p className="text-[10px] text-[var(--gray-3)]">Extra options guests can select (e.g. spice level, toppings).</p>
+                </div>
+                <button onClick={addModifier} className="flex items-center gap-1 text-[10px] font-bold text-[var(--brand-primary)] hover:underline">
+                  <Plus size={12} /> Add Group
+                </button>
               </div>
-              <button onClick={addModifier} className="flex items-center gap-1 text-[10px] font-bold text-[var(--brand-primary)] hover:underline">
-                <Plus size={12} /> Add Group
-              </button>
-            </div>
-            {modifiers.length === 0 ? (
-              <p className="text-[10px] text-[var(--gray-4)] text-center py-2 border border-dashed border-[var(--gray-5)] rounded-lg">No modifier groups yet. Click &quot;Add Group&quot; to create one.</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {modifiers.map((mod) => (
-                  <div key={mod.id} className="border border-[var(--gray-5)] rounded-lg p-3 flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={mod.name}
-                        onChange={(e) => updateModifierName(mod.id, e.target.value)}
-                        placeholder="Group name (e.g. Spice Level)"
-                        className="flex-1 px-2 py-1 text-xs font-bold rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]"
-                      />
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-[var(--gray-4)] hover:text-[var(--state-error)]" onClick={() => removeModifier(mod.id)}>
-                        <Trash2 size={12} />
-                      </Button>
-                    </div>
-                    {mod.options.map((opt, oi) => (
-                      <div key={oi} className="flex items-center gap-2 pl-3">
-                        <span className="text-[10px] text-[var(--gray-4)]">└</span>
-                        <Input
-                          value={opt.label}
-                          onChange={(e) => updateOption(mod.id, oi, "label", e.target.value)}
-                          placeholder="Option label"
-                          className="flex-1 px-2 py-1 text-xs rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]"
-                        />
-                        <div className="w-[80px] relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--gray-4)]" >+</span>
-                          <Input
-                            value={opt.price || ""}
-                            onChange={(e) => updateOption(mod.id, oi, "price", Number(e.target.value) || 0)}
-                            placeholder="0"
-                            className="pl-5 pr-2 py-1 text-xs rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]"
-                          />
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-5 w-5 text-[var(--gray-4)] hover:text-[var(--state-error)]" onClick={() => removeOption(mod.id, oi)}>
-                          <Trash2 size={10} />
+              {modifiers.length === 0 ? (
+                <p className="text-[10px] text-[var(--gray-4)] text-center py-2 border border-dashed border-[var(--gray-5)] rounded-lg">No modifier groups yet. Click &quot;Add Group&quot; to create one.</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {modifiers.map((mod) => (
+                    <div key={mod.id} className="border border-[var(--gray-5)] rounded-lg p-3 flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <Input value={mod.name} onChange={(e) => updateModifierName(mod.id, e.target.value)} placeholder="Group name (e.g. Spice Level)" className="flex-1 px-2 py-1 text-xs font-bold rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]" />
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-[var(--gray-4)] hover:text-[var(--state-error)]" onClick={() => removeModifier(mod.id)}>
+                          <Trash2 size={12} />
                         </Button>
                       </div>
-                    ))}
-                    <button onClick={() => addOption(mod.id)} className="text-[10px] font-medium text-[var(--brand-primary)] hover:underline self-start pl-3">
-                      + Add Option
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                      {mod.options.map((opt, oi) => (
+                        <div key={oi} className="flex items-center gap-2 pl-3">
+                          <span className="text-[10px] text-[var(--gray-4)]">└</span>
+                          <Input value={opt.label} onChange={(e) => updateOption(mod.id, oi, "label", e.target.value)} placeholder="Option label" className="flex-1 px-2 py-1 text-xs rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]" />
+                          <div className="w-[80px] relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--gray-4)]">+</span>
+                            <Input value={opt.price || ""} onChange={(e) => updateOption(mod.id, oi, "price", Number(e.target.value) || 0)} placeholder="0" className="pl-5 pr-2 py-1 text-xs rounded-md border-[var(--gray-5)] focus:border-[var(--brand-primary)]" />
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 text-[var(--gray-4)] hover:text-[var(--state-error)]" onClick={() => removeOption(mod.id, oi)}>
+                            <Trash2 size={10} />
+                          </Button>
+                        </div>
+                      ))}
+                      <button onClick={() => addOption(mod.id)} className="text-[10px] font-medium text-[var(--brand-primary)] hover:underline self-start pl-3">
+                        + Add Option
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -434,58 +427,55 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
 
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4">
-            <h3 className="text-xs font-bold text-[var(--black-2)] mb-3 uppercase tracking-wider">Item Images</h3>
-            
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {itemImages.map((img, idx) => (
-                <div key={idx} className="relative aspect-square rounded-[8px] overflow-hidden border border-[var(--gray-5)] group">
-                  <img src={img.preview} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => removeSelectedImage(idx)}
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-0 p-0"
-                  >
-                    <X size={10} />
-                  </button>
-                </div>
-              ))}
-              
-              {itemImages.length < 8 && (
-                <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-[var(--gray-5)] rounded-[8px] cursor-pointer hover:border-[var(--brand-primary)] hover:bg-[rgba(149,48,2,0.02)] transition-colors">
-                  <Upload size={20} className="text-[var(--gray-4)]" />
-                  <span className="text-[10px] text-[var(--gray-4)] mt-1 font-medium">Add Photo</span>
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
-                </label>
-              )}
-            </div>
-            
-            <div className="bg-[rgba(0,0,0,0.02)] rounded-[8px] p-2.5">
-              <p className="text-[9px] text-[var(--gray-3)] leading-relaxed">
-                Images help guests choose dishes. High quality photos (1:1 aspect ratio) work best.
-              </p>
-            </div>
+              <h3 className="text-xs font-bold text-[var(--black-2)] mb-3 uppercase tracking-wider">Item Images</h3>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {itemImages.map((img, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-[8px] overflow-hidden border border-[var(--gray-5)] group">
+                    <img src={img.preview} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => removeSelectedImage(idx)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-0 p-0"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+                {itemImages.length < 8 && (
+                  <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-[var(--gray-5)] rounded-[8px] cursor-pointer hover:border-[var(--brand-primary)] hover:bg-[rgba(149,48,2,0.02)] transition-colors">
+                    <Upload size={20} className="text-[var(--gray-4)]" />
+                    <span className="text-[10px] text-[var(--gray-4)] mt-1 font-medium">Add Photo</span>
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+                  </label>
+                )}
+              </div>
+              <div className="bg-[rgba(0,0,0,0.02)] rounded-[8px] p-2.5">
+                <p className="text-[9px] text-[var(--gray-3)] leading-relaxed">
+                  Images help guests choose dishes. High quality photos (1:1 aspect ratio) work best.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
           {/* Quick summary */}
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4 flex flex-col gap-2">
-            <h3 className="text-xs font-bold text-[var(--black-2)]">Summary</h3>
-            <div className="flex justify-between text-[10px]">
-              <span className="text-[var(--gray-3)]">Variants</span>
-              <span className="font-bold text-[var(--black-2)]">{variants.length}</span>
-            </div>
-            <div className="flex justify-between text-[10px]">
-              <span className="text-[var(--gray-3)]">Modifier Groups</span>
-              <span className="font-bold text-[var(--black-2)]">{modifiers.length}</span>
-            </div>
-            <div className="flex justify-between text-[10px]">
-              <span className="text-[var(--gray-3)]">Total Options</span>
-              <span className="font-bold text-[var(--black-2)]">{modifiers.reduce((a, m) => a + m.options.length, 0)}</span>
-            </div>
-            <div className="flex justify-between text-[10px]">
-              <span className="text-[var(--gray-3)]">Available</span>
-              <span className="font-bold text-[var(--black-2)]">{availability.allDays ? "All days" : availability.days.join(", ") || "None"}</span>
-            </div>
+              <h3 className="text-xs font-bold text-[var(--black-2)]">Summary</h3>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-[var(--gray-3)]">Variants</span>
+                <span className="font-bold text-[var(--black-2)]">{variants.length}</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-[var(--gray-3)]">Modifier Groups</span>
+                <span className="font-bold text-[var(--black-2)]">{modifiers.length}</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-[var(--gray-3)]">Total Options</span>
+                <span className="font-bold text-[var(--black-2)]">{modifiers.reduce((a, m) => a + m.options.length, 0)}</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-[var(--gray-3)]">Available</span>
+                <span className="font-bold text-[var(--black-2)]">{availability.allDays ? "All days" : availability.days.join(", ") || "None"}</span>
+              </div>
             </CardContent>
           </Card>
         </div>

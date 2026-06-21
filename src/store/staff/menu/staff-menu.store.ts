@@ -29,7 +29,10 @@ export interface MenuItem {
   name: string;
   price: number;
   description: string;
-  category: string;
+  categoryId: string;
+  categoryName: string;
+  menuId: string;
+  menuName: string;
   status: MenuStatus;
   tag?: string;
   calories?: number;
@@ -43,7 +46,6 @@ export interface Menu {
   id: string;
   name: string;
   description: string;
-  type: string;
   status: MenuStatus;
   isVisible: boolean;
   isNew?: boolean;
@@ -52,38 +54,67 @@ export interface Menu {
   items: MenuItem[];
 }
 
+export interface MenuCategory {
+  id: string;
+  name: string;
+  propertyId: number;
+}
+
 export interface BackendMenuItem {
   id: number;
+  propertyId: number;
+  menuId?: number;
+  menuName?: string;
+  categoryId?: number;
+  categoryName?: string;
   name: string;
   price: number;
   description?: string;
-  category?: string;
   isAvailable: boolean;
   imageUrls?: string[];
   imageUrl?: string;
   tag?: string;
   calories?: number;
+  variants?: Variant[];
+  modifiers?: Modifier[];
+}
+
+export interface BackendMenu {
+  id: number;
+  propertyId: number;
+  name: string;
+  description?: string;
+  status: string;
 }
 
 // ─── Store ─────────────────────────────────────────────────────────────────────
 
 interface StaffMenuState {
   menus: Menu[];
+  categories: MenuCategory[];
   propertyId: number | null;
   successMsg: string | null;
   errorMsg: string | null;
   isLoading: boolean;
+  categoriesLoading: boolean;
 }
 
 interface StaffMenuActions {
   fetchMenus: (propertyId: number) => Promise<void>;
-  fetchMenuItems: (propertyId: number) => Promise<void>;
+  fetchCategories: (propertyId: number) => Promise<void>;
   getMenu: (id: string) => Menu | undefined;
-  addMenu: (menu: Omit<Menu, "id" | "itemCount" | "priceRange" | "items">, items?: Omit<MenuItem, "id">[], propId?: number) => Promise<string>;
-  updateMenu: (id: string, data: Partial<Menu>) => void;
+  addMenu: (data: { name: string; description: string; status: MenuStatus }, propId?: number) => Promise<string>;
+  updateMenu: (id: string, data: Partial<{ name: string; description: string; status: MenuStatus }>) => Promise<void>;
   deleteMenu: (id: string) => Promise<void>;
   toggleVisibility: (id: string) => Promise<void>;
-  addItem: (menuId: string, item: Omit<MenuItem, "id">, propId?: number) => Promise<void>;
+  addCategory: (name: string, propId?: number) => Promise<MenuCategory | null>;
+  deleteCategory: (categoryId: string) => Promise<void>;
+  addItem: (menuId: string, item: {
+    name: string; price: number; description: string;
+    categoryId: string; status: MenuStatus; tag?: string;
+    calories?: number; imageUrls: string[];
+    availability: AvailabilityWindow; variants: Variant[]; modifiers: Modifier[];
+  }, propId?: number) => Promise<void>;
   updateItem: (menuId: string, itemId: string, data: Partial<MenuItem>) => Promise<void>;
   deleteItem: (menuId: string, itemId: string) => Promise<void>;
   toggleItemStatus: (menuId: string, itemId: string) => Promise<void>;
@@ -104,60 +135,68 @@ function extractApiErrorMessage(error: unknown, fallback: string): string {
     const response = (error as { response?: { data?: unknown } }).response;
     if (response && typeof response.data === "object" && response.data !== null) {
       const data = response.data as Record<string, unknown>;
-      if (typeof data.message === "string") {
-        return data.message;
-      }
+      if (typeof data.message === "string") return data.message;
     }
   }
   return fallback;
 }
 
-
 export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set, get) => ({
   menus: [],
+  categories: [],
   propertyId: null,
   successMsg: null,
   errorMsg: null,
   isLoading: false,
+  categoriesLoading: false,
 
+  // ─── Fetch Menus (from real /api/menus) ──────────────────────────────────────
   fetchMenus: async (propertyId: number) => {
     try {
       set({ isLoading: true, errorMsg: null, propertyId });
-      const response = await api.get(`/menu-items/property/${propertyId}`);
-      const backendItems = response.data as BackendMenuItem[];
 
-      // Group items by category to build menus dynamically
-      const menuItemMap = backendItems.reduce((acc: Record<string, MenuItem[]>, item) => {
-        const category = item.category || "General";
-        if (!acc[category]) acc[category] = [];
-        acc[category].push({
-          id: String(item.id),
-          name: item.name,
-          price: item.price,
-          description: item.description || "",
-          category: item.category || "General",
-          status: item.isAvailable ? "active" : "draft",
-          imageUrls: item.imageUrls || (item.imageUrl ? [item.imageUrl] : []),
-          tag: item.tag,
-          calories: item.calories,
-          availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
-          variants: [],
-          modifiers: [],
-        });
-        return acc;
-      }, {});
+      // Fetch menus and items in parallel
+      const [menusRes, itemsRes] = await Promise.all([
+        api.get(`/menus/property/${propertyId}`),
+        api.get(`/menu-items/property/${propertyId}`),
+      ]);
 
-      const menus: Menu[] = Object.entries(menuItemMap).map(([category, items]) => ({
-        id: category, // Using category name as ID for now
-        name: category,
-        description: `${category} items`,
-        type: category,
-        status: "active" as const,
-        isVisible: true,
-        priceRange: calcPriceRange(items),
-        itemCount: items.length,
-        items,
-      }));
+      const backendMenus = menusRes.data as BackendMenu[];
+      const backendItems = itemsRes.data as BackendMenuItem[];
+
+      // Build menus with their items
+      const menus: Menu[] = backendMenus.map((bm) => {
+        const menuItems: MenuItem[] = backendItems
+          .filter((bi) => bi.menuId === bm.id)
+          .map((bi) => ({
+            id: String(bi.id),
+            name: bi.name,
+            price: bi.price,
+            description: bi.description || "",
+            categoryId: bi.categoryId ? String(bi.categoryId) : "",
+            categoryName: bi.categoryName || "",
+            menuId: String(bm.id),
+            menuName: bm.name,
+            status: bi.isAvailable ? "active" as const : "draft" as const,
+            imageUrls: bi.imageUrls || (bi.imageUrl ? [bi.imageUrl] : []),
+            tag: bi.tag,
+            calories: bi.calories,
+            availability: { startTime: "08:00", endTime: "22:00", allDays: true, days: [] },
+            variants: bi.variants || [],
+            modifiers: bi.modifiers || [],
+          }));
+
+        return {
+          id: String(bm.id),
+          name: bm.name,
+          description: bm.description || "",
+          status: (bm.status === "active" ? "active" : "draft") as MenuStatus,
+          isVisible: bm.status === "active",
+          priceRange: calcPriceRange(menuItems),
+          itemCount: menuItems.length,
+          items: menuItems,
+        };
+      });
 
       set({ menus, isLoading: false });
     } catch (error: unknown) {
@@ -165,14 +204,26 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     }
   },
 
-  fetchMenuItems: async (propertyId: number) => {
-    // fetchMenuItems is now just an alias for fetchMenus since they do the same thing
-    return get().fetchMenus(propertyId);
+  // ─── Fetch Categories ─────────────────────────────────────────────────────────
+  fetchCategories: async (propertyId: number) => {
+    try {
+      set({ categoriesLoading: true });
+      const response = await api.get(`/menu-categories/property/${propertyId}`);
+      const cats = (response.data as { id: number; propertyId: number; name: string }[]).map((c) => ({
+        id: String(c.id),
+        name: c.name,
+        propertyId: c.propertyId,
+      }));
+      set({ categories: cats, categoriesLoading: false });
+    } catch (error: unknown) {
+      set({ errorMsg: extractApiErrorMessage(error, "Failed to fetch categories"), categoriesLoading: false });
+    }
   },
 
   getMenu: (id) => get().menus.find((m) => m.id === id),
 
-  addMenu: async (data, initialItems, propId) => {
+  // ─── Add Menu ────────────────────────────────────────────────────────────────
+  addMenu: async (data, propId) => {
     const propertyId = propId || get().propertyId;
     if (!propertyId) {
       set({ errorMsg: "No property selected. Please try re-logging." });
@@ -180,69 +231,74 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     }
     try {
       set({ isLoading: true, errorMsg: null });
-      const category = data.name;
-
-      const itemPromises = (initialItems ?? []).map(item => 
-        api.post("/menu-items", {
-          propertyId,
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          category,
-          isAvailable: item.status === "active",
-          imageUrls: item.imageUrls,
-        })
-      );
-      
-      await Promise.all(itemPromises);
-
-      await get().fetchMenus(propertyId);
-      set({ isLoading: false });
-      return category;
+      const response = await api.post("/menus", {
+        propertyId,
+        name: data.name,
+        description: data.description,
+        status: data.status || "active",
+      });
+      const created = response.data as BackendMenu;
+      const newMenu: Menu = {
+        id: String(created.id),
+        name: created.name,
+        description: created.description || "",
+        status: (created.status === "active" ? "active" : "draft") as MenuStatus,
+        isVisible: created.status === "active",
+        isNew: true,
+        priceRange: "—",
+        itemCount: 0,
+        items: [],
+      };
+      set((s) => ({ menus: [newMenu, ...s.menus], isLoading: false }));
+      return String(created.id);
     } catch (error: unknown) {
       set({ errorMsg: extractApiErrorMessage(error, "Failed to create menu"), isLoading: false });
       return "";
     }
   },
 
-  updateMenu: (id, data) =>
-    set((s) => ({
-      menus: s.menus.map((m) => (m.id === id ? { ...m, ...data } : m)),
-    })),
-
-  deleteMenu: async (id) => {
-    const propertyId = get().propertyId;
-    const menu = get().menus.find((m) => m.id === id);
-    if (!propertyId || !menu) return;
+  // ─── Update Menu ─────────────────────────────────────────────────────────────
+  updateMenu: async (id, data) => {
     try {
       set({ isLoading: true, errorMsg: null });
-      await api.delete(`/menu-items/property/${propertyId}/category/${encodeURIComponent(menu.name)}`);
+      const response = await api.put(`/menus/${id}`, data);
+      const updated = response.data as BackendMenu;
+      set((s) => ({
+        menus: s.menus.map((m) =>
+          m.id === id
+            ? { ...m, name: updated.name, description: updated.description || m.description, status: updated.status as MenuStatus, isVisible: updated.status === "active" }
+            : m
+        ),
+        isLoading: false,
+      }));
+    } catch (error: unknown) {
+      set({ errorMsg: extractApiErrorMessage(error, "Failed to update menu"), isLoading: false });
+    }
+  },
+
+  // ─── Delete Menu ─────────────────────────────────────────────────────────────
+  deleteMenu: async (id) => {
+    try {
+      set({ isLoading: true, errorMsg: null });
+      // Delete all items first, then the menu
+      await api.delete(`/menu-items/menu/${id}`);
+      await api.delete(`/menus/${id}`);
       set((s) => ({ menus: s.menus.filter((m) => m.id !== id), isLoading: false }));
     } catch (error: unknown) {
       set({ errorMsg: extractApiErrorMessage(error, "Failed to delete menu"), isLoading: false });
     }
   },
 
+  // ─── Toggle Visibility ───────────────────────────────────────────────────────
   toggleVisibility: async (id) => {
     const menu = get().menus.find((m) => m.id === id);
     if (!menu) return;
+    const newStatus = menu.isVisible ? "draft" : "active";
     try {
-      const newAvailable = !menu.isVisible;
-      await Promise.all(
-        menu.items.map((item) =>
-          api.patch(`/menu-items/${item.id}/toggle`)
-        )
-      );
+      await api.put(`/menus/${id}`, { status: newStatus });
       set((s) => ({
         menus: s.menus.map((m) =>
-          m.id === id
-            ? {
-                ...m,
-                isVisible: newAvailable,
-                status: newAvailable ? ("active" as const) : ("draft" as const),
-                items: m.items.map((i) => ({ ...i, status: newAvailable ? ("active" as const) : ("draft" as const) })),
-              }
-            : m
+          m.id === id ? { ...m, isVisible: !m.isVisible, status: newStatus as MenuStatus } : m
         ),
       }));
     } catch (error: unknown) {
@@ -250,6 +306,36 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     }
   },
 
+  // ─── Add Category ─────────────────────────────────────────────────────────────
+  addCategory: async (name, propId) => {
+    const propertyId = propId || get().propertyId;
+    if (!propertyId) {
+      set({ errorMsg: "No property selected." });
+      return null;
+    }
+    try {
+      const response = await api.post("/menu-categories", { propertyId, name });
+      const created = response.data as { id: number; propertyId: number; name: string };
+      const newCat: MenuCategory = { id: String(created.id), name: created.name, propertyId: created.propertyId };
+      set((s) => ({ categories: [...s.categories, newCat] }));
+      return newCat;
+    } catch (error: unknown) {
+      set({ errorMsg: extractApiErrorMessage(error, "Failed to create category") });
+      return null;
+    }
+  },
+
+  // ─── Delete Category ──────────────────────────────────────────────────────────
+  deleteCategory: async (categoryId) => {
+    try {
+      await api.delete(`/menu-categories/${categoryId}`);
+      set((s) => ({ categories: s.categories.filter((c) => c.id !== categoryId) }));
+    } catch (error: unknown) {
+      set({ errorMsg: extractApiErrorMessage(error, "Failed to delete category") });
+    }
+  },
+
+  // ─── Add Item ────────────────────────────────────────────────────────────────
   addItem: async (menuId, item, propId) => {
     const propertyId = propId || get().propertyId;
     const menu = get().menus.find((m) => m.id === menuId);
@@ -261,19 +347,35 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       set({ isLoading: true, errorMsg: null });
       const response = await api.post("/menu-items", {
         propertyId,
+        menuId: Number(menuId),
+        categoryId: Number(item.categoryId),
         name: item.name,
         description: item.description,
         price: item.price,
-        category: item.category || menu.name,
         isAvailable: item.status === "active",
-        imageUrls: item.imageUrls,
         tag: item.tag,
         calories: item.calories,
+        imageUrls: item.imageUrls,
+        variants: item.variants,
+        modifiers: item.modifiers,
       });
       const saved = response.data as BackendMenuItem;
       const newItem: MenuItem = {
-        ...item,
         id: String(saved.id),
+        name: saved.name,
+        price: saved.price,
+        description: saved.description || "",
+        categoryId: item.categoryId,
+        categoryName: saved.categoryName || "",
+        menuId,
+        menuName: menu.name,
+        status: item.status,
+        tag: item.tag,
+        calories: item.calories,
+        imageUrls: saved.imageUrls || [],
+        availability: item.availability,
+        variants: item.variants,
+        modifiers: item.modifiers,
       };
       set((s) => ({
         menus: s.menus.map((m) => {
@@ -288,6 +390,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     }
   },
 
+  // ─── Update Item ─────────────────────────────────────────────────────────────
   updateItem: async (menuId, itemId, data) => {
     try {
       set({ isLoading: true, errorMsg: null });
@@ -295,17 +398,15 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
         name: data.name,
         description: data.description,
         price: data.price,
-        category: data.category,
         tag: data.tag,
         calories: data.calories,
       };
-
-      if (data.status !== undefined) {
-        updateData.isAvailable = data.status === "active";
-      }
-      if (data.imageUrls !== undefined) {
-        updateData.imageUrls = data.imageUrls;
-      }
+      if (data.categoryId !== undefined) updateData.categoryId = Number(data.categoryId);
+      if (data.menuId !== undefined) updateData.menuId = Number(data.menuId);
+      if (data.status !== undefined) updateData.isAvailable = data.status === "active";
+      if (data.imageUrls !== undefined) updateData.imageUrls = data.imageUrls;
+      if (data.variants !== undefined) updateData.variants = data.variants;
+      if (data.modifiers !== undefined) updateData.modifiers = data.modifiers;
 
       await api.put(`/menu-items/${itemId}`, updateData);
       set((s) => ({
@@ -321,6 +422,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     }
   },
 
+  // ─── Delete Item ─────────────────────────────────────────────────────────────
   deleteItem: async (menuId, itemId) => {
     try {
       set({ isLoading: true, errorMsg: null });
@@ -338,6 +440,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
     }
   },
 
+  // ─── Toggle Item Status ───────────────────────────────────────────────────────
   toggleItemStatus: async (menuId, itemId) => {
     try {
       await api.patch(`/menu-items/${itemId}/toggle`);

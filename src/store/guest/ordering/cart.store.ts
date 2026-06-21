@@ -9,6 +9,7 @@ export type MenuItem = {
   price: number;
   priceLkr: number;
   imageUrl?: string;
+  imageUrls?: string[];
   tag?: string;
   category: string;
   variants?: { id: string; label: string; price: number }[];
@@ -28,7 +29,12 @@ type CartState = {
   taxRate: number;
   propertyId: number | null;
   isLoadingRates: boolean;
-  add: (item: MenuItem) => void;
+  add: (
+    item: MenuItem,
+    qty?: number,
+    selectedVariantId?: string,
+    selectedModifiers?: { modifierId: string; optionLabel: string }[]
+  ) => void;
   remove: (id: string) => void;
   setQty: (id: string, qty: number) => void;
   clear: () => void;
@@ -41,6 +47,26 @@ type CartState = {
   fetchChargesFromApi: (propertyId: number) => Promise<void>;
 };
 
+function getLineKey(
+  item: MenuItem,
+  selectedVariantId?: string,
+  selectedModifiers?: { modifierId: string; optionLabel: string }[]
+): string {
+  let key = item.id;
+  if (selectedVariantId) {
+    key += `-${selectedVariantId}`;
+  }
+  if (selectedModifiers && selectedModifiers.length > 0) {
+    const sorted = [...selectedModifiers].sort(
+      (a, b) => a.modifierId.localeCompare(b.modifierId) || a.optionLabel.localeCompare(b.optionLabel)
+    );
+    sorted.forEach((sm) => {
+      key += `-${sm.modifierId}:${sm.optionLabel}`;
+    });
+  }
+  return key;
+}
+
 export const useCartStore = create<CartState>((set, get) => ({
   lines: {},
   serviceChargeRate: 0.1,
@@ -48,14 +74,15 @@ export const useCartStore = create<CartState>((set, get) => ({
   propertyId: null,
   isLoadingRates: false,
 
-  add: (item) =>
+  add: (item, qty = 1, selectedVariantId, selectedModifiers) =>
     set((state) => {
-      const existing = state.lines[item.id];
-      const qty = existing ? existing.qty + 1 : 1;
+      const lineKey = getLineKey(item, selectedVariantId, selectedModifiers);
+      const existing = state.lines[lineKey];
+      const newQty = existing ? existing.qty + qty : qty;
       return {
         lines: {
           ...state.lines,
-          [item.id]: { item, qty },
+          [lineKey]: { item, qty: newQty, selectedVariantId, selectedModifiers },
         },
       };
     }),
@@ -84,7 +111,32 @@ export const useCartStore = create<CartState>((set, get) => ({
   clear: () => set({ lines: {} }),
 
   subtotal: () =>
-    Object.values(get().lines).reduce((sum, l) => sum + l.item.price * l.qty, 0),
+    Object.values(get().lines).reduce((sum, l) => {
+      let price = l.item.price;
+
+      // Variant price overrides base price
+      if (l.selectedVariantId && l.item.variants) {
+        const variant = l.item.variants.find((v) => v.id === l.selectedVariantId);
+        if (variant) {
+          price = variant.price;
+        }
+      }
+
+      // Add modifier option prices
+      if (l.selectedModifiers && l.item.modifiers) {
+        l.selectedModifiers.forEach((sm) => {
+          const modifier = l.item.modifiers?.find((m) => m.id === sm.modifierId);
+          if (modifier) {
+            const option = modifier.options.find((o) => o.label === sm.optionLabel);
+            if (option) {
+              price += option.price;
+            }
+          }
+        });
+      }
+
+      return sum + price * l.qty;
+    }, 0),
 
   serviceCharge: () => Math.round(get().subtotal() * get().serviceChargeRate),
 
