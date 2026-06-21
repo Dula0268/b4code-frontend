@@ -19,6 +19,7 @@ interface UploadedPhoto {
   id: string
   url: string    // object URL — revoked on unmount
   name: string
+  file: File
 }
 
 interface RatingCategory {
@@ -95,6 +96,7 @@ function useReviewLogic() {
       id:   `${Date.now()}-${file.name}`,
       url:  URL.createObjectURL(file),
       name: file.name,
+      file: file,
     }))
     setPhotos(prev => [...prev, ...newPhotos])
   }
@@ -124,14 +126,39 @@ function useReviewLogic() {
     if (!booking) {
       setErrorMsg("You need a completed booking before leaving a review.")
       setIsSubmitting(false)
+      setTimeout(() => setErrorMsg(null), 3500)
       return
     }
 
     try {
-      await guestApi.createReview({ bookingId: Number(booking.id), overallRating, comment: reviewText })
+      // 1. Upload photos if any
+      const photoUrls: string[] = []
+      for (const photo of photos) {
+        try {
+          const res = await guestApi.uploadImage(photo.file, "reviews")
+          if (res.url) photoUrls.push(res.url)
+        } catch (uploadErr) {
+          console.error("Failed to upload photo", photo.name, uploadErr)
+        }
+      }
+
+      // 2. Submit the full review
+      await guestApi.createReview({ 
+        bookingId: Number(booking.id.replace(/\D/g, '')) || 1, 
+        overallRating, 
+        cleanlinessRating: categoryRatings.cleanliness,
+        comfortRating: categoryRatings.comfort,
+        serviceRating: categoryRatings.service,
+        diningRating: categoryRatings.dining,
+        locationRating: categoryRatings.location,
+        valueRating: categoryRatings.value,
+        comment: reviewText,
+        photoUrls 
+      })
       setSubmitted(true)
     } catch (err) {
-      setErrorMsg("Failed to submit review.")
+      setErrorMsg("Failed to submit review. Please try again later.")
+      setTimeout(() => setErrorMsg(null), 3500)
     } finally {
       setIsSubmitting(false)
     }
@@ -152,6 +179,8 @@ function SubmitReviewContent() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const logic = useReviewLogic()
   const { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm } = logic
+  const searchParams = useSearchParams()
+  const propertyId = searchParams?.get("propertyId") || "1"
 
   if (!ready) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -173,11 +202,11 @@ function SubmitReviewContent() {
             ))}
           </div>
           <p className="text-sm leading-relaxed mb-8 text-[#828282]">
-            Thank you for your feedback! Your review has been submitted and will be published after a brief review.
+            Thank you for sharing your experience! Your feedback helps other guests make great decisions.
           </p>
           <div className="flex flex-col gap-3">
-            <Link href="/guest/booking" className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 no-underline bg-[#9a3300] text-white transition-colors hover:bg-[#7a2800]">
-              Back to My Bookings
+            <Link href={`/guest/property/${propertyId}`} className="py-3.5 rounded-xl font-bold text-white transition-colors block bg-[#9a3300] hover:bg-[#7a2800]">
+              View Property
             </Link>
             <button onClick={resetForm} className="text-sm font-bold cursor-pointer transition-colors text-[#828282] hover:text-[#1d1d1d]">
               Submit another review
@@ -189,12 +218,25 @@ function SubmitReviewContent() {
   }
 
   return (
-    <div className="max-w-[820px] mx-auto px-4 pt-6">
-      <Link href="/guest/booking" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors">
-        <ChevronLeft size={16} /> Back to My Bookings
-      </Link>
+    <>
+      {/* ── Error Notification ── */}
+      <div
+        className={[
+          "fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-[#e53935] text-white text-[13px] font-medium",
+          "px-4 py-2.5 rounded-xl shadow-[0_10px_30px_rgba(229,57,53,0.3)] transition-all duration-300 whitespace-nowrap",
+          errorMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
+        ].join(" ")}
+      >
+        <span className="text-[16px]">⚠️</span>
+        {errorMsg}
+      </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="max-w-[820px] mx-auto px-4 pt-6">
+        <Link href="/guest/booking" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors">
+          <ChevronLeft size={16} /> Back to My Bookings
+        </Link>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-5 sm:p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#9a3300]/10 border border-[#9a3300]/20">
@@ -282,22 +324,22 @@ function SubmitReviewContent() {
         </div>
 
         <div className="pb-4">
-          {errorMsg && <div className="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded-xl border border-red-200"><p className="text-sm font-semibold">{errorMsg}</p></div>}
           <button type="submit" disabled={!isFormValid || isSubmitting} className="w-full py-4 rounded-xl text-[0.9375rem] font-black text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-[#9a3300] hover:bg-[#7a2800]">
             {isSubmitting ? <><RefreshCw size={16} className="animate-spin" /> Submitting...</> : "Submit Review"}
           </button>
           <p className="text-[0.6875rem] text-center mt-3 leading-relaxed text-[#a0a0a0]">By submitting, you certify this review is based on your genuine experience at this property.</p>
         </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </>
   )
 }
 
 export default function SubmitReviewPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafafa]">
+    <div className="min-h-screen bg-[#fafafa] pb-24 relative">
       <GuestTopbar />
-      <main className="flex-1 pt-20 pb-16 bg-transparent">
+      <main className="max-w-[700px] mx-auto px-4 pt-8 md:pt-12">
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-10 h-10 border-4 border-t-[#9a3300] border-[#e8ddcf] rounded-full animate-spin" /></div>}>
           <SubmitReviewContent />
         </Suspense>

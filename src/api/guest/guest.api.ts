@@ -78,12 +78,23 @@ export const guestApi = {
   getPropertyReviews: (propertyId: number) =>
     api.get(`/guest/reviews/property/${propertyId}`).then((r) => r.data),
 
+  uploadImage: async (file: File, folder: string = "reviews") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", folder);
+    const response = await api.post("/images/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data; // { url: "...", message: "..." }
+  },
+
   createReview: (reviewData: {
     bookingId: number;
     overallRating: number;
     cleanlinessRating?: number;
-    accuracyRating?: number;
-    communicationRating?: number;
+    comfortRating?: number;
+    serviceRating?: number;
+    diningRating?: number;
     locationRating?: number;
     valueRating?: number;
     comment?: string;

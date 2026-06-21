@@ -346,7 +346,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                             </div>
                             <div className="flex flex-col gap-2.5 mb-8 p-5 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm">
                                 {(() => {
-                                    const standardTypes = ["Cleanliness", "Accuracy", "Communication", "Location", "Value"];
+                                    const standardTypes = ["Cleanliness", "Comfort", "Service", "Dining", "Location", "Value"];
                                     const extraTypes = (property.reviewBreakdown || [])
                                         .filter(r => !standardTypes.includes(r.label))
                                         .map(r => r.label);
@@ -379,11 +379,22 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                         
                                         <div className="flex flex-wrap gap-1.5 mb-3">
                                             {rev.cleanlinessRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Cleanliness: {rev.cleanlinessRating}★</span>}
-                                            {rev.accuracyRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Accuracy: {rev.accuracyRating}★</span>}
-                                            {rev.communicationRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Communication: {rev.communicationRating}★</span>}
+                                            {rev.comfortRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Comfort: {rev.comfortRating}★</span>}
+                                            {rev.serviceRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Service: {rev.serviceRating}★</span>}
+                                            {rev.diningRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Dining: {rev.diningRating}★</span>}
                                             {rev.locationRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Location: {rev.locationRating}★</span>}
                                             {rev.valueRating != null && <span className="text-[10px] bg-[#f0f0f0] text-[#555] px-2 py-0.5 rounded-full font-medium">Value: {rev.valueRating}★</span>}
                                         </div>
+
+                                        {(rev.photoUrls && rev.photoUrls.length > 0) && (
+                                            <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+                                                {rev.photoUrls.map((url: string, idx: number) => (
+                                                    <div key={idx} className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-[#e8e8e8]">
+                                                        <Image src={url} alt="Review photo" fill className="object-cover" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
 
                                         {rev.ownerReply && (
                                             <div className="mt-2 p-3 bg-[#f8f8f8] rounded-xl border border-[#ebebeb]">
