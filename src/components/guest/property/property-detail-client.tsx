@@ -346,7 +346,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                 }
                                 return (
                                     <div className="flex flex-col gap-3">
-                                        {displayedRooms.map(room => (
+                                        {displayedRooms.map((room: any) => (
                                             <RoomCard
                                                 key={room.id}
                                                 room={room}

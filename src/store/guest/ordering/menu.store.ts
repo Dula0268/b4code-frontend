@@ -57,7 +57,6 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
       }
       
       const response = await api.get(url);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rawItems: any[] = response.data;
 
       // Map backend fields to frontend MenuItem shape

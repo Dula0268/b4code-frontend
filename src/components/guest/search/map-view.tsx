@@ -132,7 +132,6 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
             mapRef.current = null
             markers.clear()
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [listings])
 
     // Highlight hovered marker
