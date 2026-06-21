@@ -24,6 +24,38 @@ export interface MenuCategory {
   items: MenuItem[];
 }
 
+type ApiVariant = {
+  id?: string | number;
+  label?: string;
+  price?: number;
+};
+
+type ApiModifierOption = {
+  label?: string;
+  price?: number;
+};
+
+type ApiModifier = {
+  id?: string | number;
+  name?: string;
+  options?: ApiModifierOption[];
+};
+
+type ApiMenuItem = {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  price?: number;
+  imageUrl?: string;
+  imageUrls?: string[];
+  category?: string;
+  categoryName?: string;
+  isAvailable?: boolean;
+  tag?: string;
+  variants?: ApiVariant[];
+  modifiers?: ApiModifier[];
+};
+
 type GuestMenuState = {
   categories: MenuCategory[];
   loading: boolean;
@@ -59,8 +91,7 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
       }
       
       const response = await api.get(url);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rawItems: any[] = response.data;
+      const rawItems: ApiMenuItem[] = response.data;
 
       // Map backend fields to frontend MenuItem shape
       const items: MenuItem[] = rawItems.map((item) => ({
@@ -76,15 +107,15 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         isAvailable: item.isAvailable !== false,
         tag: item.tag,
         imageUrls: item.imageUrls || [],
-        variants: item.variants?.map((v: any, idx: number) => ({
-          id: v.id || `var-${idx}`,
+        variants: item.variants?.map((v, idx: number) => ({
+          id: String(v.id ?? `var-${idx}`),
           label: v.label || "",
           price: v.price || 0,
         })) || [],
-        modifiers: item.modifiers?.map((m: any, mIdx: number) => ({
-          id: String(m.id || `mod-${mIdx}`),
+        modifiers: item.modifiers?.map((m, mIdx: number) => ({
+          id: String(m.id ?? `mod-${mIdx}`),
           name: m.name || "",
-          options: m.options?.map((o: any) => ({
+          options: m.options?.map((o) => ({
             label: o.label || "",
             price: o.price || 0,
           })) || [],
