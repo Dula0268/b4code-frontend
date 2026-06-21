@@ -34,7 +34,10 @@ export default function MenuItemCard({
     return getReviewsForItem(item.id).length;
   }, [item.id, getReviewsForItem]);
 
-  const tagInfo = item.tag ? TAG_CONFIG[item.tag] : null;
+  const tagsList = React.useMemo(() => {
+    if (!item.tag) return [];
+    return item.tag.split(",").map((t) => t.trim()).filter(Boolean);
+  }, [item.tag]);
 
   return (
     <Card className="overflow-hidden rounded-xl border border-[#f3f4f6] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex flex-col !p-0 !gap-0">
@@ -60,15 +63,20 @@ export default function MenuItemCard({
           <h3 className="text-[11px] md:text-sm font-bold text-[#111827] leading-[14px] md:leading-5 line-clamp-1 md:line-clamp-2">
             {item.title}
           </h3>
-          <div className="flex items-center gap-1 shrink-0">
-            {tagInfo ? (
-              <span
-                className="rounded-full px-1.5 md:px-2 py-0.5 text-[10px] md:text-xs font-medium hidden sm:inline-flex"
-                style={{ backgroundColor: tagInfo.bg, color: tagInfo.text }}
-              >
-                {tagInfo.label}
-              </span>
-            ) : null}
+          <div className="flex flex-wrap items-center gap-1 shrink-0 justify-end max-w-[120px]">
+            {tagsList.map((tag) => {
+              const tagInfo = TAG_CONFIG[tag];
+              if (!tagInfo) return null;
+              return (
+                <span
+                  key={tag}
+                  className="rounded-full px-1.5 md:px-2 py-0.5 text-[9px] md:text-[10px] font-medium hidden sm:inline-flex"
+                  style={{ backgroundColor: tagInfo.bg, color: tagInfo.text }}
+                >
+                  {tagInfo.label}
+                </span>
+              );
+            })}
             {reviewCount > 0 && (
               <span className="rounded-full px-1.5 md:px-2 py-0.5 text-[10px] md:text-xs font-medium bg-[#fef3c7] text-[#92400e] inline-flex items-center gap-0.5">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="#f59e0b">

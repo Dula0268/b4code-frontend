@@ -9,7 +9,9 @@ export interface MenuItem {
   price: number;
   priceLkr: number;
   imageUrl?: string;
+  imageUrls?: string[];
   category: string;
+  categoryName?: string; // From normalized backend DTO
   isAvailable: boolean;
   tag?: string;
   variants?: { id: string; label: string; price: number }[];
@@ -21,6 +23,38 @@ export interface MenuCategory {
   name: string;
   items: MenuItem[];
 }
+
+type ApiVariant = {
+  id?: string | number;
+  label?: string;
+  price?: number;
+};
+
+type ApiModifierOption = {
+  label?: string;
+  price?: number;
+};
+
+type ApiModifier = {
+  id?: string | number;
+  name?: string;
+  options?: ApiModifierOption[];
+};
+
+type ApiMenuItem = {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  price?: number;
+  imageUrl?: string;
+  imageUrls?: string[];
+  category?: string;
+  categoryName?: string;
+  isAvailable?: boolean;
+  tag?: string;
+  variants?: ApiVariant[];
+  modifiers?: ApiModifier[];
+};
 
 type GuestMenuState = {
   categories: MenuCategory[];
@@ -57,8 +91,7 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
       }
       
       const response = await api.get(url);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rawItems: any[] = response.data;
+      const rawItems: ApiMenuItem[] = response.data;
 
       // Map backend fields to frontend MenuItem shape
       const items: MenuItem[] = rawItems.map((item) => ({
@@ -69,14 +102,27 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         price: item.price || 0,
         priceLkr: item.price || 0,
         imageUrl: item.imageUrl,
-        category: item.category || "Other",
+        // Use categoryName (from normalized schema) as the category for tab grouping
+        category: item.categoryName || item.category || "Other",
         isAvailable: item.isAvailable !== false,
         tag: item.tag,
-        variants: item.variants,
-        modifiers: item.modifiers,
+        imageUrls: item.imageUrls || [],
+        variants: item.variants?.map((v, idx: number) => ({
+          id: String(v.id ?? `var-${idx}`),
+          label: v.label || "",
+          price: v.price || 0,
+        })) || [],
+        modifiers: item.modifiers?.map((m, mIdx: number) => ({
+          id: String(m.id ?? `mod-${mIdx}`),
+          name: m.name || "",
+          options: m.options?.map((o) => ({
+            label: o.label || "",
+            price: o.price || 0,
+          })) || [],
+        })) || [],
       }));
 
-      // Group items by category
+      // Group items by categoryName (dynamic categories created by staff)
       const categoryMap = new Map<string, MenuItem[]>();
       items.forEach((item) => {
         const category = item.category || "Other";
@@ -93,8 +139,8 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         items: catItems.filter((item) => item.isAvailable),
       }));
 
-
       set({ categories, loading: false });
+
     } catch (error: unknown) {
       let errorMsg = "Failed to fetch menu";
       if (typeof error === "object" && error !== null) {
