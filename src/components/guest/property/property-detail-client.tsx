@@ -252,7 +252,7 @@ export default function PropertyClient({ property }: { property: any }) {
                         <div>
                             <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">What this place offers</h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {(property.amenities || []).map(a => (
+                                {(property.amenities || []).map((a: any) => (
                                     <div key={a.label} className="flex items-center gap-2.5 text-[13px] text-[#333]">
                                         <AmenityIcon name={a.icon} /><span>{a.label}</span>
                                     </div>
@@ -334,7 +334,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                 <h2 className="text-[20px] font-bold text-[#1d1d1d]">Room Types</h2>
                             </div>
                             {(() => {
-                                const displayedRooms = (property.rooms || []).filter(room => room.maxGuests >= guestsFromSearch);
+                                const displayedRooms = (property.rooms || []).filter((room: any) => room.maxGuests >= guestsFromSearch);
                                 if (displayedRooms.length === 0) {
                                     return (
                                         <div className="p-8 bg-[#fff5f5] border border-[#ffe0e0] rounded-2xl text-[#d32f2f] flex flex-col items-center justify-center text-center">
