@@ -130,8 +130,14 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
       tag: tag || undefined,
       imageUrls: uploadedUrls,
       availability,
-      variants,
-      modifiers,
+      variants: variants.map(v => ({
+        ...v,
+        id: v.id.startsWith('vn-') ? undefined : v.id
+      })) as Variant[],
+      modifiers: modifiers.map(m => ({
+        ...m,
+        id: m.id.startsWith('mn-') ? undefined : m.id
+      })) as Modifier[],
     };
 
     try {
