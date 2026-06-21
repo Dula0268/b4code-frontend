@@ -94,17 +94,54 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 
 /* ─── Track Order Client ─── */
 
+/* ─── Backend status → frontend status mapper ─── */
+function mapBackendStatus(backendStatus: string): OrderStatus {
+  const statusMap: Record<string, OrderStatus> = {
+    NEW: "Placed",
+    PREPARING: "In-Progress",
+    READY: "Accepted",
+    DELIVERED: "Delivered",
+    CANCELLED: "Rejected",
+  };
+  return statusMap[backendStatus] || "Placed";
+}
+
 export default function TrackOrderClient() {
   const order = useOrderStore((s) => s.currentOrder);
   const advanceStatus = useOrderStore((s) => s.advanceStatus);
+  const eventSourceRef = React.useRef<EventSource | null>(null);
 
-  /* ── Demo controls: simulate status progression ── */
-  const nextStatus = React.useMemo(() => {
-    if (!order) return null;
-    if (order.currentStatus === "Delivered" || order.currentStatus === "Rejected") return null;
-    const idx = STATUS_PIPELINE.indexOf(order.currentStatus);
-    return idx >= 0 && idx < STATUS_PIPELINE.length - 1 ? STATUS_PIPELINE[idx + 1] : null;
-  }, [order]);
+  const numericOrderId = order?.id?.replace('#ORD-', '');
+
+  /* ── SSE: real-time status updates ── */
+  React.useEffect(() => {
+    if (!numericOrderId) return;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    const es = new EventSource(`${apiUrl}/orders/${numericOrderId}/stream`);
+    eventSourceRef.current = es;
+
+    es.addEventListener('message', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'status-update' && data.status) {
+          const mappedStatus = mapBackendStatus(data.status);
+          advanceStatus(mappedStatus, data.rejectionReason);
+        }
+      } catch {
+        // Ignore malformed SSE data
+      }
+    });
+
+    es.onerror = () => {
+      // EventSource will auto-reconnect
+    };
+
+    return () => {
+      es.close();
+      eventSourceRef.current = null;
+    };
+  }, [numericOrderId, advanceStatus]);
 
   /* ── No order state ── */
   if (!order) {
@@ -278,30 +315,7 @@ export default function TrackOrderClient() {
             </div>
           </div>
 
-          {/* ── Demo status controls ── */}
-          {(nextStatus || (!isRejected && order.currentStatus !== "Delivered")) && (
-            <div className="bg-[#fafaf9] border border-dashed border-[#E0E0E0] rounded-xl px-5 py-3 flex items-center gap-3 flex-wrap">
-              <span className="text-[12px] text-[#828282] font-medium uppercase tracking-wider">
-                Simulate:
-              </span>
-              {nextStatus && (
-                <button
-                  onClick={() => advanceStatus(nextStatus)}
-                  className="px-3 py-1.5 rounded-md bg-[#27AE60] text-white text-[12px] font-medium hover:bg-[#219a52] transition cursor-pointer"
-                >
-                  \u2192 {nextStatus}
-                </button>
-              )}
-              {!isRejected && order.currentStatus !== "Delivered" && (
-                <button
-                  onClick={() => advanceStatus("Rejected", "Kitchen is currently closed for this item.")}
-                  className="px-3 py-1.5 rounded-md bg-[#EB5757] text-white text-[12px] font-medium hover:bg-[#d94444] transition cursor-pointer"
-                >
-                  \u2715 Reject
-                </button>
-              )}
-            </div>
-          )}
+
 
           {/* ── Bottom action buttons ── */}
           <div className="flex gap-3">

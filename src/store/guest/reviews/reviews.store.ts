@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import api from "@/lib/axios";
 
 /* ─── Types ─── */
 
@@ -23,6 +24,8 @@ type ReviewsActions = {
   addReview: (review: Omit<ItemReview, "id">) => void;
   getReviewsForItem: (itemId: string) => ItemReview[];
   getAverageRating: (itemId: string) => number;
+  fetchReviewsForItem: (menuItemId: string) => Promise<void>;
+  submitReview: (orderId: string, review: { menuItemId: string; rating: number; comment: string; guestName: string }) => Promise<void>;
   setLoading: (value: boolean) => void;
   setError: (message: string | null) => void;
   reset: () => void;
@@ -55,6 +58,61 @@ export const useGuestReviewsStore = create<ReviewsState & ReviewsActions>((set, 
     if (reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
     return +(sum / reviews.length).toFixed(1);
+  },
+
+  fetchReviewsForItem: async (menuItemId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await api.get(`/menu-items/${menuItemId}/reviews`);
+      interface BackendReview {
+        id: number;
+        menuItemId: number;
+        menuItemName?: string;
+        rating: number;
+        comment: string;
+        guestName: string;
+        createdAt: string;
+        helpful?: number;
+      }
+      const reviews: ItemReview[] = (response.data as BackendReview[]).map((r) => ({
+        id: String(r.id),
+        itemId: String(r.menuItemId),
+        itemTitle: r.menuItemName || "",
+        rating: r.rating,
+        reviewText: r.comment,
+        guestName: r.guestName,
+        timestamp: new Date(r.createdAt).getTime(),
+        helpful: r.helpful || 0,
+      }));
+      set({ itemReviews: reviews, loading: false });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to fetch reviews";
+      set({ error: message, loading: false });
+    }
+  },
+
+  submitReview: async (orderId: string, review: { menuItemId: string; rating: number; comment: string; guestName: string }) => {
+    set({ loading: true, error: null });
+    try {
+      await api.post(`/orders/${orderId}/reviews`, review);
+      const newReview: ItemReview = {
+        id: `rev-${Date.now()}`,
+        itemId: review.menuItemId,
+        itemTitle: "",
+        rating: review.rating,
+        reviewText: review.comment,
+        guestName: review.guestName,
+        timestamp: Date.now(),
+        helpful: 0,
+      };
+      set((state) => ({
+        itemReviews: [...state.itemReviews, newReview],
+        loading: false,
+      }));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to submit review";
+      set({ error: message, loading: false });
+    }
   },
 
   setLoading: (value) => set({ loading: value }),

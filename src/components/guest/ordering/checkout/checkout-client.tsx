@@ -15,7 +15,7 @@ function formatLkr(n: number) {
   return `LKR ${n.toLocaleString("en-LK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
-type PaymentMethod = "in-app" | "room-charge";
+type PaymentMethod = "cash" | "online" | "pay-at-property" | "card" | "room-charge";
 
 /* ─── Checkout Client ─── */
 
@@ -30,6 +30,9 @@ export default function CheckoutClient() {
   const guestId = user?.userId;
   const tableId = qrContext?.tableId;
   const tableNumber = qrContext?.locationLabel;
+
+  const isRoomQr = qrContext?.type?.toUpperCase().includes("ROOM");
+  const isTableQr = !isRoomQr;
 
   const [walkInName, setWalkInName] = React.useState("");
   const [walkInPhone, setWalkInPhone] = React.useState("");
@@ -51,14 +54,37 @@ export default function CheckoutClient() {
   const total = subtotal + serviceCharge + tax;
 
   const [kitchenInstructions, setKitchenInstructions] = React.useState("");
-  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("room-charge");
+  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>(
+    user ? "room-charge" : "cash"
+  );
   const router = useRouter();
   const placeOrder = useOrderStore((s) => s.placeOrder);
 
   const handlePlaceOrder = () => {
+    // Room QR but not logged in — block ordering
+    if (isRoomQr && !user) {
+      return;
+    }
+
     if ((!roomNumber && !tableId) || !finalGuestName || !propertyId) {
       alert("Please provide your name and ensure you have scanned a valid QR code.");
       return;
+    }
+
+    // Walk-in (table QR) requires phone
+    if (isTableQr && !user && !walkInPhone) {
+      alert("Please provide your phone number.");
+      return;
+    }
+
+    // Determine actual payment method value for the API
+    let resolvedPaymentMethod: "cash" | "online" | "pay-at-property" | "card" | "room-charge" = paymentMethod;
+    if (!user) {
+      // Walk-in: cash or online
+      resolvedPaymentMethod = paymentMethod === "online" ? "online" : "cash";
+    } else {
+      // Logged-in room guest: card (online/PayHere) or pay-at-property (room charge)
+      resolvedPaymentMethod = paymentMethod === "room-charge" ? "pay-at-property" : "online";
     }
 
     placeOrder({
@@ -72,7 +98,8 @@ export default function CheckoutClient() {
       tableNumber,
       guestName: finalGuestName,
       guestPhone: walkInPhone,
-      paymentMethod: paymentMethod === "room-charge" ? "room-charge" : "card",
+      guestInstructions: kitchenInstructions,
+      paymentMethod: resolvedPaymentMethod,
       propertyId,
       guestId,
     });
@@ -350,119 +377,169 @@ export default function CheckoutClient() {
                   Payment Method
                 </p>
 
-                {isWalkIn && (
-                  <div className="space-y-3 mb-4">
-                    <p className="text-[14px] font-medium text-[#1f1f1f]">Guest Details (Walk-in)</p>
-                    <input
-                      type="text"
-                      placeholder="Your Full Name *"
-                      value={walkInName}
-                      onChange={(e) => setWalkInName(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Phone Number (Optional)"
-                      value={walkInPhone}
-                      onChange={(e) => setWalkInPhone(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
-                    />
+                {/* ── ROOM QR + NOT LOGGED IN: Login Required ── */}
+                {isRoomQr && !user && (
+                  <div className="bg-[#fff8f0] border border-[#f0c896] rounded-xl p-6 space-y-4 text-center">
+                    <div className="flex justify-center">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="11" width="18" height="11" rx="2" stroke="#973102" strokeWidth="1.5" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#973102" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <h3 className="text-[18px] font-semibold text-[#1f1f1f] leading-[28px]">
+                      Login Required
+                    </h3>
+                    <p className="text-[14px] text-[#6b7280] leading-[20px]">
+                      To place an order from your room, please log in with your guest credentials. This helps us verify your room assignment and charge your order correctly.
+                    </p>
+                    <Link
+                      href="/auth/login"
+                      className="inline-flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 text-white font-semibold text-[14px] hover:bg-[#7c2802] transition"
+                    >
+                      Log In to Continue
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </Link>
                   </div>
                 )}
 
-                {/* Pay In-App option */}
-                <button
-                  onClick={() => setPaymentMethod("in-app")}
-                  className={`w-full flex items-center gap-3 p-[13px] rounded-lg border transition cursor-pointer ${
-                    paymentMethod === "in-app"
-                      ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)]"
-                      : "bg-[#f8f6f5] border-[#e5e7eb]"
-                  }`}
-                >
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <rect
-                        x="2"
-                        y="5"
-                        width="20"
-                        height="14"
-                        rx="2"
-                        stroke={paymentMethod === "in-app" ? "#953002" : "#1f1f1f"}
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                {/* ── TABLE QR + WALK-IN (not logged in): Name/Phone + Cash/Online ── */}
+                {isTableQr && !user && (
+                  <>
+                    <div className="space-y-3 mb-4">
+                      <p className="text-[14px] font-medium text-[#1f1f1f]">Guest Details (Walk-in)</p>
+                      <input
+                        type="text"
+                        placeholder="Your Full Name *"
+                        value={walkInName}
+                        onChange={(e) => setWalkInName(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
                       />
-                      <path
-                        d="M2 10h20"
-                        stroke={paymentMethod === "in-app" ? "#953002" : "#1f1f1f"}
-                        strokeWidth="1.5"
+                      <input
+                        type="text"
+                        placeholder="Phone Number *"
+                        value={walkInPhone}
+                        onChange={(e) => setWalkInPhone(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
+                        required
                       />
-                    </svg>
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p
-                      className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "in-app" ? "text-[#953002]" : "text-[#1f1f1f]"}`}
-                    >
-                      Pay with Card
-                    </p>
-                    <p
-                      className={`text-[12px] leading-[16px] ${paymentMethod === "in-app" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}
-                    >
-                      Visa ending in 4242
-                    </p>
-                  </div>
-                  {/* Radio indicator */}
-                  <div
-                    className={`shrink-0 w-5 h-5 rounded-full border ${
-                      paymentMethod === "in-app"
-                        ? "bg-[#953002] border-[#953002]"
-                        : "border-[#d1d5db]"
-                    }`}
-                  />
-                </button>
+                    </div>
 
-                {/* Charge to Room option (Only for authenticated users) */}
-                {!isWalkIn && (
-                  <button
-                    onClick={() => setPaymentMethod("room-charge")}
-                    className={`w-full flex items-center gap-3 rounded-lg border transition cursor-pointer ${
-                      paymentMethod === "room-charge"
-                        ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)] p-[14px]"
-                        : "bg-[#f8f6f5] border-[#e5e7eb] p-[13px]"
-                    }`}
-                  >
-                    <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M10 21V17a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4M3 7l9-4 9 4"
-                          stroke={paymentMethod === "room-charge" ? "#953002" : "#1f1f1f"}
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p
-                        className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "room-charge" ? "text-[#953002]" : "text-[#1f1f1f]"}`}
-                      >
-                        Charge to Room
-                      </p>
-                      <p
-                        className={`text-[12px] leading-[16px] ${paymentMethod === "room-charge" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}
-                      >
-                        Room {roomNumber} • Verified
-                      </p>
-                    </div>
-                    {/* Radio indicator */}
-                    <div
-                      className={`shrink-0 w-5 h-5 rounded-full border ${
-                        paymentMethod === "room-charge"
-                          ? "bg-[#953002] border-[#953002]"
-                          : "border-[#d1d5db]"
+                    {/* Pay with Cash */}
+                    <button
+                      onClick={() => setPaymentMethod("cash")}
+                      className={`w-full flex items-center gap-3 p-[13px] rounded-lg border transition cursor-pointer ${
+                        paymentMethod === "cash"
+                          ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)]"
+                          : "bg-[#f8f6f5] border-[#e5e7eb]"
                       }`}
-                    />
-                  </button>
+                    >
+                      <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <rect x="2" y="6" width="20" height="12" rx="2" stroke={paymentMethod === "cash" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" />
+                          <circle cx="12" cy="12" r="3" stroke={paymentMethod === "cash" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "cash" ? "text-[#953002]" : "text-[#1f1f1f]"}`}>
+                          Pay with Cash
+                        </p>
+                        <p className={`text-[12px] leading-[16px] ${paymentMethod === "cash" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}>
+                          Pay at the counter or upon delivery
+                        </p>
+                      </div>
+                      <div className={`shrink-0 w-5 h-5 rounded-full border ${paymentMethod === "cash" ? "bg-[#953002] border-[#953002]" : "border-[#d1d5db]"}`} />
+                    </button>
+
+                    {/* Online Payment */}
+                    <button
+                      onClick={() => setPaymentMethod("online")}
+                      className={`w-full flex items-center gap-3 p-[13px] rounded-lg border transition cursor-pointer ${
+                        paymentMethod === "online"
+                          ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)]"
+                          : "bg-[#f8f6f5] border-[#e5e7eb]"
+                      }`}
+                    >
+                      <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <rect x="2" y="5" width="20" height="14" rx="2" stroke={paymentMethod === "online" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M2 10h20" stroke={paymentMethod === "online" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "online" ? "text-[#953002]" : "text-[#1f1f1f]"}`}>
+                          Online Payment
+                        </p>
+                        <p className={`text-[12px] leading-[16px] ${paymentMethod === "online" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}>
+                          Pay via PayHere
+                        </p>
+                      </div>
+                      <div className={`shrink-0 w-5 h-5 rounded-full border ${paymentMethod === "online" ? "bg-[#953002] border-[#953002]" : "border-[#d1d5db]"}`} />
+                    </button>
+                  </>
+                )}
+
+                {/* ── LOGGED IN (room guest): Card + Room Charge ── */}
+                {user && (
+                  <>
+                    {/* Pay with Card (online/PayHere) */}
+                    <button
+                      onClick={() => setPaymentMethod("card")}
+                      className={`w-full flex items-center gap-3 p-[13px] rounded-lg border transition cursor-pointer ${
+                        paymentMethod === "card"
+                          ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)]"
+                          : "bg-[#f8f6f5] border-[#e5e7eb]"
+                      }`}
+                    >
+                      <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <rect x="2" y="5" width="20" height="14" rx="2" stroke={paymentMethod === "card" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M2 10h20" stroke={paymentMethod === "card" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "card" ? "text-[#953002]" : "text-[#1f1f1f]"}`}>
+                          Pay with Card
+                        </p>
+                        <p className={`text-[12px] leading-[16px] ${paymentMethod === "card" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}>
+                          Online payment via PayHere
+                        </p>
+                      </div>
+                      <div className={`shrink-0 w-5 h-5 rounded-full border ${paymentMethod === "card" ? "bg-[#953002] border-[#953002]" : "border-[#d1d5db]"}`} />
+                    </button>
+
+                    {/* Charge to Room */}
+                    <button
+                      onClick={() => setPaymentMethod("room-charge")}
+                      className={`w-full flex items-center gap-3 rounded-lg border transition cursor-pointer ${
+                        paymentMethod === "room-charge"
+                          ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)] p-[14px]"
+                          : "bg-[#f8f6f5] border-[#e5e7eb] p-[13px]"
+                      }`}
+                    >
+                      <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M10 21V17a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4M3 7l9-4 9 4"
+                            stroke={paymentMethod === "room-charge" ? "#953002" : "#1f1f1f"}
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "room-charge" ? "text-[#953002]" : "text-[#1f1f1f]"}`}>
+                          Charge to Room
+                        </p>
+                        <p className={`text-[12px] leading-[16px] ${paymentMethod === "room-charge" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}>
+                          Room {roomNumber} • Verified
+                        </p>
+                      </div>
+                      <div className={`shrink-0 w-5 h-5 rounded-full border ${paymentMethod === "room-charge" ? "bg-[#953002] border-[#953002]" : "border-[#d1d5db]"}`} />
+                    </button>
+                  </>
                 )}
               </div>
             </div>

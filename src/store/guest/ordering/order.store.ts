@@ -26,7 +26,7 @@ export type Order = {
   id: string;
   roomNumber: string;
   guestName: string;
-  paymentMethod: "card" | "room-charge";
+  paymentMethod: "cash" | "online" | "pay-at-property" | "card" | "room-charge";
   lines: OrderLine[];
   subtotal: number;
   serviceCharge: number;
@@ -56,7 +56,8 @@ type OrderState = {
     tableNumber?: string;
     guestName?: string;
     guestPhone?: string;
-    paymentMethod: "card" | "room-charge";
+    guestInstructions?: string;
+    paymentMethod: "cash" | "online" | "pay-at-property" | "card" | "room-charge";
     propertyId: number;
     guestId?: number;
   }) => Promise<string | null>; // Returns order ID or null on error
@@ -173,6 +174,8 @@ export const useOrderStore = create<OrderState>((set) => ({
         tableNumber: opts.tableNumber,
         guestName: opts.guestName,
         guestPhone: opts.guestPhone,
+        guestInstructions: opts.guestInstructions,
+        paymentMethod: opts.paymentMethod,
         totalAmount: opts.total,
         status: "NEW",
       });

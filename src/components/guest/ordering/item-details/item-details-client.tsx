@@ -39,6 +39,11 @@ export default function ItemDetailsClient({
   const addToCart = useCartStore((s) => s.add);
   const getReviewsForItem = useGuestReviewsStore((s) => s.getReviewsForItem);
   const getAverageRating = useGuestReviewsStore((s) => s.getAverageRating);
+  const fetchReviewsForItem = useGuestReviewsStore((s) => s.fetchReviewsForItem);
+
+  React.useEffect(() => {
+    fetchReviewsForItem(item.id);
+  }, [item.id, fetchReviewsForItem]);
 
   const itemReviews = React.useMemo(() => {
     return getReviewsForItem(item.id);
