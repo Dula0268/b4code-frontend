@@ -33,10 +33,8 @@ export default function PaymentFlow() {
     const amount = Number(rawAmount).toLocaleString("en-US", { minimumFractionDigits: 2 });
 
     const handleMethodSelect = async (method: string) => {
-        // Collect all current booking params to pass through the payment flow
-        // so confirmation page works after PayHere redirects back
-        const returnParams = searchParams ? searchParams.toString() : "";
-        sessionStorage.setItem("pendingBookingParams", returnParams);
+        // The return parameters will be constructed directly when calling initiatePayment
+        // to avoid appending too many unnecessary query params.
 
         if (method === "card") {
             setStep("card");
@@ -50,7 +48,7 @@ export default function PaymentFlow() {
                     firstName: searchParams?.get("firstName") || "Guest",
                     lastName: searchParams?.get("lastName") || "User",
                     email: searchParams?.get("email") || "",
-                    returnParams,
+                    returnParams: `payment_success=true&bookingRef=${searchParams?.get("confirmationCode") || ""}`,
                 });
 
                 if (response.checkoutUrl && response.payHereParams) {
