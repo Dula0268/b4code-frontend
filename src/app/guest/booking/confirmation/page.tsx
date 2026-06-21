@@ -4,12 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { guestApi } from "@/api/guest/guest.api";
-import { useGuestBookingStore } from "@/store/guest/booking/booking.store";
 
 export default function BookingConfirmationPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const addBooking = useGuestBookingStore((s) => s.addBooking);
     
     const [status, setStatus] = useState<"processing" | "success" | "failed">("processing");
     const [errorMsg, setErrorMsg] = useState("");
@@ -55,26 +53,6 @@ export default function BookingConfirmationPage() {
                     paymentMethod: "online",
                 });
 
-                // Add to local store for immediate UI update
-                addBooking({
-                    id: String(bookingResponse.id || crypto.randomUUID()),
-                    propertyId: String(propertyId),
-                    userEmail: guestEmail,
-                    property: bookingResponse.propertyName || "Property",
-                    location: bookingResponse.propertyAddress || "Location",
-                    imageSrc: bookingResponse.propertyImage || "/images/placeholder-property.jpg",
-                    checkIn: checkIn,
-                    checkOut: checkOut,
-                    guestsLabel: `${adults} Adults${children > 0 ? `, ${children} Children` : ""}`,
-                    totalPrice: bookingResponse.totalAmount || 0,
-                    nightsLabel: `${Math.max(1, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000))} night(s)`,
-                    paymentMethod: "online",
-                    paidInFull: true,
-                    status: "UPCOMING",
-                    roomName: bookingResponse.roomName || "Room",
-                    confirmationCode: bookingResponse.confirmationCode,
-                });
-
                 // Clear session storage so we don't duplicate on refresh
                 sessionStorage.removeItem("pendingBookingParams");
 
@@ -93,7 +71,7 @@ export default function BookingConfirmationPage() {
         };
 
         processBooking();
-    }, [addBooking, router]);
+    }, [router]);
 
     return (
         <div className="min-h-screen bg-[#fafafa] flex items-center justify-center p-4">

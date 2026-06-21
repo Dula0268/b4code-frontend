@@ -8,7 +8,7 @@ import {
 } from "lucide-react"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { guestApi } from "@/api/guest/guest.api";
-import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/booking.store"
+import { type BookingStatus } from "@/store/guest/booking/booking.store"
 import BookingCard, { type BookingCardData } from "@/components/guest/booking/booking-card"
 import { useGuestGuard } from "@/hooks/use-guest-guard"
 import AccessDenied from "@/components/shared/auth/access-denied"
@@ -23,7 +23,6 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
-  const localBookings = useGuestBookingStore(s => s.bookings)
 
   useEffect(() => {
     async function loadBookings() {
@@ -90,52 +89,19 @@ export default function MyBookingsPage() {
                     };
                 })
             } catch (err) {
-                console.warn("API booking fetch failed or empty:", err)
+                console.warn("API booking fetch failed:", err)
             }
 
-            const userLocalBookings = localBookings.filter(b => b.userEmail.toLowerCase() === email.toLowerCase())
-            const mappedLocal: BookingCardData[] = userLocalBookings.map(b => ({
-                id: String(b.id),
-                propertyId: String(b.propertyId),
-                orderId: b.confirmationCode,
-                orderNumber: b.confirmationCode,
-                status: b.status,
-                property: b.property,
-                location: b.location,
-                imageSrc: b.imageSrc,
-                checkIn: b.checkIn,
-                checkOut: b.checkOut,
-                guests: b.guestsLabel,
-                totalPrice: b.totalPrice,
-                nightsLabel: b.nightsLabel,
-                paymentMethod: b.paymentMethod,
-                paidInFull: b.paidInFull,
-                roomName: b.roomName,
-                isFromStore: true,
-            }))
-
-            // Local store bookings take full priority (they have the latest status including cancellations)
-            const merged = [...mappedLocal]
-            for (const apiB of apiBookings) {
-                // Skip API bookings that already exist in local store (by orderNumber or id)
-                const existsLocally = merged.find(m =>
-                    m.orderNumber === apiB.orderNumber || m.id === apiB.id
-                )
-                if (!existsLocally) {
-                    merged.push(apiB)
-                }
-            }
-            
-            setBookings(merged)
+            setBookings(apiBookings)
         } catch (err) {
-            console.error("Failed to synchronize bookings:", err)
+            console.error("Failed to load bookings:", err)
         } finally {
             setLoading(false)
         }
     }
 
     if (user) loadBookings();
-  }, [user, localBookings]);
+  }, [user]);
   
   if (status === "loading") return (
     <div className="min-h-screen flex items-center justify-center bg-white">

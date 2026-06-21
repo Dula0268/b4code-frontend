@@ -10,8 +10,36 @@ import {
   CreditCard, Wallet, Edit3, X, AlertTriangle, AlertCircle,
   Check, ArrowRight
 } from "lucide-react"
-import { useGuestBookingStore, StoredBooking } from "@/store/guest/booking/booking.store"
+import { guestApi } from "@/api/guest/guest.api"
 
+export interface StoredBooking {
+  id: string
+  propertyId: string
+  userEmail: string
+  property: string
+  location: string
+  imageSrc: string
+  checkIn: string
+  checkOut: string
+  checkInFormatted?: string
+  checkOutFormatted?: string
+  guestsLabel?: string
+  guests?: number
+  totalPrice: number
+  basePrice: number
+  taxes: number
+  discount: number
+  nightsLabel: string
+  nights?: number
+  paymentMethod: string
+  paidInFull: boolean
+  status: "UPCOMING" | "COMPLETED" | "CANCELLED"
+  roomName: string
+  confirmationCode: string
+  isModified?: boolean
+  cancelReason?: string
+  refundStatus?: "PENDING" | "PROCESSED" | "REJECTED"
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // Format Helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,9 +98,8 @@ function StatusBadge({ status, isModified }: { status: string, isModified?: bool
 // Client Component
 // ─────────────────────────────────────────────────────────────────────────────
 export default function BookingDetailsClient({ id }: { id: string }) {
-  const { bookings, updateBookingStatus } = useGuestBookingStore()
-  
   const [booking, setBooking] = useState<StoredBooking | null>(null)
+  const [loading, setLoading] = useState(true)
   
   // UI States
   const [isEditing, setIsEditing] = useState(false)
@@ -87,14 +114,53 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   const [cancelReason, setCancelReason] = useState("")
 
   useEffect(() => {
-    const found = bookings.find((b) => b.id === id)
-    if (found) {
-      setBooking(found)
-      setEditGuests(found.guests || 2)
-      setEditCheckIn(found.checkIn)
-      setEditCheckOut(found.checkOut)
+    async function loadBooking() {
+      try {
+        setLoading(true)
+        const b = await guestApi.getBookingByConfirmation(id)
+        
+        // Map API response to local state structure
+        const checkInDate = new Date(b.checkIn)
+        const checkOutDate = new Date(b.checkOut)
+        const diffDays = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / 86400000))
+        
+        const mappedBooking: StoredBooking = {
+          id: String(b.id),
+          propertyId: String(b.propertyId),
+          userEmail: b.guestEmail || "",
+          property: b.propertyName || "Property",
+          location: b.propertyAddress || "Location",
+          imageSrc: b.propertyImage || "/images/placeholder-property.jpg",
+          checkIn: b.checkIn,
+          checkOut: b.checkOut,
+          checkInFormatted: checkInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          checkOutFormatted: checkOutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          guests: b.adults || 1,
+          totalPrice: b.totalAmount || 0,
+          basePrice: b.totalAmount || 0, // Placeholder, real implementation should use price breakdown
+          taxes: 0,
+          discount: 0,
+          nights: diffDays,
+          nightsLabel: `${diffDays} Night(s)`,
+          paymentMethod: b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online",
+          paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
+          status: (b.status === "COMPLETED" ? "COMPLETED" : b.status === "CANCELLED" ? "CANCELLED" : "UPCOMING") as any,
+          roomName: b.roomName || "Room",
+          confirmationCode: b.confirmationCode,
+        }
+
+        setBooking(mappedBooking)
+        setEditGuests(mappedBooking.guests || 2)
+        setEditCheckIn(mappedBooking.checkIn)
+        setEditCheckOut(mappedBooking.checkOut)
+      } catch (error) {
+        console.error("Failed to load booking details:", error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [id, bookings])
+    loadBooking()
+  }, [id])
 
   // Real-time calculation of new price when editing
   const { newPrice, diffAmount } = useMemo(() => {
@@ -134,39 +200,24 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   // ─────────────────────────────────────────────────────────────────────────────
   // Action Handlers
   // ─────────────────────────────────────────────────────────────────────────────
-  const handleSaveChanges = () => {
-    // If diffAmount is > 0, they "paid". If < 0, they "requested refund".
-    let newRefundStatus = booking.refundStatus;
-    if (diffAmount < 0) newRefundStatus = "PENDING";
-    
-    updateBookingStatus(booking.confirmationCode, {
-      guests: editGuests,
-      checkIn: editCheckIn,
-      checkOut: editCheckOut,
-      checkInFormatted: new Date(editCheckIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      checkOutFormatted: new Date(editCheckOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      nights: calculateNights(editCheckIn, editCheckOut),
-      totalPrice: newPrice,
-      isModified: true,
-      refundStatus: newRefundStatus
-    })
+  const handleSaveChanges = async () => {
+    // In a real implementation, you would call guestApi.modifyBooking(booking.id, payload)
     setIsEditing(false)
   }
 
-  const handleConfirmCancel = () => {
-    updateBookingStatus(booking.confirmationCode, {
-      status: "CANCELLED",
-      cancelReason,
-      refundStatus: "PENDING"
-    })
-    setIsCanceling(false)
+  const handleConfirmCancel = async () => {
+    try {
+      await guestApi.cancelBooking(booking.id, cancelReason)
+      setBooking(prev => prev ? { ...prev, status: "CANCELLED", cancelReason } : null)
+      setIsCanceling(false)
+    } catch (error) {
+      console.error("Failed to cancel booking:", error)
+    }
   }
 
-  const handleCompleteBooking = () => {
-    updateBookingStatus(booking.confirmationCode, {
-      status: "COMPLETED",
-      paidInFull: true
-    })
+  const handleCompleteBooking = async () => {
+    // For testing/flow purposes only. Guests normally shouldn't complete their own bookings.
+    setBooking(prev => prev ? { ...prev, status: "COMPLETED", paidInFull: true } : null)
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

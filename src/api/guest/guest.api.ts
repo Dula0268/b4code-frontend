@@ -31,6 +31,9 @@ export const guestApi = {
   getGuestBookings: (email: string) =>
     api.get(`/guest/bookings/guest`, { params: { email } }).then((r) => r.data),
 
+  getBookingByConfirmation: (confirmationNumber: string) =>
+    api.get(`/guest/bookings/confirmation/${confirmationNumber}`).then((r) => r.data),
+
   createBooking: (bookingData: {
     roomId: number;
     propertyId: number;
@@ -59,6 +62,9 @@ export const guestApi = {
         paymentMethod: bookingData.paymentMethod === "online" ? "ONLINE_CARD" : "PAY_AT_PROPERTY",
       })
       .then((r) => r.data),
+
+  cancelBooking: (id: string | number, reason: string) =>
+    api.patch(`/guest/bookings/${id}/cancel`, { reason }).then((r) => r.data),
 
   // Review Methods
   getPropertyReviews: (propertyId: number) =>

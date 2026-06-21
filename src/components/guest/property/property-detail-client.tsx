@@ -483,8 +483,11 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                                             value={nicNumber}
                                                             onChange={(e) => setNicNumber(e.target.value)}
                                                             placeholder="e.g. 199012345678 or 901234567V" 
-                                                            className="w-full border border-[#d8d8d8] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)] bg-white"
+                                                            className={`w-full border ${nicNumber.trim() && !/^([0-9]{9}[vVxX]|[0-9]{12})$/.test(nicNumber.trim()) ? 'border-red-400' : 'border-[#d8d8d8]'} rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)] bg-white`}
                                                         />
+                                                        {nicNumber.trim() && !/^([0-9]{9}[vVxX]|[0-9]{12})$/.test(nicNumber.trim()) && (
+                                                            <p className="text-red-500 text-[11px] mt-1 font-medium">Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).</p>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -492,7 +495,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                     </div>
 
                                     <button
-                                        disabled={isSubmitting || (paymentMethod === 'property' && !nicNumber.trim())}
+                                        disabled={isSubmitting || (paymentMethod === 'property' && (!nicNumber.trim() || !/^([0-9]{9}[vVxX]|[0-9]{12})$/.test(nicNumber.trim())))}
                                         onClick={async () => {
                                             setIsSubmitting(true);
                                             try {

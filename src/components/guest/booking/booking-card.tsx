@@ -199,7 +199,7 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
         <div className="flex items-center gap-3 mt-auto pt-6 border-t border-[#f2e7d9] flex-wrap">
           {isUpcoming && (
             <>
-              <Link href={`/guest/booking/${booking.id}`} className={btnPrimary} style={{ background: "#9a3300" }}>
+              <Link href={`/guest/booking/${booking.orderId}`} className={btnPrimary} style={{ background: "#9a3300" }}>
                 <Info size={14} /> More Info
               </Link>
               <Link href="/guest/order" className={btnOutline}>
