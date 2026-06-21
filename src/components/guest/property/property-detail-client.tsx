@@ -36,6 +36,7 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
     const [promoCodeInput, setPromoCodeInput] = useState("")
     const [appliedPromos, setAppliedPromos] = useState<string[]>([])
     const [promoError, setPromoError] = useState("")
+    const [isApplyingPromo, setIsApplyingPromo] = useState(false)
     const [priceBreakdown, setPriceBreakdown] = useState<any>(null)
     const [paymentMethod, setPaymentMethod] = useState<"online" | "property">("online")
     const [nicNumber, setNicNumber] = useState("")
@@ -117,6 +118,36 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
         };
         fetchBreakdown();
     }, [selectedRooms, appliedPromos, checkInDate, checkOutDate]);
+
+    const handleApplyPromo = async () => {
+        const code = promoCodeInput.trim().toUpperCase();
+        if (!code || appliedPromos.includes(code)) return;
+        
+        setIsApplyingPromo(true);
+        setPromoError("");
+        
+        const roomId = Object.keys(selectedRooms)[0];
+        if (!roomId) {
+            setIsApplyingPromo(false);
+            return;
+        }
+        
+        try {
+            const qty = selectedRooms[roomId].quantity;
+            const tempPromos = [...appliedPromos, code];
+            let url = `/guest/bookings/price-preview?roomId=${roomId}&checkIn=${checkInDate}&checkOut=${checkOutDate}&roomQuantity=${qty}`;
+            url += `&promoCodes=${tempPromos.join(",")}`;
+            
+            const res = await api.get(url);
+            setPriceBreakdown(res.data);
+            setAppliedPromos(tempPromos);
+            setPromoCodeInput("");
+        } catch (error: any) {
+            setPromoError(error.response?.data?.message || "Invalid promo code");
+        } finally {
+            setIsApplyingPromo(false);
+        }
+    };
 
     const handleShare = async () => {
         const url = typeof window !== "undefined" ? window.location.href : ""
@@ -570,17 +601,15 @@ export default function PropertyClient({ property }: { property: PropertyDetail 
                                                     className={`flex-1 border ${promoError ? 'border-red-400' : 'border-[#e8e8e8]'} rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)]`}
                                                 />
                                                 <button 
-                                                    onClick={() => {
-                                                        const code = promoCodeInput.trim().toUpperCase();
-                                                        if (code && !appliedPromos.includes(code)) {
-                                                            setAppliedPromos(prev => [...prev, code]);
-                                                            setPromoCodeInput("");
-                                                        }
-                                                    }}
-                                                    disabled={!promoCodeInput.trim() || appliedPromos.includes(promoCodeInput.trim().toUpperCase())}
-                                                    className="bg-[#f0f0f0] hover:bg-[#e0e0e0] text-[#1d1d1d] font-semibold px-4 py-2 rounded-xl text-[14px] transition-colors cursor-pointer disabled:opacity-50"
+                                                    onClick={handleApplyPromo}
+                                                    disabled={!promoCodeInput.trim() || isApplyingPromo || appliedPromos.includes(promoCodeInput.trim().toUpperCase())}
+                                                    className="bg-[#f0f0f0] hover:bg-[#e0e0e0] text-[#1d1d1d] font-semibold px-4 py-2 rounded-xl text-[14px] transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center min-w-[70px]"
                                                 >
-                                                    Apply
+                                                    {isApplyingPromo ? (
+                                                        <div className="w-4 h-4 border-2 border-[#1d1d1d] border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        "Apply"
+                                                    )}
                                                 </button>
                                             </div>
                                             

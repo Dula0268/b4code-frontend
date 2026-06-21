@@ -4,7 +4,7 @@ import { useState, useRef, Suspense } from "react"
 import { Star, X, Camera, ImagePlus, ChevronLeft, CheckCircle2, ThumbsUp, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { useGuestBookingStore } from "@/store/guest/booking/booking.store"
 import { guestApi } from "@/api/guest/guest.api";
@@ -82,6 +82,8 @@ function useReviewLogic() {
   const [submitted, setSubmitted]                 = useState(false)
   const [isSubmitting, setIsSubmitting]           = useState(false)
   const [errorMsg, setErrorMsg]                   = useState<string | null>(null)
+  const [successMsg, setSuccessMsg]               = useState<string | null>(null)
+  const router = useRouter()
 
   const isFormValid = overallRating > 0 && reviewText.trim().length >= 20
 
@@ -156,7 +158,10 @@ function useReviewLogic() {
         comment: reviewText,
         photoUrls 
       })
-      setSubmitted(true)
+      setSuccessMsg("Review submitted successfully! Redirecting...")
+      setTimeout(() => {
+        router.push(`/guest/property/${propertyId}`)
+      }, 2000)
     } catch (err: any) {
       console.error("Submission error:", err.response?.data || err);
       const backendMsg = err.response?.data?.message || err.response?.data?.error || err.message;
@@ -171,7 +176,7 @@ function useReviewLogic() {
     setSubmitted(false); setOverallRating(0); setCategoryRatings({}); setReviewText(""); setPhotos([]);
   }
 
-  return { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm }
+  return { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, successMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -181,7 +186,7 @@ function SubmitReviewContent() {
   const { ready } = useGuestGuard()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const logic = useReviewLogic()
-  const { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm } = logic
+  const { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, successMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm } = logic
   const searchParams = useSearchParams()
   const propertyId = searchParams?.get("propertyId") || "1"
 
@@ -191,37 +196,19 @@ function SubmitReviewContent() {
     </div>
   )
 
-  if (submitted) {
-    return (
-      <div className="flex items-center justify-center px-4 pt-20 bg-transparent">
-        <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm max-w-md w-full p-10 text-center">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 bg-emerald-50 border border-emerald-200">
-            <CheckCircle2 size={38} className="text-emerald-500" />
-          </div>
-          <h2 className="text-2xl font-black mb-2 text-[#1d1d1d]">Review Submitted!</h2>
-          <div className="flex justify-center gap-0.5 mb-4">
-            {[1, 2, 3, 4, 5].map(s => (
-              <Star key={s} size={24} className={s <= overallRating ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"} />
-            ))}
-          </div>
-          <p className="text-sm leading-relaxed mb-8 text-[#828282]">
-            Thank you for sharing your experience! Your feedback helps other guests make great decisions.
-          </p>
-          <div className="flex flex-col gap-3">
-            <Link href={`/guest/property/${propertyId}`} className="py-3.5 rounded-xl font-bold text-white transition-colors block bg-[#9a3300] hover:bg-[#7a2800]">
-              View Property
-            </Link>
-            <button onClick={resetForm} className="text-sm font-bold cursor-pointer transition-colors text-[#828282] hover:text-[#1d1d1d]">
-              Submit another review
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <>
+      {/* ── Success Notification ── */}
+      <div
+        className={[
+          "fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-emerald-500 text-white text-[13px] font-medium",
+          "px-4 py-2.5 rounded-xl shadow-[0_10px_30px_rgba(16,185,129,0.3)] transition-all duration-300 whitespace-nowrap",
+          successMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
+        ].join(" ")}
+      >
+        <span className="text-[16px]">✓</span>
+        {successMsg}
+      </div>
       {/* ── Error Notification ── */}
       <div
         className={[
