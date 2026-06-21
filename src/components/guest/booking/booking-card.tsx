@@ -208,10 +208,16 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
               <button className={btnOutline}>
                 <MessageSquare size={14} /> Message
               </button>
+              <Link href={`/guest/reviews?propertyId=${booking.propertyId}`} className={btnOutline}>
+                <Star size={14} /> Keep Review
+              </Link>
             </>
           )}
           {isCompleted && (
             <>
+              <Link href={`/guest/booking/${booking.orderId}`} className={btnPrimary} style={{ background: "#9a3300" }}>
+                <Info size={14} /> More Info
+              </Link>
               <Link href="/guest/booking/confirmation" className={btnOutline}>
                 <Download size={14} /> Invoice
               </Link>

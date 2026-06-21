@@ -16,11 +16,11 @@ import AccessDenied from "@/components/shared/auth/access-denied"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 
-const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
+const TABS: ("UPCOMING" | "CANCELLED")[] = ["UPCOMING", "CANCELLED"]
 
 export default function MyBookingsPage() {
   const { status, userRole } = useGuestGuard()
-  const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
+  const [activeTab, setActiveTab] = useState<"UPCOMING" | "CANCELLED">("UPCOMING")
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
@@ -80,12 +80,17 @@ export default function MyBookingsPage() {
                     const checkOutDate = b.checkOut ? new Date(b.checkOut) : new Date(checkInDate.getTime() + 86400000);
                     const diffDays = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
                     
+                    let derivedStatus = normalizeStatus(b.status);
+                    if (derivedStatus === "UPCOMING" && new Date() > checkOutDate) {
+                        derivedStatus = "COMPLETED";
+                    }
+
                     return {
                         id: String(b.bookingId ?? b.id ?? b.confirmationCode ?? b.confirmationNumber ?? crypto.randomUUID()),
                         propertyId: String((b as any).propertyId ?? b.bookingId ?? b.id ?? ""),
                         orderId: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
                         orderNumber: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
-                        status: normalizeStatus(b.status),
+                        status: derivedStatus,
                         property: b.propertyName || "Prime Stay Property",
                         location: b.propertyAddress || "Sri Lanka",
                         imageSrc: b.propertyImage || "/images/properties/property-1.jpg",
@@ -172,7 +177,7 @@ export default function MyBookingsPage() {
             </div>
           ) : (
             bookings
-              .filter(b => b.status === activeTab)
+              .filter(b => activeTab === "UPCOMING" ? (b.status === "UPCOMING" || b.status === "COMPLETED") : b.status === activeTab)
               .map(booking => <BookingCard key={booking.id} booking={booking} />)
           )}
         </div>

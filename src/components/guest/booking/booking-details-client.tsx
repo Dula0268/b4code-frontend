@@ -106,7 +106,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   const router = useRouter()
   
   // UI States
-  const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "complete" | "refund">("modify")
+  const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "refund">("modify")
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   
@@ -358,7 +358,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
       } else {
         setSuccessMessage("Booking cancelled successfully.");
         // Switch to a safe tab so it doesn't stay on the cancel form
-        setActiveTab("complete");
+        setActiveTab("modify");
       }
       
     } catch (error: any) {
@@ -367,10 +367,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     }
   }
 
-  const handleCompleteBooking = async () => {
-    // For testing/flow purposes only. Guests normally shouldn't complete their own bookings.
-    setBooking(prev => prev ? { ...prev, status: "COMPLETED", paidInFull: true } : null)
-  }
+
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Render Helpers
