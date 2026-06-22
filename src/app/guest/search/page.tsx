@@ -156,6 +156,7 @@ function SearchResultsContent() {
     const checkIn = searchParams?.get("checkIn") || ""
     const checkOut = searchParams?.get("checkOut") || ""
     const guests = Number(searchParams?.get("guests") || 1)
+    const rooms = Number(searchParams?.get("rooms") || 1)
 
     // State
     const [filterOptions, setFilterOptions] = useState<FilterOptionsResponse | null>(null)
@@ -212,6 +213,7 @@ function SearchResultsContent() {
                 checkIn: checkIn || undefined,
                 checkOut: checkOut || undefined,
                 guests,
+                rooms,
                 minPrice: filterOptions ? filters.priceMin : undefined,
                 maxPrice: filterOptions ? filters.priceMax : undefined,
                 minRating: filters.guestRating ? parseFloat(filters.guestRating) : undefined,
@@ -228,7 +230,7 @@ function SearchResultsContent() {
         } finally {
             setLoading(false)
         }
-    }, [destination, checkIn, checkOut, guests, filters, sortBy, page, filterOptions])
+    }, [destination, checkIn, checkOut, guests, rooms, filters, sortBy, page, filterOptions])
 
     useEffect(() => {
         if (!filtersLoading) fetchResults()

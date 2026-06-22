@@ -2,7 +2,20 @@ import { CheckCircle2, BedDouble, Users, SquareDot } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import type { Room } from "@/lib/mock-properties"
+
+export interface Room {
+    id: string;
+    name: string;
+    maxGuests: number;
+    bedType: string;
+    sqft: number;
+    pricePerNight: number;
+    originalPrice?: number;
+    tag?: string;
+    features: string[];
+    imageSrc: string;
+    availableCount?: number;
+}
 
 function formatLKR(n: number) {
     return `LKR ${n.toLocaleString("en-US")}`
@@ -19,7 +32,7 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                 ? "bg-amber-50 text-amber-700 border-amber-200"
                 : "bg-red-50 text-red-700 border-red-200"
 
-    const availableCount = room.availableCount ?? 3;
+    const availableCount = room.availableCount ?? 1;
 
     return (
         <div className="flex flex-col sm:flex-row gap-4 p-4 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white">
@@ -46,17 +59,25 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                     <p className="text-[18px] font-bold text-[#1d1d1d]">{formatLKR(room.pricePerNight)}</p>
                     <p className="text-[11px] text-[#828282]">per night</p>
                 </div>
-                <select
-                    value={selectedQuantity}
-                    onChange={(e) => onQuantityChange?.(Number(e.target.value))}
-                    className="px-4 py-2 border border-[#e8e8e8] text-[13px] font-semibold rounded-xl focus:outline-none focus:border-[var(--brand-primary)] bg-white cursor-pointer"
-                >
-                    {Array.from({ length: availableCount + 1 }, (_, i) => i).map((num) => (
-                        <option key={num} value={num}>
-                            {num === 0 ? "Select Rooms" : `${num} ${num === 1 ? 'Room' : 'Rooms'}`}
-                        </option>
-                    ))}
-                </select>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => onQuantityChange?.(Math.max(0, selectedQuantity - 1))}
+                        disabled={selectedQuantity === 0}
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-[#e8e8e8] text-[#1d1d1d] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                        -
+                    </button>
+                    <span className="text-[14px] font-semibold text-[#1d1d1d] w-4 text-center">
+                        {selectedQuantity}
+                    </span>
+                    <button
+                        onClick={() => onQuantityChange?.(Math.min(availableCount, selectedQuantity + 1))}
+                        disabled={selectedQuantity >= availableCount}
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-[#e8e8e8] text-[#1d1d1d] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                        +
+                    </button>
+                </div>
             </div>
         </div>
     )

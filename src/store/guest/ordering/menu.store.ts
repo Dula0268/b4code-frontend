@@ -91,7 +91,7 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
       }
       
       const response = await api.get(url);
-      const rawItems: ApiMenuItem[] = response.data;
+      const rawItems: any[] = response.data;
 
       // Map backend fields to frontend MenuItem shape
       const items: MenuItem[] = rawItems.map((item) => ({
@@ -107,15 +107,15 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         isAvailable: item.isAvailable !== false,
         tag: item.tag,
         imageUrls: item.imageUrls || [],
-        variants: item.variants?.map((v, idx: number) => ({
+        variants: item.variants?.map((v: any, idx: number) => ({
           id: String(v.id ?? `var-${idx}`),
           label: v.label || "",
           price: v.price || 0,
         })) || [],
-        modifiers: item.modifiers?.map((m, mIdx: number) => ({
+        modifiers: item.modifiers?.map((m: any, mIdx: number) => ({
           id: String(m.id ?? `mod-${mIdx}`),
           name: m.name || "",
-          options: m.options?.map((o) => ({
+          options: m.options?.map((o: any) => ({
             label: o.label || "",
             price: o.price || 0,
           })) || [],

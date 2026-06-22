@@ -12,6 +12,7 @@ export interface PropertyListing {
     location: string
     propertyType: string
     pricePerNight: number
+    highestPricePerNight?: number
     maxGuests: number
     baseGuests: number
     extraGuestFee: number
@@ -31,7 +32,9 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
     const searchParams = useSearchParams()
     const query = searchParams && searchParams.toString() ? `?${searchParams.toString()}` : ""
 
-    const maxPrice = listing.pricePerNight + (Math.max(0, listing.maxGuests - listing.baseGuests) * listing.extraGuestFee)
+    const maxPrice = listing.highestPricePerNight && listing.highestPricePerNight > listing.pricePerNight 
+        ? listing.highestPricePerNight 
+        : listing.pricePerNight + (Math.max(0, listing.maxGuests - listing.baseGuests) * listing.extraGuestFee)
 
     return (
         <Link
@@ -97,10 +100,21 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
 
                     {/* Price Range */}
                     <div className="border-t border-[var(--border)] mt-1 pt-2 flex flex-col">
-                        <span className="text-[10px] sm:text-[11px] text-[var(--muted)] uppercase tracking-wide font-semibold mb-0.5">Price Range</span>
-                        <p className="text-[14px] sm:text-[15px] font-bold text-[var(--fg)]">
-                            {formatLKR(listing.pricePerNight)} <span className="text-[12px] font-medium text-[var(--muted)]">to</span> {formatLKR(maxPrice)}
-                        </p>
+                        {maxPrice > listing.pricePerNight ? (
+                            <>
+                                <span className="text-[10px] sm:text-[11px] text-[var(--muted)] uppercase tracking-wide font-semibold mb-0.5">Price Range</span>
+                                <p className="text-[14px] sm:text-[15px] font-bold text-[var(--fg)]">
+                                    {formatLKR(listing.pricePerNight)} <span className="text-[12px] font-medium text-[var(--muted)]">-</span> {formatLKR(maxPrice)}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <span className="text-[10px] sm:text-[11px] text-[var(--muted)] uppercase tracking-wide font-semibold mb-0.5">Price</span>
+                                <p className="text-[14px] sm:text-[15px] font-bold text-[var(--fg)]">
+                                    {formatLKR(listing.pricePerNight)} <span className="text-[12px] font-medium text-[var(--muted)]">/ night</span>
+                                </p>
+                            </>
+                        )}
                     </div>
                 </div>
             </article>

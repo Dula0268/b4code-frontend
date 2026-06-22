@@ -25,7 +25,7 @@ export interface RoomData {
 export interface PropertyData {
     id?: unknown; propertyId?: unknown; title?: unknown; name?: unknown;
     location?: unknown; city?: unknown; propertyType?: unknown;
-    pricePerNight?: unknown; lowestPricePerNight?: unknown;
+    pricePerNight?: unknown; lowestPricePerNight?: unknown; highestPricePerNight?: unknown;
     maxGuests?: unknown; availableRooms?: RoomData[];
     baseGuests?: unknown; extraGuestFee?: unknown; rating?: unknown;
     averageRating?: unknown; reviewCount?: unknown; badge?: unknown;
@@ -34,6 +34,8 @@ export interface PropertyData {
     hostBio?: unknown; hostYears?: unknown; hostSuperhost?: unknown;
     description?: unknown; reviewBreakdown?: unknown; reviews?: unknown;
     rooms?: RoomData[]; lat?: unknown; lng?: unknown; amenities?: unknown;
+    checkInTime?: unknown; checkOutTime?: unknown;
+    cancellationPolicy?: unknown; childPolicy?: unknown; houseRules?: unknown;
     [key: string]: unknown;
 }
 
@@ -56,6 +58,7 @@ export const normalizePropertyListing = (property: PropertyData) => ({
     location: property?.location ?? property?.city ?? "Sri Lanka",
     propertyType: property?.propertyType ?? "Property",
     pricePerNight: toNumber(property?.pricePerNight ?? property?.lowestPricePerNight),
+    highestPricePerNight: property?.highestPricePerNight != null ? toNumber(property.highestPricePerNight) : undefined,
     maxGuests: toNumber(property?.maxGuests ?? property?.availableRooms?.[0]?.maxOccupancy, 2),
     baseGuests: toNumber(property?.baseGuests, 2),
     extraGuestFee: toNumber(property?.extraGuestFee),
@@ -85,8 +88,20 @@ export const normalizePropertyDetail = (property: PropertyData) => ({
     description: property?.description ?? "",
     amenities: Array.isArray(property?.amenities) ? property.amenities : [],
     reviewBreakdown: Array.isArray(property?.reviewBreakdown) ? property.reviewBreakdown : [],
-    reviews: Array.isArray(property?.reviews) ? property.reviews : [],
+    reviews: Array.isArray(property?.reviews) ? property.reviews.map((rev: any) => ({
+        ...rev,
+        cleanlinessRating: rev?.cleanlinessRating != null ? toNumber(rev.cleanlinessRating) : undefined,
+        accuracyRating: rev?.accuracyRating != null ? toNumber(rev.accuracyRating) : undefined,
+        communicationRating: rev?.communicationRating != null ? toNumber(rev.communicationRating) : undefined,
+        locationRating: rev?.locationRating != null ? toNumber(rev.locationRating) : undefined,
+        valueRating: rev?.valueRating != null ? toNumber(rev.valueRating) : undefined,
+    })) : [],
     rooms: Array.isArray(property?.rooms) ? property.rooms.map(normalizeRoom) : Array.isArray(property?.availableRooms) ? property.availableRooms.map(normalizeRoom) : [],
     lat: property?.lat == null ? undefined : toNumber(property.lat),
     lng: property?.lng == null ? undefined : toNumber(property.lng),
+    checkInTime: property?.checkInTime ?? "14:00",
+    checkOutTime: property?.checkOutTime ?? "11:00",
+    cancellationPolicy: property?.cancellationPolicy ?? "Free cancellation until 48 hours before.\n50% refund within 48 hours.\nNo-shows will be charged full amount.",
+    childPolicy: property?.childPolicy ?? "Children of any age are welcome.\nNo age restriction for check-in.\nExtra beds available upon request.",
+    houseRules: property?.houseRules ?? "No smoking indoors.\nNo pets allowed.\nNo parties or events.",
 });

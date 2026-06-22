@@ -12,6 +12,7 @@ export const paymentApi = {
     lastName?: string;
     email?: string;
     phone?: string;
+    bookingId?: number;
     returnParams?: string;
   }) =>
     api.post("/payments", paymentData).then((r) => r.data),
