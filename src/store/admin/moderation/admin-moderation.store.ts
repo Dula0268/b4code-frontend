@@ -31,6 +31,7 @@ type AdminModerationState = {
   historyLoading: boolean;
 
   actionLoading: boolean;
+  isExporting: boolean;
   error: string | null;
 };
 
@@ -49,6 +50,7 @@ type AdminModerationActions = {
   resolveDispute: (id: string, resolution: string, refundApproved: boolean) => Promise<void>;
 
   fetchHistory: (params?: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }) => Promise<void>;
+  downloadHistoryExport: (params?: { action?: string; search?: string; from?: string; to?: string }) => Promise<void>;
 };
 
 export const useAdminModerationStore = create<AdminModerationState & AdminModerationActions>((set, get) => ({
@@ -71,6 +73,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
   historyLoading: false,
 
   actionLoading: false,
+  isExporting: false,
   error: null,
 
   setActiveTab: (tab) => set({ activeTab: tab }),
@@ -156,6 +159,25 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
     } catch (err) {
       console.error('fetchHistory error:', err);
       set({ error: 'Failed to load history', historyLoading: false });
+    }
+  },
+
+  downloadHistoryExport: async (params) => {
+    set({ isExporting: true, error: null });
+    try {
+      const blob = await ModerationApi.exportHistory(params || {});
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "moderation-history-report.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      set({ isExporting: false });
+    } catch (err) {
+      console.error('downloadHistoryExport error:', err);
+      set({ error: 'Failed to export history', isExporting: false });
     }
   },
 }));

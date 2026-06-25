@@ -18,7 +18,7 @@ export default function AdminPageLayout({
       <AdminSidebar />
 
       {/* Right side: header + page content */}
-      <div className="ml-65 flex-1 flex flex-col">
+      <div className="ml-65 flex-1 flex flex-col min-w-0">
         {/* Fixed Header */}
         <AdminHeader adminName={adminName} avatarSrc={avatarSrc} />
 

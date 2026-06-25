@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Calendar,
   Loader2,
+  Search,
 } from "lucide-react";
 import { useAdminAnalyticsStore } from "@/store/admin/analytics/admin-analytics.store";
 import { RevPar } from "@/api/admin/analytics.api";
@@ -22,13 +23,14 @@ import { RevPar } from "@/api/admin/analytics.api";
 
 const ITEMS_PER_PAGE = 3;
 
-const ROOM_CATEGORIES = [
-  "All Categories",
-  "Suite",
-  "Villa",
-  "Penthouse",
-  "Eco Cabin",
-];
+// We will dynamically compute categories inside the component
+// const ROOM_CATEGORIES = [ ... ];
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
+const formatCategory = (cat: string) => {
+  if (cat === "All Categories") return cat;
+  return cat.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+};
 
 // ─── Room Card ────────────────────────────────────────────────────────────────
 function RoomCard({ room }: { room: RevPar }) {
@@ -40,6 +42,7 @@ function RoomCard({ room }: { room: RevPar }) {
           src={room.image}
           alt={room.propertyName}
           fill
+          sizes="(max-width: 768px) 100vw, 200px"
           className="object-cover"
         />
       </div>
@@ -49,7 +52,7 @@ function RoomCard({ room }: { room: RevPar }) {
         {/* Left: type + name + meta */}
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold tracking-widest text-[#C05621] uppercase m-0 mb-1">
-            {room.type} &bull; {room.roomNumber}
+            {formatCategory(room.type)} &bull; {room.roomNumber}
           </p>
           <h2 className="text-[20px] font-bold text-[#1A1A1A] leading-snug m-0 mb-3">
             {room.propertyName}
@@ -76,7 +79,7 @@ function RoomCard({ room }: { room: RevPar }) {
               className="text-[22px] font-bold leading-none m-0"
               style={{ color: room.occupancyRate >= 80 ? "#2D7D5C" : "#C05621" }}
             >
-              {room.occupancyRate}%
+              {Math.round(room.occupancyRate)}%
             </p>
           </div>
           <div>
@@ -112,6 +115,7 @@ export default function RevparDetailPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { revParBreakdown, loading, fetchAnalyticsData } = useAdminAnalyticsStore();
 
@@ -121,10 +125,13 @@ export default function RevparDetailPage() {
     }
   }, [revParBreakdown.length, fetchAnalyticsData]);
 
-  const filtered =
-    selectedCategory === "All Categories"
-      ? revParBreakdown
-      : revParBreakdown.filter((r) => r.type === selectedCategory);
+  const filtered = revParBreakdown.filter((r) => {
+    const matchesCategory = selectedCategory === "All Categories" || r.type === selectedCategory;
+    const matchesSearch =
+      (r.propertyName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.roomNumber || "").toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const pageRooms = filtered.slice(
@@ -136,6 +143,20 @@ export default function RevparDetailPage() {
     setSelectedCategory(cat);
     setCurrentPage(1);
     setCategoryOpen(false);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const dynamicCategories = ["All Categories", ...Array.from(new Set(revParBreakdown.map(r => r.type)))];
+
+  const getPaginationItems = () => {
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (currentPage <= 3) return [1, 2, 3, 4, "...", totalPages];
+    if (currentPage >= totalPages - 2) return [1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
   };
 
   return (
@@ -169,6 +190,18 @@ export default function RevparDetailPage() {
 
           {/* Filters */}
           <div className="flex items-center gap-3">
+            {/* Search Input */}
+            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E8DDD8] rounded-xl shadow-sm min-w-[240px]">
+              <Search size={14} color="#9E7B6A" />
+              <input
+                type="text"
+                placeholder="property name, room number"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full text-[13px] text-[#1A1A1A] placeholder:text-[#C8B8B0] outline-none border-none bg-transparent"
+              />
+            </div>
+
             {/* Room Category dropdown */}
             <div className="relative">
               <button
@@ -178,12 +211,12 @@ export default function RevparDetailPage() {
                 <span className="text-[10px] font-semibold text-[#9E7B6A] uppercase tracking-wider">
                   Room Category
                 </span>
-                <span className="font-medium">{selectedCategory}</span>
+                <span className="font-medium">{formatCategory(selectedCategory)}</span>
                 <ChevronDown size={14} color="#9E7B6A" />
               </button>
               {categoryOpen && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-[#E8DDD8] rounded-xl shadow-lg z-20 min-w-[180px] overflow-hidden">
-                  {ROOM_CATEGORIES.map((cat) => (
+                <div className="absolute top-full right-0 mt-1 bg-white border border-[#E8DDD8] rounded-xl shadow-lg z-20 min-w-[180px] overflow-hidden">
+                  {dynamicCategories.map((cat) => (
                     <button
                       key={cat}
                       onClick={() => handleCategoryChange(cat)}
@@ -193,17 +226,11 @@ export default function RevparDetailPage() {
                           : "text-[#1A1A1A] hover:bg-[#FAF5F2]"
                       }`}
                     >
-                      {cat}
+                      {formatCategory(cat)}
                     </button>
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Date Range */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E8DDD8] rounded-xl text-[13px] text-[#6B4A3A] shadow-sm">
-              <Calendar size={14} color="#9E7B6A" />
-              <span>Oct 01 – Oct 31, 2023</span>
             </div>
           </div>
         </div>
@@ -222,7 +249,7 @@ export default function RevparDetailPage() {
               </p>
             </div>
           ) : (
-            pageRooms.map((room) => <RoomCard key={room.propertyId} room={room} />)
+            pageRooms.map((room) => <RoomCard key={room.roomNumber} room={room} />)
           )}
         </div>
 
@@ -242,19 +269,29 @@ export default function RevparDetailPage() {
               <ChevronLeft size={16} color="#6B4A3A" />
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-9 h-9 rounded-xl text-[13px] font-semibold border transition-colors ${
-                  currentPage === page
-                    ? "bg-[#F59E0B] text-white border-[#F59E0B]"
-                    : "bg-white text-[#1A1A1A] border-[#E8DDD8] hover:bg-[#FAF5F2]"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            {getPaginationItems().map((item, idx) => {
+              if (item === "...") {
+                return (
+                  <span key={`ellipsis-${idx}`} className="text-[#9E7B6A] font-medium tracking-widest px-1">
+                    ...
+                  </span>
+                );
+              }
+              const page = item as number;
+              return (
+                <button
+                  key={`page-${page}`}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-9 h-9 rounded-xl text-[13px] font-semibold border transition-colors ${
+                    currentPage === page
+                      ? "bg-[#F59E0B] text-white border-[#F59E0B]"
+                      : "bg-white text-[#1A1A1A] border-[#E8DDD8] hover:bg-[#FAF5F2]"
+                  }`}
+                >
+                  {page}
+                </button>
+              );
+            })}
 
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}

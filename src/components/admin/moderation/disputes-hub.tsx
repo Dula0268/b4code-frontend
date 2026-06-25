@@ -13,6 +13,7 @@ import {
   FileText,
   ArrowLeft,
   Loader2,
+  X,
 } from "lucide-react";
 import OpenCasesCard from "@/components/admin/moderation/kpi-cards/open-cases-card";
 import PendingDecisionCard from "@/components/admin/moderation/kpi-cards/pending-decision-card";
@@ -101,9 +102,9 @@ function ResolutionSummary({ dispute }: { dispute: Dispute }) {
   };
 
   return (
-    <div className="w-85 shrink-0 flex flex-col gap-5">
+    <div className="w-85 shrink-0 flex flex-col gap-5 bg-white border border-[#F0EBE7] rounded-2xl shadow-sm overflow-hidden relative">
       {/* ── Header ── */}
-      <div className="flex items-start justify-between">
+      <div className="sticky top-0 bg-white px-6 pt-6 pb-4 border-b border-[#F0EBE7] flex items-center justify-between z-10">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-full bg-[#FEF3C7] flex items-center justify-center">
             <FileText size={18} className="text-[#92400E]" />
@@ -114,10 +115,20 @@ function ResolutionSummary({ dispute }: { dispute: Dispute }) {
             Summary
           </h3>
         </div>
-        <span className="text-[12px] text-[#9E7B6A]">
-          ID: {dispute.bookingId?.replace("#BK-", "#") || "N/A"}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-[12px] text-[#9E7B6A]">
+            ID: {dispute.bookingId?.replace("#BK-", "#") || "N/A"}
+          </span>
+          <button
+            onClick={() => setSelectedDispute(null)}
+            className="w-8 h-8 rounded-lg hover:bg-[#F3F4F6] flex items-center justify-center transition cursor-pointer border-none bg-transparent"
+          >
+            <X size={18} className="text-[#6B7280]" />
+          </button>
+        </div>
       </div>
+
+      <div className="px-6 pb-6 flex flex-col gap-6 overflow-y-auto max-h-[calc(100vh-250px)]">
 
       {/* ── Booking Context ── */}
       <div>
@@ -267,6 +278,7 @@ function ResolutionSummary({ dispute }: { dispute: Dispute }) {
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
@@ -398,10 +410,10 @@ export default function DisputeHubPage() {
       </div>
 
       {/* ── Content: Table + Detail Panel ── */}
-      <div className="flex gap-6">
+      <div className="flex gap-6 items-start">
         {/* ── Disputes Table ── */}
         <div
-          className={`bg-white rounded-2xl shadow-sm overflow-hidden ${selectedDispute ? "flex-1 min-w-0" : "w-full"}`}
+          className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-all duration-300 ${selectedDispute ? "flex-1 min-w-0" : "w-full"}`}
         >
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">

@@ -16,6 +16,7 @@ interface FinanceState {
   refundsLoading: boolean;
   payoutsLoading: boolean;
   actionLoading: boolean;
+  isExporting: boolean;
   error: string | null;
 
   // Data
@@ -45,6 +46,7 @@ interface FinanceState {
   rejectRefund: (id: string, adminNote: string) => Promise<void>;
   processPayout: (id: string, bankReference: string, commissionRate?: number) => Promise<void>;
   rejectPayout: (id: string) => Promise<void>;
+  downloadPayoutExport: (params: { search?: string; status?: string }) => Promise<void>;
 }
 
 export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
@@ -54,6 +56,7 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
   refundsLoading: false,
   payoutsLoading: false,
   actionLoading: false,
+  isExporting: false,
   error: null,
 
   summary: null,
@@ -197,6 +200,25 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
       const message = err instanceof Error ? err.message : "Failed to reject payout";
       set({ error: message, actionLoading: false });
       throw err;
+    }
+  },
+
+  downloadPayoutExport: async (params) => {
+    set({ isExporting: true, error: null });
+    try {
+      const blob = await FinanceApi.exportPayouts(params);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "payout-report.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      set({ isExporting: false });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to export payouts";
+      set({ error: message, isExporting: false });
     }
   }
 }));
