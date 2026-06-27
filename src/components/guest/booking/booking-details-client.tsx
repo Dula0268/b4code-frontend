@@ -118,13 +118,15 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   }, [booking, isEditing, editCheckIn, editCheckOut, editGuests])
 
   if (!booking) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-10 h-10 border-4 border-t-[#9a3300] border-[#e8ddcf] rounded-full animate-spin mb-4" />
-        <p className="text-[#828282] font-medium">Loading booking details...</p>
-      </div>
-    )
-  }
+      return (
+        <div className="max-w-[1000px] mx-auto px-4 md:px-8 py-8 animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/3 mb-8"></div>
+          <div className="h-64 bg-gray-100 rounded-xl mb-6"></div>
+          <div className="h-64 bg-gray-100 rounded-xl"></div>
+        </div>
+      )
+    }
 
   const isUpcoming = booking.status === "UPCOMING"
   const isCompleted = booking.status === "COMPLETED"
