@@ -254,7 +254,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
                       <SelectTrigger className={categoryError ? errCls : inputCls}>
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white">
                         {categories.map((c) => (
                           <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
                         ))}
