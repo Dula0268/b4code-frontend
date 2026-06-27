@@ -9,7 +9,7 @@ export type ItemReview = {
   itemTitle: string;
   rating: number; // 1-5
   reviewText: string;
-  guestName: string;
+  guestName?: string;
   timestamp: number;
   helpful: number; // count of guests who found it helpful
 };
@@ -50,20 +50,23 @@ export const useGuestReviewsStore = create<ReviewsState & ReviewsActions>((set, 
   },
 
   getReviewsForItem: (itemId: string) => {
-    return get().itemReviews.filter((r) => r.itemId === itemId);
+    const numericItemId = itemId.replace(/^mn-/, "");
+    return get().itemReviews.filter((r) => r.itemId === numericItemId);
   },
 
   getAverageRating: (itemId: string) => {
-    const reviews = get().itemReviews.filter((r) => r.itemId === itemId);
+    const numericItemId = itemId.replace(/^mn-/, "");
+    const reviews = get().itemReviews.filter((r) => r.itemId === numericItemId);
     if (reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
     return +(sum / reviews.length).toFixed(1);
   },
 
   fetchReviewsForItem: async (menuItemId: string) => {
+    const numericItemId = menuItemId.replace(/^mn-/, "");
     set({ loading: true, error: null });
     try {
-      const response = await api.get(`/menu-items/${menuItemId}/reviews`);
+      const response = await api.get(`/menu-items/${numericItemId}/reviews`);
       interface BackendReview {
         id: number;
         menuItemId: number;
@@ -80,7 +83,7 @@ export const useGuestReviewsStore = create<ReviewsState & ReviewsActions>((set, 
         itemTitle: r.menuItemName || "",
         rating: r.rating,
         reviewText: r.comment,
-        guestName: r.guestName,
+        guestName: r.guestName || "Guest",
         timestamp: new Date(r.createdAt).getTime(),
         helpful: r.helpful || 0,
       }));
@@ -92,16 +95,18 @@ export const useGuestReviewsStore = create<ReviewsState & ReviewsActions>((set, 
   },
 
   submitReview: async (orderId: string, review: { menuItemId: string; rating: number; comment: string; guestName: string }) => {
+    const numericOrderId = orderId.replace(/^#ORD-/, "");
+    const numericMenuItemId = review.menuItemId.replace(/^mn-/, "");
     set({ loading: true, error: null });
     try {
-      await api.post(`/orders/${orderId}/reviews`, review);
+      await api.post(`/orders/${numericOrderId}/reviews`, { ...review, menuItemId: Number(numericMenuItemId) });
       const newReview: ItemReview = {
         id: `rev-${Date.now()}`,
-        itemId: review.menuItemId,
+        itemId: numericMenuItemId,
         itemTitle: "",
         rating: review.rating,
         reviewText: review.comment,
-        guestName: review.guestName,
+        guestName: review.guestName || "Guest",
         timestamp: Date.now(),
         helpful: 0,
       };
