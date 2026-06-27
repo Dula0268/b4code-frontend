@@ -16,7 +16,7 @@ export default function ConfirmationClient() {
 
   const orderNumber = order?.id ?? "#ORD-0000";
   const totalAmount = order?.total ?? 0;
-  const roomNumber = order?.roomNumber ?? "304";
+  const location = order?.location ?? "";
 
   return (
     <div className="min-h-[calc(100vh-72px)] flex items-center justify-center px-4 py-6 bg-[#fafaf9]">
@@ -44,7 +44,7 @@ export default function ConfirmationClient() {
           </h1>
           <p className="text-[14px] text-[#828282] leading-[20px] max-w-[380px] mx-auto">
             Thank you for your order. We are preparing your meal and will deliver it shortly to{" "}
-            <span className="font-semibold text-[#333333]">Room {roomNumber}</span>.
+            <span className="font-semibold text-[#333333]">{location}</span>.
           </p>
         </div>
 
