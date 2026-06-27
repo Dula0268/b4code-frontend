@@ -159,11 +159,13 @@ export default function QrList({ propertyId }: { propertyId: number }) {
       <div className="flex-1 overflow-hidden flex flex-col bg-white rounded-[10px] border border-[var(--gray-5)] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
         {/* Loading indicator */}
         {loading && (
-          <div className="flex items-center justify-center h-full">
-            <div className="flex flex-col items-center gap-2">
-              <Loader size={20} className="animate-spin text-[var(--brand-primary)]" />
-              <p className="text-xs text-[var(--gray-3)]">Loading QR codes...</p>
+          <div className="flex-1 flex flex-col p-4 gap-4">
+            <div className="grid grid-cols-[1fr_120px_100px_140px] gap-4 mb-2">
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-4 bg-gray-200 rounded animate-pulse" />)}
             </div>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-10 w-full bg-gray-100 rounded animate-pulse" />
+            ))}
           </div>
         )}
 

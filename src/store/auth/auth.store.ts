@@ -63,6 +63,7 @@ type AuthState = {
 type AuthActions = {
   login: (email: string, password: string) => Promise<string>;
   loginForCheckout: (email: string, password: string) => Promise<void>;
+  roomLogin: (lastName: string, roomNumber: string, propertyId: number) => Promise<void>;
   register: (email: string, password: string, role: Role, propertyId?: number) => Promise<void>;
   registerFromCheckout: (
     email: string,
@@ -181,6 +182,42 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
       });
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || (err instanceof Error ? err.message : "Login failed");
+
+      set({ loading: false, error: message });
+      throw new Error(message);
+    }
+  },
+
+  // ─── ROOM LOGIN FOR CHECKOUT ─────────────────────────────
+  roomLogin: async (lastName, roomNumber, propertyId) => {
+    set({ loading: true, error: null });
+
+    try {
+      const data = await authApi.roomLogin(lastName, roomNumber, propertyId);
+      const role = data.role.toLowerCase() as Role;
+
+      setToken(data.token);
+
+      const userData: AuthUser = {
+        email: data.email,
+        role,
+        userId: data.userId,
+        propertyId: data.propertyId,
+        roomId: data.roomId,
+        profile: data.profile
+      };
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("auth_user", JSON.stringify(userData));
+      }
+
+      set({
+        loading: false,
+        user: userData,
+        isAuthenticated: true,
+      });
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || (err instanceof Error ? err.message : "Verification failed");
 
       set({ loading: false, error: message });
       throw new Error(message);

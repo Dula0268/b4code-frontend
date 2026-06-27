@@ -1,14 +1,16 @@
 import { create } from "zustand";
 import api from "@/lib/axios";
+import axios from "axios";
+import { useAuthStore } from "@/store/auth/auth.store";
+import { getToken } from "@/lib/token";
+
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 export type OrderStatus =
   | "placed"
   | "accepted"
   | "in-progress"
-  | "ready"
   | "delivered"
-  | "completed"
   | "cancelled";
 
 export interface OrderItem {
@@ -52,22 +54,21 @@ export interface Order {
 const STATUS_FLOW: Partial<Record<OrderStatus, OrderStatus>> = {
   placed: "accepted",
   accepted: "in-progress",
-  "in-progress": "ready",
-  ready: "delivered",
-  delivered: "completed",
+  "in-progress": "delivered",
 };
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   placed: "Order Placed",
   accepted: "Order Confirmed",
   "in-progress": "Order Preparing",
-  ready: "Order Prepared and Ready",
   delivered: "Order Delivered",
-  completed: "Order Completed",
   cancelled: "Order Rejected",
 };
 
 // ─── Initialize empty orders (populated from API) ─────────────────────────────
+let staffEventSource: EventSource | null = null;
+let activeAbortController: AbortController | null = null;
+
 
 // ─── State ─────────────────────────────────────────────────────────────────────
 type StaffOrdersState = {
@@ -89,72 +90,167 @@ type StaffOrdersActions = {
   getOrder: (orderId: string) => Order | undefined;
   getOrdersByStatus: (status: OrderStatus) => Order[];
   getCountByStatus: (status: OrderStatus) => number;
+  setupSse: (propertyId: number) => void;
+  stopSse: () => void;
   reset: () => void;
 };
 
 // Helper function to map backend status to frontend status
 function mapBackendStatusToFrontend(status: string): OrderStatus {
   const statusMap: Record<string, OrderStatus> = {
-    NEW: "placed",
-    PREPARING: "in-progress",
-    READY: "ready",
+    // Current Backend Statuses (Uppercase)
+    PLACED: "placed",
+    ACCEPTED: "accepted",
+    IN_PROGRESS: "in-progress",
+    READY: "in-progress",
     DELIVERED: "delivered",
     CANCELLED: "cancelled",
+
+    // Obsolete/Alternative format mappings
+    NEW: "placed",
+    PREPARING: "accepted",
+
+    // Lowercase mappings
+    placed: "placed",
+    accepted: "accepted",
+    "in-progress": "in-progress",
+    in_progress: "in-progress",
+    delivered: "delivered",
+    cancelled: "cancelled",
   };
-  return statusMap[status] || "placed";
+  return statusMap[status] || (statusMap[status.toLowerCase()] as OrderStatus) || "placed";
+}
+
+function sanitizeErrorMessage(message: string, context: string): string {
+  const msg = message.toLowerCase();
+  
+  if (
+    msg.includes("constraint") ||
+    msg.includes("duplicate") ||
+    msg.includes("foreign key") ||
+    msg.includes("sql") ||
+    msg.includes("hibernate") ||
+    msg.includes("database") ||
+    msg.includes("persistence") ||
+    msg.includes("query") ||
+    msg.includes("nullpointer") ||
+    msg.includes("npe")
+  ) {
+    return "We encountered a temporary database update issue. Please refresh and try again.";
+  }
+  
+  if (
+    msg.includes("network") ||
+    msg.includes("timeout") ||
+    msg.includes("refused") ||
+    msg.includes("500") ||
+    msg.includes("502") ||
+    msg.includes("503") ||
+    msg.includes("504") ||
+    msg.includes("connect") ||
+    msg.includes("socket") ||
+    msg.includes("http") ||
+    msg.includes("request failed")
+  ) {
+    return "Connection issue. Please check your internet connection or try again shortly.";
+  }
+  
+  if (
+    msg.includes("unauthorized") ||
+    msg.includes("forbidden") ||
+    msg.includes("401") ||
+    msg.includes("403") ||
+    msg.includes("token") ||
+    msg.includes("jwt")
+  ) {
+    return "Access issue. Please verify your credentials or sign in again.";
+  }
+  
+  if (
+    msg.includes("exception") ||
+    msg.includes("failed with status") ||
+    msg.includes("internal server error")
+  ) {
+    return `We couldn't complete the request: ${context}. Please try again.`;
+  }
+  
+  return message;
 }
 
 function extractApiErrorMessage(error: unknown, fallback: string): string {
+  let message = fallback;
   if (typeof error === "object" && error !== null) {
     const response = (error as { response?: { data?: unknown } }).response;
     if (response && typeof response.data === "object" && response.data !== null) {
       const data = response.data as Record<string, unknown>;
       if (typeof data.message === "string") {
-        return data.message;
+        message = data.message;
       }
     }
+  } else if (error instanceof Error && error.message) {
+    message = error.message;
   }
 
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return fallback;
+  return sanitizeErrorMessage(message, fallback);
 }
 
-// Helper function to convert backend order to frontend order
+interface BackendOrderItem {
+  id: number;
+  quantity: number;
+  priceAtOrder: number;
+  note?: string;
+  menuItem: {
+    name: string;
+    tag?: string;
+  };
+}
+
 interface BackendOrderResponse {
   id: number;
-  roomNumber: string;
+  location: string;
+  guestName: string;
   guestId: number;
+  guestInstructions?: string;
   totalAmount: number;
   status: string;
   createdAt: string;
+  items?: BackendOrderItem[];
 }
 function convertBackendOrder(backendOrder: BackendOrderResponse): Order {
   const createdAt = new Date(backendOrder.createdAt);
   const status = mapBackendStatusToFrontend(backendOrder.status);
   
+  const items: OrderItem[] = (backendOrder.items || []).map((it) => ({
+    qty: it.quantity,
+    name: it.menuItem?.name || "Unknown Item",
+    price: it.priceAtOrder,
+    tag: it.menuItem?.tag || undefined,
+    note: it.note || undefined,
+  }));
+
+  const totalItems = items.reduce((acc, it) => acc + it.qty, 0);
+
   return {
     id: `#ORD-${backendOrder.id}`,
     time: createdAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
     timeAgo: getTimeAgo(createdAt),
-    table: backendOrder.roomNumber || "Unknown",
+    table: backendOrder.location || "Unknown",
     type: "Room Service",
-    room: backendOrder.roomNumber,
-    guest: `Guest ${backendOrder.guestId}`,
-    items: [],
+    room: backendOrder.location,
+    guest: backendOrder.guestName || `Guest ${backendOrder.guestId}`,
+    items,
+    note: backendOrder.guestInstructions,
     subtotal: backendOrder.totalAmount * 0.9,
     serviceCharge: backendOrder.totalAmount * 0.1 * 0.1,
     total: backendOrder.totalAmount,
-    totalItems: 0,
+    totalItems,
     status,
     isUrgent: status === "placed" || status === "in-progress",
     history: [
       {
         label: STATUS_LABELS[status],
         time: createdAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-        detail: "From Backend",
+        detail: `By ${backendOrder.guestName || "Guest"}`,
         color: (status === "in-progress" ? "yellow" : "green") as "yellow" | "green",
       },
     ],
@@ -190,45 +286,54 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         set({ loading: false });
         return;
       }
+
+      // Abort previous pending fetch request to avoid race conditions
+      if (activeAbortController) {
+        activeAbortController.abort();
+      }
+
+      const controller = new AbortController();
+      activeAbortController = controller;
+
       set({ loading: true, error: null });
       console.log(`🔄 Fetching orders for property ${propertyId}...`);
       try {
-        const response = await api.get(`/staff/orders/property/${propertyId}`);
-        const backendOrders = response.data;
-        console.log(`✅ Received ${backendOrders.length} orders from backend:`, backendOrders);
-        const orders = backendOrders.map(convertBackendOrder);
-        console.log(`✅ Converted to frontend format:`, orders);
-        set({ orders, loading: false });
+        const response = await api.get(`/staff/orders/property/${propertyId}`, {
+          params: { size: 100 },
+          signal: controller.signal
+        });
+        
+        // Only apply results if this is the latest fetch request
+        if (activeAbortController === controller) {
+          // Backend returns a Spring Page object: {content: [], totalPages, ...}
+          // Extract the content array, or fall back to the raw data if it's already an array
+          const raw = response.data;
+          const backendOrders: BackendOrderResponse[] = Array.isArray(raw) ? raw : (raw?.content ?? []);
+          console.log(`✅ Received ${backendOrders.length} orders from backend:`, backendOrders);
+          const orders = backendOrders.map(convertBackendOrder);
+          console.log(`✅ Converted to frontend format:`, orders);
+          set({ orders, loading: false });
+        }
       } catch (error: unknown) {
+        if (axios.isCancel(error)) {
+          console.log("🔄 Stale fetch orders request aborted successfully.");
+          return;
+        }
         const errorMessage = extractApiErrorMessage(error, "Failed to fetch orders");
         console.error(`❌ Failed to fetch orders:`, error);
         set({ error: errorMessage, loading: false });
-        // Keep existing orders on error
       }
     },
 
     acceptOrder: async (orderId) => {
       try {
         const orderIdNum = parseInt(orderId.replace("#ORD-", ""));
-        await api.patch(`/staff/orders/${orderIdNum}/accept`);
+        const response = await api.patch(`/staff/orders/${orderIdNum}/accept`);
+        const updated = convertBackendOrder(response.data);
         
         set((state) => ({
           orders: state.orders.map((o) =>
-            o.id === orderId
-              ? {
-                  ...o,
-                  status: "accepted" as OrderStatus,
-                  history: [
-                    {
-                      label: "Order Confirmed",
-                      time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-                      detail: "Auto-confirmed",
-                      color: "green" as const,
-                    },
-                    ...o.history,
-                  ],
-                }
-              : o
+            o.id === orderId ? { ...updated, internalNotes: o.internalNotes } : o
           ),
           toast: {
             type: "success",
@@ -239,31 +344,22 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
       } catch (error: unknown) {
         const errorMessage = extractApiErrorMessage(error, "Failed to accept order");
         set({ error: errorMessage });
+        throw error;
       }
     },
 
     rejectOrder: async (orderId, reason) => {
       try {
         const orderIdNum = parseInt(orderId.replace("#ORD-", ""));
-        await api.patch(`/staff/orders/${orderIdNum}/reject`);
+        const response = await api.post(`/staff/orders/${orderIdNum}/reject`, {
+          confirm: true,
+          reason: reason || "Rejected via notification"
+        });
+        const updated = convertBackendOrder(response.data);
         
         set((state) => ({
           orders: state.orders.map((o) =>
-            o.id === orderId
-              ? {
-                  ...o,
-                  status: "cancelled" as OrderStatus,
-                  history: [
-                    {
-                      label: "Order Rejected",
-                      time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-                      detail: reason || "Rejected by staff",
-                      color: "gray" as const,
-                    },
-                    ...o.history,
-                  ],
-                }
-              : o
+            o.id === orderId ? { ...updated, internalNotes: o.internalNotes } : o
           ),
           toast: {
             type: "error",
@@ -274,13 +370,13 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
       } catch (error: unknown) {
         const errorMessage = extractApiErrorMessage(error, "Failed to reject order");
         set({ error: errorMessage });
+        throw error;
       }
     },
 
     advanceStatus: async (orderId) => {
       try {
         const orderIdNum = parseInt(orderId.replace("#ORD-", ""));
-        // Get current order to determine next action
         const currentOrder = get().orders.find((o) => o.id === orderId);
         if (!currentOrder) return;
 
@@ -289,34 +385,20 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         
         if (status === "placed") {
           endpoint = `/staff/orders/${orderIdNum}/accept`;
-        } else if (status === "accepted" || status === "in-progress") {
+        } else if (status === "accepted") {
           endpoint = `/staff/orders/${orderIdNum}/ready`;
-        } else if (status === "ready") {
+        } else if (status === "in-progress") {
           endpoint = `/staff/orders/${orderIdNum}/deliver`;
         }
 
         if (endpoint) {
-          await api.patch(endpoint);
+          const response = await api.patch(endpoint);
+          const updated = convertBackendOrder(response.data);
           
           set((state) => ({
-            orders: state.orders.map((o) => {
-              if (o.id !== orderId) return o;
-              const nextStatus = STATUS_FLOW[o.status];
-              if (!nextStatus) return o;
-              return {
-                ...o,
-                status: nextStatus,
-                history: [
-                  {
-                    label: STATUS_LABELS[nextStatus],
-                    time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-                    detail: nextStatus === "completed" ? "Auto-completed" : "By Staff",
-                    color: (nextStatus === "in-progress" ? "yellow" : "green") as "green" | "yellow" | "gray",
-                  },
-                  ...o.history,
-                ],
-              };
-            }),
+            orders: state.orders.map((o) =>
+              o.id === orderId ? { ...updated, internalNotes: o.internalNotes } : o
+            ),
           }));
         }
       } catch (error: unknown) {
@@ -328,6 +410,11 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
     clearToast: () => set({ toast: null }),
 
     addInternalNote: (orderId, note) => {
+      const user = useAuthStore.getState().user;
+      const author = user?.profile?.firstName 
+        ? `${user.profile.firstName} ${user.profile.lastName?.charAt(0) || ""}`.trim()
+        : "Staff";
+
       set((state) => ({
         orders: state.orders.map((o) =>
           o.id === orderId
@@ -335,7 +422,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
                 ...o,
                 internalNotes: [
                   {
-                    author: "Alex M.",
+                    author,
                     text: note,
                     timeAgo: "Just now",
                   },
@@ -351,6 +438,94 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
     getOrdersByStatus: (status) => get().orders.filter((o) => o.status === status),
     getCountByStatus: (status) => get().orders.filter((o) => o.status === status).length,
 
-    reset: () => set({ orders: [], loading: false, error: null, toast: null }),
+    setupSse: (propertyId) => {
+      if (typeof window === "undefined") return;
+      
+      // Clean up previous event source if any
+      if (staffEventSource) {
+        staffEventSource.close();
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+      const apiBase = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+      const token = getToken() || "";
+      console.log(`🔌 Establishing Staff SSE connection to property ${propertyId}...`);
+      
+      const es = new EventSource(`${apiBase}/staff/orders/property/${propertyId}/stream?token=${token}`);
+      staffEventSource = es;
+
+      es.addEventListener("new-order", (event) => {
+        try {
+          const backendOrder = JSON.parse(event.data);
+          console.log("📩 Staff SSE: new-order received:", backendOrder);
+          const converted = convertBackendOrder(backendOrder);
+          
+          set((state) => {
+            if (state.orders.some((o) => o.id === converted.id)) {
+              return state;
+            }
+            return {
+              orders: [converted, ...state.orders],
+            };
+          });
+        } catch (err) {
+          console.error("❌ Failed to parse new-order SSE event:", err);
+        }
+      });
+
+      es.addEventListener("status-update", (event) => {
+        try {
+          const backendOrder = JSON.parse(event.data);
+          console.log("📩 Staff SSE: status-update received:", backendOrder);
+          const converted = convertBackendOrder(backendOrder);
+          
+          set((state) => {
+            const exists = state.orders.some((o) => o.id === converted.id);
+            if (!exists) {
+              return {
+                orders: [converted, ...state.orders],
+              };
+            }
+            return {
+              orders: state.orders.map((o) =>
+                o.id === converted.id ? { ...o, status: converted.status, history: converted.history } : o
+              ),
+            };
+          });
+        } catch (err) {
+          console.error("❌ Failed to parse status-update SSE event:", err);
+        }
+      });
+
+      let reconnectDelay = 1000;
+      es.onerror = (err) => {
+        console.warn("⚠️ Staff SSE connection error (will auto-reconnect):", err);
+        // Close current connection - browser will auto-reconnect for EventSource
+        // If it keeps failing, we just log it silently
+        if (staffEventSource?.readyState === EventSource.CLOSED) {
+          console.log(`🔌 SSE closed, reconnecting in ${reconnectDelay}ms...`);
+          setTimeout(() => {
+            if (reconnectDelay < 30000) reconnectDelay *= 2;
+            get().setupSse(propertyId);
+          }, reconnectDelay);
+        }
+      };
+    },
+
+    stopSse: () => {
+      if (staffEventSource) {
+        console.log("🔌 Closing Staff SSE connection...");
+        staffEventSource.close();
+        staffEventSource = null;
+      }
+    },
+
+    reset: () => {
+      if (staffEventSource) {
+        staffEventSource.close();
+        staffEventSource = null;
+      }
+      set({ orders: [], loading: false, error: null, toast: null });
+    },
   })
 );

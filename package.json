@@ -51,20 +51,28 @@
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
+    "uuid": "^14.0.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@babel/plugin-transform-typescript": "^7.24.1",
+    "@babel/preset-env": "^7.24.1",
+    "@babel/preset-typescript": "^7.24.1",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
+    "babel-loader": "^10.1.1",
+    "babel-plugin-module-resolver": "^5.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
     "jest": "^30.0.5",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.11",
     "tw-animate-css": "^1.3.7",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   }
 }

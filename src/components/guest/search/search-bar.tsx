@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { MapPin, Calendar, Users, Search } from "lucide-react"
+import { toast } from "sonner"
 
 import CalendarPicker from "@/components/shared/forms/calendar-picker"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
@@ -47,7 +48,6 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const guestRef = useRef<HTMLDivElement>(null)
 
   const [mounted, setMounted] = useState(false)
-  const [errorMsg, setErrorMsg] = useState("")
   useEffect(() => { setMounted(true) }, [])
 
   // Keep the compact search bar aligned with the current URL when navigating
@@ -117,24 +117,19 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   // ── Search ─────────────────────────────────────────────────────────────
   const handleSearch = () => {
     if (!destination.trim() || !checkIn || !checkOut) {
-      setErrorMsg("Please enter a destination and select your check-in and check-out dates.")
-      setTimeout(() => setErrorMsg(""), 4000)
+      toast.error("Please enter a destination and select your check-in and check-out dates.")
       return
     }
 
     if (guests.adults < 1 || guests.rooms < 1) {
-      setErrorMsg("Please select at least 1 guest and 1 room.")
-      setTimeout(() => setErrorMsg(""), 4000)
+      toast.error("Please select at least 1 guest and 1 room.")
       return
     }
 
     if (checkIn && checkOut && checkOut <= checkIn) {
-      setErrorMsg("Check-out date must be after check-in date.")
-      setTimeout(() => setErrorMsg(""), 4000)
+      toast.error("Check-out date must be after check-in date.")
       return
     }
-
-    setErrorMsg("")
 
     const params = new URLSearchParams()
     if (destination.trim()) params.set("destination", destination.trim())
@@ -156,18 +151,6 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
 
   return (
     <div className="relative">
-      {/* Error Notification */}
-      <div
-        className={[
-          "absolute -top-12 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 bg-[#e53935] text-white text-[13px] font-medium",
-          "px-4 py-2.5 rounded-xl shadow-lg transition-all duration-300 whitespace-nowrap",
-          errorMsg ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
-        ].join(" ")}
-      >
-        <span className="text-[16px]">⚠️</span>
-        {errorMsg}
-      </div>
-
       <div
         role="search"
         className={[

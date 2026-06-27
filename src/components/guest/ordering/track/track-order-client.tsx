@@ -14,25 +14,25 @@ function formatLkr(n: number) {
 /* ─── Status pipeline (happy path + rejected) ─── */
 
 const STATUS_PIPELINE: OrderStatus[] = [
-  "Placed",
-  "Accepted",
-  "In-Progress",
-  "Delivered",
+  "placed",
+  "accepted",
+  "in-progress",
+  "delivered",
 ];
 
-const STATUS_DESCRIPTIONS: Record<OrderStatus, (room: string) => string> = {
-  Placed: (room) => `We have received your order request from Room ${room}.`,
-  Accepted: () => "The kitchen has accepted your order and started preparing.",
-  "In-Progress": () =>
+const STATUS_DESCRIPTIONS: Record<OrderStatus, (loc: string) => string> = {
+  placed: (loc) => `We have received your order request from ${loc}.`,
+  accepted: () => "The kitchen has accepted your order and started preparing.",
+  "in-progress": () =>
     "Your order is being plated and prepared for room service delivery.",
-  Delivered: (room) => `Order successfully delivered to Room ${room}.`,
-  Rejected: () => "Unfortunately, the kitchen was unable to fulfill your order.",
+  delivered: (loc) => `Order successfully delivered to ${loc}.`,
+  cancelled: () => "Unfortunately, the kitchen was unable to fulfill your order.",
 };
 
 /* ─── Hero config by status ─── */
 
 function getHeroBanner(status: OrderStatus, rejectionReason?: string) {
-  if (status === "Rejected") {
+  if (status === "cancelled") {
     return {
       bg: "bg-gradient-to-br from-[#fde8e8] to-[#fbd5d5]",
       icon: (
@@ -41,12 +41,12 @@ function getHeroBanner(status: OrderStatus, rejectionReason?: string) {
           <path d="M15 9l-6 6M9 9l6 6" stroke="white" strokeWidth="2" strokeLinecap="round" />
         </svg>
       ),
-      title: "Order Rejected",
+      title: "Order Cancelled",
       subtitle: rejectionReason || "The kitchen was unable to process your order at this time.",
       titleColor: "text-[#EB5757]",
     };
   }
-  if (status === "Delivered") {
+  if (status === "delivered") {
     return {
       bg: "bg-gradient-to-br from-[#e8f5e9] to-[#c8e6c9]",
       icon: (
@@ -57,7 +57,7 @@ function getHeroBanner(status: OrderStatus, rejectionReason?: string) {
       ),
       title: "Order Delivered!",
       subtitle: "We hope you enjoy your meal. Thank you for ordering with Prime Stay.",
-      titleColor: "text-[#1D1D1D]",
+      titleColor: "text-[#27AE60]",
     };
   }
   return {
@@ -68,7 +68,7 @@ function getHeroBanner(status: OrderStatus, rejectionReason?: string) {
         <path d="M12 6v6l4 2" stroke="#F2994A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: status === "Placed" ? "Order Placed" : status === "Accepted" ? "Being Prepared" : "In Progress",
+    title: status === "placed" ? "Order Placed" : status === "accepted" ? "Being Prepared" : "In Progress",
     subtitle: "Your order is being prepared. We\u2019ll update you as it progresses.",
     titleColor: "text-[#1D1D1D]",
   };
@@ -77,34 +77,82 @@ function getHeroBanner(status: OrderStatus, rejectionReason?: string) {
 /* ─── Status badge helper ─── */
 
 function StatusBadge({ status }: { status: OrderStatus }) {
-  const config: Record<OrderStatus, { bg: string; text: string }> = {
-    Placed: { bg: "bg-[#e8f5e9]", text: "text-[#27AE60]" },
-    Accepted: { bg: "bg-[#fff3cd]", text: "text-[#856404]" },
-    "In-Progress": { bg: "bg-[#fff3cd]", text: "text-[#856404]" },
-    Delivered: { bg: "bg-[#e8f5e9]", text: "text-[#27AE60]" },
-    Rejected: { bg: "bg-[#fde8e8]", text: "text-[#EB5757]" },
+  const config: Record<OrderStatus, { bg: string; text: string; label: string }> = {
+    placed: { bg: "bg-[#e8f5e9]", text: "text-[#27AE60]", label: "Placed" },
+    accepted: { bg: "bg-[#fff3cd]", text: "text-[#856404]", label: "Accepted" },
+    "in-progress": { bg: "bg-[#fff3cd]", text: "text-[#856404]", label: "In Progress" },
+    delivered: { bg: "bg-[#e8f5e9]", text: "text-[#27AE60]", label: "Delivered" },
+    cancelled: { bg: "bg-[#fde8e8]", text: "text-[#EB5757]", label: "Cancelled" },
   };
   const c = config[status];
   return (
     <span className={`px-2 py-0.5 rounded-full ${c.bg} ${c.text} text-[11px] font-medium`}>
-      {status}
+      {c.label}
     </span>
   );
 }
 
 /* ─── Track Order Client ─── */
 
+/* ─── Backend status → frontend status mapper ─── */
+function mapBackendStatus(backendStatus: string): OrderStatus {
+  const statusMap: Record<string, OrderStatus> = {
+    NEW: "placed",
+    PREPARING: "accepted",
+    READY: "in-progress",
+    DELIVERED: "delivered",
+    CANCELLED: "cancelled",
+    placed: "placed",
+    accepted: "accepted",
+    "in-progress": "in-progress",
+    delivered: "delivered",
+    cancelled: "cancelled",
+  };
+  return statusMap[backendStatus] || (statusMap[backendStatus.toLowerCase()] as OrderStatus) || "placed";
+}
+
 export default function TrackOrderClient() {
   const order = useOrderStore((s) => s.currentOrder);
   const advanceStatus = useOrderStore((s) => s.advanceStatus);
+  const syncCurrentOrder = useOrderStore((s) => s.syncCurrentOrder);
+  const eventSourceRef = React.useRef<EventSource | null>(null);
 
-  /* ── Demo controls: simulate status progression ── */
-  const nextStatus = React.useMemo(() => {
-    if (!order) return null;
-    if (order.currentStatus === "Delivered" || order.currentStatus === "Rejected") return null;
-    const idx = STATUS_PIPELINE.indexOf(order.currentStatus);
-    return idx >= 0 && idx < STATUS_PIPELINE.length - 1 ? STATUS_PIPELINE[idx + 1] : null;
-  }, [order]);
+  const numericOrderId = order?.id?.replace('#ORD-', '');
+
+  React.useEffect(() => {
+    syncCurrentOrder();
+  }, [syncCurrentOrder]);
+
+  /* ── SSE: real-time status updates ── */
+  React.useEffect(() => {
+    if (!numericOrderId) return;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const apiBase = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+    const es = new EventSource(`${apiBase}/orders/${numericOrderId}/stream`);
+    eventSourceRef.current = es;
+
+    es.addEventListener('status-update', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.status) {
+          const mappedStatus = mapBackendStatus(data.status);
+          advanceStatus(mappedStatus, data.rejectionReason);
+        }
+      } catch {
+        // Ignore malformed SSE data
+      }
+    });
+
+    es.onerror = () => {
+      // EventSource will auto-reconnect
+    };
+
+    return () => {
+      es.close();
+      eventSourceRef.current = null;
+    };
+  }, [numericOrderId, advanceStatus]);
 
   /* ── No order state ── */
   if (!order) {
@@ -138,7 +186,7 @@ export default function TrackOrderClient() {
   const hero = getHeroBanner(order.currentStatus, order.rejectionReason);
 
   /* Build timeline display from order's real timeline + remaining pipeline steps */
-  const isRejected = order.currentStatus === "Rejected";
+  const isRejected = order.currentStatus === "cancelled";
   const completedStatuses = new Set(order.timeline.map((t) => t.status));
   const timelineMap = Object.fromEntries(order.timeline.map((t) => [t.status, t]));
 
@@ -146,7 +194,7 @@ export default function TrackOrderClient() {
   const displaySteps = isRejected
     ? [
         ...STATUS_PIPELINE.filter((s) => completedStatuses.has(s)),
-        "Rejected" as OrderStatus,
+        "cancelled" as OrderStatus,
       ]
     : STATUS_PIPELINE;
 
@@ -167,7 +215,7 @@ export default function TrackOrderClient() {
 
       {/* ─── Order meta ─── */}
       <p className="text-[13px] text-[#828282] leading-[18px] mb-5">
-        Order {order.id} • Room {order.roomNumber} • {order.placedAt}
+        Order {order.id} • {order.location} • {order.placedAt}
       </p>
 
       {/* ─── Two-column layout ─── */}
@@ -200,8 +248,8 @@ export default function TrackOrderClient() {
                 const isLast = idx === displaySteps.length - 1;
                 const completed = completedStatuses.has(status);
                 const timeEntry = timelineMap[status];
-                const isRejectedStep = status === "Rejected";
-                const isFinal = status === "Delivered" && completed;
+                const isRejectedStep = status === "cancelled";
+                const isFinal = status === "delivered" && completed;
 
                 return (
                   <div key={status} className="flex gap-3">
@@ -230,7 +278,7 @@ export default function TrackOrderClient() {
                         <div
                           className={`w-[2px] flex-1 min-h-[32px] ${
                             completed &&
-                            (displaySteps[idx + 1] === "Rejected"
+                            (displaySteps[idx + 1] === "cancelled"
                               ? true
                               : completedStatuses.has(displaySteps[idx + 1]))
                               ? isRejected
@@ -256,7 +304,15 @@ export default function TrackOrderClient() {
                                   : "text-[#828282]"
                           }`}
                         >
-                          {status === "Delivered" ? `Delivered to Room` : status}
+                          {status === "delivered"
+                            ? "Delivered to Location"
+                            : status === "in-progress"
+                              ? "In Progress"
+                              : status === "accepted"
+                                ? "Accepted"
+                                : status === "placed"
+                                  ? "Placed"
+                                  : status}
                         </h4>
                         {timeEntry && (
                           <span className="text-[12px] text-[#828282] leading-[16px]">
@@ -268,7 +324,7 @@ export default function TrackOrderClient() {
                         {completed || isRejectedStep
                           ? isRejectedStep && order.rejectionReason
                             ? order.rejectionReason
-                            : STATUS_DESCRIPTIONS[status](order.roomNumber)
+                            : STATUS_DESCRIPTIONS[status](order.location || "")
                           : "Pending..."}
                       </p>
                     </div>
@@ -278,34 +334,9 @@ export default function TrackOrderClient() {
             </div>
           </div>
 
-          {/* ── Demo status controls ── */}
-          {(nextStatus || (!isRejected && order.currentStatus !== "Delivered")) && (
-            <div className="bg-[#fafaf9] border border-dashed border-[#E0E0E0] rounded-xl px-5 py-3 flex items-center gap-3 flex-wrap">
-              <span className="text-[12px] text-[#828282] font-medium uppercase tracking-wider">
-                Simulate:
-              </span>
-              {nextStatus && (
-                <button
-                  onClick={() => advanceStatus(nextStatus)}
-                  className="px-3 py-1.5 rounded-md bg-[#27AE60] text-white text-[12px] font-medium hover:bg-[#219a52] transition cursor-pointer"
-                >
-                  \u2192 {nextStatus}
-                </button>
-              )}
-              {!isRejected && order.currentStatus !== "Delivered" && (
-                <button
-                  onClick={() => advanceStatus("Rejected", "Kitchen is currently closed for this item.")}
-                  className="px-3 py-1.5 rounded-md bg-[#EB5757] text-white text-[12px] font-medium hover:bg-[#d94444] transition cursor-pointer"
-                >
-                  \u2715 Reject
-                </button>
-              )}
-            </div>
-          )}
-
           {/* ── Bottom action buttons ── */}
           <div className="flex gap-3">
-            {order.currentStatus === "Delivered" && (
+            {order.currentStatus === "delivered" && (
               <Link
                 href="/guest/order/review"
                 className="flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] transition"
@@ -340,7 +371,7 @@ export default function TrackOrderClient() {
               </svg>
               <span className="text-[14px] font-medium text-[#333333] leading-[20px]">Need Help?</span>
             </Link>
-            {order.currentStatus === "Rejected" && (
+            {order.currentStatus === "cancelled" && (
               <Link
                 href="/guest/order/menu"
                 className="flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] transition"
@@ -431,8 +462,10 @@ export default function TrackOrderClient() {
                 </svg>
                 <span className="text-[12px] text-[#828282] leading-[16px]">
                   {order.paymentMethod === "room-charge"
-                    ? `Charged to Room ${order.roomNumber}`
-                    : "Paid with Card"}
+                    ? `Charged to ${order.location}`
+                    : order.paymentMethod === "cash" || order.paymentMethod === "pay-at-property"
+                      ? "Pay with Cash / at Property"
+                      : "Paid with Card"}
                 </span>
               </div>
             </div>

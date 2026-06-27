@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Utensils, ShoppingCart, ClipboardList, HelpCircle } from 'lucide-react';
@@ -15,6 +16,11 @@ const ORDER_TABS = [
 export default function OrderTabBar() {
   const pathname   = usePathname();
   const itemCount  = useCartStore((s) => s.itemCount());
+  const [isHydrated, setIsHydrated] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
@@ -39,7 +45,7 @@ export default function OrderTabBar() {
               >
                 <Icon size={15} />
                 {label}
-                {label === 'Cart' && itemCount > 0 && (
+                {label === 'Cart' && isHydrated && itemCount > 0 && (
                   <span className="bg-[#953002] text-white text-[10px] font-bold rounded-full min-w-[17px] h-[17px] flex items-center justify-center px-1 leading-none">
                     {itemCount}
                   </span>
@@ -69,7 +75,7 @@ export default function OrderTabBar() {
                 )}
                 <div className="relative">
                   <Icon size={20} color={active ? '#953002' : '#828282'} />
-                  {label === 'Cart' && itemCount > 0 && (
+                  {label === 'Cart' && isHydrated && itemCount > 0 && (
                     <span className="absolute -top-1 -right-2 bg-[#953002] text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5 leading-none">
                       {itemCount}
                     </span>

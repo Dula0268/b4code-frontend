@@ -26,8 +26,10 @@ import { usePermission } from "@/hooks/use-permission";
 
 function useStats() {
   const queueCount = useStaffOrdersStore((s) => s.getCountByStatus("placed"));
-  const inProgress = useStaffOrdersStore((s) => s.getCountByStatus("in-progress"));
-  const deliveredCount = useStaffOrdersStore((s) => s.getCountByStatus("delivered")) + useStaffOrdersStore((s) => s.getCountByStatus("completed"));
+  const acceptedCount = useStaffOrdersStore((s) => s.getCountByStatus("accepted"));
+  const inProgressCount = useStaffOrdersStore((s) => s.getCountByStatus("in-progress"));
+  const inProgress = acceptedCount + inProgressCount;
+  const deliveredCount = useStaffOrdersStore((s) => s.getCountByStatus("delivered"));
 
   return [
     {
@@ -83,7 +85,7 @@ function useManagementCards() {
   return [
     {
       title: "Order Management",
-      highlight: placedCount > 0 ? `${placedCount} New Orders` : "No New Orders",
+      highlight: placedCount > 0 ? (placedCount === 1 ? "1 New Order" : `${placedCount} New Orders`) : "No New Orders",
       description: "Manage incoming guest orders and update prep status.",
       buttonLabel: "Manage Orders",
       buttonIcon: ArrowRight,
@@ -92,7 +94,7 @@ function useManagementCards() {
     },
     {
       title: "Menu Management",
-      highlight: outOfStockCount > 0 ? `${outOfStockCount} Items Unavailable` : "All Items Available",
+      highlight: outOfStockCount > 0 ? (outOfStockCount === 1 ? "1 Item Unavailable" : `${outOfStockCount} Items Unavailable`) : "All Items Available",
       description: "Update menu availability and manage property dishes.",
       buttonLabel: "Update Menu",
       buttonIcon: UtensilsCrossed,
@@ -101,7 +103,7 @@ function useManagementCards() {
     },
     {
       title: "QR Management",
-      highlight: `${activeQRs} Active QR Codes`,
+      highlight: activeQRs === 1 ? "1 Active QR Code" : `${activeQRs} Active QR Codes`,
       description: "Monitor and manage QR code locations for guest ordering.",
       buttonLabel: "View QR Codes",
       buttonIcon: Eye,
@@ -110,7 +112,7 @@ function useManagementCards() {
     },
     {
       title: "Guest Chats",
-      highlight: unreadMessages > 0 ? `${unreadMessages} Unread Messages` : "No Unread Messages",
+      highlight: unreadMessages > 0 ? (unreadMessages === 1 ? "1 Unread Message" : `${unreadMessages} Unread Messages`) : "No Unread Messages",
       description: "Communicate directly with guests in real-time.",
       buttonLabel: "Open Chats",
       buttonIcon: MessageSquare,
@@ -124,7 +126,10 @@ export default function StaffDashboard() {
   const stats = useStats();
   const managementCards = useManagementCards();
   const fetchOrders = useStaffOrdersStore((s) => s.fetchOrders);
-
+  const loadingOrders = useStaffOrdersStore((s) => s.loading);
+  const loadingMenus = useStaffMenuStore((s) => s.isLoading);
+  const loadingQRs = useStaffQRStore((s) => s.loading);
+  
   const { user } = useAuthStore();
   const fetchMenus = useStaffMenuStore((s) => s.fetchMenus);
   const fetchQRs = useStaffQRStore((s) => s.fetchQRs);
@@ -153,14 +158,53 @@ export default function StaffDashboard() {
       const pid = Number(propertyId);
       fetchOrders(pid);
       fetchMenus(pid);
-      fetchQRs(pid);
+      fetchQRs(pid, 0, 100);
     } else {
       console.warn("⚠️ No propertyId found for staff dashboard");
       fetchOrders(1);
       fetchMenus(1);
-      fetchQRs(1);
+      fetchQRs(1, 0, 100);
     }
   }, [user, fetchOrders, fetchMenus, fetchQRs]);
+
+  const isLoading = loadingOrders || loadingMenus || loadingQRs;
+
+  if (isLoading) {
+    return (
+      <div className="h-full overflow-y-auto px-6 py-4 flex flex-col gap-4">
+        {/* Stat Cards Row Skeleton */}
+        <div className="grid grid-cols-4 gap-3 shrink-0">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-[#e5e7eb] p-4 h-[88px] animate-pulse">
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-2 bg-gray-200 rounded w-1/4 mt-1"></div>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-gray-100 shrink-0"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Management Cards Grid Skeleton */}
+        <div className="grid grid-cols-2 gap-3 flex-1 min-h-[300px]">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-[#e5e7eb] p-4 flex flex-col justify-between animate-pulse h-full">
+              <div className="flex flex-col gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gray-100"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-5 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-3 bg-gray-200 rounded w-full mt-1"></div>
+              </div>
+              <div className="h-10 bg-gray-200 rounded w-full mt-4"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full overflow-y-auto px-6 py-4 flex flex-col gap-4">
@@ -209,7 +253,7 @@ export default function StaffDashboard() {
                     <p className="text-xs text-[#6b7280] m-0 mt-0.5 line-clamp-2">{card.description}</p>
                   </div>
                 </div>
-                <Button asChild className="bg-[var(--brand-primary)] text-white mt-2 gap-1.5">
+                <Button asChild className="bg-[var(--brand-primary)] text-white mt-2 gap-1.5 hover:opacity-90">
                   <Link href={card.href}>
                     {card.buttonLabel}
                     <ButtonIcon size={14} />
