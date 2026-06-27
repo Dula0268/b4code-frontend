@@ -67,7 +67,11 @@ function getLineKey(
   return key;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
+import { persist } from "zustand/middleware";
+
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
   lines: {},
   serviceChargeRate: 0.1,
   taxRate: 0.05,
@@ -168,4 +172,9 @@ export const useCartStore = create<CartState>((set, get) => ({
       set({ propertyId, isLoadingRates: false });
     }
   },
-}));
+}),
+    {
+      name: "cart-storage",
+    }
+  )
+);
