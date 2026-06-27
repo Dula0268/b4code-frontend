@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/auth/auth.store";
 import { Check, X, User, Building, Clock, ArrowLeft } from "lucide-react";
 import { ownerApi } from "@/api/owner/owner.api";
 import { Button } from "@/components/ui/button";
@@ -19,8 +18,6 @@ interface StaffMember {
 
 export default function OwnerStaffPage() {
     const router = useRouter();
-    const { user } = useAuthStore();
-    const ownerId = user?.userId ?? 1;
     const [pendingStaff, setPendingStaff] = useState<StaffMember[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -28,7 +25,7 @@ export default function OwnerStaffPage() {
     const fetchStaff = async () => {
         setLoading(true);
         try {
-            const data = await ownerApi.getPendingStaff(ownerId);
+            const data = await ownerApi.getPendingStaff();
             setPendingStaff(data);
             setError(null);
         } catch (err) {
