@@ -4,10 +4,12 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useCartStore } from "@/store/guest/ordering/cart.store";
 import { useOrderStore } from "@/store/guest/ordering/order.store";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
+import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
 
 /* ─── Helpers ─── */
 
@@ -24,18 +26,24 @@ export default function CheckoutClient() {
   
   // Derived data from session
   const qrContext = useOrderContextStore((s) => s.qrContext);
-  const roomNumber = user?.roomId ? String(user.roomId) : (qrContext?.roomNumber || (qrContext?.roomId ? String(qrContext.roomId) : ""));
+  const location = qrContext?.location || (user?.roomId ? String(user.roomId) : "");
   const authGuestName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "";
   const propertyId = user?.propertyId || qrContext?.propertyId;
   const guestId = user?.userId;
-  const tableId = qrContext?.tableId;
-  const tableNumber = qrContext?.locationLabel;
 
   const isRoomQr = qrContext?.type?.toUpperCase().includes("ROOM");
   const isTableQr = !isRoomQr;
+  
+  const sessionGuestName = useGuestSessionStore((s) => s.guestName);
+  const sessionGuestPhone = useGuestSessionStore((s) => s.guestPhone);
+  const setGuestDetails = useGuestSessionStore((s) => s.setGuestDetails);
 
-  const [walkInName, setWalkInName] = React.useState("");
-  const [walkInPhone, setWalkInPhone] = React.useState("");
+  const [walkInName, setWalkInName] = React.useState(sessionGuestName || "");
+  const [walkInPhone, setWalkInPhone] = React.useState(sessionGuestPhone || "");
+
+  React.useEffect(() => {
+    setGuestDetails(walkInName, walkInPhone);
+  }, [walkInName, walkInPhone, setGuestDetails]);
   
   const isWalkIn = !user;
   const finalGuestName = isWalkIn ? walkInName : authGuestName;
@@ -43,6 +51,7 @@ export default function CheckoutClient() {
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
   const remove = useCartStore((s) => s.remove);
+  const clearCart = useCartStore((s) => s.clear);
 
   const lines = React.useMemo(() => Object.values(linesMap), [linesMap]);
   const subtotal = React.useMemo(
@@ -60,20 +69,20 @@ export default function CheckoutClient() {
   const router = useRouter();
   const placeOrder = useOrderStore((s) => s.placeOrder);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     // Room QR but not logged in — block ordering
     if (isRoomQr && !user) {
       return;
     }
 
-    if ((!roomNumber && !tableId) || !finalGuestName || !propertyId) {
-      alert("Please provide your name and ensure you have scanned a valid QR code.");
+    if (!location || !finalGuestName || !propertyId) {
+      toast.error("Please provide your name and ensure you have scanned a valid QR code.");
       return;
     }
 
     // Walk-in (table QR) requires phone
     if (isTableQr && !user && !walkInPhone) {
-      alert("Please provide your phone number.");
+      toast.error("Please provide your phone number.");
       return;
     }
 
@@ -87,23 +96,37 @@ export default function CheckoutClient() {
       resolvedPaymentMethod = paymentMethod === "room-charge" ? "pay-at-property" : "online";
     }
 
-    placeOrder({
-      lines: lines.map((l) => ({ item: l.item, qty: l.qty })),
+    const guestSessionId = useGuestSessionStore.getState().sessionId;
+
+    setGuestDetails(finalGuestName, walkInPhone);
+
+    const orderId = await placeOrder({
+      lines: lines.map((l) => ({ 
+        item: l.item, 
+        qty: l.qty, 
+        selectedVariantId: l.selectedVariantId,
+        selectedModifiers: l.selectedModifiers
+      })),
       subtotal,
       serviceCharge,
       tax,
       total,
-      roomNumber,
-      tableId,
-      tableNumber,
+      location,
       guestName: finalGuestName,
       guestPhone: walkInPhone,
       guestInstructions: kitchenInstructions,
       paymentMethod: resolvedPaymentMethod,
       propertyId,
       guestId,
+      guestSessionId: guestSessionId || undefined,
     });
-    router.push("/guest/order/confirmation");
+    
+    if (orderId) {
+      clearCart();
+      router.push("/guest/order/confirmation");
+    } else {
+      toast.error("Failed to place order. Please try again.");
+    }
   };
 
   return (
@@ -178,9 +201,9 @@ export default function CheckoutClient() {
 
             {/* Items list */}
             <div>
-              {lines.map(({ item, qty }, idx) => (
+              {Object.entries(linesMap).map(([lineKey, { item, qty }], idx) => (
                 <div
-                  key={item.id}
+                  key={lineKey}
                   className={`flex gap-4 items-center px-4 py-3 ${idx > 0 ? "border-t border-[#e5e7eb]" : ""}`}
                 >
                   {/* Thumbnail 96×96 */}
@@ -218,7 +241,7 @@ export default function CheckoutClient() {
                       {/* Qty pill */}
                       <div className="flex items-center bg-[#f8f6f5] border border-[#e5e7eb] rounded-lg">
                         <button
-                          onClick={() => setQty(item.id, qty - 1)}
+                          onClick={() => setQty(lineKey, qty - 1)}
                           className="px-2 py-1 text-[16px] text-[#6b7280] leading-[24px] cursor-pointer hover:bg-[#f0ebe8] rounded-l-lg transition"
                         >
                           -
@@ -227,7 +250,7 @@ export default function CheckoutClient() {
                           {qty}
                         </span>
                         <button
-                          onClick={() => setQty(item.id, qty + 1)}
+                          onClick={() => setQty(lineKey, qty + 1)}
                           className="px-2 py-1 text-[16px] text-[#6b7280] leading-[24px] cursor-pointer hover:bg-[#f0ebe8] rounded-r-lg transition"
                         >
                           +
@@ -236,7 +259,7 @@ export default function CheckoutClient() {
 
                       {/* Remove button */}
                       <button
-                        onClick={() => remove(item.id)}
+                        onClick={() => remove(lineKey)}
                         className="flex items-center gap-1 cursor-pointer hover:opacity-70 transition"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="py-[4px]">
@@ -377,7 +400,7 @@ export default function CheckoutClient() {
                   Payment Method
                 </p>
 
-                {/* ── ROOM QR + NOT LOGGED IN: Login Required ── */}
+                {/* ── ROOM QR + NOT LOGGED IN: Room Verification ── */}
                 {isRoomQr && !user && (
                   <div className="bg-[#fff8f0] border border-[#f0c896] rounded-xl p-6 space-y-4 text-center">
                     <div className="flex justify-center">
@@ -387,20 +410,38 @@ export default function CheckoutClient() {
                       </svg>
                     </div>
                     <h3 className="text-[18px] font-semibold text-[#1f1f1f] leading-[28px]">
-                      Login Required
+                      Room Verification
                     </h3>
                     <p className="text-[14px] text-[#6b7280] leading-[20px]">
-                      To place an order from your room, please log in with your guest credentials. This helps us verify your room assignment and charge your order correctly.
+                      To place an order to your room, please enter your name. We will verify that this room is currently occupied.
                     </p>
-                    <Link
-                      href="/auth/login"
-                      className="inline-flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 text-white font-semibold text-[14px] hover:bg-[#7c2802] transition"
+                    <div className="space-y-3 mt-4 text-left">
+                      <input
+                        type="text"
+                        placeholder="Your Name *"
+                        value={walkInName}
+                        onChange={(e) => setWalkInName(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
+                      />
+                      <input
+                        type="text"
+                        value={location}
+                        disabled
+                        className="w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-sm text-gray-500 cursor-not-allowed"
+                      />
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await useAuthStore.getState().roomLogin(walkInName, location, Number(propertyId));
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : "Verification failed");
+                        }
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 text-white font-semibold text-[14px] hover:bg-[#7c2802] transition cursor-pointer"
                     >
-                      Log In to Continue
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                        <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </Link>
+                      Verify & Continue
+                    </button>
                   </div>
                 )}
 
@@ -534,7 +575,7 @@ export default function CheckoutClient() {
                           Charge to Room
                         </p>
                         <p className={`text-[12px] leading-[16px] ${paymentMethod === "room-charge" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}>
-                          Room {roomNumber} • Verified
+                          {location} • Verified
                         </p>
                       </div>
                       <div className={`shrink-0 w-5 h-5 rounded-full border ${paymentMethod === "room-charge" ? "bg-[#953002] border-[#953002]" : "border-[#d1d5db]"}`} />
