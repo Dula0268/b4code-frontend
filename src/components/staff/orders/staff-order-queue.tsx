@@ -14,6 +14,7 @@ import {
   CircleCheck,
   Eye,
   Play,
+  User,
 } from "lucide-react";
 import {
   useStaffOrdersStore,
@@ -32,9 +33,7 @@ const STATUS_TABS: { label: string; value: OrderStatus }[] = [
   { label: "Placed", value: "placed" },
   { label: "Accepted", value: "accepted" },
   { label: "In-Progress", value: "in-progress" },
-  { label: "Ready", value: "ready" },
   { label: "Delivered", value: "delivered" },
-  { label: "Completed", value: "completed" },
   { label: "Cancelled", value: "cancelled" },
 ];
 
@@ -42,9 +41,7 @@ const STATUS_BADGE: Record<OrderStatus, { label: string; bg: string; text: strin
   placed: { label: "New", bg: "bg-[rgba(151,49,2,0.1)]", text: "text-[var(--brand-primary)]" },
   accepted: { label: "Accepted", bg: "bg-[rgba(39,174,96,0.1)]", text: "text-[var(--state-success)]", dot: "bg-[var(--state-success)]" },
   "in-progress": { label: "Preparing", bg: "bg-[#fefce8]", text: "text-[#ca8a04]", dot: "bg-[#ca8a04]" },
-  ready: { label: "Ready", bg: "bg-[rgba(47,128,237,0.1)]", text: "text-[var(--state-info)]", dot: "bg-[var(--state-info)]" },
   delivered: { label: "Delivered", bg: "bg-[rgba(39,174,96,0.1)]", text: "text-[var(--state-success)]" },
-  completed: { label: "Completed", bg: "bg-[rgba(39,174,96,0.1)]", text: "text-[var(--state-success)]" },
   cancelled: { label: "Rejected", bg: "bg-[rgba(235,87,87,0.1)]", text: "text-[var(--state-error)]" },
 };
 
@@ -91,19 +88,7 @@ function OrderCard({
       case "in-progress":
         return (
           <Button size="sm" className="w-full bg-[var(--brand-primary)] text-white text-xs gap-1" onClick={(e) => { e.stopPropagation(); onAdvance?.(); }}>
-            <ChefHat size={14} /> Set to Ready
-          </Button>
-        );
-      case "ready":
-        return (
-          <Button size="sm" className="w-full bg-[var(--brand-primary)] text-white text-xs gap-1" onClick={(e) => { e.stopPropagation(); onAdvance?.(); }}>
             <Truck size={14} /> Mark Delivered
-          </Button>
-        );
-      case "delivered":
-        return (
-          <Button size="sm" className="w-full bg-[var(--state-success)] text-white text-xs gap-1" onClick={(e) => { e.stopPropagation(); onAdvance?.(); }}>
-            <CircleCheck size={14} /> Mark Completed
           </Button>
         );
       default:
@@ -146,6 +131,10 @@ function OrderCard({
           <div className="flex items-center gap-1.5">
             <UtensilsCrossed size={14} className="text-[#a8a29e]" />
             <span className="text-xs font-semibold text-[#292524]">{order.table}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--brand-primary)]">
+            <User size={12} />
+            <span>{order.guest}</span>
           </div>
           <Badge variant="secondary" className="text-[10px] font-medium">{order.type}</Badge>
         </div>
@@ -253,8 +242,8 @@ function RejectModal({ orderId, onClose, onConfirm }: { orderId: string; onClose
         {/* Footer */}
         <div className="px-6 pb-6 flex gap-3">
           <Button variant="outline" className="flex-1" onClick={onClose}>Keep Order</Button>
-          <Button variant="destructive" className="flex-1" onClick={() => onConfirm(reason || "No reason provided")}>
-            Confirm Rejection
+          <Button className="flex-1 bg-[var(--state-error)] text-white hover:bg-[rgba(235,87,87,0.85)]" onClick={() => onConfirm(reason || "No reason provided")}>
+            Reject Order
           </Button>
         </div>
       </div>
@@ -277,20 +266,12 @@ export default function StaffOrderQueue() {
   const advanceStatus = useStaffOrdersStore((s) => s.advanceStatus);
   const clearToast = useStaffOrdersStore((s) => s.clearToast);
   const getCountByStatus = useStaffOrdersStore((s) => s.getCountByStatus);
+  const setupSse = useStaffOrdersStore((s) => s.setupSse);
+  const stopSse = useStaffOrdersStore((s) => s.stopSse);
 
   const { user } = useAuthStore();
 
-  // Fetch orders when component mounts
-  useEffect(() => {
-    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
-    console.log(`📦 StaffOrderQueue mounted, fetching orders for property: ${propertyId}...`);
-    if (propertyId) {
-      fetchOrders(Number(propertyId));
-    } else {
-      console.warn("⚠️ No propertyId found for staff order queue");
-      fetchOrders(1);
-    }
-  }, [user, fetchOrders]);
+  // Orders and SSE are now fetched and managed globally via StaffGlobalOrdersProvider
 
   const filteredOrders = orders.filter(
     (o) =>
