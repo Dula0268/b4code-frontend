@@ -61,7 +61,7 @@ export default function ReviewClient() {
   const submitReview = useGuestReviewsStore((s) => s.submitReview);
 
   const orderItems = order?.lines ?? [];
-  const roomNumber = order?.roomNumber ?? "304";
+  const location = order?.location ?? "";
 
   // State for item reviews
   const [itemReviews, setItemReviews] = React.useState<
@@ -92,12 +92,12 @@ export default function ReviewClient() {
       .map(([itemId, review]) => {
         const item = orderItems.find((line) => line.item.id === itemId);
         if (item && numericOrderId) {
-          return submitReview(numericOrderId, {
-            menuItemId: item.item.id,
-            rating: review.rating,
-            comment: review.text,
-            guestName: `Guest Room ${roomNumber}`,
-          });
+            return submitReview(numericOrderId, {
+              menuItemId: item.item.id,
+              rating: review.rating,
+              comment: review.text,
+              guestName: order?.guestName || `Guest ${location}`,
+            });
         }
         return Promise.resolve();
       });
