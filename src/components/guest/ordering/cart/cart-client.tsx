@@ -4,6 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCartStore } from "@/store/guest/ordering/cart.store";
+import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 
 /* ─── Helpers ─── */
 
@@ -20,20 +21,26 @@ const TAG_LABELS: Record<string, string> = {
 
 /* ─── Cart Client ─── */
 
-export default function CartClient({ roomNumber }: { roomNumber?: string }) {
+export default function CartClient({ location }: { location?: string }) {
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
   const remove = useCartStore((s) => s.remove);
+  
+  const qrContext = useOrderContextStore((s) => s.qrContext);
+  const locationText = qrContext ? `${qrContext.type} ${qrContext.location}` : "Unknown Location";
+
+  // To ensure reactivity, we compute derived state by accessing s.lines
+  const subtotal = useCartStore((s) => {
+    // Access s.lines to trigger re-renders
+    const _lines = s.lines;
+    return s.subtotal();
+  });
+  const serviceCharge = useCartStore((s) => { const _lines = s.lines; return s.serviceCharge(); });
+  const tax = useCartStore((s) => { const _lines = s.lines; return s.tax(); });
+  const total = useCartStore((s) => { const _lines = s.lines; return s.total(); });
+  const itemCount = useCartStore((s) => { const _lines = s.lines; return s.itemCount(); });
 
   const lines = React.useMemo(() => Object.values(linesMap), [linesMap]);
-  const itemCount = React.useMemo(() => lines.reduce((s, l) => s + l.qty, 0), [lines]);
-  const subtotal = React.useMemo(
-    () => lines.reduce((s, l) => s + l.item.priceLkr * l.qty, 0),
-    [lines],
-  );
-  const serviceCharge = Math.round(subtotal * 0.1);
-  const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + serviceCharge + tax;
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-4">
@@ -123,9 +130,9 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
               </span>
             </div>
 
-            {lines.map(({ item, qty }) => (
+            {Object.entries(linesMap).map(([lineKey, { item, qty }]) => (
               <div
-                key={item.id}
+                key={lineKey}
                 className="bg-white border border-[#f3f4f6] rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] p-3 flex gap-3 items-center"
               >
                 {/* Thumbnail – 72×72 */}
@@ -156,7 +163,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                       )}
                     </div>
                     <button
-                      onClick={() => remove(item.id)}
+                      onClick={() => remove(lineKey)}
                       className="p-0.5 cursor-pointer hover:opacity-70 transition shrink-0"
                       aria-label={`Remove ${item.title}`}
                     >
@@ -181,7 +188,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                     {/* Qty control pill */}
                     <div className="flex items-center bg-[#f9fafb] border border-[#e5e7eb] rounded-md">
                       <button
-                        onClick={() => setQty(item.id, qty - 1)}
+                        onClick={() => setQty(lineKey, qty - 1)}
                         className="px-1.5 py-0.5 cursor-pointer hover:bg-[#f3f4f6] rounded-l-md transition"
                         aria-label="Decrease quantity"
                       >
@@ -193,7 +200,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                         {qty}
                       </span>
                       <button
-                        onClick={() => setQty(item.id, qty + 1)}
+                        onClick={() => setQty(lineKey, qty + 1)}
                         className="px-1.5 py-0.5 cursor-pointer hover:bg-[#f3f4f6] rounded-r-md transition"
                         aria-label="Increase quantity"
                       >
@@ -211,7 +218,6 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                 </div>
               </div>
             ))}
-
 
           </div>
 
@@ -275,11 +281,8 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[12px] font-semibold text-[#6b7280] uppercase tracking-[0.3px] leading-[16px]">
-                    Delivering to
-                  </p>
                   <p className="text-[14px] font-bold text-[#111827] leading-[20px]">
-                    Room {roomNumber}
+                    Delivering to {locationText}
                   </p>
                 </div>
               </div>
