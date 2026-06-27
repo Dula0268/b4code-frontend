@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import { imageApi } from "@/api/image/image.api";
 import { useState } from "react";
 import LogoutSuccessModal from "./logout-success-modal";
+import { toast } from "sonner";
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -37,7 +38,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
     } catch (err: unknown) {
       console.error("Failed to upload avatar:", err);
       const errorMessage = err instanceof Error ? err.message : "Please check your Cloudinary configuration.";
-      alert(`Failed to upload image: ${errorMessage}`);
+      toast.error(`Failed to upload image: ${errorMessage}`);
     } finally {
       setIsUploading(false);
     }
