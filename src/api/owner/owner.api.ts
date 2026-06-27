@@ -1,8 +1,8 @@
 import api from "@/lib/axios";
 
 export const ownerApi = {
-  getPendingStaff: () =>
-    api.get("/owner/staff/pending").then((r) => r.data),
+  getPendingStaff: (ownerId = 1) =>
+    api.get(`/owner/staff/pending?ownerId=${ownerId}`).then((r) => r.data),
 
   approveStaff: (staffId: number) =>
     api.put(`/owner/staff/${staffId}/approve`).then((r) => r.data),
