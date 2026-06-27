@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCartStore, type MenuItem } from "@/store/guest/ordering/cart.store";
 import { useGuestReviewsStore } from "@/store/guest/reviews/reviews.store";
@@ -22,10 +23,10 @@ function formatLkr(n: number) {
 
 export default function ItemDetailsClient({
   item,
-  roomNumber,
+  location,
 }: {
   item: MenuItem | MenuItemDetail;
-  roomNumber?: string;
+  location?: string;
 }) {
   const [qty, setQty] = React.useState(1);
   const [selectedVariantId, setSelectedVariantId] = React.useState<string>(
@@ -35,6 +36,7 @@ export default function ItemDetailsClient({
   const [specialInstructions, setSpecialInstructions] = React.useState("");
   const [activeImage, setActiveImage] = React.useState(0);
   const [sortBy, setSortBy] = React.useState<"newest" | "rating-high" | "helpful">("newest");
+  const router = useRouter();
 
   const addToCart = useCartStore((s) => s.add);
   const getReviewsForItem = useGuestReviewsStore((s) => s.getReviewsForItem);
@@ -118,6 +120,7 @@ export default function ItemDetailsClient({
     }
 
     addToCart(item, qty, selectedVariantId || undefined, selMods);
+    router.push("/guest/order/cart");
   };
 
   return (
@@ -278,7 +281,7 @@ export default function ItemDetailsClient({
                   Customize your order
                 </h2>
                 <p className="text-xs font-medium text-[#923002]">
-                  For Room {roomNumber}
+                  For {location}
                 </p>
               </div>
               <p className="text-sm text-[#6b7280]">
@@ -387,18 +390,7 @@ export default function ItemDetailsClient({
               </div>
             )}
 
-            {/* Special Instructions */}
-            <div className="space-y-2">
-              <p className="text-sm font-semibold uppercase tracking-wider text-[#6b7280]">
-                Special Instructions
-              </p>
-              <textarea
-                value={specialInstructions}
-                onChange={(e) => setSpecialInstructions(e.target.value)}
-                placeholder={`Allergies, dietary restrictions, or special requests?\n(e.g. No onions)`}
-                className="h-20 w-full rounded-lg border border-[#e5e7eb] bg-[#f8f6f5] p-3.5 text-sm text-[#111827] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#953002] resize-none"
-              />
-            </div>
+            {/* Removed Special Instructions */}
 
             {/* Total + CTA */}
             <div className="pt-2">
@@ -411,12 +403,12 @@ export default function ItemDetailsClient({
                   </span>
                 </div>
 
-                {/* Go to Cart button */}
+                {/* Add to Cart button */}
                 <button
                   onClick={handleAddToCart}
                   className="w-full h-12 rounded-lg bg-[#973102] text-white font-bold text-base flex items-center justify-center gap-2 shadow-[0px_10px_15px_-3px_rgba(151,49,2,0.3),0px_4px_6px_-4px_rgba(151,49,2,0.3)] hover:bg-[#7c2802] transition cursor-pointer"
                 >
-                  Go to Cart
+                  Add to Cart
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path
                       d="M3 8H13M13 8L9 4M13 8L9 12"
@@ -430,7 +422,7 @@ export default function ItemDetailsClient({
 
                 {/* Note */}
                 <p className="text-center text-xs text-[#9ca3af]">
-                  Charges will be added to Room {roomNumber} bill
+                  Charges will be added to {location} bill
                 </p>
               </div>
             </div>
@@ -448,7 +440,7 @@ export default function ItemDetailsClient({
             </h2>
             {itemReviews.length === 0 ? (
               <p className="text-[14px] text-[#6b7280]">
-                No reviews yet. Be the first to review this item!
+                No reviews yet for this dish.
               </p>
             ) : (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -493,15 +485,9 @@ export default function ItemDetailsClient({
           {/* Reviews List */}
           {itemReviews.length === 0 ? (
             <div className="bg-[#f9fafb] border border-[#e5e7eb] rounded-lg p-6 text-center">
-              <p className="text-[14px] text-[#6b7280] mb-3">
-                Be the first guest to share your thoughts about this dish!
+              <p className="text-[14px] text-[#6b7280] m-0">
+                Guests can leave reviews for this dish after ordering.
               </p>
-              <Link
-                href="/guest/order/review"
-                className="inline-block text-[14px] font-medium text-[#953002] hover:text-[#7c2606] underline transition"
-              >
-                Write a Review
-              </Link>
             </div>
           ) : (
             <div className="space-y-4">
@@ -514,7 +500,7 @@ export default function ItemDetailsClient({
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h4 className="text-[14px] font-semibold text-[#111827]">
-                        {review.guestName}
+                        {review.guestName || "Guest"}
                       </h4>
                       <p className="text-[12px] text-[#9ca3af] mt-1">
                         {new Date(review.timestamp).toLocaleDateString("en-US", {
