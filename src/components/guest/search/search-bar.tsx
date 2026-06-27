@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { MapPin, Calendar, Users, Search } from "lucide-react"
+import { toast } from "sonner"
 
 import CalendarPicker from "@/components/shared/forms/calendar-picker"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
@@ -116,7 +117,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   // ── Search ─────────────────────────────────────────────────────────────
   const handleSearch = () => {
     if (checkIn && checkOut && checkOut <= checkIn) {
-      alert("Check-out date must be after check-in date")
+      toast.error("Check-out date must be after check-in date")
       return
     }
 
