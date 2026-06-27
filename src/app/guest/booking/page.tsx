@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { 
-  Calendar, ChevronRight, Lock
+  Calendar, ChevronRight, Lock, ShieldCheck
 } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/store/auth/auth.store"
 import { guestApi } from "@/api/guest/guest.api";
-import { useGuestBookingStore, type BookingStatus } from "@/store/guest/booking/booking.store"
+import { type BookingStatus } from "@/store/guest/booking/booking.store"
 import BookingCard, { type BookingCardData } from "@/components/guest/booking/booking-card"
 import { useGuestGuard } from "@/hooks/use-guest-guard"
 import AccessDenied from "@/components/shared/auth/access-denied"
@@ -17,13 +18,23 @@ import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 
 const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
-export default function MyBookingsPage() {
+function BookingsContent() {
   const { status, userRole } = useGuestGuard()
   const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
-  const localBookings = useGuestBookingStore(s => s.bookings)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successBookingRef, setSuccessBookingRef] = useState("")
+
+  useEffect(() => {
+    if (searchParams?.get("payment_success") === "true") {
+      setShowSuccessModal(true)
+      setSuccessBookingRef(searchParams.get("bookingRef") || "")
+    }
+  }, [searchParams])
 
   useEffect(() => {
     async function loadBookings() {
@@ -42,15 +53,16 @@ export default function MyBookingsPage() {
                   bookingId?: number | string
                   id?: number | string
                   confirmationNumber?: string
+                  confirmationCode?: string
                   propertyName?: string
                   propertyAddress?: string
+                  propertyImage?: string
                   roomName?: string
                   guestName?: string
                   guestEmail?: string
-                  guestCount?: number
+                  adults?: number
                   checkIn?: string
                   checkOut?: string
-                  nights?: number
                   totalAmount?: number
                   status?: string
                   paymentMethod?: string
@@ -63,72 +75,50 @@ export default function MyBookingsPage() {
                   return "UPCOMING"
                 }
 
-                apiBookings = (data as ApiBooking[]).map((b) => ({
-                    id: String(b.bookingId ?? b.id ?? b.confirmationNumber ?? crypto.randomUUID()),
-                    propertyId: String(b.bookingId ?? b.id ?? ""),
-                    orderId: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
-                    orderNumber: b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
-                    status: normalizeStatus(b.status),
-                    property: b.propertyName || "Prime Stay Property",
-                    location: b.propertyAddress || "Sri Lanka",
-                    imageSrc: "/images/properties/property-1.jpg",
-                    checkIn: b.checkIn || "",
-                    checkOut: b.checkOut || "",
-                    guests: `${b.guestCount ?? 2} Guests`,
-                    totalPrice: b.totalAmount ?? 0,
-                    nightsLabel: `${b.nights ?? 1} night${(b.nights ?? 1) > 1 ? "s" : ""}`,
-                    paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
-                    paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
-                    roomName: b.roomName,
-                    isFromStore: false,
-                }))
+                apiBookings = (data as ApiBooking[]).map((b) => {
+                    const checkInDate = b.checkIn ? new Date(b.checkIn) : new Date();
+                    const checkOutDate = b.checkOut ? new Date(b.checkOut) : new Date(checkInDate.getTime() + 86400000);
+                    const diffDays = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
+                    
+                    let derivedStatus = normalizeStatus(b.status);
+                    if (derivedStatus === "UPCOMING" && new Date() > checkOutDate) {
+                        derivedStatus = "COMPLETED";
+                    }
+
+                    return {
+                        id: String(b.bookingId ?? b.id ?? b.confirmationCode ?? b.confirmationNumber ?? crypto.randomUUID()),
+                        propertyId: String((b as any).propertyId ?? b.bookingId ?? b.id ?? ""),
+                        orderId: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
+                        orderNumber: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
+                        status: derivedStatus,
+                        property: b.propertyName || "Prime Stay Property",
+                        location: b.propertyAddress || "Sri Lanka",
+                        imageSrc: b.propertyImage || "/images/properties/property-1.jpg",
+                        checkIn: b.checkIn || "",
+                        checkOut: b.checkOut || "",
+                        guests: `${b.adults ?? 1} Guest${(b.adults ?? 1) > 1 ? "s" : ""}`,
+                        totalPrice: b.totalAmount ?? 0,
+                        nightsLabel: `${diffDays} night${diffDays > 1 ? "s" : ""}`,
+                        paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
+                        paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
+                        roomName: b.roomName,
+                        isFromStore: false,
+                    };
+                })
             } catch (err) {
-                console.warn("API booking fetch failed or empty:", err)
+                console.warn("API booking fetch failed:", err)
             }
 
-            const userLocalBookings = localBookings.filter(b => b.userEmail.toLowerCase() === email.toLowerCase())
-            const mappedLocal: BookingCardData[] = userLocalBookings.map(b => ({
-                id: String(b.id),
-                propertyId: String(b.propertyId),
-                orderId: b.confirmationCode,
-                orderNumber: b.confirmationCode,
-                status: b.status,
-                property: b.property,
-                location: b.location,
-                imageSrc: b.imageSrc,
-                checkIn: b.checkIn,
-                checkOut: b.checkOut,
-                guests: b.guestsLabel,
-                totalPrice: b.totalPrice,
-                nightsLabel: b.nightsLabel,
-                paymentMethod: b.paymentMethod,
-                paidInFull: b.paidInFull,
-                roomName: b.roomName,
-                isFromStore: true,
-            }))
-
-            // Local store bookings take full priority (they have the latest status including cancellations)
-            const merged = [...mappedLocal]
-            for (const apiB of apiBookings) {
-                // Skip API bookings that already exist in local store (by orderNumber or id)
-                const existsLocally = merged.find(m =>
-                    m.orderNumber === apiB.orderNumber || m.id === apiB.id
-                )
-                if (!existsLocally) {
-                    merged.push(apiB)
-                }
-            }
-            
-            setBookings(merged)
+            setBookings(apiBookings)
         } catch (err) {
-            console.error("Failed to synchronize bookings:", err)
+            console.error("Failed to load bookings:", err)
         } finally {
             setLoading(false)
         }
     }
 
     if (user) loadBookings();
-  }, [user, localBookings]);
+  }, [user]);
   
   if (status === "loading") return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -205,6 +195,48 @@ export default function MyBookingsPage() {
         </div>
       </div>
       <GuestFooter />
+
+      {/* Payment Success Modal */}
+      {showSuccessModal && (
+          <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+                  <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
+                      <ShieldCheck size={40} />
+                  </div>
+                  <h2 className="text-[28px] font-bold text-[#1d1d1d] mb-2">Payment Successful!</h2>
+                  <p className="text-[15px] text-[#555] mb-8">Your room has been successfully booked. An itinerary has been sent to your email.</p>
+                  
+                  {successBookingRef && (
+                      <div className="bg-[#f8f8f8] border border-[#e8e8e8] p-5 rounded-2xl w-full mb-8">
+                          <p className="text-[12px] text-[#828282] uppercase tracking-widest font-bold mb-2">Booking Reference</p>
+                          <p className="text-[24px] font-mono font-black text-[var(--brand-primary)]">{successBookingRef}</p>
+                      </div>
+                  )}
+
+                  <button
+                      onClick={() => {
+                          setShowSuccessModal(false);
+                          router.replace('/guest/booking');
+                      }}
+                      className="w-full bg-[#8b4513] hover:bg-[#6d2200] text-white font-bold py-4 rounded-xl transition-colors cursor-pointer text-center text-[16px] shadow-lg shadow-[#8b4513]/20"
+                  >
+                      View Bookings
+                  </button>
+              </div>
+          </div>
+      )}
     </div>
+  )
+}
+
+export default function MyBookingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-t-[#9a3300] border-neutral-200 rounded-full animate-spin" />
+      </div>
+    }>
+      <BookingsContent />
+    </Suspense>
   )
 }

@@ -73,4 +73,7 @@ export const ModerationApi = {
 
   getHistory: (params: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }): Promise<PageResponse<ModerationHistory>> =>
     api.get('/admin/moderation/history', { params }).then((res) => res.data),
+
+  exportHistory: (params: { action?: string; search?: string; from?: string; to?: string }): Promise<Blob> =>
+    api.get('/admin/moderation/history/export', { params, responseType: 'blob' }).then((res) => res.data),
 };

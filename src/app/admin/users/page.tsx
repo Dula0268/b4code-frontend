@@ -399,7 +399,6 @@ export default function UsersManagementPage() {
   // ── Initial fetch ──
   useEffect(() => {
     fetchUsers(undefined, undefined, undefined, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Debounced search + filter re-fetch ──
@@ -413,7 +412,6 @@ export default function UsersManagementPage() {
       );
     }, 400);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, roleFilter]);
 
   function handlePageChange(page: number) {

@@ -13,8 +13,13 @@ export const guestApi = {
       return items.map(normalizePropertyListing);
     }),
 
-  getPropertyDetail: (propertyId: number | string) =>
-    api.get(`/guest/properties/${propertyId}`).then((r) => normalizePropertyDetail(r.data)),
+  getPropertyDetail: (propertyId: number | string, checkIn?: string, checkOut?: string) => {
+    const query = new URLSearchParams();
+    if (checkIn) query.set("checkIn", checkIn);
+    if (checkOut) query.set("checkOut", checkOut);
+    const qs = query.toString();
+    return api.get(`/guest/properties/${propertyId}${qs ? `?${qs}` : ""}`).then((r) => normalizePropertyDetail(r.data));
+  },
 
   // Booking Methods
   getPricePreview: (roomId: number, checkIn: string, checkOut: string, promoCode?: string) => {
@@ -26,41 +31,74 @@ export const guestApi = {
   getGuestBookings: (email: string) =>
     api.get(`/guest/bookings/guest`, { params: { email } }).then((r) => r.data),
 
+  getBookingByConfirmation: (confirmationNumber: string) =>
+    api.get(`/guest/bookings/confirmation/${confirmationNumber}`).then((r) => r.data),
+
   createBooking: (bookingData: {
     roomId: number;
+    propertyId: number;
+    roomQuantity: number;
     guestName: string;
     guestEmail: string;
-    guestPhone: string;
     checkIn: string;
     checkOut: string;
-    guestCount: number;
+    adults: number;
+    children?: number;
     promoCode?: string;
     paymentMethod: "online" | "property";
   }) =>
     api
       .post("/guest/bookings", {
         roomId: bookingData.roomId,
+        propertyId: bookingData.propertyId,
+        roomQuantity: bookingData.roomQuantity,
         guestName: bookingData.guestName,
         guestEmail: bookingData.guestEmail,
-        guestPhone: bookingData.guestPhone,
         checkIn: bookingData.checkIn,
         checkOut: bookingData.checkOut,
-        guestCount: bookingData.guestCount,
-        promoCode: bookingData.promoCode,
+        adults: bookingData.adults,
+        children: bookingData.children || 0,
+        promoCodes: bookingData.promoCode ? [bookingData.promoCode] : undefined,
         paymentMethod: bookingData.paymentMethod === "online" ? "ONLINE_CARD" : "PAY_AT_PROPERTY",
       })
       .then((r) => r.data),
+
+  cancelBooking: (id: string | number, reason: string) =>
+    api.patch(`/guest/bookings/${id}/cancel`, { reason }).then((r) => r.data),
+
+  completeBooking: (id: string | number) =>
+    api.patch(`/guest/bookings/${id}/complete`).then((r) => r.data),
+
+  modifyBooking: (id: string | number, payload: {
+    roomId: number;
+    propertyId: number;
+    checkInDate: string;
+    checkOutDate: string;
+    guests: number;
+  }) => api.put(`/guest/bookings/${id}`, payload).then((r) => r.data),
 
   // Review Methods
   getPropertyReviews: (propertyId: number) =>
     api.get(`/guest/reviews/property/${propertyId}`).then((r) => r.data),
 
+  uploadImage: async (file: File, folder: string = "reviews") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", folder);
+    const response = await api.post("/images/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data; // { url: "...", message: "..." }
+  },
+
   createReview: (reviewData: {
     bookingId: number;
+    propertyId?: number;
     overallRating: number;
     cleanlinessRating?: number;
-    accuracyRating?: number;
-    communicationRating?: number;
+    comfortRating?: number;
+    serviceRating?: number;
+    diningRating?: number;
     locationRating?: number;
     valueRating?: number;
     comment?: string;

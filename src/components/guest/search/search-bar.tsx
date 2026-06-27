@@ -43,7 +43,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const calRef = useRef<HTMLDivElement>(null)
 
   // Guests
-  const [guests, setGuests] = useState<GuestCounts>({ adults: Math.max(1, initGuests), children: 0, rooms: Math.max(1, initRooms) })
+  const [guests, setGuests] = useState<GuestCounts>({ adults: Math.max(1, initGuests), rooms: Math.max(1, initRooms) })
   const [guestOpen, setGuestOpen] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
 
@@ -68,7 +68,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
     setDestination(nextDestination)
     setCheckIn(nextCheckIn)
     setCheckOut(nextCheckOut)
-    setGuests({ adults: nextGuests, children: 0, rooms: nextRooms })
+    setGuests({ adults: nextGuests, rooms: nextRooms })
   }, [isCompact, searchParams])
 
   // ── Close on outside click ─────────────────────────────────────────────
@@ -98,7 +98,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
     return ""
   })()
 
-  const guestTotal = guests.adults + guests.children
+  const guestTotal = guests.adults
   const guestLabel = !mounted ? "1 guest, 1 room" : `${guestTotal} guest${guestTotal !== 1 ? "s" : ""}, ${guests.rooms} room${guests.rooms !== 1 ? "s" : ""}`
 
   // Keep search results in sync when guest count changes on compact search bar.
@@ -116,8 +116,18 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
 
   // ── Search ─────────────────────────────────────────────────────────────
   const handleSearch = () => {
+    if (!destination.trim() || !checkIn || !checkOut) {
+      toast.error("Please enter a destination and select your check-in and check-out dates.")
+      return
+    }
+
+    if (guests.adults < 1 || guests.rooms < 1) {
+      toast.error("Please select at least 1 guest and 1 room.")
+      return
+    }
+
     if (checkIn && checkOut && checkOut <= checkIn) {
-      toast.error("Check-out date must be after check-in date")
+      toast.error("Check-out date must be after check-in date.")
       return
     }
 
@@ -140,10 +150,11 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const closeAll = () => { setLocationOpen(false); setCalOpen(false); setGuestOpen(false) }
 
   return (
-    <div
-      role="search"
-      className={[
-        "bg-white rounded-xl flex flex-col md:flex-row gap-1",
+    <div className="relative">
+      <div
+        role="search"
+        className={[
+          "bg-white rounded-xl flex flex-col md:flex-row gap-1",
         isCompact
           ? "p-1 border border-[#e0e0e0] shadow-[0_2px_12px_rgba(0,0,0,0.08)] w-full max-w-[580px]"
           : "p-2 shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-[640px]",
@@ -163,7 +174,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
             value={destination}
             onChange={e => { setDestination(e.target.value); setLocationOpen(true) }}
             onFocus={() => { closeAll(); setLocationOpen(true) }}
-            placeholder="Where are you going?"
+            placeholder="Search destination or property"
             className="border-none outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-sm text-[#333333] placeholder:text-[#828282] bg-transparent w-full"
             suppressHydrationWarning
           />
@@ -255,6 +266,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       >
         <span>Search</span>
       </button>
+    </div>
     </div>
   )
 }

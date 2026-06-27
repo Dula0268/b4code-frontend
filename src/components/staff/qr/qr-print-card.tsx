@@ -132,7 +132,6 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
                     )}
                     <div className="w-[140px] h-[140px] bg-white border border-[var(--gray-5)] rounded-[8px] flex items-center justify-center overflow-hidden p-2">
                       {qr.qrImageUrl ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
                         <img src={qr.qrImageUrl} alt={`QR Code for ${qr.name}`} className="w-full h-full object-contain" />
                       ) : (
                         <QrCode size={64} className="text-[var(--gray-2)]" />

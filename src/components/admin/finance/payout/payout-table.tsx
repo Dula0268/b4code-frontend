@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Download,
 } from "lucide-react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 import type { PayoutDto } from "@/api/admin/finance.api";
@@ -103,6 +104,8 @@ export default function PayoutTable({
     payoutsTotalPages,
     fetchPayouts,
     payoutsLoading,
+    isExporting,
+    downloadPayoutExport,
   } = useAdminFinanceStore();
 
   useEffect(() => {
@@ -149,24 +152,35 @@ export default function PayoutTable({
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] placeholder:text-[#C4B5AB] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition"
           />
         </div>
-        <div className="relative">
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="appearance-none flex items-center gap-2 pl-9 pr-10 py-2.5 rounded-xl border border-[#E8DDD8] text-sm font-medium text-[#1A1A1A] hover:bg-[#FAF5F2] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition cursor-pointer bg-white"
+        <div className="relative flex items-center gap-2">
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="appearance-none flex items-center gap-2 pl-9 pr-10 py-2.5 rounded-xl border border-[#E8DDD8] text-sm font-medium text-[#1A1A1A] hover:bg-[#FAF5F2] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition cursor-pointer bg-white"
+            >
+              <option value="">All Statuses</option>
+              <option value="PENDING">Pending</option>
+              <option value="PROCESSED">Processed</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+            <SlidersHorizontal
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A1A1A] pointer-events-none"
+            />
+          </div>
+          
+          <button
+            onClick={() => downloadPayoutExport({ search: debouncedSearch || undefined, status: statusFilter || undefined })}
+            disabled={isExporting || payouts.length === 0}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E8DDD8] bg-white text-sm font-semibold text-[#1A1A1A] hover:bg-[#FAF5F2] hover:border-[#C05621] hover:text-[#C05621] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <option value="">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="PROCESSED">Processed</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
-          <SlidersHorizontal
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A1A1A] pointer-events-none"
-          />
+            {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            Export Report
+          </button>
         </div>
       </div>
 
