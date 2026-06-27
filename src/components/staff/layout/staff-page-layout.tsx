@@ -5,6 +5,7 @@ import StaffSidebar from "@/components/staff/layout/staff-sidebar";
 import RoleGuard from "@/components/shared/auth/role-guard";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useRBACStore } from "@/store/auth/rbac.store";
+import StaffGlobalOrdersProvider from "./staff-global-orders";
 
 interface StaffPageLayoutProps {
   children: React.ReactNode;
@@ -37,6 +38,9 @@ export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
         <div className="ml-[260px] flex-1 flex flex-col h-full overflow-hidden">
           {children}
         </div>
+        
+        {/* Global Staff Orders Notification Provider */}
+        <StaffGlobalOrdersProvider />
       </div>
     </RoleGuard>
   );
