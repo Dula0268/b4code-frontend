@@ -295,7 +295,7 @@ export default function AnalyticsPage() {
                   <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-[#FFF8F0] to-transparent opacity-80 rounded-bl-full pointer-events-none" />
                   
                   <div className="flex items-center justify-between mb-5 flex-shrink-0 relative z-10">
-                    <h2 className="text-[17px] font-extrabold text-[#1A1A1A] m-0">Leaderboard</h2>
+                    <h2 className="text-[17px] font-extrabold text-[#1A1A1A] m-0">Frequently Ordered</h2>
                     <div className="p-1.5 bg-gradient-to-br from-[#FFF8F0] to-white border border-[#F0EBE7]/50 rounded-xl shadow-sm">
                       <Flame size={16} className="text-[#C05621]" />
                     </div>
@@ -338,20 +338,6 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 
-                {/* Rejected/Failed alert card */}
-                <div className="bg-gradient-to-br from-[#FFF6F6] to-white rounded-3xl border border-[#FDE8E8] p-5 shadow-[0_8px_30px_rgb(235,87,87,0.06)] hover:shadow-[0_8px_30px_rgb(235,87,87,0.12)] transition-shadow flex justify-between items-center flex-shrink-0 group">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FDE8E8] to-[#FAD4D4] flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
-                      <XCircle size={20} className="text-[#EB5757]" />
-                    </div>
-                    <div>
-                      <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#EB5757] uppercase m-0">Failed Orders</h3>
-                      <p className="text-[13px] text-[#EB5757] font-semibold opacity-80 m-0 mt-0.5">Needs attention</p>
-                    </div>
-                  </div>
-                  <p className="text-[32px] font-black text-[#EB5757] tracking-tighter m-0">{summary?.rejectedCount || 0}</p>
-                </div>
-
               </div>
 
             </div>
