@@ -343,7 +343,10 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         }));
       } catch (error: unknown) {
         const errorMessage = extractApiErrorMessage(error, "Failed to accept order");
-        set({ error: errorMessage });
+        set({
+          error: errorMessage,
+          toast: { type: "error", message: "Action Failed", detail: errorMessage }
+        });
         throw error;
       }
     },
@@ -369,7 +372,10 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         }));
       } catch (error: unknown) {
         const errorMessage = extractApiErrorMessage(error, "Failed to reject order");
-        set({ error: errorMessage });
+        set({
+          error: errorMessage,
+          toast: { type: "error", message: "Action Failed", detail: errorMessage }
+        });
         throw error;
       }
     },
@@ -403,7 +409,10 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         }
       } catch (error: unknown) {
         const errorMessage = extractApiErrorMessage(error, "Failed to advance order status");
-        set({ error: errorMessage });
+        set({
+          error: errorMessage,
+          toast: { type: "error", message: "Action Failed", detail: errorMessage }
+        });
       }
     },
 
