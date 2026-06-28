@@ -30,12 +30,12 @@ export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
   return (
     <RoleGuard allowedRoles={["staff", "admin", "owner"]}>
       <PermissionLoader />
-      <div className="flex h-screen overflow-hidden bg-[#f8f6f5]">
+      <div className="flex h-screen overflow-hidden bg-[#FAFBFC]">
         {/* Fixed Sidebar */}
         <StaffSidebar />
 
         {/* Right side: header + page content */}
-        <div className="ml-[260px] flex-1 flex flex-col h-full overflow-hidden">
+        <div className="ml-[260px] flex-1 flex flex-col h-full overflow-hidden bg-[#F5F6F8]">
           {children}
         </div>
         

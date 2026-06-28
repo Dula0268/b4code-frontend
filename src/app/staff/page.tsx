@@ -72,7 +72,7 @@ export default function StaffPage() {
         subtitle={`Operational Overview • ${today}`}
         searchPlaceholder="Search order #, room, or item..."
       />
-      <main className="mt-[72px] flex-1 overflow-hidden">
+      <main className="mt-[64px] flex-1 overflow-hidden">
         <StaffDashboard />
       </main>
     </StaffPageLayout>

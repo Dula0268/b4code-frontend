@@ -221,12 +221,12 @@ export default function StaffDashboard() {
                 </div>
                 <div className={`flex items-center gap-1 ${stat.trendColor} mt-1`}>
                   <TrendIcon size={12} />
-                  <span className="text-[11px] font-bold tracking-[0.05em] uppercase">{stat.trend}</span>
+                  <span className="text-[10px] font-semibold tracking-wider uppercase">{stat.trend}</span>
                 </div>
               </div>
               <div className="z-10 mt-3 flex flex-col gap-0.5">
-                <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase">{stat.label}</h3>
-                <span className="text-2xl font-extrabold text-[#1A1A1A] tracking-tighter leading-none">{stat.value}</span>
+                <h3 className="text-[10px] font-semibold tracking-wider text-[#6B7280] uppercase">{stat.label}</h3>
+                <span className="text-xl font-bold text-[#1A1A1A] leading-none">{stat.value}</span>
               </div>
             </div>
           );
@@ -247,9 +247,9 @@ export default function StaffDashboard() {
                   <Icon size={20} className="text-[#C05621]" />
                 </div>
                 <div className="flex flex-col">
-                  <h3 className="text-[13px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">{card.title}</h3>
-                  <p className="text-lg font-extrabold m-0 text-[#1A1A1A] tracking-tight">{card.highlight}</p>
-                  <p className="text-[13px] font-semibold text-[#9E7B6A] m-0 mt-1">{card.description}</p>
+                  <h3 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-0.5">{card.title}</h3>
+                  <p className="text-base font-bold m-0 text-[#1A1A1A]">{card.highlight}</p>
+                  <p className="text-xs text-[#6B7280] m-0 mt-0.5">{card.description}</p>
                 </div>
               </div>
               

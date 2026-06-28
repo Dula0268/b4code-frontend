@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
   if (!propertyId) return (
     <StaffPageLayout>
       <StaffHeader title="Analytics" subtitle="Performance Dashboard" searchPlaceholder="Search..." />
-      <main className="mt-[72px] flex-1 p-8 text-[#9E7B6A]">
+      <main className="mt-[64px] flex-1 p-8 text-[#9E7B6A]">
         No property selected.
       </main>
     </StaffPageLayout>
@@ -120,12 +120,12 @@ export default function AnalyticsPage() {
         subtitle="Performance Dashboard"
         searchPlaceholder="Search order #, room, or item..."
       />
-      <main className="mt-[72px] flex-1 p-6 h-[calc(100vh-72px)] overflow-hidden bg-[#f8f6f5] flex flex-col">
+      <main className="mt-[64px] flex-1 p-6 h-[calc(100vh-64px)] overflow-hidden bg-[#F5F6F8] flex flex-col">
       
         {/* ── Page Header ── */}
         <div className="flex justify-between items-end flex-shrink-0 mb-4">
           <div>
-            <h1 className="text-[26px] font-bold text-[#1A1A1A] leading-tight m-0">
+            <h1 className="text-xl font-bold text-[#1A1A1A] leading-tight m-0">
               Staff Performance
             </h1>
             <p className="text-[13px] text-[#9E7B6A] mt-1">

@@ -27,13 +27,13 @@ export default function StaffHeader({
   };
 
   return (
-    <header className="fixed top-0 right-0 left-[260px] h-[72px] z-40 bg-[var(--white)] border-b border-[var(--gray-5)] flex items-center justify-between px-8">
+    <header className="fixed top-0 right-0 left-[260px] h-[64px] z-40 bg-white/80 backdrop-blur-xl border-b border-[#E8EAED] flex items-center justify-between px-8">
       {/* Left: Title + Subtitle */}
       <div className="flex flex-col gap-0.5">
-        <h1 className="text-2xl font-bold text-[#111827] m-0 leading-8">
+        <h1 className="text-lg font-bold text-[#1A1A1A] m-0 leading-6">
           {title}
         </h1>
-        <p className="text-sm text-[#6b7280] m-0">{subtitle}</p>
+        <p className="text-xs text-[#6B7280] m-0 mt-0.5">{subtitle}</p>
       </div>
 
       {/* Right: Search + Actions */}
@@ -45,7 +45,7 @@ export default function StaffHeader({
             value={searchQuery}
             onChange={handleSearchChange}
             placeholder={searchPlaceholder}
-            className="pl-9 rounded-full h-10 text-sm border-[#d1d5db]"
+            className="pl-9 rounded-full h-9 text-xs border-[#E8EAED] bg-[#F5F6F8] placeholder:text-[#9CA3AF]"
           />
         </div>
         {actions}
