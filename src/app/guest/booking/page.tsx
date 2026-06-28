@@ -105,6 +105,7 @@ function BookingsContent() {
                         isFromStore: false,
                     };
                 })
+                console.log("API BOOKINGS:", apiBookings)
             } catch (err) {
                 console.warn("API booking fetch failed:", err)
             }
