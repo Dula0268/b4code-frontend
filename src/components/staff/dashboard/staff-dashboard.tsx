@@ -207,14 +207,14 @@ export default function StaffDashboard() {
   }
 
   return (
-    <div className="h-full overflow-hidden px-6 py-4 flex flex-col gap-4">
+    <div className="h-full overflow-hidden px-6 py-3 flex flex-col gap-3">
       {/* Stat Cards Row */}
-      <div className="grid grid-cols-4 gap-4 shrink-0">
+      <div className="grid grid-cols-4 gap-3 shrink-0">
         {stats.map((stat) => {
           const Icon = stat.icon;
           const TrendIcon = stat.trendIcon;
           return (
-            <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
+            <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
               <div className="flex justify-between items-start z-10">
                 <div className={`p-2.5 ${stat.iconBg.replace('0.08', '0.15')} rounded-xl self-start group-hover:scale-110 transition-transform`}>
                   <Icon size={18} className={stat.iconColor} />
@@ -239,7 +239,7 @@ export default function StaffDashboard() {
           const Icon = card.icon;
           const ButtonIcon = card.buttonIcon;
           return (
-            <div key={card.title} className="bg-white/90 backdrop-blur-xl rounded-2xl border border-white/80 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] transition-all duration-500 h-full flex flex-col justify-between group relative overflow-hidden">
+            <div key={card.title} className="bg-white/90 backdrop-blur-xl rounded-2xl border border-white/80 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden h-full">
               <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-2xl rounded-full group-hover:scale-150 group-hover:opacity-[0.06] transition-all duration-700" />
               
               <div className="flex flex-col gap-2 z-10">
@@ -249,11 +249,11 @@ export default function StaffDashboard() {
                 <div className="flex flex-col">
                   <h3 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-0.5">{card.title}</h3>
                   <p className="text-base font-bold m-0 text-[#1A1A1A]">{card.highlight}</p>
-                  <p className="text-xs text-[#6B7280] m-0 mt-0.5">{card.description}</p>
+                  <p className="text-xs text-[#6B7280] m-0 mt-0.5 line-clamp-1">{card.description}</p>
                 </div>
               </div>
               
-              <Button asChild className="bg-[#1A1A1A] hover:bg-[#C05621] text-white mt-3 rounded-xl h-10 font-bold tracking-wide transition-colors z-10">
+              <Button asChild className="bg-[#1A1A1A] hover:bg-[#C05621] text-white mt-auto rounded-xl h-9 text-xs font-bold tracking-wide transition-colors z-10 shrink-0">
                 <Link href={card.href} className="flex items-center gap-2">
                   {card.buttonLabel}
                   <ButtonIcon size={16} className="group-hover:translate-x-1 transition-transform" />
