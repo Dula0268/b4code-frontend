@@ -153,158 +153,175 @@ export default function AnalyticsPage() {
             <Activity className="animate-spin text-[#C05621]" size={40} />
           </div>
         ) : (
-          <div className="flex flex-col gap-4 flex-1 min-h-0 animate-in fade-in duration-700">
+          <div className="flex flex-col gap-5 flex-1 min-h-0 animate-in fade-in zoom-in-95 duration-1000 relative z-10">
             
-            {/* ── KPI Cards Row (Fixed Height) ── */}
-            <div className="grid grid-cols-5 gap-4 flex-shrink-0">
-              {/* Total Revenue */}
-              <div className="col-span-1 bg-white rounded-xl border border-[#F0EBE7] p-4 shadow-sm flex flex-col justify-center border-l-4 border-l-[#C05621]">
-                <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">Total Revenue</p>
-                <p className="text-[24px] font-bold text-[#1A1A1A] leading-none m-0 mt-2">
-                  LKR {formatCurrency(summary?.totalRevenue || 0).replace('$', '')}
-                </p>
-              </div>
-
-              {/* Total Orders */}
-              <div className="col-span-1 bg-white rounded-xl border border-[#F0EBE7] p-4 shadow-sm flex flex-col justify-center">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">Total Orders</p>
-                  <ShoppingCart size={14} color="#9E7B6A" />
-                </div>
-                <div className="flex items-end gap-2 mt-2">
-                  <p className="text-[24px] font-bold text-[#1A1A1A] leading-none m-0">{summary?.totalOrders || 0}</p>
-                  <span className="text-[12px] font-medium text-[#2D7D5C] bg-[#E6F5EF] px-1.5 py-0.5 rounded">
-                    {completionRate}% Done
+            {/* ── KPI Bento Row ── */}
+            <div className="grid grid-cols-12 gap-5 flex-shrink-0">
+              
+              {/* Total Revenue - Big feature card */}
+              <div className="col-span-4 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between relative overflow-hidden group">
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#C05621] opacity-[0.08] blur-3xl rounded-full group-hover:scale-150 group-hover:opacity-[0.12] transition-all duration-700" />
+                <div className="flex justify-between items-start z-10">
+                  <div className="p-2 bg-gradient-to-br from-[#FFF8F0] to-white rounded-xl shadow-sm border border-[#F0EBE7]/50">
+                    <DollarSign size={18} className="text-[#C05621]" />
+                  </div>
+                  <span className="text-[12px] font-bold text-[#2D7D5C] bg-[#E6F5EF] px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                    <TrendingUp size={12} /> {summary?.totalOrders} Orders
                   </span>
                 </div>
-              </div>
-              
-              {/* Avg Order Value */}
-              <div className="col-span-1 bg-white rounded-xl border border-[#F0EBE7] p-4 shadow-sm flex flex-col justify-center">
-                <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">Avg Order Value</p>
-                <p className="text-[24px] font-bold text-[#1A1A1A] leading-none m-0 mt-2">
-                  LKR {formatCurrency(summary?.averageOrderValue || 0).replace('$', '')}
-                </p>
+                <div className="z-10 mt-6">
+                  <h3 className="text-[12px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">Total Revenue</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[20px] font-medium text-[#C05621]">LKR</span>
+                    <span className="text-[42px] font-extrabold text-[#1A1A1A] tracking-tighter leading-none">
+                      {formatCurrency(summary?.totalRevenue || 0).replace('$', '').split('.')[0]}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              {/* Most Sold Item */}
-              <div className="col-span-1 bg-white rounded-xl border border-[#F0EBE7] p-4 shadow-sm flex flex-col justify-center">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">Top Item</p>
-                  <Flame size={14} color="#C05621" />
+              {/* Middle KPIs */}
+              <div className="col-span-5 grid grid-cols-2 gap-5">
+                {/* Avg Order Value */}
+                <div className="col-span-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between">
+                  <div className="p-2 bg-[#F8F6F5] rounded-xl self-start">
+                    <Activity size={16} className="text-[#9E7B6A]" />
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">Avg Order</h3>
+                    <p className="text-[24px] font-bold text-[#1A1A1A] tracking-tight m-0">
+                      LKR {formatCurrency(summary?.averageOrderValue || 0).replace('$', '')}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[16px] font-bold text-[#1A1A1A] leading-tight line-clamp-1 m-0 mt-2">
-                  {mostSoldItem ? mostSoldItem.name : "No Data"}
-                </p>
-                {mostSoldItem && (
-                  <p className="text-[11px] text-[#9E7B6A] font-medium m-0 mt-0.5">{mostSoldItem.volume} sold</p>
-                )}
+
+                {/* Most Sold Item */}
+                <div className="col-span-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group">
+                  <div className="p-2 bg-[#FFF8F0] rounded-xl self-start group-hover:scale-110 transition-transform">
+                    <Flame size={16} className="text-[#C05621]" />
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">Top Item</h3>
+                    <p className="text-[17px] font-bold text-[#1A1A1A] leading-tight line-clamp-1 m-0">
+                      {mostSoldItem ? mostSoldItem.name : "N/A"}
+                    </p>
+                    <p className="text-[12px] font-semibold text-[#C05621] mt-0.5 m-0">{mostSoldItem?.volume || 0} units</p>
+                  </div>
+                </div>
               </div>
 
               {/* View Order History Button */}
               <div 
                 onClick={() => router.push('/staff/orders')}
-                className="col-span-1 bg-[#2D7D5C] rounded-xl p-4 shadow-sm flex flex-col justify-center cursor-pointer hover:bg-[#236348] transition-colors group relative overflow-hidden"
+                className="col-span-3 bg-gradient-to-br from-[#1A5039] to-[#2D7D5C] rounded-3xl p-6 shadow-[0_8px_30px_rgb(45,125,92,0.3)] hover:shadow-[0_12px_40px_rgb(45,125,92,0.4)] hover:-translate-y-1 flex flex-col justify-between cursor-pointer transition-all duration-500 group relative overflow-hidden"
               >
-                <History className="absolute -right-2 -bottom-2 h-16 w-16 text-white opacity-10 group-hover:scale-110 transition-transform" />
-                <p className="text-[11px] font-semibold tracking-widest text-[rgba(255,255,255,0.7)] uppercase m-0 z-10">Manage</p>
-                <div className="flex items-center justify-between mt-2 z-10">
-                  <p className="text-[18px] font-bold text-white leading-none m-0">Order History</p>
-                  <ArrowRight color="white" size={16} className="group-hover:translate-x-1 transition-transform" />
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none" />
+                <History className="absolute -right-4 -bottom-4 h-28 w-28 text-white opacity-[0.05] group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-700" />
+                
+                <div className="bg-white/10 backdrop-blur-md p-2.5 rounded-xl self-start border border-white/20">
+                  <ArrowRight size={18} className="text-white group-hover:translate-x-1 transition-transform" />
+                </div>
+                
+                <div className="z-10 mt-6">
+                  <h3 className="text-[11px] font-bold tracking-[0.2em] text-white/70 uppercase mb-1">Manage</h3>
+                  <p className="text-[22px] font-bold text-white tracking-tight leading-none m-0">Order History</p>
                 </div>
               </div>
             </div>
 
-            {/* ── Main Chart and List Row (Fills Remaining Space) ── */}
-            <div className="flex gap-4 flex-1 min-h-0">
+            {/* ── Main Chart and List Row ── */}
+            <div className="flex gap-5 flex-1 min-h-0">
               
-              {/* Revenue Chart */}
-              <div className="flex-[5] bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex flex-col min-h-0">
-                <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                  <p className="text-[14px] font-bold text-[#1A1A1A] m-0 flex items-center gap-2">
-                    <Activity size={16} color="#C05621" /> Revenue Timeline
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-[#C05621]" />
-                      <span className="text-[11px] font-medium text-[#9E7B6A]">Gross Revenue</span>
-                    </div>
+              {/* Revenue Chart Box */}
+              <div className="flex-[5] bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-0">
+                <div className="flex justify-between items-center mb-6 flex-shrink-0">
+                  <h2 className="text-[17px] font-extrabold text-[#1A1A1A] m-0 flex items-center gap-2.5">
+                    <span className="w-2 h-6 bg-[#C05621] rounded-full" />
+                    Revenue Timeline
+                  </h2>
+                  <div className="flex items-center gap-2 bg-white/50 px-3 py-1.5 rounded-xl border border-white shadow-sm">
+                    <div className="w-2 h-2 rounded-full bg-[#C05621] shadow-[0_0_8px_rgb(192,86,33,0.8)]" />
+                    <span className="text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">Gross</span>
                   </div>
                 </div>
                 
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={trends} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                       <defs>
-                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#C05621" stopOpacity={0.15}/>
-                          <stop offset="100%" stopColor="#C05621" stopOpacity={0}/>
+                        <linearGradient id="colorRevenuePremium" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#C05621" stopOpacity={0.3}/>
+                          <stop offset="100%" stopColor="#C05621" stopOpacity={0.01}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="0" stroke="#F0EBE7" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F0EBE7" vertical={false} opacity={0.6} />
                       <XAxis 
                         dataKey="timeLabel" 
                         stroke="transparent" 
-                        tick={{ fill: "#9E7B6A", fontSize: 11 }} 
+                        tick={{ fill: "#9E7B6A", fontSize: 12, fontWeight: 600 }} 
                         tickLine={false} 
                         axisLine={false}
-                        dy={8} 
+                        dy={15} 
                       />
                       <YAxis 
                         stroke="transparent" 
-                        tick={{ fill: "#9E7B6A", fontSize: 11 }} 
+                        tick={{ fill: "#9E7B6A", fontSize: 12, fontWeight: 600 }} 
                         tickLine={false} 
                         axisLine={false}
                         tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} 
                       />
                       <Tooltip 
-                        contentStyle={{ backgroundColor: '#fff', borderColor: '#F0EBE7', borderRadius: '8px', color: '#1A1A1A', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                        itemStyle={{ color: '#C05621', fontWeight: 'bold', fontSize: '13px' }}
-                        cursor={{ stroke: '#E8DDD8', strokeWidth: 1 }}
+                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(8px)', borderColor: 'rgba(255,255,255,0.5)', borderRadius: '16px', color: '#1A1A1A', boxShadow: '0 20px 40px -10px rgb(0 0 0 / 0.1)', padding: '12px 16px' }}
+                        itemStyle={{ color: '#C05621', fontWeight: '900', fontSize: '15px' }}
+                        cursor={{ stroke: '#C05621', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.4 }}
                       />
                       <Area 
-                        type="natural" 
+                        type="monotone" 
                         dataKey="revenue" 
                         stroke="#C05621" 
-                        strokeWidth={2.5}
-                        fill="url(#colorRevenue)" 
-                        activeDot={{ r: 5, fill: "#C05621", stroke: "#fff", strokeWidth: 2 }}
+                        strokeWidth={4}
+                        fill="url(#colorRevenuePremium)" 
+                        activeDot={{ r: 7, fill: "#fff", stroke: "#C05621", strokeWidth: 3, shadow: '0 4px 10px rgba(192,86,33,0.5)' }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              {/* Right Column: Top Items & Rejected Stats */}
-              <div className="flex-[3] flex flex-col gap-4 min-h-0">
+              {/* Right Column: Top Items Leaderboard */}
+              <div className="flex-[3] flex flex-col gap-5 min-h-0">
                 
-                <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex flex-col min-h-0">
-                  <div className="flex items-center gap-2 mb-4 flex-shrink-0">
-                    <Flame size={16} color="#C05621" />
-                    <h2 className="text-[14px] font-bold text-[#1A1A1A] m-0">Top Selling Items</h2>
+                <div className="flex-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-0 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-[#FFF8F0] to-transparent opacity-80 rounded-bl-full pointer-events-none" />
+                  
+                  <div className="flex items-center justify-between mb-5 flex-shrink-0 relative z-10">
+                    <h2 className="text-[17px] font-extrabold text-[#1A1A1A] m-0">Leaderboard</h2>
+                    <div className="p-1.5 bg-gradient-to-br from-[#FFF8F0] to-white border border-[#F0EBE7]/50 rounded-xl shadow-sm">
+                      <Flame size={16} className="text-[#C05621]" />
+                    </div>
                   </div>
                   
-                  <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar relative z-10">
                     {topItems.length > 0 ? (
                       <div className="space-y-3">
                         {topItems.map((item, i) => (
-                          <div key={item.menuItemId} className="flex items-center justify-between group">
-                            <div className="flex items-center gap-3">
-                              <div className={`flex items-center justify-center w-7 h-7 rounded-lg font-bold text-[12px] flex-shrink-0
-                                ${i === 0 ? 'bg-[#FFF8F0] text-[#C05621]' : 
-                                  i === 1 ? 'bg-[#F0EBE7] text-[#1A1A1A]' : 
-                                  i === 2 ? 'bg-[#F0EBE7] text-[#9E7B6A]' : 
-                                  'bg-transparent text-[#9E7B6A] border border-[#F0EBE7]'}`}>
+                          <div key={item.menuItemId} className="flex items-center justify-between group hover:bg-white/80 p-3 -mx-3 rounded-2xl transition-all duration-300 hover:shadow-[0_4px_20px_rgb(0,0,0,0.03)] cursor-default border border-transparent hover:border-white">
+                            <div className="flex items-center gap-4">
+                              <div className={`flex items-center justify-center w-9 h-9 rounded-xl font-bold text-[13px] flex-shrink-0 transition-transform group-hover:scale-110
+                                ${i === 0 ? 'bg-gradient-to-br from-[#C05621] to-[#99451A] text-white shadow-[0_4px_10px_rgb(192,86,33,0.3)]' : 
+                                  i === 1 ? 'bg-gradient-to-br from-[#E8E8E8] to-[#D4D4D4] text-[#1A1A1A] shadow-sm' : 
+                                  i === 2 ? 'bg-gradient-to-br from-[#F5E6DA] to-[#E3D1C3] text-[#9E7B6A] shadow-sm' : 
+                                  'bg-white text-[#9E7B6A] border border-[#F0EBE7]'}`}>
                                 {i + 1}
                               </div>
                               <div>
-                                <p className="text-[13px] font-semibold text-[#1A1A1A] line-clamp-1 m-0">{item.name}</p>
-                                <p className="text-[11px] font-medium text-[#9E7B6A] m-0 mt-0.5">{item.volume} units sold</p>
+                                <p className="text-[14px] font-bold text-[#1A1A1A] line-clamp-1 m-0 group-hover:text-[#C05621] transition-colors">{item.name}</p>
+                                <p className="text-[12px] font-semibold text-[#9E7B6A] m-0 mt-0.5">{item.volume} units</p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-[13px] font-bold text-[#2D7D5C] m-0 whitespace-nowrap">
-                                LKR {formatCurrency(item.revenue).replace('$', '')}
+                              <p className="text-[14px] font-extrabold text-[#2D7D5C] m-0 whitespace-nowrap bg-[#E6F5EF] px-2 py-1 rounded-lg">
+                                LKR {formatCurrency(item.revenue).replace('$', '').split('.')[0]}
                               </p>
                             </div>
                           </div>
@@ -312,25 +329,27 @@ export default function AnalyticsPage() {
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-[#9E7B6A]">
-                        <ShoppingCart className="h-8 w-8 mb-2 opacity-20" />
-                        <p className="text-[13px] font-medium">No items sold</p>
+                        <div className="p-5 bg-white/50 rounded-full mb-3 shadow-sm border border-white">
+                          <ShoppingCart className="h-8 w-8 opacity-40" />
+                        </div>
+                        <p className="text-[14px] font-bold">No data available</p>
                       </div>
                     )}
                   </div>
                 </div>
                 
-                {/* Rejected/Failed small card */}
-                <div className="bg-[#FFF6F6] rounded-xl border border-[#FDE8E8] p-4 flex justify-between items-center flex-shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#FDE8E8] flex items-center justify-center">
-                      <XCircle size={16} color="#EB5757" />
+                {/* Rejected/Failed alert card */}
+                <div className="bg-gradient-to-br from-[#FFF6F6] to-white rounded-3xl border border-[#FDE8E8] p-5 shadow-[0_8px_30px_rgb(235,87,87,0.06)] hover:shadow-[0_8px_30px_rgb(235,87,87,0.12)] transition-shadow flex justify-between items-center flex-shrink-0 group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FDE8E8] to-[#FAD4D4] flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
+                      <XCircle size={20} className="text-[#EB5757]" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold tracking-widest text-[#EB5757] uppercase m-0">Failed / Rejected</p>
-                      <p className="text-[11px] text-[#EB5757] opacity-80 m-0 mt-0.5">Orders not fulfilled</p>
+                      <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#EB5757] uppercase m-0">Failed Orders</h3>
+                      <p className="text-[13px] text-[#EB5757] font-semibold opacity-80 m-0 mt-0.5">Needs attention</p>
                     </div>
                   </div>
-                  <p className="text-[24px] font-bold text-[#EB5757] m-0">{summary?.rejectedCount || 0}</p>
+                  <p className="text-[32px] font-black text-[#EB5757] tracking-tighter m-0">{summary?.rejectedCount || 0}</p>
                 </div>
 
               </div>
