@@ -82,7 +82,8 @@ function EditPropertyContent() {
         Object.fromEntries(AMENITY_LIST.map((a) => [a.key, false]))
     );
 
-    const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+    const MAX_PHOTOS = 10;
+    const [existingUrls, setExistingUrls] = useState<string[]>([]);
     const [newImages, setNewImages] = useState<ImageEntry[]>([]);
     const [dragging, setDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -106,7 +107,11 @@ function EditPropertyContent() {
             });
             if (data.checkIn)  setCheckIn(parseTime(data.checkIn));
             if (data.checkOut) setCheckOut(parseTime(data.checkOut));
-            if (data.image) setExistingImageUrl(data.image);
+            if (data.photoUrls?.length) {
+                setExistingUrls(data.photoUrls.slice(0, 10));
+            } else if (data.image) {
+                setExistingUrls([data.image]);
+            }
             if (data.amenities?.length) {
                 setAmenities((prev) => {
                     const next = { ...prev };
@@ -124,9 +129,12 @@ function EditPropertyContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [propertyId, ownerId]);
 
+    const removeExisting = (url: string) =>
+        setExistingUrls((prev) => prev.filter((u) => u !== url));
+
     const processFiles = useCallback((files: FileList | File[]) => {
         const fileArr = Array.from(files);
-        const remaining = 10 - newImages.length;
+        const remaining = MAX_PHOTOS - existingUrls.length - newImages.length;
         if (remaining <= 0) return;
         fileArr.filter((f) => f.type.startsWith("image/") && f.size <= 10 * 1024 * 1024)
             .slice(0, remaining)
@@ -142,7 +150,7 @@ function EditPropertyContent() {
                         setNewImages((prev) => prev.map((img) => img.id === id ? { ...img, uploading: false, error: err?.message ?? "Upload failed" } : img))
                     );
             });
-    }, [newImages.length]);
+    }, [existingUrls.length, newImages.length]);
 
     const removeNew = (id: string) => {
         setNewImages((prev) => {
@@ -159,7 +167,8 @@ function EditPropertyContent() {
         setSaving(true);
         try {
             const selectedAmenities = Object.entries(amenities).filter(([, v]) => v).map(([k]) => k);
-            const newImageUrl = newImages.find((i) => i.cloudUrl)?.cloudUrl;
+            const uploadedNewUrls = newImages.filter((i) => i.cloudUrl).map((i) => i.cloudUrl as string);
+            const allImageUrls = [...existingUrls, ...uploadedNewUrls].slice(0, MAX_PHOTOS);
             await propertiesApi.updateProperty(Number(propertyId), ownerId, {
                 name:         form.name,
                 description:  form.description,
@@ -173,7 +182,7 @@ function EditPropertyContent() {
                 houseRules:   form.houseRules,
                 propertyType: form.propertyType,
                 amenities:    selectedAmenities,
-                ...(newImageUrl ? { imageUrl: newImageUrl } : {}),
+                imageUrls:    allImageUrls,
             });
             setSaveSuccess(true);
         } catch (err: unknown) {
@@ -332,66 +341,90 @@ function EditPropertyContent() {
                                     </div>
                                 </div>
 
-                                {/* Property Photo */}
+                                {/* Property Photos */}
                                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                    <div className="flex justify-between items-center mb-2.5">
+                                    <div className="flex justify-between items-center mb-1">
                                         <div className="flex items-center gap-2">
                                             <Camera size={16} color="#953002" />
-                                            <span className="text-[15px] font-bold text-[#1d1d1d]">Property Photo</span>
+                                            <span className="text-[15px] font-bold text-[#1d1d1d]">Property Photos</span>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => window.location.href = `/owner/properties/Media?id=${propertyId}`}
-                                            className="flex items-center gap-1 bg-transparent border-none text-[#953002] text-[12px] font-semibold cursor-pointer hover:underline"
-                                        >
-                                            Manage All Photos <ArrowRight size={13} />
-                                        </button>
+                                        <span className="text-[11px] text-[#828282]">
+                                            {existingUrls.length + newImages.length}/{MAX_PHOTOS} photos
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-[#b0b0b0] mb-3">
+                                        Upload up to 10 photos. The first photo is the main cover image.
+                                    </p>
+
+                                    {/* Photo grid */}
+                                    <div className="grid grid-cols-5 gap-2 mb-3">
+                                        {/* Existing photos */}
+                                        {existingUrls.map((url, i) => (
+                                            <div key={url} className="relative group aspect-square rounded-lg overflow-hidden border border-[#e0e0e0]">
+                                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                                {i === 0 && (
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-[#953002] text-white text-[8px] font-bold text-center py-0.5">
+                                                        COVER
+                                                    </div>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeExisting(url)}
+                                                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border-none cursor-pointer p-0"
+                                                >
+                                                    <X size={10} color="#fff" />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {/* New (uploading) photos */}
+                                        {newImages.map((img) => (
+                                            <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden border border-[#e0e0e0]">
+                                                <img src={img.localUrl} alt="" className="w-full h-full object-cover" />
+                                                {img.uploading && (
+                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                                        <Loader2 size={14} color="#fff" className="animate-spin" />
+                                                    </div>
+                                                )}
+                                                {img.cloudUrl && (
+                                                    <div className="absolute top-1 left-1 bg-[#27ae60] rounded-full p-px">
+                                                        <CheckCircle2 size={10} color="#fff" />
+                                                    </div>
+                                                )}
+                                                {img.error && (
+                                                    <div className="absolute inset-0 bg-[rgba(231,76,60,0.25)] flex items-center justify-center">
+                                                        <AlertCircle size={14} color="#e74c3c" />
+                                                    </div>
+                                                )}
+                                                {!img.uploading && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeNew(img.id)}
+                                                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border-none cursor-pointer p-0"
+                                                    >
+                                                        <X size={10} color="#fff" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        {/* Add slot */}
+                                        {(existingUrls.length + newImages.length) < MAX_PHOTOS && (
+                                            <div
+                                                onClick={() => fileInputRef.current?.click()}
+                                                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                                                onDragLeave={() => setDragging(false)}
+                                                onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files); }}
+                                                className={`aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                                                    dragging ? "border-[#953002] bg-[#fef5ef]" : "border-[#d0d0d0] bg-[#fafafa] hover:border-[#953002] hover:bg-[#fef8f4]"
+                                                }`}
+                                            >
+                                                <Plus size={18} color="#b0b0b0" />
+                                                <span className="text-[9px] text-[#b0b0b0] mt-1 text-center leading-tight px-1">Add Photo</span>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* Existing image */}
-                                    {existingImageUrl && newImages.length === 0 && (
-                                        <div className="flex items-center gap-3 mb-2.5">
-                                            <div className="w-[100px] h-[72px] rounded-lg overflow-hidden border-2 border-[#953002] shrink-0">
-                                                <img src={existingImageUrl} alt="Current" className="w-full h-full object-cover" />
-                                            </div>
-                                            <span className="text-[11px] text-[#828282]">Current photo. Upload a new one to replace it.</span>
-                                        </div>
-                                    )}
-
-                                    {/* New images preview */}
-                                    {newImages.length > 0 && (
-                                        <div className="flex gap-2 flex-wrap mb-2.5">
-                                            {newImages.map((img) => (
-                                                <div key={img.id} className="relative w-16 h-12 rounded-md overflow-hidden group shrink-0">
-                                                    <img src={img.localUrl} alt="" className="w-full h-full object-cover" />
-                                                    {img.uploading && (
-                                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                                            <Loader2 size={12} color="#fff" className="animate-spin" />
-                                                        </div>
-                                                    )}
-                                                    {img.cloudUrl && (
-                                                        <div className="absolute inset-0 border-2 border-[#27ae60] rounded-md pointer-events-none" />
-                                                    )}
-                                                    {img.error && (
-                                                        <div className="absolute inset-0 bg-[rgba(231,76,60,0.3)] flex items-center justify-center">
-                                                            <AlertCircle size={12} color="#e74c3c" />
-                                                        </div>
-                                                    )}
-                                                    {!img.uploading && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeNew(img.id)}
-                                                            className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border-none cursor-pointer p-0"
-                                                        >
-                                                            <X size={10} color="#fff" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Drop zone */}
                                     <input
                                         ref={fileInputRef}
                                         type="file"
@@ -400,28 +433,30 @@ function EditPropertyContent() {
                                         className="hidden"
                                         onChange={(e) => { if (e.target.files?.length) processFiles(e.target.files); e.target.value = ""; }}
                                     />
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                                        onDragLeave={() => setDragging(false)}
-                                        onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files); }}
-                                        className={`border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer py-4 transition-colors ${
-                                            dragging ? "border-[#953002] bg-[#fef5ef]" : "border-[#d0d0d0] bg-[#fafafa] hover:border-[#953002] hover:bg-[#fef8f4]"
-                                        }`}
+
+                                    {existingUrls.length + newImages.length === 0 && (
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                                            onDragLeave={() => setDragging(false)}
+                                            onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files); }}
+                                            className={`border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer py-6 transition-colors ${
+                                                dragging ? "border-[#953002] bg-[#fef5ef]" : "border-[#d0d0d0] bg-[#fafafa] hover:border-[#953002] hover:bg-[#fef8f4]"
+                                            }`}
+                                        >
+                                            <Building2 size={26} color="#b0b0b0" />
+                                            <span className="text-[12px] text-[#828282] mt-1.5">Click or drag to upload photos</span>
+                                            <span className="text-[10px] text-[#b0b0b0]">PNG, JPG, WEBP up to 10MB each · max 10 photos</span>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => window.location.href = `/owner/properties/Media?id=${propertyId}`}
+                                        className="flex items-center gap-1 mt-2 bg-transparent border-none text-[#953002] text-[11px] font-semibold cursor-pointer hover:underline p-0"
                                     >
-                                        {newImages.length === 0 && !existingImageUrl ? (
-                                            <>
-                                                <Building2 size={26} color="#b0b0b0" />
-                                                <span className="text-[12px] text-[#828282] mt-1.5">Click or drag to upload new photo</span>
-                                                <span className="text-[10px] text-[#b0b0b0]">PNG, JPG up to 10MB</span>
-                                            </>
-                                        ) : (
-                                            <div className="flex items-center gap-1.5 py-1">
-                                                <Plus size={14} color="#953002" />
-                                                <span className="text-[12px] text-[#953002] font-medium">Add another photo</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                        Manage All Photos in Media tab <ArrowRight size={12} />
+                                    </button>
                                 </div>
 
                                 {/* Error / Success banners */}
