@@ -17,7 +17,6 @@ import {
     Settings,
     ChevronLeft,
     ChevronRight,
-    MoreVertical,
     Loader2,
 } from "lucide-react";
 
@@ -122,7 +121,8 @@ export default function OwnerDashboardPage() {
 
     const calDays        = getCalendarDays(calYear, calMonth);
     const todayDay       = now.getMonth() === calMonth && now.getFullYear() === calYear ? now.getDate() : -1;
-    const recentBookings = (data?.recentBookings ?? []).map(mapBooking);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recentBookings: ReturnType<typeof mapBooking>[] = ((data?.recentBookings ?? []) as any[]).map(mapBooking);
 
     const prevMonth = () => calMonth === 0  ? (setCalMonth(11), setCalYear(y => y - 1)) : setCalMonth(m => m - 1);
     const nextMonth = () => calMonth === 11 ? (setCalMonth(0),  setCalYear(y => y + 1)) : setCalMonth(m => m + 1);
