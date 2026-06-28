@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
@@ -36,8 +36,13 @@ const roomTypes = [
  * Multi-section form for adding a new room to a property, including
  * room type, capacity, pricing, amenities, and photo uploads.
  */
-export default function AddRoomPage() {
+function AddRoomContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const propertyId = searchParams.get("propertyId");
+    const backUrl = propertyId
+        ? `/owner/properties/propertyRoomInventry?id=${propertyId}`
+        : "/owner/properties";
     const [roomName, setRoomName] = useState("");
     const [roomType, setRoomType] = useState("King Suite");
     const [maxAdults, setMaxAdults] = useState("2");
@@ -79,10 +84,10 @@ export default function AddRoomPage() {
                         </a>
                         <span className="text-[#d0d0d0]">›</span>
                         <a
-                            href="/owner/properties/propertyDetails"
+                            href={backUrl}
                             className="text-[#828282] no-underline hover:text-[#953002] transition-colors"
                         >
-                            Downtown Luxury Loft
+                            Rooms
                         </a>
                         <span className="text-[#d0d0d0]">›</span>
                         <span className="text-[#953002]">Add New Room</span>
@@ -285,12 +290,12 @@ export default function AddRoomPage() {
                         {/* ── Actions ── */}
                         <div className="flex justify-end items-center gap-4">
                             <button
-                                onClick={() => router.back()}
+                                onClick={() => router.push(backUrl)}
                                 className="py-2.5 px-7 bg-white text-[#4f4f4f] border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 onClick={() => router.back()}
                                 className="flex items-center gap-2 py-2.5 px-7 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#a63602] transition-colors"
                             >
@@ -302,5 +307,17 @@ export default function AddRoomPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function AddRoomPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
+                <div className="w-6 h-6 border-2 border-[#953002] border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <AddRoomContent />
+        </Suspense>
     );
 }

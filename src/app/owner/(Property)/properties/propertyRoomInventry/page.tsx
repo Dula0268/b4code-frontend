@@ -202,7 +202,7 @@ function RoomsContent() {
                         <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden">
                             <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#f0f0f0]">
                                 <span className="text-[15px] font-bold text-[#1d1d1d]">Room Inventory</span>
-                                <a href="/owner/roomManagement" className="no-underline">
+                                <a href={`/owner/roomManagement/addRoom?propertyId=${propertyId}`} className="no-underline">
                                     <button className="flex items-center gap-1.5 py-2 px-4 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">
                                         <Plus size={14} /> Add Room
                                     </button>
@@ -213,7 +213,7 @@ function RoomsContent() {
                                 <div className="flex flex-col items-center justify-center py-16 text-center">
                                     <Bed size={40} color="#c0a898" className="mb-3" />
                                     <p className="text-[14px] text-[#828282]">No rooms yet for this property. Add rooms to get started.</p>
-                                    <a href="/owner/roomManagement" className="no-underline mt-3">
+                                    <a href={`/owner/roomManagement/addRoom?propertyId=${propertyId}`} className="no-underline mt-3">
                                         <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#b03a02]">
                                             <Plus size={14} /> Add Room
                                         </button>
