@@ -214,7 +214,7 @@ export default function StaffDashboard() {
           const Icon = stat.icon;
           const TrendIcon = stat.trendIcon;
           return (
-            <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
+            <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
               <div className="flex justify-between items-start z-10">
                 <div className={`p-2.5 ${stat.iconBg.replace('0.08', '0.15')} rounded-xl self-start group-hover:scale-110 transition-transform`}>
                   <Icon size={18} className={stat.iconColor} />
@@ -239,7 +239,7 @@ export default function StaffDashboard() {
           const Icon = card.icon;
           const ButtonIcon = card.buttonIcon;
           return (
-            <div key={card.title} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)] transition-all duration-500 h-full flex flex-col justify-between group relative overflow-hidden">
+            <div key={card.title} className="bg-white/90 backdrop-blur-xl rounded-2xl border border-white/80 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] transition-all duration-500 h-full flex flex-col justify-between group relative overflow-hidden">
               <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-2xl rounded-full group-hover:scale-150 group-hover:opacity-[0.06] transition-all duration-700" />
               
               <div className="flex flex-col gap-2 z-10">
