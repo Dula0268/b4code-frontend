@@ -98,7 +98,8 @@ export default function StaffMenuList() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
+    <div className="h-full flex flex-col overflow-hidden px-6 py-5 gap-5 animate-in fade-in zoom-in-95 duration-1000 relative z-10">
+      <div className="absolute inset-0 bg-[#F8F6F5] pointer-events-none" />
       {/* ── Loading State ── */}
       {isLoading && (
         <div className="flex-1 flex flex-col gap-3">
@@ -165,44 +166,46 @@ export default function StaffMenuList() {
           )}
 
           {/* ── Header ── */}
-          <div className="flex-none flex items-center justify-between">
+          <div className="flex-none flex items-center justify-between relative z-10 bg-white/70 backdrop-blur-xl p-5 rounded-3xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <div>
-              <h1 className="text-lg font-bold text-[var(--black-2)] leading-tight">Menu Management</h1>
-              <p className="text-xs text-[var(--gray-3)] mt-0.5">Manage menus, categories, and dining options for your guests.</p>
+              <h1 className="text-xl font-extrabold text-[#1A1A1A] leading-tight m-0">Menu Management</h1>
+              <p className="text-xs font-semibold text-[#9E7B6A] mt-1 m-0">Manage menus, categories, and dining options for your guests.</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm" className="text-xs h-7 gap-1.5">
+            <div className="flex items-center gap-3">
+              <Button asChild variant="outline" size="sm" className="h-9 px-4 rounded-xl border-white bg-white/50 hover:bg-white shadow-sm font-bold text-[#1A1A1A] gap-2 transition-all">
                 <Link href="/staff/menu/availability">
-                  <ToggleRight size={13} /> Item Availability
+                  <ToggleRight size={16} className="text-[#C05621]" /> Item Availability
                 </Link>
               </Button>
-              <Button asChild size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1.5 hover:bg-[var(--brand-primary)]/90">
+              <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] text-white hover:from-[#C05621] hover:to-[#99451A] shadow-md font-bold gap-2 transition-all">
                 <Link href="/staff/menu/new">
-                  <Plus size={13} /> Create New Menu
+                  <Plus size={16} /> Create New Menu
                 </Link>
               </Button>
             </div>
           </div>
 
           {/* ── Stat Cards ── */}
-          <div className="flex-none grid grid-cols-3 gap-3">
+          <div className="flex-none grid grid-cols-3 gap-5 relative z-10">
             {[
-              { label: "Total Menus", value: String(total), sub: `${menus.filter(m => m.status === "active").length} active`, icon: UtensilsCrossed, iconBg: "bg-[rgba(149,48,2,0.08)]", iconColor: "text-[var(--brand-primary)]" },
-              { label: "Active Items", value: String(activeItems), sub: "Across all menus", icon: Layers, iconBg: "bg-[rgba(39,174,96,0.08)]", iconColor: "text-[var(--state-success)]" },
-              { label: "Categories", value: String(categories.length), sub: "Custom defined", icon: Tag, iconBg: "bg-[rgba(99,102,241,0.08)]", iconColor: "text-indigo-500" },
+              { label: "Total Menus", value: String(total), sub: `${menus.filter(m => m.status === "active").length} active`, icon: UtensilsCrossed, iconBg: "bg-[rgba(192,86,33,0.1)]", iconColor: "text-[#C05621]" },
+              { label: "Active Items", value: String(activeItems), sub: "Across all menus", icon: Layers, iconBg: "bg-[rgba(45,125,92,0.1)]", iconColor: "text-[#2D7D5C]" },
+              { label: "Categories", value: String(categories.length), sub: "Custom defined", icon: Tag, iconBg: "bg-[rgba(99,102,241,0.1)]", iconColor: "text-indigo-500" },
             ].map((s) => (
-              <Card key={s.label} className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                <CardContent className="px-4 py-3 flex items-start justify-between">
-                  <div>
-                    <p className="text-[10px] text-[var(--gray-3)] font-medium">{s.label}</p>
-                    <p className="text-xl font-bold text-[var(--black-2)] leading-tight mt-0.5">{s.value}</p>
-                    <p className="text-[10px] text-[var(--gray-3)] mt-0.5">{s.sub}</p>
+              <div key={s.label} className="col-span-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group">
+                <div className="flex justify-between items-start">
+                  <div className={`p-2.5 ${s.iconBg} rounded-xl self-start group-hover:scale-110 transition-transform`}>
+                    <s.icon size={18} className={s.iconColor} />
                   </div>
-                  <div className={`${s.iconBg} rounded-lg p-2`}>
-                    <s.icon size={16} className={s.iconColor} />
-                  </div>
-                </CardContent>
-              </Card>
+                  <span className="text-[10px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase bg-white/50 px-2 py-1 rounded-lg border border-white">
+                    {s.sub}
+                  </span>
+                </div>
+                <div className="mt-5">
+                  <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">{s.label}</h3>
+                  <p className="text-[32px] font-extrabold text-[#1A1A1A] tracking-tighter leading-none m-0">{s.value}</p>
+                </div>
+              </div>
             ))}
           </div>
 

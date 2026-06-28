@@ -102,71 +102,75 @@ function OrderCard({
 
   return (
     <Card
-      className="bg-white border-0 py-0 gap-0 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-white/80 backdrop-blur-xl border border-white py-0 gap-0 overflow-hidden cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)] hover:-translate-y-1 transition-all duration-500 rounded-3xl flex flex-col group relative"
       onClick={onViewDetail}
     >
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-3xl rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
+      
       {/* Card Header */}
-      <div className="bg-[#fafaf9] border-b border-[#f5f5f4] px-3.5 py-2.5 flex items-center justify-between">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold text-[#1c1917]">{order.id}</span>
-            {order.isUrgent && <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" />}
+      <div className="bg-white/40 border-b border-[#F0EBE7]/50 px-5 py-4 flex items-center justify-between z-10">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-extrabold text-[#1A1A1A]">{order.id}</span>
+            {order.isUrgent && <span className="w-2 h-2 rounded-full bg-[#ef4444] shadow-[0_0_8px_rgb(239,68,68,0.6)] animate-pulse" />}
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-[#78716c]">
-            <Clock size={10} />
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#9E7B6A]">
+            <Clock size={12} />
             <span>{order.time}</span>
             <span>•</span>
             <span>{order.timeAgo}</span>
           </div>
         </div>
-        <span className={`${badge.bg} ${badge.text} text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1`}>
-          {badge.dot && <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />}
+        <span className={`${badge.bg} ${badge.text} text-[11px] font-bold px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-sm`}>
+          {badge.dot && <span className={`w-2 h-2 rounded-full ${badge.dot}`} />}
           {badge.label}
         </span>
       </div>
 
       {/* Card Body */}
-      <CardContent className="px-3.5 py-2.5 flex flex-col gap-2 flex-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <UtensilsCrossed size={14} className="text-[#a8a29e]" />
-            <span className="text-xs font-semibold text-[#292524]">{order.table}</span>
+      <CardContent className="px-5 py-4 flex flex-col gap-3 flex-1 z-10">
+        <div className="flex items-center justify-between bg-white/50 p-2.5 rounded-xl border border-white shadow-sm">
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed size={16} className="text-[#9E7B6A]" />
+            <span className="text-xs font-bold text-[#1A1A1A]">{order.table}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--brand-primary)]">
-            <User size={12} />
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#C05621]">
+            <User size={14} />
             <span>{order.guest}</span>
           </div>
-          <Badge variant="secondary" className="text-[10px] font-medium">{order.type}</Badge>
+          <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">{order.type}</Badge>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2.5 mt-1">
           {order.items.slice(0, 2).map((item, idx) => (
-            <div key={idx} className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-1.5">
-                <div className="bg-[#f5f5f4] rounded w-4 h-4 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[10px] font-bold text-[#57534e]">{item.qty}</span>
+            <div key={idx} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2.5">
+                <div className="bg-[#FFF8F0] border border-[#F0EBE7]/50 rounded-lg w-6 h-6 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[#C05621]">{item.qty}</span>
                 </div>
-                <span className="text-xs text-[#44403c] truncate">{item.name}</span>
+                <span className="text-[13px] font-semibold text-[#1A1A1A] truncate">{item.name}</span>
               </div>
               {item.note && (
-                <span className="text-[10px] text-[#a8a29e] italic ml-5.5 line-clamp-1">{item.note}</span>
+                <span className="text-[11px] font-medium text-[#9E7B6A] italic ml-8 line-clamp-1">{item.note}</span>
               )}
             </div>
           ))}
           {order.items.length > 2 && (
-            <span className="text-[10px] text-[#a8a29e] ml-5">+{order.items.length - 2} more items</span>
+            <span className="text-[11px] font-bold text-[#C05621] ml-8">+{order.items.length - 2} more items</span>
           )}
           {order.note && (
-            <p className="text-[10px] italic text-[#a8a29e] ml-5 m-0">{order.note}</p>
+            <div className="mt-2 p-2.5 bg-yellow-50/50 border border-yellow-100 rounded-xl">
+              <p className="text-[11px] font-semibold italic text-yellow-800 m-0 leading-relaxed">{order.note}</p>
+            </div>
           )}
         </div>
       </CardContent>
 
       {/* Card Footer */}
-      <div className="bg-[#fafaf9] border-t border-[#f5f5f4] px-3.5 py-2.5 flex flex-col gap-2">
+      <div className="bg-white/40 border-t border-[#F0EBE7]/50 px-5 py-4 flex flex-col gap-3.5 z-10">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-[#78716c]">{order.totalItems} items</span>
-          <span className="text-sm font-bold text-[#1c1917]">LKR {order.total.toLocaleString()}</span>
+          <span className="text-[11px] font-bold tracking-widest text-[#9E7B6A] uppercase">{order.totalItems} items</span>
+          <span className="text-[17px] font-extrabold text-[#1A1A1A] tracking-tight">LKR {order.total.toLocaleString()}</span>
         </div>
         {renderActions()}
       </div>
@@ -343,9 +347,10 @@ export default function StaffOrderQueue() {
       </div>
 
       {/* Orders Grid */}
-      <div className="flex-1 bg-[#f8f6f5] px-6 py-4 overflow-y-auto">
+      <div className="flex-1 px-6 py-6 overflow-y-auto relative animate-in fade-in zoom-in-95 duration-1000">
+        <div className="absolute inset-0 bg-[#F8F6F5]" />
         {filteredOrders.length > 0 ? (
-          <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
             {filteredOrders.map((order) => (
               <OrderCard
                 key={order.id}
@@ -358,11 +363,11 @@ export default function StaffOrderQueue() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-[#78716c]">
-            <div className="w-14 h-14 rounded-full bg-[#f5f5f4] flex items-center justify-center">
-              <UtensilsCrossed size={24} className="text-[#a8a29e]" />
+          <div className="flex flex-col items-center justify-center py-24 text-[#9E7B6A] relative z-10">
+            <div className="w-20 h-20 rounded-full bg-white/80 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-center">
+              <UtensilsCrossed size={32} className="text-[#C05621] opacity-50" />
             </div>
-            <p className="text-sm mt-3 m-0">
+            <p className="text-[15px] font-bold mt-5 m-0">
               No orders in &ldquo;{STATUS_TABS.find((t) => t.value === activeTab)?.label}&rdquo; status
             </p>
           </div>

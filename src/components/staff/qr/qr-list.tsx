@@ -102,10 +102,11 @@ export default function QrList({ propertyId }: { propertyId: number }) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
+    <div className="h-full flex flex-col overflow-hidden px-6 py-5 gap-5 animate-in fade-in zoom-in-95 duration-1000 relative z-10">
+      <div className="absolute inset-0 bg-[#F8F6F5] pointer-events-none" />
       {/* Success banner */}
       {successMsg && (
-        <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-[10px] px-4 py-2 text-sm">
+        <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-xl px-4 py-2 text-sm relative z-10">
           <CheckCircle size={16} className="text-[var(--state-success)]" />
           <span className="text-[var(--black-2)] font-medium flex-1">{successMsg}</span>
           <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setSuccess(null)}><X size={14} /></Button>
@@ -122,14 +123,14 @@ export default function QrList({ propertyId }: { propertyId: number }) {
       )}
 
       {/* Header */}
-      <div className="flex-none flex items-center justify-between">
+      <div className="flex-none flex items-center justify-between relative z-10 bg-white/70 backdrop-blur-xl p-5 rounded-3xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
         <div>
-          <h1 className="text-lg font-bold text-[var(--black-2)] leading-tight">QR Management</h1>
-          <p className="text-xs text-[var(--gray-3)] mt-0.5">QR List</p>
+          <h1 className="text-xl font-extrabold text-[#1A1A1A] leading-tight m-0">QR Management</h1>
+          <p className="text-xs font-semibold text-[#9E7B6A] mt-1 m-0">Manage and track guest QR codes</p>
         </div>
-        <Button asChild size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1.5 hover:bg-[var(--brand-primary)]/90" disabled={loading}>
+        <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] text-white hover:from-[#C05621] hover:to-[#99451A] shadow-md font-bold gap-2 transition-all" disabled={loading}>
           <Link href={`/staff/qr/new?propertyId=${propertyId}`}>
-            <Plus size={13} /> Create QR
+            <Plus size={16} /> Create QR
           </Link>
         </Button>
       </div>
