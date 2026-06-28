@@ -116,211 +116,223 @@ export default function AnalyticsPage() {
         subtitle="Performance Dashboard"
         searchPlaceholder="Search order #, room, or item..."
       />
-      <main className="mt-[72px] flex-1 p-6 md:p-10 space-y-8 h-full overflow-y-auto">
+      <main className="mt-[72px] flex-1 p-8 h-full overflow-y-auto bg-[#f8f6f5]">
       
-      {/* Header Area */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-top-4 duration-500">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            <div className="p-2 bg-[rgba(149,48,2,0.1)] rounded-lg">
-              <BarChart3 className="h-6 w-6 text-[var(--brand-primary,#953002)]" />
-            </div>
-            Performance Dashboard
-          </h1>
-          <p className="text-slate-500 mt-1 text-sm font-medium">Monitor real-time insights and revenue growth.</p>
-        </div>
+      <div className="flex flex-col gap-6 max-w-7xl mx-auto">
         
-        <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
-          <Calendar className="h-4 w-4 text-slate-400 ml-2" />
-          <Select value={timeframe} onValueChange={(val: any) => setTimeframe(val)}>
-            <SelectTrigger className="w-[160px] bg-white border-none shadow-sm text-slate-700 font-medium h-9 focus:ring-1 focus:ring-[var(--brand-primary,#953002)] rounded-lg">
-              <SelectValue placeholder="Select timeframe" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-              <SelectItem value="today" className="cursor-pointer focus:bg-slate-50">Today</SelectItem>
-              <SelectItem value="week" className="cursor-pointer focus:bg-slate-50">Last 7 Days</SelectItem>
-              <SelectItem value="month" className="cursor-pointer focus:bg-slate-50">Last 30 Days</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <Activity className="h-10 w-10 text-[var(--brand-primary,#953002)] animate-pulse" />
-        </div>
-      ) : (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-white border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group rounded-2xl overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 pt-6">
-                <CardTitle className="text-sm font-semibold text-slate-500">Total Revenue</CardTitle>
-                <div className="p-2 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
-                  <DollarSign className="h-5 w-5 text-emerald-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-900">{formatCurrency(summary?.totalRevenue || 0)}</div>
-                <div className="flex items-center gap-1 mt-2 text-xs font-medium text-slate-500">
-                  <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-                  <span className="text-emerald-600 font-semibold">{summary?.totalOrders}</span> orders
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group rounded-2xl overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 pt-6">
-                <CardTitle className="text-sm font-semibold text-slate-500">Avg. Order Value</CardTitle>
-                <div className="p-2 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-900">{formatCurrency(summary?.averageOrderValue || 0)}</div>
-                <div className="mt-2 text-xs font-medium text-slate-500">
-                  Per completed order
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group rounded-2xl overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-1 h-full bg-[var(--brand-primary,#953002)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 pt-6">
-                <CardTitle className="text-sm font-semibold text-slate-500">Completion Rate</CardTitle>
-                <div className="p-2 bg-[rgba(149,48,2,0.06)] rounded-xl group-hover:bg-[rgba(149,48,2,0.1)] transition-colors">
-                  <CheckCircle className="h-5 w-5 text-[var(--brand-primary,#953002)]" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-900">{completionRate}%</div>
-                <div className="mt-2 text-xs font-medium text-slate-500">
-                  <span className="text-slate-700 font-semibold">{summary?.completedCount}</span> completed
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group rounded-2xl overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-1 h-full bg-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 pt-6">
-                <CardTitle className="text-sm font-semibold text-slate-500">Rejected Orders</CardTitle>
-                <div className="p-2 bg-rose-50 rounded-xl group-hover:bg-rose-100 transition-colors">
-                  <XCircle className="h-5 w-5 text-rose-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-900">{summary?.rejectedCount || 0}</div>
-                <div className="mt-2 text-xs font-medium text-slate-500">
-                  Failed or cancelled
-                </div>
-              </CardContent>
-            </Card>
+        {/* ── Page Header ── */}
+        <div className="flex justify-between items-end">
+          <div>
+            <h1 className="text-[26px] font-bold text-[#1A1A1A] leading-tight m-0">
+              Staff Performance
+            </h1>
+            <p className="text-[13px] text-[#9E7B6A] mt-1">
+              Real-time insights for your property's orders and items.
+            </p>
           </div>
+          
+          <div className="flex items-center gap-3 bg-white p-1.5 rounded-xl border border-[#F0EBE7] shadow-sm">
+            <Calendar className="h-4 w-4 text-[#9E7B6A] ml-2" />
+            <Select value={timeframe} onValueChange={(val: any) => setTimeframe(val)}>
+              <SelectTrigger className="w-[160px] bg-transparent border-none shadow-none text-[#1A1A1A] font-medium h-8 focus:ring-0">
+                <SelectValue placeholder="Select timeframe" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-[#F0EBE7] shadow-lg">
+                <SelectItem value="today" className="cursor-pointer">Today</SelectItem>
+                <SelectItem value="week" className="cursor-pointer">Last 7 Days</SelectItem>
+                <SelectItem value="month" className="cursor-pointer">Last 30 Days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-6">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-32">
+            <Activity className="animate-spin text-[#C05621]" size={40} />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6 animate-in fade-in duration-700">
             
-            {/* Main Trend Chart */}
-            <Card className="col-span-1 xl:col-span-2 bg-white border-slate-100 shadow-sm rounded-2xl overflow-hidden">
-              <CardHeader className="border-b border-slate-50 bg-slate-50/50 pb-4">
-                <CardTitle className="text-base text-slate-800 font-semibold flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-[var(--brand-primary,#953002)]" />
-                  Revenue Trends
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-[380px] w-full pt-6">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#953002" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#953002" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis 
-                      dataKey="timeLabel" 
-                      stroke="#94a3b8" 
-                      fontSize={12} 
-                      tickLine={false} 
-                      axisLine={false}
-                      dy={10} 
-                    />
-                    <YAxis 
-                      stroke="#94a3b8" 
-                      fontSize={12} 
-                      tickLine={false} 
-                      axisLine={false}
-                      tickFormatter={(value) => `$${value}`} 
-                    />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#fff', borderColor: '#e2e8f0', borderRadius: '12px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
-                      itemStyle={{ color: '#0f172a', fontWeight: 'bold' }}
-                      cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '4 4' }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#953002" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorRevenue)" 
-                      activeDot={{ r: 6, fill: '#fff', stroke: '#953002', strokeWidth: 3 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            {/* ── Row 1: Main Trend + Net Revenue ── */}
+            <div className="flex flex-col xl:flex-row gap-5">
+              {/* Gross Revenue Chart */}
+              <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase mb-1">
+                      Total Revenue
+                    </p>
+                    <p className="text-[34px] font-bold text-[#C05621] leading-none m-0">
+                      LKR {formatCurrency(summary?.totalRevenue || 0).replace('$', '')}
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-lg text-[12px] font-semibold bg-[#E6F5EF] text-[#2D7D5C]">
+                    {summary?.totalOrders} Orders
+                  </span>
+                </div>
+                
+                <div className="h-[220px] w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={trends} margin={{ top: 10, right: 0, left: -15, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#C05621" stopOpacity={0.15}/>
+                          <stop offset="100%" stopColor="#C05621" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="0" stroke="#F0EBE7" vertical={false} />
+                      <XAxis 
+                        dataKey="timeLabel" 
+                        stroke="transparent" 
+                        tick={{ fill: "#9E7B6A", fontSize: 12 }} 
+                        tickLine={false} 
+                        axisLine={false}
+                        dy={8} 
+                      />
+                      <YAxis 
+                        stroke="transparent" 
+                        tick={{ fill: "#9E7B6A", fontSize: 12 }} 
+                        tickLine={false} 
+                        axisLine={false}
+                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} 
+                      />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#fff', borderColor: '#F0EBE7', borderRadius: '8px', color: '#1A1A1A', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        itemStyle={{ color: '#C05621', fontWeight: 'bold' }}
+                        cursor={{ stroke: '#E8DDD8', strokeWidth: 1 }}
+                      />
+                      <Area 
+                        type="natural" 
+                        dataKey="revenue" 
+                        stroke="#C05621" 
+                        strokeWidth={2.5}
+                        fill="url(#colorRevenue)" 
+                        activeDot={{ r: 5, fill: "#C05621", stroke: "#fff", strokeWidth: 2 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
 
-            {/* Top Items List */}
-            <Card className="col-span-1 bg-white border-slate-100 shadow-sm rounded-2xl flex flex-col h-[460px]">
-              <CardHeader className="border-b border-slate-50 bg-slate-50/50 pb-4">
-                <CardTitle className="text-base text-slate-800 font-semibold flex items-center gap-2">
-                  <Flame className="h-5 w-5 text-orange-500" />
-                  Top Selling Items
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 flex-1 overflow-y-auto custom-scrollbar">
-                {topItems.length > 0 ? (
-                  <div className="space-y-5">
-                    {topItems.map((item, i) => (
-                      <div key={item.menuItemId} className="flex items-center justify-between group hover:bg-slate-50 p-2 -mx-2 rounded-xl transition-colors">
+              {/* Top KPI Cards Side */}
+              <div className="flex flex-col gap-5 w-full xl:w-[260px]">
+                {/* Avg Order Value */}
+                <div className="bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col justify-center flex-1 border-l-4 border-l-[#2D7D5C]">
+                  <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">
+                    Avg. Order Value
+                  </p>
+                  <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0 mt-3">
+                    LKR {formatCurrency(summary?.averageOrderValue || 0).replace('$', '')}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-3">
+                    <TrendingUp size={14} color="#27ae60" />
+                    <span className="text-[12px] font-medium text-[#9E7B6A]">
+                      Per completed order
+                    </span>
+                  </div>
+                </div>
+
+                {/* Completion Rate */}
+                <div className="bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col justify-center flex-1">
+                  <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">
+                    Completion Rate
+                  </p>
+                  <div className="flex items-end gap-2 mt-3">
+                    <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0">
+                      {completionRate}%
+                    </p>
+                    <span className="text-[14px] text-[#9E7B6A] mb-1">
+                      ({summary?.completedCount} done)
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-[#F0EBE7] overflow-hidden mt-3">
+                    <div
+                      className="h-full rounded-full bg-[#2D7D5C]"
+                      style={{ width: `${completionRate}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Row 2: Secondary Stats & Top Items ── */}
+            <div className="flex flex-col xl:flex-row gap-5">
+              
+              {/* Secondary Stats Grid */}
+              <div className="grid grid-cols-2 gap-5 w-full xl:w-[400px]">
+                
+                {/* Total Orders */}
+                <div className="bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart size={16} color="#9E7B6A" />
+                    <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">
+                      Total Orders
+                    </p>
+                  </div>
+                  <p className="text-[32px] font-bold text-[#1A1A1A] leading-none m-0">
+                    {summary?.totalOrders || 0}
+                  </p>
+                </div>
+
+                {/* Rejected Orders */}
+                <div className="bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <XCircle size={16} color="#9E7B6A" />
+                    <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">
+                      Rejected
+                    </p>
+                  </div>
+                  <p className="text-[32px] font-bold text-[#EB5757] leading-none m-0">
+                    {summary?.rejectedCount || 0}
+                  </p>
+                </div>
+
+              </div>
+
+              {/* Top Selling Items */}
+              <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col">
+                <div className="flex items-center gap-2 mb-5">
+                  <Flame size={18} color="#C05621" />
+                  <h2 className="text-[15px] font-bold text-[#1A1A1A] m-0">Top Selling Menu Items</h2>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
+                  {topItems.length > 0 ? (
+                    topItems.map((item, i) => (
+                      <div key={item.menuItemId} className="flex items-center justify-between group">
                         <div className="flex items-center gap-3">
-                          <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm shadow-sm
-                            ${i === 0 ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-100/50' : 
-                              i === 1 ? 'bg-slate-100 text-slate-700' : 
-                              i === 2 ? 'bg-orange-50 text-orange-700' : 
-                              'bg-slate-50 text-slate-500 border border-slate-100'}`}>
+                          <div className={`flex items-center justify-center w-8 h-8 rounded-lg font-bold text-[13px]
+                            ${i === 0 ? 'bg-[#FFF8F0] text-[#C05621]' : 
+                              i === 1 ? 'bg-[#F0EBE7] text-[#1A1A1A]' : 
+                              i === 2 ? 'bg-[#F0EBE7] text-[#9E7B6A]' : 
+                              'bg-transparent text-[#9E7B6A] border border-[#F0EBE7]'}`}>
                             {i + 1}
                           </div>
                           <div>
-                            <p className="text-slate-800 font-semibold line-clamp-1">{item.name}</p>
-                            <p className="text-slate-500 text-xs font-medium">{item.volume} units sold</p>
+                            <p className="text-[14px] font-semibold text-[#1A1A1A] line-clamp-1 m-0">{item.name}</p>
+                            <p className="text-[12px] font-medium text-[#9E7B6A] m-0 mt-0.5">{item.volume} units sold</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-slate-900 font-bold">{formatCurrency(item.revenue)}</p>
+                          <p className="text-[14px] font-bold text-[#2D7D5C] m-0">
+                            LKR {formatCurrency(item.revenue).replace('$', '')}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                    <div className="p-4 bg-slate-50 rounded-full mb-3">
-                      <ShoppingCart className="h-8 w-8 text-slate-300" />
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-[#9E7B6A] py-8">
+                      <ShoppingCart className="h-10 w-10 mb-3 opacity-20" />
+                      <p className="text-[14px] font-medium">No items sold</p>
+                      <p className="text-[12px] mt-1">Try selecting a broader timeframe.</p>
                     </div>
-                    <p className="font-medium">No item data found</p>
-                    <p className="text-xs mt-1">Try selecting a different timeframe.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       </main>
     </StaffPageLayout>
   );
