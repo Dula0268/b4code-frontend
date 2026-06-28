@@ -36,7 +36,7 @@ export default function AnalyticsPage() {
   const { user } = useAuthStore();
   const propertyId = user?.propertyId;
 
-  const [timeframe, setTimeframe] = useState<"today" | "week" | "month">("today");
+  const [timeframe, setTimeframe] = useState<"today" | "week" | "month">("month");
   
   const [summary, setSummary] = useState<OrderSummary | null>(null);
   const [trends, setTrends] = useState<OrderTrend[]>([]);
