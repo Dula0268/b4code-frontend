@@ -27,6 +27,8 @@ import {
 } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
+import StaffHeader from "@/components/staff/layout/staff-header";
 
 export default function AnalyticsPage() {
   const { user } = useAuthStore();
@@ -90,7 +92,14 @@ export default function AnalyticsPage() {
     fetchData();
   }, [propertyId, timeframe]);
 
-  if (!propertyId) return <div className="p-8 text-slate-500">No property selected.</div>;
+  if (!propertyId) return (
+    <StaffPageLayout>
+      <StaffHeader title="Analytics" subtitle="Performance Dashboard" searchPlaceholder="Search..." />
+      <main className="mt-[72px] flex-1 p-8 text-slate-500">
+        No property selected.
+      </main>
+    </StaffPageLayout>
+  );
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount || 0);
@@ -101,7 +110,13 @@ export default function AnalyticsPage() {
     : 0;
 
   return (
-    <div className="p-6 md:p-10 space-y-8 h-full overflow-y-auto">
+    <StaffPageLayout>
+      <StaffHeader
+        title="Analytics"
+        subtitle="Performance Dashboard"
+        searchPlaceholder="Search order #, room, or item..."
+      />
+      <main className="mt-[72px] flex-1 p-6 md:p-10 space-y-8 h-full overflow-y-auto">
       
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -306,6 +321,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
       )}
-    </div>
+      </main>
+    </StaffPageLayout>
   );
 }
