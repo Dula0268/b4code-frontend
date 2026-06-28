@@ -207,60 +207,59 @@ export default function StaffDashboard() {
   }
 
   return (
-    <div className="h-full overflow-y-auto px-6 py-4 flex flex-col gap-4">
+    <div className="h-full overflow-y-auto px-6 py-5 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-1000 relative z-10">
       {/* Stat Cards Row */}
-      <div className="grid grid-cols-4 gap-3 shrink-0">
+      <div className="grid grid-cols-4 gap-5 shrink-0">
         {stats.map((stat) => {
           const Icon = stat.icon;
           const TrendIcon = stat.trendIcon;
           return (
-            <Card key={stat.label} className="bg-white border-0 py-0 gap-0 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-              <CardContent className="px-4 py-3 flex items-start justify-between">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-medium text-[#6b7280]">{stat.label}</span>
-                  <span className="text-2xl font-bold text-[#111827] leading-tight">{stat.value}</span>
-                  <div className={`flex items-center gap-1 ${stat.trendColor} mt-0.5`}>
-                    <TrendIcon size={12} />
-                    <span className="text-[10px] font-medium">{stat.trend}</span>
-                  </div>
-                </div>
-                <div className={`${stat.iconBg} rounded-lg p-2 flex items-center justify-center`}>
+            <div key={stat.label} className="col-span-1 bg-white/80 backdrop-blur-xl rounded-3xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
+              <div className="flex justify-between items-start z-10">
+                <div className={`p-2.5 ${stat.iconBg.replace('0.08', '0.15')} rounded-xl self-start group-hover:scale-110 transition-transform`}>
                   <Icon size={18} className={stat.iconColor} />
                 </div>
-              </CardContent>
-            </Card>
+                <div className={`flex items-center gap-1 ${stat.trendColor} mt-1`}>
+                  <TrendIcon size={12} />
+                  <span className="text-[11px] font-bold tracking-[0.05em] uppercase">{stat.trend}</span>
+                </div>
+              </div>
+              <div className="z-10 mt-6 flex flex-col gap-1">
+                <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase">{stat.label}</h3>
+                <span className="text-[32px] font-extrabold text-[#1A1A1A] tracking-tighter leading-none">{stat.value}</span>
+              </div>
+            </div>
           );
         })}
       </div>
 
       {/* Management Cards Grid */}
-      <div className="grid grid-cols-2 gap-3 flex-1 min-h-[300px]">
+      <div className="grid grid-cols-2 gap-5 flex-1 min-h-[300px]">
         {visibleCards.map((card) => {
           const Icon = card.icon;
           const ButtonIcon = card.buttonIcon;
           return (
-            <Card key={card.title} className="bg-white border-0 py-0 gap-0 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] h-full">
-              <CardContent className="p-4 flex flex-col justify-between h-full">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <div className="bg-[rgba(149,48,2,0.08)] rounded-lg w-9 h-9 flex items-center justify-center">
-                      <Icon size={18} className="text-[var(--brand-primary)]" />
-                    </div>
-                  </div>
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-bold text-[#111827] m-0">{card.title}</h3>
-                    <p className="text-lg font-bold m-0 mt-0.5 text-[var(--brand-primary)]">{card.highlight}</p>
-                    <p className="text-xs text-[#6b7280] m-0 mt-0.5 line-clamp-2">{card.description}</p>
-                  </div>
+            <div key={card.title} className="col-span-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)] transition-all duration-500 h-full flex flex-col justify-between group relative overflow-hidden">
+              <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-2xl rounded-full group-hover:scale-150 group-hover:opacity-[0.06] transition-all duration-700" />
+              
+              <div className="flex flex-col gap-4 z-10">
+                <div className="bg-gradient-to-br from-[#FFF8F0] to-white border border-[#F0EBE7]/50 rounded-xl w-11 h-11 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Icon size={20} className="text-[#C05621]" />
                 </div>
-                <Button asChild className="bg-[var(--brand-primary)] text-white mt-2 gap-1.5 hover:opacity-90">
-                  <Link href={card.href}>
-                    {card.buttonLabel}
-                    <ButtonIcon size={14} />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="flex flex-col">
+                  <h3 className="text-[13px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">{card.title}</h3>
+                  <p className="text-[22px] font-extrabold m-0 text-[#1A1A1A] tracking-tight">{card.highlight}</p>
+                  <p className="text-[13px] font-semibold text-[#9E7B6A] m-0 mt-1">{card.description}</p>
+                </div>
+              </div>
+              
+              <Button asChild className="bg-[#1A1A1A] hover:bg-[#C05621] text-white mt-4 rounded-xl h-11 font-bold tracking-wide transition-colors group-hover:shadow-[0_4px_15px_rgb(192,86,33,0.3)] z-10">
+                <Link href={card.href} className="flex items-center gap-2">
+                  {card.buttonLabel}
+                  <ButtonIcon size={16} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+            </div>
           );
         })}
         {visibleCards.length === 0 && (
