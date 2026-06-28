@@ -177,7 +177,7 @@ export default function CalendarPicker({
 
                         // Connecting bars for the range highlight
                         const showLeftBar = inRange || (isCheckOut && checkIn && rangeEnd && rangeEnd > checkIn)
-                        const showRightBar = inRange || (isCheckIn && rangeEnd && rangeEnd > checkIn)
+                        const showRightBar = inRange || (isCheckIn && checkIn && rangeEnd && rangeEnd > checkIn)
 
                         return (
                             <div
