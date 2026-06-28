@@ -347,7 +347,6 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
           error: errorMessage,
           toast: { type: "error", message: "Action Failed", detail: errorMessage }
         });
-        throw error;
       }
     },
 
@@ -376,7 +375,6 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
           error: errorMessage,
           toast: { type: "error", message: "Action Failed", detail: errorMessage }
         });
-        throw error;
       }
     },
 
