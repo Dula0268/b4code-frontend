@@ -208,7 +208,7 @@ export default function ReviewManagementPage() {
                       {review.flagged_status && (
                         <div className="mt-2 flex items-center gap-1.5">
                           <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                            review.flagged_status === 'PENDING' ? 'bg-[#FFF8F0] text-[#C05621]' :
+                            review.flagged_status === 'FLAGGED' ? 'bg-[#FFF8F0] text-[#C05621]' :
                             review.flagged_status === 'APPROVED' ? 'bg-[#E6F5EF] text-[#2D7D5C]' :
                             'bg-[#FDE8E8] text-[#EB5757]'
                           }`}>
