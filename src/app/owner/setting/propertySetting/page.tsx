@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Logo from "@/components/shared/branding/logo";
+import TimePicker, { type TimeValue, parseTime } from "@/components/owner/TimePicker";
 import {
     Bell,
     LayoutDashboard,
@@ -18,7 +19,6 @@ import {
     CreditCard,
     Puzzle,
     ChevronDown,
-    Clock,
     MapPin,
     Save,
 } from "lucide-react";
@@ -40,8 +40,8 @@ export default function PropertySettingPage() {
     const [currency, setCurrency] = useState("LKR");
     const [timezone, setTimezone] = useState("(GMT-08:00) Pacific Time");
     const [language, setLanguage] = useState("English (US)");
-    const [checkInTime, setCheckInTime] = useState("03:00 PM");
-    const [checkOutTime, setCheckOutTime] = useState("11:00 AM");
+    const [checkInTime,  setCheckInTime]  = useState<TimeValue>(() => parseTime("03:00 PM"));
+    const [checkOutTime, setCheckOutTime] = useState<TimeValue>(() => parseTime("11:00 AM"));
     const [vatId, setVatId] = useState("");
     const [taxRate, setTaxRate] = useState("8.5");
     const [autoTax, setAutoTax] = useState(true);
@@ -190,20 +190,12 @@ export default function PropertySettingPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col">
                                         <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Default Check-in Time</label>
-                                        <div className="flex items-center gap-2 py-2 px-3 border border-[#e0e0e0] rounded-lg bg-white">
-                                            <Clock size={14} color="#953002" className="shrink-0" />
-                                            <input type="text" value={checkInTime} onChange={(e) => setCheckInTime(e.target.value)} className="flex-1 border-none outline-none text-[13px] text-[#1d1d1d] font-sans bg-transparent" />
-                                            <Clock size={14} color="#828282" />
-                                        </div>
+                                        <TimePicker value={checkInTime} onChange={setCheckInTime} />
                                         <span className="text-[10px] text-[#b0b0b0] mt-1">Guests can check in after this time.</span>
                                     </div>
                                     <div className="flex flex-col">
                                         <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Default Check-out Time</label>
-                                        <div className="flex items-center gap-2 py-2 px-3 border border-[#e0e0e0] rounded-lg bg-white">
-                                            <Clock size={14} color="#953002" className="shrink-0" />
-                                            <input type="text" value={checkOutTime} onChange={(e) => setCheckOutTime(e.target.value)} className="flex-1 border-none outline-none text-[13px] text-[#1d1d1d] font-sans bg-transparent" />
-                                            <Clock size={14} color="#828282" />
-                                        </div>
+                                        <TimePicker value={checkOutTime} onChange={setCheckOutTime} />
                                         <span className="text-[10px] text-[#b0b0b0] mt-1">Guests must check out by this time.</span>
                                     </div>
                                 </div>

@@ -1,53 +1,135 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { ownerSettingsApi } from "@/api/owner/settings.api";
+import { useAuthStore } from "@/store/auth/auth.store";
 import {
-    Bell as BellIcon,
+    Bell,
     ChevronRight,
     MapPin,
     Bed,
     Calendar,
-    Eye,
-    Edit,
+    Loader2,
+    Building2,
     Settings as SettingsIcon,
     Shield,
     CreditCard,
-    BellRing,
-    AlertTriangle,
-    Save
+    Save,
+    CheckCircle2,
+    AlertCircle,
+    ToggleLeft,
+    ToggleRight,
 } from "lucide-react";
 
-/* ───────────────────── component ───────────────────── */
+function SettingContent() {
+    const searchParams = useSearchParams();
+    const propertyId = searchParams.get("id");
+    const { user } = useAuthStore();
+    const ownerId = user?.userId ?? 1;
 
-/**
- * SettingsPage Component
- *
- * Property-level settings for configuring check-in/out times,
- * house rules, cancellation policies, and tax configurations.
- */
-export default function SettingsPage() {
-    const [activeTab, setActiveTab] = useState("Settings");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [property, setProperty] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Form state
+    const [isActive, setIsActive] = useState(false);
+    const [cancellationPolicy, setCancellationPolicy] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [togglingStatus, setTogglingStatus] = useState(false);
+
+    useEffect(() => {
+        if (!propertyId) {
+            setError("No property ID provided.");
+            setLoading(false);
+            return;
+        }
+        Promise.all([
+            propertiesApi.getProperty(Number(propertyId), ownerId),
+            ownerSettingsApi.getBankAccounts(ownerId),
+        ])
+            .then(([prop, billing]) => {
+                setProperty(prop);
+                setIsActive(prop?.status === "active");
+                setCancellationPolicy(prop?.cancellationPolicy ?? "");
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const accounts: any[] = billing?.bankAccounts ?? billing ?? [];
+                setBankAccounts(Array.isArray(accounts) ? accounts : []);
+            })
+            .catch((err) => {
+                setError(err?.response?.data?.message ?? err?.message ?? "Failed to load settings.");
+            })
+            .finally(() => setLoading(false));
+    }, [propertyId, ownerId]);
+
     const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+
+    const statusColor = property?.status === "active" ? "#27ae60"
+        : property?.status === "inactive" ? "#828282"
+        : property?.status === "maintenance" ? "#e67e22"
+        : "#b0b0b0";
+    const statusLabel = property?.status?.toUpperCase() ?? "PENDING";
+
+    async function handleToggleStatus() {
+        if (!propertyId) return;
+        setTogglingStatus(true);
+        try {
+            const updated = await propertiesApi.toggleStatus(Number(propertyId), ownerId);
+            setProperty(updated);
+            setIsActive(updated?.status === "active");
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            alert((err as any)?.response?.data?.message ?? "Failed to toggle status.");
+        } finally {
+            setTogglingStatus(false);
+        }
+    }
+
+    async function handleSave() {
+        if (!propertyId) return;
+        setSaving(true);
+        setSaveSuccess(false);
+        setSaveError(null);
+        try {
+            const updated = await propertiesApi.updateProperty(Number(propertyId), ownerId, {
+                cancellationPolicy,
+            });
+            setProperty(updated);
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSaveError((err as any)?.response?.data?.message ?? "Failed to save settings.");
+        } finally {
+            setSaving(false);
+        }
+    }
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
+            {/* Sidebar */}
             <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
                 <div className="px-3.5">
                     <Logo width={120} height={36} />
                 </div>
             </aside>
 
-            {/* ── Main ── */}
+            {/* Main */}
             <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
                 {/* Top Bar */}
                 <div className="flex justify-between items-center py-1.5">
                     <div />
                     <div className="flex items-center gap-3">
                         <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <BellIcon size={18} color="#4f4f4f" />
+                            <Bell size={18} color="#4f4f4f" />
                         </a>
                         <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
@@ -55,180 +137,262 @@ export default function SettingsPage() {
                     </div>
                 </div>
 
+                {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Property Name</span>
+                    <span className="text-[#953002] font-semibold">{property?.name ?? "Settings"}</span>
                 </div>
 
-                {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto pb-4 pr-1">
+                {loading && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 size={28} color="#953002" className="animate-spin" />
+                    </div>
+                )}
+                {error && !loading && (
+                    <div className="flex-1 flex items-center justify-center text-[13px] text-[#e74c3c]">{error}</div>
+                )}
 
-                    {/* ── Property Header Card ── */}
-                    <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
-                        <div className="flex items-center gap-4 flex-1">
-                            <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002]">
-                                <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=90&fit=crop" alt="" className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2.5">
-                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Property Name</h2>
-                                    <span className="text-[9px] font-bold text-white bg-[#27ae60] rounded w-max px-[7px] py-[2px] tracking-widest">ACTIVE</span>
+                {!loading && !error && property && (
+                    <div className="flex-1 overflow-y-auto pb-4 pr-1">
+                        {/* Property Header Card */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002] bg-[#f0ebe5] flex items-center justify-center">
+                                    {property.image ? (
+                                        <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Building2 size={28} color="#c0a898" />
+                                    )}
                                 </div>
-                                <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
-                                    <MapPin size={12} /> 123 Coastal Way, Malibu, CA 90265
-                                </div>
-                                <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
-                                    <span className="flex items-center gap-[3px]"><Bed size={12} /> 5 Rooms</span>
-                                    <span className="flex items-center gap-[3px]"><Calendar size={12} /> Rs. 350,000/night</span>
+                                <div>
+                                    <div className="flex items-center gap-2.5">
+                                        <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">{property.name}</h2>
+                                        <span
+                                            className="text-[9px] font-bold text-white rounded w-max px-[7px] py-[2px] tracking-widest"
+                                            style={{ backgroundColor: statusColor }}
+                                        >
+                                            {statusLabel}
+                                        </span>
+                                    </div>
+                                    <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
+                                        <MapPin size={12} />
+                                        {[property.address, property.city, property.country].filter(Boolean).join(", ")}
+                                    </div>
+                                    <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
+                                        <span className="flex items-center gap-[3px]"><Bed size={12} /> {property.roomCount ?? 0} Rooms</span>
+                                        <span className="flex items-center gap-[3px]"><Calendar size={12} /> {property.rate ?? "—"}/night</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-2.5">
-                            <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-gray-50"><Eye size={14} /> View Live</button>
-                            <a href="/owner/properties/editPropertyDetails" className="no-underline">
-                                <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02]"><Edit size={14} /> Edit Property</button>
-                            </a>
-                        </div>
-                    </div>
 
-                    {/* ── Tabs ── */}
-                    <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
-                        {tabs.map((t) => (
-                            <button
-                                key={t}
-                                onClick={() => {
-                                    if (t === "Overview") window.location.href = "/owner/properties/propertyDetails";
-                                    else if (t === "Rooms") window.location.href = "/owner/properties/propertyRoomInventry";
-                                    else if (t === "Availability") window.location.href = "/owner/properties/Availability";
-                                    else if (t === "Rates") window.location.href = "/owner/properties/Rate";
-                                    else if (t === "Reservations") window.location.href = "/owner/properties/Reservation";
-                                    else if (t === "Media") window.location.href = "/owner/properties/Media";
-                                    else if (t === "Staff") window.location.href = "/owner/properties/Staff";
-                                    else if (t === "Settings") setActiveTab(t);
-                                    else setActiveTab(t);
-                                }}
-                                className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative ${
-                                    activeTab === t ? "text-[#953002] font-bold border-b-2 border-[#953002]" : "text-[#828282] font-medium border-b-2 border-transparent hover:text-[#4f4f4f]"
-                                }`}
-                            >
-                                {t}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* ── Two Column Layout ── */}
-                    <div className="grid grid-cols-[1fr_300px] gap-4 items-start">
-                        {/* Left Column - General Settings */}
-                        <div className="flex flex-col gap-3">
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <SettingsIcon size={16} color="#953002" />
-                                    <span className="text-[15px] font-bold text-[#1d1d1d]">General Settings</span>
-                                </div>
-
-                                <div className="flex items-center justify-between py-3 border-b border-[#f5f5f5]">
-                                    <div>
-                                        <div className="text-[13px] font-semibold text-[#1d1d1d]">Instant Booking</div>
-                                        <div className="text-[11px] text-[#828282] mt-0.5">Allow guests to instantly book available dates without requiring approval.</div>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" className="sr-only peer" defaultChecked />
-                                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#27ae60]"></div>
-                                    </label>
-                                </div>
-
-                                <div className="flex items-center justify-between py-3 border-b border-[#f5f5f5]">
-                                    <div>
-                                        <div className="text-[13px] font-semibold text-[#1d1d1d]">Hide Property from Search</div>
-                                        <div className="text-[11px] text-[#828282] mt-0.5">Temporarily unlist this property from public search results.</div>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" className="sr-only peer" />
-                                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#953002]"></div>
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            {/* Cancellation & Policies */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Shield size={16} color="#953002" />
-                                    <span className="text-[15px] font-bold text-[#1d1d1d]">Policies & Cancellation</span>
-                                </div>
-
-                                <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1.5">Standard Cancellation Policy</label>
-                                <select className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] cursor-pointer mb-4 outline-none focus:border-[#953002]">
-                                    <option value="flexible">Flexible (Full refund up to 48 hours prior)</option>
-                                    <option value="moderate">Moderate (Full refund up to 5 days prior)</option>
-                                    <option value="strict">Strict (Partial refund up to 14 days prior)</option>
-                                    <option value="non-refundable">Non-refundable</option>
-                                </select>
-                                
-                                <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1.5">House Rules Overview</label>
-                                <textarea placeholder="E.g., No parties, no pets..." className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[80px] outline-none focus:border-[#953002] resize-none" defaultValue={"No smoking inside.\nNo pets allowed.\nQuiet hours after 10 PM."}></textarea>
-
-                                <div className="mt-4 flex justify-end">
-                                    <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#7a2702] transition-colors">
-                                        <Save size={14} /> Save Policies
+                        {/* Tabs */}
+                        <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
+                            {tabs.map((t) => {
+                                const isActive = t === "Settings";
+                                return (
+                                    <button
+                                        key={t}
+                                        onClick={() => {
+                                            if (t === "Overview") window.location.href = `/owner/properties/propertyDetails?id=${propertyId}`;
+                                            else if (t === "Rooms") window.location.href = `/owner/properties/propertyRoomInventry?id=${propertyId}`;
+                                            else if (t === "Availability") window.location.href = `/owner/properties/Availability?id=${propertyId}`;
+                                            else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${propertyId}`;
+                                            else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${propertyId}`;
+                                            else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
+                                            else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${propertyId}`;
+                                            else if (t === "Settings") return;
+                                        }}
+                                        className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${
+                                            isActive
+                                                ? "text-[#953002] font-bold border-[#953002]"
+                                                : "text-[#828282] font-medium border-transparent hover:text-[#4f4f4f]"
+                                        }`}
+                                    >
+                                        {t}
                                     </button>
-                                </div>
-                            </div>
+                                );
+                            })}
                         </div>
 
-                        {/* Right Column - Danger Zone & Notifications */}
-                        <div className="flex flex-col gap-3">
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <BellRing size={16} color="#953002" />
-                                    <span className="text-[14px] font-bold text-[#1d1d1d]">Notifications</span>
+                        {/* Two-column layout */}
+                        <div className="grid grid-cols-[1fr_300px] gap-4 items-start">
+                            {/* Left column */}
+                            <div className="flex flex-col gap-4">
+
+                                {/* Property Status */}
+                                <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <SettingsIcon size={16} color="#953002" />
+                                        <span className="text-[15px] font-bold text-[#1d1d1d]">Property Status</span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-3 border border-[#f0f0f0] rounded-xl px-4">
+                                        <div>
+                                            <div className="text-[13px] font-semibold text-[#1d1d1d]">
+                                                Property is currently <span style={{ color: statusColor }} className="font-bold">{statusLabel}</span>
+                                            </div>
+                                            <div className="text-[11px] text-[#828282] mt-0.5">
+                                                {isActive
+                                                    ? "Your property is visible to guests and accepting bookings."
+                                                    : "Your property is hidden from guests and not accepting new bookings."}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleToggleStatus}
+                                            disabled={togglingStatus}
+                                            className="flex items-center gap-2 py-2 px-4 border rounded-lg text-[12px] font-semibold cursor-pointer transition-colors disabled:opacity-50"
+                                            style={{
+                                                backgroundColor: isActive ? "#fde8e8" : "#dcfce7",
+                                                color: isActive ? "#b91c1c" : "#15803d",
+                                                borderColor: isActive ? "#fca5a5" : "#86efac",
+                                            }}
+                                        >
+                                            {togglingStatus
+                                                ? <Loader2 size={14} className="animate-spin" />
+                                                : isActive
+                                                    ? <><ToggleRight size={16} /> Deactivate</>
+                                                    : <><ToggleLeft size={16} /> Activate</>
+                                            }
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="space-y-3">
-                                    <div className="flex items-start gap-2">
-                                        <input type="checkbox" className="mt-0.5" defaultChecked />
-                                        <div className="text-[12px] text-[#4f4f4f] leading-snug">Notify me by email on new reservations</div>
+
+                                {/* Cancellation Policy */}
+                                <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Shield size={16} color="#953002" />
+                                        <span className="text-[15px] font-bold text-[#1d1d1d]">Cancellation Policy</span>
                                     </div>
-                                    <div className="flex items-start gap-2">
-                                        <input type="checkbox" className="mt-0.5" defaultChecked />
-                                        <div className="text-[12px] text-[#4f4f4f] leading-snug">Notify me by SMS on immediate cancellations</div>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <input type="checkbox" className="mt-0.5" />
-                                        <div className="text-[12px] text-[#4f4f4f] leading-snug">Send daily summary digest</div>
+
+                                    {saveSuccess && (
+                                        <div className="flex items-center gap-2 mb-3 p-3 bg-[#dcfce7] border border-[#86efac] rounded-lg text-[13px] text-[#15803d]">
+                                            <CheckCircle2 size={15} /> Settings saved successfully.
+                                        </div>
+                                    )}
+                                    {saveError && (
+                                        <div className="flex items-center gap-2 mb-3 p-3 bg-[#fde8e8] border border-[#fca5a5] rounded-lg text-[13px] text-[#b91c1c]">
+                                            <AlertCircle size={15} /> {saveError}
+                                        </div>
+                                    )}
+
+                                    <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1.5">
+                                        Cancellation Policy
+                                    </label>
+                                    <textarea
+                                        value={cancellationPolicy}
+                                        onChange={(e) => setCancellationPolicy(e.target.value)}
+                                        placeholder="Describe your cancellation policy, e.g. Full refund if cancelled 48 hours before check-in..."
+                                        rows={5}
+                                        className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border outline-none focus:border-[#953002] resize-none leading-relaxed"
+                                    />
+
+                                    <div className="mt-4 flex justify-end">
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={saving}
+                                            className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02] disabled:opacity-60 transition-colors"
+                                        >
+                                            {saving
+                                                ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+                                                : <><Save size={14} /> Save Settings</>
+                                            }
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-[#fffbf5] border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <CreditCard size={16} color="#953002" />
-                                    <span className="text-[14px] font-bold text-[#1d1d1d]">Payout Settings</span>
-                                </div>
-                                <div className="text-[12px] text-[#828282] mb-3 leading-snug">
-                                    Current payout method is linked to Bank Account ending in ****1234.
-                                </div>
-                                <button className="w-full py-2 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-gray-50 transition-colors">
-                                    Manage Payout Methods
-                                </button>
-                            </div>
+                            {/* Right column */}
+                            <div className="flex flex-col gap-4">
+                                {/* Billing */}
+                                <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <CreditCard size={16} color="#953002" />
+                                        <span className="text-[14px] font-bold text-[#1d1d1d]">Billing & Payouts</span>
+                                    </div>
 
-                            <div className="bg-[#fdedec] border border-[#fadbd8] rounded-xl py-4 px-5">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <AlertTriangle size={16} color="#c0392b" />
-                                    <span className="text-[14px] font-bold text-[#c0392b]">Danger Zone</span>
+                                    {bankAccounts.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-6 text-center border border-dashed border-[#e0e0e0] rounded-xl bg-[#faf9f7]">
+                                            <CreditCard size={28} color="#c0a898" className="mb-2" />
+                                            <p className="text-[12px] text-[#828282]">No bank accounts added.</p>
+                                            <a href="/owner/settings/billing" className="no-underline mt-2">
+                                                <button className="py-1.5 px-3.5 bg-[#953002] text-white border-none rounded-lg text-[11px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">
+                                                    Add Bank Account
+                                                </button>
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-2">
+                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                            {bankAccounts.map((account: any, idx: number) => (
+                                                <div key={idx} className="flex items-center gap-3 p-3 border border-[#e8e8e8] rounded-lg bg-[#faf9f7]">
+                                                    <div className="w-9 h-9 rounded-lg bg-[#fef5ef] flex items-center justify-center shrink-0">
+                                                        <CreditCard size={16} color="#953002" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-[13px] font-semibold text-[#1d1d1d] truncate">
+                                                            {account.bankName ?? account.accountName ?? "Bank Account"}
+                                                        </div>
+                                                        <div className="text-[11px] text-[#828282]">
+                                                            {account.accountNumber
+                                                                ? `****${String(account.accountNumber).slice(-4)}`
+                                                                : account.accountType ?? "—"}
+                                                        </div>
+                                                    </div>
+                                                    {account.isPrimary && (
+                                                        <span className="text-[10px] font-bold text-[#15803d] bg-[#dcfce7] px-2 py-0.5 rounded-full shrink-0">
+                                                            Primary
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            <a href="/owner/settings/billing" className="no-underline mt-1">
+                                                <button className="w-full py-2 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#fef5ef] transition-colors">
+                                                    Manage Payout Methods
+                                                </button>
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="text-[11px] text-[#e74c3c] mb-3 leading-snug">
-                                    Deactivating this property will completely remove it from all systems. This action cannot be undone.
+
+                                {/* Quick links */}
+                                <div className="bg-[#fffbf5] border border-[#e8e8e8] rounded-xl py-4 px-5">
+                                    <div className="text-[13px] font-bold text-[#953002] mb-3">Quick Settings</div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <a href={`/owner/properties/editPropertyDetails?id=${propertyId}`} className="no-underline">
+                                            <button className="w-full text-left py-2 px-3 text-[12px] text-[#4f4f4f] font-medium bg-white border border-[#e8e8e8] rounded-lg hover:bg-[#f5f5f5] cursor-pointer transition-colors">
+                                                Edit Property Details
+                                            </button>
+                                        </a>
+                                        <a href={`/owner/properties/propertyRoomInventry?id=${propertyId}`} className="no-underline">
+                                            <button className="w-full text-left py-2 px-3 text-[12px] text-[#4f4f4f] font-medium bg-white border border-[#e8e8e8] rounded-lg hover:bg-[#f5f5f5] cursor-pointer transition-colors">
+                                                Manage Rooms
+                                            </button>
+                                        </a>
+                                        <a href={`/owner/properties/Rate?id=${propertyId}`} className="no-underline">
+                                            <button className="w-full text-left py-2 px-3 text-[12px] text-[#4f4f4f] font-medium bg-white border border-[#e8e8e8] rounded-lg hover:bg-[#f5f5f5] cursor-pointer transition-colors">
+                                                Configure Rates
+                                            </button>
+                                        </a>
+                                    </div>
                                 </div>
-                                <button className="w-full py-2 bg-[#c0392b] text-white border border-[#c0392b] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#a93226] transition-colors">
-                                    Deactivate Property
-                                </button>
                             </div>
                         </div>
                     </div>
-
-                </div>
+                )}
             </main>
         </div>
+    );
+}
+
+export default function SettingPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
+                <Loader2 size={28} color="#953002" className="animate-spin" />
+            </div>
+        }>
+            <SettingContent />
+        </Suspense>
     );
 }

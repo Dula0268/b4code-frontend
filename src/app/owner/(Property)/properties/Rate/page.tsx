@@ -1,54 +1,86 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { ratesApi } from "@/api/owner/rates.api";
+import { useAuthStore } from "@/store/auth/auth.store";
 import {
     Bell,
     ChevronRight,
     MapPin,
     Bed,
     Calendar,
-    Eye,
-    Edit,
+    Loader2,
+    Building2,
     DollarSign,
     Percent,
-    TrendingUp,
     Plus,
-    MoreVertical
 } from "lucide-react";
 
-/* ───────────────────── data ───────────────────── */
+function RateContent() {
+    const searchParams = useSearchParams();
+    const propertyId = searchParams.get("id");
+    const { user } = useAuthStore();
+    const ownerId = user?.userId ?? 1;
 
-const ratePlans = [
-    { id: 1, name: "Standard Rate", room: "Master Suite", baseRate: "Rs. 120,000", conditions: "Non-refundable", status: "Active" },
-    { id: 2, name: "Flexible Rate", room: "Master Suite", baseRate: "Rs. 135,000", conditions: "Free Cancellation (48h)", status: "Active" },
-    { id: 3, name: "Standard Rate", room: "Ocean Guest Room", baseRate: "Rs. 100,000", conditions: "Non-refundable", status: "Active" },
-    { id: 4, name: "Early Bird 15%", room: "All Rooms", baseRate: "-15% off Best Available", conditions: "Book 30+ days in advance", status: "Inactive" },
-];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [property, setProperty] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [ratePlans, setRatePlans] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [discounts, setDiscounts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-/* ───────────────────── component ───────────────────── */
+    useEffect(() => {
+        if (!propertyId) {
+            setError("No property ID provided.");
+            setLoading(false);
+            return;
+        }
+        Promise.all([
+            propertiesApi.getProperty(Number(propertyId), ownerId),
+            ratesApi.getRateOverview(Number(propertyId)),
+        ])
+            .then(([prop, rateData]) => {
+                setProperty(prop);
+                setRatePlans(rateData?.ratePlans ?? []);
+                setDiscounts(rateData?.discounts ?? []);
+            })
+            .catch((err) => {
+                setError(err?.response?.data?.message ?? err?.message ?? "Failed to load rate data.");
+            })
+            .finally(() => setLoading(false));
+    }, [propertyId, ownerId]);
 
-/**
- * RatesPage Component
- *
- * Property-level rate management showing base prices, seasonal
- * adjustments, and rate plan configurations per room type.
- */
-export default function RatesPage() {
-    const [activeTab, setActiveTab] = useState("Rates");
     const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+
+    const statusColor = property?.status === "active" ? "#27ae60"
+        : property?.status === "inactive" ? "#828282"
+        : property?.status === "maintenance" ? "#e67e22"
+        : "#b0b0b0";
+    const statusLabel = property?.status?.toUpperCase() ?? "PENDING";
+
+    function formatDateRange(start: string, end: string) {
+        if (!start && !end) return "—";
+        if (!start) return `Until ${end}`;
+        if (!end) return `From ${start}`;
+        return `${start} – ${end}`;
+    }
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
+            {/* Sidebar */}
             <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
                 <div className="px-3.5">
                     <Logo width={120} height={36} />
                 </div>
             </aside>
 
-            {/* ── Main ── */}
+            {/* Main */}
             <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
                 {/* Top Bar */}
                 <div className="flex justify-between items-center py-1.5">
@@ -63,170 +95,208 @@ export default function RatesPage() {
                     </div>
                 </div>
 
+                {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Property Name</span>
+                    <span className="text-[#953002] font-semibold">{property?.name ?? "Rates"}</span>
                 </div>
 
-                {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto pb-4 pr-1">
-
-                    {/* ── Property Header Card ── */}
-                    <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
-                        <div className="flex items-center gap-4 flex-1">
-                            <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002]">
-                                <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=90&fit=crop" alt="" className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2.5">
-                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Property Name</h2>
-                                    <span className="text-[9px] font-bold text-white bg-[#27ae60] rounded w-max px-[7px] py-[2px] tracking-widest">ACTIVE</span>
-                                </div>
-                                <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
-                                    <MapPin size={12} /> 123 Coastal Way, Malibu, CA 90265
-                                </div>
-                                <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
-                                    <span className="flex items-center gap-[3px]"><Bed size={12} /> 5 Rooms</span>
-                                    <span className="flex items-center gap-[3px]"><Calendar size={12} /> Rs. 350,000/night</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex gap-2.5">
-                            <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-gray-50"><Eye size={14} /> View Live</button>
-                            <a href="/owner/properties/editPropertyDetails" className="no-underline">
-                                <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02]"><Edit size={14} /> Edit Property</button>
-                            </a>
-                        </div>
+                {loading && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 size={28} color="#953002" className="animate-spin" />
                     </div>
+                )}
+                {error && !loading && (
+                    <div className="flex-1 flex items-center justify-center text-[13px] text-[#e74c3c]">{error}</div>
+                )}
 
-                    {/* ── Tabs ── */}
-                    <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
-                        {tabs.map((t) => (
-                            <button
-                                key={t}
-                                onClick={() => {
-                                    if (t === "Overview") window.location.href = "/owner/properties/propertyDetails";
-                                    else if (t === "Rooms") window.location.href = "/owner/properties/propertyRoomInventry";
-                                    else if (t === "Availability") window.location.href = "/owner/properties/Availability";
-                                    else if (t === "Rates") setActiveTab(t);
-                                    else if (t === "Reservations") window.location.href = "/owner/properties/Reservation";
-                                    else if (t === "Media") window.location.href = "/owner/properties/Media";
-                                    else if (t === "Staff") window.location.href = "/owner/properties/Staff";
-                                    else if (t === "Settings") window.location.href = "/owner/properties/Setting";
-                                    else setActiveTab(t);
-                                }}
-                                className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative ${
-                                    activeTab === t ? "text-[#953002] font-bold border-b-2 border-[#953002]" : "text-[#828282] font-medium border-b-2 border-transparent hover:text-[#4f4f4f]"
-                                }`}
-                            >
-                                {t}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* ── Two Column Layout ── */}
-                    <div className="grid grid-cols-[1fr_260px] gap-4 items-start">
-                        {/* Left Column - Rate Plans */}
-                        <div className="flex flex-col gap-3">
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <DollarSign size={16} color="#953002" />
-                                        <span className="text-[15px] font-bold text-[#1d1d1d]">Active Rate Plans</span>
+                {!loading && !error && property && (
+                    <div className="flex-1 overflow-y-auto pb-4 pr-1">
+                        {/* Property Header Card */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002] bg-[#f0ebe5] flex items-center justify-center">
+                                    {property.image ? (
+                                        <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Building2 size={28} color="#c0a898" />
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2.5">
+                                        <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">{property.name}</h2>
+                                        <span
+                                            className="text-[9px] font-bold text-white rounded w-max px-[7px] py-[2px] tracking-widest"
+                                            style={{ backgroundColor: statusColor }}
+                                        >
+                                            {statusLabel}
+                                        </span>
                                     </div>
-                                    <button className="flex items-center gap-1.5 py-1.5 px-3 bg-[#953002] text-white border-none rounded-md text-[12px] font-medium cursor-pointer hover:bg-[#7a2702] transition-colors">
-                                        <Plus size={14} /> Add New Plan
-                                    </button>
+                                    <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
+                                        <MapPin size={12} />
+                                        {[property.address, property.city, property.country].filter(Boolean).join(", ")}
+                                    </div>
+                                    <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
+                                        <span className="flex items-center gap-[3px]"><Bed size={12} /> {property.roomCount ?? 0} Rooms</span>
+                                        <span className="flex items-center gap-[3px]"><Calendar size={12} /> {property.rate ?? "—"}/night</span>
+                                    </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                {/* Table */}
-                                <table className="w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">PLAN NAME</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">APPLIES TO</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">RATE</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">CONDITIONS</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">STATUS</th>
-                                            <th className="w-8 border-b border-[#f0f0f0]"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {ratePlans.map((plan) => (
-                                            <tr key={plan.id} className="border-b border-[#f5f5f5] hover:bg-[#fafafa] transition-colors">
-                                                <td className="text-[13px] text-[#4f4f4f] py-3 pr-2 align-middle">
-                                                    <span className="font-semibold text-[#1d1d1d]">{plan.name}</span>
-                                                </td>
-                                                <td className="text-[13px] text-[#828282] py-3 pr-2 align-middle">
-                                                    <span>{plan.room}</span>
-                                                </td>
-                                                <td className="text-[13px] text-[#4f4f4f] py-3 pr-2 align-middle font-medium">
-                                                    {plan.baseRate}
-                                                </td>
-                                                <td className="text-[13px] text-[#828282] py-3 pr-2 align-middle">
-                                                    {plan.conditions}
-                                                </td>
-                                                <td className="text-[13px] py-3 pr-2 align-middle">
-                                                    <span className={`text-[10px] font-bold py-[3px] px-[8px] rounded uppercase tracking-wide ${
-                                                        plan.status === "Active" ? "text-[#27ae60] bg-[#eafaf1]" :
-                                                        "text-[#7f8c8d] bg-[#f2f4f4]"
-                                                    }`}>
-                                                        {plan.status}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 align-middle text-right">
-                                                    <button className="bg-transparent border-none cursor-pointer text-[#828282] hover:text-[#1d1d1d]">
-                                                        <MoreVertical size={16} />
-                                                    </button>
-                                                </td>
+                        {/* Tabs */}
+                        <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
+                            {tabs.map((t) => {
+                                const isActive = t === "Rates";
+                                return (
+                                    <button
+                                        key={t}
+                                        onClick={() => {
+                                            if (t === "Overview") window.location.href = `/owner/properties/propertyDetails?id=${propertyId}`;
+                                            else if (t === "Rooms") window.location.href = `/owner/properties/propertyRoomInventry?id=${propertyId}`;
+                                            else if (t === "Availability") window.location.href = `/owner/properties/Availability?id=${propertyId}`;
+                                            else if (t === "Rates") return;
+                                            else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${propertyId}`;
+                                            else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
+                                            else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${propertyId}`;
+                                            else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${propertyId}`;
+                                        }}
+                                        className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${
+                                            isActive
+                                                ? "text-[#953002] font-bold border-[#953002]"
+                                                : "text-[#828282] font-medium border-transparent hover:text-[#4f4f4f]"
+                                        }`}
+                                    >
+                                        {t}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Rate Plans Section */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden mb-4">
+                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#f0f0f0]">
+                                <div className="flex items-center gap-2">
+                                    <DollarSign size={16} color="#953002" />
+                                    <span className="text-[15px] font-bold text-[#1d1d1d]">Rate Plans</span>
+                                </div>
+                                <button className="flex items-center gap-1.5 py-2 px-4 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">
+                                    <Plus size={14} /> Add Rate Plan
+                                </button>
+                            </div>
+
+                            {ratePlans.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <DollarSign size={36} color="#c0a898" className="mb-3" />
+                                    <p className="text-[14px] text-[#828282]">No rate plans configured yet.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="bg-[#faf9f7]">
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Name</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Type</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Base Price</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Min Nights</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Date Range</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Status</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody>
+                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                            {ratePlans.map((plan: any, idx: number) => (
+                                                <tr
+                                                    key={plan.id}
+                                                    className={`border-t border-[#f5f5f5] ${idx % 2 === 0 ? "bg-white" : "bg-[#fdf9f7]"} hover:bg-[#fef5ef] transition-colors`}
+                                                >
+                                                    <td className="px-5 py-3.5 text-[13px] font-semibold text-[#1d1d1d]">{plan.name}</td>
+                                                    <td className="px-5 py-3.5 text-[13px] text-[#4f4f4f]">{plan.type ?? "—"}</td>
+                                                    <td className="px-5 py-3.5 text-[13px] font-semibold text-[#953002]">Rs. {plan.basePrice}</td>
+                                                    <td className="px-5 py-3.5 text-[13px] text-[#4f4f4f]">{plan.minNights ?? "—"}</td>
+                                                    <td className="px-5 py-3.5 text-[13px] text-[#4f4f4f]">{formatDateRange(plan.startDate, plan.endDate)}</td>
+                                                    <td className="px-5 py-3.5">
+                                                        <span
+                                                            className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
+                                                                plan.isActive
+                                                                    ? "bg-[#dcfce7] text-[#15803d]"
+                                                                    : "bg-[#f3f4f6] text-[#6b7280]"
+                                                            }`}
+                                                        >
+                                                            {plan.isActive ? "Active" : "Inactive"}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Right Column - Promos & Tips */}
-                        <div className="flex flex-col gap-3">
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex items-center gap-1.5 mb-3.5">
+                        {/* Discounts Section */}
+                        {discounts.length > 0 && (
+                            <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden">
+                                <div className="flex items-center gap-2 px-5 py-3.5 border-b border-[#f0f0f0]">
                                     <Percent size={16} color="#953002" />
-                                    <span className="text-[14px] font-bold text-[#1d1d1d]">Quick Discount</span>
+                                    <span className="text-[15px] font-bold text-[#1d1d1d]">Discounts</span>
                                 </div>
-                                
-                                <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1.5">Discount Name</label>
-                                <input type="text" placeholder="e.g. Weekend Flash Sale" className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] mb-3 outline-none focus:border-[#953002]" />
-
-                                <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1.5">Discount Percentage (%)</label>
-                                <input type="number" placeholder="15" className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] mb-4 outline-none focus:border-[#953002]" />
-
-                                <div className="flex flex-col gap-2">
-                                    <button className="w-full py-2.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#7a2702] transition-colors">
-                                        Apply Discount
-                                    </button>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="bg-[#faf9f7]">
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Name</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Type</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Value</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Date Range</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                            {discounts.map((disc: any, idx: number) => (
+                                                <tr
+                                                    key={disc.id}
+                                                    className={`border-t border-[#f5f5f5] ${idx % 2 === 0 ? "bg-white" : "bg-[#fdf9f7]"} hover:bg-[#fef5ef] transition-colors`}
+                                                >
+                                                    <td className="px-5 py-3.5 text-[13px] font-semibold text-[#1d1d1d]">{disc.name}</td>
+                                                    <td className="px-5 py-3.5 text-[13px] text-[#4f4f4f]">{disc.discountType ?? "—"}</td>
+                                                    <td className="px-5 py-3.5 text-[13px] font-semibold text-[#953002]">{disc.discountValue}%</td>
+                                                    <td className="px-5 py-3.5 text-[13px] text-[#4f4f4f]">{formatDateRange(disc.startDate, disc.endDate)}</td>
+                                                    <td className="px-5 py-3.5">
+                                                        <span
+                                                            className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
+                                                                disc.isActive
+                                                                    ? "bg-[#dcfce7] text-[#15803d]"
+                                                                    : "bg-[#f3f4f6] text-[#6b7280]"
+                                                            }`}
+                                                        >
+                                                            {disc.isActive ? "Active" : "Inactive"}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-
-                            <div className="bg-[#fffbf5] border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                <div className="flex items-center gap-1.5 mb-2.5">
-                                    <TrendingUp size={16} color="#953002" />
-                                    <span className="text-[14px] font-bold text-[#1d1d1d]">Pricing Tips</span>
-                                </div>
-                                <div className="flex items-start gap-2 mb-2">
-                                    <div className="w-[7px] h-[7px] rounded-full mt-1.5 shrink-0 bg-[#953002]" />
-                                    <span className="text-[12px] text-[#4f4f4f] leading-snug">Setting dynamic pricing for weekends can increase overall revenue by 20%.</span>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                    <div className="w-[7px] h-[7px] rounded-full mt-1.5 shrink-0 bg-[#953002]" />
-                                    <span className="text-[12px] text-[#4f4f4f] leading-snug">Consider an &quot;Early Bird&quot; rate to secure bookings further in advance.</span>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </div>
-
-                </div>
+                )}
             </main>
         </div>
+    );
+}
+
+export default function RatePage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
+                <Loader2 size={28} color="#953002" className="animate-spin" />
+            </div>
+        }>
+            <RateContent />
+        </Suspense>
     );
 }

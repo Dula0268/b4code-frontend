@@ -1,29 +1,41 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
+import { imageApi } from "@/api/image/image.api";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { useAuthStore } from "@/store/auth/auth.store";
+import TimePicker, { type TimeValue, formatTime } from "@/components/owner/TimePicker";
 import {
     Info,
     MapPin,
     Star,
     Image as ImageIcon,
     ShieldAlert,
-    Clock,
     Plus,
     Bell,
     ChevronRight,
+    X,
+    Loader2,
+    AlertCircle,
 } from "lucide-react";
 
-/* ───────────────────── component ───────────────────── */
+interface ImageEntry {
+    id: string;
+    localUrl: string;
+    cloudUrl: string | null;
+    uploading: boolean;
+    error: string | null;
+}
 
-/**
- * CreateNewPropertyPage Component
- *
- * Multi-step form for registering a new property, including
- * basic info, location, amenities, photos, and pricing setup.
- */
 export default function CreateNewPropertyPage() {
+    const router = useRouter();
+    const { user } = useAuthStore();
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+
     const [form, setForm] = useState({
         name: "",
         description: "",
@@ -31,10 +43,11 @@ export default function CreateNewPropertyPage() {
         city: "",
         contact: "",
         email: "",
-        checkIn: "02:00 PM",
-        checkOut: "11:00 AM",
         rules: "",
     });
+
+    const [checkIn,  setCheckIn]  = useState<TimeValue>({ hour: "2",  minute: "00", period: "PM" });
+    const [checkOut, setCheckOut] = useState<TimeValue>({ hour: "11", minute: "00", period: "AM" });
 
     const [amenities, setAmenities] = useState<Record<string, boolean>>({
         wifi: false,
@@ -46,6 +59,10 @@ export default function CreateNewPropertyPage() {
         petFriendly: false,
         smartTv: false,
     });
+
+    const [images, setImages] = useState<ImageEntry[]>([]);
+    const [dragging, setDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const toggleAmenity = (key: string) =>
         setAmenities((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -62,6 +79,70 @@ export default function CreateNewPropertyPage() {
         { key: "petFriendly", label: "Pet Friendly" },
         { key: "smartTv", label: "Smart TV" },
     ];
+
+    const processFiles = useCallback((files: FileList | File[]) => {
+        const fileArr = Array.from(files);
+        const remaining = 10 - images.length;
+        if (remaining <= 0) return;
+
+        const toAdd = fileArr
+            .filter((f) => f.type.startsWith("image/") && f.size <= 10 * 1024 * 1024)
+            .slice(0, remaining);
+
+        toAdd.forEach((file) => {
+            const id = `${Date.now()}-${Math.random()}`;
+            const localUrl = URL.createObjectURL(file);
+
+            // Add optimistic entry immediately so preview shows at once
+            setImages((prev) => [
+                ...prev,
+                { id, localUrl, cloudUrl: null, uploading: true, error: null },
+            ]);
+
+            imageApi
+                .upload(file, "properties")
+                .then((res: { url: string }) => {
+                    setImages((prev) =>
+                        prev.map((img) =>
+                            img.id === id
+                                ? { ...img, cloudUrl: res.url, uploading: false }
+                                : img
+                        )
+                    );
+                })
+                .catch((err: Error) => {
+                    setImages((prev) =>
+                        prev.map((img) =>
+                            img.id === id
+                                ? { ...img, uploading: false, error: err?.message ?? "Upload failed" }
+                                : img
+                        )
+                    );
+                });
+        });
+    }, [images.length]);
+
+    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files?.length) processFiles(e.target.files);
+        e.target.value = "";
+    };
+
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setDragging(false);
+            if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files);
+        },
+        [processFiles]
+    );
+
+    const removeImage = (id: string) => {
+        setImages((prev) => {
+            const entry = prev.find((img) => img.id === id);
+            if (entry) URL.revokeObjectURL(entry.localUrl);
+            return prev.filter((img) => img.id !== id);
+        });
+    };
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
@@ -93,7 +174,6 @@ export default function CreateNewPropertyPage() {
                     <span className="text-[#953002] font-semibold">Add New property</span>
                 </div>
 
-                {/* Page Header */}
                 <h1 className="text-[22px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Add New Property</h1>
                 <p className="text-[12px] text-[#828282] m-0 mb-2.5">List your property on our platform. Provide accurate details to attract more guests.</p>
 
@@ -172,26 +252,91 @@ export default function CreateNewPropertyPage() {
                         <div className="flex items-center gap-2 mb-3">
                             <ImageIcon size={16} color="#953002" />
                             <span className="text-[15px] font-bold text-[#1d1d1d]">Property Media</span>
+                            <span className="ml-auto text-[11px] text-[#b0b0b0]">{images.length}/10 photos</span>
                         </div>
-                        <div className="border-2 border-dashed border-[#e0e0e0] rounded-xl p-5 flex flex-col items-center gap-1 cursor-pointer bg-[#fefcfa]">
-                            <div className="w-10 h-10 rounded-full bg-[#fef5ef] flex items-center justify-center mb-1">
-                                <ImageIcon size={24} color="#953002" />
+
+                        {/* Hidden file input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleFileInput}
+                        />
+
+                        {/* Drop Zone */}
+                        <div
+                            onClick={() => images.length < 10 && fileInputRef.current?.click()}
+                            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                            onDragLeave={() => setDragging(false)}
+                            onDrop={handleDrop}
+                            className={`border-2 border-dashed rounded-xl p-5 flex flex-col items-center gap-1 transition-colors ${
+                                images.length >= 10
+                                    ? "cursor-not-allowed border-[#e0e0e0] bg-[#f5f5f5]"
+                                    : dragging
+                                    ? "cursor-copy border-[#953002] bg-[#fef5ef]"
+                                    : "cursor-pointer border-[#e0e0e0] bg-[#fefcfa] hover:border-[#953002] hover:bg-[#fef5ef]"
+                            }`}
+                        >
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${dragging ? "bg-[#953002]" : "bg-[#fef5ef]"}`}>
+                                <ImageIcon size={24} color={dragging ? "#fff" : "#953002"} />
                             </div>
-                            <div className="font-semibold text-[13px] text-[#1d1d1d]">Click or drag images here</div>
+                            <div className="font-semibold text-[13px] text-[#1d1d1d]">
+                                {dragging ? "Drop images here" : "Click or drag images here"}
+                            </div>
                             <div className="text-[11px] text-[#b0b0b0]">PNG, JPG up to 10MB each (max 10 photos)</div>
                         </div>
-                        <div className="flex gap-2.5 mt-2.5">
-                            <div className="w-16 h-12 rounded-md overflow-hidden border-2 border-[#953002]">
-                                <img
-                                    src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=80&h=60&fit=crop"
-                                    alt=""
-                                    className="w-full h-full object-cover rounded-md"
-                                />
+
+                        {/* Thumbnails */}
+                        {images.length > 0 && (
+                            <div className="flex flex-wrap gap-2.5 mt-3">
+                                {images.map((img) => (
+                                    <div key={img.id} className="relative w-16 h-12 rounded-md overflow-hidden border-2 border-[#e0e0e0] group">
+                                        <img
+                                            src={img.localUrl}
+                                            alt=""
+                                            className="w-full h-full object-cover"
+                                        />
+                                        {/* Uploading overlay */}
+                                        {img.uploading && (
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                                <Loader2 size={16} color="#fff" className="animate-spin" />
+                                            </div>
+                                        )}
+                                        {/* Error overlay */}
+                                        {img.error && (
+                                            <div className="absolute inset-0 bg-red-500/70 flex items-center justify-center" title={img.error}>
+                                                <AlertCircle size={16} color="#fff" />
+                                            </div>
+                                        )}
+                                        {/* Uploaded — show green border */}
+                                        {img.cloudUrl && !img.uploading && (
+                                            <div className="absolute inset-0 border-2 border-[#2e7d32] rounded-md pointer-events-none" />
+                                        )}
+                                        {/* Remove button */}
+                                        {!img.uploading && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); removeImage(img.id); }}
+                                                className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border-none cursor-pointer p-0"
+                                            >
+                                                <X size={10} color="#fff" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+
+                                {/* Add more slot */}
+                                {images.length < 10 && (
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-16 h-12 rounded-md border-2 border-dashed border-[#e0e0e0] flex items-center justify-center cursor-pointer bg-[#fafafa] hover:border-[#953002] hover:bg-[#fef5ef] transition-colors"
+                                    >
+                                        <Plus size={18} color="#b0b0b0" />
+                                    </div>
+                                )}
                             </div>
-                            <div className="w-16 h-12 rounded-md border-2 border-dashed border-[#e0e0e0] flex items-center justify-center cursor-pointer bg-[#fafafa]">
-                                <Plus size={18} color="#b0b0b0" />
-                            </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* ── Policies & Rules ── */}
@@ -203,17 +348,11 @@ export default function CreateNewPropertyPage() {
                         <div className="grid grid-cols-2 gap-3 mt-2">
                             <div className="flex-1">
                                 <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1">Check-in Time</label>
-                                <div className="flex items-center justify-between border border-[#e0e0e0] rounded-lg py-2 px-3 mt-1 bg-white">
-                                    <input type="text" value={form.checkIn} onChange={(e) => update("checkIn", e.target.value)} className="w-full text-[13px] text-[#1d1d1d] outline-none bg-white border-none p-0 m-0" />
-                                    <Clock size={14} color="#b0b0b0" />
-                                </div>
+                                <TimePicker value={checkIn} onChange={setCheckIn} />
                             </div>
                             <div className="flex-1">
                                 <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1">Check-out Time</label>
-                                <div className="flex items-center justify-between border border-[#e0e0e0] rounded-lg py-2 px-3 mt-1 bg-white">
-                                    <input type="text" value={form.checkOut} onChange={(e) => update("checkOut", e.target.value)} className="w-full text-[13px] text-[#1d1d1d] outline-none bg-white border-none p-0 m-0" />
-                                    <Clock size={14} color="#b0b0b0" />
-                                </div>
+                                <TimePicker value={checkOut} onChange={setCheckOut} />
                             </div>
                         </div>
                         <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Rules & Regulations</label>
@@ -226,11 +365,59 @@ export default function CreateNewPropertyPage() {
                         />
                     </div>
 
+                    {/* ── Error Banner ── */}
+                    {saveError && (
+                        <div className="mb-2 px-4 py-2 rounded-lg bg-[#fdecea] border border-[#e74c3c] text-[12px] text-[#c0392b] font-medium">
+                            {saveError}
+                        </div>
+                    )}
+
                     {/* ── Action Buttons ── */}
                     <div className="flex gap-3 pt-2 pb-3">
-                        <a href="/owner/properties" className="no-underline">
-                            <button className="py-2.5 px-7 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">Save Property Listing</button>
-                        </a>
+                        <button
+                            disabled={saving}
+                            onClick={async () => {
+                                if (!form.name.trim()) {
+                                    setSaveError("Property name is required.");
+                                    return;
+                                }
+                                setSaveError(null);
+                                setSaving(true);
+                                try {
+                                    const selectedAmenities = Object.entries(amenities)
+                                        .filter(([, v]) => v)
+                                        .map(([k]) => k);
+
+                                    const firstImageUrl = images.find((i) => i.cloudUrl)?.cloudUrl;
+
+                                    await propertiesApi.createProperty(user?.userId ?? 1, {
+                                        name:         form.name,
+                                        description:  form.description,
+                                        address:      form.address,
+                                        city:         form.city,
+                                        contactPhone: form.contact,
+                                        contactEmail: form.email,
+                                        checkIn:      formatTime(checkIn),
+                                        checkOut:     formatTime(checkOut),
+                                        houseRules:   form.rules,
+                                        amenities:    selectedAmenities,
+                                        imageUrl:     firstImageUrl,
+                                    });
+                                    router.push("/owner/properties");
+                                } catch (err: unknown) {
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    const axiosMsg = (err as any)?.response?.data?.message;
+                                    const msg = axiosMsg || (err instanceof Error ? err.message : "Failed to save property. Please try again.");
+                                    setSaveError(msg);
+                                } finally {
+                                    setSaving(false);
+                                }
+                            }}
+                            className={`flex items-center gap-2 py-2.5 px-7 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold transition-colors ${saving ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-[#b03a02]"}`}
+                        >
+                            {saving && <Loader2 size={14} className="animate-spin" />}
+                            {saving ? "Saving..." : "Save Property Listing"}
+                        </button>
                         <a href="/owner/properties" className="no-underline">
                             <button className="py-2.5 px-7 bg-[#e8e8e8] text-[#4f4f4f] border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#d0d0d0] transition-colors">Cancel</button>
                         </a>

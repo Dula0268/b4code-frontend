@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/auth/auth.store";
 import Logo from "@/components/shared/branding/logo";
+import TimePicker, { type TimeValue, parseTime } from "@/components/owner/TimePicker";
 import {
     Bell,
     LayoutDashboard,
@@ -18,7 +19,6 @@ import {
     BellRing,
     CreditCard,
     Puzzle,
-    Clock,
     Mail,
     MessageSquare,
     PlusCircle,
@@ -49,8 +49,8 @@ export default function AccountSettingPage() {
     }, [user]);
     const [currency, setCurrency] = useState("USD ($)");
     const [timezone, setTimezone] = useState("(GMT-05:00) Eastern Time");
-    const [checkIn, setCheckIn] = useState("03:00 PM");
-    const [checkOut, setCheckOut] = useState("11:00 AM");
+    const [checkIn,  setCheckIn]  = useState<TimeValue>(() => parseTime("03:00 PM"));
+    const [checkOut, setCheckOut] = useState<TimeValue>(() => parseTime("11:00 AM"));
     const [autoTax, setAutoTax] = useState(true);
     const [emailNotif, setEmailNotif] = useState(true);
     const [smsAlert, setSmsAlert] = useState(false);
@@ -214,15 +214,14 @@ export default function AccountSettingPage() {
                                 </div>
 
                                 <div className="mt-3.5">
-                                    <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Default Check-in / Check-out</label>
-                                    <div className="flex gap-3 items-center">
-                                        <div className="relative flex-1">
-                                            <input type="text" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border" />
-                                            <Clock size={14} color="#828282" className="absolute right-3 top-1/2 -translate-y-1/2" />
+                                    <div className="flex gap-3 items-start">
+                                        <div className="flex-1">
+                                            <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Default Check-in Time</label>
+                                            <TimePicker value={checkIn} onChange={setCheckIn} />
                                         </div>
-                                        <div className="relative flex-1">
-                                            <input type="text" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border" />
-                                            <Clock size={14} color="#828282" className="absolute right-3 top-1/2 -translate-y-1/2" />
+                                        <div className="flex-1">
+                                            <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Default Check-out Time</label>
+                                            <TimePicker value={checkOut} onChange={setCheckOut} />
                                         </div>
                                     </div>
                                 </div>
