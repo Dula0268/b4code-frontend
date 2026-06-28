@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
 import { propertiesApi } from "@/api/owner/properties.api";
 import { imageApi } from "@/api/image/image.api";
@@ -53,6 +53,7 @@ interface ImageEntry {
 
 function EditPropertyContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const propertyId = searchParams.get("id");
     const { user } = useAuthStore();
     const ownerId = user?.userId ?? 1;
@@ -185,6 +186,9 @@ function EditPropertyContent() {
                 imageUrls:    allImageUrls,
             });
             setSaveSuccess(true);
+            setTimeout(() => {
+                router.push(`/owner/properties/propertyDetails?id=${propertyId}`);
+            }, 800);
         } catch (err: unknown) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const axiosMsg = (err as any)?.response?.data?.message;
