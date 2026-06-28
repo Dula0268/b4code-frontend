@@ -283,10 +283,10 @@ export default function ReviewManagementPage() {
                   <SelectValue placeholder="Select a reason" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-[#F0EBE7] shadow-xl">
-                  <SelectItem value="INAPPROPRIATE">Inappropriate Language</SelectItem>
-                  <SelectItem value="SPAM">Spam or Fake</SelectItem>
-                  <SelectItem value="UNFAIR">Unfair/False Claims</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
+                  <SelectItem value="PROFANITY">Inappropriate Language</SelectItem>
+                  <SelectItem value="SPAM_SCAM">Spam or Fake</SelectItem>
+                  <SelectItem value="POLICY_VIOLATION">Unfair/False Claims</SelectItem>
+                  <SelectItem value="HARASSMENT">Harassment/Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>

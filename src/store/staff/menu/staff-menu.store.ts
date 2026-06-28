@@ -341,8 +341,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
   deleteMenu: async (id) => {
     try {
       set({ isLoading: true, errorMsg: null });
-      // Delete all items first, then the menu
-      await api.delete(`/menu-items/menu/${id}`);
+      // The backend handles unlinking the items, so just delete the menu.
       await api.delete(`/menus/${id}`);
       set((s) => ({ menus: s.menus.filter((m) => m.id !== id), isLoading: false }));
     } catch (error: unknown) {
