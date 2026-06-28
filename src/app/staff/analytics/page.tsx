@@ -129,7 +129,7 @@ export default function AnalyticsPage() {
               Staff Performance
             </h1>
             <p className="text-[13px] text-[#9E7B6A] mt-1">
-              Real-time insights for your property's orders and items.
+              Real-time insights for your property&apos;s orders and items.
             </p>
           </div>
           
@@ -281,7 +281,7 @@ export default function AnalyticsPage() {
                         stroke="#C05621" 
                         strokeWidth={4}
                         fill="url(#colorRevenuePremium)" 
-                        activeDot={{ r: 7, fill: "#fff", stroke: "#C05621", strokeWidth: 3, shadow: '0 4px 10px rgba(192,86,33,0.5)' }}
+                        activeDot={{ r: 7, fill: "#fff", stroke: "#C05621", strokeWidth: 3 }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
