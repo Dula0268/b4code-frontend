@@ -102,11 +102,10 @@ export default function QrList({ propertyId }: { propertyId: number }) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden px-6 py-5 gap-5 animate-in fade-in zoom-in-95 duration-1000 relative z-10">
-      <div className="absolute inset-0 bg-[#F8F6F5] pointer-events-none" />
+    <div className="h-full flex flex-col overflow-hidden px-6 py-4 gap-4">
       {/* Success banner */}
       {successMsg && (
-        <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-xl px-4 py-2 text-sm relative z-10">
+        <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-xl px-4 py-2 text-sm">
           <CheckCircle size={16} className="text-[var(--state-success)]" />
           <span className="text-[var(--black-2)] font-medium flex-1">{successMsg}</span>
           <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setSuccess(null)}><X size={14} /></Button>
@@ -137,27 +136,27 @@ export default function QrList({ propertyId }: { propertyId: number }) {
 
       {/* Tabs + Search */}
       <div className="flex-none flex items-center justify-between">
-        <div className="flex border border-[var(--gray-5)] rounded-[8px] overflow-hidden">
+        <div className="flex bg-white/30 backdrop-blur-md border border-white/50 rounded-xl overflow-hidden p-1 gap-1">
           {(["Table", "Room"] as QRTab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium transition-colors ${
-                tab === t ? "bg-[var(--brand-primary)] text-white" : "bg-white text-[var(--gray-2)] hover:bg-[rgba(0,0,0,0.02)]"
+              className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold transition-colors ${
+                tab === t ? "bg-white text-[#1A1A1A] shadow-sm rounded-lg" : "bg-transparent text-[#9E7B6A] hover:bg-white/50 rounded-lg"
               }`}
             >
               {TAB_ICONS[t]} {t}
             </button>
           ))}
         </div>
-        <div className="relative w-[220px]">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-4)] z-10" />
-          <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} placeholder="Search contexts..." className="pl-8 text-xs rounded-[8px] border-[var(--gray-5)]" disabled={loading} />
+        <div className="relative w-[260px]">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E7B6A] z-10" />
+          <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} placeholder="Search contexts..." className="pl-9 h-10 text-xs rounded-xl border-white/50 bg-white/70 backdrop-blur-md shadow-sm font-semibold placeholder:text-[#9E7B6A]" disabled={loading} />
         </div>
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-hidden flex flex-col bg-white rounded-[10px] border border-[var(--gray-5)] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+      <div className="flex-1 overflow-hidden flex flex-col bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
         {/* Loading indicator */}
         {loading && (
           <div className="flex-1 flex flex-col p-4 gap-4">

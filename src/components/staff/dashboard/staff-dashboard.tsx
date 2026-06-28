@@ -207,14 +207,14 @@ export default function StaffDashboard() {
   }
 
   return (
-    <div className="h-full overflow-y-auto px-6 py-5 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-1000 relative z-10">
+    <div className="h-full overflow-hidden px-6 py-4 flex flex-col gap-4">
       {/* Stat Cards Row */}
-      <div className="grid grid-cols-4 gap-5 shrink-0">
+      <div className="grid grid-cols-4 gap-4 shrink-0">
         {stats.map((stat) => {
           const Icon = stat.icon;
           const TrendIcon = stat.trendIcon;
           return (
-            <div key={stat.label} className="col-span-1 bg-white/80 backdrop-blur-xl rounded-3xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
+            <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
               <div className="flex justify-between items-start z-10">
                 <div className={`p-2.5 ${stat.iconBg.replace('0.08', '0.15')} rounded-xl self-start group-hover:scale-110 transition-transform`}>
                   <Icon size={18} className={stat.iconColor} />
@@ -224,9 +224,9 @@ export default function StaffDashboard() {
                   <span className="text-[11px] font-bold tracking-[0.05em] uppercase">{stat.trend}</span>
                 </div>
               </div>
-              <div className="z-10 mt-6 flex flex-col gap-1">
+              <div className="z-10 mt-3 flex flex-col gap-0.5">
                 <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase">{stat.label}</h3>
-                <span className="text-[32px] font-extrabold text-[#1A1A1A] tracking-tighter leading-none">{stat.value}</span>
+                <span className="text-2xl font-extrabold text-[#1A1A1A] tracking-tighter leading-none">{stat.value}</span>
               </div>
             </div>
           );
@@ -234,26 +234,26 @@ export default function StaffDashboard() {
       </div>
 
       {/* Management Cards Grid */}
-      <div className="grid grid-cols-2 gap-5 flex-1 min-h-[300px]">
+      <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
         {visibleCards.map((card) => {
           const Icon = card.icon;
           const ButtonIcon = card.buttonIcon;
           return (
-            <div key={card.title} className="col-span-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)] transition-all duration-500 h-full flex flex-col justify-between group relative overflow-hidden">
+            <div key={card.title} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)] transition-all duration-500 h-full flex flex-col justify-between group relative overflow-hidden">
               <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-2xl rounded-full group-hover:scale-150 group-hover:opacity-[0.06] transition-all duration-700" />
               
-              <div className="flex flex-col gap-4 z-10">
-                <div className="bg-gradient-to-br from-[#FFF8F0] to-white border border-[#F0EBE7]/50 rounded-xl w-11 h-11 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+              <div className="flex flex-col gap-2 z-10">
+                <div className="bg-gradient-to-br from-[#FFF8F0] to-white border border-[#F0EBE7]/80 rounded-xl w-10 h-10 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
                   <Icon size={20} className="text-[#C05621]" />
                 </div>
                 <div className="flex flex-col">
                   <h3 className="text-[13px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">{card.title}</h3>
-                  <p className="text-[22px] font-extrabold m-0 text-[#1A1A1A] tracking-tight">{card.highlight}</p>
+                  <p className="text-lg font-extrabold m-0 text-[#1A1A1A] tracking-tight">{card.highlight}</p>
                   <p className="text-[13px] font-semibold text-[#9E7B6A] m-0 mt-1">{card.description}</p>
                 </div>
               </div>
               
-              <Button asChild className="bg-[#1A1A1A] hover:bg-[#C05621] text-white mt-4 rounded-xl h-11 font-bold tracking-wide transition-colors group-hover:shadow-[0_4px_15px_rgb(192,86,33,0.3)] z-10">
+              <Button asChild className="bg-[#1A1A1A] hover:bg-[#C05621] text-white mt-3 rounded-xl h-10 font-bold tracking-wide transition-colors z-10">
                 <Link href={card.href} className="flex items-center gap-2">
                   {card.buttonLabel}
                   <ButtonIcon size={16} className="group-hover:translate-x-1 transition-transform" />

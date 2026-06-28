@@ -98,8 +98,7 @@ export default function StaffMenuList() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden px-6 py-5 gap-5 animate-in fade-in zoom-in-95 duration-1000 relative z-10">
-      <div className="absolute inset-0 bg-[#F8F6F5] pointer-events-none" />
+    <div className="h-full flex flex-col overflow-hidden px-6 py-4 gap-4">
       {/* ── Loading State ── */}
       {isLoading && (
         <div className="flex-1 flex flex-col gap-3">
@@ -166,7 +165,7 @@ export default function StaffMenuList() {
           )}
 
           {/* ── Header ── */}
-          <div className="flex-none flex items-center justify-between relative z-10 bg-white/70 backdrop-blur-xl p-5 rounded-3xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="flex-none flex items-center justify-between bg-white/80 backdrop-blur-xl p-5 rounded-2xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <div>
               <h1 className="text-xl font-extrabold text-[#1A1A1A] leading-tight m-0">Menu Management</h1>
               <p className="text-xs font-semibold text-[#9E7B6A] mt-1 m-0">Manage menus, categories, and dining options for your guests.</p>
@@ -186,7 +185,7 @@ export default function StaffMenuList() {
           </div>
 
           {/* ── Stat Cards ── */}
-          <div className="flex-none grid grid-cols-3 gap-5 relative z-10">
+          <div className="flex-none grid grid-cols-3 gap-5">
             {[
               { label: "Total Menus", value: String(total), sub: `${menus.filter(m => m.status === "active").length} active`, icon: UtensilsCrossed, iconBg: "bg-[rgba(192,86,33,0.1)]", iconColor: "text-[#C05621]" },
               { label: "Active Items", value: String(activeItems), sub: "Across all menus", icon: Layers, iconBg: "bg-[rgba(45,125,92,0.1)]", iconColor: "text-[#2D7D5C]" },
@@ -210,7 +209,7 @@ export default function StaffMenuList() {
           </div>
 
           {/* ── Categories Manager ── */}
-          <Card className="flex-none bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+          <Card className="flex-none bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <CardContent className="px-4 py-3">
               <div className="flex items-center justify-between mb-2.5">
                 <div>
@@ -276,9 +275,9 @@ export default function StaffMenuList() {
           </Card>
 
           {/* ── Menus Table ── */}
-          <div className="flex-1 bg-white border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden min-h-0">
+          <div className="flex-1 bg-white/80 backdrop-blur-xl border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden min-h-0">
             {/* Header row */}
-            <div className="flex-none grid grid-cols-[1fr_140px_130px_70px_80px_70px] gap-2 px-4 py-2 border-b border-[var(--gray-5)] bg-[rgba(0,0,0,0.015)]">
+            <div className="flex-none grid grid-cols-[1fr_140px_130px_70px_80px_70px] gap-2 px-4 py-2 border-b border-[var(--gray-5)] bg-white/50">
               {["MENU NAME", "ITEMS", "PRICE RANGE", "STATUS", "VISIBILITY", "ACTIONS"].map((h) => (
                 <span key={h} className="text-[9px] font-bold text-[var(--gray-3)] uppercase tracking-wider">{h}</span>
               ))}
@@ -352,7 +351,7 @@ export default function StaffMenuList() {
             </div>
 
             {/* Pagination */}
-            <div className="flex-none flex items-center justify-between px-4 py-2 border-t border-[var(--gray-5)] bg-[rgba(0,0,0,0.015)]">
+            <div className="flex-none flex items-center justify-between px-4 py-2 border-t border-[var(--gray-5)] bg-white/50">
               <span className="text-[10px] text-[var(--gray-3)]">
                 {total === 0 ? "No menus" : `Showing ${page * perPage + 1}-${Math.min((page + 1) * perPage, total)} of ${total} menus`}
               </span>

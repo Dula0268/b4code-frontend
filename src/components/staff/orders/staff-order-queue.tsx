@@ -347,10 +347,9 @@ export default function StaffOrderQueue() {
       </div>
 
       {/* Orders Grid */}
-      <div className="flex-1 px-6 py-6 overflow-y-auto relative animate-in fade-in zoom-in-95 duration-1000">
-        <div className="absolute inset-0 bg-[#F8F6F5]" />
+      <div className="flex-1 px-6 py-6 overflow-y-auto">
         {filteredOrders.length > 0 ? (
-          <div className="grid grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+          <div className="grid grid-cols-3 xl:grid-cols-4 gap-5">
             {filteredOrders.map((order) => (
               <OrderCard
                 key={order.id}
@@ -363,7 +362,7 @@ export default function StaffOrderQueue() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-[#9E7B6A] relative z-10">
+          <div className="flex flex-col items-center justify-center py-24 text-[#9E7B6A]">
             <div className="w-20 h-20 rounded-full bg-white/80 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-center">
               <UtensilsCrossed size={32} className="text-[#C05621] opacity-50" />
             </div>
