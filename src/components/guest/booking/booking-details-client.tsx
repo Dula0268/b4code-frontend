@@ -373,19 +373,9 @@ export default function BookingDetailsClient({ id }: { id: string }) {
 
   const handleCompleteBooking = async () => {
     setErrorMessage("");
-    setSuccessMessage("");
     try {
-      const res = await guestApi.completeBooking(booking.id)
-      
-      const mappedBooking: StoredBooking = {
-        ...booking,
-        status: res.status
-      }
-
-      setBooking(mappedBooking)
-      setSuccessMessage("Booking marked as completed! You can now leave a review.");
-      setActiveTab("modify"); // switch off cancel tab if they were on it
-      
+      await guestApi.completeBooking(booking.id)
+      router.push('/guest/booking')
     } catch (error: any) {
       console.error("Failed to complete booking:", error)
       setErrorMessage(error.response?.data?.message || "Failed to complete booking.")
