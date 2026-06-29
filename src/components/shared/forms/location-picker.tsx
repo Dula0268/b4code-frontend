@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapPin, Home, Loader2 } from "lucide-react";
+import { MapPin, Bed, Loader2 } from "lucide-react";
 import { getFilterOptions, LocationSuggestionDTO } from "@/api/guest/search.api";
 
 // ─── Props ────────────────────────────────────────────────────────────────
@@ -24,7 +24,7 @@ export default function LocationPicker({
   value,
   onSelect,
   open,
-  maxSuggestions = 7,
+  maxSuggestions = 5,
 }: LocationPickerProps) {
   const [suggestions, setSuggestions] = useState<LocationSuggestionDTO[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,7 +72,7 @@ export default function LocationPicker({
       className="absolute top-full left-0 mt-2 bg-white rounded-xl z-50 w-[260px] overflow-hidden
                  shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]"
     >
-      <p className="text-[10px] font-semibold text-[#828282] uppercase tracking-wide px-4 pt-3 pb-1">
+      <p className="hidden">
         {loading ? "Loading..." : "Suggested"}
       </p>
 
@@ -93,16 +93,16 @@ export default function LocationPicker({
               e.preventDefault();
               onSelect(loc.name);
             }}
-            className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#953002]/5 cursor-pointer transition-colors"
+            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
           >
             {loc.type === "property" ? (
-              <Home size={15} className="text-[#953002] flex-shrink-0" />
+              <Bed size={20} className="text-black flex-shrink-0" strokeWidth={1.75} />
             ) : (
-              <MapPin size={15} className="text-[#953002] flex-shrink-0" />
+              <MapPin size={20} className="text-black flex-shrink-0" strokeWidth={1.75} />
             )}
             <div className="flex flex-col">
-              <span className="text-sm text-[#333333] leading-tight">{loc.name}</span>
-              <span className="text-[10px] text-[#828282] uppercase tracking-wider">{loc.type}</span>
+              <span className="text-[15px] font-bold text-black leading-tight">{loc.name}</span>
+              <span className="text-xs text-[#828282] capitalize">{loc.type}</span>
             </div>
           </div>
         ))

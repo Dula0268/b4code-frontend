@@ -35,56 +35,50 @@ export default function GuestPicker({ value, onChange }: GuestPickerProps) {
     }
 
     return (
-        <div className="p-4 w-[240px]">
-            <p className="text-[10px] font-semibold text-[#828282] uppercase tracking-wide mb-3">
-                Guests
-            </p>
+        <div className="p-5 w-[280px]">
+
 
             {ROWS.map(({ key, label, sub, min }) => (
                 <div
                     key={key}
-                    className="flex items-center justify-between py-3 border-b border-[#f0f0f0] last:border-0"
+                    className="flex items-center justify-between py-4 border-b border-[#f0f0f0] last:border-0"
                 >
                     {/* Label */}
                     <div>
-                        <p className="text-sm font-semibold text-[#1d1d1d]">{label}</p>
-                        <p className="text-xs text-[#828282]">{sub}</p>
+                        <p className="text-[16px] font-bold text-[#1d1d1d] leading-tight">{label}</p>
+                        <p className="text-[13px] text-[#828282] mt-0.5">{sub}</p>
                     </div>
 
                     {/* Stepper */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={() => adjust(key, -1, min)}
                             disabled={value[key] <= min}
                             aria-label={`Decrease ${label}`}
-                            className="w-7 h-7 rounded-full border-2 border-[#953002] flex items-center justify-center
-                         text-[#953002] transition-colors
-                         hover:bg-[#953002]/10
-                         disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="w-9 h-9 rounded-full border flex items-center justify-center transition-colors
+                                       border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10
+                                       disabled:border-[var(--brand-primary)]/30 disabled:text-[var(--brand-primary)]/40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                         >
-                            <Minus size={12} />
+                            <Minus size={16} strokeWidth={2} />
                         </button>
 
-                        <span className="w-4 text-center text-sm font-bold text-[#1d1d1d]">
+                        <span className="w-5 text-center text-[16px] font-bold text-[#1d1d1d]">
                             {value[key]}
                         </span>
 
                         <button
                             onClick={() => adjust(key, 1, min)}
                             aria-label={`Increase ${label}`}
-                            className="w-7 h-7 rounded-full border-2 border-[#953002] flex items-center justify-center
-                         text-[#953002] transition-colors hover:bg-[#953002]/10"
+                            className="w-9 h-9 rounded-full border-[2px] flex items-center justify-center transition-colors
+                                       border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
                         >
-                            <Plus size={12} />
+                            <Plus size={16} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
             ))}
 
-            {/* Total */}
-            <p className="mt-2 text-xs text-[#828282] text-center">
-                {total} guest{total !== 1 ? "s" : ""}, {value.rooms} room{value.rooms !== 1 ? "s" : ""} total
-            </p>
+
         </div>
     )
 }

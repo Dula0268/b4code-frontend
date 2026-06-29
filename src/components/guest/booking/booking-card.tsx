@@ -202,9 +202,7 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
               <Link href={`/guest/booking/${booking.orderId}`} className={btnPrimary} style={{ background: "#9a3300" }}>
                 <Info size={14} /> More Info
               </Link>
-              <Link href="/guest/order" className={btnOutline}>
-                <Utensils size={14} /> Order Food
-              </Link>
+
               <button className={btnOutline}>
                 <MessageSquare size={14} /> Message
               </button>

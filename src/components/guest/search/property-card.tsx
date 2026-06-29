@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
-import { Star, MapPin } from "lucide-react"
+import { Star, MapPin, Check } from "lucide-react"
 
 export interface PropertyListing {
     id: string
@@ -39,10 +39,10 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
     return (
         <Link
             href={`/guest/property/${listing.id}${query}`}
-            className="group block no-underline text-inherit"
+            className="group block no-underline text-inherit h-full"
             aria-label={`View ${listing.title}`}
         >
-            <article className="bg-[var(--bg)] rounded-[var(--radius-lg)] overflow-hidden border border-[var(--border)] shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] sm:active:scale-100">
+            <article className="h-full flex flex-col bg-[var(--bg)] rounded-[var(--radius-lg)] overflow-hidden border border-[var(--border)] shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] sm:active:scale-100">
                 {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden bg-[var(--gray-5)]">
                     {!imgError ? (
@@ -70,7 +70,7 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                 </div>
 
                 {/* Content */}
-                <div className="p-3 sm:p-4 flex flex-col gap-1.5">
+                <div className="p-3 sm:p-4 flex flex-col flex-1 gap-1.5">
 
                     {/* Title + Rating */}
                     <div className="flex items-start justify-between gap-2">
@@ -98,8 +98,18 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                         <span>{listing.reviewCount.toLocaleString()} total reviews</span>
                     </div>
 
-                    {/* Price Range */}
-                    <div className="border-t border-[var(--border)] mt-1 pt-2 flex flex-col">
+                    {/* Amenities / Advanced Filters */}
+                    {listing.amenities && listing.amenities.length > 0 && (
+                        <div className="flex flex-wrap gap-x-2.5 gap-y-1 mt-1 mb-1.5">
+                            {listing.amenities.map((amenity, idx) => (
+                                <span key={idx} className="flex items-center gap-1 text-[11px] sm:text-[11.5px] text-[var(--muted)] font-medium">
+                                    <Check size={11} className="text-[var(--state-success)] flex-shrink-0" strokeWidth={3} />
+                                    {amenity === "Breakfast Included" ? "Breakfast" : amenity}
+                                </span>
+                            ))}
+                        </div>
+                    )}                    {/* Price Range */}
+                    <div className="border-t border-[var(--border)] mt-auto pt-2 flex flex-col">
                         {maxPrice > listing.pricePerNight ? (
                             <>
                                 <span className="text-[10px] sm:text-[11px] text-[var(--muted)] uppercase tracking-wide font-semibold mb-0.5">Price Range</span>
