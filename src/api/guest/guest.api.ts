@@ -77,6 +77,9 @@ export const guestApi = {
     guests: number;
   }) => api.put(`/guest/bookings/${id}`, payload).then((r) => r.data),
 
+  sendReceipt: (confirmationCode: string) =>
+    api.post(`/guest/bookings/${confirmationCode}/send-receipt`).then((r) => r.data),
+
   // Review Methods
   getPropertyReviews: (propertyId: number) =>
     api.get(`/guest/reviews/property/${propertyId}`).then((r) => r.data),

@@ -285,14 +285,18 @@ export default function PropertyClient({ property }: { property: any }) {
                             </div>
                             <div className="flex flex-col gap-2.5 mb-8 p-5 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm">
                                 {(() => {
+                                    if (!property.reviewBreakdown || property.reviewBreakdown.length === 0) {
+                                        return <div className="text-[#888] text-sm text-center py-2">No reviews yet.</div>;
+                                    }
+
                                     const standardTypes = ["Cleanliness", "Comfort", "Service", "Dining", "Location", "Value"];
-                                    const extraTypes = (property.reviewBreakdown || [])
+                                    const extraTypes = property.reviewBreakdown
                                         .filter((r: any) => !standardTypes.includes(r.label))
                                         .map((r: any) => r.label);
                                     const allTypesToDisplay = [...standardTypes, ...extraTypes];
                                     
                                     return allTypesToDisplay.map(type => {
-                                        const found = (property.reviewBreakdown || []).find((r: any) => r.label === type);
+                                        const found = property.reviewBreakdown.find((r: any) => r.label === type);
                                         return <RatingBar key={type} label={type} score={found ? found.score : 0} />
                                     });
                                 })()}
@@ -737,10 +741,11 @@ export default function PropertyClient({ property }: { property: any }) {
                                                     return;
                                                 }
 
-                                                setBookingRef(res.data.confirmationCode);
-                                                setBookingStep("confirmation");
                                                 setSuccessMsg("Booking Confirmed Successfully!");
-                                                setTimeout(() => setSuccessMsg(""), 5000);
+                                                setTimeout(() => {
+                                                    setSuccessMsg("");
+                                                    router.push("/guest/booking");
+                                                }, 1500);
                                             } catch (error: any) {
                                                 console.error("Booking failed:", error);
                                                 const msg = error.response?.data?.message || "Failed to confirm booking. Please try again.";
