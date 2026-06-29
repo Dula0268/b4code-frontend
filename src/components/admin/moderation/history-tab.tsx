@@ -37,7 +37,7 @@ export default function HistoryTabPage() {
     "Appeal Denied",
   ];
 
-  const { history, historyTotalPages, historyLoading, isExporting, fetchHistory, downloadHistoryExport } = useAdminModerationStore();
+  const { history, historyTotalPages, historyLoading, isExporting, fetchHistory } = useAdminModerationStore();
 
   useEffect(() => {
     const timer = setTimeout(() => {
