@@ -23,6 +23,8 @@ import {
   useAdminModerationStore,
 } from "@/store/admin/moderation/admin-moderation.store";
 import type { Dispute } from "@/api/admin/moderation.api";
+import { ModerationApi } from "@/api/admin/moderation.api";
+import ExportButton from "../audit-logs/ExportButton";
 
 // ─── Reason Badge ─────────────────────────────────────────────────────────────
 function ReasonBadge({ reason }: { reason: string }) {
@@ -407,6 +409,13 @@ export default function DisputeHubPage() {
             {badgeCounts.openDisputes}
           </span>
         </button>
+        <div className="ml-auto pb-2">
+          <ExportButton
+            filenamePrefix="disputes"
+            onExportCsv={() => ModerationApi.exportDisputesCsv({})}
+            onExportPdf={() => ModerationApi.exportDisputesPdf({})}
+          />
+        </div>
       </div>
 
       {/* ── Content: Table + Detail Panel ── */}
