@@ -27,6 +27,7 @@ export interface BookingCardData {
   paymentStatus?: string
   paidInFull?: boolean
   roomName?: string
+  roomQuantity?: number
   bookingStatus?: string
   cancellationNote?: string
   isFromStore?: boolean
@@ -118,6 +119,7 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
     totalPrice: String(booking.totalPrice || 0),
     guests: booking.guests || "",
     propertyId: booking.propertyId || "",
+    roomQuantity: String(booking.roomQuantity || 1),
     isFromStore: booking.isFromStore ? "1" : "0",
   }).toString()
 
@@ -153,7 +155,8 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
              <h3 className="text-[22px] font-black text-[#2d2116] mb-1 tracking-tight">{booking.property}</h3>
              {booking.roomName && (
                <p className="text-[14px] font-semibold text-[#6f6254] flex items-center gap-1">
-                 <BedDouble size={14} className="text-[#9a3300]" /> {booking.roomName}
+                 <BedDouble size={14} className="text-[#9a3300]" /> 
+                 {booking.roomQuantity && booking.roomQuantity > 1 ? `${booking.roomQuantity}x ` : ""}{booking.roomName}
                </p>
              )}
              <div className="mt-1">
