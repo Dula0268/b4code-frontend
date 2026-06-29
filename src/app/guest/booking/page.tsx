@@ -95,7 +95,7 @@ function BookingsContent() {
                     const checkOutDate = b.checkOut ? new Date(b.checkOut) : new Date(checkInDate.getTime() + 86400000);
                     const diffDays = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
                     
-                    let derivedStatus = normalizeStatus(b.status);
+                    const derivedStatus = normalizeStatus(b.status);
 
                     return {
                         id: String(b.bookingId ?? b.id ?? b.confirmationCode ?? b.confirmationNumber ?? crypto.randomUUID()),
