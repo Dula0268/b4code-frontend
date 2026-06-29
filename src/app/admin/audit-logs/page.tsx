@@ -155,7 +155,7 @@ export default function AuditLogsPage() {
             <Loader2 className="animate-spin text-[#C05621]" size={48} />
           </div>
         )}
-        <AuditLogsHeader />
+        <AuditLogsHeader currentRole={roleFilter} currentSearch={search} />
 
         <AuditLogsFilters
           search={search}

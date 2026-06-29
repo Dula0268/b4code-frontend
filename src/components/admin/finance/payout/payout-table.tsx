@@ -172,15 +172,6 @@ export default function PayoutTable({
               className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A1A1A] pointer-events-none"
             />
           </div>
-          
-          <button
-            onClick={() => downloadPayoutExport({ search: debouncedSearch || undefined, status: statusFilter || undefined })}
-            disabled={isExporting || payouts.length === 0}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E8DDD8] bg-white text-sm font-semibold text-[#1A1A1A] hover:bg-[#FAF5F2] hover:border-[#C05621] hover:text-[#C05621] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            Export Report
-          </button>
         </div>
       </div>
 

@@ -116,8 +116,11 @@ export const FinanceApi = {
   getAllPayouts: (params: { search?: string; status?: string; page?: number; size?: number }): Promise<PayoutPageDto> =>
     api.get('/admin/finance/payouts', { params }).then((res) => res.data),
 
-  exportPayouts: (params: { search?: string; status?: string }): Promise<Blob> =>
-    api.get('/admin/finance/payouts/export', { params, responseType: 'blob' }).then((res) => res.data),
+  exportPayoutsCsv: (params: { search?: string; status?: string }): Promise<Blob> =>
+    api.get('/admin/finance/payouts/export/csv', { params, responseType: 'blob' }).then((res) => res.data),
+
+  exportPayoutsPdf: (params: { search?: string; status?: string }): Promise<Blob> =>
+    api.get('/admin/finance/payouts/export/pdf', { params, responseType: 'blob' }).then((res) => res.data),
 
   processPayout: (id: string, payload: { bankReference: string, commissionRate?: number }): Promise<PayoutDto> =>
     api.put(`/admin/finance/payouts/${id}/process`, payload).then((res) => res.data),

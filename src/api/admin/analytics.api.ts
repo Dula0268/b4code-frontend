@@ -19,6 +19,7 @@ export interface PlatformSummary {
   totalBookings: number;
   activeBookings: number;
   newListingsThisWeek: number;
+  totalProperties: number;
   registeredUsers: number;
   registeredUsersGrowthPct: number;
   platformCommission: number;
@@ -42,6 +43,7 @@ export interface RevPar {
 export interface BookingChartPoint {
   month: string;
   value: number;
+  netRevenue: number;
 }
 
 export const AnalyticsApi = {
