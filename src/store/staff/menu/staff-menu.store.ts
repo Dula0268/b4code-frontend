@@ -97,6 +97,7 @@ interface StaffMenuState {
   errorMsg: string | null;
   isLoading: boolean;
   categoriesLoading: boolean;
+  serviceChargeRate: number;
 }
 
 interface StaffMenuActions {
@@ -120,6 +121,8 @@ interface StaffMenuActions {
   toggleItemStatus: (menuId: string, itemId: string) => Promise<void>;
   setSuccess: (msg: string | null) => void;
   setError: (msg: string | null) => void;
+  fetchServiceCharge: (propertyId: number) => Promise<void>;
+  updateServiceCharge: (propertyId: number, rate: number) => Promise<void>;
 }
 
 function calcPriceRange(items: MenuItem[]): string {
@@ -210,6 +213,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
   errorMsg: null,
   isLoading: false,
   categoriesLoading: false,
+  serviceChargeRate: 10,
 
   // ─── Fetch Menus (from real /api/menus) ──────────────────────────────────────
   fetchMenus: async (propertyId: number) => {
@@ -520,4 +524,26 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
 
   setSuccess: (msg) => set({ successMsg: msg }),
   setError: (msg) => set({ errorMsg: msg }),
+
+  // ─── Service Charge ──────────────────────────────────────────────────────────
+  fetchServiceCharge: async (propertyId) => {
+    try {
+      const response = await api.get(`/staff/properties/${propertyId}/service-charge`);
+      set({ serviceChargeRate: response.data.serviceChargeRate });
+    } catch (error: unknown) {
+      console.warn("Failed to fetch service charge", error);
+    }
+  },
+  
+  updateServiceCharge: async (propertyId, rate) => {
+    try {
+      set({ isLoading: true });
+      const response = await api.put(`/staff/properties/${propertyId}/service-charge`, {
+        serviceChargeRate: rate,
+      });
+      set({ serviceChargeRate: response.data.serviceChargeRate, isLoading: false, successMsg: "Service charge updated successfully" });
+    } catch (error: unknown) {
+      set({ errorMsg: extractApiErrorMessage(error, "Failed to update service charge"), isLoading: false });
+    }
+  },
 }));

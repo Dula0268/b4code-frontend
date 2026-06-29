@@ -13,6 +13,7 @@ import {
   ToggleRight,
   Tag,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import { useAuthStore } from "@/store/auth/auth.store";
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 
 export default function StaffMenuList() {
   const menus = useStaffMenuStore((s) => s.menus);
@@ -41,6 +43,12 @@ export default function StaffMenuList() {
   const [page, setPage] = useState(0);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
+  const serviceChargeRate = useStaffMenuStore((s) => s.serviceChargeRate);
+  const fetchServiceCharge = useStaffMenuStore((s) => s.fetchServiceCharge);
+  const updateServiceCharge = useStaffMenuStore((s) => s.updateServiceCharge);
+  const [editingCharge, setEditingCharge] = useState(false);
+  const [chargeInput, setChargeInput] = useState("");
+  const [categoryToDelete, setCategoryToDelete] = useState<{ id: string; name: string } | null>(null);
   const perPage = 4;
   const total = menus.length;
   const paged = menus.slice(page * perPage, (page + 1) * perPage);
@@ -55,11 +63,13 @@ export default function StaffMenuList() {
     if (propertyId) {
       fetchMenus(propertyId);
       fetchCategories(propertyId);
+      fetchServiceCharge(propertyId);
     } else {
       fetchMenus(1);
       fetchCategories(1);
+      fetchServiceCharge(1);
     }
-  }, [user, fetchMenus, fetchCategories]);
+  }, [user, fetchMenus, fetchCategories, fetchServiceCharge]);
 
   // Auto-dismiss success banner
   useEffect(() => {
@@ -90,11 +100,26 @@ export default function StaffMenuList() {
     }
   };
 
-  const handleDeleteCategory = async (id: string, name: string) => {
-    if (typeof window !== "undefined" && window.confirm(`Delete category "${name}"? Existing items linked to this category will lose their category reference.`)) {
-      await deleteCategory(id);
-      setSuccess(`Category "${name}" deleted.`);
+  const handleDeleteCategory = (id: string, name: string) => {
+    setCategoryToDelete({ id, name });
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    await deleteCategory(categoryToDelete.id);
+    setSuccess(`Category "${categoryToDelete.name}" deleted.`);
+    setCategoryToDelete(null);
+  };
+
+  const handleUpdateCharge = async () => {
+    const rate = parseFloat(chargeInput);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      setError("Please enter a valid percentage between 0 and 100.");
+      return;
     }
+    const propertyId = user?.propertyId || Number(localStorage.getItem("selected_property_id")) || 1;
+    await updateServiceCharge(propertyId, rate);
+    setEditingCharge(false);
   };
 
   return (
@@ -208,8 +233,9 @@ export default function StaffMenuList() {
             ))}
           </div>
 
-          {/* ── Categories Manager ── */}
-          <Card className="flex-none bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="flex-none grid grid-cols-2 gap-4">
+            {/* ── Categories Manager ── */}
+            <Card className="bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <CardContent className="px-4 py-3">
               <div className="flex items-center justify-between mb-2.5">
                 <div>
@@ -273,6 +299,49 @@ export default function StaffMenuList() {
               )}
             </CardContent>
           </Card>
+
+            {/* ── Order Settings ── */}
+            <Card className="bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <CardContent className="px-4 py-3">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div>
+                    <h3 className="text-xs font-bold text-[var(--black-2)] flex items-center gap-1.5">
+                      <Settings size={12} className="text-[var(--brand-primary)]" />
+                      Global Order Settings
+                    </h3>
+                    <p className="text-[10px] text-[var(--gray-3)] mt-0.5">Configure property-wide settings like service charges.</p>
+                  </div>
+                </div>
+
+                <div className="bg-[rgba(192,86,33,0.05)] border border-[rgba(192,86,33,0.1)] rounded-[10px] p-3 flex flex-col gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold text-[var(--black-2)]">Service Charge Rate</span>
+                    {editingCharge ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={chargeInput}
+                          onChange={(e) => setChargeInput(e.target.value)}
+                          className="w-16 h-7 text-xs px-2"
+                          placeholder="%"
+                        />
+                        <Button size="sm" onClick={handleUpdateCharge} className="h-7 px-2 text-[10px] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary)]/90">Save</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingCharge(false)} className="h-7 px-2 text-[10px]">Cancel</Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[var(--brand-primary)]">{serviceChargeRate}%</span>
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => { setChargeInput(String(serviceChargeRate)); setEditingCharge(true); }}>
+                          <Pencil size={12} />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-[var(--gray-3)]">Applied automatically to all guest orders placed via the platform.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* ── Menus Table ── */}
           <div className="flex-1 bg-white/80 backdrop-blur-xl border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden min-h-0">
@@ -363,6 +432,14 @@ export default function StaffMenuList() {
           </div>
         </>
       )}
+      
+      <DeleteConfirmationDialog
+        isOpen={categoryToDelete !== null}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={confirmDeleteCategory}
+        title="Delete Category"
+        description={`Are you sure you want to delete the category "${categoryToDelete?.name}"? Existing items linked to this category will lose their category reference.`}
+      />
     </div>
   );
 }
