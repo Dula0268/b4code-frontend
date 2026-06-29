@@ -82,6 +82,7 @@ function BookingsContent() {
                   status?: string
                   paymentMethod?: string
                   createdAt?: string
+                  roomQuantity?: number
                 }
 
                 const normalizeStatus = (s?: string): BookingStatus => {
