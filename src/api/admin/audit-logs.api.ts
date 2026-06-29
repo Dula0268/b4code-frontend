@@ -24,4 +24,10 @@ export interface AuditLogPageDto {
 export const AuditLogsApi = {
   getAuditLogs: (params: { role?: string; search?: string; page?: number; size?: number }): Promise<AuditLogPageDto> =>
     api.get('/admin/audit-logs', { params }).then((res) => res.data),
+    
+  exportAuditLogsCsv: (params: { role?: string; search?: string }): Promise<Blob> =>
+    api.get('/admin/audit-logs/export/csv', { params, responseType: 'blob' }).then((res) => res.data),
+
+  exportAuditLogsPdf: (params: { role?: string; search?: string }): Promise<Blob> =>
+    api.get('/admin/audit-logs/export/pdf', { params, responseType: 'blob' }).then((res) => res.data),
 };

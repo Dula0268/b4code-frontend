@@ -75,26 +75,6 @@ export default function HistoryTabPage() {
             Historical audit of moderated content for PRIME STAY.
           </p>
         </div>
-        {/* Export Log */}
-        <button
-          onClick={() => {
-            const actionMap: Record<string, string> = {
-              "Review Removed": "REVIEW_REMOVED",
-              "Refund Issued": "REFUND_ISSUED",
-              "Review Kept": "REVIEW_KEPT",
-              "Appeal Denied": "APPEAL_DENIED",
-            };
-            downloadHistoryExport({
-              search: search || undefined,
-              action: actionFilter !== "All Actions" ? actionMap[actionFilter] : undefined,
-            });
-          }}
-          disabled={isExporting || history.length === 0}
-          className="flex items-center gap-2 px-4 py-2 rounded-[10px] border-[1.5px] border-[#E8DDD8] bg-white text-[13px] font-semibold text-[#1A1A1A] cursor-pointer hover:border-[#C05621] hover:text-[#C05621] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-          Export Log
-        </button>
       </div>
 
       {/* ── Search + Filters ── */}
