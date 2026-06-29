@@ -221,7 +221,7 @@ export default function OwnerDashboardPage() {
                     {/* Calendar */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <h2 className="text-[15px] font-bold text-[#1d1d1d] m-0">Availability Preview</h2>
+                            <div className="text-[15px] font-bold text-[#1d1d1d]">Availability Preview</div>
                             <div className="flex gap-1">
                                 <button onClick={prevMonth} className="w-7 h-7 rounded-md bg-white border border-[#e0e0e0] flex items-center justify-center cursor-pointer">
                                     <ChevronLeft size={14} color="#4f4f4f" />
@@ -257,7 +257,7 @@ export default function OwnerDashboardPage() {
                                 ))}
                             </div>
                             <div className="mt-4 pt-3 border-t border-[#f0f0f0]">
-                                <h4 className="text-[10px] font-bold tracking-wider uppercase text-[#828282] mb-2">QUICK LINKS</h4>
+                                <div className="text-[10px] font-bold tracking-wider uppercase text-[#828282] mb-2">QUICK LINKS</div>
                                 <div className="flex flex-col gap-2">
                                     <a href="/owner/properties" className="text-[12px] text-[#953002] no-underline hover:underline font-medium">
                                         → Manage Properties
@@ -276,7 +276,7 @@ export default function OwnerDashboardPage() {
                     {/* Recent Reservations */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <h2 className="text-[15px] font-bold text-[#1d1d1d] m-0">Recent Reservations</h2>
+                            <div className="text-[15px] font-bold text-[#1d1d1d]">Recent Reservations</div>
                             <a href="/owner/reservation" className="bg-transparent border-none text-[13px] font-semibold text-[#953002] cursor-pointer no-underline hover:underline">
                                 View All
                             </a>
