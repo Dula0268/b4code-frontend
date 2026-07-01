@@ -269,9 +269,15 @@ export default function StaffGlobalOrdersProvider() {
   const router = useRouter();
 
   const [collapsed, setCollapsed] = useState(false);
-  // Track manually dismissed orders so they don't re-appear until refreshed
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const prevCountRef = useRef(0);
+
+  // Drag state
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const draggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const posStartRef = useRef({ x: 0, y: 0 });
+  const hasMovedRef = useRef(false);
 
   useEffect(() => {
     const propertyId = user?.propertyId || localStorage.getItem("selected_property_id") || "1";
@@ -282,21 +288,59 @@ export default function StaffGlobalOrdersProvider() {
 
   const placedOrders = orders.filter((o) => o.status === "placed" && !dismissed.has(o.id));
 
-  // Auto-expand when new orders arrive
+  // Auto-expand when new orders arrive, auto-collapse after 4s
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     if (placedOrders.length > prevCountRef.current) {
       setCollapsed(false);
+      timer = setTimeout(() => {
+        setCollapsed(true);
+      }, 4000);
     }
     prevCountRef.current = placedOrders.length;
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [placedOrders.length]);
 
   const dismiss = (id: string) => setDismissed((prev) => new Set([...prev, id]));
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // Only drag from header
+    draggingRef.current = true;
+    hasMovedRef.current = false;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    posStartRef.current = { ...position };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!draggingRef.current) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      hasMovedRef.current = true;
+    }
+    setPosition({
+      x: posStartRef.current.x + dx,
+      y: posStartRef.current.y + dy,
+    });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    draggingRef.current = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
+  const handleHeaderClick = () => {
+    if (hasMovedRef.current) return;
+    setCollapsed(!collapsed);
+  };
 
   if (placedOrders.length === 0) return null;
 
   return (
     <>
-      {/* Keyframe animation injected once */}
       <style>{`
         @keyframes slideInNotif {
           from { opacity: 0; transform: translateY(16px) scale(0.97); }
@@ -322,11 +366,15 @@ export default function StaffGlobalOrdersProvider() {
           flexDirection: "column",
           gap: "0",
           filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.25))",
+          transform: `translate(${position.x}px, ${position.y}px)`,
         }}
       >
-        {/* Sticky header / toggle */}
+        {/* Sticky header / toggle (Draggable) */}
         <div
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={handleHeaderClick}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
           style={{
             background: "linear-gradient(135deg, #1c1917 0%, #292524 100%)",
             color: "#fff",
@@ -335,9 +383,16 @@ export default function StaffGlobalOrdersProvider() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            cursor: "pointer",
+            cursor: "grab",
             userSelect: "none",
             boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            touchAction: "none",
+          }}
+          onPointerDownCapture={(e) => {
+            (e.currentTarget as HTMLElement).style.cursor = "grabbing";
+          }}
+          onPointerUpCapture={(e) => {
+            (e.currentTarget as HTMLElement).style.cursor = "grab";
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -362,7 +417,6 @@ export default function StaffGlobalOrdersProvider() {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {/* Count badge */}
             <span
               style={{
                 background: "linear-gradient(135deg, #973102, #c04a0a)",
@@ -381,9 +435,10 @@ export default function StaffGlobalOrdersProvider() {
           </div>
         </div>
 
-        {/* Cards */}
+        {/* Cards - Maximum 2 */}
         {!collapsed && (
           <div
+            className="notif-card-container"
             style={{
               display: "flex",
               flexDirection: "column",
@@ -394,7 +449,7 @@ export default function StaffGlobalOrdersProvider() {
               background: "transparent",
             }}
           >
-            {placedOrders.map((order) => (
+            {placedOrders.slice(0, 2).map((order) => (
               <OrderNotificationCard
                 key={order.id}
                 order={order}
@@ -407,6 +462,11 @@ export default function StaffGlobalOrdersProvider() {
                 onDismiss={() => dismiss(order.id)}
               />
             ))}
+            {placedOrders.length > 2 && (
+              <div style={{ textAlign: "center", fontSize: "12px", color: "#78716c", fontWeight: 600, padding: "4px 0" }}>
+                + {placedOrders.length - 2} more orders pending...
+              </div>
+            )}
           </div>
         )}
       </div>
