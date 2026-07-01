@@ -13,7 +13,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import { useSearchParams } from "next/navigation";
 import MenuItemCard from "./menu-item-card";
 import OrderSidebar from "./order-sidebar";
-import { MenuSkeleton } from "@/app/guest/order/page";
+import { MenuSkeleton } from "@/components/guest/ordering/menu/menu-skeleton";
 
 type SortOption = "default" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 
@@ -78,9 +78,11 @@ export default function MenuClient() {
       const locationStr = searchParams.get("location");
       const qrIdStr = searchParams.get("qrId");
 
-      // For walk-in guests, we STRICTLY REQUIRE the URL to contain a valid QR ID.
-      // If they don't have it, we block access and clear any stale session storage.
-      if (!qrIdStr && !useAuthStore.getState().user) {
+      // For walk-in guests, we STRICTLY REQUIRE the URL to contain a valid QR ID,
+      // UNLESS they already have an active QR context in their session.
+      const currentContext = useOrderContextStore.getState().qrContext;
+      
+      if (!qrIdStr && !useAuthStore.getState().user && !currentContext) {
         useOrderContextStore.getState().reset();
         setParamError("Please scan a valid QR code to access the menu.");
         setIsInitializing(false);

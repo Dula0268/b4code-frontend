@@ -10,7 +10,7 @@ import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 
 import GuestGlobalOrdersProvider from '@/components/guest/ordering/guest-global-orders-provider';
-import { MenuSkeleton } from "@/app/guest/order/page";
+import { MenuSkeleton } from "@/components/guest/ordering/menu/menu-skeleton";
 
 interface OrderingShellProps {
   children: React.ReactNode;

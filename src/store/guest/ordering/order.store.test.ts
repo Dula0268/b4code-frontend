@@ -58,7 +58,7 @@ describe("Order Store - Prefix Stripping Tests", () => {
       serviceCharge: 420,
       tax: 210,
       total: 4830,
-      roomNumber: "Room 101",
+      location: "Room 101",
       paymentMethod: "room-charge",
       propertyId: 1,
       guestId: 5,
@@ -70,16 +70,16 @@ describe("Order Store - Prefix Stripping Tests", () => {
     // Verify api.post was called with the correctly formatted request payload
     expect(api.post).toHaveBeenCalledWith("/orders", expect.objectContaining({
       items: [
-        {
+        expect.objectContaining({
           menuItemId: 101, // 'mn-101' -> 101
           quantity: 2,
-          unitPrice: 1500,
-        },
-        {
+          priceAtOrder: 1500,
+        }),
+        expect.objectContaining({
           menuItemId: 202, // 'vn-202' -> 202
           quantity: 1,
-          unitPrice: 1200,
-        },
+          priceAtOrder: 1200,
+        }),
       ]
     }));
   });

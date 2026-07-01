@@ -42,7 +42,7 @@ describe("Reviews Store - ID Prefix Stripping Tests", () => {
     expect(api.post).toHaveBeenCalledWith(
       "/orders/909/reviews",
       expect.objectContaining({
-        menuItemId: "707",
+        menuItemId: 707,
         rating: 5,
         comment: "Absolutely delicious!",
         guestName: "John Doe",

@@ -27,6 +27,20 @@ export interface Conversation {
 
 export const QUICK_REPLIES = ["On our way", "Sorry for the delay", "Is there anything else?"];
 
+export interface StaffChatState {
+  conversations: Conversation[];
+  activeConvId: string | null;
+}
+
+export interface StaffChatActions {
+  selectConversation: (id: string) => void;
+  sendMessage: (convId: string, text: string) => void;
+  markRead: (convId: string) => void;
+  getActiveConversation: () => Conversation | undefined;
+}
+
+let nextMsgId = 1;
+
 export const useStaffChatStore = create<StaffChatState & StaffChatActions>((set, get) => ({
   conversations: [],
   activeConvId: null,

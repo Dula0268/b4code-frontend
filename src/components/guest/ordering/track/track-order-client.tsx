@@ -27,6 +27,7 @@ const STATUS_DESCRIPTIONS: Record<OrderStatus, (loc: string) => string> = {
     "Your order is being plated and prepared for room service delivery.",
   delivered: (loc) => `Order successfully delivered to ${loc}.`,
   cancelled: () => "Unfortunately, the kitchen was unable to fulfill your order.",
+  "payment-pending": () => "Payment is pending.",
 };
 
 /* ─── Hero config by status ─── */
@@ -83,6 +84,7 @@ function StatusBadge({ status }: { status: OrderStatus }) {
     "in-progress": { bg: "bg-[#fff3cd]", text: "text-[#856404]", label: "In Progress" },
     delivered: { bg: "bg-[#e8f5e9]", text: "text-[#27AE60]", label: "Delivered" },
     cancelled: { bg: "bg-[#fde8e8]", text: "text-[#EB5757]", label: "Cancelled" },
+    "payment-pending": { bg: "bg-[#f3f4f6]", text: "text-[#4b5563]", label: "Payment Pending" },
   };
   const c = config[status];
   return (

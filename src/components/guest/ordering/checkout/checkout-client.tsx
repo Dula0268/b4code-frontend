@@ -69,8 +69,12 @@ export default function CheckoutClient() {
   );
   const router = useRouter();
   const placeOrder = useOrderStore((s) => s.placeOrder);
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
   const handlePlaceOrder = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    try {
     // Room QR but not logged in — block ordering
     if (isRoomQr && !user) {
       return;
@@ -78,12 +82,14 @@ export default function CheckoutClient() {
 
     if (!location || !finalGuestName || !propertyId) {
       toast.error("Please provide your name and ensure you have scanned a valid QR code.");
+      setIsProcessing(false);
       return;
     }
 
     // Walk-in (table QR) requires phone
     if (isTableQr && !user && !walkInPhone) {
       toast.error("Please provide your phone number.");
+      setIsProcessing(false);
       return;
     }
 
@@ -162,6 +168,7 @@ export default function CheckoutClient() {
         } catch (err) {
           console.error("Payment initiation failed:", err);
           toast.error("Could not initiate online payment. Please try cash instead.");
+          setIsProcessing(false);
           return;
         }
       }
@@ -169,6 +176,10 @@ export default function CheckoutClient() {
       router.push("/guest/order/confirmation");
     } else {
       toast.error("Failed to place order. Please try again.");
+    }
+    } finally {
+      // If we're redirecting to PayHere, this might run before the page unloads, but that's fine.
+      setIsProcessing(false);
     }
   };
 
@@ -661,20 +672,29 @@ export default function CheckoutClient() {
               {/* Place Order button */}
               <button
                 onClick={handlePlaceOrder}
-                className="w-full flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] transition cursor-pointer"
+                disabled={isProcessing}
+                className="w-full flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
               >
-                <span className="text-[16px] font-semibold text-white leading-[24px]">
-                  Confirm & Place Order
-                </span>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="ml-1">
-                  <path
-                    d="M3 8H13M13 8L9 4M13 8L9 12"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                {isProcessing ? (
+                  <span className="text-[16px] font-semibold text-white leading-[24px]">
+                    Processing...
+                  </span>
+                ) : (
+                  <>
+                    <span className="text-[16px] font-semibold text-white leading-[24px]">
+                      Confirm & Place Order
+                    </span>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="ml-1">
+                      <path
+                        d="M3 8H13M13 8L9 4M13 8L9 12"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </>
+                )}
               </button>
 
               {/* Secure badge */}

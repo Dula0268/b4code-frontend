@@ -18,7 +18,8 @@ export type OrderStatus =
   | "accepted"
   | "in-progress"
   | "delivered"
-  | "cancelled";
+  | "cancelled"
+  | "payment-pending";
 
 export type OrderLine = {
   item: MenuItem;
@@ -127,13 +128,14 @@ function mapBackendStatus(backendStatus: string): OrderStatus {
     READY: "in-progress",
     DELIVERED: "delivered",
     CANCELLED: "cancelled",
-    PAYMENT_PENDING: "placed",
-    payment_pending: "placed",
+    PAYMENT_PENDING: "payment-pending",
+    payment_pending: "payment-pending",
     placed: "placed",
     accepted: "accepted",
     "in-progress": "in-progress",
     delivered: "delivered",
     cancelled: "cancelled",
+    "payment-pending": "payment-pending",
   };
   return statusMap[backendStatus] || (statusMap[backendStatus.toLowerCase()] as OrderStatus) || "placed";
 }
@@ -239,24 +241,21 @@ export const useOrderStore = create<OrderState>()(
         guestName: opts.guestName,
         guestPhone: opts.guestPhone,
         totalAmount: opts.total,
-        status: opts.paymentMethod === "online" ? "PAYMENT_PENDING" : "PLACED",
+        status: (opts.paymentMethod === "online" || opts.paymentMethod === "card") ? "PAYMENT_PENDING" : "PLACED",
       });
-
-      const resolvedSessionId = opts.guestSessionId || useGuestSessionStore.getState().sessionId || generateUUID();
 
         // Call backend API
       const response = await api.post("/orders", {
         propertyId: opts.propertyId,
         guestId: opts.guestId,
-        guestSessionId: resolvedSessionId,
         location: opts.location,
         guestName: opts.guestName,
         guestPhone: opts.guestPhone,
         guestInstructions: opts.guestInstructions,
         paymentMethod: opts.paymentMethod,
         totalAmount: opts.total,
-        // Online walk-in payments wait for PayHere confirmation before becoming active
-        status: opts.paymentMethod === "online" ? "PAYMENT_PENDING" : "PLACED",
+        // Online/card payments wait for PayHere confirmation before becoming active
+        status: (opts.paymentMethod === "online" || opts.paymentMethod === "card") ? "PAYMENT_PENDING" : "PLACED",
         items: opts.lines.map((line) => {
           let note = "";
           if (line.selectedVariantId && line.item.variants) {
@@ -292,10 +291,10 @@ export const useOrderStore = create<OrderState>()(
         serviceCharge: opts.serviceCharge,
         tax: opts.tax,
         total: opts.total,
-        currentStatus: "placed",
+        currentStatus: mapBackendStatus(backendOrder.status),
         timeline: [
           {
-            status: "placed",
+            status: mapBackendStatus(backendOrder.status),
             time: formatTime(now),
             timestamp: now.getTime(),
           },

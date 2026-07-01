@@ -10,7 +10,7 @@ import { Suspense } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function MenuSkeleton() {
+function MenuSkeleton() {
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-6 py-6 flex flex-col gap-6">
       {/* Header Banner Skeleton */}

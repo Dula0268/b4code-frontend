@@ -317,7 +317,9 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
           const raw = response.data;
           const backendOrders: BackendOrderResponse[] = Array.isArray(raw) ? raw : (raw?.content ?? []);
           console.log(`✅ Received ${backendOrders.length} orders from backend:`, backendOrders);
-          const orders = backendOrders.map(convertBackendOrder);
+          const orders = backendOrders
+            .filter((o) => o.status !== "PAYMENT_PENDING" && o.status !== "payment_pending")
+            .map(convertBackendOrder);
           console.log(`✅ Converted to frontend format:`, orders);
           set({ orders, loading: false });
         }
@@ -471,6 +473,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
       es.addEventListener("new-order", (event) => {
         try {
           const backendOrder = JSON.parse(event.data);
+          if (backendOrder.status === "PAYMENT_PENDING" || backendOrder.status === "payment_pending") return;
           console.log("📩 Staff SSE: new-order received:", backendOrder);
           const converted = convertBackendOrder(backendOrder);
           
@@ -490,6 +493,7 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
       es.addEventListener("status-update", (event) => {
         try {
           const backendOrder = JSON.parse(event.data);
+          if (backendOrder.status === "PAYMENT_PENDING" || backendOrder.status === "payment_pending") return;
           console.log("📩 Staff SSE: status-update received:", backendOrder);
           const converted = convertBackendOrder(backendOrder);
           

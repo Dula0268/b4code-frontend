@@ -70,7 +70,7 @@ describe("End-to-End Guest & Staff Integration flow", () => {
       serviceCharge: 330.0,
       tax: 165.0,
       total: 3795.0,
-      roomNumber: "Room 303",
+      location: "Room 303",
       guestInstructions: "No mayonnaise in sandwich please.",
       paymentMethod: "room-charge",
       propertyId: 1,
@@ -82,11 +82,11 @@ describe("End-to-End Guest & Staff Integration flow", () => {
     expect(api.post).toHaveBeenCalledWith("/orders", expect.objectContaining({
       propertyId: 1,
       guestId: 10,
-      roomNumber: "Room 303",
+      location: "Room 303",
       guestInstructions: "No mayonnaise in sandwich please.",
       items: [
-        { menuItemId: 11, quantity: 1, unitPrice: 1800.0 },
-        { menuItemId: 12, quantity: 1, unitPrice: 1500.0 },
+        { menuItemId: 11, quantity: 1, priceAtOrder: 1800.0 },
+        { menuItemId: 12, quantity: 1, priceAtOrder: 1500.0 },
       ]
     }));
 
@@ -94,7 +94,7 @@ describe("End-to-End Guest & Staff Integration flow", () => {
     let guestState = useOrderStore.getState();
     expect(guestState.currentOrder).not.toBeNull();
     expect(guestState.currentOrder?.id).toBe(`#ORD-${guestOrderId}`);
-    expect(guestState.currentOrder?.currentStatus).toBe("Placed");
+    expect(guestState.currentOrder?.currentStatus).toBe("placed");
 
     // ----------------------------------------------------
     // STEP 2: Staff fetches orders and reviews the new order
@@ -115,7 +115,7 @@ describe("End-to-End Guest & Staff Integration flow", () => {
 
     await useStaffOrdersStore.getState().fetchOrders(1);
     
-    expect(api.get).toHaveBeenCalledWith("/staff/orders/property/1");
+    expect(api.get).toHaveBeenCalledWith("/staff/orders/property/1", expect.any(Object));
     const staffState = useStaffOrdersStore.getState();
     expect(staffState.orders).toHaveLength(1);
     expect(staffState.orders[0].id).toBe(`#ORD-${guestOrderId}`);
