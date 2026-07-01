@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import api from "@/lib/axios";
 import axios from "axios";
 import { useAuthStore } from "@/store/auth/auth.store";
@@ -152,7 +153,7 @@ function sanitizeErrorMessage(message: string, context: string): string {
     msg.includes("http") ||
     msg.includes("request failed")
   ) {
-    return "Connection issue. Please check your internet connection or try again shortly.";
+    return "Offline: Viewing offline data. Changes will sync when connection is restored.";
   }
   
   if (
@@ -179,6 +180,11 @@ function sanitizeErrorMessage(message: string, context: string): string {
 
 function extractApiErrorMessage(error: unknown, fallback: string): string {
   let message = fallback;
+  
+  if (error instanceof Error) {
+    message = error.message;
+  }
+  
   if (typeof error === "object" && error !== null) {
     const response = (error as { response?: { data?: unknown } }).response;
     if (response && typeof response.data === "object" && response.data !== null) {
@@ -187,8 +193,6 @@ function extractApiErrorMessage(error: unknown, fallback: string): string {
         message = data.message;
       }
     }
-  } else if (error instanceof Error && error.message) {
-    message = error.message;
   }
 
   return sanitizeErrorMessage(message, fallback);
@@ -270,8 +274,9 @@ function getTimeAgo(date: Date): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>(
-  (set, get) => ({
+export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>()(
+  persist(
+    (set, get) => ({
     orders: [],
     loading: false,
     error: null,
@@ -534,5 +539,10 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
       }
       set({ orders: [], loading: false, error: null, toast: null });
     },
-  })
+  }),
+  {
+    name: 'staff-orders-storage',
+    partialize: (state) => ({ orders: state.orders }),
+  }
+)
 );

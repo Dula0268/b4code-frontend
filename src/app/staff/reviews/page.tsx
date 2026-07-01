@@ -114,7 +114,12 @@ export default function ReviewManagementPage() {
 
   return (
     <StaffPageLayout>
-      <StaffHeader title="Review Management" subtitle="Monitor and moderate guest reviews" />
+      <StaffHeader 
+        title="Review Management" 
+        subtitle="Monitor and moderate guest reviews" 
+        searchPlaceholder="Search reviews..."
+        onSearch={(query) => setSearch(query)}
+      />
       
       <main className="mt-[64px] flex-1 p-8 text-[#9E7B6A] h-[calc(100vh-64px)] overflow-hidden flex flex-col">
         
@@ -148,17 +153,6 @@ export default function ReviewManagementPage() {
                 Flagged
               </button>
             </div>
-          </div>
-          
-          
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E7B6A]/50" size={18} />
-            <Input
-              placeholder="Search reviews..."
-              className="pl-10 rounded-xl bg-white/50 border-white shadow-sm focus-visible:ring-[#C05621]/30 h-11"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
           </div>
         </div>
 
@@ -203,7 +197,7 @@ export default function ReviewManagementPage() {
 
                     <div className="col-span-4 flex flex-col justify-center">
                       <p className="text-[13px] text-[#1A1A1A] leading-relaxed line-clamp-2 m-0" title={review.comment}>
-                        "{review.comment}"
+                        &quot;{review.comment}&quot;
                       </p>
                       {review.flagged_status && (
                         <div className="mt-2 flex items-center gap-1.5">
@@ -247,8 +241,8 @@ export default function ReviewManagementPage() {
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-[#9E7B6A]">
                   <CheckCircle2 className="h-12 w-12 text-[#2D7D5C] opacity-40 mb-4" />
-                  <p className="text-[15px] font-bold text-[#1A1A1A]">No reviews found</p>
-                  <p className="text-[13px]">You're all caught up!</p>
+                  <p className="text-[15px] font-bold text-[#1c1917] m-0">You&apos;re completely caught up!</p>
+                  <p className="text-[13px]">You&apos;re all caught up!</p>
                 </div>
               )}
             </div>
@@ -271,7 +265,7 @@ export default function ReviewManagementPage() {
           
           {selectedReview && (
             <div className="bg-[#FAFBFC] p-4 rounded-2xl border border-[#F0EBE7] mb-5">
-              <p className="text-[13px] text-[#1A1A1A] italic m-0">"{selectedReview.comment}"</p>
+              <p className="text-[13px] text-[#44403c] italic leading-relaxed m-0">&quot;{selectedReview.comment}&quot;</p>
             </div>
           )}
 

@@ -78,9 +78,9 @@ function useStats() {
 function useManagementCards() {
   const placedCount = useStaffOrdersStore((s) => s.getCountByStatus("placed"));
   const menus = useStaffMenuStore((s) => s.menus);
-  const outOfStockCount = menus.reduce((acc, menu) => acc + menu.items.filter(i => i.status === "draft").length, 0);
+  const outOfStockCount = menus.reduce((acc: number, menu: any) => acc + menu.items.filter((i: any) => i.status === "draft").length, 0);
   const activeQRs = useStaffQRStore((s) => s.qrs.filter(q => q.status === "active").length);
-  const unreadMessages = useStaffChatStore((s) => s.conversations.reduce((acc, conv) => acc + conv.unread, 0));
+  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
 
   return [
     {

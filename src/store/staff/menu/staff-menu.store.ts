@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import api from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -164,7 +165,7 @@ function sanitizeErrorMessage(message: string, context: string): string {
     msg.includes("http") ||
     msg.includes("request failed")
   ) {
-    return "Connection issue. Please check your internet connection or try again shortly.";
+    return "Offline: Viewing offline data. Changes will sync when connection is restored.";
   }
   
   if (
@@ -191,6 +192,11 @@ function sanitizeErrorMessage(message: string, context: string): string {
 
 function extractApiErrorMessage(error: unknown, fallback: string): string {
   let message = fallback;
+  
+  if (error instanceof Error) {
+    message = error.message;
+  }
+  
   if (typeof error === "object" && error !== null) {
     const response = (error as { response?: { data?: unknown } }).response;
     if (response && typeof response.data === "object" && response.data !== null) {
@@ -199,13 +205,14 @@ function extractApiErrorMessage(error: unknown, fallback: string): string {
         message = data.message;
       }
     }
-  } else if (error instanceof Error && error.message) {
-    message = error.message;
   }
+  
   return sanitizeErrorMessage(message, fallback);
 }
 
-export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set, get) => ({
+export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>()(
+  persist(
+    (set, get) => ({
   menus: [],
   categories: [],
   propertyId: null,
@@ -546,4 +553,10 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
       set({ errorMsg: extractApiErrorMessage(error, "Failed to update service charge"), isLoading: false });
     }
   },
-}));
+  }),
+  {
+    name: 'staff-menu-storage',
+    partialize: (state) => ({ menus: state.menus, categories: state.categories, serviceChargeRate: state.serviceChargeRate }),
+  }
+)
+);
