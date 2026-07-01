@@ -26,6 +26,7 @@ import {
     Wrench,
     CheckCircle,
     UtensilsCrossed,
+    Star,
 } from "lucide-react";
 
 /* ───────────────────── sidebar data ───────────────────── */

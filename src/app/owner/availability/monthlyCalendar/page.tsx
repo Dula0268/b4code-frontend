@@ -22,6 +22,7 @@ import {
     BookOpen,
     Settings,
     UtensilsCrossed,
+    Star,
 } from "lucide-react";
 
 /* ───────────────────── helpers ───────────────────── */
