@@ -49,7 +49,7 @@ export default function CartClient({ location }: { location?: string }) {
         <>
           {/* Breadcrumbs */}
           <nav className="flex items-center gap-2 text-base mb-4 md:mb-8 px-1">
-            <Link href="/guest/order" className="flex items-center gap-1">
+            <Link href={qrContext ? `/guest/order?qrId=${qrContext.qrId}` : "/guest/order"} className="flex items-center gap-1">
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                 <path
                   d="M3 10L10 3L17 10M5 8.5V16.5C5 16.776 5.224 17 5.5 17H8.5V13C8.5 12.724 8.724 12.5 9 12.5H11C11.276 12.5 11.5 12.724 11.5 13V17H14.5C14.776 17 15 16.776 15 16.5V8.5"
@@ -62,7 +62,7 @@ export default function CartClient({ location }: { location?: string }) {
             </Link>
             <span className="text-[#828282]">Home</span>
             <ChevronRight />
-            <Link href="/guest/order/menu" className="text-[#828282] hover:underline">
+            <Link href={qrContext ? `/guest/order/menu?qrId=${qrContext.qrId}` : "/guest/order/menu"} className="text-[#828282] hover:underline">
               Menu
             </Link>
             <ChevronRight />
@@ -80,7 +80,7 @@ export default function CartClient({ location }: { location?: string }) {
             </svg>
             <p className="text-lg text-[#6b7280]">Your cart is empty</p>
             <Link
-              href="/guest/order/menu"
+              href={qrContext ? `/guest/order/menu?qrId=${qrContext.qrId}` : "/guest/order/menu"}
               className="px-6 py-3 rounded-lg bg-[#af3a04] text-white font-bold text-base hover:bg-[#923002] transition"
             >
               Browse Menu
@@ -93,7 +93,7 @@ export default function CartClient({ location }: { location?: string }) {
           <div className="flex-1 min-w-0 space-y-3">
             {/* Breadcrumbs */}
             <nav className="flex items-center gap-2 text-sm mb-2 px-1">
-              <Link href="/guest/order" className="flex items-center gap-1">
+              <Link href={qrContext ? `/guest/order?qrId=${qrContext.qrId}` : "/guest/order"} className="flex items-center gap-1">
                 <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                   <path
                     d="M3 10L10 3L17 10M5 8.5V16.5C5 16.776 5.224 17 5.5 17H8.5V13C8.5 12.724 8.724 12.5 9 12.5H11C11.276 12.5 11.5 12.724 11.5 13V17H14.5C14.776 17 15 16.776 15 16.5V8.5"
@@ -106,7 +106,7 @@ export default function CartClient({ location }: { location?: string }) {
               </Link>
               <span className="text-[#828282]">Home</span>
               <ChevronRight />
-              <Link href="/guest/order/menu" className="text-[#828282] hover:underline">
+              <Link href={qrContext ? `/guest/order/menu?qrId=${qrContext.qrId}` : "/guest/order/menu"} className="text-[#828282] hover:underline">
                 Menu
               </Link>
               <ChevronRight />

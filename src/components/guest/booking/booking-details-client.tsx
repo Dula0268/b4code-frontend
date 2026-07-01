@@ -285,12 +285,14 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         guests: editGuests
       });
 
-      if (res.additionalAmountDue > 0) {
+      if (Number(res.additionalAmountDue) > 0) {
         const params = new URLSearchParams();
         params.set("total", res.additionalAmountDue.toString());
         params.set("confirmationCode", booking.confirmationCode);
         params.set("bookingId", booking.id);
         params.set("email", booking.userEmail);
+        params.set("firstName", booking.userEmail.split("@")[0] || "Guest");
+        params.set("lastName", "");
         router.push(`/payment?${params.toString()}`);
         return;
       }

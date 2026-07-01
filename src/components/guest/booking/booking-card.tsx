@@ -5,7 +5,7 @@ import Link from "next/link"
 import {
   MapPin, MessageSquare, Download,
   Star, ChevronRight, RefreshCw, FileText, BedDouble,
-  CreditCard, Wallet, Calendar, User, Clock, Utensils, CheckCircle2, XCircle, Info
+  CreditCard, Wallet, Calendar, User, Clock, CheckCircle2, XCircle, Info
 } from "lucide-react"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -201,9 +201,6 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
             <>
               <Link href={`/guest/booking/${booking.orderId}`} className={btnPrimary} style={{ background: "#9a3300" }}>
                 <Info size={14} /> More Info
-              </Link>
-              <Link href="/guest/order" className={btnOutline}>
-                <Utensils size={14} /> Order Food
               </Link>
               <button className={btnOutline}>
                 <MessageSquare size={14} /> Message

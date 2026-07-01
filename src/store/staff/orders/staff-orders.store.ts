@@ -109,6 +109,8 @@ function mapBackendStatusToFrontend(status: string): OrderStatus {
     // Obsolete/Alternative format mappings
     NEW: "placed",
     PREPARING: "accepted",
+    PAYMENT_PENDING: "placed",
+    payment_pending: "placed",
 
     // Lowercase mappings
     placed: "placed",

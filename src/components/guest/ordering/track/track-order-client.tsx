@@ -102,6 +102,8 @@ function mapBackendStatus(backendStatus: string): OrderStatus {
     READY: "in-progress",
     DELIVERED: "delivered",
     CANCELLED: "cancelled",
+    PAYMENT_PENDING: "placed",
+    payment_pending: "placed",
     placed: "placed",
     accepted: "accepted",
     "in-progress": "in-progress",

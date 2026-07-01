@@ -2,7 +2,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "@/lib/axios";
 import type { MenuItem } from "./cart.store";
-import { v4 as uuidv4 } from "uuid";
+const generateUUID = () => {
+  if (typeof window !== "undefined" && window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return "sess-" + Math.random().toString(36).substring(2, 15) + "-" + Date.now().toString(36);
+};
 
 import { useGuestSessionStore } from "./guest-session.store";
 
@@ -122,6 +127,8 @@ function mapBackendStatus(backendStatus: string): OrderStatus {
     READY: "in-progress",
     DELIVERED: "delivered",
     CANCELLED: "cancelled",
+    PAYMENT_PENDING: "placed",
+    payment_pending: "placed",
     placed: "placed",
     accepted: "accepted",
     "in-progress": "in-progress",
@@ -232,10 +239,10 @@ export const useOrderStore = create<OrderState>()(
         guestName: opts.guestName,
         guestPhone: opts.guestPhone,
         totalAmount: opts.total,
-        status: "PLACED",
+        status: opts.paymentMethod === "online" ? "PAYMENT_PENDING" : "PLACED",
       });
 
-      const resolvedSessionId = opts.guestSessionId || useGuestSessionStore.getState().sessionId || uuidv4();
+      const resolvedSessionId = opts.guestSessionId || useGuestSessionStore.getState().sessionId || generateUUID();
 
         // Call backend API
       const response = await api.post("/orders", {
@@ -248,7 +255,8 @@ export const useOrderStore = create<OrderState>()(
         guestInstructions: opts.guestInstructions,
         paymentMethod: opts.paymentMethod,
         totalAmount: opts.total,
-        status: "PLACED",
+        // Online walk-in payments wait for PayHere confirmation before becoming active
+        status: opts.paymentMethod === "online" ? "PAYMENT_PENDING" : "PLACED",
         items: opts.lines.map((line) => {
           let note = "";
           if (line.selectedVariantId && line.item.variants) {

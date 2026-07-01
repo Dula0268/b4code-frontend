@@ -78,6 +78,15 @@ export default function MenuClient() {
       const locationStr = searchParams.get("location");
       const qrIdStr = searchParams.get("qrId");
 
+      // For walk-in guests, we STRICTLY REQUIRE the URL to contain a valid QR ID.
+      // If they don't have it, we block access and clear any stale session storage.
+      if (!qrIdStr && !useAuthStore.getState().user) {
+        useOrderContextStore.getState().reset();
+        setParamError("Please scan a valid QR code to access the menu.");
+        setIsInitializing(false);
+        return;
+      }
+
       let parsedLocation: string | undefined = locationStr || undefined;
       let qrName = "";
       let qrType = "";

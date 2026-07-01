@@ -13,6 +13,7 @@ export const paymentApi = {
     email?: string;
     phone?: string;
     bookingId?: number;
+    foodOrderId?: number;
     returnParams?: string;
   }) =>
     api.post("/payments", paymentData).then((r) => r.data),
