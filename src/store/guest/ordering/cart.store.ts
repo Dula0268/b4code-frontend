@@ -155,7 +155,7 @@ export const useCartStore = create<CartState>()(
   fetchChargesFromApi: async (propertyId: number) => {
     try {
       set({ isLoadingRates: true });
-      const response = await api.get(`/properties/${propertyId}/charges`);
+      const response = await api.get(`/properties/public/${propertyId}/charges`);
       const { serviceChargeRate = 0.1, taxRate = 0.05 } = response.data;
       set({
         serviceChargeRate: serviceChargeRate / 100, // Convert percentage to decimal

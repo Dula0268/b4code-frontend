@@ -78,9 +78,9 @@ function useStats() {
 function useManagementCards() {
   const placedCount = useStaffOrdersStore((s) => s.getCountByStatus("placed"));
   const menus = useStaffMenuStore((s) => s.menus);
-  const outOfStockCount = menus.reduce((acc, menu) => acc + menu.items.filter(i => i.status === "draft").length, 0);
+  const outOfStockCount = menus.reduce((acc: number, menu: any) => acc + menu.items.filter((i: any) => i.status === "draft").length, 0);
   const activeQRs = useStaffQRStore((s) => s.qrs.filter(q => q.status === "active").length);
-  const unreadMessages = useStaffChatStore((s) => s.conversations.reduce((acc, conv) => acc + conv.unread, 0));
+  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
 
   return [
     {
@@ -207,60 +207,59 @@ export default function StaffDashboard() {
   }
 
   return (
-    <div className="h-full overflow-y-auto px-6 py-4 flex flex-col gap-4">
+    <div className="h-full overflow-hidden px-6 py-3 flex flex-col gap-3">
       {/* Stat Cards Row */}
       <div className="grid grid-cols-4 gap-3 shrink-0">
         {stats.map((stat) => {
           const Icon = stat.icon;
           const TrendIcon = stat.trendIcon;
           return (
-            <Card key={stat.label} className="bg-white border-0 py-0 gap-0 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-              <CardContent className="px-4 py-3 flex items-start justify-between">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-medium text-[#6b7280]">{stat.label}</span>
-                  <span className="text-2xl font-bold text-[#111827] leading-tight">{stat.value}</span>
-                  <div className={`flex items-center gap-1 ${stat.trendColor} mt-0.5`}>
-                    <TrendIcon size={12} />
-                    <span className="text-[10px] font-medium">{stat.trend}</span>
-                  </div>
-                </div>
-                <div className={`${stat.iconBg} rounded-lg p-2 flex items-center justify-center`}>
+            <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
+              <div className="flex justify-between items-start z-10">
+                <div className={`p-2.5 ${stat.iconBg.replace('0.08', '0.15')} rounded-xl self-start group-hover:scale-110 transition-transform`}>
                   <Icon size={18} className={stat.iconColor} />
                 </div>
-              </CardContent>
-            </Card>
+                <div className={`flex items-center gap-1 ${stat.trendColor} mt-1`}>
+                  <TrendIcon size={12} />
+                  <span className="text-[10px] font-semibold tracking-wider uppercase">{stat.trend}</span>
+                </div>
+              </div>
+              <div className="z-10 mt-3 flex flex-col gap-0.5">
+                <h3 className="text-[10px] font-semibold tracking-wider text-[#6B7280] uppercase">{stat.label}</h3>
+                <span className="text-xl font-bold text-[#1A1A1A] leading-none">{stat.value}</span>
+              </div>
+            </div>
           );
         })}
       </div>
 
       {/* Management Cards Grid */}
-      <div className="grid grid-cols-2 gap-3 flex-1 min-h-[300px]">
+      <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
         {visibleCards.map((card) => {
           const Icon = card.icon;
           const ButtonIcon = card.buttonIcon;
           return (
-            <Card key={card.title} className="bg-white border-0 py-0 gap-0 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] h-full">
-              <CardContent className="p-4 flex flex-col justify-between h-full">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <div className="bg-[rgba(149,48,2,0.08)] rounded-lg w-9 h-9 flex items-center justify-center">
-                      <Icon size={18} className="text-[var(--brand-primary)]" />
-                    </div>
-                  </div>
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-bold text-[#111827] m-0">{card.title}</h3>
-                    <p className="text-lg font-bold m-0 mt-0.5 text-[var(--brand-primary)]">{card.highlight}</p>
-                    <p className="text-xs text-[#6b7280] m-0 mt-0.5 line-clamp-2">{card.description}</p>
-                  </div>
+            <div key={card.title} className="bg-white/90 backdrop-blur-xl rounded-2xl border border-white/80 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden h-full">
+              <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-2xl rounded-full group-hover:scale-150 group-hover:opacity-[0.06] transition-all duration-700" />
+              
+              <div className="flex flex-col gap-2 z-10">
+                <div className="bg-gradient-to-br from-[#FFF8F0] to-white border border-[#F0EBE7]/80 rounded-xl w-10 h-10 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Icon size={20} className="text-[#C05621]" />
                 </div>
-                <Button asChild className="bg-[var(--brand-primary)] text-white mt-2 gap-1.5 hover:opacity-90">
-                  <Link href={card.href}>
-                    {card.buttonLabel}
-                    <ButtonIcon size={14} />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="flex flex-col">
+                  <h3 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-0.5">{card.title}</h3>
+                  <p className="text-base font-bold m-0 text-[#1A1A1A]">{card.highlight}</p>
+                  <p className="text-xs text-[#6B7280] m-0 mt-0.5 line-clamp-1">{card.description}</p>
+                </div>
+              </div>
+              
+              <Button asChild className="bg-[#1A1A1A] hover:bg-[#C05621] text-white mt-auto rounded-xl h-9 text-xs font-bold tracking-wide transition-colors z-10 shrink-0">
+                <Link href={card.href} className="flex items-center gap-2">
+                  {card.buttonLabel}
+                  <ButtonIcon size={16} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+            </div>
           );
         })}
         {visibleCards.length === 0 && (

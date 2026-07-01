@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import api from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -97,6 +98,7 @@ interface StaffMenuState {
   errorMsg: string | null;
   isLoading: boolean;
   categoriesLoading: boolean;
+  serviceChargeRate: number;
 }
 
 interface StaffMenuActions {
@@ -120,6 +122,8 @@ interface StaffMenuActions {
   toggleItemStatus: (menuId: string, itemId: string) => Promise<void>;
   setSuccess: (msg: string | null) => void;
   setError: (msg: string | null) => void;
+  fetchServiceCharge: (propertyId: number) => Promise<void>;
+  updateServiceCharge: (propertyId: number, rate: number) => Promise<void>;
 }
 
 function calcPriceRange(items: MenuItem[]): string {
@@ -161,7 +165,7 @@ function sanitizeErrorMessage(message: string, context: string): string {
     msg.includes("http") ||
     msg.includes("request failed")
   ) {
-    return "Connection issue. Please check your internet connection or try again shortly.";
+    return "Offline: Viewing offline data. Changes will sync when connection is restored.";
   }
   
   if (
@@ -188,6 +192,11 @@ function sanitizeErrorMessage(message: string, context: string): string {
 
 function extractApiErrorMessage(error: unknown, fallback: string): string {
   let message = fallback;
+  
+  if (error instanceof Error) {
+    message = error.message;
+  }
+  
   if (typeof error === "object" && error !== null) {
     const response = (error as { response?: { data?: unknown } }).response;
     if (response && typeof response.data === "object" && response.data !== null) {
@@ -196,13 +205,14 @@ function extractApiErrorMessage(error: unknown, fallback: string): string {
         message = data.message;
       }
     }
-  } else if (error instanceof Error && error.message) {
-    message = error.message;
   }
+  
   return sanitizeErrorMessage(message, fallback);
 }
 
-export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set, get) => ({
+export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>()(
+  persist(
+    (set, get) => ({
   menus: [],
   categories: [],
   propertyId: null,
@@ -210,6 +220,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
   errorMsg: null,
   isLoading: false,
   categoriesLoading: false,
+  serviceChargeRate: 10,
 
   // ─── Fetch Menus (from real /api/menus) ──────────────────────────────────────
   fetchMenus: async (propertyId: number) => {
@@ -341,8 +352,7 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
   deleteMenu: async (id) => {
     try {
       set({ isLoading: true, errorMsg: null });
-      // Delete all items first, then the menu
-      await api.delete(`/menu-items/menu/${id}`);
+      // The backend handles unlinking the items, so just delete the menu.
       await api.delete(`/menus/${id}`);
       set((s) => ({ menus: s.menus.filter((m) => m.id !== id), isLoading: false }));
     } catch (error: unknown) {
@@ -521,4 +531,32 @@ export const useStaffMenuStore = create<StaffMenuState & StaffMenuActions>((set,
 
   setSuccess: (msg) => set({ successMsg: msg }),
   setError: (msg) => set({ errorMsg: msg }),
-}));
+
+  // ─── Service Charge ──────────────────────────────────────────────────────────
+  fetchServiceCharge: async (propertyId) => {
+    try {
+      const response = await api.get(`/staff/properties/${propertyId}/service-charge`);
+      set({ serviceChargeRate: response.data.serviceChargeRate });
+    } catch (error: unknown) {
+      console.warn("Failed to fetch service charge", error);
+    }
+  },
+  
+  updateServiceCharge: async (propertyId, rate) => {
+    try {
+      set({ isLoading: true });
+      const response = await api.put(`/staff/properties/${propertyId}/service-charge`, {
+        serviceChargeRate: rate,
+      });
+      set({ serviceChargeRate: response.data.serviceChargeRate, isLoading: false, successMsg: "Service charge updated successfully" });
+    } catch (error: unknown) {
+      set({ errorMsg: extractApiErrorMessage(error, "Failed to update service charge"), isLoading: false });
+    }
+  },
+  }),
+  {
+    name: 'staff-menu-storage',
+    partialize: (state) => ({ menus: state.menus, categories: state.categories, serviceChargeRate: state.serviceChargeRate }),
+  }
+)
+);
