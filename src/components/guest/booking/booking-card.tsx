@@ -14,7 +14,7 @@ import {
 export interface BookingCardData {
   id: string
   orderId: string
-  status: "UPCOMING" | "COMPLETED" | "CANCELLED"
+  status: "UPCOMING" | "COMPLETED" | "CANCELLED" | "PENDING"
   property: string
   location: string
   imageSrc: string
@@ -72,14 +72,26 @@ export function StatusBadge({ status }: { status: string }) {
     PENDING: "bg-amber-500/20 text-amber-400 border-amber-500/30",
     FAILED: "bg-red-500/20 text-red-400 border-red-500/30",
   }
+  const labels: Record<string, string> = {
+    PENDING: "Pending Payment",
+  }
   return (
     <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest border ${styles[status] || styles.PENDING}`}>
-      {status}
+      {labels[status] ?? status}
     </span>
   )
 }
 
-function PaymentBadge({ paidInFull, method }: { paidInFull?: boolean, method?: string }) {
+function PaymentBadge({ paidInFull, method, status }: { paidInFull?: boolean, method?: string, status?: string }) {
+  // Online card booking that hasn't been paid yet
+  if (status === "PENDING" && method === "online") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wide">
+        <CreditCard size={10} /> Payment Pending
+      </span>
+    )
+  }
+
   const isPaid = paidInFull || method === "ONLINE_CARD";
   
   return isPaid ? (
@@ -87,7 +99,7 @@ function PaymentBadge({ paidInFull, method }: { paidInFull?: boolean, method?: s
       <CreditCard size={10} /> Paid
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wide">
+    <span className="inline-flex items-center gap-1 text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
       <Wallet size={10} /> Pay at Property
     </span>
   )
@@ -105,6 +117,7 @@ const btnGhost   = "inline-flex items-center gap-1.5 text-xs font-bold text-[#8b
 // ─────────────────────────────────────────────────────────────────────────────
 export default function BookingCard({ booking }: { booking: BookingCardData }) {
   const isUpcoming  = booking.status === "UPCOMING"
+  const isPending   = booking.status === "PENDING"
   const isCompleted = booking.status === "COMPLETED"
   const isCancelled = booking.status === "CANCELLED"
 
@@ -160,7 +173,7 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
                </p>
              )}
              <div className="mt-1">
-               <PaymentBadge paidInFull={booking.paidInFull} method={booking.paymentMethod} />
+               <PaymentBadge paidInFull={booking.paidInFull} method={booking.paymentMethod} status={booking.status} />
              </div>
           </div>
           <div className="text-left sm:text-right flex flex-col items-start sm:items-end mt-2 sm:mt-0">
@@ -200,6 +213,16 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
 
         {/* Action row */}
         <div className="flex items-center gap-3 mt-auto pt-6 border-t border-[#f2e7d9] flex-wrap">
+          {isPending && booking.paymentMethod === "online" && (
+            <>
+              <Link
+                href={`/payment?total=${Number(booking.totalPrice).toFixed(2)}&confirmationCode=${booking.orderId}&bookingId=${booking.id}`}
+                className="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl hover:bg-amber-100 transition-colors"
+              >
+                ⏳ Complete Payment
+              </Link>
+            </>
+          )}
           {isUpcoming && (
             <>
               <Link href={`/guest/booking/${booking.orderId}`} className={btnPrimary} style={{ background: "#9a3300" }}>

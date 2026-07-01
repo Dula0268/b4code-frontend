@@ -728,8 +728,10 @@ export default function PropertyClient({ property }: { property: any }) {
                                                 
                                                 if (paymentMethod === 'online') {
                                                     const params = new URLSearchParams();
-                                                    params.set("total", priceBreakdown.totalAmount.toString());
+                                                    // Use toFixed(2) to ensure a clean decimal string (avoids BigDecimal toString quirks)
+                                                    params.set("total", Number(priceBreakdown.totalAmount).toFixed(2));
                                                     params.set("confirmationCode", res.data.confirmationCode);
+                                                    params.set("bookingId", String(res.data.id));
                                                     if (user?.profile) {
                                                         params.set("firstName", user.profile.firstName);
                                                         params.set("lastName", user.profile.lastName);

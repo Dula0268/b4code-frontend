@@ -279,6 +279,38 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     setSuccessMessage("");
     try {
       setLoading(true);
+
+      // Calculate the amount due client-side first to decide what to do.
+      const amountDue = !booking.paidInFull ? newPrice : (diffAmount > 0 ? diffAmount : 0);
+
+      if (amountDue > 0) {
+        // Payment is required BEFORE modifying the booking.
+        // Store the pending modification in sessionStorage so the payment
+        // success handler can pick it up and commit the change.
+        const pendingModification = {
+          bookingId: booking.id,
+          confirmationCode: booking.confirmationCode,
+          roomId: Number(editRoomId || booking.roomId),
+          propertyId: Number(booking.propertyId),
+          checkInDate: editCheckIn,
+          checkOutDate: editCheckOut,
+          guests: editGuests,
+        };
+        sessionStorage.setItem("pendingBookingModification", JSON.stringify(pendingModification));
+
+        const params = new URLSearchParams();
+        params.set("total", amountDue.toFixed(2));
+        params.set("confirmationCode", booking.confirmationCode);
+        params.set("bookingId", booking.id);
+        params.set("email", booking.userEmail);
+        params.set("firstName", booking.userEmail.split("@")[0] || "Guest");
+        params.set("lastName", "");
+        params.set("type", "modification");
+        router.push(`/payment?${params.toString()}`);
+        return;
+      }
+
+      // No payment required – commit the modification immediately.
       const res = await guestApi.modifyBooking(booking.id, {
         roomId: Number(editRoomId || booking.roomId),
         propertyId: Number(booking.propertyId),
@@ -286,18 +318,6 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         checkOutDate: editCheckOut,
         guests: editGuests
       });
-
-      if (Number(res.additionalAmountDue) > 0) {
-        const params = new URLSearchParams();
-        params.set("total", res.additionalAmountDue.toString());
-        params.set("confirmationCode", booking.confirmationCode);
-        params.set("bookingId", booking.id);
-        params.set("email", booking.userEmail);
-        params.set("firstName", booking.userEmail.split("@")[0] || "Guest");
-        params.set("lastName", "");
-        router.push(`/payment?${params.toString()}`);
-        return;
-      }
 
       // Re-fetch booking from backend
       const updated = await guestApi.getBookingByConfirmation(id);

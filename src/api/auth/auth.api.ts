@@ -11,7 +11,8 @@ export const authApi = {
     firstName: string,
     lastName: string,
     phone?: string,
-    propertyId?: number
+    propertyId?: number,
+    staffRole?: string
   ) =>
     api.post("/auth/register", {
       email,
@@ -21,6 +22,7 @@ export const authApi = {
       lastName,
       phone,
       propertyId,
+      staffRole,
     }).then((r) => r.data),
 
   forgotPassword: (email: string) =>

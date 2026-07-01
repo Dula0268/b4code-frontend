@@ -38,7 +38,7 @@ export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
         <div className="ml-[260px] flex-1 flex flex-col h-full overflow-hidden">
           {children}
         </div>
-        
+
         {/* Global Staff Orders Notification Provider */}
         <StaffGlobalOrdersProvider />
       </div>

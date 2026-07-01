@@ -29,27 +29,36 @@ export default function PaymentFlow() {
     }
 
     // Read total from URL, fallback to default if not present
-    const rawAmount = searchParams?.get("total") || "1990";
-    const amount = Number(rawAmount).toLocaleString("en-US", { minimumFractionDigits: 2 });
+    const rawAmount = searchParams?.get("total") || "0";
+    // Always parse from rawAmount (the clean numeric string), never the display-formatted string
+    const parsedAmount = parseFloat(rawAmount);
+    const amount = parsedAmount.toLocaleString("en-US", { minimumFractionDigits: 2 });
+
+    const confirmationCode = searchParams?.get("confirmationCode") || "";
+    const isModification = searchParams?.get("type") === "modification";
+
+    // Build the return URL that PayHere will redirect to after payment.
+    // For modifications, we also pass a type=modification signal back.
+    const buildReturnParams = (code: string) => {
+        const base = `payment_success=true&bookingRef=${code}`;
+        return isModification ? `${base}&type=modification` : base;
+    };
 
     const handleMethodSelect = async (method: string) => {
-        // The return parameters will be constructed directly when calling initiatePayment
-        // to avoid appending too many unnecessary query params.
-
         if (method === "card") {
             setStep("card");
         } else {
             setStep("processing");
             try {
                 const response = await paymentApi.initiatePayment({
-                    amount: parseFloat(rawAmount),
+                    amount: parsedAmount,
                     currency: "LKR",
                     paymentMethod: method,
                     firstName: searchParams?.get("firstName") || "Guest",
                     lastName: searchParams?.get("lastName") || "User",
                     email: searchParams?.get("email") || "",
                     bookingId: searchParams?.get("bookingId") ? Number(searchParams.get("bookingId")) : undefined,
-                    returnParams: `payment_success=true&bookingRef=${searchParams?.get("confirmationCode") || ""}`,
+                    returnParams: buildReturnParams(confirmationCode),
                 });
 
                 if (response.checkoutUrl && response.payHereParams) {
@@ -82,6 +91,8 @@ export default function PaymentFlow() {
     };
 
     const handleCancel = () => {
+        // Clear any pending modification since payment was cancelled
+        sessionStorage.removeItem("pendingBookingModification");
         router.back();
     };
 
@@ -143,6 +154,7 @@ export default function PaymentFlow() {
                             onBack={() => setStep("selection")}
                             onSubmit={(success) => setStep(success ? "success" : "failed")}
                             amount={amount}
+                            rawAmount={rawAmount}
                         />
                     )}
 

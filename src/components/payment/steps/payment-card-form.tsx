@@ -9,10 +9,11 @@ import { paymentApi } from "@/api/payment/payment.api";
 interface PaymentCardFormProps {
     onBack: () => void;
     onSubmit: (isSuccess: boolean) => void;
-    amount: string;
+    amount: string;    // Formatted display string e.g. "15,000.00"
+    rawAmount: string; // Clean numeric string e.g. "15000.00" — used for initiatePayment
 }
 
-export default function PaymentCardForm({ onBack, onSubmit, amount }: PaymentCardFormProps) {
+export default function PaymentCardForm({ onBack, onSubmit, amount, rawAmount }: PaymentCardFormProps) {
     const [name, setName] = useState("");
     const [cardNumber, setCardNumber] = useState("");
     const [expiry, setExpiry] = useState("");
@@ -31,7 +32,9 @@ export default function PaymentCardForm({ onBack, onSubmit, amount }: PaymentCar
             }
 
             await paymentApi.initiatePayment({
-                amount: parseFloat(amount.replace(/,/g, '')),
+                // Use rawAmount (clean decimal string) to avoid parseFloat issues
+                // with locale-formatted display strings that contain commas.
+                amount: parseFloat(rawAmount),
                 currency: "LKR",
                 paymentMethod: "card",
                 cardHolderName: name,

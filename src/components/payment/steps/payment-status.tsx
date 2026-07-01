@@ -20,16 +20,23 @@ export default function PaymentStatus({ step, onRetry, onChangeMethod }: Payment
                 // Get existing search params to preserve booking info
                 const params = new URLSearchParams(window.location.search);
                 
-                // IMPORTANT: Ensure we mark it as paid
+                // IMPORTANT: Ensure we mark it as paid and successful
                 params.set("paidInFull", "1");
+                params.set("payment_success", "true");
                 
-                // If we don't have a code in the URL, only then generate one
-                // (This helps if the user arrived here without a pre-generated code)
-                if (!params.has("confirmationCode")) {
-                    params.set("confirmationCode", "B4C-" + Math.random().toString(36).substring(2, 9).toUpperCase());
+                // Map confirmationCode to bookingRef for the bookings page handler
+                if (params.has("confirmationCode") && !params.has("bookingRef")) {
+                    params.set("bookingRef", params.get("confirmationCode") || "");
                 }
                 
-                const finalUrl = `/guest/booking/confirmation?${params.toString()}`;
+                // If we don't have a code in the URL, only then generate one
+                if (!params.has("confirmationCode")) {
+                    const generatedCode = "B4C-" + Math.random().toString(36).substring(2, 9).toUpperCase();
+                    params.set("confirmationCode", generatedCode);
+                    params.set("bookingRef", generatedCode);
+                }
+                
+                const finalUrl = `/guest/booking?${params.toString()}`;
                 router.push(finalUrl);
             }, 3000);
             return () => clearTimeout(timer);

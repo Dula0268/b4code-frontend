@@ -23,6 +23,19 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingId, setIsUploadingId] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [propertyName, setPropertyName] = useState<string>("");
+
+  useEffect(() => {
+    const pid = user?.propertyId;
+    if (pid) {
+      import("@/api/properties/properties.api").then(({ propertiesApi }) => {
+        propertiesApi.getPublicList().then((list) => {
+          const prop = list.find((p) => p.id === Number(pid));
+          if (prop) setPropertyName(prop.name);
+        }).catch(console.error);
+      });
+    }
+  }, [user?.propertyId]);
 
   // Sync form data with user store data
   useEffect(() => {
@@ -32,13 +45,13 @@ export default function ProfilePage() {
         lastName: user.profile?.lastName || "",
         email: user.email || "",
         phone: user.profile?.phone || "",
-        staffRole: "Kitchen Staff", // Placeholder for now
-        assignedProperty: "Hilton Colombo", // Placeholder for now
+        staffRole: user.profile?.staffRole || "Staff",
+        assignedProperty: propertyName || (user.propertyId ? "Property #" + user.propertyId : "Unassigned"),
         avatarUrl: user.profile?.avatarUrl || "",
         nationalIdUrl: user.profile?.nationalIdUrl || "",
       });
     }
-  }, [user]);
+  }, [user, propertyName]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,17 +76,17 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    
+
     try {
       const emailToUse = user?.email || "";
-      await updateProfile(emailToUse, { 
-        firstName: formData.firstName, 
-        lastName: formData.lastName, 
+      await updateProfile(emailToUse, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         phone: formData.phone,
         avatarUrl: formData.avatarUrl,
         nationalIdUrl: formData.nationalIdUrl
       });
-      
+
       setIsSaving(false);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
@@ -108,20 +121,20 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-[#44403c]">First Name</label>
-            <Input 
-              name="firstName" 
+            <Input
+              name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[rgba(149,48,2,0.2)]" 
+              className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[rgba(149,48,2,0.2)]"
             />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-[#44403c]">Last Name</label>
-            <Input 
-              name="lastName" 
+            <Input
+              name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[rgba(149,48,2,0.2)]" 
+              className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[rgba(149,48,2,0.2)]"
             />
           </div>
         </div>
@@ -129,12 +142,12 @@ export default function ProfilePage() {
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Email Address</label>
           <div className="relative">
-            <Input 
-              name="email" 
-              type="email" 
+            <Input
+              name="email"
+              type="email"
               value={formData.email}
               disabled
-              className="h-11 bg-[#fcfcfc] border-[#e7e5e4] pr-10 text-[#78716c]" 
+              className="h-11 bg-[#fcfcfc] border-[#e7e5e4] pr-10 text-[#78716c]"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <Lock size={16} className="text-[#a8a29e]" />
@@ -145,32 +158,44 @@ export default function ProfilePage() {
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Phone Number</label>
-          <Input 
-            name="phone" 
+          <Input
+            name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
+            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full"
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Staff Role</label>
-          <Input 
-            name="staffRole" 
-            value={formData.staffRole}
-            onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
-          />
+          <div className="relative">
+            <Input
+              name="staffRole"
+              value={formData.staffRole}
+              disabled
+              className="h-11 bg-[#fcfcfc] border-[#e7e5e4] pr-10 text-[#78716c]"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Lock size={16} className="text-[#a8a29e]" />
+            </div>
+          </div>
+          <p className="text-[11px] text-[#a8a29e] mt-1">Staff role cannot be changed.</p>
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-[#44403c]">Assigned Property</label>
-          <Input 
-            name="assignedProperty" 
-            value={formData.assignedProperty}
-            onChange={handleChange}
-            className="h-11 bg-[#fdfaf8] border-[#e7e5e4] focus-visible:ring-[#953002]/20 w-full" 
-          />
+          <div className="relative">
+            <Input
+              name="assignedProperty"
+              value={formData.assignedProperty}
+              disabled
+              className="h-11 bg-[#fcfcfc] border-[#e7e5e4] pr-10 text-[#78716c]"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Lock size={16} className="text-[#a8a29e]" />
+            </div>
+          </div>
+          <p className="text-[11px] text-[#a8a29e] mt-1">Property assignment cannot be changed.</p>
         </div>
 
         <div className="space-y-3">
@@ -182,10 +207,10 @@ export default function ProfilePage() {
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <label className="cursor-pointer bg-white text-[#1c1917] px-4 py-2 rounded-lg font-bold text-sm hover:bg-neutral-100 transition-colors">
                     Change ID Photo
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*,application/pdf" 
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*,application/pdf"
                       onChange={(e) => handleFileUpload(e)}
                     />
                   </label>
@@ -207,10 +232,10 @@ export default function ProfilePage() {
                     <p className="text-xs text-[#9ca3af]">SVG, PNG, JPG or PDF (max. 5MB). Required for international bookings.</p>
                   </>
                 )}
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*,application/pdf" 
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*,application/pdf"
                   onChange={(e) => handleFileUpload(e)}
                   disabled={isUploadingId}
                 />
@@ -223,8 +248,8 @@ export default function ProfilePage() {
           <p className="text-xs text-[#9ca3af] max-w-sm leading-relaxed">
             Your personal data is encrypted and secure. We only share necessary details with host partners upon confirmed bookings.
           </p>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="bg-[#d97706] hover:bg-[#b45309] text-white px-8 transition-colors h-11 font-medium rounded-xl"
             disabled={isSaving || isUploadingId}
           >
