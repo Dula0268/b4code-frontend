@@ -21,6 +21,7 @@ import {
     DollarSign,
     BookOpen,
     Settings,
+    UtensilsCrossed,
 } from "lucide-react";
 
 /* ───────────────────── helpers ───────────────────── */
@@ -172,7 +173,9 @@ export default function MonthlyCalendarPage() {
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/monthlyCalendar", active: true },
         { label: "Rate", icon: <DollarSign size={18} />, href: "/owner/rate" },
         { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
+        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting" },
+        { label: "Menu",     icon: <UtensilsCrossed size={18} />, href: "/owner/menu" },
+        { label: "Reviews", icon: <Star size={18} />,             href: "/owner/reviews" },
     ];
 
     return (

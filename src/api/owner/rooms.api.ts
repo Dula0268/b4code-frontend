@@ -1,12 +1,12 @@
 import api from '@/lib/axios';
 
 export const roomsApi = {
-  listRooms: async (ownerId: number, status?: string, search?: string) => {
+  listRooms: async (status?: string, search?: string, page = 1, size = 10) => {
     const params = new URLSearchParams();
-    params.append('ownerId', ownerId.toString());
     if (status) params.append('status', status);
     if (search) params.append('search', search);
-
+    params.append('page', page.toString());
+    params.append('size', size.toString());
     const response = await api.get(`/owner/rooms?${params.toString()}`);
     return response.data;
   },
@@ -39,5 +39,20 @@ export const roomsApi = {
   toggleAvailability: async (id: number) => {
     const response = await api.patch(`/owner/rooms/${id}/toggle-availability`);
     return response.data;
-  }
+  },
+
+  getPhysicalRooms: async (roomId: number) => {
+    const response = await api.get(`/owner/rooms/${roomId}/units`);
+    return response.data;
+  },
+
+  getPhysicalRoomsByProperty: async (propertyId: number) => {
+    const response = await api.get(`/owner/rooms/units/by-property?propertyId=${propertyId}`);
+    return response.data;
+  },
+
+  updatePhysicalRoomStatus: async (roomId: number, unitId: number, status: string) => {
+    const response = await api.patch(`/owner/rooms/${roomId}/units/${unitId}/status?status=${encodeURIComponent(status)}`);
+    return response.data;
+  },
 };

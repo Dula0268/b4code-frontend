@@ -23,6 +23,8 @@ import {
     Clock,
     Plus,
     SettingsIcon,
+    UtensilsCrossed,
+    Star,
 } from "lucide-react";
 
 /* ───────────────────── data ───────────────────── */
@@ -34,7 +36,9 @@ const sidebarItems = [
     { icon: CalendarCheck, label: "Availability", active: false, href: "/owner/availability/weeklyCalendar" },
     { icon: DollarSign, label: "Rate", active: false, href: "/owner/rate" },
     { icon: ClipboardList, label: "Reservation", active: false, href: "/owner/reservation" },
-    { icon: Settings, label: "Settings", active: false, href: "/owner/setting/propertySetting" },
+    { icon: Settings, label: "Settings", active: false, href: "/owner/setting/accountSetting" },
+    { icon: UtensilsCrossed, label: "Menu",      href: "/owner/menu" },
+    { icon: Star,             label: "Reviews",  href: "/owner/reviews" },
 ];
 
 interface Conversation {

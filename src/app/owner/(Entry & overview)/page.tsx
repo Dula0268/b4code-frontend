@@ -18,6 +18,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Loader2,
+    UtensilsCrossed,
+    Star,
 } from "lucide-react";
 
 /* ───────────────────── sidebar ───────────────────── */
@@ -29,7 +31,9 @@ const sidebarItems = [
     { icon: CalendarCheck,   label: "Availability",  active: false, href: "/owner/availability/weeklyCalendar" },
     { icon: DollarSign,      label: "Rate",          active: false, href: "/owner/rate" },
     { icon: ClipboardList,   label: "Reservations",  active: false, href: "/owner/reservation" },
-    { icon: Settings,        label: "Settings",      active: false, href: "/owner/setting/propertySetting" },
+    { icon: Settings,        label: "Settings",      active: false, href: "/owner/setting/accountSetting" },
+    { icon: UtensilsCrossed, label: "Menu",      href: "/owner/menu" },
+    { icon: Star,             label: "Reviews",  href: "/owner/reviews" },
 ];
 
 /* ───────────────────── helpers ───────────────────── */
@@ -133,7 +137,7 @@ export default function OwnerDashboardPage() {
         { label: "TOTAL ROOMS",      value: loading ? null : String(data?.totalRooms       ?? 0), highlight: false },
         { label: "ACTIVE RESV.",     value: loading ? null : String(data?.activeBookings   ?? 0), highlight: false },
         { label: "TOTAL BOOKINGS",   value: loading ? null : String(data?.totalBookings    ?? 0), highlight: false },
-        { label: "TODAY CHECK-INS",  value: loading ? null : "—",                                 highlight: false },
+        { label: "TODAY CHECK-INS",  value: loading ? null : String(data?.todayCheckIns ?? 0),      highlight: false },
         { label: "TOTAL REVENUE",    value: loading ? null : formatRevenue(data?.totalRevenue),   highlight: true  },
     ];
 

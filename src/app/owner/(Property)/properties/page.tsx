@@ -20,6 +20,7 @@ import {
     ClipboardList,
     Settings,
     ChevronRight,
+    UtensilsCrossed,
 } from "lucide-react";
 
 /* ───────────────────── data ───────────────────── */
@@ -32,6 +33,8 @@ const sidebarItems = [
     { icon: DollarSign, label: "Rate", href: "/owner/rate", active: false },
     { icon: ClipboardList, label: "Reservations", href: "/owner/reservation", active: false },
     { icon: Settings, label: "Settings", href: "/owner/setting/accountSetting", active: false },
+    { icon: UtensilsCrossed, label: "Menu",     href: "/owner/menu" },
+    { icon: Star,             label: "Reviews", href: "/owner/reviews" },
 ];
 
 /* ───────────────────── component ───────────────────── */

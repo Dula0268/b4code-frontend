@@ -25,6 +25,8 @@ import {
     Plus,
     SlidersHorizontal,
     Tag,
+    UtensilsCrossed,
+    Star,
 } from "lucide-react";
 
 /* ───────────────────── component ───────────────────── */
@@ -85,7 +87,9 @@ export default function ReservationPage() {
         { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
         { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
         { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation", active: true },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
+        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting" },
+        { label: "Menu",     icon: <UtensilsCrossed size={18} />, href: "/owner/menu" },
+        { label: "Reviews", icon: <Star size={18} />,             href: "/owner/reviews" },
     ];
 
     return (
