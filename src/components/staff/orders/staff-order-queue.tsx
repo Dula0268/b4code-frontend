@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import StaffHeader from "@/components/staff/layout/staff-header";
 
 const STATUS_TABS: { label: string; value: OrderStatus }[] = [
   { label: "Placed", value: "placed" },
@@ -185,15 +186,19 @@ function StaffToast({ type, message, detail, onClose }: { type: "success" | "err
     return () => clearTimeout(timer);
   }, [onClose]);
 
+  const isOffline = detail.includes("Offline");
+
   return (
     <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-lg border ${
-      type === "success"
+      isOffline
+        ? "bg-[#FFF8F0] border-[#F0EBE7] text-[#C05621]"
+        : type === "success"
         ? "bg-[#f0fdf4] border-[#bbf7d0] text-[#166534]"
         : "bg-[#fef2f2] border-[#fecaca] text-[#991b1b]"
     }`}>
-      {type === "success" ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+      {isOffline ? <Clock size={18} /> : type === "success" ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
       <div className="flex flex-col">
-        <span className="text-sm font-semibold">{message}</span>
+        <span className="text-sm font-semibold">{isOffline ? "Offline Mode" : message}</span>
         <span className="text-xs opacity-80">{detail}</span>
       </div>
       <button onClick={onClose} className="ml-3 text-current opacity-50 hover:opacity-100 bg-transparent border-none cursor-pointer text-lg leading-none">×</button>
@@ -291,31 +296,20 @@ export default function StaffOrderQueue() {
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+      <StaffHeader
+        title="Orders Queue"
+        subtitle="Manage incoming kitchen orders in real-time"
+        searchPlaceholder="Search ID or Table..."
+        onSearch={(query) => setSearchQuery(query)}
+        actions={
+          <Button variant="outline" size="icon" className="h-9 w-9 border-[#E8EAED] bg-[#F5F6F8]">
+            <SlidersHorizontal size={16} className="text-[#9CA3AF]" />
+          </Button>
+        }
+      />
       {/* Header Area */}
-      <div className="bg-white px-6 pt-5 pb-0 flex flex-col gap-4">
-        {/* Title Row */}
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-0.5">
-            <h1 className="text-xl font-bold text-[#1c1917] m-0 leading-7">Orders Queue</h1>
-            <p className="text-xs text-[#78716c] m-0">Manage incoming kitchen orders in real-time</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-[220px]">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8a29e]" />
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search ID or Table..."
-                className="pl-8 h-9 text-xs"
-              />
-            </div>
-            <Button variant="outline" size="icon" className="h-9 w-9">
-              <SlidersHorizontal size={16} className="text-[#78716c]" />
-            </Button>
-          </div>
-        </div>
+      <div className="bg-white px-6 pt-5 pb-0 flex flex-col gap-4 mt-[64px]">
 
         {/* Status Tabs */}
         <div className="border-b border-[#e7e5e4] flex items-start gap-0 overflow-x-auto">

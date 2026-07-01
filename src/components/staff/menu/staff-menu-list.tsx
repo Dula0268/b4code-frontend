@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import StaffHeader from "@/components/staff/layout/staff-header";
 
 export default function StaffMenuList() {
   const menus = useStaffMenuStore((s) => s.menus);
@@ -123,7 +124,26 @@ export default function StaffMenuList() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden px-6 py-4 gap-4">
+    <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden">
+      <StaffHeader
+        title="Menu Management"
+        subtitle="Manage menus, categories, and dining options for your guests."
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm" className="h-9 px-4 rounded-xl border-[#E8EAED] bg-white shadow-sm font-bold text-[#1A1A1A] gap-2 transition-all">
+              <Link href="/staff/menu/availability">
+                <ToggleRight size={16} className="text-[#C05621]" /> Item Availability
+              </Link>
+            </Button>
+            <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] text-white hover:from-[#C05621] hover:to-[#99451A] shadow-md font-bold gap-2 transition-all">
+              <Link href="/staff/menu/new">
+                <Plus size={16} /> Create New Menu
+              </Link>
+            </Button>
+          </>
+        }
+      />
+      <div className="flex flex-col flex-1 px-6 py-4 gap-4 mt-[64px] overflow-y-auto">
       {/* ── Loading State ── */}
       {isLoading && (
         <div className="flex-1 flex flex-col gap-3">
@@ -181,35 +201,25 @@ export default function StaffMenuList() {
             </div>
           )}
 
-          {/* ── Error Banner ── */}
+          {/* ── Error / Info Banner ── */}
           {errorMsg && (
-            <div className="flex-none flex items-center gap-2 bg-[rgba(235,87,87,0.08)] border border-[rgba(235,87,87,0.2)] rounded-[10px] px-4 py-2 text-sm">
-              <span className="text-[#eb5757] font-medium flex-1">{errorMsg}</span>
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setError(null)}><X size={14} /></Button>
+            <div className={`flex-none flex items-center gap-2 rounded-[10px] px-4 py-2 text-sm border ${
+              errorMsg.includes("offline") || errorMsg.includes("Connection")
+                ? "bg-[#FFF8F0] border-[#F0EBE7] text-[#C05621]"
+                : "bg-[rgba(235,87,87,0.08)] border-[rgba(235,87,87,0.2)] text-[#eb5757]"
+            }`}>
+              <span className="font-medium flex-1">
+                {errorMsg.includes("offline") || errorMsg.includes("Connection") 
+                  ? "Viewing offline data. Changes will sync when connection is restored." 
+                  : errorMsg}
+              </span>
+              <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-transparent" onClick={() => setError(null)}>
+                <X size={14} className={errorMsg.includes("offline") || errorMsg.includes("Connection") ? "text-[#C05621]" : "text-[#eb5757]"} />
+              </Button>
             </div>
           )}
 
-          {/* ── Header ── */}
-          <div className="flex-none flex items-center justify-between bg-white/80 backdrop-blur-xl p-5 rounded-2xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <div>
-              <h1 className="text-xl font-extrabold text-[#1A1A1A] leading-tight m-0">Menu Management</h1>
-              <p className="text-xs font-semibold text-[#9E7B6A] mt-1 m-0">Manage menus, categories, and dining options for your guests.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button asChild variant="outline" size="sm" className="h-9 px-4 rounded-xl border-white bg-white/50 hover:bg-white shadow-sm font-bold text-[#1A1A1A] gap-2 transition-all">
-                <Link href="/staff/menu/availability">
-                  <ToggleRight size={16} className="text-[#C05621]" /> Item Availability
-                </Link>
-              </Button>
-              <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] text-white hover:from-[#C05621] hover:to-[#99451A] shadow-md font-bold gap-2 transition-all">
-                <Link href="/staff/menu/new">
-                  <Plus size={16} /> Create New Menu
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          {/* ── Stat Cards ── */}
+          {/* ── Success Banner ── */}
           <div className="flex-none grid grid-cols-3 gap-5">
             {[
               { label: "Total Menus", value: String(total), sub: `${menus.filter(m => m.status === "active").length} active`, icon: UtensilsCrossed, iconBg: "bg-[rgba(192,86,33,0.1)]", iconColor: "text-[#C05621]" },
@@ -440,6 +450,7 @@ export default function StaffMenuList() {
         title="Delete Category"
         description={`Are you sure you want to delete the category "${categoryToDelete?.name}"? Existing items linked to this category will lose their category reference.`}
       />
+      </div>
     </div>
   );
 }

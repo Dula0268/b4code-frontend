@@ -5,6 +5,7 @@ import StaffHeader from "@/components/staff/layout/staff-header";
 import StaffDashboard from "@/components/staff/dashboard/staff-dashboard";
 import { useStaffGuard } from "@/hooks/use-staff-guard";
 import AccessDenied from "@/components/shared/auth/access-denied";
+import { useTranslations } from 'next-intl';
 
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -51,6 +52,7 @@ function StaffDashboardSkeleton() {
 }
 
 export default function StaffPage() {
+  const t = useTranslations('StaffDashboard');
   const { ready, status, userRole } = useStaffGuard();
   
   if (status === "loading") return <StaffDashboardSkeleton />;
@@ -68,7 +70,7 @@ export default function StaffPage() {
   return (
     <StaffPageLayout>
       <StaffHeader
-        title="Staff Dashboard"
+        title={t('title')}
         subtitle={`Operational Overview • ${today}`}
         searchPlaceholder="Search order #, room, or item..."
       />

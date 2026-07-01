@@ -6,7 +6,6 @@ import RoleGuard from "@/components/shared/auth/role-guard";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useRBACStore } from "@/store/auth/rbac.store";
 import StaffGlobalOrdersProvider from "./staff-global-orders";
-
 interface StaffPageLayoutProps {
   children: React.ReactNode;
 }

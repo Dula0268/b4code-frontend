@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import StaffHeader from "@/components/staff/layout/staff-header";
 
 const TAB_ICONS: Record<QRTab, React.ReactNode> = {
   Table: <UtensilsCrossed size={13} />,
@@ -102,7 +103,19 @@ export default function QrList({ propertyId }: { propertyId: number }) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden px-6 py-4 gap-4">
+    <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden">
+      <StaffHeader
+        title="QR Management"
+        subtitle="Manage and track guest QR codes"
+        actions={
+          <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] text-white hover:from-[#C05621] hover:to-[#99451A] shadow-md font-bold gap-2 transition-all" disabled={loading}>
+            <Link href={`/staff/qr/new?propertyId=${propertyId}`}>
+              <Plus size={16} /> Create QR
+            </Link>
+          </Button>
+        }
+      />
+      <div className="flex flex-col flex-1 px-6 py-4 gap-4 mt-[64px] overflow-y-auto">
       {/* Success banner */}
       {successMsg && (
         <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-xl px-4 py-2 text-sm">
@@ -112,27 +125,24 @@ export default function QrList({ propertyId }: { propertyId: number }) {
         </div>
       )}
 
-      {/* Error banner */}
+      {/* Error / Info banner */}
       {error && (
-        <div className="flex-none flex items-center gap-2 bg-[rgba(220,53,69,0.08)] border border-[rgba(220,53,69,0.2)] rounded-[10px] px-4 py-2 text-sm">
-          <AlertCircle size={16} className="text-red-500" />
-          <span className="text-[var(--black-2)] font-medium flex-1">{error}</span>
-          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setError(null)}><X size={14} /></Button>
+        <div className={`flex-none flex items-center gap-2 rounded-[10px] px-4 py-2 text-sm border ${
+          error.includes("offline") || error.includes("Connection")
+            ? "bg-[#FFF8F0] border-[#F0EBE7] text-[#C05621]"
+            : "bg-[rgba(220,53,69,0.08)] border-[rgba(220,53,69,0.2)] text-red-500"
+        }`}>
+          <AlertCircle size={16} className={error.includes("offline") || error.includes("Connection") ? "text-[#C05621]" : "text-red-500"} />
+          <span className="font-medium flex-1">
+            {error.includes("offline") || error.includes("Connection") 
+              ? "Viewing offline data. Changes will sync when connection is restored." 
+              : error}
+          </span>
+          <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-transparent" onClick={() => setError(null)}>
+            <X size={14} className={error.includes("offline") || error.includes("Connection") ? "text-[#C05621]" : "text-red-500"} />
+          </Button>
         </div>
       )}
-
-      {/* Header */}
-      <div className="flex-none flex items-center justify-between relative z-10 bg-white/70 backdrop-blur-xl p-5 rounded-3xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-        <div>
-          <h1 className="text-xl font-extrabold text-[#1A1A1A] leading-tight m-0">QR Management</h1>
-          <p className="text-xs font-semibold text-[#9E7B6A] mt-1 m-0">Manage and track guest QR codes</p>
-        </div>
-        <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] text-white hover:from-[#C05621] hover:to-[#99451A] shadow-md font-bold gap-2 transition-all" disabled={loading}>
-          <Link href={`/staff/qr/new?propertyId=${propertyId}`}>
-            <Plus size={16} /> Create QR
-          </Link>
-        </Button>
-      </div>
 
       {/* Tabs + Search */}
       <div className="flex-none flex items-center justify-between">
@@ -265,6 +275,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
         title="Delete QR Context?"
         description="This action cannot be undone. Guests will no longer be able to order using this QR code."
       />
+      </div>
     </div>
   );
 }

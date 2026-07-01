@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import NetworkIndicator from "./network-indicator";
 
 interface StaffHeaderProps {
   title: string;
@@ -38,6 +39,7 @@ export default function StaffHeader({
 
       {/* Right: Search + Actions */}
       <div className="flex items-center gap-3">
+        <NetworkIndicator />
         <div className="relative w-[280px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
           <Input
