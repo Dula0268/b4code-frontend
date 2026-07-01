@@ -3,9 +3,7 @@
 import { Search } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { useAuthStore } from "@/store/auth/auth.store";
-import UserIcon from "@/components/admin/user-icon";
-import Link from "next/link";
+import UserAvatarDropdown from "@/components/shared/auth/user-avatar-dropdown";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface AdminHeaderProps {
@@ -29,14 +27,8 @@ export default function AdminHeader({
   onSearch,
   fullWidth = false,
 }: AdminHeaderProps) {
-  const { user } = useAuthStore();
+  const adminName = adminNameProp || "Admin";
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Only show profile data if the logged-in user is actually ADMIN (cross-tab guard)
-  const adminUser = user?.role?.toLowerCase() === "admin" ? user : null;
-
-  const adminName = adminNameProp ||
-    (adminUser?.profile ? `${adminUser.profile.firstName} ${adminUser.profile.lastName}` : "Admin");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -66,41 +58,8 @@ export default function AdminHeader({
         />
       </div>
 
-      {/* ── User Avatar ── */}
-      <Link
-        href="/admin/profile"
-        title={adminName}
-        className="relative w-[42px] h-[42px] flex-shrink-0 cursor-pointer"
-      >
-        {/* Avatar circle — overflow-hidden so SVG clips cleanly */}
-        <div className="w-[42px] h-[42px] rounded-full overflow-hidden bg-[#953002]/10 border-2 border-white shadow-sm ring-1 ring-neutral-100 flex items-center justify-center relative">
-          {avatarSrc ? (
-            <Image
-              src={avatarSrc}
-              alt={adminName}
-              fill
-              className="object-cover"
-            />
-          ) : adminUser?.profile?.avatarUrl ? (
-            <img 
-              src={adminUser.profile.avatarUrl} 
-              alt={adminName} 
-              className="absolute inset-0 w-full h-full object-cover" 
-            />
-          ) : (
-            <div className="absolute inset-0 w-full h-full bg-[#953002] flex items-center justify-center text-white text-[13px] font-extrabold uppercase">
-              {adminUser?.profile ? (
-                `${adminUser.profile.firstName[0]}${adminUser.profile.lastName[0]}`
-              ) : (
-                adminUser?.email?.[0] || "A"
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Green online indicator dot */}
-        <span className="absolute bottom-[1px] right-[1px] w-[11px] h-[11px] rounded-full bg-[var(--state-success)] border-2 border-[var(--white)]" />
-      </Link>
+      {/* ── User Avatar Dropdown ── */}
+      <UserAvatarDropdown />
     </header>
   );
 }

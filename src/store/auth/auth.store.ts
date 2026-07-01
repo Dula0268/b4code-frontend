@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { authApi } from "@/api/auth/auth.api";
 import { setToken, removeToken } from "@/lib/token";
 import { userApi } from "@/api/user/user.api";
+import { formatApiError } from "@/lib/error-formatter";
 
 type Role = "guest" | "owner" | "admin" | "staff";
 
@@ -142,8 +143,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
 
         return REDIRECT_MAP[role];
       } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          (err instanceof Error ? err.message : "Unexpected error occurred");
+        const message = formatApiError(err, "Login failed. Please try again.");
 
         console.log("LOGIN ERROR:", message);
 
@@ -182,7 +182,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           isAuthenticated: true,
         });
       } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || (err instanceof Error ? err.message : "Login failed");
+        const message = formatApiError(err, "Login failed. Please try again.");
 
         set({ loading: false, error: message });
         throw new Error(message);
@@ -218,7 +218,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           isAuthenticated: true,
         });
       } catch (err: unknown) {
-        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || (err instanceof Error ? err.message : "Verification failed");
+        const message = formatApiError(err, "Verification failed. Please try again.");
 
         set({ loading: false, error: message });
         throw new Error(message);
@@ -240,8 +240,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         await authApi.register(email, password, role, firstName, lastName, undefined, propertyId, staffRole);
 
         set({ loading: false });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Registration failed";
+      } catch (err: unknown) {
+        const message = formatApiError(err, "Registration failed. Please try again.");
 
         set({ loading: false, error: message });
 
@@ -274,8 +274,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
             profile,
           },
         });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Registration failed";
+      } catch (err: unknown) {
+        const message = formatApiError(err, "Registration failed. Please try again.");
 
         set({ loading: false, error: message });
 
@@ -291,7 +291,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         await authApi.verifyEmail(email, otp);
         set({ loading: false });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Verification failed";
+        const message = formatApiError(err, "Verification failed. Please try again.");
         set({ loading: false, error: message });
         throw new Error(message);
       }
@@ -333,7 +333,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         await userApi.changePassword({ currentPassword, newPassword });
         set({ loading: false });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to update password";
+        const message = formatApiError(err, "Failed to update password. Please try again.");
 
         set({ loading: false, error: message });
 
@@ -371,7 +371,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           };
         });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to update profile";
+        const message = formatApiError(err, "Failed to update profile. Please try again.");
 
         set({ loading: false, error: message });
 
