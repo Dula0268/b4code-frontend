@@ -11,6 +11,8 @@ import {
   QrCode,
   MessageCircle,
   LogOut,
+  BarChart3,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -21,10 +23,12 @@ import { usePermission } from "@/hooks/use-permission";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/staff", icon: LayoutDashboard, permKey: null },
+  { label: "Analytics", href: "/staff/analytics", icon: BarChart3, permKey: "analytics" },
   { label: "Order Management", href: "/staff/orders", icon: ClipboardList, permKey: "order_management" },
   { label: "Menu Management", href: "/staff/menu", icon: Package, permKey: "menu_management" },
   { label: "QR Management", href: "/staff/qr", icon: QrCode, permKey: "qr_management" },
   { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, isChat: true, permKey: "guest_messages" },
+  { label: "Reviews", href: "/staff/reviews", icon: Star, permKey: "reviews" },
 ];
 
 function NavItem({ item, isActive, badge }: {
@@ -66,7 +70,7 @@ export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuthStore();
-  const unreadMessages = useStaffChatStore((s) => s.conversations.reduce((acc, conv) => acc + conv.unread, 0));
+  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
   const [mounted, setMounted] = useState(false);
   const [propertyName, setPropertyName] = useState<string>("");
 

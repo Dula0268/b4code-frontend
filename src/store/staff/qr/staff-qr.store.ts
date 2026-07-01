@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import api, { BASE_URL } from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -101,7 +102,7 @@ function sanitizeErrorMessage(message: string, context: string): string {
     msg.includes("http") ||
     msg.includes("request failed")
   ) {
-    return "Connection issue. Please check your internet connection or try again shortly.";
+    return "Offline: Viewing offline data. Changes will sync when connection is restored.";
   }
   
   if (
@@ -128,6 +129,11 @@ function sanitizeErrorMessage(message: string, context: string): string {
 
 function extractApiErrorMessage(error: unknown, fallback: string): string {
   let message = fallback;
+  
+  if (error instanceof Error) {
+    message = error.message;
+  }
+  
   if (typeof error === "object" && error !== null) {
     const response = (error as { response?: { data?: unknown } }).response;
     if (response && typeof response.data === "object" && response.data !== null) {
@@ -136,8 +142,6 @@ function extractApiErrorMessage(error: unknown, fallback: string): string {
         message = data.message;
       }
     }
-  } else if (error instanceof Error && error.message) {
-    message = error.message;
   }
 
   return sanitizeErrorMessage(message, fallback);
@@ -187,7 +191,9 @@ function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
   };
 }
 
-export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) => ({
+export const useStaffQRStore = create<StaffQRState & StaffQRActions>()(
+  persist(
+    (set, get) => ({
   qrs: [],
   successMsg: null,
   loading: false,
@@ -342,4 +348,10 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
   setSuccess: (msg) => set({ successMsg: msg }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
-}));
+  }),
+  {
+    name: 'staff-qr-storage',
+    partialize: (state) => ({ qrs: state.qrs, totalItems: state.totalItems }),
+  }
+)
+);
