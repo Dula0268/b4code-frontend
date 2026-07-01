@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Utensils, ShoppingCart, ClipboardList, HelpCircle } from 'lucide-react';
 import { useCartStore } from '@/store/guest/ordering/cart.store';
+import { useOrderContextStore } from '@/store/guest/ordering/order-context.store';
 
 const ORDER_TABS = [
   { label: 'Menu',      href: '/guest/order/menu',      icon: Utensils     },
@@ -17,10 +18,13 @@ export default function OrderTabBar() {
   const pathname   = usePathname();
   const itemCount  = useCartStore((s) => s.itemCount());
   const [isHydrated, setIsHydrated] = React.useState(false);
+  const qrContext = useOrderContextStore((s) => s.qrContext);
 
   React.useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  const getHref = (base: string) => qrContext?.qrId ? `${base}?qrId=${qrContext.qrId}` : base;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
@@ -35,7 +39,7 @@ export default function OrderTabBar() {
             return (
               <Link
                 key={href}
-                href={href}
+                href={getHref(href)}
                 className={[
                   'relative flex items-center gap-1.5 px-5 h-11 text-[14px] font-medium transition-colors duration-200 whitespace-nowrap no-underline',
                   active
@@ -67,7 +71,7 @@ export default function OrderTabBar() {
             return (
               <Link
                 key={href}
-                href={href}
+                href={getHref(href)}
                 className="flex flex-col items-center justify-center gap-1 flex-1 py-2 relative no-underline"
               >
                 {active && (

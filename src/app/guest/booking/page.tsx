@@ -20,7 +20,7 @@ const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED
 
 function BookingsContent() {
   const { status, userRole } = useGuestGuard()
-  const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED">("UPCOMING")
+  const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED" | "PENDING">("UPCOMING")
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
@@ -28,110 +28,143 @@ function BookingsContent() {
   const searchParams = useSearchParams()
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successBookingRef, setSuccessBookingRef] = useState("")
+  const [successType, setSuccessType] = useState<"booking" | "modification">("booking")
+
+  async function loadBookings() {
+      try {
+          const email = user?.email
+          if (!email) {
+            setBookings([])
+            setLoading(false)
+            return
+          }
+
+          let apiBookings: BookingCardData[] = []
+          try {
+              const data = await guestApi.getGuestBookings(email)
+              type ApiBooking = {
+                bookingId?: number | string
+                id?: number | string
+                confirmationNumber?: string
+                confirmationCode?: string
+                propertyName?: string
+                propertyAddress?: string
+                propertyImage?: string
+                roomName?: string
+                guestName?: string
+                guestEmail?: string
+                adults?: number
+                checkIn?: string
+                checkOut?: string
+                totalAmount?: number
+                status?: string
+                paymentMethod?: string
+                createdAt?: string
+                roomQuantity?: number
+              }
+
+              const normalizeStatus = (s?: string): BookingCardData["status"] => {
+                if (s === "COMPLETED") return "COMPLETED"
+                if (s === "CANCELLED") return "CANCELLED"
+                if (s === "PENDING") return "PENDING"
+                return "UPCOMING"
+              }
+
+              apiBookings = (data as ApiBooking[]).map((b) => {
+                  const checkInDate = b.checkIn ? new Date(b.checkIn) : new Date();
+                  const checkOutDate = b.checkOut ? new Date(b.checkOut) : new Date(checkInDate.getTime() + 86400000);
+                  const diffDays = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
+                  
+                  const derivedStatus = normalizeStatus(b.status);
+
+                  return {
+                      id: String(b.bookingId ?? b.id ?? b.confirmationCode ?? b.confirmationNumber ?? crypto.randomUUID()),
+                      propertyId: String((b as any).propertyId ?? b.bookingId ?? b.id ?? ""),
+                      orderId: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
+                      orderNumber: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
+                      status: derivedStatus,
+                      property: b.propertyName || "Prime Stay Property",
+                      location: b.propertyAddress || "Sri Lanka",
+                      imageSrc: b.propertyImage || "/images/properties/property-1.jpg",
+                      checkIn: b.checkIn || "",
+                      checkOut: b.checkOut || "",
+                      guests: `${b.adults ?? 1} Guest${(b.adults ?? 1) > 1 ? "s" : ""}`,
+                      totalPrice: b.totalAmount ?? 0,
+                      nightsLabel: `${diffDays} night${diffDays > 1 ? "s" : ""}`,
+                      paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
+                      paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY" && b.status !== "PENDING",
+                      roomName: b.roomName,
+                      roomQuantity: b.roomQuantity || 1,
+                      isFromStore: false,
+                  };
+              })
+              console.log("API BOOKINGS:", apiBookings)
+          } catch (err) {
+              console.warn("API booking fetch failed:", err)
+          }
+
+          setBookings(apiBookings)
+      } catch (err) {
+          console.error("Failed to load bookings:", err)
+      } finally {
+          setLoading(false)
+      }
+  }
 
   useEffect(() => {
     if (searchParams?.get("payment_success") === "true") {
       const bookingRef = searchParams.get("bookingRef") || "";
+      const isModification = searchParams.get("type") === "modification";
+
       if (bookingRef) {
-        guestApi.sendReceipt(bookingRef).then(() => {
-          setShowSuccessModal(true);
-          setSuccessBookingRef(bookingRef);
-          // Reload bookings to reflect CONFIRMED status instead of PENDING
-          if (user) {
-            guestApi.getGuestBookings(user.email).then(data => {
-              // trigger a reload indirectly or let the main effect handle it
+        const commitAndReload = async () => {
+          try {
+            // If this was a modification payment, commit the pending modification first.
+            if (isModification) {
+              setSuccessType("modification");
+              const rawPending = sessionStorage.getItem("pendingBookingModification");
+              if (rawPending) {
+                try {
+                  const pending = JSON.parse(rawPending);
+                  await guestApi.modifyBooking(pending.bookingId, {
+                    roomId: pending.roomId,
+                    propertyId: pending.propertyId,
+                    checkInDate: pending.checkInDate,
+                    checkOutDate: pending.checkOutDate,
+                    guests: pending.guests,
+                  });
+                } catch (modErr) {
+                  console.error("Failed to commit pending modification after payment:", modErr);
+                } finally {
+                  sessionStorage.removeItem("pendingBookingModification");
+                }
+              }
+              // The backend modifyBooking method sends the booking modification email!
+              // So we DO NOT call guestApi.sendReceipt(bookingRef) here.
+              setSuccessBookingRef(bookingRef);
+              setShowSuccessModal(true);
               window.history.replaceState(null, "", "/guest/booking");
-              window.location.reload();
-            });
+              await loadBookings();
+            } else {
+              setSuccessType("booking");
+              // Send receipt email (confirms booking status from PENDING → CONFIRMED)
+              await guestApi.sendReceipt(bookingRef);
+              setSuccessBookingRef(bookingRef);
+              setShowSuccessModal(true);
+              window.history.replaceState(null, "", "/guest/booking");
+              await loadBookings();
+            }
+          } catch (err) {
+            console.error("Failed to confirm booking receipt", err);
           }
-        }).catch(err => {
-          console.error("Failed to confirm booking receipt", err);
-        });
+        };
+
+        commitAndReload();
       }
     }
   }, [searchParams, user])
 
   useEffect(() => {
-    async function loadBookings() {
-        try {
-            const email = user?.email
-            if (!email) {
-              setBookings([])
-              setLoading(false)
-              return
-            }
-
-            let apiBookings: BookingCardData[] = []
-            try {
-                const data = await guestApi.getGuestBookings(email)
-                type ApiBooking = {
-                  bookingId?: number | string
-                  id?: number | string
-                  confirmationNumber?: string
-                  confirmationCode?: string
-                  propertyName?: string
-                  propertyAddress?: string
-                  propertyImage?: string
-                  roomName?: string
-                  guestName?: string
-                  guestEmail?: string
-                  adults?: number
-                  checkIn?: string
-                  checkOut?: string
-                  totalAmount?: number
-                  status?: string
-                  paymentMethod?: string
-                  createdAt?: string
-                  roomQuantity?: number
-                }
-
-                const normalizeStatus = (s?: string): BookingStatus => {
-                  if (s === "COMPLETED") return "COMPLETED"
-                  if (s === "CANCELLED") return "CANCELLED"
-                  return "UPCOMING"
-                }
-
-                apiBookings = (data as ApiBooking[]).map((b) => {
-                    const checkInDate = b.checkIn ? new Date(b.checkIn) : new Date();
-                    const checkOutDate = b.checkOut ? new Date(b.checkOut) : new Date(checkInDate.getTime() + 86400000);
-                    const diffDays = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
-                    
-                    const derivedStatus = normalizeStatus(b.status);
-
-                    return {
-                        id: String(b.bookingId ?? b.id ?? b.confirmationCode ?? b.confirmationNumber ?? crypto.randomUUID()),
-                        propertyId: String((b as any).propertyId ?? b.bookingId ?? b.id ?? ""),
-                        orderId: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
-                        orderNumber: b.confirmationCode || b.confirmationNumber || `BK-${String(b.bookingId ?? b.id ?? "")}`,
-                        status: derivedStatus,
-                        property: b.propertyName || "Prime Stay Property",
-                        location: b.propertyAddress || "Sri Lanka",
-                        imageSrc: b.propertyImage || "/images/properties/property-1.jpg",
-                        checkIn: b.checkIn || "",
-                        checkOut: b.checkOut || "",
-                        guests: `${b.adults ?? 1} Guest${(b.adults ?? 1) > 1 ? "s" : ""}`,
-                        totalPrice: b.totalAmount ?? 0,
-                        nightsLabel: `${diffDays} night${diffDays > 1 ? "s" : ""}`,
-                        paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
-                        paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
-                        roomName: b.roomName,
-                        roomQuantity: b.roomQuantity || 1,
-                        isFromStore: false,
-                    };
-                })
-                console.log("API BOOKINGS:", apiBookings)
-            } catch (err) {
-                console.warn("API booking fetch failed:", err)
-            }
-
-            setBookings(apiBookings)
-        } catch (err) {
-            console.error("Failed to load bookings:", err)
-        } finally {
-            setLoading(false)
-        }
-    }
-
     if (user) loadBookings();
   }, [user]);
   
@@ -192,7 +225,7 @@ function BookingsContent() {
             </div>
           ) : (
             bookings
-              .filter(b => b.status === activeTab)
+              .filter(b => activeTab === "UPCOMING" ? (b.status === "UPCOMING" || b.status === "PENDING") : b.status === activeTab)
               .map(booking => <BookingCard key={booking.id} booking={booking} />)
           )}
         </div>
@@ -218,8 +251,14 @@ function BookingsContent() {
                   <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
                       <ShieldCheck size={40} />
                   </div>
-                  <h2 className="text-[28px] font-bold text-[#1d1d1d] mb-2">Payment Successful!</h2>
-                  <p className="text-[15px] text-[#555] mb-8">Your room has been successfully booked. An itinerary has been sent to your email.</p>
+                  <h2 className="text-[28px] font-bold text-[#1d1d1d] mb-2">
+                    {successType === "modification" ? "Booking Modified!" : "Payment Successful!"}
+                  </h2>
+                  <p className="text-[15px] text-[#555] mb-8">
+                    {successType === "modification"
+                      ? "Your booking has been successfully updated. A modification receipt has been sent to your email."
+                      : "Your room has been successfully booked. An itinerary has been sent to your email."}
+                  </p>
                   
                   {successBookingRef && (
                       <div className="bg-[#f8f8f8] border border-[#e8e8e8] p-5 rounded-2xl w-full mb-8">

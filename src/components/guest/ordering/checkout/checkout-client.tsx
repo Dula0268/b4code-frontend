@@ -10,6 +10,7 @@ import { useOrderStore } from "@/store/guest/ordering/order.store";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
+import { paymentApi } from "@/api/payment/payment.api";
 
 /* ─── Helpers ─── */
 
@@ -68,8 +69,12 @@ export default function CheckoutClient() {
   );
   const router = useRouter();
   const placeOrder = useOrderStore((s) => s.placeOrder);
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
   const handlePlaceOrder = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    try {
     // Room QR but not logged in — block ordering
     if (isRoomQr && !user) {
       return;
@@ -77,12 +82,14 @@ export default function CheckoutClient() {
 
     if (!location || !finalGuestName || !propertyId) {
       toast.error("Please provide your name and ensure you have scanned a valid QR code.");
+      setIsProcessing(false);
       return;
     }
 
     // Walk-in (table QR) requires phone
     if (isTableQr && !user && !walkInPhone) {
       toast.error("Please provide your phone number.");
+      setIsProcessing(false);
       return;
     }
 
@@ -123,9 +130,56 @@ export default function CheckoutClient() {
     
     if (orderId) {
       clearCart();
+
+      // If guest chose online payment, redirect through PayHere before confirmation
+      if (resolvedPaymentMethod === "online") {
+        try {
+          const response = await paymentApi.initiatePayment({
+            amount: total,
+            currency: "LKR",
+            paymentMethod: "VISA",
+            firstName: finalGuestName.split(" ")[0] || "Guest",
+            lastName: finalGuestName.split(" ").slice(1).join(" ") || "",
+            email: "",
+            phone: walkInPhone || "",
+            foodOrderId: Number(orderId),
+            returnParams: window.location.origin + "/guest/order/confirmation",
+          });
+
+          if (response.checkoutUrl && response.payHereParams) {
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = response.checkoutUrl;
+            form.style.display = "none";
+
+            const params = new URLSearchParams(response.payHereParams);
+            params.forEach((value, key) => {
+              const input = document.createElement("input");
+              input.type = "hidden";
+              input.name = key;
+              input.value = value;
+              form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            return; // PayHere will redirect to /guest/order/confirmation on success
+          }
+        } catch (err) {
+          console.error("Payment initiation failed:", err);
+          toast.error("Could not initiate online payment. Please try cash instead.");
+          setIsProcessing(false);
+          return;
+        }
+      }
+
       router.push("/guest/order/confirmation");
     } else {
       toast.error("Failed to place order. Please try again.");
+    }
+    } finally {
+      // If we're redirecting to PayHere, this might run before the page unloads, but that's fine.
+      setIsProcessing(false);
     }
   };
 
@@ -134,7 +188,7 @@ export default function CheckoutClient() {
       {/* ─── Breadcrumbs + Subtitle ─── */}
       <div className="space-y-1 mb-4">
         <nav className="flex items-center gap-2 text-base">
-          <Link href="/guest/order" className="flex items-center gap-1">
+          <Link href={qrContext ? `/guest/order?qrId=${qrContext.qrId}` : "/guest/order"} className="flex items-center gap-1">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M3 12L12 3L21 12M5 10.5V20.5C5 20.776 5.224 21 5.5 21H10.5V16C10.5 15.724 10.724 15.5 11 15.5H13C13.276 15.5 13.5 15.724 13.5 16V21H18.5C18.776 21 19 20.776 19 20.5V10.5"
@@ -148,7 +202,7 @@ export default function CheckoutClient() {
           <span className="text-[16px] font-medium text-[#828282] leading-[22.4px]">Home</span>
           <ChevronRight />
           <Link
-            href="/guest/order/menu"
+            href={qrContext ? `/guest/order/menu?qrId=${qrContext.qrId}` : "/guest/order/menu"}
             className="text-[16px] font-medium text-[#828282] leading-[22.4px] hover:underline"
           >
             Menu
@@ -618,20 +672,29 @@ export default function CheckoutClient() {
               {/* Place Order button */}
               <button
                 onClick={handlePlaceOrder}
-                className="w-full flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] transition cursor-pointer"
+                disabled={isProcessing}
+                className="w-full flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
               >
-                <span className="text-[16px] font-semibold text-white leading-[24px]">
-                  Confirm & Place Order
-                </span>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="ml-1">
-                  <path
-                    d="M3 8H13M13 8L9 4M13 8L9 12"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                {isProcessing ? (
+                  <span className="text-[16px] font-semibold text-white leading-[24px]">
+                    Processing...
+                  </span>
+                ) : (
+                  <>
+                    <span className="text-[16px] font-semibold text-white leading-[24px]">
+                      Confirm & Place Order
+                    </span>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="ml-1">
+                      <path
+                        d="M3 8H13M13 8L9 4M13 8L9 12"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </>
+                )}
               </button>
 
               {/* Secure badge */}

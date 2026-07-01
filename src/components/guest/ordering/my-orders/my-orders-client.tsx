@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useOrderStore, type Order, type OrderStatus } from "@/store/guest/ordering/order.store";
 
 import { useAuthStore } from "@/store/auth/auth.store";
-import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +37,7 @@ const STATUS_STYLES: Record<OrderStatus, { bg: string; dot: string; text: string
   "in-progress":{ bg: "bg-[#fef3c7] border-[#fde68a]", dot: "bg-[#f59e0b]", text: "text-[#92400e]" },
   delivered:    { bg: "bg-[#dcfce7] border-[#bbf7d0]", dot: "bg-[#22c55e]", text: "text-[#166534]" },
   cancelled:    { bg: "bg-[#fee2e2] border-[#fecaca]", dot: "bg-[#ef4444]", text: "text-[#991b1b]" },
+  "payment-pending": { bg: "bg-[#f3f4f6] border-[#d1d5db]", dot: "bg-[#9ca3af]", text: "text-[#4b5563]" },
 };
 
 function StatusBadge({ status }: { status: OrderStatus }) {
@@ -48,6 +48,7 @@ function StatusBadge({ status }: { status: OrderStatus }) {
     "in-progress": "In Progress",
     delivered: "Delivered",
     cancelled: "Cancelled",
+    "payment-pending": "Payment Pending",
   };
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12px] font-medium leading-[16px] ${s.bg} ${s.text}`}>
@@ -81,18 +82,19 @@ export default function MyOrdersClient() {
   const currentOrder = useOrderStore((s) => s.currentOrder);
   const fetchOrderHistory = useOrderStore((s) => s.fetchOrderHistory);
   const user = useAuthStore((s) => s.user);
-  const guestSessionId = useGuestSessionStore((s) => s.sessionId);
 
   React.useEffect(() => {
-    fetchOrderHistory(user?.userId, guestSessionId || undefined);
-  }, [user?.userId, guestSessionId, fetchOrderHistory]);
+    fetchOrderHistory(user?.userId);
+  }, [user?.userId, fetchOrderHistory]);
 
   const [filter, setFilter] = React.useState<"All" | "Active" | "Past">("All");
 
   // Combine current order (if any) with history
   const allOrders = React.useMemo(() => {
     const list: Order[] = [];
-    if (currentOrder) list.push(currentOrder);
+    if (currentOrder) {
+      list.push(currentOrder);
+    }
     
     // Add history orders, avoiding duplicates
     for (const histOrder of orderHistory) {
@@ -103,6 +105,9 @@ export default function MyOrdersClient() {
 
     // Apply Filter
     const filteredList = list.filter((order) => {
+      // Never show payment-pending orders
+      if (order.currentStatus === "payment-pending") return false;
+
       if (filter === "All") return true;
       const isActive = ["placed", "accepted", "in-progress"].includes(order.currentStatus);
       if (filter === "Active") return isActive;
@@ -112,8 +117,8 @@ export default function MyOrdersClient() {
     
     // Sort by timestamp descending (newest first)
     filteredList.sort((a, b) => {
-      const aTime = a.timeline[a.timeline.length - 1]?.timestamp || 0;
-      const bTime = b.timeline[b.timeline.length - 1]?.timestamp || 0;
+      const aTime = a.timeline?.[a.timeline.length - 1]?.timestamp || 0;
+      const bTime = b.timeline?.[b.timeline.length - 1]?.timestamp || 0;
       return bTime - aTime;
     });
 
@@ -195,9 +200,9 @@ export default function MyOrdersClient() {
           </div>
         ) : (
           paged.map((order, idx) => {
-            const placedTs = order.timeline[0]?.timestamp ?? Date.now();
+            const placedTs = order.timeline?.[0]?.timestamp ?? Date.now();
             // Use unique key combining order ID and timeline timestamp to avoid duplicates
-            const uniqueKey = `${order.id}-${order.timeline[0]?.timestamp ?? idx}`;
+            const uniqueKey = `${order.id}-${order.timeline?.[0]?.timestamp ?? idx}`;
             return (
               <React.Fragment key={uniqueKey}>
                 {/* Desktop row */}

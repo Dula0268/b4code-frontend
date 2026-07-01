@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 // QR session context
 
@@ -41,7 +41,7 @@ export const useOrderContextStore = create<OrderContextState & OrderContextActio
     }),
     {
       name: "order-context-storage",
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );
-

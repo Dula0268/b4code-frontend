@@ -2,7 +2,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "@/lib/axios";
 import type { MenuItem } from "./cart.store";
-import { v4 as uuidv4 } from "uuid";
+const generateUUID = () => {
+  if (typeof window !== "undefined" && window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return "sess-" + Math.random().toString(36).substring(2, 15) + "-" + Date.now().toString(36);
+};
 
 import { useGuestSessionStore } from "./guest-session.store";
 
@@ -13,7 +18,8 @@ export type OrderStatus =
   | "accepted"
   | "in-progress"
   | "delivered"
-  | "cancelled";
+  | "cancelled"
+  | "payment-pending";
 
 export type OrderLine = {
   item: MenuItem;
@@ -122,11 +128,14 @@ function mapBackendStatus(backendStatus: string): OrderStatus {
     READY: "in-progress",
     DELIVERED: "delivered",
     CANCELLED: "cancelled",
+    PAYMENT_PENDING: "payment-pending",
+    payment_pending: "payment-pending",
     placed: "placed",
     accepted: "accepted",
     "in-progress": "in-progress",
     delivered: "delivered",
     cancelled: "cancelled",
+    "payment-pending": "payment-pending",
   };
   return statusMap[backendStatus] || (statusMap[backendStatus.toLowerCase()] as OrderStatus) || "placed";
 }
@@ -232,23 +241,21 @@ export const useOrderStore = create<OrderState>()(
         guestName: opts.guestName,
         guestPhone: opts.guestPhone,
         totalAmount: opts.total,
-        status: "PLACED",
+        status: (opts.paymentMethod === "online" || opts.paymentMethod === "card") ? "PAYMENT_PENDING" : "PLACED",
       });
-
-      const resolvedSessionId = opts.guestSessionId || useGuestSessionStore.getState().sessionId || uuidv4();
 
         // Call backend API
       const response = await api.post("/orders", {
         propertyId: opts.propertyId,
         guestId: opts.guestId,
-        guestSessionId: resolvedSessionId,
         location: opts.location,
         guestName: opts.guestName,
         guestPhone: opts.guestPhone,
         guestInstructions: opts.guestInstructions,
         paymentMethod: opts.paymentMethod,
         totalAmount: opts.total,
-        status: "PLACED",
+        // Online/card payments wait for PayHere confirmation before becoming active
+        status: (opts.paymentMethod === "online" || opts.paymentMethod === "card") ? "PAYMENT_PENDING" : "PLACED",
         items: opts.lines.map((line) => {
           let note = "";
           if (line.selectedVariantId && line.item.variants) {
@@ -284,10 +291,10 @@ export const useOrderStore = create<OrderState>()(
         serviceCharge: opts.serviceCharge,
         tax: opts.tax,
         total: opts.total,
-        currentStatus: "placed",
+        currentStatus: mapBackendStatus(backendOrder.status),
         timeline: [
           {
-            status: "placed",
+            status: mapBackendStatus(backendOrder.status),
             time: formatTime(now),
             timestamp: now.getTime(),
           },

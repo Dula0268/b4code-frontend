@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { authApi } from "@/api/auth/auth.api";
 import { setToken, removeToken } from "@/lib/token";
 import { userApi } from "@/api/user/user.api";
+import { formatApiError } from "@/lib/error-formatter";
 
 type Role = "guest" | "owner" | "admin" | "staff";
 
@@ -11,6 +12,7 @@ export type UserProfile = {
   phone: string;
   avatarUrl?: string;
   nationalIdUrl?: string;
+  staffRole?: string;
 };
 
 type AuthUser = {
@@ -64,7 +66,7 @@ type AuthActions = {
   login: (email: string, password: string) => Promise<string>;
   loginForCheckout: (email: string, password: string) => Promise<void>;
   roomLogin: (lastName: string, roomNumber: string, propertyId: number) => Promise<void>;
-  register: (email: string, password: string, role: Role, propertyId?: number) => Promise<void>;
+  register: (email: string, password: string, role: Role, propertyId?: number, staffRole?: string) => Promise<void>;
   registerFromCheckout: (
     email: string,
     password: string,
@@ -98,353 +100,353 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     isRestoring: false,
     error: null,
 
-  // ─── LOGIN ─────────────────────────────────────────────
-  login: async (email, password) => {
-    set({ loading: true, error: null });
+    // ─── LOGIN ─────────────────────────────────────────────
+    login: async (email, password) => {
+      set({ loading: true, error: null });
 
-    try {
-      const data = await authApi.login(email, password);
-      const role = data.role.toLowerCase() as Role;
+      try {
+        const data = await authApi.login(email, password);
+        const role = data.role.toLowerCase() as Role;
 
-      setToken(data.token);
+        setToken(data.token);
 
-      const userData: AuthUser = {
-        email: data.email,
-        role,
-        userId: data.userId,
-        propertyId: data.propertyId,
-        roomId: data.roomId,
-        profile: data.profile,
-      };
+        const userData: AuthUser = {
+          email: data.email,
+          role,
+          userId: data.userId,
+          propertyId: data.propertyId,
+          roomId: data.roomId,
+          profile: data.profile,
+        };
 
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem("auth_user", JSON.stringify(userData));
-        // Also keep legacy keys for compatibility
-        sessionStorage.setItem("accessToken", data.token);
-        sessionStorage.setItem("authEmail", data.email);
-        sessionStorage.setItem("authRole", role);
-        sessionStorage.setItem("authUserId", String(data.userId));
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("auth_user", JSON.stringify(userData));
+          // Also keep legacy keys for compatibility
+          sessionStorage.setItem("accessToken", data.token);
+          sessionStorage.setItem("authEmail", data.email);
+          sessionStorage.setItem("authRole", role);
+          sessionStorage.setItem("authUserId", String(data.userId));
 
-        // Auto-set selected property for staff so dashboard loads directly
-        if (role === "staff" && data.propertyId) {
-          const pid = String(data.propertyId);
-          sessionStorage.setItem("selected_property_id", pid);
-          localStorage.setItem("selected_property_id", pid);
+          // Auto-set selected property for staff so dashboard loads directly
+          if (role === "staff" && data.propertyId) {
+            const pid = String(data.propertyId);
+            sessionStorage.setItem("selected_property_id", pid);
+            localStorage.setItem("selected_property_id", pid);
+          }
         }
+
+        set({
+          loading: false,
+          user: userData,
+          isAuthenticated: true,
+        });
+
+        return REDIRECT_MAP[role];
+      } catch (err: unknown) {
+        const message = formatApiError(err, "Login failed. Please try again.");
+
+        console.log("LOGIN ERROR:", message);
+
+        set({ loading: false, error: message });
+
+        throw new Error(message);
       }
+    },
 
-      set({
-        loading: false,
-        user: userData,
-        isAuthenticated: true,
-      });
+    // ─── LOGIN FOR CHECKOUT ─────────────────────────────
+    loginForCheckout: async (email, password) => {
+      set({ loading: true, error: null });
 
-      return REDIRECT_MAP[role];
-    } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        (err instanceof Error ? err.message : "Unexpected error occurred");
+      try {
+        const data = await authApi.login(email, password);
+        const role = data.role.toLowerCase() as Role;
 
-      console.log("LOGIN ERROR:", message);
+        setToken(data.token);
 
-      set({ loading: false, error: message });
+        const userData: AuthUser = {
+          email: data.email,
+          role,
+          userId: data.userId,
+          propertyId: data.propertyId,
+          roomId: data.roomId,
+          profile: data.profile
+        };
 
-      throw new Error(message);
-    }
-  },
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("auth_user", JSON.stringify(userData));
+        }
 
-  // ─── LOGIN FOR CHECKOUT ─────────────────────────────
-  loginForCheckout: async (email, password) => {
-    set({ loading: true, error: null });
+        set({
+          loading: false,
+          user: userData,
+          isAuthenticated: true,
+        });
+      } catch (err: unknown) {
+        const message = formatApiError(err, "Login failed. Please try again.");
 
-    try {
-      const data = await authApi.login(email, password);
-      const role = data.role.toLowerCase() as Role;
+        set({ loading: false, error: message });
+        throw new Error(message);
+      }
+    },
 
-      setToken(data.token);
+    // ─── ROOM LOGIN FOR CHECKOUT ─────────────────────────────
+    roomLogin: async (lastName, roomNumber, propertyId) => {
+      set({ loading: true, error: null });
 
-      const userData: AuthUser = {
-        email: data.email,
-        role,
-        userId: data.userId,
-        propertyId: data.propertyId,
-        roomId: data.roomId,
-        profile: data.profile
-      };
+      try {
+        const data = await authApi.roomLogin(lastName, roomNumber, propertyId);
+        const role = data.role.toLowerCase() as Role;
 
+        setToken(data.token);
+
+        const userData: AuthUser = {
+          email: data.email,
+          role,
+          userId: data.userId,
+          propertyId: data.propertyId,
+          roomId: data.roomId,
+          profile: data.profile
+        };
+
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("auth_user", JSON.stringify(userData));
+        }
+
+        set({
+          loading: false,
+          user: userData,
+          isAuthenticated: true,
+        });
+      } catch (err: unknown) {
+        const message = formatApiError(err, "Verification failed. Please try again.");
+
+        set({ loading: false, error: message });
+        throw new Error(message);
+      }
+    },
+
+    // ─── REGISTER ─────────────────────────────────────────
+    register: async (email, password, role, propertyId, staffRole) => {
+      set({ loading: true, error: null });
+
+      try {
+        const nameParts = email.split("@")[0].split(".");
+        const firstName =
+          nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) ||
+          "User";
+        const lastName =
+          nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || "";
+
+        await authApi.register(email, password, role, firstName, lastName, undefined, propertyId, staffRole);
+
+        set({ loading: false });
+      } catch (err: unknown) {
+        const message = formatApiError(err, "Registration failed. Please try again.");
+
+        set({ loading: false, error: message });
+
+        throw new Error(message);
+      }
+    },
+
+    // ─── REGISTER FROM CHECKOUT ─────────────────────────
+    registerFromCheckout: async (email, password, profile) => {
+      set({ loading: true, error: null });
+
+      try {
+        await authApi.register(
+          email,
+          password,
+          "guest",
+          profile.firstName,
+          profile.lastName,
+          profile.phone
+        );
+
+        setToken("");
+
+        set({
+          loading: false,
+          isAuthenticated: true,
+          user: {
+            email: email.toLowerCase(),
+            role: "guest",
+            profile,
+          },
+        });
+      } catch (err: unknown) {
+        const message = formatApiError(err, "Registration failed. Please try again.");
+
+        set({ loading: false, error: message });
+
+        throw new Error(message);
+      }
+    },
+
+    // ─── VERIFY EMAIL (OTP) ─────────────────────────────
+    verifyEmail: async (email, otp) => {
+      set({ loading: true, error: null });
+
+      try {
+        await authApi.verifyEmail(email, otp);
+        set({ loading: false });
+      } catch (err) {
+        const message = formatApiError(err, "Verification failed. Please try again.");
+        set({ loading: false, error: message });
+        throw new Error(message);
+      }
+    },
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    checkEmailExists: () => {
+      // We don't have a real endpoint for this in authApi yet, so we return false
+      // or we could implement it if needed. For now, keep it simple.
+      return false;
+    },
+
+    logout: () => {
+      removeToken();
       if (typeof window !== "undefined") {
-        sessionStorage.setItem("auth_user", JSON.stringify(userData));
+        sessionStorage.removeItem("accessToken");
+        sessionStorage.removeItem("refreshToken");
+        sessionStorage.removeItem("authEmail");
+        sessionStorage.removeItem("authRole");
+        sessionStorage.removeItem("authUserId");
+        sessionStorage.removeItem("auth_user");
       }
 
-      set({
-        loading: false,
-        user: userData,
-        isAuthenticated: true,
-      });
-    } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || (err instanceof Error ? err.message : "Login failed");
+      set({ user: null, isAuthenticated: false, error: null });
+    },
 
-      set({ loading: false, error: message });
-      throw new Error(message);
-    }
-  },
+    setError: (message) => set({ error: message }),
 
-  // ─── ROOM LOGIN FOR CHECKOUT ─────────────────────────────
-  roomLogin: async (lastName, roomNumber, propertyId) => {
-    set({ loading: true, error: null });
+    reset: () => set({ user: null, isAuthenticated: false, loading: false, error: null }),
 
-    try {
-      const data = await authApi.roomLogin(lastName, roomNumber, propertyId);
-      const role = data.role.toLowerCase() as Role;
+    restoreSession: (user) =>
+      set({ user, isAuthenticated: true, loading: false, isRestoring: true, error: null }),
 
-      setToken(data.token);
+    // ─── UPDATE PASSWORD ───────────────────────────────
+    updatePassword: async (email, currentPassword, newPassword) => {
+      set({ loading: true, error: null });
 
-      const userData: AuthUser = {
-        email: data.email,
-        role,
-        userId: data.userId,
-        propertyId: data.propertyId,
-        roomId: data.roomId,
-        profile: data.profile
-      };
+      try {
+        await userApi.changePassword({ currentPassword, newPassword });
+        set({ loading: false });
+      } catch (err) {
+        const message = formatApiError(err, "Failed to update password. Please try again.");
 
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem("auth_user", JSON.stringify(userData));
+        set({ loading: false, error: message });
+
+        throw new Error(message);
       }
+    },
 
-      set({
-        loading: false,
-        user: userData,
-        isAuthenticated: true,
-      });
-    } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || (err instanceof Error ? err.message : "Verification failed");
+    // ─── UPDATE PROFILE ────────────────────────────────
+    updateProfile: async (email, updates) => {
+      set({ loading: true, error: null });
 
-      set({ loading: false, error: message });
-      throw new Error(message);
-    }
-  },
+      try {
+        const data = await userApi.updateProfile(updates);
 
-  // ─── REGISTER ─────────────────────────────────────────
-  register: async (email, password, role, propertyId) => {
-    set({ loading: true, error: null });
+        const profile: UserProfile = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          avatarUrl: data.avatarUrl,
+          nationalIdUrl: data.nationalIdUrl,
+        };
 
-    try {
-      const nameParts = email.split("@")[0].split(".");
-      const firstName =
-        nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) ||
-        "User";
-      const lastName =
-        nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || "";
+        set((state) => {
+          if (!state.user) return { loading: false };
 
-      await authApi.register(email, password, role, firstName, lastName, undefined, propertyId);
+          const updatedUser = { ...state.user, profile };
 
-      set({ loading: false });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Registration failed";
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("auth_user", JSON.stringify(updatedUser));
+          }
 
-      set({ loading: false, error: message });
+          return {
+            loading: false,
+            user: updatedUser,
+          };
+        });
+      } catch (err) {
+        const message = formatApiError(err, "Failed to update profile. Please try again.");
 
-      throw new Error(message);
-    }
-  },
+        set({ loading: false, error: message });
 
-  // ─── REGISTER FROM CHECKOUT ─────────────────────────
-  registerFromCheckout: async (email, password, profile) => {
-    set({ loading: true, error: null });
+        throw new Error(message);
+      }
+    },
 
-    try {
-      await authApi.register(
-        email,
-        password,
-        "guest",
-        profile.firstName,
-        profile.lastName,
-        profile.phone
-      );
-
-      setToken("");
-
-      set({
-        loading: false,
-        isAuthenticated: true,
-        user: {
-          email: email.toLowerCase(),
-          role: "guest",
-          profile,
-        },
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Registration failed";
-
-      set({ loading: false, error: message });
-
-      throw new Error(message);
-    }
-  },
-
-  // ─── VERIFY EMAIL (OTP) ─────────────────────────────
-  verifyEmail: async (email, otp) => {
-    set({ loading: true, error: null });
-
-    try {
-      await authApi.verifyEmail(email, otp);
-      set({ loading: false });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Verification failed";
-      set({ loading: false, error: message });
-      throw new Error(message);
-    }
-  },
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  checkEmailExists: () => {
-    // We don't have a real endpoint for this in authApi yet, so we return false
-    // or we could implement it if needed. For now, keep it simple.
-    return false;
-  },
-
-  logout: () => {
-    removeToken();
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("accessToken");
-      sessionStorage.removeItem("refreshToken");
-      sessionStorage.removeItem("authEmail");
-      sessionStorage.removeItem("authRole");
-      sessionStorage.removeItem("authUserId");
-      sessionStorage.removeItem("auth_user");
-    }
-
-    set({ user: null, isAuthenticated: false, error: null });
-  },
-
-  setError: (message) => set({ error: message }),
-
-  reset: () => set({ user: null, isAuthenticated: false, loading: false, error: null }),
-
-  restoreSession: (user) =>
-    set({ user, isAuthenticated: true, loading: false, isRestoring: true, error: null }),
-
-  // ─── UPDATE PASSWORD ───────────────────────────────
-  updatePassword: async (email, currentPassword, newPassword) => {
-    set({ loading: true, error: null });
-
-    try {
-      await userApi.changePassword({ currentPassword, newPassword });
-      set({ loading: false });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update password";
-
-      set({ loading: false, error: message });
-
-      throw new Error(message);
-    }
-  },
-
-  // ─── UPDATE PROFILE ────────────────────────────────
-  updateProfile: async (email, updates) => {
-    set({ loading: true, error: null });
-
-    try {
-      const data = await userApi.updateProfile(updates);
-
-      const profile: UserProfile = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone,
-        avatarUrl: data.avatarUrl,
-        nationalIdUrl: data.nationalIdUrl,
-      };
-
+    assignStay: (propertyId, roomId) =>
       set((state) => {
-        if (!state.user) return { loading: false };
+        if (!state.user) return state;
 
-        const updatedUser = { ...state.user, profile };
+        const updatedUser = { ...state.user, propertyId, roomId };
 
         if (typeof window !== "undefined") {
           sessionStorage.setItem("auth_user", JSON.stringify(updatedUser));
         }
 
-        return {
-          loading: false,
-          user: updatedUser,
-        };
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update profile";
+        console.log("📍 Stay Assigned to Session:", { propertyId, roomId });
 
-      set({ loading: false, error: message });
+        return { user: updatedUser };
+      }),
 
-      throw new Error(message);
-    }
-  },
+    // ─── FETCH CURRENT USER ────────────────────────────
+    fetchCurrentUser: async () => {
+      try {
+        const data = await userApi.getCurrentUser();
 
-  assignStay: (propertyId, roomId) =>
-    set((state) => {
-      if (!state.user) return state;
-
-      const updatedUser = { ...state.user, propertyId, roomId };
-
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem("auth_user", JSON.stringify(updatedUser));
-      }
-
-      console.log("📍 Stay Assigned to Session:", { propertyId, roomId });
-
-      return { user: updatedUser };
-    }),
-
-  // ─── FETCH CURRENT USER ────────────────────────────
-  fetchCurrentUser: async () => {
-    try {
-      const data = await userApi.getCurrentUser();
-
-      if (!data) {
-        set({ loading: false, isRestoring: false });
-        return;
-      }
-
-      const role = data.role.toLowerCase() as Role;
-
-      const profile: UserProfile = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone,
-        avatarUrl: data.avatarUrl,
-        nationalIdUrl: data.nationalIdUrl,
-      };
-
-      // Auto-set selected property for staff so dashboard loads directly
-      if (typeof window !== "undefined" && role === "staff" && data.propertyId) {
-        const pid = String(data.propertyId);
-        sessionStorage.setItem("selected_property_id", pid);
-        localStorage.setItem("selected_property_id", pid);
-      }
-
-      set({
-        user: {
-          email: data.email,
-          role,
-          userId: data.userId,
-          propertyId: data.propertyId,
-          profile,
-        },
-        isAuthenticated: true,
-        loading: false,
-        isRestoring: false,
-      });
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { status?: number } };
-      if (axiosError?.response?.status === 401 || axiosError?.response?.status === 403) {
-        // Token is invalid/expired — quietly clear state
-        set({ user: null, isAuthenticated: false, isRestoring: false });
-        if (typeof window !== "undefined") {
-          sessionStorage.removeItem("auth-storage");
+        if (!data) {
+          set({ loading: false, isRestoring: false });
+          return;
         }
-      } else {
-        console.error("Failed to fetch user:", err);
-        set({ isRestoring: false });
+
+        const role = data.role.toLowerCase() as Role;
+
+        const profile: UserProfile = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          avatarUrl: data.avatarUrl,
+          nationalIdUrl: data.nationalIdUrl,
+          staffRole: data.staffRole,
+        };
+
+        // Auto-set selected property for staff so dashboard loads directly
+        if (typeof window !== "undefined" && role === "staff" && data.propertyId) {
+          const pid = String(data.propertyId);
+          sessionStorage.setItem("selected_property_id", pid);
+          localStorage.setItem("selected_property_id", pid);
+        }
+
+        set({
+          user: {
+            email: data.email,
+            role,
+            userId: data.userId,
+            propertyId: data.propertyId,
+            profile,
+          },
+          isAuthenticated: true,
+          loading: false,
+          isRestoring: false,
+        });
+      } catch (err: unknown) {
+        const axiosError = err as { response?: { status?: number } };
+        if (axiosError?.response?.status === 401 || axiosError?.response?.status === 403) {
+          // Token is invalid/expired — quietly clear state
+          set({ user: null, isAuthenticated: false, isRestoring: false });
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem("auth-storage");
+          }
+        } else {
+          console.error("Failed to fetch user:", err);
+          set({ isRestoring: false });
+        }
       }
     }
-  }
-};
+  };
 });

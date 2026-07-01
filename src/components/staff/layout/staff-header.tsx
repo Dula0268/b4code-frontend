@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import UserAvatarDropdown from "@/components/shared/auth/user-avatar-dropdown";
 import NetworkIndicator from "./network-indicator";
 
 interface StaffHeaderProps {
@@ -51,6 +52,7 @@ export default function StaffHeader({
           />
         </div>
         {actions}
+        <UserAvatarDropdown />
       </div>
     </header>
   );

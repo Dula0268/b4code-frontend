@@ -127,17 +127,24 @@ function RegisterForm() {
             }
         }
 
-        if (role === "staff" && !selectedPropertyId) {
-            setLocalError("Please select a property to register for.");
-            return;
+        if (role === "staff") {
+            if (!selectedPropertyId) {
+                setLocalError("Please select a property to register for.");
+                return;
+            }
+            if (!staffRole) {
+                setLocalError("Please select a staff role.");
+                return;
+            }
         }
 
         try {
             await register(
-                email, 
-                password, 
-                role, 
-                role === "staff" ? Number(selectedPropertyId) : undefined
+                email,
+                password,
+                role,
+                role === "staff" ? Number(selectedPropertyId) : undefined,
+                role === "staff" ? staffRole : undefined
             );
             // Instead of showing success modal immediately, switch to OTP input
             setShowOtpInput(true);
@@ -248,293 +255,295 @@ function RegisterForm() {
 
                             {!showOtpInput ? (
 
-                            <form onSubmit={handleRegister} className="space-y-4">
-                                {/* Common Fields */}
-                                <div className="space-y-1.5">
-                                    <Label className="pl-1 text-[13px] font-bold text-[#282828]">Full Name</Label>
-                                    <div className="relative">
-                                        <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                            <Input
-                                                type="text"
-                                                name="fullName"
-                                                autoComplete="name"
-                                                placeholder="John Doe"
-                                                value={fullName}
-                                                onChange={(e) => setFullName(e.target.value)}
-                                                className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                required
-                                            />
-                                            <User className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <Label className="pl-1 text-[13px] font-bold text-[#282828]">Email Address</Label>
-                                    <div className="relative">
-                                        <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                            <Input
-                                                type="email"
-                                                name="email"
-                                                autoComplete="email"
-                                                placeholder="john@example.com"
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                required
-                                            />
-                                            <Mail className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <Label className="pl-1 text-[13px] font-bold text-[#282828]">Phone Number</Label>
-                                    <div className="relative">
-                                        <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                            <Input
-                                                type="tel"
-                                                name="phone"
-                                                autoComplete="tel"
-                                                placeholder="0777646946"
-                                                value={phone}
-                                                onChange={(e) => setPhone(e.target.value)}
-                                                className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                required
-                                            />
-                                            <Phone className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <form onSubmit={handleRegister} className="space-y-4">
+                                    {/* Common Fields */}
                                     <div className="space-y-1.5">
-                                        <Label className="pl-1 text-[13px] font-bold text-[#282828]">Password</Label>
+                                        <Label className="pl-1 text-[13px] font-bold text-[#282828]">Full Name</Label>
                                         <div className="relative">
                                             <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                                 <Input
-                                                    type="password"
-                                                    name="password"
-                                                    autoComplete="new-password"
-                                                    placeholder="••••••••"
-                                                    value={password}
-                                                    onChange={(e) => setPassword(e.target.value)}
-                                                    className="h-[48px] w-full rounded-full bg-transparent pl-[40px] pr-[12px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                    type="text"
+                                                    name="fullName"
+                                                    autoComplete="name"
+                                                    placeholder="John Doe"
+                                                    value={fullName}
+                                                    onChange={(e) => setFullName(e.target.value)}
+                                                    className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
                                                     required
                                                 />
-                                                <Lock className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                <User className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <Label className="pl-1 text-[13px] font-bold text-[#282828]">Confirm</Label>
+                                        <Label className="pl-1 text-[13px] font-bold text-[#282828]">Email Address</Label>
                                         <div className="relative">
                                             <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                                 <Input
-                                                    type="password"
-                                                    name="confirmPassword"
-                                                    autoComplete="new-password"
-                                                    placeholder="••••••••"
-                                                    value={confirmPassword}
-                                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                                    className="h-[48px] w-full rounded-full bg-transparent pl-[40px] pr-[12px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                    type="email"
+                                                    name="email"
+                                                    autoComplete="email"
+                                                    placeholder="john@example.com"
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
                                                     required
                                                 />
-                                                <svg className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+                                                <Mail className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Password Strength Meter */}
-                                <div className="flex items-center justify-between pt-1 pb-2">
-                                    <span className="text-[11px] font-bold text-[#953002]">Password Strength</span>
-                                    <div className="flex-1 mx-3 h-1 bg-neutral-200 rounded-full overflow-hidden">
-                                        <div className={clsx("h-full transition-all duration-300", strength.color)} style={{ width: strength.width }} />
+                                    <div className="space-y-1.5">
+                                        <Label className="pl-1 text-[13px] font-bold text-[#282828]">Phone Number</Label>
+                                        <div className="relative">
+                                            <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
+                                                <Input
+                                                    type="tel"
+                                                    name="phone"
+                                                    autoComplete="tel"
+                                                    placeholder="0777646946"
+                                                    value={phone}
+                                                    onChange={(e) => setPhone(e.target.value)}
+                                                    className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                    required
+                                                />
+                                                <Phone className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <span className={clsx("text-[11px] font-bold w-12 text-right", strength.color.replace("bg-", "text-").replace("500", "600"))}>{strength.label}</span>
-                                </div>
 
-                                {/* Extra Owner Fields */}
-                                {role === "owner" && (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div className="space-y-1.5">
-                                            <Label className="pl-1 text-[13px] font-bold text-[#282828]">Property Name</Label>
+                                            <Label className="pl-1 text-[13px] font-bold text-[#282828]">Password</Label>
                                             <div className="relative">
                                                 <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                                     <Input
-                                                        type="text"
-                                                        placeholder="Sunset Villa"
-                                                        value={propertyName}
-                                                        onChange={(e) => setPropertyName(e.target.value)}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                        required={role === "owner"}
+                                                        type="password"
+                                                        name="password"
+                                                        autoComplete="new-password"
+                                                        placeholder="••••••••"
+                                                        value={password}
+                                                        onChange={(e) => setPassword(e.target.value)}
+                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[40px] pr-[12px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                        required
                                                     />
-                                                    <Home className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                    <Lock className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label className="pl-1 text-[13px] font-bold text-[#282828]">Property Address</Label>
+                                            <Label className="pl-1 text-[13px] font-bold text-[#282828]">Confirm</Label>
                                             <div className="relative">
                                                 <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
                                                     <Input
-                                                        type="text"
-                                                        placeholder="street address, city, province."
-                                                        value={propertyAddress}
-                                                        onChange={(e) => setPropertyAddress(e.target.value)}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                        required={role === "owner"}
+                                                        type="password"
+                                                        name="confirmPassword"
+                                                        autoComplete="new-password"
+                                                        placeholder="••••••••"
+                                                        value={confirmPassword}
+                                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[40px] pr-[12px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                        required
                                                     />
-                                                    <MapPin className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                            <Label className="pl-1 text-[13px] font-bold text-[#282828]">National ID / Business Registration No.</Label>
-                                            <div className="relative">
-                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="Enter your official identification number"
-                                                        value={nationalId}
-                                                        onChange={(e) => setNationalId(e.target.value)}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                        required={role === "owner"}
-                                                    />
-                                                    <Building2 className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                    <svg className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                )}
 
-                                {/* Extra Staff Fields */}
-                                {role === "staff" && (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <div className="space-y-1.5">
-                                            <Label className="pl-1 text-[13px] font-bold text-[#282828]">Staff Role</Label>
-                                            <div className="relative">
-                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center relative">
-                                                    <select
-                                                        name="staffRole"
-                                                        value={staffRole}
-                                                        onChange={(e) => setStaffRole(e.target.value)}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] text-[#282828] border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30 appearance-none outline-none"
-                                                        required={role === "staff"}
-                                                    >
-                                                        <option value="" disabled>Select a role</option>
-                                                        <option value="Kitchen Staff">Kitchen Staff</option>
-                                                    </select>
-                                                    <Briefcase className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                    <div className="absolute right-4 pointer-events-none text-[#953002]/70">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    {/* Password Strength Meter */}
+                                    <div className="flex items-center justify-between pt-1 pb-2">
+                                        <span className="text-[11px] font-bold text-[#953002]">Password Strength</span>
+                                        <div className="flex-1 mx-3 h-1 bg-neutral-200 rounded-full overflow-hidden">
+                                            <div className={clsx("h-full transition-all duration-300", strength.color)} style={{ width: strength.width }} />
+                                        </div>
+                                        <span className={clsx("text-[11px] font-bold w-12 text-right", strength.color.replace("bg-", "text-").replace("500", "600"))}>{strength.label}</span>
+                                    </div>
+
+                                    {/* Extra Owner Fields */}
+                                    {role === "owner" && (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="space-y-1.5">
+                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">Property Name</Label>
+                                                <div className="relative">
+                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
+                                                        <Input
+                                                            type="text"
+                                                            placeholder="Sunset Villa"
+                                                            value={propertyName}
+                                                            onChange={(e) => setPropertyName(e.target.value)}
+                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                            required={role === "owner"}
+                                                        />
+                                                        <Home className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">Property Address</Label>
+                                                <div className="relative">
+                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
+                                                        <Input
+                                                            type="text"
+                                                            placeholder="street address, city, province."
+                                                            value={propertyAddress}
+                                                            onChange={(e) => setPropertyAddress(e.target.value)}
+                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                            required={role === "owner"}
+                                                        />
+                                                        <MapPin className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">National ID / Business Registration No.</Label>
+                                                <div className="relative">
+                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
+                                                        <Input
+                                                            type="text"
+                                                            placeholder="Enter your official identification number"
+                                                            value={nationalId}
+                                                            onChange={(e) => setNationalId(e.target.value)}
+                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
+                                                            required={role === "owner"}
+                                                        />
+                                                        <Building2 className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    )}
 
-                                        <div className="space-y-1.5">
-                                            <Label className="pl-1 text-[13px] font-bold text-[#282828]">Assigned Property</Label>
-                                            <div className="relative">
-                                                <div className="bg-[#f0e8e4] rounded-full w-full flex items-center relative">
-                                                    <select
-                                                        name="assignedProperty"
-                                                        value={selectedPropertyId}
-                                                        onChange={(e) => setSelectedPropertyId(Number(e.target.value))}
-                                                        className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] text-[#282828] border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30 appearance-none outline-none"
-                                                        required={role === "staff"}
-                                                    >
-                                                        <option value="" disabled>Select a property</option>
-                                                        {properties.map(p => (
-                                                            <option key={p.id} value={p.id}>{p.name}</option>
-                                                        ))}
-                                                    </select>
-                                                    <Home className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                    <div className="absolute right-4 pointer-events-none text-[#953002]/70">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    {/* Extra Staff Fields */}
+                                    {role === "staff" && (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="space-y-1.5">
+                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">Staff Role</Label>
+                                                <div className="relative">
+                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center relative">
+                                                        <select
+                                                            name="staffRole"
+                                                            value={staffRole}
+                                                            onChange={(e) => setStaffRole(e.target.value)}
+                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] text-[#282828] border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30 appearance-none outline-none"
+                                                            required={role === "staff"}
+                                                        >
+                                                            <option value="" disabled>Select a role</option>
+                                                            <option value="Kitchen Staff">Kitchen Staff</option>
+                                                            <option value="Property Staff">Property Staff</option>
+                                                            <option value="Staff Admin">Staff Admin</option>
+                                                        </select>
+                                                        <Briefcase className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                        <div className="absolute right-4 pointer-events-none text-[#953002]/70">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">Assigned Property</Label>
+                                                <div className="relative">
+                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center relative">
+                                                        <select
+                                                            name="assignedProperty"
+                                                            value={selectedPropertyId}
+                                                            onChange={(e) => setSelectedPropertyId(Number(e.target.value))}
+                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] text-[#282828] border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30 appearance-none outline-none"
+                                                            required={role === "staff"}
+                                                        >
+                                                            <option value="" disabled>Select a property</option>
+                                                            {properties.map(p => (
+                                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                                            ))}
+                                                        </select>
+                                                        <Home className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
+                                                        <div className="absolute right-4 pointer-events-none text-[#953002]/70">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    )}
+
+                                    {/* Terms Checkbox */}
+                                    <div className="flex items-center gap-2 pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAgreedToTerms(!agreedToTerms)}
+                                            className={clsx(
+                                                "h-4 w-4 rounded-full border border-neutral-300 flex items-center justify-center transition-colors",
+                                                agreedToTerms ? "bg-[#953002] border-[#953002]" : "bg-white"
+                                            )}
+                                        >
+                                            {agreedToTerms && <div className="h-2 w-2 rounded-full bg-white" />}
+                                        </button>
+                                        <p className="text-[12px] text-neutral-500 font-medium">
+                                            I agree to the <span className="text-[#953002] font-bold cursor-pointer hover:underline">Terms of Service</span> and <span className="text-[#953002] font-bold cursor-pointer hover:underline">Privacy Policy</span>.
+                                        </p>
                                     </div>
-                                )}
 
-                                {/* Terms Checkbox */}
-                                <div className="flex items-center gap-2 pt-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setAgreedToTerms(!agreedToTerms)}
-                                        className={clsx(
-                                            "h-4 w-4 rounded-full border border-neutral-300 flex items-center justify-center transition-colors",
-                                            agreedToTerms ? "bg-[#953002] border-[#953002]" : "bg-white"
-                                        )}
-                                    >
-                                        {agreedToTerms && <div className="h-2 w-2 rounded-full bg-white" />}
-                                    </button>
-                                    <p className="text-[12px] text-neutral-500 font-medium">
-                                        I agree to the <span className="text-[#953002] font-bold cursor-pointer hover:underline">Terms of Service</span> and <span className="text-[#953002] font-bold cursor-pointer hover:underline">Privacy Policy</span>.
-                                    </p>
-                                </div>
+                                    {displayError && (
+                                        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 animate-in fade-in duration-300">
+                                            {displayError}
+                                        </div>
+                                    )}
 
-                                {displayError && (
-                                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 animate-in fade-in duration-300">
-                                        {displayError}
+                                    <Button type="submit" disabled={loading} size="lg" className="w-full h-[52px] text-[15px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] mt-2 transition-all">
+                                        {loading ? "Registering…" : "Register Account →"}
+                                    </Button>
+
+                                    <div className="mt-4 text-center text-[13px] font-medium text-neutral-600 pb-2">
+                                        Already have an account?{" "}
+                                        <Link
+                                            href={(() => {
+                                                const redirectParam = searchParams.get("redirect");
+                                                const roleSuffix = `?role=${role}`;
+                                                return redirectParam
+                                                    ? `/auth/login${roleSuffix}&redirect=${encodeURIComponent(redirectParam)}`
+                                                    : `/auth/login${roleSuffix}`;
+                                            })()}
+                                            className="font-extrabold text-[#953002] hover:underline"
+                                        >
+                                            Log in
+                                        </Link>
                                     </div>
-                                )}
 
-                                <Button type="submit" disabled={loading} size="lg" className="w-full h-[52px] text-[15px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] mt-2 transition-all">
-                                    {loading ? "Registering…" : "Register Account →"}
-                                </Button>
+                                    <div className="relative flex items-center py-2">
+                                        <div className="flex-grow border-t border-neutral-300"></div>
+                                        <span className="flex-shrink-0 mx-4 text-neutral-400 text-[10px] font-extrabold tracking-widest uppercase">Or register with</span>
+                                        <div className="flex-grow border-t border-neutral-300"></div>
+                                    </div>
 
-                                <div className="mt-4 text-center text-[13px] font-medium text-neutral-600 pb-2">
-                                    Already have an account?{" "}
-                                    <Link
-                                        href={(() => {
-                                            const redirectParam = searchParams.get("redirect");
-                                            const roleSuffix = `?role=${role}`;
-                                            return redirectParam
-                                                ? `/auth/login${roleSuffix}&redirect=${encodeURIComponent(redirectParam)}`
-                                                : `/auth/login${roleSuffix}`;
-                                        })()}
-                                        className="font-extrabold text-[#953002] hover:underline"
-                                    >
-                                        Log in
-                                    </Link>
-                                </div>
-
-                                <div className="relative flex items-center py-2">
-                                    <div className="flex-grow border-t border-neutral-300"></div>
-                                    <span className="flex-shrink-0 mx-4 text-neutral-400 text-[10px] font-extrabold tracking-widest uppercase">Or register with</span>
-                                    <div className="flex-grow border-t border-neutral-300"></div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                                    <Button type="button" variant="outline" className="rounded-full h-[46px] font-bold text-neutral-600 border-neutral-200 hover:bg-neutral-50">
-                                        <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                                        </svg>
-                                        Google
-                                    </Button>
-                                    <Button type="button" variant="outline" className="rounded-full h-[46px] font-bold text-neutral-600 border-neutral-200 hover:bg-neutral-50">
-                                        <svg className="w-4 h-4 mr-2 text-black" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.09 2.31-.86 3.59-.8 1.51.05 2.95.72 3.81 1.96-3.41 1.94-2.89 6.64.45 8.01-.8 1.9-1.91 3.59-2.93 5zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                                        </svg>
-                                        Apple
-                                    </Button>
-                                </div>
-                            </form>
-                        ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                        <Button type="button" variant="outline" className="rounded-full h-[46px] font-bold text-neutral-600 border-neutral-200 hover:bg-neutral-50">
+                                            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                                            </svg>
+                                            Google
+                                        </Button>
+                                        <Button type="button" variant="outline" className="rounded-full h-[46px] font-bold text-neutral-600 border-neutral-200 hover:bg-neutral-50">
+                                            <svg className="w-4 h-4 mr-2 text-black" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.09 2.31-.86 3.59-.8 1.51.05 2.95.72 3.81 1.96-3.41 1.94-2.89 6.64.45 8.01-.8 1.9-1.91 3.59-2.93 5zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                                            </svg>
+                                            Apple
+                                        </Button>
+                                    </div>
+                                </form>
+                            ) : (
                                 <form onSubmit={handleVerifyOtp} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="text-center">
                                         <p className="text-[14px] text-neutral-600 font-medium leading-relaxed">
-                                            We&apos;ve sent a 6-digit verification code to<br/>
+                                            We&apos;ve sent a 6-digit verification code to<br />
                                             <span className="font-bold text-[#953002]">{email}</span>
                                         </p>
                                     </div>
@@ -561,16 +570,16 @@ function RegisterForm() {
                                     )}
 
                                     <div className="space-y-3">
-                                        <Button 
-                                            type="submit" 
-                                            disabled={loading || otp.length !== 6} 
-                                            size="lg" 
+                                        <Button
+                                            type="submit"
+                                            disabled={loading || otp.length !== 6}
+                                            size="lg"
                                             className="w-full h-[52px] text-[15px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] transition-all"
                                         >
                                             {loading ? "Verifying…" : "Verify & Complete →"}
                                         </Button>
-                                        
-                                        <button 
+
+                                        <button
                                             type="button"
                                             onClick={() => setShowOtpInput(false)}
                                             className="w-full text-[13px] font-bold text-neutral-500 hover:text-[#953002] transition-colors"
@@ -600,8 +609,8 @@ function RegisterForm() {
                                 {role === "staff" ? "Registration Submitted" : "Registered Successful"}
                             </h3>
                             <p className="text-[14px] text-neutral-500 leading-relaxed mb-6">
-                                {role === "staff" 
-                                    ? "Your request has been sent to the property owner for approval. You will be able to log in once they verify your account." 
+                                {role === "staff"
+                                    ? "Your request has been sent to the property owner for approval. You will be able to log in once they verify your account."
                                     : "You have been securely registered. Thank you for joining our platform."}
                             </p>
 
