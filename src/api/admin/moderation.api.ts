@@ -74,6 +74,15 @@ export const ModerationApi = {
   getHistory: (params: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }): Promise<PageResponse<ModerationHistory>> =>
     api.get('/admin/moderation/history', { params }).then((res) => res.data),
 
-  exportHistory: (params: { action?: string; search?: string; from?: string; to?: string }): Promise<Blob> =>
-    api.get('/admin/moderation/history/export', { params, responseType: 'blob' }).then((res) => res.data),
+  exportReviewsCsv: (params: { flagType?: string; rating?: number }): Promise<Blob> =>
+    api.get('/admin/moderation/reviews/export/csv', { params, responseType: 'blob' }).then((res) => res.data),
+
+  exportReviewsPdf: (params: { flagType?: string; rating?: number }): Promise<Blob> =>
+    api.get('/admin/moderation/reviews/export/pdf', { params, responseType: 'blob' }).then((res) => res.data),
+
+  exportDisputesCsv: (params: { status?: string; search?: string }): Promise<Blob> =>
+    api.get('/admin/moderation/disputes/export/csv', { params, responseType: 'blob' }).then((res) => res.data),
+
+  exportDisputesPdf: (params: { status?: string; search?: string }): Promise<Blob> =>
+    api.get('/admin/moderation/disputes/export/pdf', { params, responseType: 'blob' }).then((res) => res.data),
 };

@@ -1,8 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { useAuthStore } from "@/store/auth/auth.store";
 import {
     Info,
     MapPin,
@@ -16,31 +19,46 @@ import {
     User,
     Phone,
     Edit,
+    Building2,
+    Loader2,
 } from "lucide-react";
 
-/* ───────────────────── component ───────────────────── */
+function PropertyDetailsContent() {
+    const searchParams = useSearchParams();
+    const propertyId = searchParams.get("id");
+    const { user } = useAuthStore();
+    const ownerId = user?.userId ?? 1;
 
-/**
- * PropertyDetailsPage Component
- *
- * Read-only view of a single property showing its full details,
- * amenities, location map, and photo gallery.
- */
-export default function PropertyDetailsPage() {
     const [activeTab, setActiveTab] = useState("Overview");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [property, setProperty] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const property = {
-        name: "Property Name",
-        description:
-            "Experience breathtaking coastal views in this ultra-modern architectural masterpiece. Located in the heart of Malibu, this villa offers premium amenities, infinity pool, and private beach access for an unforgettable stay.",
-        type: "Villa",
-        yearBuilt: "2022",
-        address: "123 Coastal Way",
-        city: "Malibu",
-        postalCode: "90265",
-    };
+    useEffect(() => {
+        if (!propertyId) {
+            setError("No property ID provided.");
+            setLoading(false);
+            return;
+        }
+        propertiesApi
+            .getProperty(Number(propertyId), ownerId)
+            .then((data) => setProperty(data))
+            .catch(() => setError("Failed to load property details."))
+            .finally(() => setLoading(false));
+    }, [propertyId, ownerId]);
 
     const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+
+    const statusLabel = property?.status === "active" ? "ACTIVE"
+        : property?.status === "inactive" ? "INACTIVE"
+        : property?.status === "maintenance" ? "MAINTENANCE"
+        : property?.status?.toUpperCase() ?? "PENDING";
+
+    const statusColor = property?.status === "active" ? "#27ae60"
+        : property?.status === "inactive" ? "#828282"
+        : property?.status === "maintenance" ? "#e67e22"
+        : "#b0b0b0";
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
@@ -69,186 +87,230 @@ export default function PropertyDetailsPage() {
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Property Name</span>
+                    <span className="text-[#953002] font-semibold">{property?.name ?? "Property Details"}</span>
                 </div>
+
+                {/* Loading / Error */}
+                {loading && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 size={28} color="#953002" className="animate-spin" />
+                    </div>
+                )}
+                {error && !loading && (
+                    <div className="flex-1 flex items-center justify-center text-[13px] text-[#e74c3c]">{error}</div>
+                )}
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto pb-4 pr-1">
+                {!loading && !error && property && (
+                    <div className="flex-1 overflow-y-auto pb-4 pr-1">
 
-                    {/* ── Property Header Card ── */}
-                    <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
-                        <div className="flex items-center gap-4 flex-1">
-                            <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002]">
-                                <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=90&fit=crop" alt="" className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2.5">
-                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Property Name</h2>
-                                    <span className="text-[9px] font-bold text-white bg-[#27ae60] rounded w-max px-[7px] py-[2px] tracking-widest">ACTIVE</span>
+                        {/* ── Property Header Card ── */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002] bg-[#f0ebe5] flex items-center justify-center">
+                                    {property.image ? (
+                                        <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Building2 size={28} color="#c0a898" />
+                                    )}
                                 </div>
-                                <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
-                                    <MapPin size={12} /> 123 Coastal Way, Malibu, CA 90265
-                                </div>
-                                <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
-                                    <span className="flex items-center gap-[3px]"><Bed size={12} /> 5 Rooms</span>
-                                    <span className="flex items-center gap-[3px]"><Calendar size={12} /> Rs. 350,000/night</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex gap-2.5">
-                            <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-gray-50"><Eye size={14} /> View Live</button>
-                            <a href="/owner/properties/editPropertyDetails" className="no-underline">
-                                <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02]"><Edit size={14} /> Edit Property</button>
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* ── Tabs ── */}
-                    <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
-                        {tabs.map((t) => (
-                            <button
-                                key={t}
-                                onClick={() => {
-                                    if (t === "Overview") setActiveTab(t);
-                                    else if (t === "Rooms") window.location.href = "/owner/properties/propertyRoomInventry";
-                                    else if (t === "Availability") window.location.href = "/owner/properties/Availability";
-                                    else if (t === "Rates") window.location.href = "/owner/properties/Rate";
-                                    else if (t === "Reservations") window.location.href = "/owner/properties/Reservation";
-                                    else if (t === "Media") window.location.href = "/owner/properties/Media";
-                                    else if (t === "Staff") window.location.href = "/owner/properties/Staff";
-                                    else if (t === "Settings") window.location.href = "/owner/properties/Setting";
-                                    else setActiveTab(t);
-                                }}
-                                className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative ${
-                                    activeTab === t ? "text-[#953002] font-bold border-b-2 border-[#953002]" : "text-[#828282] font-medium border-b-2 border-transparent hover:text-[#4f4f4f]"
-                                }`}
-                            >
-                                {t}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* ── Two Column Layout ── */}
-                    <div className="grid grid-cols-[1fr_260px] gap-4 items-start">
-                        {/* Left Column */}
-                        <div className="flex flex-col gap-3">
-                            {/* Core Details */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex items-center gap-2 mb-2.5">
-                                    <Info size={16} color="#953002" />
-                                    <span className="text-[15px] font-bold text-[#1d1d1d]">Core Details</span>
-                                </div>
-                                <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Property Display Name</label>
-                                <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">{property.name}</div>
-                                <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Property Description</label>
-                                <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[70px] leading-relaxed">{property.description}</div>
-                                <div className="grid grid-cols-2 gap-3 mt-2">
-                                    <div className="flex-1">
-                                        <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Property Type</label>
-                                        <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center justify-between">
-                                            <span>{property.type}</span>
-                                            <ChevronDown size={14} color="#b0b0b0" />
-                                        </div>
+                                <div>
+                                    <div className="flex items-center gap-2.5">
+                                        <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">{property.name}</h2>
+                                        <span
+                                            className="text-[9px] font-bold text-white rounded w-max px-[7px] py-[2px] tracking-widest"
+                                            style={{ backgroundColor: statusColor }}
+                                        >
+                                            {statusLabel}
+                                        </span>
                                     </div>
-                                    <div className="flex-1">
-                                        <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Year Built</label>
-                                        <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">{property.yearBuilt}</div>
+                                    <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
+                                        <MapPin size={12} />
+                                        {[property.address, property.city, property.country].filter(Boolean).join(", ")}
+                                    </div>
+                                    <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
+                                        <span className="flex items-center gap-[3px]"><Bed size={12} /> {property.roomCount ?? 0} Rooms</span>
+                                        <span className="flex items-center gap-[3px]"><Calendar size={12} /> {property.rate ?? "—"}/night</span>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Location & Map */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex items-center gap-2 mb-2.5">
-                                    <MapPin size={16} color="#e74c3c" />
-                                    <span className="text-[15px] font-bold text-[#1d1d1d]">Location & Map</span>
-                                </div>
-                                <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Street Address</label>
-                                <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">{property.address}</div>
-                                <div className="grid grid-cols-2 gap-3 mt-2">
-                                    <div className="flex-1">
-                                        <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">City</label>
-                                        <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">{property.city}</div>
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Postal Code</label>
-                                        <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">{property.postalCode}</div>
-                                    </div>
-                                </div>
-                                {/* Map Placeholder */}
-                                <div className="mt-2.5 rounded-lg overflow-hidden h-[120px] bg-[#f0ebe5]">
-                                    <div className="relative w-full h-full">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-[#f0ebe5] to-[#e8e0d8] rounded-lg flex flex-col items-center justify-center">
-                                            <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-                                                <path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24s16-12 16-24C32 7.16 24.84 0 16 0zm0 22c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" fill="#953002" />
-                                            </svg>
-                                            <div className="text-[11px] text-[#828282] mt-1.5">Map Preview</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Column */}
-                        <div className="flex flex-col gap-3">
-                            {/* Quick Stats */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                <div className="text-[14px] font-bold text-[#953002] mb-2.5">Quick Stats</div>
-                                <div className="flex justify-between items-center py-2 border-b border-[#f5f5f5]">
-                                    <span className="text-[13px] text-[#4f4f4f]">Occupancy Rate</span>
-                                    <span className="text-[14px] font-bold text-[#953002]">84%</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-[#f5f5f5]">
-                                    <span className="text-[13px] text-[#4f4f4f]">Avg. Rating</span>
-                                    <span className="text-[14px] font-bold text-[#1d1d1d] flex items-center gap-[3px]">
-                                        <Star size={12} color="#ffb401" fill="#ffb401" /> 4.9
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-none">
-                                    <span className="text-[13px] text-[#4f4f4f]">Total Reviews</span>
-                                    <span className="text-[14px] font-bold text-[#1d1d1d]">128</span>
-                                </div>
-                            </div>
-
-                            {/* Manager Info */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                <div className="text-[14px] font-bold text-[#953002] mb-2.5">Manager Info</div>
-                                <div className="flex items-center gap-2.5 mb-2.5">
-                                    <div className="w-[34px] h-[34px] rounded-full bg-[#fef5ef] flex items-center justify-center">
-                                        <User size={16} color="#953002" />
-                                    </div>
-                                    <div>
-                                        <div className="text-[13px] font-bold text-[#1d1d1d]">Marcus Sterling</div>
-                                        <div className="text-[11px] text-[#b0b0b0]">Property Owner</div>
-                                    </div>
-                                </div>
-                                <button className="w-full flex items-center justify-center gap-1.5 py-2 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-semibold cursor-pointer">
-                                    <Phone size={13} /> Contact Manager
+                            <div className="flex gap-2.5">
+                                <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-gray-50">
+                                    <Eye size={14} /> View Live
                                 </button>
+                                <a href={`/owner/properties/editPropertyDetails?id=${property.id}`} className="no-underline">
+                                    <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02]">
+                                        <Edit size={14} /> Edit Property
+                                    </button>
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* ── Tabs ── */}
+                        <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
+                            {tabs.map((t) => (
+                                <button
+                                    key={t}
+                                    onClick={() => {
+                                        if (t === "Overview") setActiveTab(t);
+                                        else if (t === "Rooms") window.location.href = `/owner/properties/propertyRoomInventry?id=${property.id}`;
+                                        else if (t === "Availability") window.location.href = `/owner/properties/Availability?id=${property.id}`;
+                                        else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${property.id}`;
+                                        else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${property.id}`;
+                                        else if (t === "Media") window.location.href = `/owner/properties/Media?id=${property.id}`;
+                                        else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${property.id}`;
+                                        else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${property.id}`;
+                                        else setActiveTab(t);
+                                    }}
+                                    className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative ${
+                                        activeTab === t ? "text-[#953002] font-bold border-b-2 border-[#953002]" : "text-[#828282] font-medium border-b-2 border-transparent hover:text-[#4f4f4f]"
+                                    }`}
+                                >
+                                    {t}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* ── Two Column Layout ── */}
+                        <div className="grid grid-cols-[1fr_260px] gap-4 items-start">
+                            {/* Left Column */}
+                            <div className="flex flex-col gap-3">
+                                {/* Core Details */}
+                                <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
+                                    <div className="flex items-center gap-2 mb-2.5">
+                                        <Info size={16} color="#953002" />
+                                        <span className="text-[15px] font-bold text-[#1d1d1d]">Core Details</span>
+                                    </div>
+                                    <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Property Display Name</label>
+                                    <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">{property.name}</div>
+                                    <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Property Description</label>
+                                    <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[70px] leading-relaxed">{property.description || "—"}</div>
+                                    <div className="grid grid-cols-2 gap-3 mt-2">
+                                        <div className="flex-1">
+                                            <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Property Type</label>
+                                            <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center justify-between">
+                                                <span>{property.propertyType || "—"}</span>
+                                                <ChevronDown size={14} color="#b0b0b0" />
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Check-in / Check-out</label>
+                                            <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">
+                                                {property.checkIn || "—"} / {property.checkOut || "—"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* Amenities */}
+                                    {property.amenities?.length > 0 && (
+                                        <>
+                                            <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Amenities</label>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {property.amenities.map((a: string) => (
+                                                    <span key={a} className="px-2.5 py-0.5 bg-[#fef5ef] text-[#953002] text-[11px] font-semibold rounded-full border border-[#f0cdb4]">
+                                                        {a}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Location & Map */}
+                                <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
+                                    <div className="flex items-center gap-2 mb-2.5">
+                                        <MapPin size={16} color="#e74c3c" />
+                                        <span className="text-[15px] font-bold text-[#1d1d1d]">Location & Map</span>
+                                    </div>
+                                    <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Street Address</label>
+                                    <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">{property.address || "—"}</div>
+                                    <div className="grid grid-cols-2 gap-3 mt-2">
+                                        <div className="flex-1">
+                                            <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">City</label>
+                                            <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">{property.city || "—"}</div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Country</label>
+                                            <div className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border min-h-[38px] flex items-center">{property.country || "—"}</div>
+                                        </div>
+                                    </div>
+                                    {/* Map Placeholder */}
+                                    <div className="mt-2.5 rounded-lg overflow-hidden h-[120px] bg-[#f0ebe5]">
+                                        <div className="relative w-full h-full">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-[#f0ebe5] to-[#e8e0d8] rounded-lg flex flex-col items-center justify-center">
+                                                <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
+                                                    <path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24s16-12 16-24C32 7.16 24.84 0 16 0zm0 22c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" fill="#953002" />
+                                                </svg>
+                                                <div className="text-[11px] text-[#828282] mt-1.5">Map Preview</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Action History */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                <div className="text-[14px] font-bold text-[#953002] mb-2.5">Action History</div>
-                                <div className="flex items-start gap-2 mb-2 pl-0.5">
-                                    <div className="w-2 h-2 rounded-full mt-1 shrink-0 bg-[#e74c3c]" />
-                                    <div>
-                                        <div className="text-[12px] font-semibold text-[#1d1d1d]">Price Updated</div>
-                                        <div className="text-[10px] text-[#b0b0b0]">2 hours ago</div>
+                            {/* Right Column */}
+                            <div className="flex flex-col gap-3">
+                                {/* Quick Stats */}
+                                <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
+                                    <div className="text-[14px] font-bold text-[#953002] mb-2.5">Quick Stats</div>
+                                    <div className="flex justify-between items-center py-2 border-b border-[#f5f5f5]">
+                                        <span className="text-[13px] text-[#4f4f4f]">Rooms</span>
+                                        <span className="text-[14px] font-bold text-[#953002]">{property.roomCount ?? 0}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-2 border-b border-[#f5f5f5]">
+                                        <span className="text-[13px] text-[#4f4f4f]">Avg. Rating</span>
+                                        <span className="text-[14px] font-bold text-[#1d1d1d] flex items-center gap-[3px]">
+                                            <Star size={12} color="#ffb401" fill="#ffb401" /> {property.rating ?? "—"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-2 border-none">
+                                        <span className="text-[13px] text-[#4f4f4f]">Total Reviews</span>
+                                        <span className="text-[14px] font-bold text-[#1d1d1d]">{property.reviews ?? 0}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-2 mb-2 pl-0.5">
-                                    <div className="w-2 h-2 rounded-full mt-1 shrink-0 bg-[#ffb401]" />
-                                    <div>
-                                        <div className="text-[12px] font-semibold text-[#1d1d1d]">New Media Added</div>
-                                        <div className="text-[10px] text-[#b0b0b0]">Yesterday, 10:45 AM</div>
+
+                                {/* Contact Info */}
+                                <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
+                                    <div className="text-[14px] font-bold text-[#953002] mb-2.5">Contact Info</div>
+                                    <div className="flex items-center gap-2.5 mb-2.5">
+                                        <div className="w-[34px] h-[34px] rounded-full bg-[#fef5ef] flex items-center justify-center">
+                                            <User size={16} color="#953002" />
+                                        </div>
+                                        <div>
+                                            <div className="text-[13px] font-bold text-[#1d1d1d]">{property.contactEmail || "—"}</div>
+                                            <div className="text-[11px] text-[#b0b0b0]">Property Owner</div>
+                                        </div>
                                     </div>
+                                    {property.contactPhone && (
+                                        <button className="w-full flex items-center justify-center gap-1.5 py-2 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-semibold cursor-pointer">
+                                            <Phone size={13} /> {property.contactPhone}
+                                        </button>
+                                    )}
                                 </div>
+
+                                {/* House Rules */}
+                                {property.houseRules && (
+                                    <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
+                                        <div className="text-[14px] font-bold text-[#953002] mb-2.5">House Rules</div>
+                                        <p className="text-[12px] text-[#4f4f4f] leading-relaxed m-0">{property.houseRules}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
             </main>
         </div>
+    );
+}
+
+export default function PropertyDetailsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
+                <Loader2 size={28} color="#953002" className="animate-spin" />
+            </div>
+        }>
+            <PropertyDetailsContent />
+        </Suspense>
     );
 }

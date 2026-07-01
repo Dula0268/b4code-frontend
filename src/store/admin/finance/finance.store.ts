@@ -206,7 +206,7 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
   downloadPayoutExport: async (params) => {
     set({ isExporting: true, error: null });
     try {
-      const blob = await FinanceApi.exportPayouts(params);
+      const blob = await FinanceApi.exportPayoutsCsv(params);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

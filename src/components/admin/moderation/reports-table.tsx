@@ -8,6 +8,8 @@ import RemovedTodayCard from "./kpi-cards/removed-today-card";
 import AvgTimeCard from "./kpi-cards/avg-time-card";
 import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
 import type { FlaggedReview } from "@/api/admin/moderation.api";
+import { ModerationApi } from "@/api/admin/moderation.api";
+import ExportButton from "../audit-logs/ExportButton";
 
 // ─── Flag Badge ───────────────────────────────────────────────────────────────
 function FlagBadge({ status }: { status: string }) {
@@ -78,6 +80,11 @@ export default function ReviewsQueue() {
     "POLICY_VIOLATION",
   ];
   const ratingOptions: string[] = ["Any", "1", "2", "3", "4", "5"];
+
+  const getExportParams = () => ({
+    flagType: flagFilter !== "All" ? flagFilter : undefined,
+    rating: ratingFilter !== "Any" ? parseInt(ratingFilter) : undefined,
+  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -162,6 +169,12 @@ export default function ReviewsQueue() {
               </div>
             )}
           </div>
+          {/* Export Dropdown */}
+          <ExportButton
+            filenamePrefix="review-queue"
+            onExportCsv={() => ModerationApi.exportReviewsCsv(getExportParams())}
+            onExportPdf={() => ModerationApi.exportReviewsPdf(getExportParams())}
+          />
         </div>
       </div>
 

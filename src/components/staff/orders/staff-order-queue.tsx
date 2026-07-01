@@ -141,11 +141,16 @@ function OrderCard({
 
         <div className="flex flex-col gap-1.5">
           {order.items.slice(0, 2).map((item, idx) => (
-            <div key={idx} className="flex items-center gap-1.5">
-              <div className="bg-[#f5f5f4] rounded w-4 h-4 flex items-center justify-center flex-shrink-0">
-                <span className="text-[10px] font-bold text-[#57534e]">{item.qty}</span>
+            <div key={idx} className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <div className="bg-[#f5f5f4] rounded w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[10px] font-bold text-[#57534e]">{item.qty}</span>
+                </div>
+                <span className="text-xs text-[#44403c] truncate">{item.name}</span>
               </div>
-              <span className="text-xs text-[#44403c] truncate">{item.name}</span>
+              {item.note && (
+                <span className="text-[10px] text-[#a8a29e] italic ml-5.5 line-clamp-1">{item.note}</span>
+              )}
             </div>
           ))}
           {order.items.length > 2 && (

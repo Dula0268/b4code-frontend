@@ -4,7 +4,7 @@ import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 // ─── Constants ────────────────────────────────────────────────────────────
-const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"]
+const DAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
 const MONTH_NAMES = [
     "January", "February", "March", "April", "May", "June",
@@ -17,7 +17,8 @@ function getDaysInMonth(year: number, month: number) {
 }
 
 function getFirstDayOfMonth(year: number, month: number) {
-    return new Date(year, month, 1).getDay()
+    const day = new Date(year, month, 1).getDay()
+    return (day + 6) % 7 // Make Monday = 0
 }
 
 function isSameDay(a: Date, b: Date) {
@@ -54,6 +55,7 @@ export default function CalendarPicker({
     const [viewYear, setViewYear] = useState(today.getFullYear())
     const [viewMonth, setViewMonth] = useState(today.getMonth())
     const [hovered, setHovered] = useState<Date | null>(null)
+    const [flexDates, setFlexDates] = useState<number>(0)
 
     // ── Navigation ──────────────────────────────────────────────────────────
     const prevMonth = () => {
@@ -67,8 +69,8 @@ export default function CalendarPicker({
     }
 
     // ── Day click ───────────────────────────────────────────────────────────
-    const handleDay = (day: number) => {
-        const clicked = new Date(viewYear, viewMonth, day)
+    const handleDay = (day: number, month: number, year: number) => {
+        const clicked = new Date(year, month, day)
 
         if (!checkIn || (checkIn && checkOut)) {
             // Start fresh selection
@@ -85,125 +87,131 @@ export default function CalendarPicker({
         }
     }
 
-    // ── Build grid ──────────────────────────────────────────────────────────
-    const totalDays = getDaysInMonth(viewYear, viewMonth)
-    const startDay = getFirstDayOfMonth(viewYear, viewMonth)
-    const cells: (number | null)[] = [
-        ...Array(startDay).fill(null),
-        ...Array.from({ length: totalDays }, (_, i) => i + 1),
-    ]
-
     // The effective end of the range (either confirmed checkOut or hovered preview)
     const rangeEnd = checkIn && !checkOut && hovered && hovered > checkIn
         ? hovered
         : checkOut
 
-    return (
-        <div className="p-4 w-[300px]">
+    const renderMonth = (year: number, month: number, isLeft: boolean) => {
+        const totalDays = getDaysInMonth(year, month)
+        const startDay = getFirstDayOfMonth(year, month)
+        const cells: (number | null)[] = [
+            ...Array(startDay).fill(null),
+            ...Array.from({ length: totalDays }, (_, i) => i + 1),
+        ]
 
-            {/* ── Month header ── */}
-            <div className="flex items-center justify-between mb-4">
-                <button
-                    onClick={prevMonth}
-                    aria-label="Previous month"
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#953002]/10 text-[#953002] transition-colors"
-                >
-                    <ChevronLeft size={18} />
-                </button>
+        // Check if previous month button should be disabled
+        const isPrevDisabled = isLeft && (year < today.getFullYear() || (year === today.getFullYear() && month <= today.getMonth()))
 
-                <span className="font-bold text-[#953002] text-[15px]">
-                    {MONTH_NAMES[viewMonth]} {viewYear}
-                </span>
+        return (
+            <div className="flex-1 w-[320px]">
+                {/* ── Month header ── */}
+                <div className="flex items-center justify-between mb-6">
+                    {isLeft ? (
+                        <button
+                            onClick={prevMonth}
+                            disabled={isPrevDisabled}
+                            aria-label="Previous month"
+                            className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${isPrevDisabled ? "text-gray-300 cursor-not-allowed" : "hover:bg-gray-100 text-black"}`}
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                    ) : <div className="w-8 h-8" />}
 
-                <button
-                    onClick={nextMonth}
-                    aria-label="Next month"
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#953002]/10 text-[#953002] transition-colors"
-                >
-                    <ChevronRight size={18} />
-                </button>
-            </div>
+                    <span className="font-bold text-black text-[15px]">
+                        {MONTH_NAMES[month]} {year}
+                    </span>
 
-            {/* ── Day-of-week labels ── */}
-            <div className="grid grid-cols-7 mb-1">
-                {DAY_LABELS.map((d, i) => (
-                    <div
-                        key={i}
-                        className="text-center text-xs font-semibold text-[#828282] py-1"
-                    >
-                        {d}
-                    </div>
-                ))}
-            </div>
+                    {!isLeft ? (
+                        <button
+                            onClick={nextMonth}
+                            aria-label="Next month"
+                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-black transition-colors"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
+                    ) : <div className="w-8 h-8" />}
+                </div>
 
-            {/* ── Date cells ── */}
-            <div className="grid grid-cols-7">
-                {cells.map((day, i) => {
-                    if (!day) return <div key={i} />
-
-                    const date = new Date(viewYear, viewMonth, day)
-                    const isPast = date < todayMidnight
-                    const isCheckIn = checkIn ? isSameDay(date, checkIn) : false
-                    const isCheckOut = rangeEnd ? isSameDay(date, rangeEnd) : false
-                    const inRange = checkIn && rangeEnd
-                        ? isBetween(date, checkIn, rangeEnd)
-                        : false
-
-                    let wrapClass = "relative flex items-center justify-center h-9 "
-                    let innerClass = "w-8 h-8 flex items-center justify-center rounded-full z-10 relative text-sm "
-
-                    if (isPast) {
-                        wrapClass += "cursor-not-allowed"
-                        innerClass += "text-[#cccccc]"
-                    } else if (isCheckIn || isCheckOut) {
-                        wrapClass += "cursor-pointer"
-                        innerClass += "bg-[#953002] text-white font-bold"
-                    } else if (inRange) {
-                        wrapClass += "bg-[#953002]/10 cursor-pointer"
-                        innerClass += "text-[#953002] font-medium"
-                    } else {
-                        wrapClass += "cursor-pointer"
-                        innerClass += "text-[#333333] font-medium hover:bg-[#953002]/10 hover:text-[#953002]"
-                    }
-
-                    // Connecting bars for the range highlight
-                    const showLeftBar = inRange || isCheckOut
-                    const showRightBar = inRange || isCheckIn
-
-                    return (
+                {/* ── Day-of-week labels ── */}
+                <div className="grid grid-cols-7 mb-2">
+                    {DAY_LABELS.map((d, i) => (
                         <div
                             key={i}
-                            className={wrapClass}
-                            onMouseEnter={() => !isPast && setHovered(date)}
-                            onMouseLeave={() => setHovered(null)}
-                            onClick={() => !isPast && handleDay(day)}
+                            className="text-center text-[13px] font-medium text-[#828282] py-1"
                         >
-                            {showLeftBar && (
-                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1/2 h-9 bg-[#953002]/10 z-0" />
-                            )}
-                            {showRightBar && (
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1/2 h-9 bg-[#953002]/10 z-0" />
-                            )}
-                            <div className={innerClass}>{day}</div>
+                            {d}
                         </div>
-                    )
-                })}
+                    ))}
+                </div>
+
+                {/* ── Date cells ── */}
+                <div className="grid grid-cols-7 gap-y-1">
+                    {cells.map((day, i) => {
+                        if (!day) return <div key={i} className="h-11" />
+
+                        const date = new Date(year, month, day)
+                        const isPast = date < todayMidnight
+                        const isCheckIn = checkIn ? isSameDay(date, checkIn) : false
+                        const isCheckOut = rangeEnd ? isSameDay(date, rangeEnd) : false
+                        const inRange = checkIn && rangeEnd
+                            ? isBetween(date, checkIn, rangeEnd)
+                            : false
+
+                        let wrapClass = "relative flex items-center justify-center h-11 w-11 mx-auto "
+                        let innerClass = "w-full h-full flex items-center justify-center rounded-md z-10 relative text-[14px] transition-colors "
+
+                        if (isPast) {
+                            wrapClass += "cursor-not-allowed"
+                            innerClass += "text-[#cccccc]"
+                        } else if (isCheckIn || isCheckOut) {
+                            wrapClass += "cursor-pointer"
+                            innerClass += "bg-[var(--brand-primary)] text-white font-bold"
+                        } else if (inRange) {
+                            wrapClass += "bg-[var(--brand-primary)]/10 cursor-pointer"
+                            innerClass += "text-[var(--brand-primary)] font-medium"
+                        } else {
+                            wrapClass += "cursor-pointer"
+                            innerClass += "text-[#333333] font-medium hover:border hover:border-gray-800"
+                        }
+
+                        // Connecting bars for the range highlight
+                        const showLeftBar = inRange || (isCheckOut && checkIn && rangeEnd && rangeEnd > checkIn)
+                        const showRightBar = inRange || (isCheckIn && checkIn && rangeEnd && rangeEnd > checkIn)
+
+                        return (
+                            <div
+                                key={i}
+                                className={wrapClass}
+                                onMouseEnter={() => !isPast && setHovered(date)}
+                                onMouseLeave={() => setHovered(null)}
+                                onClick={() => !isPast && handleDay(day, month, year)}
+                            >
+                                {showLeftBar && (
+                                    <div className="absolute left-[-2px] top-0 w-[55%] h-full bg-[var(--brand-primary)]/10 z-0" />
+                                )}
+                                {showRightBar && (
+                                    <div className="absolute right-[-2px] top-0 w-[55%] h-full bg-[var(--brand-primary)]/10 z-0" />
+                                )}
+                                <div className={innerClass}>{day}</div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+        )
+    }
+
+    const nextMonthVal = viewMonth === 11 ? 0 : viewMonth + 1
+    const nextYearVal = viewMonth === 11 ? viewYear + 1 : viewYear
+
+    return (
+        <div className="p-6 w-[700px] bg-white rounded-3xl">
+            <div className="flex gap-8">
+                {renderMonth(viewYear, viewMonth, true)}
+                {renderMonth(nextYearVal, nextMonthVal, false)}
             </div>
 
-            {/* ── Status footer ── */}
-            <div className="mt-3 flex items-center justify-between text-xs text-[#828282] border-t border-[#f0f0f0] pt-3">
-                <span>
-                    {checkIn
-                        ? checkIn.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                        : "Select check-in"}
-                </span>
-                <span className="text-[#953002]">→</span>
-                <span>
-                    {checkOut
-                        ? checkOut.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                        : "Select check-out"}
-                </span>
-            </div>
         </div>
     )
 }

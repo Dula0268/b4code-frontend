@@ -31,10 +31,25 @@ function BookingsContent() {
 
   useEffect(() => {
     if (searchParams?.get("payment_success") === "true") {
-      setShowSuccessModal(true)
-      setSuccessBookingRef(searchParams.get("bookingRef") || "")
+      const bookingRef = searchParams.get("bookingRef") || "";
+      if (bookingRef) {
+        guestApi.sendReceipt(bookingRef).then(() => {
+          setShowSuccessModal(true);
+          setSuccessBookingRef(bookingRef);
+          // Reload bookings to reflect CONFIRMED status instead of PENDING
+          if (user) {
+            guestApi.getGuestBookings(user.email).then(data => {
+              // trigger a reload indirectly or let the main effect handle it
+              window.history.replaceState(null, "", "/guest/booking");
+              window.location.reload();
+            });
+          }
+        }).catch(err => {
+          console.error("Failed to confirm booking receipt", err);
+        });
+      }
     }
-  }, [searchParams])
+  }, [searchParams, user])
 
   useEffect(() => {
     async function loadBookings() {
@@ -67,6 +82,7 @@ function BookingsContent() {
                   status?: string
                   paymentMethod?: string
                   createdAt?: string
+                  roomQuantity?: number
                 }
 
                 const normalizeStatus = (s?: string): BookingStatus => {
@@ -80,10 +96,7 @@ function BookingsContent() {
                     const checkOutDate = b.checkOut ? new Date(b.checkOut) : new Date(checkInDate.getTime() + 86400000);
                     const diffDays = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
                     
-                    let derivedStatus = normalizeStatus(b.status);
-                    if (derivedStatus === "UPCOMING" && new Date() > checkOutDate) {
-                        derivedStatus = "COMPLETED";
-                    }
+                    const derivedStatus = normalizeStatus(b.status);
 
                     return {
                         id: String(b.bookingId ?? b.id ?? b.confirmationCode ?? b.confirmationNumber ?? crypto.randomUUID()),
@@ -102,9 +115,11 @@ function BookingsContent() {
                         paymentMethod: (b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online") as "property" | "online",
                         paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
                         roomName: b.roomName,
+                        roomQuantity: b.roomQuantity || 1,
                         isFromStore: false,
                     };
                 })
+                console.log("API BOOKINGS:", apiBookings)
             } catch (err) {
                 console.warn("API booking fetch failed:", err)
             }

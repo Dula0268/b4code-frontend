@@ -210,12 +210,18 @@ export default function PropertiesPage() {
                                     <tr key={p.id} className="border-b border-[#f5f5f5]">
                                         {/* Image */}
                                         <td className="py-1.5 px-3.5 align-middle">
-                                            <div className="w-16 h-11 rounded-lg overflow-hidden shrink-0">
-                                                <img
-                                                    src={p.image}
-                                                    alt={p.name}
-                                                    className="w-full h-full object-cover rounded-lg"
-                                                />
+                                            <div className="w-16 h-11 rounded-lg overflow-hidden shrink-0 bg-[#f0ebe5]">
+                                                {p.image ? (
+                                                    <img
+                                                        src={p.image}
+                                                        alt={p.name}
+                                                        className="w-full h-full object-cover rounded-lg"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Building2 size={20} color="#c0a898" />
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
 
@@ -270,7 +276,7 @@ export default function PropertiesPage() {
                                         {/* Actions */}
                                         <td className="py-1.5 px-3.5 align-middle">
                                             <div className="flex items-center gap-2">
-                                                <a href="/owner/properties/propertyDetails" className="no-underline">
+                                                <a href={`/owner/properties/propertyDetails?id=${p.id}`} className="no-underline">
                                                     <button className="py-1.5 px-4 bg-white border border-[#e0e0e0] rounded-lg text-[13px] font-medium text-[#4f4f4f] cursor-pointer hover:bg-gray-50">View Details</button>
                                                 </a>
                                                 <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center hover:bg-gray-100" aria-label="More">

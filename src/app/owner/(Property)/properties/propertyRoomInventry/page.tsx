@@ -1,55 +1,95 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { roomsApi } from "@/api/owner/rooms.api";
+import { useAuthStore } from "@/store/auth/auth.store";
 import {
     Bell,
     ChevronRight,
     MapPin,
     Bed,
     Calendar,
-    Eye,
-    Edit2,
-    Trash2,
+    Loader2,
     Plus,
-    BarChart3,
-    Lightbulb,
-    Star,
+    Building2,
 } from "lucide-react";
 
-/* ───────────────────── data ───────────────────── */
+function RoomsContent() {
+    const searchParams = useSearchParams();
+    const propertyId = searchParams.get("id");
+    const { user } = useAuthStore();
+    const ownerId = user?.userId ?? 1;
 
-const rooms = [
-    { name: "Master Suite", type: "King Suite", occupancy: "2 Adults", rate: "Rs.120,000", status: "Active" },
-    { name: "Ocean Guest Room", type: "Queen Room", occupancy: "2 Adults", rate: "Rs. 100,000", status: "Active" },
-    { name: "Poolside Studio", type: "Studio", occupancy: "2 Adults", rate: "Rs.90,000", status: "Maintenance" },
-    { name: "Family Loft", type: "Suite", occupancy: "4 People", rate: "Rs.150,000", status: "Active" },
-    { name: "Sunset Penthouse", type: "Penthouse", occupancy: "2 Adults", rate: "Rs.250,000", status: "Active" },
-];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [property, setProperty] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [rooms, setRooms] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-/* ───────────────────── component ───────────────────── */
+    useEffect(() => {
+        if (!propertyId) {
+            setError("No property ID provided.");
+            setLoading(false);
+            return;
+        }
+        Promise.all([
+            propertiesApi.getProperty(Number(propertyId), ownerId),
+            roomsApi.listRooms(ownerId),
+        ])
+            .then(([prop, roomData]) => {
+                setProperty(prop);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const all: any[] = roomData?.rooms ?? [];
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                setRooms(all.filter((r: any) => r.propertyId === Number(propertyId)));
+            })
+            .catch((err) => {
+                setError(err?.response?.data?.message ?? err?.message ?? "Failed to load data.");
+            })
+            .finally(() => setLoading(false));
+    }, [propertyId, ownerId]);
 
-/**
- * PropertyRoomInventoryPage Component
- *
- * Manages room inventory for a specific property, including room counts,
- * availability allocations, and overbooking thresholds per room type.
- */
-export default function PropertyRoomInventoryPage() {
-    const [activeTab, setActiveTab] = useState("Rooms");
     const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+
+    const statusColor = property?.status === "active" ? "#27ae60"
+        : property?.status === "inactive" ? "#828282"
+        : property?.status === "maintenance" ? "#e67e22"
+        : "#b0b0b0";
+
+    const statusLabel = property?.status?.toUpperCase() ?? "PENDING";
+
+    // Compute stats from filtered rooms
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const total = rooms.length;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const occupied = rooms.filter((r: any) => r.status === "OCCUPIED" || (!r.isAvailable && r.status !== "MAINTENANCE")).length;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const maintenance = rooms.filter((r: any) => r.status === "MAINTENANCE").length;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const vacant = rooms.filter((r: any) => r.status === "AVAILABLE" && r.isAvailable).length;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function roomStatusBadge(status: any) {
+        if (status === "AVAILABLE") return { label: "Available", bg: "#dcfce7", color: "#15803d" };
+        if (status === "MAINTENANCE") return { label: "Maintenance", bg: "#fff7ed", color: "#c2410c" };
+        return { label: "Unavailable", bg: "#f3f4f6", color: "#6b7280" };
+    }
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
+            {/* Sidebar */}
             <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
                 <div className="px-3.5">
                     <Logo width={120} height={36} />
                 </div>
             </aside>
 
-            {/* ── Main ── */}
+            {/* Main */}
             <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
                 {/* Top Bar */}
                 <div className="flex justify-between items-center py-1.5">
@@ -64,191 +104,200 @@ export default function PropertyRoomInventoryPage() {
                     </div>
                 </div>
 
+                {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Sunset Luxury Villa</span>
+                    <span className="text-[#953002] font-semibold">{property?.name ?? "Rooms"}</span>
                 </div>
 
-                {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto pb-4 pr-1">
-
-                    {/* ── Property Header Card ── */}
-                    <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
-                        <div className="flex items-center gap-4 flex-1">
-                            <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002]">
-                                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=120&h=90&fit=crop" alt="" className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2.5">
-                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Property Name</h2>
-                                    <span className="text-[9px] font-bold text-white bg-[#27ae60] rounded w-max px-[7px] py-[2px] tracking-widest">ACTIVE</span>
-                                </div>
-                                <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
-                                    <MapPin size={12} /> 123 Coastal Way, Malibu, CA 90265
-                                </div>
-                                <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
-                                    <span className="flex items-center gap-[3px]"><Bed size={12} /> 5 Rooms</span>
-                                    <span className="flex items-center gap-[3px]"><Calendar size={12} /> Rs. 350,000 / night</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex gap-2.5">
-                            <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer"><Eye size={14} /> View Live</button>
-                            <a href="/owner/properties" className="no-underline">
-                                <button className="py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">Save Changes</button>
-                            </a>
-                        </div>
+                {loading && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 size={28} color="#953002" className="animate-spin" />
                     </div>
+                )}
+                {error && !loading && (
+                    <div className="flex-1 flex items-center justify-center text-[13px] text-[#e74c3c]">{error}</div>
+                )}
 
-                    {/* ── Tabs ── */}
-                    <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
-                        {tabs.map((t) => (
-                            <button
-                                key={t}
-                                onClick={() => {
-                                    if (t === "Overview") window.location.href = "/owner/properties/propertyDetails";
-                                    else if (t === "Rooms") setActiveTab(t);
-                                    else if (t === "Availability") window.location.href = "/owner/properties/Availability";
-                                    else if (t === "Rates") window.location.href = "/owner/properties/Rate";
-                                    else if (t === "Reservations") window.location.href = "/owner/properties/Reservation";
-                                    else if (t === "Media") window.location.href = "/owner/properties/Media";
-                                    else if (t === "Staff") window.location.href = "/owner/properties/Staff";
-                                    else if (t === "Settings") window.location.href = "/owner/properties/Setting";
-                                    else setActiveTab(t);
-                                }}
-                                className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative ${
-                                    activeTab === t ? "text-[#953002] font-bold border-b-2 border-[#953002]" : "text-[#828282] font-medium border-b-2 border-transparent"
-                                }`}
-                            >
-                                {t}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* ── Two Column Layout ── */}
-                    <div className="grid grid-cols-[1fr_260px] gap-4 items-start">
-                        {/* Left Column - Room Inventory */}
-                        <div className="flex flex-col gap-3">
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex justify-between items-center mb-3.5">
-                                    <div className="flex items-center gap-2">
-                                        <Bed size={16} color="#953002" />
-                                        <span className="text-[15px] font-bold text-[#1d1d1d]">Room Inventory</span>
+                {!loading && !error && property && (
+                    <div className="flex-1 overflow-y-auto pb-4 pr-1">
+                        {/* Property Header Card */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002] bg-[#f0ebe5] flex items-center justify-center">
+                                    {property.image ? (
+                                        <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Building2 size={28} color="#c0a898" />
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2.5">
+                                        <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">{property.name}</h2>
+                                        <span
+                                            className="text-[9px] font-bold text-white rounded w-max px-[7px] py-[2px] tracking-widest"
+                                            style={{ backgroundColor: statusColor }}
+                                        >
+                                            {statusLabel}
+                                        </span>
                                     </div>
-                                    <a href="/owner/roomManagement/addRoom" className="flex items-center gap-1 py-2 px-4 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer no-underline hover:bg-[#7a2702] transition-colors">
-                                        <Plus size={14} /> Add New Room
+                                    <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
+                                        <MapPin size={12} />
+                                        {[property.address, property.city, property.country].filter(Boolean).join(", ")}
+                                    </div>
+                                    <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
+                                        <span className="flex items-center gap-[3px]"><Bed size={12} /> {property.roomCount ?? 0} Rooms</span>
+                                        <span className="flex items-center gap-[3px]"><Calendar size={12} /> {property.rate ?? "—"}/night</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
+                            {tabs.map((t) => {
+                                const isActive = t === "Rooms";
+                                return (
+                                    <button
+                                        key={t}
+                                        onClick={() => {
+                                            if (t === "Overview") window.location.href = `/owner/properties/propertyDetails?id=${propertyId}`;
+                                            else if (t === "Rooms") return;
+                                            else if (t === "Availability") window.location.href = `/owner/properties/Availability?id=${propertyId}`;
+                                            else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${propertyId}`;
+                                            else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${propertyId}`;
+                                            else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
+                                            else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${propertyId}`;
+                                            else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${propertyId}`;
+                                        }}
+                                        className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${
+                                            isActive
+                                                ? "text-[#953002] font-bold border-[#953002]"
+                                                : "text-[#828282] font-medium border-transparent hover:text-[#4f4f4f]"
+                                        }`}
+                                    >
+                                        {t}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Stats Row */}
+                        <div className="grid grid-cols-4 gap-3 mb-4">
+                            {[
+                                { label: "Total Rooms", value: total, color: "#953002" },
+                                { label: "Occupied", value: occupied, color: "#2563eb" },
+                                { label: "Maintenance", value: maintenance, color: "#d97706" },
+                                { label: "Vacant", value: vacant, color: "#16a34a" },
+                            ].map((stat) => (
+                                <div key={stat.label} className="bg-white border border-[#e8e8e8] rounded-xl p-4">
+                                    <div className="text-[12px] text-[#828282] mb-1">{stat.label}</div>
+                                    <div className="text-[28px] font-extrabold" style={{ color: stat.color }}>{stat.value}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Rooms Table */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden">
+                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#f0f0f0]">
+                                <span className="text-[15px] font-bold text-[#1d1d1d]">Room Inventory</span>
+                                <a href={`/owner/roomManagement/addRoom?propertyId=${propertyId}`} className="no-underline">
+                                    <button className="flex items-center gap-1.5 py-2 px-4 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">
+                                        <Plus size={14} /> Add Room
+                                    </button>
+                                </a>
+                            </div>
+
+                            {rooms.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-16 text-center">
+                                    <Bed size={40} color="#c0a898" className="mb-3" />
+                                    <p className="text-[14px] text-[#828282]">No rooms yet for this property. Add rooms to get started.</p>
+                                    <a href={`/owner/roomManagement/addRoom?propertyId=${propertyId}`} className="no-underline mt-3">
+                                        <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#b03a02]">
+                                            <Plus size={14} /> Add Room
+                                        </button>
                                     </a>
                                 </div>
-
-                                {/* Table */}
-                                <table className="w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">ROOM NAME</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">TYPE</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">OCCUPANCY</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">NIGHTLY RATE</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">STATUS</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">ACTIONS</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {rooms.map((r, i) => (
-                                            <tr key={i} className="border-b border-[#f5f5f5]">
-                                                <td className="text-[13px] color-[#4f4f4f] py-3 pr-2 align-middle">
-                                                    <span className="font-semibold text-[#1d1d1d]">{r.name}</span>
-                                                </td>
-                                                <td className="text-[13px] text-[#828282] py-3 pr-2 align-middle">
-                                                    <span>{r.type}</span>
-                                                </td>
-                                                <td className="text-[13px] color-[#4f4f4f] py-3 pr-2 align-middle">{r.occupancy}</td>
-                                                <td className="text-[13px] color-[#4f4f4f] py-3 pr-2 align-middle">
-                                                    <span className="font-semibold text-[#1d1d1d]">{r.rate}</span>
-                                                </td>
-                                                <td className="text-[13px] color-[#4f4f4f] py-3 pr-2 align-middle">
-                                                    <span className={`text-[10px] font-semibold py-[3px] px-[10px] rounded-md ${r.status === "Active" ? "text-[#27ae60] bg-[#eafaf1]" : "text-[#e67e22] bg-[#fef5e7]"}`}>
-                                                        {r.status}
-                                                    </span>
-                                                </td>
-                                                <td className="text-[13px] color-[#4f4f4f] py-3 pr-2 align-middle">
-                                                    <div className="flex gap-2">
-                                                        <button className="bg-transparent border border-[#e8e8e8] rounded-md p-1.5 cursor-pointer flex items-center justify-center"><Edit2 size={14} color="#828282" /></button>
-                                                        <button className="bg-transparent border border-[#e8e8e8] rounded-md p-1.5 cursor-pointer flex items-center justify-center"><Trash2 size={14} color="#828282" /></button>
-                                                    </div>
-                                                </td>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="bg-[#faf9f7]">
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Room Name</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Type</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Occupancy</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Rate</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Status</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Right Column */}
-                        <div className="flex flex-col gap-3">
-                            {/* Quick Stats */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                <div className="flex items-center gap-1.5 mb-2.5">
-                                    <BarChart3 size={16} color="#953002" />
-                                    <span className="text-[14px] font-bold text-[#1d1d1d]">Quick Stats</span>
+                                        </thead>
+                                        <tbody>
+                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                            {rooms.map((room: any, idx: number) => {
+                                                const badge = roomStatusBadge(room.status);
+                                                return (
+                                                    <tr
+                                                        key={room.id}
+                                                        className={`border-t border-[#f5f5f5] ${idx % 2 === 0 ? "bg-white" : "bg-[#fdf9f7]"} hover:bg-[#fef5ef] transition-colors`}
+                                                    >
+                                                        <td className="px-5 py-3.5">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-9 h-9 rounded-lg overflow-hidden bg-[#f0ebe5] shrink-0 flex items-center justify-center border border-[#e8e0da]">
+                                                                    {room.imageUrl ? (
+                                                                        <img src={room.imageUrl} alt={room.name} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <Bed size={16} color="#c0a898" />
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-[13px] font-semibold text-[#1d1d1d]">{room.name}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-5 py-3.5 text-[13px] text-[#4f4f4f]">{room.roomType ?? "—"}</td>
+                                                        <td className="px-5 py-3.5 text-[13px] text-[#4f4f4f]">
+                                                            {room.maxOccupancy} Adults{room.maxChildren ? ` + ${room.maxChildren} Children` : ""}
+                                                        </td>
+                                                        <td className="px-5 py-3.5 text-[13px] font-semibold text-[#953002]">
+                                                            Rs. {room.baseRate}/night
+                                                        </td>
+                                                        <td className="px-5 py-3.5">
+                                                            <span
+                                                                className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                                                                style={{ backgroundColor: badge.bg, color: badge.color }}
+                                                            >
+                                                                {badge.label}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-5 py-3.5">
+                                                            <a href={`/owner/roomManagement?roomId=${room.id}`} className="no-underline">
+                                                                <button className="py-1.5 px-3.5 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#fef5ef] transition-colors">
+                                                                    View
+                                                                </button>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div className="flex justify-between items-center py-2 border-b border-[#f5f5f5]">
-                                    <span className="text-[13px] text-[#4f4f4f]">Total Rooms</span>
-                                    <span className="text-[16px] font-extrabold text-[#1d1d1d]">5</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-[#f5f5f5]">
-                                    <span className="text-[13px] text-[#4f4f4f]">Active Rooms</span>
-                                    <span className="text-[16px] font-extrabold text-[#27ae60]">4</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-none">
-                                    <span className="text-[13px] text-[#4f4f4f]">Under Maintenance</span>
-                                    <span className="text-[16px] font-extrabold text-[#e74c3c]">1</span>
-                                </div>
-                            </div>
-
-                            {/* Room Tips */}
-                            <div className="bg-[#fffbf5] border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                <div className="flex items-center gap-1.5 mb-2.5">
-                                    <Lightbulb size={16} color="#953002" />
-                                    <span className="text-[14px] font-bold text-[#1d1d1d]">Room Tips</span>
-                                </div>
-                                <div className="flex items-start gap-2 mb-2">
-                                    <div className="w-[7px] h-[7px] rounded-full mt-1 shrink-0 bg-[#953002]" />
-                                    <span className="text-[12px] text-[#4f4f4f] leading-snug">Add detailed room photos to increase booking conversion by up to 35%.</span>
-                                </div>
-                                <div className="flex items-start gap-2 mb-2">
-                                    <div className="w-[7px] h-[7px] rounded-full mt-1 shrink-0 bg-[#953002]" />
-                                    <span className="text-[12px] text-[#4f4f4f] leading-snug">Ensure room amenities are kept up to date for better guest ratings.</span>
-                                </div>
-                                <div className="flex items-start gap-2 mb-2">
-                                    <div className="w-[7px] h-[7px] rounded-full mt-1 shrink-0 bg-[#953002]" />
-                                    <span className="text-[12px] text-[#4f4f4f] leading-snug">Set dynamic pricing based on room popularity for maximum revenue.</span>
-                                </div>
-                                <button className="w-full py-2 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer mt-1">Read Help Documentation</button>
-                            </div>
-
-                            {/* Action History */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                <div className="text-[14px] font-bold text-[#1d1d1d] mb-2.5">Action History</div>
-                                <div className="flex items-start gap-2 mb-2 pl-0.5">
-                                    <div className="w-2 h-2 rounded-full mt-[3px] shrink-0 bg-[#953002]" />
-                                    <div>
-                                        <div className="text-[12px] font-semibold text-[#1d1d1d]">Price Updated</div>
-                                        <div className="text-[10px] text-[#b0b0b0]">2 hours ago</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-2 mb-2 pl-0.5">
-                                    <div className="w-2 h-2 rounded-full mt-[3px] shrink-0 bg-[#b0b0b0]" />
-                                    <div>
-                                        <div className="text-[12px] font-semibold text-[#1d1d1d]">New Media Added</div>
-                                        <div className="text-[10px] text-[#b0b0b0]">Yesterday, 10:45 AM</div>
-                                    </div>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
-                </div>
+                )}
             </main>
         </div>
+    );
+}
+
+export default function RoomsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
+                <Loader2 size={28} color="#953002" className="animate-spin" />
+            </div>
+        }>
+            <RoomsContent />
+        </Suspense>
     );
 }

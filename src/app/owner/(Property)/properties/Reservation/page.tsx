@@ -1,52 +1,124 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { reservationsApi } from "@/api/owner/reservations.api";
+import { useAuthStore } from "@/store/auth/auth.store";
 import {
     Bell,
     ChevronRight,
     MapPin,
     Bed,
     Calendar,
-    Eye,
-    Edit,
+    Loader2,
+    Building2,
     BookOpen,
-    Filter,
-    CheckCircle,
-    XCircle,
-    Clock,
-    MoreVertical,
-    Search
+    Search,
 } from "lucide-react";
 
-/* ───────────────────── data ───────────────────── */
+function ReservationContent() {
+    const searchParams = useSearchParams();
+    const propertyId = searchParams.get("id");
+    const { user } = useAuthStore();
+    const ownerId = user?.userId ?? 1;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const reservationsData: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [property, setProperty] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [reservations, setReservations] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [actionLoading, setActionLoading] = useState<Record<number, string>>({});
 
-/* ───────────────────── component ───────────────────── */
+    useEffect(() => {
+        if (!propertyId) {
+            setError("No property ID provided.");
+            setLoading(false);
+            return;
+        }
+        Promise.all([
+            propertiesApi.getProperty(Number(propertyId), ownerId),
+            reservationsApi.listReservations(ownerId),
+        ])
+            .then(([prop, resData]) => {
+                setProperty(prop);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const all: any[] = Array.isArray(resData) ? resData : [];
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                setReservations(all.filter((r: any) => r.propertyId === Number(propertyId)));
+            })
+            .catch((err) => {
+                setError(err?.response?.data?.message ?? err?.message ?? "Failed to load reservation data.");
+            })
+            .finally(() => setLoading(false));
+    }, [propertyId, ownerId]);
 
-/**
- * ReservationsPage Component
- *
- * Property-level reservation listing with filtering, guest details,
- * and status management for upcoming and past bookings.
- */
-export default function ReservationsPage() {
-    const [activeTab, setActiveTab] = useState("Reservations");
     const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+
+    const statusColor = property?.status === "active" ? "#27ae60"
+        : property?.status === "inactive" ? "#828282"
+        : property?.status === "maintenance" ? "#e67e22"
+        : "#b0b0b0";
+    const statusLabel = property?.status?.toUpperCase() ?? "PENDING";
+
+    const filtered = reservations.filter((r) => {
+        const q = search.toLowerCase();
+        return !q || r.guestName?.toLowerCase().includes(q) || r.confirmationCode?.toLowerCase().includes(q);
+    });
+
+    function statusBadge(status: string) {
+        if (status === "CONFIRMED") return { label: "Confirmed", bg: "#dbeafe", color: "#1d4ed8" };
+        if (status === "CHECKED_IN") return { label: "Checked In", bg: "#dcfce7", color: "#15803d" };
+        if (status === "COMPLETED") return { label: "Completed", bg: "#f3f4f6", color: "#6b7280" };
+        if (status === "CANCELLED") return { label: "Cancelled", bg: "#fde8e8", color: "#b91c1c" };
+        if (status === "PENDING") return { label: "Pending", bg: "#fff7ed", color: "#c2410c" };
+        return { label: status, bg: "#f3f4f6", color: "#6b7280" };
+    }
+
+    function formatDate(d: string) {
+        if (!d) return "—";
+        try { return new Date(d).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }); }
+        catch { return d; }
+    }
+
+    async function handleAction(id: number, action: "checkIn" | "checkOut" | "cancel") {
+        setActionLoading((prev) => ({ ...prev, [id]: action }));
+        try {
+            if (action === "checkIn") await reservationsApi.checkIn(id);
+            else if (action === "checkOut") await reservationsApi.checkOut(id);
+            else await reservationsApi.cancel(id);
+
+            // Optimistic update
+            setReservations((prev) =>
+                prev.map((r) => {
+                    if (r.id !== id) return r;
+                    const newStatus = action === "checkIn" ? "CHECKED_IN" : action === "checkOut" ? "COMPLETED" : "CANCELLED";
+                    return { ...r, status: newStatus };
+                })
+            );
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            alert((err as any)?.response?.data?.message ?? "Action failed. Please try again.");
+        } finally {
+            setActionLoading((prev) => { const n = { ...prev }; delete n[id]; return n; });
+        }
+    }
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
+            {/* Sidebar */}
             <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
                 <div className="px-3.5">
                     <Logo width={120} height={36} />
                 </div>
             </aside>
 
-            {/* ── Main ── */}
+            {/* Main */}
             <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
                 {/* Top Bar */}
                 <div className="flex justify-between items-center py-1.5">
@@ -61,176 +133,213 @@ export default function ReservationsPage() {
                     </div>
                 </div>
 
+                {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Property Name</span>
+                    <span className="text-[#953002] font-semibold">{property?.name ?? "Reservations"}</span>
                 </div>
 
-                {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto pb-4 pr-1">
+                {loading && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 size={28} color="#953002" className="animate-spin" />
+                    </div>
+                )}
+                {error && !loading && (
+                    <div className="flex-1 flex items-center justify-center text-[13px] text-[#e74c3c]">{error}</div>
+                )}
 
-                    {/* ── Property Header Card ── */}
-                    <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
-                        <div className="flex items-center gap-4 flex-1">
-                            <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002]">
-                                <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=120&h=90&fit=crop" alt="" className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2.5">
-                                    <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">Property Name</h2>
-                                    <span className="text-[9px] font-bold text-white bg-[#27ae60] rounded w-max px-[7px] py-[2px] tracking-widest">ACTIVE</span>
+                {!loading && !error && property && (
+                    <div className="flex-1 overflow-y-auto pb-4 pr-1">
+                        {/* Property Header Card */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002] bg-[#f0ebe5] flex items-center justify-center">
+                                    {property.image ? (
+                                        <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Building2 size={28} color="#c0a898" />
+                                    )}
                                 </div>
-                                <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
-                                    <MapPin size={12} /> 123 Coastal Way, Malibu, CA 90265
-                                </div>
-                                <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
-                                    <span className="flex items-center gap-[3px]"><Bed size={12} /> 5 Rooms</span>
-                                    <span className="flex items-center gap-[3px]"><Calendar size={12} /> Rs. 350,000/night</span>
+                                <div>
+                                    <div className="flex items-center gap-2.5">
+                                        <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">{property.name}</h2>
+                                        <span
+                                            className="text-[9px] font-bold text-white rounded w-max px-[7px] py-[2px] tracking-widest"
+                                            style={{ backgroundColor: statusColor }}
+                                        >
+                                            {statusLabel}
+                                        </span>
+                                    </div>
+                                    <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
+                                        <MapPin size={12} />
+                                        {[property.address, property.city, property.country].filter(Boolean).join(", ")}
+                                    </div>
+                                    <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
+                                        <span className="flex items-center gap-[3px]"><Bed size={12} /> {property.roomCount ?? 0} Rooms</span>
+                                        <span className="flex items-center gap-[3px]"><Calendar size={12} /> {property.rate ?? "—"}/night</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-2.5">
-                            <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-gray-50"><Eye size={14} /> View Live</button>
-                            <a href="/owner/properties/editPropertyDetails" className="no-underline">
-                                <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02]"><Edit size={14} /> Edit Property</button>
-                            </a>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
+                            {tabs.map((t) => {
+                                const isActive = t === "Reservations";
+                                return (
+                                    <button
+                                        key={t}
+                                        onClick={() => {
+                                            if (t === "Overview") window.location.href = `/owner/properties/propertyDetails?id=${propertyId}`;
+                                            else if (t === "Rooms") window.location.href = `/owner/properties/propertyRoomInventry?id=${propertyId}`;
+                                            else if (t === "Availability") window.location.href = `/owner/properties/Availability?id=${propertyId}`;
+                                            else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${propertyId}`;
+                                            else if (t === "Reservations") return;
+                                            else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
+                                            else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${propertyId}`;
+                                            else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${propertyId}`;
+                                        }}
+                                        className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${
+                                            isActive
+                                                ? "text-[#953002] font-bold border-[#953002]"
+                                                : "text-[#828282] font-medium border-transparent hover:text-[#4f4f4f]"
+                                        }`}
+                                    >
+                                        {t}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    </div>
 
-                    {/* ── Tabs ── */}
-                    <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
-                        {tabs.map((t) => (
-                            <button
-                                key={t}
-                                onClick={() => {
-                                    if (t === "Overview") window.location.href = "/owner/properties/propertyDetails";
-                                    else if (t === "Rooms") window.location.href = "/owner/properties/propertyRoomInventry";
-                                    else if (t === "Availability") window.location.href = "/owner/properties/Availability";
-                                    else if (t === "Rates") window.location.href = "/owner/properties/Rate";
-                                    else if (t === "Reservations") setActiveTab(t);
-                                    else if (t === "Media") window.location.href = "/owner/properties/Media";
-                                    else if (t === "Staff") window.location.href = "/owner/properties/Staff";
-                                    else if (t === "Settings") window.location.href = "/owner/properties/Setting";
-                                    else setActiveTab(t);
-                                }}
-                                className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative ${
-                                    activeTab === t ? "text-[#953002] font-bold border-b-2 border-[#953002]" : "text-[#828282] font-medium border-b-2 border-transparent hover:text-[#4f4f4f]"
-                                }`}
-                            >
-                                {t}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* ── Two Column Layout ── */}
-                    <div className="grid grid-cols-[1fr_260px] gap-4 items-start">
-                        {/* Left Column - Reservations List */}
-                        <div className="flex flex-col gap-3">
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <BookOpen size={16} color="#953002" />
-                                        <span className="text-[15px] font-bold text-[#1d1d1d]">Recent Reservations</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="relative">
-                                            <Search size={14} color="#828282" className="absolute left-2.5 top-1/2 -translate-y-1/2" />
-                                            <input type="text" placeholder="Search..." className="pl-8 pr-3 py-1.5 border border-[#e0e0e0] rounded-md text-[12px] w-[150px] outline-none focus:border-[#953002]" />
-                                        </div>
-                                        <button className="flex items-center gap-1.5 py-1.5 px-3 bg-[#fafafa] text-[#4f4f4f] border border-[#e0e0e0] rounded-md text-[12px] font-medium cursor-pointer hover:bg-[#f0f0f0] transition-colors">
-                                            <Filter size={14} /> Filter
-                                        </button>
-                                    </div>
+                        {/* Reservations Table */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden">
+                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#f0f0f0]">
+                                <div className="flex items-center gap-2">
+                                    <BookOpen size={16} color="#953002" />
+                                    <span className="text-[15px] font-bold text-[#1d1d1d]">Reservations</span>
                                 </div>
+                                <div className="relative">
+                                    <Search size={14} color="#828282" className="absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search guest or code..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        className="pl-8 pr-3 py-1.5 border border-[#e0e0e0] rounded-md text-[12px] w-[200px] outline-none focus:border-[#953002]"
+                                    />
+                                </div>
+                            </div>
 
-                                {/* Table */}
-                                <table className="w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">ID</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">GUEST / ROOM</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">DATES</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">STATUS</th>
-                                            <th className="text-left text-[10px] font-bold text-[#953002] tracking-wider py-2 pr-2 border-b border-[#f0f0f0]">TOTAL</th>
-                                            <th className="w-8 border-b border-[#f0f0f0]"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {reservationsData.map((res) => (
-                                            <tr key={res.id} className="border-b border-[#f5f5f5] hover:bg-[#fafafa] transition-colors">
-                                                <td className="text-[12px] text-[#828282] py-3 pr-2 align-middle font-mono">{res.id}</td>
-                                                <td className="py-3 pr-2 align-middle">
-                                                    <div className="text-[13px] font-semibold text-[#1d1d1d]">{res.guest}</div>
-                                                    <div className="text-[11px] text-[#828282]">{res.room}</div>
-                                                </td>
-                                                <td className="text-[13px] text-[#4f4f4f] py-3 pr-2 align-middle">
-                                                    {res.dates}
-                                                </td>
-                                                <td className="text-[13px] py-3 pr-2 align-middle">
-                                                    <span className={`text-[10px] font-bold py-[3px] px-[8px] rounded uppercase tracking-wide flex items-center gap-1 w-max ${
-                                                        res.status === "Confirmed" ? "text-[#27ae60] bg-[#eafaf1]" :
-                                                        res.status === "Pending" ? "text-[#f39c12] bg-[#fef5e7]" :
-                                                        "text-[#c0392b] bg-[#fdedec]"
-                                                    }`}>
-                                                        {res.status === "Confirmed" && <CheckCircle size={10} />}
-                                                        {res.status === "Pending" && <Clock size={10} />}
-                                                        {res.status === "Cancelled" && <XCircle size={10} />}
-                                                        {res.status}
-                                                    </span>
-                                                </td>
-                                                <td className="text-[13px] text-[#1d1d1d] py-3 pr-2 align-middle font-semibold">
-                                                    {res.total}
-                                                </td>
-                                                <td className="py-3 align-middle text-right">
-                                                    <button className="bg-transparent border-none cursor-pointer text-[#828282] hover:text-[#1d1d1d]">
-                                                        <MoreVertical size={16} />
-                                                    </button>
-                                                </td>
+                            {filtered.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-16 text-center">
+                                    <BookOpen size={40} color="#c0a898" className="mb-3" />
+                                    <p className="text-[14px] text-[#828282]">
+                                        {search ? "No reservations match your search." : "No reservations for this property yet."}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="bg-[#faf9f7]">
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Code</th>
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Guest</th>
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Room</th>
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Check-in</th>
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Check-out</th>
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Guests</th>
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Amount</th>
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Status</th>
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Right Column - Overview Stats */}
-                        <div className="flex flex-col gap-3">
-                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                <span className="text-[14px] font-bold text-[#1d1d1d] block mb-3.5">Reservation Summary</span>
-                                
-                                <div className="space-y-4">
-                                    <div>
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className="text-[12px] text-[#828282] uppercase font-bold tracking-wider">Upcoming Check-ins</span>
-                                            <span className="text-[14px] font-extrabold text-[#1d1d1d]">3</span>
-                                        </div>
-                                    </div>
-                                    <div className="w-full h-[1px] bg-[#f0f0f0]" />
-                                    <div>
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className="text-[12px] text-[#828282] uppercase font-bold tracking-wider">Pending Action</span>
-                                            <span className="text-[14px] font-extrabold text-[#e67e22]">1</span>
-                                        </div>
-                                    </div>
-                                    <div className="w-full h-[1px] bg-[#f0f0f0]" />
-                                    <div>
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className="text-[12px] text-[#828282] uppercase font-bold tracking-wider">Checking Out Today</span>
-                                            <span className="text-[14px] font-extrabold text-[#1d1d1d]">0</span>
-                                        </div>
-                                    </div>
+                                        </thead>
+                                        <tbody>
+                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                            {filtered.map((res: any, idx: number) => {
+                                                const badge = statusBadge(res.status);
+                                                const isActing = actionLoading[res.id];
+                                                return (
+                                                    <tr
+                                                        key={res.id}
+                                                        className={`border-t border-[#f5f5f5] ${idx % 2 === 0 ? "bg-white" : "bg-[#fdf9f7]"} hover:bg-[#fef5ef] transition-colors`}
+                                                    >
+                                                        <td className="px-4 py-3 text-[12px] font-mono text-[#828282]">{res.confirmationCode ?? `#${res.id}`}</td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="text-[13px] font-semibold text-[#1d1d1d]">{res.guestName}</div>
+                                                            <div className="text-[11px] text-[#828282]">{res.guestEmail}</div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-[13px] text-[#4f4f4f]">{res.roomName ?? "—"}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-[#4f4f4f]">{formatDate(res.checkIn)}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-[#4f4f4f]">{formatDate(res.checkOut)}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-[#4f4f4f]">
+                                                            {res.adults ?? 0}A{res.children ? ` + ${res.children}C` : ""}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-[13px] font-semibold text-[#953002]">
+                                                            Rs. {res.totalAmount}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span
+                                                                className="text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
+                                                                style={{ backgroundColor: badge.bg, color: badge.color }}
+                                                            >
+                                                                {badge.label}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-1.5">
+                                                                {res.status === "CONFIRMED" && (
+                                                                    <button
+                                                                        onClick={() => handleAction(res.id, "checkIn")}
+                                                                        disabled={!!isActing}
+                                                                        className="py-1 px-2.5 bg-[#dcfce7] text-[#15803d] border border-[#86efac] rounded text-[11px] font-semibold cursor-pointer hover:bg-[#bbf7d0] disabled:opacity-50 transition-colors"
+                                                                    >
+                                                                        {isActing === "checkIn" ? <Loader2 size={11} className="animate-spin" /> : "Check In"}
+                                                                    </button>
+                                                                )}
+                                                                {res.status === "CHECKED_IN" && (
+                                                                    <button
+                                                                        onClick={() => handleAction(res.id, "checkOut")}
+                                                                        disabled={!!isActing}
+                                                                        className="py-1 px-2.5 bg-[#dbeafe] text-[#1d4ed8] border border-[#93c5fd] rounded text-[11px] font-semibold cursor-pointer hover:bg-[#bfdbfe] disabled:opacity-50 transition-colors"
+                                                                    >
+                                                                        {isActing === "checkOut" ? <Loader2 size={11} className="animate-spin" /> : "Check Out"}
+                                                                    </button>
+                                                                )}
+                                                                {(res.status === "CONFIRMED" || res.status === "PENDING") && (
+                                                                    <button
+                                                                        onClick={() => handleAction(res.id, "cancel")}
+                                                                        disabled={!!isActing}
+                                                                        className="py-1 px-2.5 bg-white text-[#b91c1c] border border-[#fca5a5] rounded text-[11px] font-semibold cursor-pointer hover:bg-[#fde8e8] disabled:opacity-50 transition-colors"
+                                                                    >
+                                                                        {isActing === "cancel" ? <Loader2 size={11} className="animate-spin" /> : "Cancel"}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                
-                                <button className="w-full mt-4 py-2 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-bold cursor-pointer hover:bg-[#fef4f0] transition-colors">
-                                    View Calendar
-                                </button>
-                            </div>
+                            )}
                         </div>
                     </div>
-
-                </div>
+                )}
             </main>
         </div>
+    );
+}
+
+export default function ReservationPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
+                <Loader2 size={28} color="#953002" className="animate-spin" />
+            </div>
+        }>
+            <ReservationContent />
+        </Suspense>
     );
 }
