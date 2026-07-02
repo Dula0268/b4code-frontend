@@ -18,6 +18,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Loader2,
+    Users,
 } from "lucide-react";
 
 /* ───────────────────── sidebar ───────────────────── */
@@ -29,6 +30,7 @@ const sidebarItems = [
     { icon: CalendarCheck,   label: "Availability",  active: false, href: "/owner/availability/weeklyCalendar" },
     { icon: DollarSign,      label: "Rate",          active: false, href: "/owner/rate" },
     { icon: ClipboardList,   label: "Reservations",  active: false, href: "/owner/reservation" },
+    { icon: Users,           label: "Staff Approvals", active: false, href: "/owner/staff" },
     { icon: Settings,        label: "Settings",      active: false, href: "/owner/setting/propertySetting" },
 ];
 
