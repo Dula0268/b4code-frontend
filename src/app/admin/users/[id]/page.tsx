@@ -51,44 +51,7 @@ function stringToColor(str: string) {
   return colors[Math.abs(hash) % colors.length];
 }
 
-// ─── Mock activity log ───────────────────────────────────────────────
-const ACTIVITY_LOG: ActivityLogEntry[] = [
-  {
-    action: "update",
-    label: "Update Property",
-    target: "Sunset Villa (ID: #4092)",
-    date: "Oct 24, 2023 09:45 AM",
-    ip: "192.168.1.1",
-  },
-  {
-    action: "login",
-    label: "User Login",
-    target: "System Access",
-    date: "Oct 24, 2023 09:41 AM",
-    ip: "192.168.1.1",
-  },
-  {
-    action: "password",
-    label: "Password Change",
-    target: "Security Settings",
-    date: "Oct 15, 2023 02:20 PM",
-    ip: "192.168.2.5",
-  },
-  {
-    action: "create",
-    label: "New Listing Created",
-    target: "Oceanview Apt (ID: #4095)",
-    date: "Sep 30, 2023 11:15 AM",
-    ip: "192.168.1.1",
-  },
-  {
-    action: "delete",
-    label: "Delete Listing",
-    target: "Old Cabin (ID: #3021)",
-    date: "Sep 28, 2023 04:30 PM",
-    ip: "192.168.3.9",
-  },
-];
+// ─── Mock activity log removed, using real-time data from API ───
 
 // ─── Toast ───────────────────────────────────────────────────────────
 function Toast({ message, onClose }: { message: string; onClose: () => void }) {
@@ -175,6 +138,7 @@ export default function UserDetailPage() {
   const [currentRole, setCurrentRole] = useState<string>("Staff");
   const [toast, setToast] = useState<string | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
 
   useEffect(() => {
     async function fetchUser() {
@@ -182,7 +146,10 @@ export default function UserDetailPage() {
         const id = parseInt(params.id as string);
         if (isNaN(id)) return;
 
-        const u = await UsersApi.getById(id);
+        const [u, logs] = await Promise.all([
+          UsersApi.getById(id),
+          UsersApi.getActivityLogs(id)
+        ]);
 
         const name =
           `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Unknown User";
@@ -229,6 +196,15 @@ export default function UserDetailPage() {
         setUser(formattedUser);
         setCurrentRole(formattedUser.role);
         setSuspended(formattedUser.status === "Suspended");
+
+        const formattedLogs = logs.map(log => ({
+          action: log.action || "update",
+          label: log.action ? log.action.replace(/_/g, ' ') : "Unknown Action",
+          target: log.entityDetail || log.entity || "System",
+          date: log.timestamp || "Unknown Time",
+          ip: log.ip || "Unknown IP",
+        }));
+        setActivityLogs(formattedLogs);
       } catch (err) {
         console.error("Failed to fetch user:", err);
       } finally {
@@ -265,6 +241,18 @@ export default function UserDetailPage() {
         newStatus as import("@/api/admin/users.api").UserStatus,
       );
       setSuspended(next);
+
+      // Refresh activity logs after status change
+      const logs = await UsersApi.getActivityLogs(Number(user.id));
+      const formattedLogs = logs.map(log => ({
+        action: log.action || "update",
+        label: log.action ? log.action.replace(/_/g, ' ') : "Unknown Action",
+        target: log.entityDetail || log.entity || "System",
+        date: log.timestamp || "Unknown Time",
+        ip: log.ip || "Unknown IP",
+      }));
+      setActivityLogs(formattedLogs);
+
       setToast(
         next
           ? "User Suspended Successfully"
@@ -340,7 +328,7 @@ export default function UserDetailPage() {
 
           <div className="grid grid-cols-[1fr_1.7fr] gap-5 items-start">
             <UserAccountInformation user={user} />
-            <UserActivityLog activities={ACTIVITY_LOG} />
+            <UserActivityLog activities={activityLogs} />
           </div>
         </div>
       </AdminPageLayout>
