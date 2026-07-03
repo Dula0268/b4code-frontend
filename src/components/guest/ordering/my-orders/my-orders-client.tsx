@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOrderStore, type Order, type OrderStatus } from "@/store/guest/ordering/order.store";
+import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
 
 import { useAuthStore } from "@/store/auth/auth.store";
 import {
@@ -82,10 +83,11 @@ export default function MyOrdersClient() {
   const currentOrder = useOrderStore((s) => s.currentOrder);
   const fetchOrderHistory = useOrderStore((s) => s.fetchOrderHistory);
   const user = useAuthStore((s) => s.user);
+  const guestSessionId = useGuestSessionStore((s) => s.sessionId);
 
   React.useEffect(() => {
-    fetchOrderHistory(user?.userId);
-  }, [user?.userId, fetchOrderHistory]);
+    fetchOrderHistory(user?.userId, guestSessionId || undefined);
+  }, [user?.userId, guestSessionId, fetchOrderHistory]);
 
   const [filter, setFilter] = React.useState<"All" | "Active" | "Past">("All");
 

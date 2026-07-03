@@ -283,7 +283,16 @@ export default function StaffGlobalOrdersProvider() {
     const propertyId = user?.propertyId || localStorage.getItem("selected_property_id") || "1";
     fetchOrders(Number(propertyId));
     setupSse(Number(propertyId));
-    return () => stopSse();
+    
+    // Poll every 15s to ensure no orders are missed if SSE drops or status transitions post-creation
+    const interval = setInterval(() => {
+      fetchOrders(Number(propertyId));
+    }, 15000);
+    
+    return () => {
+      stopSse();
+      clearInterval(interval);
+    };
   }, [user, fetchOrders, setupSse, stopSse]);
 
   const placedOrders = orders.filter((o) => o.status === "placed" && !dismissed.has(o.id));
