@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { useOrderStore } from "@/store/guest/ordering/order.store";
 
@@ -13,6 +14,39 @@ function formatLkr(n: number) {
 
 export default function ConfirmationClient() {
   const order = useOrderStore((s) => s.currentOrder);
+  const syncCurrentOrder = useOrderStore((s) => s.syncCurrentOrder);
+  const [simulated, setSimulated] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!order?.id || simulated) return;
+
+    const numericOrderId = order.id.replace('#ORD-', '');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const apiBase = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+
+    // Always check the backend status directly - don't trust Zustand store alone
+    fetch(`${apiBase}/orders/${numericOrderId}`)
+      .then((r) => r.json())
+      .then((backendOrder) => {
+        if (backendOrder.status === 'PAYMENT_PENDING') {
+          // Payment confirmed by user on PayHere but webhook can't reach localhost
+          // Call simulate-payment to transition the order to PLACED
+          return fetch(`${apiBase}/orders/${numericOrderId}/simulate-payment`, {
+            method: 'POST',
+          }).then(() => {
+            setSimulated(true);
+            // Give SSE 600ms to propagate to staff store before syncing guest view
+            return new Promise<void>((resolve) => setTimeout(resolve, 600));
+          }).then(() => syncCurrentOrder());
+        } else {
+          // Already PLACED or beyond - just sync the store
+          setSimulated(true);
+          return syncCurrentOrder();
+        }
+      })
+      .catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id]);
 
   const orderNumber = order?.id ?? "#ORD-0000";
   const totalAmount = order?.total ?? 0;

@@ -264,9 +264,16 @@ export default function UserDetailPage() {
     }
   };
 
-  const handleSendReset = () => {
-    setShowResetModal(false);
-    setToast("Password Reset Link Sent!");
+  const handleSendReset = async () => {
+    try {
+      if (!user) return;
+      await UsersApi.sendResetPasswordLink(Number(user.id));
+      setShowResetModal(false);
+      setToast("Password Reset Link Sent!");
+    } catch (err) {
+      console.error("Failed to send reset link:", err);
+      setToast("Failed to send reset link");
+    }
   };
 
   if (loading) {

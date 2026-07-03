@@ -237,6 +237,7 @@ export const useOrderStore = create<OrderState>()(
       console.log("📤 Request Payload:", {
         propertyId: opts.propertyId,
         guestId: opts.guestId,
+        guestSessionId: opts.guestSessionId,
         location: opts.location,
         guestName: opts.guestName,
         guestPhone: opts.guestPhone,
@@ -248,6 +249,7 @@ export const useOrderStore = create<OrderState>()(
       const response = await api.post("/orders", {
         propertyId: opts.propertyId,
         guestId: opts.guestId,
+        guestSessionId: opts.guestSessionId,
         location: opts.location,
         guestName: opts.guestName,
         guestPhone: opts.guestPhone,
@@ -325,9 +327,68 @@ export const useOrderStore = create<OrderState>()(
   },
 
   fetchOrderHistory: async (guestId?: number, guestSessionId?: string) => {
-    // As per requirement: "show not from db but from local cookies"
-    // We just return immediately to rely entirely on the persisted state
-    set({ loading: false });
+    // Fetch from backend using session ID or guest ID
+    if (!guestSessionId && !guestId) {
+      set({ loading: false });
+      return Promise.resolve();
+    }
+    set({ loading: true });
+    try {
+      let response;
+      if (guestSessionId) {
+        response = await api.get(`/orders/session/${guestSessionId}`, { params: { size: 50 } });
+      } else {
+        response = await api.get(`/orders/guest/${guestId}`, { params: { size: 50 } });
+      }
+      const raw = response.data;
+      const backendOrders = Array.isArray(raw) ? raw : (raw?.content ?? []);
+      
+      // Map backend orders to frontend Order type, excluding payment-pending ones
+      const now = new Date();
+      const mapped: Order[] = backendOrders
+        .filter((bo: { status: string }) => bo.status !== 'PAYMENT_PENDING' && bo.status !== 'payment_pending')
+        .map((bo: { id: number; status: string; createdAt: string; location?: string; guestName?: string; totalAmount?: number; paymentMethod?: string; items?: Array<{ menuItem: { name: string; imageUrl?: string; priceLkr?: number }; quantity: number; priceAtOrder: number; note?: string }> }) => {
+          const createdDate = bo.createdAt ? new Date(bo.createdAt) : now;
+          const mappedStatus = mapBackendStatus(bo.status);
+          const lines: OrderLine[] = (bo.items || []).map((it) => ({
+            item: {
+              id: String(it.menuItem ? (it.menuItem as { name: string; imageUrl?: string; priceLkr?: number }).name : 'item'),
+              title: it.menuItem?.name || 'Item',
+              priceLkr: it.priceAtOrder,
+              category: '',
+              imageUrl: it.menuItem?.imageUrl,
+              price: it.priceAtOrder,
+            } as MenuItem,
+            qty: it.quantity,
+          }));
+          const subtotal = (bo.totalAmount ?? 0) / 1.15;
+          const serviceCharge = subtotal * 0.1;
+          const tax = subtotal * 0.05;
+          return {
+            id: `#ORD-${bo.id}`,
+            location: bo.location || '',
+            guestName: bo.guestName || 'Guest',
+            paymentMethod: (bo.paymentMethod || 'cash') as Order['paymentMethod'],
+            lines,
+            subtotal,
+            serviceCharge,
+            tax,
+            total: bo.totalAmount ?? 0,
+            currentStatus: mappedStatus,
+            timeline: [{ status: mappedStatus, time: formatTime(createdDate), timestamp: createdDate.getTime() }],
+            placedAt: formatPlacedAt(createdDate),
+          } as Order;
+        });
+      
+      set((state) => {
+        // Merge with currentOrder to avoid duplicates
+        const currentId = state.currentOrder?.id;
+        const filtered = mapped.filter((o) => o.id !== currentId);
+        return { orderHistory: filtered, loading: false };
+      });
+    } catch {
+      set({ loading: false });
+    }
     return Promise.resolve();
   },
 
@@ -340,9 +401,24 @@ export const useOrderStore = create<OrderState>()(
       const backendOrder = response.data;
       const mappedStatus = mapBackendStatus(backendOrder.status);
       
-      if (mappedStatus !== currentOrder.currentStatus) {
-        get().advanceStatus(mappedStatus);
-      }
+      // Always update from backend — ensures payment-pending -> placed transition is reflected
+      set((state) => {
+        if (!state.currentOrder) return state;
+        const alreadyHasStatus = state.currentOrder.timeline.some((t) => t.status === mappedStatus);
+        const now = new Date();
+        return {
+          currentOrder: {
+            ...state.currentOrder,
+            currentStatus: mappedStatus,
+            timeline: alreadyHasStatus
+              ? state.currentOrder.timeline
+              : [
+                  ...state.currentOrder.timeline,
+                  { status: mappedStatus, time: formatTime(now), timestamp: now.getTime() },
+                ],
+          },
+        };
+      });
     } catch (error) {
       console.error("Failed to sync current order:", error);
     }

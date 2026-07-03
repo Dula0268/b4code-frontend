@@ -86,4 +86,8 @@ export const UsersApi = {
   // DELETE /api/admin/users/{id}
   delete: (id: number): Promise<void> =>
     api.delete(`/admin/users/${id}`).then(() => undefined),
+
+  // POST /api/admin/users/{id}/send-reset-password
+  sendResetPasswordLink: (id: number): Promise<void> =>
+    api.post(`/admin/users/${id}/send-reset-password`).then(() => undefined),
 };
