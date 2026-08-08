@@ -10,11 +10,9 @@ import {
     Bell,
     LayoutDashboard,
     Building2,
-    BedDouble,
-    Calendar,
     Tag,
     BookOpen,
-    UtensilsCrossed,
+    Users,
     Star,
     Settings,
     ChevronDown,
@@ -118,15 +116,12 @@ export default function ReviewsPage() {
     const [propertyDropdownOpen, setPropertyDropdownOpen] = useState(false);
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
+        { label: "Dashboard",  icon: <LayoutDashboard size={18} />, href: "/owner" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
-        { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Menu", icon: <UtensilsCrossed size={18} />, href: "/owner/menu" },
-        { label: "Reviews", icon: <Star size={18} />, href: "/owner/reviews", active: true },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting" },
+        { label: "Staff",      icon: <Users size={18} />, href: "/owner/staff" },
+        { label: "Reviews",    icon: <Star size={18} />, href: "/owner/reviews", active: true },
+        { label: "Messages",   icon: <MessageSquare size={18} />, href: "/owner/message" },
+        { label: "Settings",   icon: <Settings size={18} />, href: "/owner/setting/accountSetting" },
     ];
 
     // Fetch properties list for filter dropdown

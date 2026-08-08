@@ -9,7 +9,6 @@ import {
     LayoutDashboard,
     Building2,
     BedDouble,
-    Calendar,
     DollarSign,
     BookOpen,
     Settings,
@@ -25,22 +24,19 @@ import {
     Users,
     Wrench,
     CheckCircle,
-    UtensilsCrossed,
     Star,
+    MessageSquare,
 } from "lucide-react";
 
 /* ───────────────────── sidebar data ───────────────────── */
 
 const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard, href: "/owner" },
-    { label: "Properties", icon: Building2, href: "/owner/properties" },
-    { label: "Rooms", icon: BedDouble, href: "/owner/roomManagement", active: true },
-    { label: "Availability", icon: Calendar, href: "/owner/availability/weeklyCalendar" },
-    { label: "Rate", icon: DollarSign, href: "/owner/rate" },
-    { label: "Reservations", icon: BookOpen, href: "/owner/reservation" },
-    { label: "Settings", icon: Settings, href: "/owner/setting/accountSetting" },
-    { label: "Menu",    icon: UtensilsCrossed, href: "/owner/menu" },
-    { label: "Reviews", icon: Star,             href: "/owner/reviews" },
+    { label: "Dashboard",  icon: LayoutDashboard, href: "/owner" },
+    { label: "Properties", icon: Building2,        href: "/owner/properties" },
+    { label: "Staff",      icon: Users,            href: "/owner/staff" },
+    { label: "Reviews",    icon: Star,             href: "/owner/reviews" },
+    { label: "Messages",   icon: MessageSquare,    href: "/owner/message" },
+    { label: "Settings",   icon: Settings,         href: "/owner/setting/accountSetting" },
 ];
 
 /* ───────────────────── types ───────────────────── */

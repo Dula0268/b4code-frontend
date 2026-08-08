@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import OwnerSidebar from "@/components/owner/OwnerSidebar";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Logo from "@/components/shared/branding/logo";
 import { propertiesApi } from "@/api/owner/properties.api";
 import { reservationsApi } from "@/api/owner/reservations.api";
 import { useAuthStore } from "@/store/auth/auth.store";
@@ -58,7 +58,7 @@ function ReservationContent() {
             .finally(() => setLoading(false));
     }, [propertyId, ownerId]);
 
-    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Settings"];
 
     const statusColor = property?.status === "active" ? "#27ae60"
         : property?.status === "inactive" ? "#828282"
@@ -112,11 +112,8 @@ function ReservationContent() {
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
             {/* Sidebar */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
+
+            <OwnerSidebar />
 
             {/* Main */}
             <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
@@ -197,7 +194,6 @@ function ReservationContent() {
                                             else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${propertyId}`;
                                             else if (t === "Reservations") return;
                                             else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
-                                            else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${propertyId}`;
                                             else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${propertyId}`;
                                         }}
                                         className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${

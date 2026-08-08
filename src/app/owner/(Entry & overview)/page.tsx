@@ -11,29 +11,26 @@ import {
     LayoutDashboard,
     Building2,
     DoorOpen,
-    CalendarCheck,
     DollarSign,
     ClipboardList,
     Settings,
     ChevronLeft,
     ChevronRight,
     Loader2,
-    UtensilsCrossed,
     Star,
+    Users,
+    MessageSquare,
 } from "lucide-react";
 
 /* ───────────────────── sidebar ───────────────────── */
 
 const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard",     active: true,  href: "/owner" },
-    { icon: Building2,       label: "Properties",    active: false, href: "/owner/properties" },
-    { icon: DoorOpen,        label: "Rooms",         active: false, href: "/owner/roomManagement" },
-    { icon: CalendarCheck,   label: "Availability",  active: false, href: "/owner/availability/weeklyCalendar" },
-    { icon: DollarSign,      label: "Rate",          active: false, href: "/owner/rate" },
-    { icon: ClipboardList,   label: "Reservations",  active: false, href: "/owner/reservation" },
-    { icon: Settings,        label: "Settings",      active: false, href: "/owner/setting/accountSetting" },
-    { icon: UtensilsCrossed, label: "Menu",      href: "/owner/menu" },
-    { icon: Star,             label: "Reviews",  href: "/owner/reviews" },
+    { icon: LayoutDashboard, label: "Dashboard",  active: true,  href: "/owner" },
+    { icon: Building2,       label: "Properties", active: false, href: "/owner/properties" },
+    { icon: Users,           label: "Staff",      active: false, href: "/owner/staff" },
+    { icon: Star,            label: "Reviews",    active: false, href: "/owner/reviews" },
+    { icon: MessageSquare,   label: "Messages",   active: false, href: "/owner/message" },
+    { icon: Settings,        label: "Settings",   active: false, href: "/owner/setting/accountSetting" },
 ];
 
 /* ───────────────────── helpers ───────────────────── */

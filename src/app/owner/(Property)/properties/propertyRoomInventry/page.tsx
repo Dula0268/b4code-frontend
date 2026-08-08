@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import OwnerSidebar from "@/components/owner/OwnerSidebar";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Logo from "@/components/shared/branding/logo";
 import { propertiesApi } from "@/api/owner/properties.api";
 import { roomsApi } from "@/api/owner/rooms.api";
 import { useAuthStore } from "@/store/auth/auth.store";
@@ -59,7 +59,7 @@ function RoomsContent() {
             .finally(() => setLoading(false));
     }, [propertyId, ownerId]); // ownerId used for getProperty only
 
-    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Settings"];
 
     const statusColor = property?.status === "active" ? "#27ae60"
         : property?.status === "inactive" ? "#828282"
@@ -88,11 +88,8 @@ function RoomsContent() {
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
             {/* Sidebar */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
+
+            <OwnerSidebar />
 
             {/* Main */}
             <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
@@ -173,7 +170,6 @@ function RoomsContent() {
                                             else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${propertyId}`;
                                             else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${propertyId}`;
                                             else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
-                                            else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${propertyId}`;
                                             else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${propertyId}`;
                                         }}
                                         className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${
@@ -232,7 +228,6 @@ function RoomsContent() {
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Room Name</th>
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Type</th>
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Occupancy</th>
-                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Rate</th>
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Status</th>
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Actions</th>
                                             </tr>
@@ -262,9 +257,6 @@ function RoomsContent() {
                                                         <td className="px-5 py-3.5 text-[13px] text-[#4f4f4f]">
                                                             {room.maxOccupancy} Adults{room.maxChildren ? ` + ${room.maxChildren} Children` : ""}
                                                         </td>
-                                                        <td className="px-5 py-3.5 text-[13px] font-semibold text-[#953002]">
-                                                            Rs. {room.baseRate}/night
-                                                        </td>
                                                         <td className="px-5 py-3.5">
                                                             <span
                                                                 className="text-[11px] font-bold px-2.5 py-1 rounded-full"
@@ -274,7 +266,7 @@ function RoomsContent() {
                                                             </span>
                                                         </td>
                                                         <td className="px-5 py-3.5">
-                                                            <a href={`/owner/roomManagement?roomId=${room.id}`} className="no-underline">
+                                                            <a href={`/owner/properties/roomDetails?roomId=${room.id}&propertyId=${propertyId}`} className="no-underline">
                                                                 <button className="py-1.5 px-3.5 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#fef5ef] transition-colors">
                                                                     View
                                                                 </button>

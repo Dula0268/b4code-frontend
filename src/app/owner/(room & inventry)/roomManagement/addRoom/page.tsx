@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Logo from "@/components/shared/branding/logo";
+import OwnerSidebar from "@/components/owner/OwnerSidebar";
 import { imageApi } from "@/api/image/image.api";
 import { roomsApi } from "@/api/owner/rooms.api";
 import {
@@ -45,9 +45,14 @@ function AddRoomContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const propertyId = searchParams.get("propertyId");
-    const backUrl = propertyId
-        ? `/owner/properties/propertyRoomInventry?id=${propertyId}`
-        : "/owner/properties";
+    const roomId = searchParams.get("roomId");
+    const isEdit = searchParams.get("edit") === "true" && !!roomId;
+
+    const backUrl = isEdit && roomId && propertyId
+        ? `/owner/properties/roomDetails?roomId=${roomId}&propertyId=${propertyId}`
+        : propertyId
+            ? `/owner/properties/propertyRoomInventry?id=${propertyId}`
+            : "/owner/properties";
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,6 +75,33 @@ function AddRoomContent() {
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saved, setSaved]       = useState(false);
     const [dragOver, setDragOver] = useState(false);
+    const [loadingRoom, setLoadingRoom] = useState(isEdit);
+
+    // Pre-populate fields when editing an existing room
+    useEffect(() => {
+        if (!isEdit || !roomId) return;
+        roomsApi.getRoom(Number(roomId))
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .then((room: any) => {
+                setRoomName(room.name ?? "");
+                setRoomType(room.roomType ?? "STANDARD_ROOM");
+                setBedType(room.bedType ?? "KING");
+                setMaxAdults(String(room.maxOccupancy ?? 2));
+                setMaxChildren(String(room.maxChildren ?? 0));
+                setInventory(String(room.inventory ?? 1));
+                setNightlyRate(room.baseRate ?? "");
+                setDescription(room.description ?? "");
+                const st = (room.status ?? "AVAILABLE").toUpperCase();
+                setRoomStatus(st === "MAINTENANCE" ? "MAINTENANCE" : "AVAILABLE");
+                if (room.imageUrl) {
+                    setImagePreview(room.imageUrl);
+                    setImageUrl(room.imageUrl);
+                }
+            })
+            .catch(() => {/* fall through with empty form */})
+            .finally(() => setLoadingRoom(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     async function handleFileChange(file: File) {
         if (!file.type.startsWith("image/")) {
@@ -96,7 +128,7 @@ function AddRoomContent() {
 
     async function handleSave() {
         if (!roomName.trim()) { setSaveError("Room name is required."); return; }
-        if (!propertyId) { setSaveError("No property selected."); return; }
+        if (!isEdit && !propertyId) { setSaveError("No property selected."); return; }
         if (!nightlyRate || isNaN(parseFloat(nightlyRate))) {
             setSaveError("Enter a valid nightly rate.");
             return;
@@ -105,7 +137,7 @@ function AddRoomContent() {
         setSaving(true);
         setSaveError(null);
         try {
-            await roomsApi.createRoom({
+            const payload = {
                 propertyId: Number(propertyId),
                 name: roomName.trim(),
                 description: description.trim() || null,
@@ -117,7 +149,12 @@ function AddRoomContent() {
                 inventory: parseInt(inventory) || 1,
                 status: roomStatus,
                 imageUrl: imageUrl ?? null,
-            });
+            };
+            if (isEdit && roomId) {
+                await roomsApi.updateRoom(Number(roomId), payload);
+            } else {
+                await roomsApi.createRoom(payload);
+            }
             setSaved(true);
             setTimeout(() => router.push(backUrl), 1200);
         } catch (err: unknown) {
@@ -129,12 +166,20 @@ function AddRoomContent() {
         }
     }
 
+    if (loadingRoom) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
+                <Loader2 size={28} color="#953002" className="animate-spin" />
+            </div>
+        );
+    }
+
     if (saved) {
         return (
             <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
                 <div className="flex flex-col items-center gap-3">
                     <CheckCircle size={48} color="#27ae60" />
-                    <p className="text-[15px] font-semibold text-[#1d1d1d]">Room saved successfully!</p>
+                    <p className="text-[15px] font-semibold text-[#1d1d1d]">{isEdit ? "Room updated successfully!" : "Room saved successfully!"}</p>
                     <p className="text-[12px] text-[#828282]">Redirecting…</p>
                 </div>
             </div>
@@ -142,19 +187,21 @@ function AddRoomContent() {
     }
 
     return (
-        <div className="flex flex-col h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* Top Bar */}
-            <header className="flex items-center justify-between py-3 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
-                <Logo width={120} height={36} />
-                <div className="flex items-center gap-3.5">
-                    <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                        <Bell size={18} color="#4f4f4f" />
-                    </a>
-                    <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                    </a>
+        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
+            <OwnerSidebar />
+
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {/* Top Bar */}
+                <div className="flex justify-end items-center py-2 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
+                    <div className="flex items-center gap-3.5">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
+                            <Bell size={18} color="#4f4f4f" />
+                        </a>
+                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
+                        </a>
+                    </div>
                 </div>
-            </header>
 
             {/* Scrollable Body */}
             <div className="flex-1 overflow-y-auto">
@@ -165,14 +212,14 @@ function AddRoomContent() {
                         <span className="text-[#d0d0d0]">›</span>
                         <a href={backUrl} className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Rooms</a>
                         <span className="text-[#d0d0d0]">›</span>
-                        <span className="text-[#953002]">Add New Room</span>
+                        <span className="text-[#953002]">{isEdit ? "Edit Room" : "Add New Room"}</span>
                     </nav>
 
                     {/* Form Card */}
                     <div className="bg-white border border-[#e8e8e8] rounded-2xl py-8 px-10">
-                        <div className="text-[24px] font-extrabold text-[#1d1d1d] leading-tight">Add New Room</div>
+                        <div className="text-[24px] font-extrabold text-[#1d1d1d] leading-tight">{isEdit ? "Edit Room" : "Add New Room"}</div>
                         <p className="text-[13px] text-[#828282] mt-1.5 mb-8">
-                            Fill in the details below to add a new room to this property.
+                            {isEdit ? "Update the room details below." : "Fill in the details below to add a new room to this property."}
                         </p>
 
                         {/* Row 1: Room Name + Type */}
@@ -418,12 +465,13 @@ function AddRoomContent() {
                                 {saving ? (
                                     <><Loader2 size={15} className="animate-spin" /> Saving…</>
                                 ) : (
-                                    <><Save size={15} /> Save Room</>
+                                    <><Save size={15} /> {isEdit ? "Update Room" : "Save Room"}</>
                                 )}
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );

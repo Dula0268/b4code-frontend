@@ -1,29 +1,49 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
-import Logo from "@/components/shared/branding/logo";
+import OwnerSidebar from "@/components/owner/OwnerSidebar";
+import { useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { staffApi } from "@/api/owner/staff.api";
 import {
     Bell as BellIcon,
     ChevronRight,
     ArrowLeft,
     Check,
-    Upload
+    Loader2,
+    AlertCircle,
 } from "lucide-react";
 
-/**
- * AddStaffPage Component
- *
- * Form for adding a new staff member to a property, including
- * personal details, role assignment, and access permissions.
- */
-export default function AddStaffPage() {
+function AddStaffContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const propertyId = searchParams.get("propertyId") ?? searchParams.get("id");
+
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
-    const [role, setRole] = useState("Property Manager");
-    const [status, setStatus] = useState("Active");
+
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const backUrl = propertyId ? `/owner/properties/Staff?id=${propertyId}` : "/owner/properties";
+
+    async function handleSubmit() {
+        if (!firstName.trim() || !email.trim()) { setError("First name and email are required."); return; }
+        if (!propertyId) { setError("No property ID found. Please open this page from a property's Staff tab."); return; }
+        setError(null);
+        setSaving(true);
+        try {
+            await staffApi.invite({ propertyId: Number(propertyId), firstName, lastName, email, phone: phone || undefined });
+            router.push(backUrl);
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setError((err as any)?.response?.data?.message ?? "Failed to add staff. Please try again.");
+        } finally {
+            setSaving(false);
+        }
+    }
 
     const [perms, setPerms] = useState({
         reservations: true,
@@ -35,14 +55,8 @@ export default function AddStaffPage() {
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
+            <OwnerSidebar />
 
-            {/* ── Main ── */}
             <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
                 {/* Top Bar */}
                 <div className="flex justify-between items-center py-1.5">
@@ -60,9 +74,7 @@ export default function AddStaffPage() {
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
                     <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#828282] font-semibold">Property Name</span>
-                    <ChevronRight size={14} color="#b0b0b0" />
-                    <a href="/owner/properties/Staff" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Staff</a>
+                    <a href={backUrl} className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Staff</a>
                     <ChevronRight size={14} color="#b0b0b0" />
                     <span className="text-[#953002] font-semibold">Add New Staff</span>
                 </div>
@@ -70,7 +82,7 @@ export default function AddStaffPage() {
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto pb-8 pr-1 mt-4">
                     <div className="flex items-center gap-3 mb-6">
-                        <a href="/owner/properties/Staff" className="w-8 h-8 rounded-full border border-[#e0e0e0] bg-white flex items-center justify-center text-[#4f4f4f] hover:bg-[#f5f5f5] transition-colors cursor-pointer text-decoration-none">
+                        <a href={backUrl} className="w-8 h-8 rounded-full border border-[#e0e0e0] bg-white flex items-center justify-center text-[#4f4f4f] hover:bg-[#f5f5f5] transition-colors cursor-pointer no-underline">
                             <ArrowLeft size={14} />
                         </a>
                         <div>
@@ -142,9 +154,14 @@ export default function AddStaffPage() {
                                 </div>
 
                                 <div className="p-4 bg-[#fffbf5] border border-[#fde8df] rounded-lg">
-                                    <h4 className="text-[12px] font-bold text-[#953002] m-0 mb-1">Invitation Link</h4>
-                                    <p className="text-[11px] text-[#4f4f4f] m-0">An invitation email will be sent to this staff member with a link to set their password.</p>
+                                    <h4 className="text-[12px] font-bold text-[#953002] m-0 mb-1">Note</h4>
+                                    <p className="text-[11px] text-[#4f4f4f] m-0">If this email already exists as a staff user, they will be assigned to this property automatically.</p>
                                 </div>
+                                {error && (
+                                    <div className="mt-3 flex items-center gap-2 text-[12px] text-[#e74c3c] bg-[#fdecea] border border-[#e74c3c] rounded-lg px-3 py-2">
+                                        <AlertCircle size={13} /> {error}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Right Side - Roles & Permissions */}
@@ -235,27 +252,39 @@ export default function AddStaffPage() {
 
                         {/* Bottom Actions */}
                         <div className="flex justify-end gap-3 p-5 bg-[#fafafa] border-t border-[#f0f0f0]">
-                            <a href="/owner/properties/Staff" className="no-underline">
+                            <a href={backUrl} className="no-underline">
                                 <button className="py-2 px-5 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">
                                     Cancel
                                 </button>
                             </a>
-                            <a href="/owner/properties/Staff" className="no-underline">
-                                <button 
-                                    disabled={!firstName || !lastName || !email}
-                                    className={`py-2 px-6 text-white border-none rounded-lg text-[12px] font-bold cursor-pointer transition-colors ${
-                                        !firstName || !lastName || !email
-                                            ? "bg-[#d0d0d0] pointer-events-none"
-                                            : "bg-[#953002] hover:bg-[#b03a02]"
-                                    }`}
-                                >
-                                    Add Staff
-                                </button>
-                            </a>
+                            <button
+                                onClick={handleSubmit}
+                                disabled={saving || !firstName || !email}
+                                className={`flex items-center gap-1.5 py-2 px-6 text-white border-none rounded-lg text-[12px] font-bold cursor-pointer transition-colors ${
+                                    saving || !firstName || !email
+                                        ? "bg-[#d0d0d0] cursor-not-allowed"
+                                        : "bg-[#953002] hover:bg-[#b03a02]"
+                                }`}
+                            >
+                                {saving ? <Loader2 size={13} className="animate-spin" /> : null}
+                                {saving ? "Adding..." : "Add Staff"}
+                            </button>
                         </div>
                     </div>
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function AddStaffPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
+                <Loader2 size={28} color="#953002" className="animate-spin" />
+            </div>
+        }>
+            <AddStaffContent />
+        </Suspense>
     );
 }
