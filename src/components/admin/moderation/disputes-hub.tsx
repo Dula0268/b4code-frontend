@@ -66,6 +66,9 @@ function StatusBadge({ status }: { status: string }) {
 function ResolutionSummary({ dispute }: { dispute: Dispute }) {
   const { setSelectedDispute, setDisputeResolved, resolveDispute, actionLoading } = useAdminModerationStore();
   const [note, setNote] = useState("");
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [requestingInfo, setRequestingInfo] = useState(false);
+  const [infoRequestText, setInfoRequestText] = useState("");
 
   const handleApprove = async () => {
     await resolveDispute(dispute.id, "Refund Approved", true);
@@ -103,184 +106,273 @@ function ResolutionSummary({ dispute }: { dispute: Dispute }) {
     setSelectedDispute(null);
   };
 
+  const handleDownloadFile = (filename: string) => {
+    // In a real scenario, this would be a URL from the API.
+    // We create a dummy download for demonstration.
+    const link = document.createElement("a");
+    link.href = "#"; // Replace with actual file URL
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    alert(`Downloading ${filename}...`);
+  };
+
+  const handleSendInfoRequest = () => {
+    // Here we would call an API to send the request to the guest
+    alert(`Info request sent to guest: ${infoRequestText}`);
+    setRequestingInfo(false);
+    setInfoRequestText("");
+  };
+
   return (
-    <div className="w-85 shrink-0 flex flex-col gap-5 bg-white border border-[#F0EBE7] rounded-2xl shadow-sm overflow-hidden relative">
-      {/* ── Header ── */}
-      <div className="sticky top-0 bg-white px-6 pt-6 pb-4 border-b border-[#F0EBE7] flex items-center justify-between z-10">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-[#FEF3C7] flex items-center justify-center">
-            <FileText size={18} className="text-[#92400E]" />
+    <>
+      <div className="w-85 shrink-0 flex flex-col gap-5 bg-white border border-[#F0EBE7] rounded-2xl shadow-sm overflow-hidden relative">
+        {/* ── Header ── */}
+        <div className="sticky top-0 bg-white px-6 pt-6 pb-4 border-b border-[#F0EBE7] flex items-center justify-between z-10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full bg-[#FEF3C7] flex items-center justify-center">
+              <FileText size={18} className="text-[#92400E]" />
+            </div>
+            <h3 className="text-[17px] font-bold text-[#1A1A1A] m-0">
+              Resolution
+              <br />
+              Summary
+            </h3>
           </div>
-          <h3 className="text-[17px] font-bold text-[#1A1A1A] m-0">
-            Resolution
-            <br />
-            Summary
-          </h3>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-[12px] text-[#9E7B6A]">
-            ID: {dispute.bookingId?.replace("#BK-", "#") || "N/A"}
-          </span>
-          <button
-            onClick={() => setSelectedDispute(null)}
-            className="w-8 h-8 rounded-lg hover:bg-[#F3F4F6] flex items-center justify-center transition cursor-pointer border-none bg-transparent"
-          >
-            <X size={18} className="text-[#6B7280]" />
-          </button>
-        </div>
-      </div>
-
-      <div className="px-6 pb-6 flex flex-col gap-6 overflow-y-auto max-h-[calc(100vh-250px)]">
-
-      {/* ── Booking Context ── */}
-      <div>
-        <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-2">
-          BOOKING CONTEXT
-        </p>
-        <div className="bg-[#FAFAF8] border border-[#F0EBE7] rounded-xl p-4 flex justify-between items-start">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-semibold text-[13px] text-[#1A1A1A]">
-              {dispute.propertyName}
-            </span>
+          <div className="flex items-center gap-3">
             <span className="text-[12px] text-[#9E7B6A]">
-              {dispute.cancellationPolicy || "Strict Cancellation"}
+              ID: {dispute.bookingId?.replace("#BK-", "#") || "N/A"}
             </span>
-            <span className="text-[12px] text-[#9E7B6A]">
-              Days until auto-close:{" "}
-              <span className="text-[#2563EB] font-semibold">
-                {dispute.daysUntilAutoClose ?? 2} days
-              </span>
-            </span>
-          </div>
-          <div className="text-right flex flex-col items-end gap-0.5">
-            <span className="text-[12px] text-[#9E7B6A]">
-              {dispute.stayDates || "Oct 12-15"}
-            </span>
-            <span className="text-[18px] font-bold text-[#1A1A1A]">
-              {dispute.amount}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Dispute Claim Timeline ── */}
-      <div>
-        <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-3">
-          DISPUTE CLAIM
-        </p>
-        <div className="flex flex-col gap-0">
-          {/* Step 1 */}
-          <div className="flex gap-3">
-            <div className="flex flex-col items-center">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#2563EB] shrink-0" />
-              <div className="w-0.5 flex-1 bg-[#E5E7EB]" />
-            </div>
-            <div className="pb-4">
-              <p className="m-0 text-[11px] text-[#9E7B6A]">Oct 14, 10:00 AM</p>
-              <p className="m-0 text-[13px] font-semibold text-[#1A1A1A]">
-                Dispute Opened by Guest
-              </p>
-            </div>
-          </div>
-          {/* Step 2 */}
-          <div className="flex gap-3">
-            <div className="flex flex-col items-center">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A] shrink-0" />
-              <div className="w-0.5 flex-1 bg-[#E5E7EB]" />
-            </div>
-            <div className="pb-4">
-              <p className="m-0 text-[11px] text-[#9E7B6A]">Oct 14, 03:30 PM</p>
-              <p className="m-0 text-[13px] font-semibold text-[#1A1A1A]">
-                Host Submitted Evidence
-              </p>
-            </div>
-          </div>
-          {/* Step 3 – Current Step */}
-          <div className="flex gap-3">
-            <div className="flex flex-col items-center">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#DC2626] shrink-0" />
-            </div>
-            <div>
-              <p className="m-0 text-[11px] text-[#DC2626] font-bold">
-                CURRENT STEP
-              </p>
-              <p className="m-0 text-[13px] font-semibold text-[#1A1A1A]">
-                Admin Decision Pending
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Evidence ── */}
-      <div>
-        <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-2">
-          EVIDENCE
-        </p>
-        <div className="flex gap-3">
-          <div className="relative w-30 h-22.5 rounded-xl overflow-hidden border border-[#E8DDD8]">
-            <Image
-              src="/evidence-photo.png"
-              alt="Evidence Photo"
-              fill
-              className="object-cover"
-            />
-            <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded">
-              Photo
-            </span>
-          </div>
-          <div className="flex flex-col items-center justify-center w-22.5 h-22.5 rounded-xl border border-[#E8DDD8] bg-[#FAFAF8] cursor-pointer hover:bg-[#f5efec] transition-colors">
-            <FileText size={22} className="text-[#9E7B6A] mb-1" />
-            <span className="text-[10px] text-[#9E7B6A]">chat_log.pdf</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Actions ── */}
-      <div className="flex flex-col gap-2.5">
-        <button
-          onClick={handleApprove}
-          disabled={actionLoading}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#16A34A] text-white text-[14px] font-semibold border-none cursor-pointer hover:bg-[#15803D] transition-colors disabled:opacity-50"
-        >
-          {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
-          Approve Refund
-        </button>
-        <button 
-          onClick={handleDeny}
-          disabled={actionLoading}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#1A1A1A] text-[14px] font-semibold border-[1.5px] border-[#E8DDD8] cursor-pointer hover:border-[#C05621] transition-colors disabled:opacity-50"
-        >
-          {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <XCircle size={16} />}
-          Deny Refund (Host Wins)
-        </button>
-        <button className="w-full flex items-center justify-center gap-2 py-2 bg-transparent text-[#C05621] text-[13px] font-semibold border-none cursor-pointer hover:underline">
-          <Clock size={14} />
-          Request More Info
-        </button>
-      </div>
-
-      {/* ── Internal Notes ── */}
-      <div>
-        <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-2">
-          INTERNAL NOTES
-        </p>
-        <div className="bg-white border border-[#E8DDD8] rounded-xl p-3">
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Add a private note for the team..."
-            className="w-full h-17.5 border-none outline-none resize-none text-[13px] text-[#1A1A1A] bg-transparent placeholder:text-[#C4B5AC] box-border"
-          />
-          <div className="flex justify-end">
-            <button className="text-[12px] font-bold text-[#C05621] bg-transparent border-none cursor-pointer hover:underline">
-              SAVE NOTE
+            <button
+              onClick={() => setSelectedDispute(null)}
+              className="w-8 h-8 rounded-lg hover:bg-[#F3F4F6] flex items-center justify-center transition cursor-pointer border-none bg-transparent"
+            >
+              <X size={18} className="text-[#6B7280]" />
             </button>
           </div>
         </div>
+
+        <div className="px-6 pb-6 flex flex-col gap-6 overflow-y-auto max-h-[calc(100vh-250px)]">
+          {/* ── Booking Context ── */}
+          <div>
+            <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-2">
+              BOOKING CONTEXT
+            </p>
+            <div className="bg-[#FAFAF8] border border-[#F0EBE7] rounded-xl p-4 flex justify-between items-start">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-semibold text-[13px] text-[#1A1A1A]">
+                  {dispute.propertyName}
+                </span>
+                <span className="text-[12px] text-[#9E7B6A]">
+                  {dispute.cancellationPolicy || "Strict Cancellation"}
+                </span>
+                <span className="text-[12px] text-[#9E7B6A]">
+                  Days until auto-close:{" "}
+                  <span className="text-[#2563EB] font-semibold">
+                    {dispute.daysUntilAutoClose ?? 2} days
+                  </span>
+                </span>
+              </div>
+              <div className="text-right flex flex-col items-end gap-0.5">
+                <span className="text-[12px] text-[#9E7B6A]">
+                  {dispute.stayDates || "Oct 12-15"}
+                </span>
+                <span className="text-[18px] font-bold text-[#1A1A1A]">
+                  {dispute.amount}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Dispute Claim Timeline ── */}
+          <div>
+            <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-3">
+              DISPUTE CLAIM
+            </p>
+            <div className="flex flex-col gap-0">
+              {/* Step 1 */}
+              <div className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#2563EB] shrink-0" />
+                  <div className="w-0.5 flex-1 bg-[#E5E7EB]" />
+                </div>
+                <div className="pb-4">
+                  <p className="m-0 text-[11px] text-[#9E7B6A]">Oct 14, 10:00 AM</p>
+                  <p className="m-0 text-[13px] font-semibold text-[#1A1A1A]">
+                    Dispute Opened by Guest
+                  </p>
+                </div>
+              </div>
+              {/* Step 2 */}
+              <div className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A] shrink-0" />
+                  <div className="w-0.5 flex-1 bg-[#E5E7EB]" />
+                </div>
+                <div className="pb-4">
+                  <p className="m-0 text-[11px] text-[#9E7B6A]">Oct 14, 03:30 PM</p>
+                  <p className="m-0 text-[13px] font-semibold text-[#1A1A1A]">
+                    Host Submitted Evidence
+                  </p>
+                </div>
+              </div>
+              {/* Step 3 – Current Step */}
+              <div className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#DC2626] shrink-0" />
+                </div>
+                <div>
+                  <p className="m-0 text-[11px] text-[#DC2626] font-bold">
+                    CURRENT STEP
+                  </p>
+                  <p className="m-0 text-[13px] font-semibold text-[#1A1A1A]">
+                    Admin Decision Pending
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Evidence ── */}
+          <div>
+            <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-2">
+              EVIDENCE
+            </p>
+            <div className="flex gap-3">
+              <div 
+                className="relative w-30 h-22.5 rounded-xl overflow-hidden border border-[#E8DDD8] cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => setViewingImage("/evidence-photo.png")}
+              >
+                <Image
+                  src="/evidence-photo.png"
+                  alt="Evidence Photo"
+                  fill
+                  className="object-cover"
+                />
+                <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded pointer-events-none">
+                  Photo
+                </span>
+                <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center">
+                </div>
+              </div>
+              <div 
+                className="flex flex-col items-center justify-center w-22.5 h-22.5 rounded-xl border border-[#E8DDD8] bg-[#FAFAF8] cursor-pointer hover:bg-[#f5efec] transition-colors group"
+                onClick={() => handleDownloadFile("chat_log.pdf")}
+              >
+                <FileText size={22} className="text-[#9E7B6A] mb-1 group-hover:text-[#C05621] transition-colors" />
+                <span className="text-[10px] text-[#9E7B6A] group-hover:text-[#C05621] transition-colors">chat_log.pdf</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Actions ── */}
+          <div className="flex flex-col gap-2.5">
+            <button
+              onClick={handleApprove}
+              disabled={actionLoading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#16A34A] text-white text-[14px] font-semibold border-none cursor-pointer hover:bg-[#15803D] transition-colors disabled:opacity-50"
+            >
+              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
+              Approve Refund
+            </button>
+            <button 
+              onClick={handleDeny}
+              disabled={actionLoading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#1A1A1A] text-[14px] font-semibold border-[1.5px] border-[#E8DDD8] cursor-pointer hover:border-[#C05621] transition-colors disabled:opacity-50"
+            >
+              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <XCircle size={16} />}
+              Deny Refund (Host Wins)
+            </button>
+            
+            {/* Request Info Area */}
+            {requestingInfo ? (
+              <div className="bg-[#FFF8F5] p-3 rounded-xl border border-[#F2D7CA] flex flex-col gap-2 mt-1">
+                <span className="text-[12px] font-semibold text-[#9E7B6A]">Message to Guest:</span>
+                <textarea
+                  value={infoRequestText}
+                  onChange={(e) => setInfoRequestText(e.target.value)}
+                  placeholder="What extra information do you need?"
+                  className="w-full h-16 border border-[#E8DDD8] rounded-lg p-2 outline-none resize-none text-[13px] bg-white"
+                  autoFocus
+                />
+                <div className="flex gap-2 justify-end mt-1">
+                  <button 
+                    onClick={() => setRequestingInfo(false)}
+                    className="px-3 py-1.5 text-[12px] font-semibold text-[#6B7280] bg-white border border-[#E8DDD8] rounded-lg cursor-pointer hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleSendInfoRequest}
+                    disabled={!infoRequestText.trim()}
+                    className="px-3 py-1.5 text-[12px] font-semibold text-white bg-[#C05621] border-none rounded-lg cursor-pointer hover:bg-[#A0451A] disabled:opacity-50"
+                  >
+                    Send Request
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setRequestingInfo(true)}
+                className="w-full flex items-center justify-center gap-2 py-2 bg-transparent text-[#C05621] text-[13px] font-semibold border-none cursor-pointer hover:underline"
+              >
+                <Clock size={14} />
+                Request More Info
+              </button>
+            )}
+          </div>
+
+          {/* ── Internal Notes ── */}
+          <div>
+            <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-2">
+              INTERNAL NOTES
+            </p>
+            <div className="bg-white border border-[#E8DDD8] rounded-xl p-3">
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Add a private note for the team..."
+                className="w-full h-17.5 border-none outline-none resize-none text-[13px] text-[#1A1A1A] bg-transparent placeholder:text-[#C4B5AC] box-border"
+              />
+              <div className="flex justify-end">
+                <button className="text-[12px] font-bold text-[#C05621] bg-transparent border-none cursor-pointer hover:underline">
+                  SAVE NOTE
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    </div>
+
+      {/* ── Image Modal ── */}
+      {viewingImage && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setViewingImage(null)}>
+          <div 
+            className="relative bg-black rounded-lg max-w-[90vw] max-h-[90vh] flex flex-col overflow-hidden" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center bg-black/90 p-3 absolute top-0 left-0 right-0 z-10">
+              <span className="text-white text-sm font-semibold">Evidence Photo</span>
+              <button 
+                onClick={() => setViewingImage(null)}
+                className="text-white hover:text-gray-300 bg-transparent border-none cursor-pointer p-1"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            {/* The image logic (using img tag because it's simpler for modal, or Next/Image) */}
+            <div className="relative mt-12 mb-4 mx-4 flex-1 flex items-center justify-center min-w-[300px] min-h-[300px]">
+              <img 
+                src={viewingImage} 
+                alt="Evidence Full View" 
+                className="max-w-full max-h-[75vh] object-contain rounded-md"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

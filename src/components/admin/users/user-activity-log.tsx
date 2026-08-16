@@ -1,9 +1,7 @@
-import { Pencil, LogIn, Key, Plus, Trash2 } from "lucide-react";
+import { Pencil, LogIn, Key, Plus, Trash2, ShieldAlert, ShieldCheck, Activity } from "lucide-react";
 
-type ActionType = "update" | "login" | "password" | "create" | "delete";
-
-interface ActivityLogEntry {
-  action: ActionType;
+export interface ActivityLogEntry {
+  action: string;
   label: string;
   target: string;
   date: string;
@@ -12,22 +10,24 @@ interface ActivityLogEntry {
 
 interface UserActivityLogProps {
   activities: ActivityLogEntry[];
-  onViewFullLog?: () => void;
 }
 
 // ─── Activity icon ────────────────────────────────────────────────────────────
-function ActivityIcon({ type }: { type: ActionType }) {
-  const cfg: Record<ActionType, { bg: string; icon: React.ReactNode }> = {
-    update: { bg: "#e8f0fe", icon: <Pencil size={13} color="#3b82f6" /> },
-    login: { bg: "#e6f7ee", icon: <LogIn size={13} color="#22c55e" /> },
-    password: { bg: "#fff4e0", icon: <Key size={13} color="#f59e0b" /> },
-    create: { bg: "#f3e8ff", icon: <Plus size={13} color="#a855f7" /> },
-    delete: { bg: "#fee2e2", icon: <Trash2 size={13} color="#ef4444" /> },
+function ActivityIcon({ type }: { type: string }) {
+  const getIconConfig = (actionType: string) => {
+    const t = actionType.toLowerCase();
+    if (t.includes('login') || t.includes('verify')) return { bg: "#e6f7ee", icon: <LogIn size={13} color="#22c55e" /> };
+    if (t.includes('password')) return { bg: "#fff4e0", icon: <Key size={13} color="#f59e0b" /> };
+    if (t.includes('create') || t.includes('register')) return { bg: "#f3e8ff", icon: <Plus size={13} color="#a855f7" /> };
+    if (t.includes('delete') || t.includes('remove')) return { bg: "#fee2e2", icon: <Trash2 size={13} color="#ef4444" /> };
+    if (t.includes('suspend')) return { bg: "#fee2e2", icon: <ShieldAlert size={13} color="#ef4444" /> };
+    if (t.includes('reactivate')) return { bg: "#e6f7ee", icon: <ShieldCheck size={13} color="#22c55e" /> };
+    return { bg: "#e8f0fe", icon: <Pencil size={13} color="#3b82f6" /> }; // default update/other
   };
-  const { bg, icon } = cfg[type];
+  const { bg, icon } = getIconConfig(type);
   return (
     <span
-      className="inline-flex items-center justify-center w-6.5 h-6.5 rounded-full shrink-0"
+      className="inline-flex items-center justify-center w-7 h-7 rounded-full shadow-sm shrink-0 border border-white"
       style={{ backgroundColor: bg }}
     >
       {icon}
@@ -37,18 +37,18 @@ function ActivityIcon({ type }: { type: ActionType }) {
 
 export default function UserActivityLog({
   activities,
-  onViewFullLog,
 }: UserActivityLogProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-neutral-100/50 overflow-hidden flex flex-col h-full">
       {/* Header */}
-      <div className="flex justify-between items-center px-6 pt-5">
-        <h2 className="m-0 text-base font-bold text-(--black-2)">
+      <div className="flex justify-between items-center px-7 py-6 border-b border-neutral-100/80">
+        <h2 className="m-0 text-lg font-extrabold text-(--black-2) flex items-center gap-2">
+          <span className="w-1.5 h-6 rounded-full bg-(--brand-primary) inline-block" />
           Activity Log
         </h2>
         <div className="flex gap-2">
           {/* Filter icon */}
-          <button className="bg-transparent border-none cursor-pointer text-(--gray-3) flex p-1">
+          <button className="bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 transition-colors cursor-pointer text-neutral-500 flex p-1.5 rounded-lg">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M2 4h12M4 8h8M6 12h4"
@@ -61,114 +61,62 @@ export default function UserActivityLog({
         </div>
       </div>
 
-      {/* Table */}
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: "13px",
-          marginTop: "12px",
-        }}
-      >
-        <thead>
-          <tr style={{ borderBottom: "1px solid var(--gray-5)" }}>
-            {["ACTION", "TARGET", "DATE & TIME", "IP ADDRESS"].map((h) => (
-              <th
-                key={h}
-                style={{
-                  padding: "8px 24px",
-                  textAlign: "left",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "var(--gray-3)",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {activities.map((log, i) => (
-            <tr
-              key={i}
-              style={{ borderBottom: "1px solid var(--gray-5)" }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
-                  "#f5efec";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
-                  "";
-              }}
-            >
-              <td style={{ padding: "13px 24px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                  }}
+      {/* Table Container */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[13px]">
+          <thead>
+            <tr className="bg-neutral-50/50 border-b border-neutral-100">
+              {["ACTION", "TARGET", "DATE & TIME", "IP ADDRESS"].map((h) => (
+                <th
+                  key={h}
+                  className="px-6 py-3.5 text-left text-[11px] font-bold text-(--gray-3) uppercase tracking-widest whitespace-nowrap"
                 >
-                  <ActivityIcon type={log.action} />
-                  <span style={{ fontWeight: 600, color: "var(--black-2)" }}>
-                    {log.label}
-                  </span>
-                </div>
-              </td>
-              <td style={{ padding: "13px 24px", color: "var(--gray-3)" }}>
-                {log.target}
-              </td>
-              <td
-                style={{
-                  padding: "13px 24px",
-                  color: "var(--gray-3)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {log.date}
-              </td>
-              <td
-                style={{
-                  padding: "13px 24px",
-                  color: "var(--gray-3)",
-                  whiteSpace: "nowrap",
-                  fontFamily: "monospace",
-                }}
-              >
-                {log.ip}
-              </td>
+                  {h}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* View Full Log */}
-      <div style={{ padding: "16px 24px", textAlign: "center" }}>
-        <button
-          onClick={onViewFullLog}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--brand-primary)",
-            fontSize: "14px",
-            fontWeight: 700,
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.textDecoration = "underline")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-        >
-          View Full Activity Log
-        </button>
+          </thead>
+          <tbody>
+            {activities.length > 0 ? (
+              activities.map((log, i) => (
+                <tr
+                  key={i}
+                  className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors group"
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <ActivityIcon type={log.action} />
+                      <span className="font-semibold text-(--black-2) group-hover:text-(--brand-primary) transition-colors">
+                        {log.label}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-(--gray-3) font-medium">
+                    {log.target}
+                  </td>
+                  <td className="px-6 py-4 text-(--gray-3) whitespace-nowrap font-medium">
+                    {log.date}
+                  </td>
+                  <td className="px-6 py-4 text-neutral-400 whitespace-nowrap font-mono text-xs bg-neutral-50/50 rounded inline-block mt-2 ml-4 mb-2">
+                    {log.ip || "Unknown IP"}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-neutral-50 flex items-center justify-center">
+                      <Activity size={24} className="text-neutral-300" />
+                    </div>
+                    <p className="text-neutral-400 font-medium m-0">No recent activity logs found</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
-
-// Export type for use in parent components
-export type { ActivityLogEntry, ActionType };

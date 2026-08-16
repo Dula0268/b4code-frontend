@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Check, X, User, Building, Clock, ArrowLeft } from "lucide-react";
+import { Check, X, User, Building, Clock, ArrowLeft, Phone, Briefcase, Calendar } from "lucide-react";
 import { ownerApi } from "@/api/owner/owner.api";
 import { Button } from "@/components/ui/button";
 
@@ -14,6 +14,8 @@ interface StaffMember {
     phone: string;
     propertyName: string;
     status: string;
+    role?: string;
+    registeredAt?: string;
 }
 
 export default function OwnerStaffPage() {
@@ -116,12 +118,23 @@ export default function OwnerStaffPage() {
                                         </div>
                                         <div>
                                             <h4 className="text-[17px] font-black text-[#282828]">{staff.firstName} {staff.lastName}</h4>
-                                            <p className="text-[13px] text-neutral-500 font-medium flex items-center gap-1.5 mt-0.5">
-                                                <User size={14} className="text-[#953002]/60" /> {staff.email}
-                                            </p>
-                                            <div className="flex items-center gap-3 mt-2">
-                                                <span className="text-[11px] font-black uppercase tracking-widest px-2.5 py-0.5 bg-neutral-100 text-neutral-500 rounded-full border border-neutral-200 flex items-center gap-1.5">
+                                            <div className="flex flex-col gap-1 mt-1">
+                                                <p className="text-[13px] text-neutral-500 font-medium flex items-center gap-1.5">
+                                                    <User size={14} className="text-[#953002]/60" /> {staff.email}
+                                                </p>
+                                                <p className="text-[13px] text-neutral-500 font-medium flex items-center gap-1.5">
+                                                    <Phone size={14} className="text-[#953002]/60" /> {staff.phone || "Not provided"}
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2 mt-3">
+                                                <span className="text-[11px] font-black uppercase tracking-widest px-2.5 py-1 bg-neutral-100 text-neutral-600 rounded-full border border-neutral-200 flex items-center gap-1.5">
                                                     <Building size={12} /> {staff.propertyName}
+                                                </span>
+                                                <span className="text-[11px] font-black uppercase tracking-widest px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100 flex items-center gap-1.5">
+                                                    <Briefcase size={12} /> {staff.role?.replace(/_/g, " ") || "N/A"}
+                                                </span>
+                                                <span className="text-[11px] font-bold tracking-wider px-2.5 py-1 bg-green-50 text-green-700 rounded-full border border-green-100 flex items-center gap-1.5">
+                                                    <Calendar size={12} /> {staff.registeredAt ? new Date(staff.registeredAt).toLocaleDateString() : "Unknown date"}
                                                 </span>
                                             </div>
                                         </div>

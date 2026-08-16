@@ -79,6 +79,10 @@ export const UsersApi = {
   updateStatus: (id: number, status: UserStatus): Promise<User> =>
     api.put(`/admin/users/${id}/status`, { status }).then((r) => r.data),
 
+  // GET /api/admin/users/{id}/activity
+  getActivityLogs: (id: number, limit = 10): Promise<any[]> =>
+    api.get(`/admin/users/${id}/activity`, { params: { limit } }).then((r) => r.data),
+
   // DELETE /api/admin/users/{id}
   delete: (id: number): Promise<void> =>
     api.delete(`/admin/users/${id}`).then(() => undefined),
