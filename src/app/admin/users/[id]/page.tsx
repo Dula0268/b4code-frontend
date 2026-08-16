@@ -215,20 +215,7 @@ export default function UserDetailPage() {
     fetchUser();
   }, [params.id]);
 
-  const handleRoleChange = async (newRole: string) => {
-    try {
-      if (!user) return;
 
-      await UsersApi.update(Number(user.id), {
-        role: newRole as import("@/api/admin/users.api").UserRole,
-      });
-      setCurrentRole(newRole);
-      setToast(`Role updated to ${newRole}`);
-    } catch (err) {
-      console.error("Failed to update role:", err);
-      setToast("Failed to update user role");
-    }
-  };
 
   const handleSuspendToggle = async () => {
     const next = !suspended;
@@ -330,7 +317,6 @@ export default function UserDetailPage() {
             suspended={suspended}
             onResetPassword={() => setShowResetModal(true)}
             onSuspendToggle={handleSuspendToggle}
-            onRoleChange={handleRoleChange}
           />
 
           <div className="grid grid-cols-[1fr_1.7fr] gap-5 items-start">
