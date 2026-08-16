@@ -13,7 +13,7 @@ import {
     ArrowLeft,
     UploadCloud,
     Trash2,
-    Image as ImageIcon
+    Image as ImageIcon,
     Users,
     Star,
     MessageSquare,

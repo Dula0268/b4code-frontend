@@ -12,6 +12,7 @@ import {
     Check,
     Loader2,
     AlertCircle,
+    Upload,
 } from "lucide-react";
 
 function AddStaffContent() {
@@ -23,6 +24,8 @@ function AddStaffContent() {
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
+    const [role, setRole] = useState("Property Manager");
+    const [status, setStatus] = useState("Active");
 
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);

@@ -16,7 +16,7 @@ import {
     Eye,
     EyeOff,
     CheckCircle2,
-    ArrowLeft
+    ArrowLeft,
     Users,
     Star,
     MessageSquare,

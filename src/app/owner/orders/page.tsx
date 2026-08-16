@@ -12,6 +12,7 @@ import {
     Building2,
     Tag,
     BookOpen,
+    UtensilsCrossed,
     Users,
     MessageSquare,
     Star,
