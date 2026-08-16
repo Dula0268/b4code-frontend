@@ -23,6 +23,7 @@ import {
 import { useAuthStore } from "@/store/auth/auth.store";
 import { ownerSettingsApi } from "@/api/owner/settings.api";
 import { paymentApi } from "@/api/payment/payment.api";
+import { propertiesApi } from "@/api/owner/properties.api";
 
 /* ───────────────────── component ───────────────────── */
 
@@ -38,6 +39,12 @@ export default function BillingPayoutPage() {
 
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
     const [invoices, setInvoices] = useState<any[]>([]);
+    const [propertiesList, setPropertiesList] = useState<any[]>([]);
+    const [selectedProperty, setSelectedProperty] = useState("");
+    const [payoutAmount, setPayoutAmount] = useState("");
+    const [requesting, setRequesting] = useState(false);
+    const [requestError, setRequestError] = useState<string | null>(null);
+    const [requestSuccess, setRequestSuccess] = useState(false);
 
     useEffect(() => {
         ownerSettingsApi.getBankAccounts(ownerId)
@@ -46,10 +53,38 @@ export default function BillingPayoutPage() {
     }, [ownerId]);
 
     useEffect(() => {
+        propertiesApi.listProperties(ownerId, 1, 100)
+            .then((res: any) => {
+                setPropertiesList(res.properties || []);
+            })
+            .catch(() => {});
+    }, [ownerId]);
+
+    useEffect(() => {
         paymentApi.getMyPayments()
             .then((data: any[]) => setInvoices(data || []))
             .catch(() => {});
     }, []);
+
+    const handleRequestPayout = async () => {
+        if (!selectedProperty || !payoutAmount || Number(payoutAmount) <= 0) return;
+        setRequesting(true);
+        setRequestError(null);
+        setRequestSuccess(false);
+        try {
+            await ownerSettingsApi.requestPayout({
+                propertyId: Number(selectedProperty),
+                amount: Number(payoutAmount),
+            });
+            setRequestSuccess(true);
+            setPayoutAmount("");
+            setSelectedProperty("");
+        } catch (err: any) {
+            setRequestError(err?.response?.data?.message ?? "Failed to request payout.");
+        } finally {
+            setRequesting(false);
+        }
+    };
 
     const primaryAccount = bankAccounts.find((a) => a.isPrimary) ?? bankAccounts[0] ?? null;
 
@@ -218,6 +253,55 @@ export default function BillingPayoutPage() {
                                             )}
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+
+                            {/* ─── Request Payout from Admin ─── */}
+                            <div className="bg-white border border-[#e8e8e8] rounded-xl p-5.5 px-6.5">
+                                <h3 className="text-[18px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Request Payout</h3>
+                                <p className="text-[12px] text-[#828282] m-0 mb-4.5">Submit a payout request for booked rooms to the admin for approval.</p>
+
+                                <div className="flex flex-col gap-4 max-w-[400px]">
+                                    <div className="flex flex-col">
+                                        <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Select Property</label>
+                                        <select 
+                                            value={selectedProperty} 
+                                            onChange={(e) => setSelectedProperty(e.target.value)} 
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                        >
+                                            <option value="">Select a property</option>
+                                            {propertiesList.map((p: any) => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                        <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Amount (LKR)</label>
+                                        <input 
+                                            type="number"
+                                            min="1"
+                                            placeholder="Enter payout amount"
+                                            value={payoutAmount}
+                                            onChange={(e) => setPayoutAmount(e.target.value)}
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                        />
+                                    </div>
+
+                                    {requestError && <div className="text-[12px] text-[#eb5757] mt-1">{requestError}</div>}
+                                    {requestSuccess && <div className="text-[12px] text-[#27ae60] mt-1">Payout request submitted successfully.</div>}
+
+                                    <button
+                                        onClick={handleRequestPayout}
+                                        disabled={requesting || !selectedProperty || !payoutAmount || Number(payoutAmount) <= 0}
+                                        className={`w-fit py-2.5 px-5 text-white border-none rounded-lg text-[12px] font-bold cursor-pointer transition-colors mt-2 ${
+                                            requesting || !selectedProperty || !payoutAmount || Number(payoutAmount) <= 0
+                                                ? "bg-[#d0d0d0] pointer-events-none"
+                                                : "bg-[#953002] hover:bg-[#b03a02]"
+                                        }`}
+                                    >
+                                        {requesting ? "Submitting…" : "Request Payout"}
+                                    </button>
                                 </div>
                             </div>
                         </div>

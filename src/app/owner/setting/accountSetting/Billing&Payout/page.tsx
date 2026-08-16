@@ -20,12 +20,33 @@ import {
     MessageSquare,
 } from "lucide-react";
 
+const SRI_LANKAN_BANKS = [
+    { name: "Bank of Ceylon (BOC)", value: "Bank of Ceylon" },
+    { name: "People's Bank", value: "People's Bank" },
+    { name: "Commercial Bank of Ceylon", value: "Commercial Bank of Ceylon" },
+    { name: "Hatton National Bank (HNB)", value: "Hatton National Bank" },
+    { name: "Sampath Bank", value: "Sampath Bank" },
+    { name: "Seylan Bank", value: "Seylan Bank" },
+    { name: "Nations Trust Bank (NTB)", value: "Nations Trust Bank" },
+    { name: "DFCC Bank", value: "DFCC Bank" },
+    { name: "National Development Bank (NDB)", value: "National Development Bank" },
+    { name: "Union Bank of Colombo", value: "Union Bank of Colombo" },
+    { name: "Pan Asia Bank", value: "Pan Asia Bank" },
+    { name: "Cargills Bank", value: "Cargills Bank" },
+    { name: "Amana Bank", value: "Amana Bank" },
+    { name: "SDB bank (Sanasa Development Bank)", value: "Sanasa Development Bank" },
+    { name: "National Savings Bank (NSB)", value: "National Savings Bank" },
+    { name: "Other Bank...", value: "Other" }
+];
+
 export default function EditBankDetailsPage() {
     const router = useRouter();
-    const [bankName, setBankName] = useState("");
+    const [selectedBank, setSelectedBank] = useState("");
+    const [customBankName, setCustomBankName] = useState("");
     const [accountHolder, setAccountHolder] = useState("");
     const [accountNumber, setAccountNumber] = useState("");
-    const [branchName, setBranchName] = useState("");
+    const [branchCode, setBranchCode] = useState("");
+    const [accountType, setAccountType] = useState("Savings");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
@@ -34,25 +55,40 @@ export default function EditBankDetailsPage() {
     useEffect(() => {
         ownerSettingsApi.getOwnerBankDetails()
             .then((data) => {
-                setBankName(data.bankName ?? "");
+                const bName = data.bankName ?? "";
+                const isPredefined = SRI_LANKAN_BANKS.some((b) => b.value === bName && b.value !== "Other");
+                if (isPredefined) {
+                    setSelectedBank(bName);
+                    setCustomBankName("");
+                } else if (bName !== "") {
+                    setSelectedBank("Other");
+                    setCustomBankName(bName);
+                } else {
+                    setSelectedBank("");
+                    setCustomBankName("");
+                }
                 setAccountHolder(data.accountHolderName ?? "");
                 setAccountNumber(data.accountNumber ?? "");
-                setBranchName(data.branchName ?? "");
+                setBranchCode(data.branchCode ?? "");
+                setAccountType(data.accountType ?? "Savings");
             })
             .catch(() => {})
             .finally(() => setLoading(false));
     }, []);
 
     const handleSubmit = async () => {
+        const finalBankName = selectedBank === "Other" ? customBankName : selectedBank;
+        if (!finalBankName || !accountHolder || !accountNumber || !branchCode) return;
         setSaving(true);
         setSaveError(null);
         setSaveSuccess(false);
         try {
             await ownerSettingsApi.saveOwnerBankDetails({
-                bankName,
+                bankName: finalBankName,
                 accountHolderName: accountHolder,
                 accountNumber,
-                branchName,
+                branchCode,
+                accountType,
             });
             setSaveSuccess(true);
             setTimeout(() => router.push("/owner/setting/accountSetting"), 1000);
@@ -145,22 +181,51 @@ export default function EditBankDetailsPage() {
                                     <div>
                                         <div className="text-[14px] font-bold text-[#1d1d1d]">Current Payout Method</div>
                                         <div className="text-[12px] text-[#828282]">
-                                            {bankName ? `${bankName}${accountNumber ? ` **** ${accountNumber.slice(-4)}` : ""}` : "No bank account set"}
+                                            {selectedBank ? `${selectedBank === "Other" ? customBankName : selectedBank}${accountNumber ? ` **** ${accountNumber.slice(-4)}` : ""}` : "No bank account set"}
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="flex flex-col gap-5">
-                                    <div>
-                                        <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Bank Name</label>
-                                        <input
-                                            type="text"
-                                            value={bankName}
-                                            placeholder="e.g. Bank of Ceylon"
-                                            onChange={(e) => setBankName(e.target.value)}
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col">
+                                            <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Bank Name</label>
+                                            <select 
+                                                value={selectedBank} 
+                                                onChange={(e) => setSelectedBank(e.target.value)} 
+                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                            >
+                                                <option value="">Select Bank</option>
+                                                {SRI_LANKAN_BANKS.map((b) => (
+                                                    <option key={b.value} value={b.value}>{b.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Type</label>
+                                            <select 
+                                                value={accountType} 
+                                                onChange={(e) => setAccountType(e.target.value)} 
+                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                            >
+                                                <option value="Savings">Savings</option>
+                                                <option value="Current">Current</option>
+                                            </select>
+                                        </div>
                                     </div>
+
+                                    {selectedBank === "Other" && (
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Specify Bank Name</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Enter your bank's name"
+                                                value={customBankName} 
+                                                onChange={(e) => setCustomBankName(e.target.value)} 
+                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            />
+                                        </div>
+                                    )}
 
                                     <div>
                                         <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Holder Name</label>
@@ -174,23 +239,26 @@ export default function EditBankDetailsPage() {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Number</label>
+                                        <div className="flex flex-col">
+                                            <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Branch Code</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="3-digit branch code"
+                                                value={branchCode} 
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, "");
+                                                    if (val.length <= 3) setBranchCode(val);
+                                                }} 
+                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Number</label>
                                             <input
                                                 type="text"
                                                 value={accountNumber}
                                                 placeholder="Account number"
                                                 onChange={(e) => setAccountNumber(e.target.value)}
-                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Branch Name</label>
-                                            <input
-                                                type="text"
-                                                value={branchName}
-                                                placeholder="e.g. Colombo Main"
-                                                onChange={(e) => setBranchName(e.target.value)}
                                                 className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
                                             />
                                         </div>
@@ -210,9 +278,21 @@ export default function EditBankDetailsPage() {
                                 </a>
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={saving || !bankName || !accountHolder || !accountNumber}
+                                    disabled={
+                                        saving || 
+                                        !selectedBank || 
+                                        (selectedBank === "Other" && !customBankName) || 
+                                        !accountHolder || 
+                                        !accountNumber ||
+                                        !branchCode
+                                    }
                                     className={`py-2.5 px-6 text-white border-none rounded-lg text-[13px] font-bold cursor-pointer transition-colors flex items-center gap-2 ${
-                                        saving || !bankName || !accountHolder || !accountNumber
+                                        saving || 
+                                        !selectedBank || 
+                                        (selectedBank === "Other" && !customBankName) || 
+                                        !accountHolder || 
+                                        !accountNumber ||
+                                        !branchCode
                                             ? "bg-[#d0d0d0] pointer-events-none"
                                             : "bg-[#953002] hover:bg-[#b03a02]"
                                     }`}
