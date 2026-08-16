@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import api, { BASE_URL } from "@/lib/axios";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -21,8 +22,6 @@ export interface QRContext {
   showRoomNumber: boolean;
   showLogo: boolean;
   qrImageUrl?: string;
-  roomNumber?: string;
-  tableId?: number;
 }
 
 // API Response types
@@ -46,8 +45,6 @@ interface QRResponse {
   lastScannedAt: string | null;
   qrImageUrl: string;
   qr_image_url?: string;
-  roomNumber?: string;
-  tableId?: number;
 }
 
 // ─── Store ─────────────────────────────────────────────────────────────────────
@@ -74,22 +71,80 @@ interface StaffQRActions {
   setError: (error: string | null) => void;
 }
 
+function sanitizeErrorMessage(message: string, context: string): string {
+  const msg = message.toLowerCase();
+  
+  if (
+    msg.includes("constraint") ||
+    msg.includes("duplicate") ||
+    msg.includes("foreign key") ||
+    msg.includes("sql") ||
+    msg.includes("hibernate") ||
+    msg.includes("database") ||
+    msg.includes("persistence") ||
+    msg.includes("query") ||
+    msg.includes("nullpointer") ||
+    msg.includes("npe")
+  ) {
+    return "We encountered a temporary database update issue. Please refresh and try again.";
+  }
+  
+  if (
+    msg.includes("network") ||
+    msg.includes("timeout") ||
+    msg.includes("refused") ||
+    msg.includes("500") ||
+    msg.includes("502") ||
+    msg.includes("503") ||
+    msg.includes("504") ||
+    msg.includes("connect") ||
+    msg.includes("socket") ||
+    msg.includes("http") ||
+    msg.includes("request failed")
+  ) {
+    return "Offline: Viewing offline data. Changes will sync when connection is restored.";
+  }
+  
+  if (
+    msg.includes("unauthorized") ||
+    msg.includes("forbidden") ||
+    msg.includes("401") ||
+    msg.includes("403") ||
+    msg.includes("token") ||
+    msg.includes("jwt")
+  ) {
+    return "Access issue. Please verify your credentials or sign in again.";
+  }
+  
+  if (
+    msg.includes("exception") ||
+    msg.includes("failed with status") ||
+    msg.includes("internal server error")
+  ) {
+    return `We couldn't complete the request: ${context}. Please try again.`;
+  }
+  
+  return message;
+}
+
 function extractApiErrorMessage(error: unknown, fallback: string): string {
+  let message = fallback;
+  
+  if (error instanceof Error) {
+    message = error.message;
+  }
+  
   if (typeof error === "object" && error !== null) {
     const response = (error as { response?: { data?: unknown } }).response;
     if (response && typeof response.data === "object" && response.data !== null) {
       const data = response.data as Record<string, unknown>;
       if (typeof data.message === "string") {
-        return data.message;
+        message = data.message;
       }
     }
   }
 
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return fallback;
+  return sanitizeErrorMessage(message, fallback);
 }
 
 function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
@@ -133,12 +188,12 @@ function mapQRResponseToContext(data: QRResponse, tab: QRTab): QRContext {
     showRoomNumber: !!data.showRoomNumber,
     showLogo: data.showLogo !== false,
     qrImageUrl: qrImageUrl,
-    roomNumber: data.roomNumber,
-    tableId: data.tableId,
   };
 }
 
-export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) => ({
+export const useStaffQRStore = create<StaffQRState & StaffQRActions>()(
+  persist(
+    (set, get) => ({
   qrs: [],
   successMsg: null,
   loading: false,
@@ -196,8 +251,6 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         instructionText: data.instructionText,
         showRoomNumber: data.showRoomNumber,
         showLogo: data.showLogo,
-        roomNumber: data.roomNumber,
-        tableId: data.tableId,
       };
 
       const response = await api.post("/qr/generate", payload);
@@ -232,8 +285,6 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
         instructionText?: string;
         showRoomNumber?: boolean;
         showLogo?: boolean;
-        roomNumber?: string;
-        tableId?: number;
       }
       const payload: QRUpdatePayload = {};
       if (data.name) payload.name = data.name;
@@ -243,8 +294,6 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
       if (data.instructionText) payload.instructionText = data.instructionText;
       if (data.showRoomNumber !== undefined) payload.showRoomNumber = data.showRoomNumber;
       if (data.showLogo !== undefined) payload.showLogo = data.showLogo;
-      if (data.roomNumber !== undefined) payload.roomNumber = data.roomNumber;
-      if (data.tableId !== undefined) payload.tableId = data.tableId;
 
       const response = await api.put(`/qr/${id}`, payload);
       const tab = response.data.type === "ROOM" ? "Room" : "Table";
@@ -299,4 +348,10 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>((set, get) 
   setSuccess: (msg) => set({ successMsg: msg }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
-}));
+  }),
+  {
+    name: 'staff-qr-storage',
+    partialize: (state) => ({ qrs: state.qrs, totalItems: state.totalItems }),
+  }
+)
+);

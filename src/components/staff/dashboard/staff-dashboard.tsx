@@ -26,8 +26,10 @@ import { usePermission } from "@/hooks/use-permission";
 
 function useStats() {
   const queueCount = useStaffOrdersStore((s) => s.getCountByStatus("placed"));
-  const inProgress = useStaffOrdersStore((s) => s.getCountByStatus("in-progress"));
-  const deliveredCount = useStaffOrdersStore((s) => s.getCountByStatus("delivered")) + useStaffOrdersStore((s) => s.getCountByStatus("completed"));
+  const acceptedCount = useStaffOrdersStore((s) => s.getCountByStatus("accepted"));
+  const inProgressCount = useStaffOrdersStore((s) => s.getCountByStatus("in-progress"));
+  const inProgress = acceptedCount + inProgressCount;
+  const deliveredCount = useStaffOrdersStore((s) => s.getCountByStatus("delivered"));
 
   return [
     {
@@ -76,14 +78,14 @@ function useStats() {
 function useManagementCards() {
   const placedCount = useStaffOrdersStore((s) => s.getCountByStatus("placed"));
   const menus = useStaffMenuStore((s) => s.menus);
-  const outOfStockCount = menus.reduce((acc, menu) => acc + menu.items.filter(i => i.status === "draft").length, 0);
+  const outOfStockCount = menus.reduce((acc: number, menu: any) => acc + menu.items.filter((i: any) => i.status === "draft").length, 0);
   const activeQRs = useStaffQRStore((s) => s.qrs.filter(q => q.status === "active").length);
-  const unreadMessages = useStaffChatStore((s) => s.conversations.reduce((acc, conv) => acc + conv.unread, 0));
+  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
 
   return [
     {
       title: "Order Management",
-      highlight: placedCount > 0 ? `${placedCount} New Orders` : "No New Orders",
+      highlight: placedCount > 0 ? (placedCount === 1 ? "1 New Order" : `${placedCount} New Orders`) : "No New Orders",
       description: "Manage incoming guest orders and update prep status.",
       buttonLabel: "Manage Orders",
       buttonIcon: ArrowRight,
@@ -92,7 +94,7 @@ function useManagementCards() {
     },
     {
       title: "Menu Management",
-      highlight: outOfStockCount > 0 ? `${outOfStockCount} Items Unavailable` : "All Items Available",
+      highlight: outOfStockCount > 0 ? (outOfStockCount === 1 ? "1 Item Unavailable" : `${outOfStockCount} Items Unavailable`) : "All Items Available",
       description: "Update menu availability and manage property dishes.",
       buttonLabel: "Update Menu",
       buttonIcon: UtensilsCrossed,
@@ -101,7 +103,7 @@ function useManagementCards() {
     },
     {
       title: "QR Management",
-      highlight: `${activeQRs} Active QR Codes`,
+      highlight: activeQRs === 1 ? "1 Active QR Code" : `${activeQRs} Active QR Codes`,
       description: "Monitor and manage QR code locations for guest ordering.",
       buttonLabel: "View QR Codes",
       buttonIcon: Eye,
@@ -110,7 +112,7 @@ function useManagementCards() {
     },
     {
       title: "Guest Chats",
-      highlight: unreadMessages > 0 ? `${unreadMessages} Unread Messages` : "No Unread Messages",
+      highlight: unreadMessages > 0 ? (unreadMessages === 1 ? "1 Unread Message" : `${unreadMessages} Unread Messages`) : "No Unread Messages",
       description: "Communicate directly with guests in real-time.",
       buttonLabel: "Open Chats",
       buttonIcon: MessageSquare,
@@ -124,7 +126,10 @@ export default function StaffDashboard() {
   const stats = useStats();
   const managementCards = useManagementCards();
   const fetchOrders = useStaffOrdersStore((s) => s.fetchOrders);
-
+  const loadingOrders = useStaffOrdersStore((s) => s.loading);
+  const loadingMenus = useStaffMenuStore((s) => s.isLoading);
+  const loadingQRs = useStaffQRStore((s) => s.loading);
+  
   const { user } = useAuthStore();
   const fetchMenus = useStaffMenuStore((s) => s.fetchMenus);
   const fetchQRs = useStaffQRStore((s) => s.fetchQRs);
@@ -153,70 +158,108 @@ export default function StaffDashboard() {
       const pid = Number(propertyId);
       fetchOrders(pid);
       fetchMenus(pid);
-      fetchQRs(pid);
+      fetchQRs(pid, 0, 100);
     } else {
       console.warn("⚠️ No propertyId found for staff dashboard");
       fetchOrders(1);
       fetchMenus(1);
-      fetchQRs(1);
+      fetchQRs(1, 0, 100);
     }
   }, [user, fetchOrders, fetchMenus, fetchQRs]);
 
+  const isLoading = loadingOrders || loadingMenus || loadingQRs;
+
+  if (isLoading) {
+    return (
+      <div className="h-full overflow-y-auto px-6 py-4 flex flex-col gap-4">
+        {/* Stat Cards Row Skeleton */}
+        <div className="grid grid-cols-4 gap-3 shrink-0">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-[#e5e7eb] p-4 h-[88px] animate-pulse">
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-2 bg-gray-200 rounded w-1/4 mt-1"></div>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-gray-100 shrink-0"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Management Cards Grid Skeleton */}
+        <div className="grid grid-cols-2 gap-3 flex-1 min-h-[300px]">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-[#e5e7eb] p-4 flex flex-col justify-between animate-pulse h-full">
+              <div className="flex flex-col gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gray-100"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-5 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-3 bg-gray-200 rounded w-full mt-1"></div>
+              </div>
+              <div className="h-10 bg-gray-200 rounded w-full mt-4"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full overflow-y-auto px-6 py-4 flex flex-col gap-4">
+    <div className="h-full overflow-hidden px-6 py-3 flex flex-col gap-3">
       {/* Stat Cards Row */}
       <div className="grid grid-cols-4 gap-3 shrink-0">
         {stats.map((stat) => {
           const Icon = stat.icon;
           const TrendIcon = stat.trendIcon;
           return (
-            <Card key={stat.label} className="bg-white border-0 py-0 gap-0 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-              <CardContent className="px-4 py-3 flex items-start justify-between">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-medium text-[#6b7280]">{stat.label}</span>
-                  <span className="text-2xl font-bold text-[#111827] leading-tight">{stat.value}</span>
-                  <div className={`flex items-center gap-1 ${stat.trendColor} mt-0.5`}>
-                    <TrendIcon size={12} />
-                    <span className="text-[10px] font-medium">{stat.trend}</span>
-                  </div>
-                </div>
-                <div className={`${stat.iconBg} rounded-lg p-2 flex items-center justify-center`}>
+            <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
+              <div className="flex justify-between items-start z-10">
+                <div className={`p-2.5 ${stat.iconBg.replace('0.08', '0.15')} rounded-xl self-start group-hover:scale-110 transition-transform`}>
                   <Icon size={18} className={stat.iconColor} />
                 </div>
-              </CardContent>
-            </Card>
+                <div className={`flex items-center gap-1 ${stat.trendColor} mt-1`}>
+                  <TrendIcon size={12} />
+                  <span className="text-[10px] font-semibold tracking-wider uppercase">{stat.trend}</span>
+                </div>
+              </div>
+              <div className="z-10 mt-3 flex flex-col gap-0.5">
+                <h3 className="text-[10px] font-semibold tracking-wider text-[#6B7280] uppercase">{stat.label}</h3>
+                <span className="text-xl font-bold text-[#1A1A1A] leading-none">{stat.value}</span>
+              </div>
+            </div>
           );
         })}
       </div>
 
       {/* Management Cards Grid */}
-      <div className="grid grid-cols-2 gap-3 flex-1 min-h-[300px]">
+      <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
         {visibleCards.map((card) => {
           const Icon = card.icon;
           const ButtonIcon = card.buttonIcon;
           return (
-            <Card key={card.title} className="bg-white border-0 py-0 gap-0 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] h-full">
-              <CardContent className="p-4 flex flex-col justify-between h-full">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <div className="bg-[rgba(149,48,2,0.08)] rounded-lg w-9 h-9 flex items-center justify-center">
-                      <Icon size={18} className="text-[var(--brand-primary)]" />
-                    </div>
-                  </div>
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-bold text-[#111827] m-0">{card.title}</h3>
-                    <p className="text-lg font-bold m-0 mt-0.5 text-[var(--brand-primary)]">{card.highlight}</p>
-                    <p className="text-xs text-[#6b7280] m-0 mt-0.5 line-clamp-2">{card.description}</p>
-                  </div>
+            <div key={card.title} className="bg-white/90 backdrop-blur-xl rounded-2xl border border-white/80 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden h-full">
+              <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-2xl rounded-full group-hover:scale-150 group-hover:opacity-[0.06] transition-all duration-700" />
+              
+              <div className="flex flex-col gap-2 z-10">
+                <div className="bg-gradient-to-br from-[#FFF8F0] to-white border border-[#F0EBE7]/80 rounded-xl w-10 h-10 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Icon size={20} className="text-[#C05621]" />
                 </div>
-                <Button asChild className="bg-[var(--brand-primary)] text-white mt-2 gap-1.5">
-                  <Link href={card.href}>
-                    {card.buttonLabel}
-                    <ButtonIcon size={14} />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="flex flex-col">
+                  <h3 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-0.5">{card.title}</h3>
+                  <p className="text-base font-bold m-0 text-[#1A1A1A]">{card.highlight}</p>
+                  <p className="text-xs text-[#6B7280] m-0 mt-0.5 line-clamp-1">{card.description}</p>
+                </div>
+              </div>
+              
+              <Button asChild className="bg-[#1A1A1A] hover:bg-[#C05621] text-white mt-auto rounded-xl h-9 text-xs font-bold tracking-wide transition-colors z-10 shrink-0">
+                <Link href={card.href} className="flex items-center gap-2">
+                  {card.buttonLabel}
+                  <ButtonIcon size={16} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+            </div>
           );
         })}
         {visibleCards.length === 0 && (

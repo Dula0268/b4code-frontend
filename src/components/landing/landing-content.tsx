@@ -185,7 +185,7 @@ export default function LandingContent() {
           <FloatingParticle delay={5} size={3} left="90%" duration={16} />
         </div>
 
-        <div className={`relative z-10 text-center px-4 sm:px-5 w-full max-w-[780px] flex flex-col items-center gap-4 sm:gap-6 transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`relative z-10 text-center px-4 sm:px-5 w-full max-w-[950px] flex flex-col items-center gap-4 sm:gap-6 transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-[10px] sm:text-[12px] font-medium tracking-wider uppercase">
             <span className="w-2 h-2 rounded-full bg-[var(--brand-secondary)] animate-pulse flex-shrink-0" />
             <span className="hidden xs:inline">Sri Lanka&apos;s Premier Booking Platform</span>

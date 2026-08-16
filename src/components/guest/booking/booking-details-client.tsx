@@ -37,6 +37,7 @@ export interface StoredBooking {
   paidInFull: boolean
   status: "UPCOMING" | "COMPLETED" | "CANCELLED"
   roomName: string
+  roomQuantity: number
   confirmationCode: string
   isModified?: boolean
   cancelReason?: string
@@ -174,6 +175,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
           paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
           status: (b.status === "COMPLETED" ? "COMPLETED" : b.status === "CANCELLED" ? "CANCELLED" : "UPCOMING") as any,
           roomName: b.roomName || "Room",
+          roomQuantity: b.roomQuantity || 1,
           confirmationCode: b.confirmationCode,
           disputeStatus: b.disputeStatus,
           disputeAmount: b.disputeAmount,
@@ -248,13 +250,15 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   }, [successMessage, errorMessage]);
 
   if (!booking) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-10 h-10 border-4 border-t-[#9a3300] border-[#e8ddcf] rounded-full animate-spin mb-4" />
-        <p className="text-[#828282] font-medium">Loading booking details...</p>
-      </div>
-    )
-  }
+      return (
+        <div className="max-w-[1000px] mx-auto px-4 md:px-8 py-8 animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/3 mb-8"></div>
+          <div className="h-64 bg-gray-100 rounded-xl mb-6"></div>
+          <div className="h-64 bg-gray-100 rounded-xl"></div>
+        </div>
+      )
+    }
 
   const isUpcoming = booking.status === "UPCOMING"
   const isCompleted = booking.status === "COMPLETED"
@@ -275,6 +279,38 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     setSuccessMessage("");
     try {
       setLoading(true);
+
+      // Calculate the amount due client-side first to decide what to do.
+      const amountDue = !booking.paidInFull ? newPrice : (diffAmount > 0 ? diffAmount : 0);
+
+      if (amountDue > 0) {
+        // Payment is required BEFORE modifying the booking.
+        // Store the pending modification in sessionStorage so the payment
+        // success handler can pick it up and commit the change.
+        const pendingModification = {
+          bookingId: booking.id,
+          confirmationCode: booking.confirmationCode,
+          roomId: Number(editRoomId || booking.roomId),
+          propertyId: Number(booking.propertyId),
+          checkInDate: editCheckIn,
+          checkOutDate: editCheckOut,
+          guests: editGuests,
+        };
+        sessionStorage.setItem("pendingBookingModification", JSON.stringify(pendingModification));
+
+        const params = new URLSearchParams();
+        params.set("total", amountDue.toFixed(2));
+        params.set("confirmationCode", booking.confirmationCode);
+        params.set("bookingId", booking.id);
+        params.set("email", booking.userEmail);
+        params.set("firstName", booking.userEmail.split("@")[0] || "Guest");
+        params.set("lastName", "");
+        params.set("type", "modification");
+        router.push(`/payment?${params.toString()}`);
+        return;
+      }
+
+      // No payment required – commit the modification immediately.
       const res = await guestApi.modifyBooking(booking.id, {
         roomId: Number(editRoomId || booking.roomId),
         propertyId: Number(booking.propertyId),
@@ -282,16 +318,6 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         checkOutDate: editCheckOut,
         guests: editGuests
       });
-
-      if (res.additionalAmountDue > 0) {
-        const params = new URLSearchParams();
-        params.set("total", res.additionalAmountDue.toString());
-        params.set("confirmationCode", booking.confirmationCode);
-        params.set("bookingId", booking.id);
-        params.set("email", booking.userEmail);
-        router.push(`/payment?${params.toString()}`);
-        return;
-      }
 
       // Re-fetch booking from backend
       const updated = await guestApi.getBookingByConfirmation(id);
@@ -369,19 +395,9 @@ export default function BookingDetailsClient({ id }: { id: string }) {
 
   const handleCompleteBooking = async () => {
     setErrorMessage("");
-    setSuccessMessage("");
     try {
-      const res = await guestApi.completeBooking(booking.id)
-      
-      const mappedBooking: StoredBooking = {
-        ...booking,
-        status: res.status
-      }
-
-      setBooking(mappedBooking)
-      setSuccessMessage("Booking marked as completed! You can now leave a review.");
-      setActiveTab("modify"); // switch off cancel tab if they were on it
-      
+      await guestApi.completeBooking(booking.id)
+      router.push('/guest/booking')
     } catch (error: any) {
       console.error("Failed to complete booking:", error)
       setErrorMessage(error.response?.data?.message || "Failed to complete booking.")
@@ -436,9 +452,9 @@ export default function BookingDetailsClient({ id }: { id: string }) {
             {booking.property}
           </h1>
           {booking.roomName && (
-            <p className="text-base font-medium text-white/90 flex items-center gap-2 mt-2">
-              <BedDouble size={18} /> {booking.roomName}
-            </p>
+            <div className="flex items-center gap-2 mt-3 text-[16px] font-medium text-[#2d2116] bg-white/50 w-fit px-4 py-2 rounded-xl border border-[#eadfce]">
+              <BedDouble size={18} /> {booking.roomQuantity && booking.roomQuantity > 1 ? `${booking.roomQuantity}x ` : ""}{booking.roomName}
+            </div>
           )}
         </div>
       </div>
@@ -645,14 +661,9 @@ export default function BookingDetailsClient({ id }: { id: string }) {
           {(isCompleted || isCancelled) && activeTab !== "refund" && (
             <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 flex flex-wrap gap-4">
               {isCompleted && (
-                <>
-                  <button className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#fdfaf6] border border-[#e8ddcf] hover:bg-gray-50 text-[#1d1d1d] text-sm font-bold transition-colors">
-                    <Download size={18} /> Download Invoice
-                  </button>
                   <Link href={`/guest/reviews?propertyId=${booking.propertyId}`} className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-sm font-bold transition-colors no-underline">
-                    <Star size={18} /> Rate Your Stay
+                    <Star size={18} /> Leave Review
                   </Link>
-                </>
               )}
               {isCancelled && (
                 <Link href={`/guest/property/${encodeURIComponent(booking.propertyId)}`} className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-sm font-bold transition-colors no-underline">

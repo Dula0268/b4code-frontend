@@ -34,9 +34,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   placed: "Placed",
   accepted: "Confirmed",
   "in-progress": "Preparing",
-  ready: "Ready",
   delivered: "Delivered",
-  completed: "Completed",
   cancelled: "Cancelled",
 };
 
@@ -44,18 +42,14 @@ const STATUS_BADGE_STYLE: Record<OrderStatus, string> = {
   placed: "bg-[rgba(47,128,237,0.12)] text-[var(--state-info)]",
   accepted: "bg-[rgba(39,174,96,0.12)] text-[var(--state-success)]",
   "in-progress": "bg-[rgba(255,180,1,0.12)] text-[var(--brand-secondary)]",
-  ready: "bg-[rgba(39,174,96,0.12)] text-[var(--state-success)]",
   delivered: "bg-[rgba(39,174,96,0.12)] text-[var(--state-success)]",
-  completed: "bg-[rgba(130,130,130,0.12)] text-[var(--gray-3)]",
   cancelled: "bg-[rgba(235,87,87,0.12)] text-[var(--state-error)]",
 };
 
 const NEXT_ACTION: Record<string, { label: string; subtitle: string }> = {
   placed: { label: "Accept Order", subtitle: "Confirm this order" },
   accepted: { label: "Set to Preparing", subtitle: "Next logical step" },
-  "in-progress": { label: "Set to Ready", subtitle: "Next logical step" },
-  ready: { label: "Mark Delivered", subtitle: "Next logical step" },
-  delivered: { label: "Mark Completed", subtitle: "Final step" },
+  "in-progress": { label: "Mark Delivered", subtitle: "Final step" },
 };
 
 interface StatusStep {
@@ -66,9 +60,7 @@ interface StatusStep {
 
 const FUTURE_STEPS: StatusStep[] = [
   { status: "in-progress", label: "Set to Preparing", icon: <ChefHat size={16} /> },
-  { status: "ready", label: "Set to Ready", icon: <PackageCheck size={16} /> },
   { status: "delivered", label: "Mark Delivered", icon: <Truck size={16} /> },
-  { status: "completed", label: "Mark Completed", icon: <CircleCheckBig size={16} /> },
 ];
 
 export default function StaffOrderDetail({ orderId }: { orderId: string }) {
@@ -106,11 +98,11 @@ export default function StaffOrderDetail({ orderId }: { orderId: string }) {
     );
   }
 
-  const isTerminal = order.status === "completed" || order.status === "cancelled";
+  const isTerminal = order.status === "delivered" || order.status === "cancelled";
   const canReject = ["placed", "accepted", "in-progress"].includes(order.status);
   const nextAction = NEXT_ACTION[order.status];
 
-  const statusOrder: OrderStatus[] = ["placed", "accepted", "in-progress", "ready", "delivered", "completed"];
+  const statusOrder: OrderStatus[] = ["placed", "accepted", "in-progress", "delivered"];
   const currentIdx = statusOrder.indexOf(order.status);
   const futureSteps = FUTURE_STEPS.filter((step) => {
     const stepIdx = statusOrder.indexOf(step.status);
@@ -375,7 +367,7 @@ export default function StaffOrderDetail({ orderId }: { orderId: string }) {
               disabled={!rejectReason.trim()}
               className="bg-[var(--state-error)] hover:bg-[rgba(235,87,87,0.85)]"
             >
-              Confirm Rejection
+              Reject Order
             </Button>
           </DialogFooter>
         </DialogContent>

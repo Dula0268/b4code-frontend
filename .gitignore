@@ -1,4 +1,4 @@
-# Dependencies
+﻿# Dependencies
 node_modules/
 /.pnp
 .pnp.js
@@ -32,3 +32,11 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# PWA
+public/sw.js
+public/workbox-*.js
+public/swe-worker-*.js
+public/sw.js.map
+public/workbox-*.js.map
+public/swe-worker-*.js.map

@@ -14,6 +14,7 @@ import {
   CircleCheck,
   Eye,
   Play,
+  User,
 } from "lucide-react";
 import {
   useStaffOrdersStore,
@@ -27,14 +28,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import StaffHeader from "@/components/staff/layout/staff-header";
 
 const STATUS_TABS: { label: string; value: OrderStatus }[] = [
   { label: "Placed", value: "placed" },
   { label: "Accepted", value: "accepted" },
   { label: "In-Progress", value: "in-progress" },
-  { label: "Ready", value: "ready" },
   { label: "Delivered", value: "delivered" },
-  { label: "Completed", value: "completed" },
   { label: "Cancelled", value: "cancelled" },
 ];
 
@@ -42,9 +42,7 @@ const STATUS_BADGE: Record<OrderStatus, { label: string; bg: string; text: strin
   placed: { label: "New", bg: "bg-[rgba(151,49,2,0.1)]", text: "text-[var(--brand-primary)]" },
   accepted: { label: "Accepted", bg: "bg-[rgba(39,174,96,0.1)]", text: "text-[var(--state-success)]", dot: "bg-[var(--state-success)]" },
   "in-progress": { label: "Preparing", bg: "bg-[#fefce8]", text: "text-[#ca8a04]", dot: "bg-[#ca8a04]" },
-  ready: { label: "Ready", bg: "bg-[rgba(47,128,237,0.1)]", text: "text-[var(--state-info)]", dot: "bg-[var(--state-info)]" },
   delivered: { label: "Delivered", bg: "bg-[rgba(39,174,96,0.1)]", text: "text-[var(--state-success)]" },
-  completed: { label: "Completed", bg: "bg-[rgba(39,174,96,0.1)]", text: "text-[var(--state-success)]" },
   cancelled: { label: "Rejected", bg: "bg-[rgba(235,87,87,0.1)]", text: "text-[var(--state-error)]" },
 };
 
@@ -91,19 +89,7 @@ function OrderCard({
       case "in-progress":
         return (
           <Button size="sm" className="w-full bg-[var(--brand-primary)] text-white text-xs gap-1" onClick={(e) => { e.stopPropagation(); onAdvance?.(); }}>
-            <ChefHat size={14} /> Set to Ready
-          </Button>
-        );
-      case "ready":
-        return (
-          <Button size="sm" className="w-full bg-[var(--brand-primary)] text-white text-xs gap-1" onClick={(e) => { e.stopPropagation(); onAdvance?.(); }}>
             <Truck size={14} /> Mark Delivered
-          </Button>
-        );
-      case "delivered":
-        return (
-          <Button size="sm" className="w-full bg-[var(--state-success)] text-white text-xs gap-1" onClick={(e) => { e.stopPropagation(); onAdvance?.(); }}>
-            <CircleCheck size={14} /> Mark Completed
           </Button>
         );
       default:
@@ -117,62 +103,75 @@ function OrderCard({
 
   return (
     <Card
-      className="bg-white border-0 py-0 gap-0 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-white/80 backdrop-blur-xl border border-white py-0 gap-0 overflow-hidden cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)] hover:-translate-y-1 transition-all duration-500 rounded-3xl flex flex-col group relative"
       onClick={onViewDetail}
     >
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-3xl rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
+      
       {/* Card Header */}
-      <div className="bg-[#fafaf9] border-b border-[#f5f5f4] px-3.5 py-2.5 flex items-center justify-between">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold text-[#1c1917]">{order.id}</span>
-            {order.isUrgent && <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" />}
+      <div className="bg-white/40 border-b border-[#F0EBE7]/50 px-5 py-4 flex items-center justify-between z-10">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-extrabold text-[#1A1A1A]">{order.id}</span>
+            {order.isUrgent && <span className="w-2 h-2 rounded-full bg-[#ef4444] shadow-[0_0_8px_rgb(239,68,68,0.6)] animate-pulse" />}
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-[#78716c]">
-            <Clock size={10} />
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#9E7B6A]">
+            <Clock size={12} />
             <span>{order.time}</span>
             <span>•</span>
             <span>{order.timeAgo}</span>
           </div>
         </div>
-        <span className={`${badge.bg} ${badge.text} text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1`}>
-          {badge.dot && <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />}
+        <span className={`${badge.bg} ${badge.text} text-[11px] font-bold px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-sm`}>
+          {badge.dot && <span className={`w-2 h-2 rounded-full ${badge.dot}`} />}
           {badge.label}
         </span>
       </div>
 
       {/* Card Body */}
-      <CardContent className="px-3.5 py-2.5 flex flex-col gap-2 flex-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <UtensilsCrossed size={14} className="text-[#a8a29e]" />
-            <span className="text-xs font-semibold text-[#292524]">{order.table}</span>
+      <CardContent className="px-5 py-4 flex flex-col gap-3 flex-1 z-10">
+        <div className="flex items-center justify-between bg-white/50 p-2.5 rounded-xl border border-white shadow-sm">
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed size={16} className="text-[#9E7B6A]" />
+            <span className="text-xs font-bold text-[#1A1A1A]">{order.table}</span>
           </div>
-          <Badge variant="secondary" className="text-[10px] font-medium">{order.type}</Badge>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#C05621]">
+            <User size={14} />
+            <span>{order.guest}</span>
+          </div>
+          <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">{order.type}</Badge>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2.5 mt-1">
           {order.items.slice(0, 2).map((item, idx) => (
-            <div key={idx} className="flex items-center gap-1.5">
-              <div className="bg-[#f5f5f4] rounded w-4 h-4 flex items-center justify-center flex-shrink-0">
-                <span className="text-[10px] font-bold text-[#57534e]">{item.qty}</span>
+            <div key={idx} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2.5">
+                <div className="bg-[#FFF8F0] border border-[#F0EBE7]/50 rounded-lg w-6 h-6 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <span className="text-[11px] font-extrabold text-[#C05621]">{item.qty}</span>
+                </div>
+                <span className="text-[13px] font-semibold text-[#1A1A1A] truncate">{item.name}</span>
               </div>
-              <span className="text-xs text-[#44403c] truncate">{item.name}</span>
+              {item.note && (
+                <span className="text-[11px] font-medium text-[#9E7B6A] italic ml-8 line-clamp-1">{item.note}</span>
+              )}
             </div>
           ))}
           {order.items.length > 2 && (
-            <span className="text-[10px] text-[#a8a29e] ml-5">+{order.items.length - 2} more items</span>
+            <span className="text-[11px] font-bold text-[#C05621] ml-8">+{order.items.length - 2} more items</span>
           )}
           {order.note && (
-            <p className="text-[10px] italic text-[#a8a29e] ml-5 m-0">{order.note}</p>
+            <div className="mt-2 p-2.5 bg-yellow-50/50 border border-yellow-100 rounded-xl">
+              <p className="text-[11px] font-semibold italic text-yellow-800 m-0 leading-relaxed">{order.note}</p>
+            </div>
           )}
         </div>
       </CardContent>
 
       {/* Card Footer */}
-      <div className="bg-[#fafaf9] border-t border-[#f5f5f4] px-3.5 py-2.5 flex flex-col gap-2">
+      <div className="bg-white/40 border-t border-[#F0EBE7]/50 px-5 py-4 flex flex-col gap-3.5 z-10">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-[#78716c]">{order.totalItems} items</span>
-          <span className="text-sm font-bold text-[#1c1917]">LKR {order.total.toLocaleString()}</span>
+          <span className="text-[11px] font-bold tracking-widest text-[#9E7B6A] uppercase">{order.totalItems} items</span>
+          <span className="text-[17px] font-extrabold text-[#1A1A1A] tracking-tight">LKR {order.total.toLocaleString()}</span>
         </div>
         {renderActions()}
       </div>
@@ -187,15 +186,19 @@ function StaffToast({ type, message, detail, onClose }: { type: "success" | "err
     return () => clearTimeout(timer);
   }, [onClose]);
 
+  const isOffline = detail.includes("Offline");
+
   return (
     <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-lg border ${
-      type === "success"
+      isOffline
+        ? "bg-[#FFF8F0] border-[#F0EBE7] text-[#C05621]"
+        : type === "success"
         ? "bg-[#f0fdf4] border-[#bbf7d0] text-[#166534]"
         : "bg-[#fef2f2] border-[#fecaca] text-[#991b1b]"
     }`}>
-      {type === "success" ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+      {isOffline ? <Clock size={18} /> : type === "success" ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
       <div className="flex flex-col">
-        <span className="text-sm font-semibold">{message}</span>
+        <span className="text-sm font-semibold">{isOffline ? "Offline Mode" : message}</span>
         <span className="text-xs opacity-80">{detail}</span>
       </div>
       <button onClick={onClose} className="ml-3 text-current opacity-50 hover:opacity-100 bg-transparent border-none cursor-pointer text-lg leading-none">×</button>
@@ -253,8 +256,8 @@ function RejectModal({ orderId, onClose, onConfirm }: { orderId: string; onClose
         {/* Footer */}
         <div className="px-6 pb-6 flex gap-3">
           <Button variant="outline" className="flex-1" onClick={onClose}>Keep Order</Button>
-          <Button variant="destructive" className="flex-1" onClick={() => onConfirm(reason || "No reason provided")}>
-            Confirm Rejection
+          <Button className="flex-1 bg-[var(--state-error)] text-white hover:bg-[rgba(235,87,87,0.85)]" onClick={() => onConfirm(reason || "No reason provided")}>
+            Reject Order
           </Button>
         </div>
       </div>
@@ -277,20 +280,12 @@ export default function StaffOrderQueue() {
   const advanceStatus = useStaffOrdersStore((s) => s.advanceStatus);
   const clearToast = useStaffOrdersStore((s) => s.clearToast);
   const getCountByStatus = useStaffOrdersStore((s) => s.getCountByStatus);
+  const setupSse = useStaffOrdersStore((s) => s.setupSse);
+  const stopSse = useStaffOrdersStore((s) => s.stopSse);
 
   const { user } = useAuthStore();
 
-  // Fetch orders when component mounts
-  useEffect(() => {
-    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
-    console.log(`📦 StaffOrderQueue mounted, fetching orders for property: ${propertyId}...`);
-    if (propertyId) {
-      fetchOrders(Number(propertyId));
-    } else {
-      console.warn("⚠️ No propertyId found for staff order queue");
-      fetchOrders(1);
-    }
-  }, [user, fetchOrders]);
+  // Orders and SSE are now fetched and managed globally via StaffGlobalOrdersProvider
 
   const filteredOrders = orders.filter(
     (o) =>
@@ -301,31 +296,20 @@ export default function StaffOrderQueue() {
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+      <StaffHeader
+        title="Orders Queue"
+        subtitle="Manage incoming kitchen orders in real-time"
+        searchPlaceholder="Search ID or Table..."
+        onSearch={(query) => setSearchQuery(query)}
+        actions={
+          <Button variant="outline" size="icon" className="h-9 w-9 border-[#E8EAED] bg-[#F5F6F8]">
+            <SlidersHorizontal size={16} className="text-[#9CA3AF]" />
+          </Button>
+        }
+      />
       {/* Header Area */}
-      <div className="bg-white px-6 pt-5 pb-0 flex flex-col gap-4">
-        {/* Title Row */}
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-0.5">
-            <h1 className="text-xl font-bold text-[#1c1917] m-0 leading-7">Orders Queue</h1>
-            <p className="text-xs text-[#78716c] m-0">Manage incoming kitchen orders in real-time</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-[220px]">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8a29e]" />
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search ID or Table..."
-                className="pl-8 h-9 text-xs"
-              />
-            </div>
-            <Button variant="outline" size="icon" className="h-9 w-9">
-              <SlidersHorizontal size={16} className="text-[#78716c]" />
-            </Button>
-          </div>
-        </div>
+      <div className="bg-white px-6 pt-5 pb-0 flex flex-col gap-4 mt-[64px]">
 
         {/* Status Tabs */}
         <div className="border-b border-[#e7e5e4] flex items-start gap-0 overflow-x-auto">
@@ -357,9 +341,9 @@ export default function StaffOrderQueue() {
       </div>
 
       {/* Orders Grid */}
-      <div className="flex-1 bg-[#f8f6f5] px-6 py-4 overflow-y-auto">
+      <div className="flex-1 px-6 py-6 overflow-y-auto">
         {filteredOrders.length > 0 ? (
-          <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 xl:grid-cols-4 gap-5">
             {filteredOrders.map((order) => (
               <OrderCard
                 key={order.id}
@@ -372,11 +356,11 @@ export default function StaffOrderQueue() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-[#78716c]">
-            <div className="w-14 h-14 rounded-full bg-[#f5f5f4] flex items-center justify-center">
-              <UtensilsCrossed size={24} className="text-[#a8a29e]" />
+          <div className="flex flex-col items-center justify-center py-24 text-[#9E7B6A]">
+            <div className="w-20 h-20 rounded-full bg-white/80 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-center">
+              <UtensilsCrossed size={32} className="text-[#C05621] opacity-50" />
             </div>
-            <p className="text-sm mt-3 m-0">
+            <p className="text-[15px] font-bold mt-5 m-0">
               No orders in &ldquo;{STATUS_TABS.find((t) => t.value === activeTab)?.label}&rdquo; status
             </p>
           </div>

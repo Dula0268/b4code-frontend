@@ -13,6 +13,7 @@ import {
   ToggleRight,
   Tag,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import { useAuthStore } from "@/store/auth/auth.store";
@@ -21,6 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import StaffHeader from "@/components/staff/layout/staff-header";
 
 export default function StaffMenuList() {
   const menus = useStaffMenuStore((s) => s.menus);
@@ -41,6 +44,12 @@ export default function StaffMenuList() {
   const [page, setPage] = useState(0);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
+  const serviceChargeRate = useStaffMenuStore((s) => s.serviceChargeRate);
+  const fetchServiceCharge = useStaffMenuStore((s) => s.fetchServiceCharge);
+  const updateServiceCharge = useStaffMenuStore((s) => s.updateServiceCharge);
+  const [editingCharge, setEditingCharge] = useState(false);
+  const [chargeInput, setChargeInput] = useState("");
+  const [categoryToDelete, setCategoryToDelete] = useState<{ id: string; name: string } | null>(null);
   const perPage = 4;
   const total = menus.length;
   const paged = menus.slice(page * perPage, (page + 1) * perPage);
@@ -55,11 +64,13 @@ export default function StaffMenuList() {
     if (propertyId) {
       fetchMenus(propertyId);
       fetchCategories(propertyId);
+      fetchServiceCharge(propertyId);
     } else {
       fetchMenus(1);
       fetchCategories(1);
+      fetchServiceCharge(1);
     }
-  }, [user, fetchMenus, fetchCategories]);
+  }, [user, fetchMenus, fetchCategories, fetchServiceCharge]);
 
   // Auto-dismiss success banner
   useEffect(() => {
@@ -90,21 +101,91 @@ export default function StaffMenuList() {
     }
   };
 
-  const handleDeleteCategory = async (id: string, name: string) => {
-    if (typeof window !== "undefined" && window.confirm(`Delete category "${name}"? Existing items linked to this category will lose their category reference.`)) {
-      await deleteCategory(id);
-      setSuccess(`Category "${name}" deleted.`);
+  const handleDeleteCategory = (id: string, name: string) => {
+    setCategoryToDelete({ id, name });
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    await deleteCategory(categoryToDelete.id);
+    setSuccess(`Category "${categoryToDelete.name}" deleted.`);
+    setCategoryToDelete(null);
+  };
+
+  const handleUpdateCharge = async () => {
+    const rate = parseFloat(chargeInput);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      setError("Please enter a valid percentage between 0 and 100.");
+      return;
     }
+    const propertyId = user?.propertyId || Number(localStorage.getItem("selected_property_id")) || 1;
+    await updateServiceCharge(propertyId, rate);
+    setEditingCharge(false);
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
+    <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden">
+      <StaffHeader
+        title="Menu Management"
+        subtitle="Manage menus, categories, and dining options for your guests."
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm" className="h-9 px-4 rounded-xl border-[#E8EAED] bg-white shadow-sm font-bold text-[#1A1A1A] gap-2 transition-all">
+              <Link href="/staff/menu/availability">
+                <ToggleRight size={16} className="text-[#C05621]" /> Item Availability
+              </Link>
+            </Button>
+            <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] text-white hover:from-[#C05621] hover:to-[#99451A] shadow-md font-bold gap-2 transition-all">
+              <Link href="/staff/menu/new">
+                <Plus size={16} /> Create New Menu
+              </Link>
+            </Button>
+          </>
+        }
+      />
+      <div className="flex flex-col flex-1 px-6 py-4 gap-4 mt-[64px] overflow-y-auto">
       {/* ── Loading State ── */}
       {isLoading && (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[var(--gray-5)] border-t-[var(--brand-primary)]"></div>
-            <p className="text-sm text-[var(--gray-3)] mt-3">Loading menus...</p>
+        <div className="flex-1 flex flex-col gap-3">
+          <div className="flex-none flex items-center justify-between mb-2">
+            <div className="animate-pulse">
+              <div className="h-5 w-40 bg-gray-200 rounded mb-1"></div>
+              <div className="h-3 w-64 bg-gray-200 rounded"></div>
+            </div>
+            <div className="flex gap-2 animate-pulse">
+              <div className="h-7 w-28 bg-gray-200 rounded"></div>
+              <div className="h-7 w-32 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+          
+          <div className="flex-none grid grid-cols-3 gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white py-3 px-4 border border-[var(--gray-5)] rounded-[10px] h-20 animate-pulse">
+                <div className="flex justify-between items-start">
+                  <div className="w-2/3">
+                    <div className="h-2 w-1/2 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-6 w-1/3 bg-gray-200 rounded mb-1"></div>
+                    <div className="h-2 w-1/4 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="h-8 w-8 bg-gray-100 rounded-lg"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex-1 bg-white border border-[var(--gray-5)] rounded-[10px] p-4 animate-pulse mt-2">
+            <div className="h-4 w-48 bg-gray-200 rounded mb-6"></div>
+            <div className="flex gap-2 mb-8">
+              <div className="h-8 w-24 bg-gray-200 rounded-full"></div>
+              <div className="h-8 w-32 bg-gray-200 rounded-full"></div>
+              <div className="h-8 w-20 bg-gray-200 rounded-full"></div>
+            </div>
+            <div className="space-y-4">
+              <div className="h-10 bg-gray-100 rounded"></div>
+              <div className="h-10 bg-gray-100 rounded"></div>
+              <div className="h-10 bg-gray-100 rounded"></div>
+              <div className="h-10 bg-gray-100 rounded"></div>
+            </div>
           </div>
         </div>
       )}
@@ -120,58 +201,51 @@ export default function StaffMenuList() {
             </div>
           )}
 
-          {/* ── Error Banner ── */}
+          {/* ── Error / Info Banner ── */}
           {errorMsg && (
-            <div className="flex-none flex items-center gap-2 bg-[rgba(235,87,87,0.08)] border border-[rgba(235,87,87,0.2)] rounded-[10px] px-4 py-2 text-sm">
-              <span className="text-[#eb5757] font-medium flex-1">{errorMsg}</span>
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setError(null)}><X size={14} /></Button>
+            <div className={`flex-none flex items-center gap-2 rounded-[10px] px-4 py-2 text-sm border ${
+              errorMsg.includes("offline") || errorMsg.includes("Connection")
+                ? "bg-[#FFF8F0] border-[#F0EBE7] text-[#C05621]"
+                : "bg-[rgba(235,87,87,0.08)] border-[rgba(235,87,87,0.2)] text-[#eb5757]"
+            }`}>
+              <span className="font-medium flex-1">
+                {errorMsg.includes("offline") || errorMsg.includes("Connection") 
+                  ? "Viewing offline data. Changes will sync when connection is restored." 
+                  : errorMsg}
+              </span>
+              <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-transparent" onClick={() => setError(null)}>
+                <X size={14} className={errorMsg.includes("offline") || errorMsg.includes("Connection") ? "text-[#C05621]" : "text-[#eb5757]"} />
+              </Button>
             </div>
           )}
 
-          {/* ── Header ── */}
-          <div className="flex-none flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-bold text-[var(--black-2)] leading-tight">Menu Management</h1>
-              <p className="text-xs text-[var(--gray-3)] mt-0.5">Manage menus, categories, and dining options for your guests.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm" className="text-xs h-7 gap-1.5">
-                <Link href="/staff/menu/availability">
-                  <ToggleRight size={13} /> Item Availability
-                </Link>
-              </Button>
-              <Button asChild size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1.5 hover:bg-[var(--brand-primary)]/90">
-                <Link href="/staff/menu/new">
-                  <Plus size={13} /> Create New Menu
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          {/* ── Stat Cards ── */}
-          <div className="flex-none grid grid-cols-3 gap-3">
+          {/* ── Success Banner ── */}
+          <div className="flex-none grid grid-cols-3 gap-5">
             {[
-              { label: "Total Menus", value: String(total), sub: `${menus.filter(m => m.status === "active").length} active`, icon: UtensilsCrossed, iconBg: "bg-[rgba(149,48,2,0.08)]", iconColor: "text-[var(--brand-primary)]" },
-              { label: "Active Items", value: String(activeItems), sub: "Across all menus", icon: Layers, iconBg: "bg-[rgba(39,174,96,0.08)]", iconColor: "text-[var(--state-success)]" },
-              { label: "Categories", value: String(categories.length), sub: "Custom defined", icon: Tag, iconBg: "bg-[rgba(99,102,241,0.08)]", iconColor: "text-indigo-500" },
+              { label: "Total Menus", value: String(total), sub: `${menus.filter(m => m.status === "active").length} active`, icon: UtensilsCrossed, iconBg: "bg-[rgba(192,86,33,0.1)]", iconColor: "text-[#C05621]" },
+              { label: "Active Items", value: String(activeItems), sub: "Across all menus", icon: Layers, iconBg: "bg-[rgba(45,125,92,0.1)]", iconColor: "text-[#2D7D5C]" },
+              { label: "Categories", value: String(categories.length), sub: "Custom defined", icon: Tag, iconBg: "bg-[rgba(99,102,241,0.1)]", iconColor: "text-indigo-500" },
             ].map((s) => (
-              <Card key={s.label} className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                <CardContent className="px-4 py-3 flex items-start justify-between">
-                  <div>
-                    <p className="text-[10px] text-[var(--gray-3)] font-medium">{s.label}</p>
-                    <p className="text-xl font-bold text-[var(--black-2)] leading-tight mt-0.5">{s.value}</p>
-                    <p className="text-[10px] text-[var(--gray-3)] mt-0.5">{s.sub}</p>
+              <div key={s.label} className="col-span-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group">
+                <div className="flex justify-between items-start">
+                  <div className={`p-2.5 ${s.iconBg} rounded-xl self-start group-hover:scale-110 transition-transform`}>
+                    <s.icon size={18} className={s.iconColor} />
                   </div>
-                  <div className={`${s.iconBg} rounded-lg p-2`}>
-                    <s.icon size={16} className={s.iconColor} />
-                  </div>
-                </CardContent>
-              </Card>
+                  <span className="text-[10px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase bg-white/50 px-2 py-1 rounded-lg border border-white">
+                    {s.sub}
+                  </span>
+                </div>
+                <div className="mt-5">
+                  <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">{s.label}</h3>
+                  <p className="text-[32px] font-extrabold text-[#1A1A1A] tracking-tighter leading-none m-0">{s.value}</p>
+                </div>
+              </div>
             ))}
           </div>
 
-          {/* ── Categories Manager ── */}
-          <Card className="flex-none bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+          <div className="flex-none grid grid-cols-2 gap-4">
+            {/* ── Categories Manager ── */}
+            <Card className="bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <CardContent className="px-4 py-3">
               <div className="flex items-center justify-between mb-2.5">
                 <div>
@@ -205,7 +279,11 @@ export default function StaffMenuList() {
 
               {/* Categories list */}
               {categoriesLoading ? (
-                <p className="text-[10px] text-[var(--gray-3)]">Loading categories...</p>
+                <div className="flex flex-col gap-1.5 w-full">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-7 w-full bg-gray-100 rounded animate-pulse" />
+                  ))}
+                </div>
               ) : categories.length === 0 ? (
                 <p className="text-[10px] text-[var(--gray-4)] text-center py-3 border border-dashed border-[var(--gray-5)] rounded-[8px]">
                   No categories yet. Add one above to get started.
@@ -232,10 +310,53 @@ export default function StaffMenuList() {
             </CardContent>
           </Card>
 
+            {/* ── Order Settings ── */}
+            <Card className="bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <CardContent className="px-4 py-3">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div>
+                    <h3 className="text-xs font-bold text-[var(--black-2)] flex items-center gap-1.5">
+                      <Settings size={12} className="text-[var(--brand-primary)]" />
+                      Global Order Settings
+                    </h3>
+                    <p className="text-[10px] text-[var(--gray-3)] mt-0.5">Configure property-wide settings like service charges.</p>
+                  </div>
+                </div>
+
+                <div className="bg-[rgba(192,86,33,0.05)] border border-[rgba(192,86,33,0.1)] rounded-[10px] p-3 flex flex-col gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold text-[var(--black-2)]">Service Charge Rate</span>
+                    {editingCharge ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={chargeInput}
+                          onChange={(e) => setChargeInput(e.target.value)}
+                          className="w-16 h-7 text-xs px-2"
+                          placeholder="%"
+                        />
+                        <Button size="sm" onClick={handleUpdateCharge} className="h-7 px-2 text-[10px] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary)]/90">Save</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingCharge(false)} className="h-7 px-2 text-[10px]">Cancel</Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[var(--brand-primary)]">{serviceChargeRate}%</span>
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => { setChargeInput(String(serviceChargeRate)); setEditingCharge(true); }}>
+                          <Pencil size={12} />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-[var(--gray-3)]">Applied automatically to all guest orders placed via the platform.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* ── Menus Table ── */}
-          <div className="flex-1 bg-white border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden min-h-0">
+          <div className="flex-1 bg-white/80 backdrop-blur-xl border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden min-h-0">
             {/* Header row */}
-            <div className="flex-none grid grid-cols-[1fr_140px_130px_70px_80px_70px] gap-2 px-4 py-2 border-b border-[var(--gray-5)] bg-[rgba(0,0,0,0.015)]">
+            <div className="flex-none grid grid-cols-[1fr_140px_130px_70px_80px_70px] gap-2 px-4 py-2 border-b border-[var(--gray-5)] bg-white/50">
               {["MENU NAME", "ITEMS", "PRICE RANGE", "STATUS", "VISIBILITY", "ACTIONS"].map((h) => (
                 <span key={h} className="text-[9px] font-bold text-[var(--gray-3)] uppercase tracking-wider">{h}</span>
               ))}
@@ -309,7 +430,7 @@ export default function StaffMenuList() {
             </div>
 
             {/* Pagination */}
-            <div className="flex-none flex items-center justify-between px-4 py-2 border-t border-[var(--gray-5)] bg-[rgba(0,0,0,0.015)]">
+            <div className="flex-none flex items-center justify-between px-4 py-2 border-t border-[var(--gray-5)] bg-white/50">
               <span className="text-[10px] text-[var(--gray-3)]">
                 {total === 0 ? "No menus" : `Showing ${page * perPage + 1}-${Math.min((page + 1) * perPage, total)} of ${total} menus`}
               </span>
@@ -321,6 +442,15 @@ export default function StaffMenuList() {
           </div>
         </>
       )}
+      
+      <DeleteConfirmationDialog
+        isOpen={categoryToDelete !== null}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={confirmDeleteCategory}
+        title="Delete Category"
+        description={`Are you sure you want to delete the category "${categoryToDelete?.name}"? Existing items linked to this category will lose their category reference.`}
+      />
+      </div>
     </div>
   );
 }

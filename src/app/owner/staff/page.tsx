@@ -65,7 +65,7 @@ export default function StaffPage() {
     useEffect(() => { fetchAll(); }, [fetchAll]);
 
     const pending = allStaff.filter((s) => s.status === "PENDING");
-    const active  = allStaff.filter((s) => s.status === "APPROVED");
+    const active = allStaff.filter((s) => s.status === "APPROVED");
 
     async function handleAction(id: number, action: "approve" | "reject") {
         setActionLoading((prev) => ({ ...prev, [id]: action }));

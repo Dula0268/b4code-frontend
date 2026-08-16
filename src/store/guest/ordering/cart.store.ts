@@ -67,7 +67,11 @@ function getLineKey(
   return key;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
+import { persist } from "zustand/middleware";
+
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
   lines: {},
   serviceChargeRate: 0.1,
   taxRate: 0.05,
@@ -151,7 +155,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   fetchChargesFromApi: async (propertyId: number) => {
     try {
       set({ isLoadingRates: true });
-      const response = await api.get(`/properties/${propertyId}/charges`);
+      const response = await api.get(`/properties/public/${propertyId}/charges`);
       const { serviceChargeRate = 0.1, taxRate = 0.05 } = response.data;
       set({
         serviceChargeRate: serviceChargeRate / 100, // Convert percentage to decimal
@@ -168,4 +172,9 @@ export const useCartStore = create<CartState>((set, get) => ({
       set({ propertyId, isLoadingRates: false });
     }
   },
-}));
+}),
+    {
+      name: "cart-storage",
+    }
+  )
+);

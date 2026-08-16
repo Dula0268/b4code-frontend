@@ -20,7 +20,7 @@ api.interceptors.request.use((config) => {
 // Handle 401 — clear tokens and redirect to login
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('accessToken');
@@ -35,6 +35,21 @@ api.interceptors.response.use(
         }
       }
     }
+
+    // Offline caching for mutation requests
+    if (typeof window !== "undefined" && !navigator.onLine && error.config) {
+      const { method, url, data } = error.config;
+      if (method && ['post', 'put', 'patch', 'delete'].includes(method.toLowerCase())) {
+        // Dynamic import to prevent circular dependency issues
+        const { useOfflineSyncStore } = await import('@/store/staff/offline-sync.store');
+        useOfflineSyncStore.getState().addAction({
+          url: url || '',
+          method: method.toUpperCase() as 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+          payload: data ? JSON.parse(data) : undefined,
+        });
+      }
+    }
+
     return Promise.reject(error);
   }
 );

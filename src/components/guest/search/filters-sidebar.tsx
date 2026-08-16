@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronDown, ChevronUp, Map, Home, Building2, BedDouble, Hotel, Palmtree, TreePine } from "lucide-react"
+import { ChevronDown, ChevronUp, Map, Home, Building2, BedDouble, Hotel, Palmtree, TreePine, ShieldCheck, Coffee, Dog, Accessibility } from "lucide-react"
 import type { FilterOptionsResponse, PropertyTypeOption, RatingOption, SortOption } from "@/api/guest/search.api"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -104,45 +104,31 @@ function PriceRangeFilter({
 
     return (
         <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
-            <h4 className="text-[15px] font-semibold text-[#1d1d1d] mb-1">Price range</h4>
-            <p className="text-[12px] text-[#828282] mb-4">Nightly prices before fees and taxes</p>
-            <div className="flex items-end gap-[3px] h-[60px] mb-3">
-                {heights.map((h, i) => {
-                    const barPct = (i / (bars - 1)) * 100
-                    const inRange = barPct >= leftPct && barPct <= rightPct
-                    return <div key={i} className="flex-1 rounded-sm transition-colors duration-200" style={{ height: `${h}px`, backgroundColor: inRange ? "var(--brand-primary)" : "#e0e0e0" }} />
-                })}
+            <h4 className="text-[17px] font-bold text-[#1d1d1d] mb-1">Price range</h4>
+            <p className="text-[13px] text-[#828282] mb-6">Nightly prices before fees and taxes</p>
+            <div className="text-[15px] font-semibold text-[#1d1d1d] mb-4 px-1">
+                {currency} {priceMin.toLocaleString("en-US")} - {currency} {priceMax.toLocaleString("en-US")}
             </div>
-            <div className="relative h-6 flex items-center mb-4">
-                <div className="absolute left-0 right-0 h-1 rounded bg-[#e0e0e0]" />
-                <div className="absolute h-1 rounded bg-[var(--brand-primary)]" style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }} />
-                <input type="range" min={absMin} max={absMax} step={5000} value={priceMin} onChange={handleMin} aria-label="Minimum price" className="absolute w-full h-1 opacity-0 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto cursor-pointer" style={{ zIndex: priceMin > absMax - 50_000 ? 5 : 3 }} />
-                <input type="range" min={absMin} max={absMax} step={5000} value={priceMax} onChange={handleMax} aria-label="Maximum price" className="absolute w-full h-1 opacity-0 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto cursor-pointer" style={{ zIndex: 4 }} />
-                <div className="absolute w-6 h-6 rounded-full bg-white border border-[#e0e0e0] shadow-md -translate-x-1/2 flex items-center justify-center" style={{ left: `${leftPct}%`, zIndex: 2, pointerEvents: "none" }}>
-                    <div className="flex gap-[2px]"><div className="w-[2px] h-2.5 bg-[#c0c0c0] rounded-full"/><div className="w-[2px] h-2.5 bg-[#c0c0c0] rounded-full"/></div>
-                </div>
-                <div className="absolute w-6 h-6 rounded-full bg-white border border-[#e0e0e0] shadow-md -translate-x-1/2 flex items-center justify-center" style={{ left: `${rightPct}%`, zIndex: 2, pointerEvents: "none" }}>
-                    <div className="flex gap-[2px]"><div className="w-[2px] h-2.5 bg-[#c0c0c0] rounded-full"/><div className="w-[2px] h-2.5 bg-[#c0c0c0] rounded-full"/></div>
-                </div>
-            </div>
-            <div className="flex gap-3">
-                <div className="flex-1">
-                    <label className="block text-[10px] font-medium text-[#828282] uppercase tracking-wide mb-1">Min</label>
-                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[var(--brand-primary)] transition-colors">
-                        <span className="text-[13px] text-[#828282]">{currency}</span>
-                        <input type="text" value={minInput} onChange={e => setMinInput(e.target.value)} onBlur={handleMinBlur} onKeyDown={handleKeyDown} className="text-[13px] text-[#1d1d1d] font-medium bg-transparent outline-none w-full min-w-0" />
-                    </div>
-                </div>
-                <div className="flex-1">
-                    <label className="block text-[10px] font-medium text-[#828282] uppercase tracking-wide mb-1">Max</label>
-                    <div className="flex items-center gap-1 border border-[#e0e0e0] rounded-lg px-3 py-2 bg-white focus-within:border-[var(--brand-primary)] transition-colors">
-                        <span className="text-[13px] text-[#828282]">{currency}</span>
-                        <input type="text" value={maxInput} onChange={e => setMaxInput(e.target.value)} onBlur={handleMaxBlur} onKeyDown={handleKeyDown} className="text-[13px] text-[#1d1d1d] font-medium bg-transparent outline-none w-full min-w-0" />
-                    </div>
-                </div>
+            
+            <div className="relative h-8 flex items-center mb-4 px-3">
+                <div className="absolute left-3 right-3 h-[3px] rounded-full bg-[#e0e0e0]" />
+                <div className="absolute h-[3px] rounded-full bg-[var(--brand-primary)]" style={{ left: `calc(12px + (100% - 24px) * ${leftPct / 100})`, right: `calc(12px + (100% - 24px) * ${(100 - rightPct) / 100})` }} />
+                
+                <input type="range" min={absMin} max={absMax} step={100} value={priceMin} onChange={handleMin} aria-label="Minimum price" className="absolute left-3 right-3 w-[calc(100%-24px)] h-8 opacity-0 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:active:cursor-grabbing [&::-moz-range-thumb]:w-8 [&::-moz-range-thumb]:h-8 [&::-moz-range-thumb]:appearance-none" style={{ zIndex: priceMin > absMax - (absMax - absMin)/2 ? 5 : 3 }} />
+                <input type="range" min={absMin} max={absMax} step={100} value={priceMax} onChange={handleMax} aria-label="Maximum price" className="absolute left-3 right-3 w-[calc(100%-24px)] h-8 opacity-0 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:active:cursor-grabbing [&::-moz-range-thumb]:w-8 [&::-moz-range-thumb]:h-8 [&::-moz-range-thumb]:appearance-none" style={{ zIndex: 4 }} />
+                
+                <div className="absolute w-6 h-6 rounded-full bg-[var(--brand-primary)] shadow-md flex items-center justify-center -translate-x-1/2 ring-[6px] ring-[var(--brand-primary)]/20" style={{ left: `calc(12px + (100% - 24px) * ${leftPct / 100})`, zIndex: 2, pointerEvents: "none" }} />
+                <div className="absolute w-6 h-6 rounded-full bg-[var(--brand-primary)] shadow-md flex items-center justify-center -translate-x-1/2 ring-[6px] ring-[var(--brand-primary)]/20" style={{ left: `calc(12px + (100% - 24px) * ${rightPct / 100})`, zIndex: 2, pointerEvents: "none" }} />
             </div>
         </section>
     )
+}
+
+const ADVANCED_ICONS: Record<string, React.ElementType> = {
+    "Free Cancellation": ShieldCheck,
+    "Breakfast": Coffee,
+    "Pet-Friendly": Dog,
+    "Accessibility": Accessibility
 }
 
 function AdvancedFilters({ selected, onChange }: { selected: string[]; onChange: (next: string[]) => void }) {
@@ -154,18 +140,24 @@ function AdvancedFilters({ selected, onChange }: { selected: string[]; onChange:
 
     return (
         <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
-            <h4 className="text-[15px] font-semibold text-[#1d1d1d] mb-4">Advanced Filters</h4>
-            <div className="flex flex-col gap-3">
+            <h4 className="text-[17px] font-bold text-[#1d1d1d] mb-4">Advanced Filters</h4>
+            <div className="flex flex-col gap-2">
                 {filters.map(am => {
                     const checked = selected.includes(am)
+                    const Icon = ADVANCED_ICONS[am] || ShieldCheck;
                     return (
-                        <label key={am} className="flex items-center gap-3 cursor-pointer select-none group">
-                            <div className={["w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors", checked ? "bg-[var(--brand-primary)] border-2 border-[var(--brand-primary)]" : "border-2 border-[#b0b0b0] bg-white group-hover:border-[var(--brand-primary)]"].join(" ")} onClick={() => toggle(am)}>
-                                {checked && <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                        <div 
+                            key={am} 
+                            onClick={() => toggle(am)} 
+                            className={["flex items-center justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer select-none group", 
+                                checked ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5" : "border-transparent bg-white hover:bg-[#f8f8f8]"
+                            ].join(" ")}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Icon size={20} className={checked ? "text-[var(--brand-primary)]" : "text-[#828282] transition-colors"} />
+                                <span className={`text-[15px] font-medium transition-colors ${checked ? "text-[#1d1d1d]" : "text-[#4a4a4a]"}`}>{am}</span>
                             </div>
-                            <input type="checkbox" checked={checked} onChange={() => toggle(am)} className="sr-only" />
-                            <span className="text-[14px] text-[#333333] font-medium">{am}</span>
-                        </label>
+                        </div>
                     )
                 })}
             </div>
@@ -203,23 +195,28 @@ function PropertyTypeFilter({ types, selected, onChange }: { types: PropertyType
 function GuestRatingFilter({ selected, onChange }: { selected: string | null; onChange: (next: string | null) => void }) {
     return (
         <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
-            <h4 className="text-[15px] font-semibold text-[#1d1d1d] mb-4">Guest Rating</h4>
-            <div className="flex flex-col gap-3">
+            <h4 className="text-[17px] font-bold text-[#1d1d1d] mb-4">Guest Rating</h4>
+            <div className="flex flex-col gap-2">
                 {[5, 4, 3, 2, 1].map((rating) => {
                     const value = String(rating);
                     const active = selected === value;
                     return (
-                        <label key={value} className="flex items-center gap-3 cursor-pointer select-none group">
-                            <div onClick={() => onChange(active ? null : value)} className={["w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0", active ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-[#b0b0b0] bg-white group-hover:border-[var(--brand-primary)]/60"].join(" ")}>
-                                {active && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
-                            </div>
+                        <div 
+                            key={value}
+                            onClick={() => onChange(active ? null : value)} 
+                            className={["flex items-center justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer select-none group", 
+                                active ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5" : "border-transparent bg-white hover:bg-[#f8f8f8]"
+                            ].join(" ")}
+                        >
                             <div className="flex items-center gap-1">
                                 {Array.from({ length: 5 }).map((_, i) => (
-                                    <span key={i} className={`text-[17px] ${i < rating ? "text-[#f59e0b]" : "text-[#e0e0e0]"}`}>★</span>
+                                    <span key={i} className={`text-[19px] leading-none ${i < rating ? "text-[#f59e0b]" : "text-[#f59e0b]/40"}`}>
+                                        {i < rating ? "★" : "☆"}
+                                    </span>
                                 ))}
-                                <span className="text-[13px] text-[#828282] ml-1.5 font-medium">& Up</span>
+                                <span className={`text-[14px] ml-2 font-semibold transition-colors ${active ? "text-[#1d1d1d]" : "text-[#828282]"}`}>& Up</span>
                             </div>
-                        </label>
+                        </div>
                     )
                 })}
             </div>

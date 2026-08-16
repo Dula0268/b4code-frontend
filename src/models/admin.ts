@@ -82,6 +82,7 @@ export interface RevPar {
 export interface BookingChartPoint {
   month: string;
   value: number;
+  netRevenue: number;
 }
 
 // ── Finance ────────────────────────────────────────────────────────────────

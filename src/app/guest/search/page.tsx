@@ -177,7 +177,7 @@ function SearchResultsContent() {
     const [mapOpen, setMapOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
 
-    const PAGE_SIZE = 6
+    const PAGE_SIZE = 9
 
     // Load filter options once
     useEffect(() => {
@@ -301,7 +301,7 @@ function SearchResultsContent() {
             
             <div className="px-4 sm:px-6 lg:px-8 pt-4 flex flex-col lg:flex-row gap-6 lg:gap-8 w-full">
                 {/* Filters Sidebar */}
-                <div className="w-full lg:w-[260px] xl:w-[280px] flex-shrink-0">
+                <div className="w-full lg:w-[290px] xl:w-[320px] flex-shrink-0">
                     <div className="sticky top-[130px]">
                         <FiltersSidebar
                             filters={filters}

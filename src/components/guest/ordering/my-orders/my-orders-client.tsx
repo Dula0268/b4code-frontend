@@ -4,6 +4,15 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOrderStore, type Order, type OrderStatus } from "@/store/guest/ordering/order.store";
+import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
+
+import { useAuthStore } from "@/store/auth/auth.store";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 /* ─── Helpers ─── */
 
@@ -24,19 +33,28 @@ function formatTimeShort(timestamp: number) {
 /* ─── Status badge ─── */
 
 const STATUS_STYLES: Record<OrderStatus, { bg: string; dot: string; text: string }> = {
-  Placed:       { bg: "bg-[#dbeafe] border-[#bfdbfe]", dot: "bg-[#3b82f6]", text: "text-[#1e40af]" },
-  Accepted:     { bg: "bg-[#fef3c7] border-[#fde68a]", dot: "bg-[#f59e0b]", text: "text-[#92400e]" },
-  "In-Progress":{ bg: "bg-[#fef3c7] border-[#fde68a]", dot: "bg-[#f59e0b]", text: "text-[#92400e]" },
-  Delivered:    { bg: "bg-[#dcfce7] border-[#bbf7d0]", dot: "bg-[#22c55e]", text: "text-[#166534]" },
-  Rejected:     { bg: "bg-[#fee2e2] border-[#fecaca]", dot: "bg-[#ef4444]", text: "text-[#991b1b]" },
+  placed:       { bg: "bg-[#dbeafe] border-[#bfdbfe]", dot: "bg-[#3b82f6]", text: "text-[#1e40af]" },
+  accepted:     { bg: "bg-[#fef3c7] border-[#fde68a]", dot: "bg-[#f59e0b]", text: "text-[#92400e]" },
+  "in-progress":{ bg: "bg-[#fef3c7] border-[#fde68a]", dot: "bg-[#f59e0b]", text: "text-[#92400e]" },
+  delivered:    { bg: "bg-[#dcfce7] border-[#bbf7d0]", dot: "bg-[#22c55e]", text: "text-[#166534]" },
+  cancelled:    { bg: "bg-[#fee2e2] border-[#fecaca]", dot: "bg-[#ef4444]", text: "text-[#991b1b]" },
+  "payment-pending": { bg: "bg-[#f3f4f6] border-[#d1d5db]", dot: "bg-[#9ca3af]", text: "text-[#4b5563]" },
 };
 
 function StatusBadge({ status }: { status: OrderStatus }) {
   const s = STATUS_STYLES[status];
+  const labelMap: Record<OrderStatus, string> = {
+    placed: "Placed",
+    accepted: "Accepted",
+    "in-progress": "In Progress",
+    delivered: "Delivered",
+    cancelled: "Cancelled",
+    "payment-pending": "Payment Pending",
+  };
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12px] font-medium leading-[16px] ${s.bg} ${s.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      {status}
+      {labelMap[status]}
     </span>
   );
 }
@@ -63,14 +81,51 @@ export default function MyOrdersClient() {
   const router = useRouter();
   const orderHistory = useOrderStore((s) => s.orderHistory);
   const currentOrder = useOrderStore((s) => s.currentOrder);
+  const fetchOrderHistory = useOrderStore((s) => s.fetchOrderHistory);
+  const user = useAuthStore((s) => s.user);
+  const guestSessionId = useGuestSessionStore((s) => s.sessionId);
+
+  React.useEffect(() => {
+    fetchOrderHistory(user?.userId, guestSessionId || undefined);
+  }, [user?.userId, guestSessionId, fetchOrderHistory]);
+
+  const [filter, setFilter] = React.useState<"All" | "Active" | "Past">("All");
 
   // Combine current order (if any) with history
   const allOrders = React.useMemo(() => {
     const list: Order[] = [];
-    if (currentOrder) list.push(currentOrder);
-    list.push(...orderHistory);
-    return list;
-  }, [currentOrder, orderHistory]);
+    if (currentOrder) {
+      list.push(currentOrder);
+    }
+    
+    // Add history orders, avoiding duplicates
+    for (const histOrder of orderHistory) {
+      if (!list.find((o) => o.id === histOrder.id)) {
+        list.push(histOrder);
+      }
+    }
+
+    // Apply Filter
+    const filteredList = list.filter((order) => {
+      // Never show payment-pending orders
+      if (order.currentStatus === "payment-pending") return false;
+
+      if (filter === "All") return true;
+      const isActive = ["placed", "accepted", "in-progress"].includes(order.currentStatus);
+      if (filter === "Active") return isActive;
+      if (filter === "Past") return !isActive;
+      return true;
+    });
+    
+    // Sort by timestamp descending (newest first)
+    filteredList.sort((a, b) => {
+      const aTime = a.timeline?.[a.timeline.length - 1]?.timestamp || 0;
+      const bTime = b.timeline?.[b.timeline.length - 1]?.timestamp || 0;
+      return bTime - aTime;
+    });
+
+    return filteredList;
+  }, [currentOrder, orderHistory, filter]);
 
   const [page, setPage] = React.useState(1);
   const totalPages = Math.max(1, Math.ceil(allOrders.length / PAGE_SIZE));
@@ -103,12 +158,27 @@ export default function MyOrdersClient() {
             View and manage your past orders during your stay
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-[#ede4de] rounded-lg bg-white text-[14px] font-medium text-[#1D1D1D] hover:bg-[#f8f6f5] transition cursor-pointer shadow-sm">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" stroke="#1D1D1D" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          Filter
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 px-4 py-2 border border-[#ede4de] rounded-lg bg-white text-[14px] font-medium text-[#1D1D1D] hover:bg-[#f8f6f5] transition cursor-pointer shadow-sm">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" stroke="#1D1D1D" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              Filter: {filter}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[150px]">
+            <DropdownMenuItem onClick={() => setFilter("All")} className="cursor-pointer">
+              All Orders
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilter("Active")} className="cursor-pointer">
+              Active
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilter("Past")} className="cursor-pointer">
+              Past
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* ─── Table ─── */}
@@ -132,14 +202,18 @@ export default function MyOrdersClient() {
           </div>
         ) : (
           paged.map((order, idx) => {
-            const placedTs = order.timeline[0]?.timestamp ?? Date.now();
+            const placedTs = order.timeline?.[0]?.timestamp ?? Date.now();
             // Use unique key combining order ID and timeline timestamp to avoid duplicates
-            const uniqueKey = `${order.id}-${order.timeline[0]?.timestamp ?? idx}`;
+            const uniqueKey = `${order.id}-${order.timeline?.[0]?.timestamp ?? idx}`;
             return (
               <React.Fragment key={uniqueKey}>
                 {/* Desktop row */}
                 <div
-                  className={`hidden md:grid px-6 py-4 grid-cols-[140px_180px_220px_1fr_160px_100px_50px] gap-4 items-center hover:bg-[#faf8f7] transition ${idx > 0 ? "border-t border-[#ede4de]" : ""}`}
+                  onClick={() => {
+                    useOrderStore.setState({ currentOrder: order });
+                    router.push("/guest/order/track");
+                  }}
+                  className={`hidden md:grid px-6 py-4 grid-cols-[140px_180px_220px_1fr_160px_100px_50px] gap-4 items-center hover:bg-[#faf8f7] transition cursor-pointer ${idx > 0 ? "border-t border-[#ede4de]" : ""}`}
                 >
                   {/* Order ID */}
                   <span className="text-[14px] font-medium text-[#af3a04] leading-[20px]">
@@ -169,7 +243,7 @@ export default function MyOrdersClient() {
                   </div>
 
                   {/* Review button */}
-                  <div className="flex justify-center">
+                  <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => {
                         useOrderStore.setState({ currentOrder: order });
@@ -191,7 +265,11 @@ export default function MyOrdersClient() {
 
                 {/* Mobile card */}
                 <div
-                  className={`md:hidden px-4 py-3 hover:bg-[#faf8f7] transition ${idx > 0 ? "border-t border-[#ede4de]" : ""}`}
+                  onClick={() => {
+                    useOrderStore.setState({ currentOrder: order });
+                    router.push("/guest/order/track");
+                  }}
+                  className={`md:hidden px-4 py-3 hover:bg-[#faf8f7] transition cursor-pointer ${idx > 0 ? "border-t border-[#ede4de]" : ""}`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[14px] font-medium text-[#af3a04] leading-[20px]">
@@ -217,7 +295,8 @@ export default function MyOrdersClient() {
                     </div>
                   </div>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       useOrderStore.setState({ currentOrder: order });
                       router.push("/guest/order/review");
                     }}

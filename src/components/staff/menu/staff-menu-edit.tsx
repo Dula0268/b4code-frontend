@@ -89,14 +89,21 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
     return () => clearTimeout(t);
   }, [successMsg, setSuccess]);
 
-  if (isLoading && !menu) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-primary)]" />
-        <p className="text-sm text-[var(--gray-3)] font-medium">Loading menu data...</p>
-      </div>
-    );
-  }
+    if (isLoading && !menu) {
+      return (
+        <div className="h-full flex flex-col p-5 gap-6">
+          <div className="flex flex-col gap-2">
+            <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+          </div>
+          <div className="flex-1 rounded-xl border border-[var(--gray-5)] bg-white p-6 shadow-sm flex flex-col gap-4">
+            <div className="h-10 w-full bg-gray-100 rounded animate-pulse" />
+            <div className="h-24 w-full bg-gray-100 rounded animate-pulse" />
+            <div className="h-10 w-32 bg-gray-100 rounded animate-pulse mt-4" />
+          </div>
+        </div>
+      );
+    }
 
   if (!menu) {
     return (

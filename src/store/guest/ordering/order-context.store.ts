@@ -1,13 +1,12 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 // QR session context
 
 export interface QRContextData {
   qrId: string; // Unique QR ID
   propertyId: number; // Property ID for fetching menu
-  roomId?: number; // Optional Room ID from QR
-  roomNumber?: string; // Optional Room Number string from QR
-  tableId?: number; // Optional Table ID from QR
+  location?: string; // Unified location string from QR
   propertyName: string; // Name of the property
   locationLabel: string; // Location/Table name or Room number
   type: string; // QR type (DINING_TABLE, ROOM, etc.)
@@ -28,14 +27,21 @@ type OrderContextActions = {
   reset: () => void;
 };
 
-export const useOrderContextStore = create<OrderContextState & OrderContextActions>((set) => ({
-  loading: false,
-  error: null,
-  qrContext: null,
+export const useOrderContextStore = create<OrderContextState & OrderContextActions>()(
+  persist(
+    (set) => ({
+      loading: false,
+      error: null,
+      qrContext: null,
 
-  setLoading: (value) => set({ loading: value }),
-  setError: (message) => set({ error: message }),
-  setQRContext: (context) => set({ qrContext: context }),
-  reset: () => set({ loading: false, error: null, qrContext: null }),
-}));
-
+      setLoading: (value) => set({ loading: value }),
+      setError: (message) => set({ error: message }),
+      setQRContext: (context) => set({ qrContext: context }),
+      reset: () => set({ loading: false, error: null, qrContext: null }),
+    }),
+    {
+      name: "order-context-storage",
+      storage: createJSONStorage(() => sessionStorage),
+    }
+  )
+);

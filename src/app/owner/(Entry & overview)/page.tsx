@@ -25,12 +25,12 @@ import {
 /* ───────────────────── sidebar ───────────────────── */
 
 const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard",  active: true,  href: "/owner" },
-    { icon: Building2,       label: "Properties", active: false, href: "/owner/properties" },
-    { icon: Users,           label: "Staff",      active: false, href: "/owner/staff" },
-    { icon: Star,            label: "Reviews",    active: false, href: "/owner/reviews" },
-    { icon: MessageSquare,   label: "Messages",   active: false, href: "/owner/message" },
-    { icon: Settings,        label: "Settings",   active: false, href: "/owner/setting/accountSetting" },
+    { icon: LayoutDashboard, label: "Dashboard", active: true, href: "/owner" },
+    { icon: Building2, label: "Properties", active: false, href: "/owner/properties" },
+    { icon: Users, label: "Staff", active: false, href: "/owner/staff" },
+    { icon: Star, label: "Reviews", active: false, href: "/owner/reviews" },
+    { icon: MessageSquare, label: "Messages", active: false, href: "/owner/message" },
+    { icon: Settings, label: "Settings", active: false, href: "/owner/setting/accountSetting" },
 ];
 
 /* ───────────────────── helpers ───────────────────── */

@@ -42,8 +42,6 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
   const [description, setDescription] = useState(existingQR?.description ?? "");
   const [isActive, setIsActive] = useState(existingQR?.status === "active" || !existingQR);
   const [nameError, setNameError] = useState(false);
-  const [roomNumber, setRoomNumber] = useState(existingQR?.roomNumber ?? "");
-  const [tableId, setTableId] = useState<number | undefined>(existingQR?.tableId ?? undefined);
   const [rooms, setRooms] = useState<{id: number, roomType: string}[]>([]);
 
   // Fetch rooms dynamically when property is selected
@@ -65,7 +63,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
 
     try {
       if (isEdit && qrId) {
-        await updateQR(qrId, { type, name, location, description, status: isActive ? "active" : "inactive", tab: TYPE_TAB[type], roomNumber: type === "Room" ? roomNumber : undefined, tableId: type === "Table" ? tableId : undefined });
+        await updateQR(qrId, { type, name, location, description, status: isActive ? "active" : "inactive", tab: TYPE_TAB[type] });
         setSuccess(`QR "${name}" updated successfully.`);
         router.push(`/staff/qr?propertyId=${propertyId}`);
       } else {
@@ -79,8 +77,6 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
           instructionText: "Scan to Order Food",
           showRoomNumber: true,
           showLogo: true,
-          roomNumber: type === "Room" ? roomNumber : undefined,
-          tableId: type === "Table" ? tableId : undefined,
         }, propertyId);
         setSuccess(`QR "${name}" has been added to your QR management.`);
         router.push(`/staff/qr/${id}?propertyId=${propertyId}`);
@@ -159,7 +155,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
               {type === "Room" ? (
                 <div>
                   <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Room <span className="text-[var(--state-error)]">*</span></Label>
-                  <Select value={roomNumber} onValueChange={setRoomNumber}>
+                  <Select value={location} onValueChange={setLocation}>
                     <SelectTrigger className="w-full mt-1 text-xs rounded-[8px] border-[var(--gray-5)] bg-white">
                       <SelectValue placeholder="Select a room" />
                     </SelectTrigger>
@@ -178,11 +174,10 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
                 </div>
               ) : (
                 <div>
-                  <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Table ID <span className="text-[var(--state-error)]">*</span></Label>
+                  <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Table Number <span className="text-[var(--state-error)]">*</span></Label>
                   <Input
-                    type="number"
-                    value={tableId ?? ""}
-                    onChange={(e) => setTableId(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. 5"
                     className="mt-1 text-xs rounded-[8px] border-[var(--gray-5)]"
                   />
@@ -190,11 +185,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
                 </div>
               )}
 
-              {/* Location */}
-              <div>
-                <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Location <span className="text-[var(--gray-3)] normal-case font-normal">(Optional)</span></Label>
-                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Main Hall, Poolside, 2nd Floor" className="mt-1 text-xs rounded-[8px] border-[var(--gray-5)]" />
-              </div>
+
 
               {/* Description */}
               <div>

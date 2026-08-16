@@ -12,6 +12,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend
 } from "recharts";
 import {
   TrendingUp,
@@ -45,7 +46,7 @@ const bookingData = [
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
 interface TooltipPayload {
-  payload: { month: string };
+  payload: { month: string; value: number; netRevenue: number };
   value: number;
 }
 interface TooltipProps {
@@ -57,12 +58,17 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white px-4 py-3 rounded-lg border border-[#F0EBE7] shadow-md">
-        <p className="text-[13px] font-semibold text-[#1A1A1A] mb-1">
+        <p className="text-[13px] font-semibold text-[#1A1A1A] mb-2">
           {payload[0].payload.month}
         </p>
-        <p className="text-[13px] font-medium text-[#C05621]">
-          LKR {payload[0].value.toLocaleString()}
-        </p>
+        <div className="flex flex-col gap-1">
+          <p className="text-[13px] font-medium text-[#C05621] m-0">
+            Gross: LKR {payload[0].payload.value?.toLocaleString() || '0'}
+          </p>
+          <p className="text-[13px] font-medium text-[#2D7D5C] m-0">
+            Net: LKR {payload[0].payload.netRevenue?.toLocaleString() || '0'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -169,10 +175,14 @@ export default function PlatformAnalyticsPage() {
                     <stop offset="0%" stopColor="#C05621" stopOpacity={0.13} />
                     <stop offset="100%" stopColor="#C05621" stopOpacity={0} />
                   </linearGradient>
+                  <linearGradient id="netGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2D7D5C" stopOpacity={0.13} />
+                    <stop offset="100%" stopColor="#2D7D5C" stopOpacity={0} />
+                  </linearGradient>
                 </defs>
                 <CartesianGrid
-                  strokeDasharray="0"
-                  stroke="#F0EBE7"
+                  strokeDasharray="3 3"
+                  stroke="#E8DDD8"
                   vertical={false}
                 />
                 <XAxis
@@ -194,7 +204,9 @@ export default function PlatformAnalyticsPage() {
                   content={<CustomTooltip />}
                   cursor={{ stroke: "#E8DDD8", strokeWidth: 1 }}
                 />
+                <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#9E7B6A', right: 0 }} />
                 <Area
+                  name="Gross Booking Value"
                   type="natural"
                   dataKey="value"
                   stroke="#C05621"
@@ -202,6 +214,16 @@ export default function PlatformAnalyticsPage() {
                   fill="url(#bookingGradient)"
                   dot={false}
                   activeDot={{ r: 5, fill: "#C05621", stroke: "#fff", strokeWidth: 2 }}
+                />
+                <Area
+                  name="Net Revenue"
+                  type="natural"
+                  dataKey="netRevenue"
+                  stroke="#2D7D5C"
+                  strokeWidth={2.5}
+                  fill="url(#netGradient)"
+                  dot={false}
+                  activeDot={{ r: 5, fill: "#2D7D5C", stroke: "#fff", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -349,30 +371,48 @@ export default function PlatformAnalyticsPage() {
           </div>
         </div>
 
-        {/* ── Row 4: New Listings + Registered Users + Platform Commission ── */}
-        <div className="flex gap-5">
-          {/* New Listings */}
-          <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex items-center gap-4">
+        {/* ── Row 4: Total Properties + New Listings + Registered Users + Platform Commission ── */}
+        <div className="grid grid-cols-4 gap-5">
+          {/* Total Properties */}
+          <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#F0EBE7] flex items-center justify-center flex-shrink-0">
+              <Building2 size={22} color="#1A1A1A" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0 mb-1">
+                Total Properties
+              </p>
+              <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0">
+                {formatCurrency(platformSummary?.totalProperties)}
+              </p>
+              <p className="text-[12px] text-[#9E7B6A] mt-0.5">
+                Properties on platform
+              </p>
+            </div>
+          </div>
+
+          {/* New Listings */}
+          <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#FFF4ED] flex items-center justify-center flex-shrink-0">
               <Building2 size={22} color="#C05621" />
             </div>
             <div>
               <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0 mb-1">
                 New Listings
               </p>
-              <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0">
+              <p className="text-[28px] font-bold text-[#C05621] leading-none m-0">
                 {formatCurrency(platformSummary?.newListingsThisWeek)}
               </p>
               <p className="text-[12px] text-[#9E7B6A] mt-0.5">
-                Properties onboarding this week
+                Onboarded this week
               </p>
             </div>
           </div>
 
           {/* Registered Users */}
-          <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex items-center gap-4">
+          <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#F0EBE7] flex items-center justify-center flex-shrink-0">
-              <Users size={22} color="#C05621" />
+              <Users size={22} color="#1A1A1A" />
             </div>
             <div>
               <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0 mb-1">
@@ -389,21 +429,21 @@ export default function PlatformAnalyticsPage() {
           </div>
 
           {/* Platform Commission */}
-          <div className="flex-1 bg-[#2D4A3E] rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+          <div className="flex-1 bg-[#2D4A3E] rounded-2xl p-5 shadow-sm flex flex-col justify-between">
             <div className="flex items-center gap-2">
               <BadgeDollarSign size={16} color="rgba(255,255,255,0.7)" />
               <p className="text-[11px] font-semibold tracking-widest text-[rgba(255,255,255,0.7)] uppercase m-0">
                 Platform Commission
               </p>
             </div>
-            <p className="text-[34px] font-bold text-white leading-none m-0 mt-3">
+            <p className="text-[28px] font-bold text-white leading-none m-0 mt-3">
               LKR {formatCurrency(platformSummary?.platformCommission)}
             </p>
-            <div className="mt-4 flex items-center gap-2 bg-[rgba(255,255,255,0.12)] rounded-lg px-3 py-2 w-fit">
-              <span className="w-4 h-4 rounded-full bg-[#4CAF50] flex items-center justify-center flex-shrink-0">
-                <span className="block w-2 h-1.5 border-b-2 border-r-2 border-white rotate-45 -translate-y-px" />
+            <div className="mt-4 flex items-center gap-2 bg-[rgba(255,255,255,0.12)] rounded-lg px-2 py-1.5 w-fit">
+              <span className="w-3 h-3 rounded-full bg-[#4CAF50] flex items-center justify-center flex-shrink-0">
+                <span className="block w-1.5 h-1 border-b-2 border-r-2 border-white rotate-45 -translate-y-px" />
               </span>
-              <p className="text-[12px] text-white m-0">Payout scheduled for 1st Oct</p>
+              <p className="text-[11px] text-white m-0">Payout on 1st Oct</p>
             </div>
           </div>
         </div>

@@ -9,19 +9,31 @@ import {
     MapPin, Share2, Heart, Star, ChevronRight, Home, Wifi, Wind, Waves,
     Dumbbell, Car, Utensils, ShieldCheck, Coffee, Leaf, Bike, BookOpen,
     Monitor, SquareDot, Grid2X2, X, Clock, AlertTriangle, Ban, Users,
-    Calendar, Edit3, User
+    Calendar, Edit3, User, Dog
 } from "lucide-react"
 import { RoomCard, RatingBar } from "@/components/guest/property/property-components"
 import CalendarPicker from "@/components/shared/forms/calendar-picker"
 import { useAuthStore } from "@/store/auth/auth.store"
 
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-    Wifi, Wind, Waves, Dumbbell, Car, Utensils, ShieldCheck, Coffee,
-    Leaf, Bike, BookOpen, Monitor,
+const AMENITY_LABEL_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+    "Wifi": Wifi,
+    "Free WiFi": Wifi,
+    "Air Conditioning": Wind,
+    "Swimming Pool": Waves,
+    "Pool": Waves,
+    "Gym": Dumbbell,
+    "Parking": Car,
+    "Kitchen": Utensils,
+    "Spa and Wellness": Leaf,
+    "Pet Friendly": Dog,
+    "Pet-Friendly": Dog,
+    "Smart TV": Monitor,
+    "Breakfast Included": Coffee,
+    "Free Cancellation": ShieldCheck,
 }
 
-function AmenityIcon({ name, size = 18 }: { name: string; size?: number }) {
-    const Icon = ICON_MAP[name] ?? SquareDot
+function AmenityIcon({ label, size = 18 }: { label: string; size?: number }) {
+    const Icon = AMENITY_LABEL_ICON_MAP[label] ?? SquareDot
     return <Icon size={size} className="text-[var(--brand-primary)] flex-shrink-0" />
 }
 
@@ -166,7 +178,8 @@ export default function PropertyClient({ property }: { property: any }) {
         setTimeout(() => setShareToast(null), 2800)
     }
 
-    const allImages = [property.imageSrc, ...(property.galleryImages || [])]
+    const filteredGallery = (property.galleryImages || []).filter((img: string) => img !== property.imageSrc)
+    const allImages = [property.imageSrc, ...filteredGallery]
 
     return (
         <div className="min-h-screen bg-[#fafafa]">
@@ -230,7 +243,7 @@ export default function PropertyClient({ property }: { property: any }) {
                         <div className="col-span-2 row-span-2 relative cursor-pointer group" onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }}>
                             <Image src={property.imageSrc} alt={property.title} fill className="object-cover group-hover:brightness-90 transition" priority sizes="(max-width: 768px) 100vw, 600px" />
                         </div>
-                        {(property.galleryImages || []).slice(0, 4).map((img: string, i: number) => (
+                        {filteredGallery.slice(0, 4).map((img: string, i: number) => (
                             <div key={i} className="relative cursor-pointer group" onClick={() => { setActiveGalleryIdx(i + 1); setGalleryOpen(true) }}>
                                 <Image src={img} alt={`${property.title} photo ${i + 2}`} fill className="object-cover group-hover:brightness-90 transition" sizes="(max-width: 768px) 50vw, 300px" />
                             </div>
@@ -239,8 +252,8 @@ export default function PropertyClient({ property }: { property: any }) {
                     <button onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }} className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#e0e0e0] rounded-xl px-4 py-2 text-[13px] font-semibold text-[#1d1d1d] shadow-sm hover:bg-white transition-colors cursor-pointer"><Grid2X2 size={14} />Show all photos</button>
                 </div>
 
-                <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-                    {/* Left Column */}
+                <div className="flex flex-col gap-8 lg:gap-12">
+                    {/* Main Content */}
                     <div className="flex-1 min-w-0 flex flex-col gap-8">
                     {/* About */}
                     <div>
@@ -254,120 +267,15 @@ export default function PropertyClient({ property }: { property: any }) {
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {(property.amenities || []).map((a: any) => (
                                     <div key={a.label} className="flex items-center gap-2.5 text-[13px] text-[#333]">
-                                        <AmenityIcon name={a.icon} /><span>{a.label}</span>
+                                        <AmenityIcon label={a.label} /><span>{a.label}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Trip Filter Box */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-sm">
-                            <h3 className="font-bold text-[#1d1d1d] text-[18px] mb-4">Availability</h3>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                {/* Date Picker */}
-                                <div className="relative flex-1">
-                                    <div 
-                                        className="w-full h-[46px] border border-[#d8d8d8] rounded-xl px-4 flex items-center justify-between text-[14px] cursor-pointer bg-white hover:border-[#aaa] transition-colors"
-                                        onClick={() => setCalOpen(!calOpen)}
-                                    >
-                                        <div className="flex items-center gap-2 text-[#1d1d1d]">
-                                            <Calendar size={16} className="text-[#828282]" />
-                                            <span className="font-medium">
-                                                {editCheckIn ? new Date(editCheckIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-in'} - {editCheckOut ? new Date(editCheckOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-out'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    {calOpen && (
-                                        <div ref={calRef} className="absolute top-[52px] left-0 z-[100] bg-white border border-[#e0e0e0] rounded-2xl shadow-xl overflow-hidden p-2">
-                                            <CalendarPicker 
-                                                checkIn={editCheckIn ? new Date(editCheckIn) : null} 
-                                                checkOut={editCheckOut ? new Date(editCheckOut) : null} 
-                                                onChange={(inDate, outDate) => {
-                                                    setEditCheckIn(inDate ? inDate.toISOString().split('T')[0] : "");
-                                                    setEditCheckOut(outDate ? outDate.toISOString().split('T')[0] : "");
-                                                    if (inDate && outDate) {
-                                                        setCalOpen(false);
-                                                    }
-                                                }} 
-                                            />
-                                        </div>
-                                    )}
-                                </div>
 
-                                {/* Guest Selector */}
-                                <div className="w-full sm:w-[200px] h-[46px] border border-[#d8d8d8] rounded-xl px-4 flex items-center justify-between text-[14px] bg-white">
-                                    <div className="flex items-center gap-2">
-                                        <User size={16} className="text-[#828282]" />
-                                        <span className="font-medium text-[#1d1d1d]">Guests</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <button 
-                                            disabled={editGuests <= 1}
-                                            onClick={() => setEditGuests(g => Math.max(1, g - 1))}
-                                            className="w-7 h-7 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
-                                        >
-                                            <span className="text-lg leading-none mb-0.5">-</span>
-                                        </button>
-                                        <span className="font-semibold text-[#1d1d1d] w-4 text-center">{editGuests}</span>
-                                        <button 
-                                            disabled={editGuests >= 10}
-                                            onClick={() => setEditGuests(g => Math.min(10, g + 1))}
-                                            className="w-7 h-7 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
-                                        >
-                                            <span className="text-lg leading-none mb-0.5">+</span>
-                                        </button>
-                                    </div>
-                                </div>
 
-                                <button 
-                                    onClick={handleApplyFilters}
-                                    className="h-[46px] px-8 bg-[#1d1d1d] hover:bg-black text-white font-bold rounded-xl transition-colors whitespace-nowrap cursor-pointer"
-                                >
-                                    Apply
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Room Types */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-[20px] font-bold text-[#1d1d1d]">Room Types</h2>
-                            </div>
-                            {(() => {
-                                const displayedRooms = (property.rooms || []).filter((room: any) => room.maxGuests >= guestsFromSearch);
-                                if (displayedRooms.length === 0) {
-                                    return (
-                                        <div className="p-8 bg-[#fff5f5] border border-[#ffe0e0] rounded-2xl text-[#d32f2f] flex flex-col items-center justify-center text-center">
-                                            <AlertTriangle size={40} className="mb-3 opacity-80" />
-                                            <h3 className="font-bold text-[18px] mb-1">No Rooms Available</h3>
-                                            <p className="text-[14px] opacity-90 max-w-sm">Sorry, there are no rooms available at this property for your selected dates and guest count. Try changing your criteria.</p>
-                                        </div>
-                                    );
-                                }
-                                return (
-                                    <div className="flex flex-col gap-3">
-                                        {displayedRooms.map((room: any) => (
-                                            <RoomCard
-                                                key={room.id}
-                                                room={room}
-                                            propertyId={property.id}
-                                            selectedQuantity={selectedRooms[room.id]?.quantity || 0}
-                                            onQuantityChange={(qty) => {
-                                                if (qty === 0) {
-                                                    setSelectedRooms({});
-                                                } else {
-                                                    setSelectedRooms({
-                                                        [room.id]: { quantity: qty, price: room.pricePerNight, name: room.name }
-                                                    });
-                                                }
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                );
-                            })()}
-                        </div>
-
+                        {/* Room Types moved to bottom */}
                         {/* Ratings & Reviews */}
                         <div className="pt-8 border-t border-[#e8e8e8]">
                             <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Guest Ratings</h2>
@@ -377,14 +285,18 @@ export default function PropertyClient({ property }: { property: any }) {
                             </div>
                             <div className="flex flex-col gap-2.5 mb-8 p-5 bg-white border border-[#e8e8e8] rounded-2xl shadow-sm">
                                 {(() => {
+                                    if (!property.reviewBreakdown || property.reviewBreakdown.length === 0) {
+                                        return <div className="text-[#888] text-sm text-center py-2">No reviews yet.</div>;
+                                    }
+
                                     const standardTypes = ["Cleanliness", "Comfort", "Service", "Dining", "Location", "Value"];
-                                    const extraTypes = (property.reviewBreakdown || [])
+                                    const extraTypes = property.reviewBreakdown
                                         .filter((r: any) => !standardTypes.includes(r.label))
                                         .map((r: any) => r.label);
                                     const allTypesToDisplay = [...standardTypes, ...extraTypes];
                                     
                                     return allTypesToDisplay.map(type => {
-                                        const found = (property.reviewBreakdown || []).find((r: any) => r.label === type);
+                                        const found = property.reviewBreakdown.find((r: any) => r.label === type);
                                         return <RatingBar key={type} label={type} score={found ? found.score : 0} />
                                     });
                                 })()}
@@ -499,14 +411,132 @@ export default function PropertyClient({ property }: { property: any }) {
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Right Column (Checkout Panel) */}
-                    <div className="lg:w-[420px] flex-shrink-0 flex flex-col gap-6">
+                {/* New Dedicated Booking Section */}
+                <div id="booking-section" className="mt-12 bg-white border border-[#e8e8e8] rounded-3xl p-6 md:p-8 shadow-sm">
+                    <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-6">Book Your Stay</h2>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 xl:gap-12">
                         
-                        {/* BOX 1: Your Booking Details */}
-                        {/* BOX 1: Your Booking Details (Only shown if rooms selected) */}
+                        {/* Left: Availability & Room Selection */}
+                        <div className="flex flex-col gap-6">
+                            <div className="bg-[#fcfcfc] border border-[#e8e8e8] rounded-2xl p-6 shadow-sm flex flex-col relative">
+                            
+                            {/* SECTION 1: Availability */}
+                            <div>
+                                <h3 className="font-bold text-[#1d1d1d] text-[18px] mb-4">Availability</h3>
+                                <div className="flex flex-col gap-4">
+                                    {/* Date Picker */}
+                                    <div className="relative w-full">
+                                        <div 
+                                            className="w-full h-[46px] border border-[#d8d8d8] rounded-xl px-4 flex items-center justify-between text-[14px] cursor-pointer bg-white hover:border-[#aaa] transition-colors"
+                                            onClick={() => setCalOpen(!calOpen)}
+                                        >
+                                            <div className="flex items-center gap-2 text-[#1d1d1d]">
+                                                <Calendar size={16} className="text-[#828282]" />
+                                                <span className="font-medium">
+                                                    {editCheckIn ? new Date(editCheckIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-in'} - {editCheckOut ? new Date(editCheckOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-out'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {calOpen && (
+                                            <div ref={calRef} className="absolute top-[52px] left-0 z-[100] bg-white border border-[#e0e0e0] rounded-2xl shadow-xl overflow-hidden p-2">
+                                                <CalendarPicker 
+                                                    checkIn={editCheckIn ? new Date(editCheckIn) : null} 
+                                                    checkOut={editCheckOut ? new Date(editCheckOut) : null} 
+                                                    onChange={(inDate, outDate) => {
+                                                        setEditCheckIn(inDate ? inDate.toISOString().split('T')[0] : "");
+                                                        setEditCheckOut(outDate ? outDate.toISOString().split('T')[0] : "");
+                                                        if (inDate && outDate) {
+                                                            setCalOpen(false);
+                                                        }
+                                                    }} 
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Guest Selector & Apply Button */}
+                                    <div className="flex gap-4">
+                                        <div className="flex-1 h-[46px] border border-[#d8d8d8] rounded-xl px-4 flex items-center justify-between text-[14px] bg-white">
+                                            <div className="flex items-center gap-2">
+                                                <User size={16} className="text-[#828282]" />
+                                                <span className="font-medium text-[#1d1d1d] hidden sm:inline">Guests</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <button 
+                                                    disabled={editGuests <= 1}
+                                                    onClick={() => setEditGuests(g => Math.max(1, g - 1))}
+                                                    className="w-7 h-7 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
+                                                >
+                                                    <span className="text-lg leading-none mb-0.5">-</span>
+                                                </button>
+                                                <span className="font-semibold text-[#1d1d1d] w-4 text-center">{editGuests}</span>
+                                                <button 
+                                                    disabled={editGuests >= 10}
+                                                    onClick={() => setEditGuests(g => Math.min(10, g + 1))}
+                                                    className="w-7 h-7 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
+                                                >
+                                                    <span className="text-lg leading-none mb-0.5">+</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={handleApplyFilters}
+                                            className="h-[46px] px-6 bg-[#1d1d1d] hover:bg-black text-white font-bold rounded-xl transition-colors whitespace-nowrap cursor-pointer"
+                                        >
+                                            Apply
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                            
+                        {/* Inserted Room Types */}
+                            <div className="mt-2">
+                                {(() => {
+                                    const displayedRooms = (property.rooms || []).filter((room: any) => room.maxGuests >= guestsFromSearch);
+                                    if (displayedRooms.length === 0) {
+                                        return (
+                                            <div className="p-8 bg-[#fff5f5] border border-[#ffe0e0] rounded-2xl text-[#d32f2f] flex flex-col items-center justify-center text-center">
+                                                <AlertTriangle size={40} className="mb-3 opacity-80" />
+                                                <h3 className="font-bold text-[18px] mb-1">No Rooms Available</h3>
+                                                <p className="text-[14px] opacity-90 max-w-sm">Sorry, there are no rooms available at this property for your selected dates and guest count. Try changing your criteria.</p>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <div className="flex flex-col gap-3">
+                                            {displayedRooms.map((room: any) => (
+                                                <RoomCard
+                                                    key={room.id}
+                                                    room={room}
+                                                    propertyId={property.id}
+                                                    selectedQuantity={selectedRooms[room.id]?.quantity || 0}
+                                                    onQuantityChange={(qty) => {
+                                                        if (qty === 0) {
+                                                            setSelectedRooms({});
+                                                        } else {
+                                                            setSelectedRooms({
+                                                                [room.id]: { quantity: qty, price: room.pricePerNight, name: room.name }
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+
+                        {/* Right: Checkout & Payment */}
+                        <div className="flex flex-col gap-6">
+                            <div className="bg-[#fcfcfc] border border-[#e8e8e8] rounded-2xl p-6 shadow-sm flex flex-col relative h-full">
+
+                        {/* SECTION 2: Your Booking Details (Only shown if rooms selected) */}
                         {bookingStep !== "confirmation" && Object.keys(selectedRooms).length > 0 && (
-                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-sm">
+                            <div>
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="font-bold text-[#1d1d1d] text-[18px]">Your Booking Details</h3>
                                 </div>
@@ -546,7 +576,7 @@ export default function PropertyClient({ property }: { property: any }) {
                         )}
 
                         {bookingStep === "confirmation" && (
-                            <div className="bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-sm text-center py-8">
+                            <div className="text-center py-8">
                                 <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <ShieldCheck size={24} className="text-emerald-500" />
                                 </div>
@@ -555,9 +585,9 @@ export default function PropertyClient({ property }: { property: any }) {
                             </div>
                         )}
 
-                        {/* BOX 2: Complete Booking (Payment Box) */}
+                        {/* SECTION 3: Complete Booking (Payment Box) */}
                         {bookingStep !== "confirmation" && Object.keys(selectedRooms).length > 0 && (
-                            <div className="sticky top-28 bg-white border border-[#e8e8e8] rounded-2xl p-6 shadow-sm flex flex-col gap-6 relative transition-all duration-300">
+                            <div className="mt-6 pt-6 border-t border-[#e8e8e8] flex flex-col gap-6">
 
                                 <h2 className="text-[20px] font-bold text-[#1d1d1d]">Complete Booking</h2>
                                 
@@ -698,8 +728,10 @@ export default function PropertyClient({ property }: { property: any }) {
                                                 
                                                 if (paymentMethod === 'online') {
                                                     const params = new URLSearchParams();
-                                                    params.set("total", priceBreakdown.totalAmount.toString());
+                                                    // Use toFixed(2) to ensure a clean decimal string (avoids BigDecimal toString quirks)
+                                                    params.set("total", Number(priceBreakdown.totalAmount).toFixed(2));
                                                     params.set("confirmationCode", res.data.confirmationCode);
+                                                    params.set("bookingId", String(res.data.id));
                                                     if (user?.profile) {
                                                         params.set("firstName", user.profile.firstName);
                                                         params.set("lastName", user.profile.lastName);
@@ -711,10 +743,11 @@ export default function PropertyClient({ property }: { property: any }) {
                                                     return;
                                                 }
 
-                                                setBookingRef(res.data.confirmationCode);
-                                                setBookingStep("confirmation");
                                                 setSuccessMsg("Booking Confirmed Successfully!");
-                                                setTimeout(() => setSuccessMsg(""), 5000);
+                                                setTimeout(() => {
+                                                    setSuccessMsg("");
+                                                    router.push("/guest/booking");
+                                                }, 1500);
                                             } catch (error: any) {
                                                 console.error("Booking failed:", error);
                                                 const msg = error.response?.data?.message || "Failed to confirm booking. Please try again.";
@@ -730,9 +763,11 @@ export default function PropertyClient({ property }: { property: any }) {
                                     </button>
                                 </div>
                             )}
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
             {/* Fullscreen Gallery Modal */}
             {galleryOpen && (

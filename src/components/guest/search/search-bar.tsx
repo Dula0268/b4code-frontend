@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { MapPin, Calendar, Users, Search } from "lucide-react"
+import { toast } from "sonner"
 
 import CalendarPicker from "@/components/shared/forms/calendar-picker"
 import GuestPicker, { type GuestCounts } from "@/components/shared/forms/guest-picker"
@@ -47,7 +48,6 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const guestRef = useRef<HTMLDivElement>(null)
 
   const [mounted, setMounted] = useState(false)
-  const [errorMsg, setErrorMsg] = useState("")
   useEffect(() => { setMounted(true) }, [])
 
   // Keep the compact search bar aligned with the current URL when navigating
@@ -99,7 +99,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   })()
 
   const guestTotal = guests.adults
-  const guestLabel = !mounted ? "1 guest, 1 room" : `${guestTotal} guest${guestTotal !== 1 ? "s" : ""}, ${guests.rooms} room${guests.rooms !== 1 ? "s" : ""}`
+  const guestLabel = !mounted ? "1 guest . 1 room" : `${guestTotal} guest${guestTotal !== 1 ? "s" : ""} . ${guests.rooms} room${guests.rooms !== 1 ? "s" : ""}`
 
   // Keep search results in sync when guest count changes on compact search bar.
   useEffect(() => {
@@ -117,24 +117,19 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   // ── Search ─────────────────────────────────────────────────────────────
   const handleSearch = () => {
     if (!destination.trim() || !checkIn || !checkOut) {
-      setErrorMsg("Please enter a destination and select your check-in and check-out dates.")
-      setTimeout(() => setErrorMsg(""), 4000)
+      toast.error("Please enter a destination and select your check-in and check-out dates.")
       return
     }
 
     if (guests.adults < 1 || guests.rooms < 1) {
-      setErrorMsg("Please select at least 1 guest and 1 room.")
-      setTimeout(() => setErrorMsg(""), 4000)
+      toast.error("Please select at least 1 guest and 1 room.")
       return
     }
 
     if (checkIn && checkOut && checkOut <= checkIn) {
-      setErrorMsg("Check-out date must be after check-in date.")
-      setTimeout(() => setErrorMsg(""), 4000)
+      toast.error("Check-out date must be after check-in date.")
       return
     }
-
-    setErrorMsg("")
 
     const params = new URLSearchParams()
     if (destination.trim()) params.set("destination", destination.trim())
@@ -156,25 +151,13 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
 
   return (
     <div className="relative">
-      {/* Error Notification */}
-      <div
-        className={[
-          "absolute -top-12 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 bg-[#e53935] text-white text-[13px] font-medium",
-          "px-4 py-2.5 rounded-xl shadow-lg transition-all duration-300 whitespace-nowrap",
-          errorMsg ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
-        ].join(" ")}
-      >
-        <span className="text-[16px]">⚠️</span>
-        {errorMsg}
-      </div>
-
       <div
         role="search"
         className={[
-          "bg-white rounded-xl flex flex-col md:flex-row gap-1",
+          "bg-white flex flex-col md:flex-row border-[3px] border-[var(--brand-secondary)]",
         isCompact
-          ? "p-1 border border-[#e0e0e0] shadow-[0_2px_12px_rgba(0,0,0,0.08)] w-full max-w-[580px]"
-          : "p-2 shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-[640px]",
+          ? "shadow-sm w-full max-w-[680px]"
+          : "shadow-2xl w-full max-w-[850px]",
       ].join(" ")}
       suppressHydrationWarning
     >
@@ -182,17 +165,17 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       {/* ── Location ─────────────────────────────────────────────────── */}
       <div ref={locationRef} className="relative flex-[2]">
         <div
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 h-[58px] hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { closeAll(); setLocationOpen(true) }}
         >
-          <MapPin size={16} className="text-[var(--brand-primary)] flex-shrink-0" />
+          <MapPin size={22} strokeWidth={2} className="text-[var(--brand-primary)] flex-shrink-0" />
           <input
             type="text"
             value={destination}
             onChange={e => { setDestination(e.target.value); setLocationOpen(true) }}
             onFocus={() => { closeAll(); setLocationOpen(true) }}
-            placeholder="Search destination or property"
-            className="border-none outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-sm text-[#333333] placeholder:text-[#828282] bg-transparent w-full"
+            placeholder="Where are you going?"
+            className="border-none outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-base font-medium text-[#333333] placeholder:text-[#828282] bg-transparent w-full"
             suppressHydrationWarning
           />
         </div>
@@ -205,33 +188,24 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
         />
       </div>
 
-      <div className="hidden md:block w-px bg-[#e0e0e0] my-2" />
+      <div className="hidden md:block w-[3px] bg-[var(--brand-secondary)] flex-shrink-0" />
 
       {/* ── Dates ────────────────────────────────────────────────────── */}
       <div ref={calRef} className="relative flex-[1.5]">
         <div
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 h-[58px] hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { closeAll(); setCalOpen(o => !o) }}
         >
-          <Calendar size={16} className="text-[var(--brand-primary)] flex-shrink-0" />
-          <span className={`text-sm truncate ${dateLabel ? "text-[#333333]" : "text-[#828282]"}`}>
-            {dateLabel || "Dates"}
+          <Calendar size={22} strokeWidth={2} className="text-[var(--brand-primary)] flex-shrink-0" />
+          <span className={`text-base font-medium truncate ${dateLabel ? "text-[#333333]" : "text-[#828282]"}`}>
+            {dateLabel || "Check-in date — Check-out date"}
           </span>
         </div>
 
         {calOpen && (
           <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl z-50
                           shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]">
-            {/* Instruction header */}
-            <div className="px-4 pt-3 border-b border-[#f0f0f0]">
-              <p className="text-[10px] font-semibold text-[#828282] uppercase tracking-wide pb-2">
-                {!checkIn
-                  ? "Select check-in date"
-                  : !checkOut
-                    ? "Select check-out date"
-                    : "Date range selected"}
-              </p>
-            </div>
+
 
             <CalendarPicker
               checkIn={checkIn}
@@ -240,12 +214,12 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
               onComplete={() => setCalOpen(false)}
             />
 
-            {/* Clear link */}
+            {/* Clear button */}
             {(checkIn || checkOut) && (
-              <div className="px-4 pb-3 flex justify-end">
+              <div className="px-6 pb-5 flex justify-end">
                 <button
                   onClick={() => { setCheckIn(null); setCheckOut(null) }}
-                  className="text-xs text-[#828282] hover:text-[#333333] underline"
+                  className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-[13px] font-medium rounded-lg text-gray-700 transition-colors"
                 >
                   Clear
                 </button>
@@ -255,16 +229,16 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
         )}
       </div>
 
-      <div className="hidden md:block w-px bg-[#e0e0e0] my-2" />
+      <div className="hidden md:block w-[3px] bg-[var(--brand-secondary)] flex-shrink-0" />
 
       {/* ── Guests ───────────────────────────────────────────────────── */}
       <div ref={guestRef} className="relative flex-1">
         <div
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 h-[58px] hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => { closeAll(); setGuestOpen(o => !o) }}
         >
-          <Users size={16} className="text-[var(--brand-primary)] flex-shrink-0" />
-          <span className="text-sm text-[#333333]">{guestLabel}</span>
+          <Users size={22} strokeWidth={2} className="text-[var(--brand-primary)] flex-shrink-0" />
+          <span className="text-base font-medium text-[#333333] whitespace-nowrap truncate">{guestLabel}</span>
         </div>
 
         {guestOpen && (
@@ -278,7 +252,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       <button
         onClick={handleSearch}
         aria-label="Search"
-        className="bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white rounded-lg px-8 h-12 flex items-center justify-center gap-2 font-bold text-[15px] transition-all duration-300 active:scale-95 shadow-md hover:shadow-lg flex-shrink-0"
+        className="bg-gradient-to-r from-[var(--brand-primary)] to-[#6d2200] hover:from-[#6d2200] hover:to-[#5a1c00] text-white px-8 h-[58px] flex items-center justify-center gap-2 font-bold text-[16px] transition-all duration-300 active:scale-95 flex-shrink-0"
         suppressHydrationWarning
       >
         <span>Search</span>

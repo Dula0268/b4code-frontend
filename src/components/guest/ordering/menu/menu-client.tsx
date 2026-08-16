@@ -13,6 +13,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import { useSearchParams } from "next/navigation";
 import MenuItemCard from "./menu-item-card";
 import OrderSidebar from "./order-sidebar";
+import { MenuSkeleton } from "@/components/guest/ordering/menu/menu-skeleton";
 
 type SortOption = "default" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 
@@ -74,14 +75,21 @@ export default function MenuClient() {
       }
 
       const propIdStr = searchParams.get("propertyId");
-      const roomNumStr = searchParams.get("roomNumber");
-      const tabIdStr = searchParams.get("tableId");
+      const locationStr = searchParams.get("location");
       const qrIdStr = searchParams.get("qrId");
 
-      let hasRoom = !!roomNumStr;
-      let hasTable = !!tabIdStr;
-      let parsedTableId: number | undefined = undefined;
-      let parsedRoomNumber: string | undefined = roomNumStr || undefined;
+      // For walk-in guests, we STRICTLY REQUIRE the URL to contain a valid QR ID,
+      // UNLESS they already have an active QR context in their session.
+      const currentContext = useOrderContextStore.getState().qrContext;
+      
+      if (!qrIdStr && !useAuthStore.getState().user && !currentContext) {
+        useOrderContextStore.getState().reset();
+        setParamError("Please scan a valid QR code to access the menu.");
+        setIsInitializing(false);
+        return;
+      }
+
+      let parsedLocation: string | undefined = locationStr || undefined;
       let qrName = "";
       let qrType = "";
       let propId = propIdStr ? Number(propIdStr) : undefined;
@@ -97,12 +105,9 @@ export default function MenuClient() {
             qrType = qrData.type?.toUpperCase() || "TABLE";
             propId = qrData.propertyId;
             
-            if (qrType === "ROOM") {
-              hasRoom = true;
-              parsedRoomNumber = qrData.roomNumber;
-            } else {
-              hasTable = true;
-              parsedTableId = qrData.tableId;
+            
+            if (qrData.location) {
+              parsedLocation = qrData.location;
             }
           }
         } catch (e) {
@@ -111,7 +116,7 @@ export default function MenuClient() {
       }
 
       // If no query parameters are provided and we failed to get one, check logged-in context
-      if (!propId && !hasRoom && !hasTable) {
+      if (!propId && !parsedLocation) {
         const currentPropId = qrContext?.propertyId || user?.propertyId;
         if (currentPropId) {
           setIsInitializing(false);
@@ -131,33 +136,17 @@ export default function MenuClient() {
 
       // QR data already fetched if qrIdStr exists.
 
-      // 2. Validate roomNumber and tableId (exactly one must be provided)
-      if (hasRoom && hasTable) {
-        setParamError("Invalid request. Cannot specify both room number and table ID.");
+      // 2. Validate location (must be provided)
+      if (!parsedLocation) {
+        setParamError("Invalid request. Missing location identifier.");
         setIsInitializing(false);
         return;
-      }
-
-      if (!hasRoom && !hasTable) {
-        setParamError("Invalid request. Missing location identifier (must provide either roomNumber or tableId).");
-        setIsInitializing(false);
-        return;
-      }
-
-      if (hasTable && tabIdStr && !parsedTableId) {
-        parsedTableId = Number(tabIdStr);
-        if (isNaN(parsedTableId)) {
-          setParamError("Invalid request. Table ID must be a valid number.");
-          setIsInitializing(false);
-          return;
-        }
       }
 
       // Check if current context already matches the parsed parameters to prevent redundant updates
       if (qrContext &&
           qrContext.propertyId === propId &&
-          qrContext.tableId === parsedTableId &&
-          (hasRoom ? qrContext.roomNumber === parsedRoomNumber : true)) {
+          qrContext.location === parsedLocation) {
         setIsInitializing(false);
         return;
       }
@@ -179,15 +168,13 @@ export default function MenuClient() {
 
         // Set the Order/QR context in the store
         setQRContext({
-          qrId: qrIdStr || `scan-${propId}-${parsedRoomNumber || parsedTableId}`,
+          qrId: qrIdStr || `scan-${propId}-${parsedLocation}`,
           propertyId: propId,
-          roomId: parsedRoomNumber ? parseInt(parsedRoomNumber, 10) : undefined,
-          roomNumber: parsedRoomNumber || undefined,
-          tableId: parsedTableId,
+          location: parsedLocation,
           propertyName: propertyName,
-          locationLabel: qrName || (hasTable ? `Table ${tabIdStr || parsedTableId}` : `Room ${parsedRoomNumber}`),
-          type: qrType || (hasTable ? "TABLE" : "ROOM"),
-          name: qrName || (hasTable ? `Table ${tabIdStr || parsedTableId}` : `Room ${parsedRoomNumber}`),
+          locationLabel: qrName || parsedLocation,
+          type: qrType || "LOCATION",
+          name: qrName || parsedLocation,
           status: "ACTIVE",
         });
 
@@ -205,12 +192,12 @@ export default function MenuClient() {
   // Fetch menu from API when propertyId is available (from QR or Session)
   React.useEffect(() => {
     const propertyId = qrContext?.propertyId || user?.propertyId;
-    const roomId = qrContext?.roomId || user?.roomId;
+    const location = qrContext?.location; // or user location? user doesn't have location yet.
     
     if (propertyId && !isNaN(Number(propertyId))) {
-      fetchMenu(Number(propertyId), roomId ? Number(roomId) : undefined);
+      fetchMenu(Number(propertyId));
     }
-  }, [qrContext?.propertyId, qrContext?.roomId, user?.propertyId, user?.roomId, fetchMenu]);
+  }, [qrContext?.propertyId, qrContext?.location, user?.propertyId, fetchMenu]);
 
   // Close filter dropdown on outside click
   React.useEffect(() => {
@@ -298,16 +285,8 @@ export default function MenuClient() {
 
   const hasActiveFilters = tagFilters.size > 0 || sortBy !== "default";
 
-  // Parameter Initialization loading state
   if (isInitializing) {
-    return (
-      <div className="ps-container flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[var(--gray-5)] border-t-[var(--brand-primary)]" />
-          <p className="text-sm text-[var(--gray-3)] mt-4">Initializing menu context...</p>
-        </div>
-      </div>
-    );
+    return <MenuSkeleton />;
   }
 
   // Parameter validation error state
@@ -329,14 +308,7 @@ export default function MenuClient() {
 
   // Loading state
   if (menuLoading) {
-    return (
-      <div className="ps-container flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-[var(--gray-5)] border-t-[var(--brand-primary)]" />
-          <p className="text-sm text-[var(--gray-3)] mt-4">Loading menu...</p>
-        </div>
-      </div>
-    );
+    return <MenuSkeleton />;
   }
 
   // Error state
@@ -354,9 +326,8 @@ export default function MenuClient() {
           <Button
             onClick={() => {
               const pId = qrContext?.propertyId || user?.propertyId;
-              const rId = qrContext?.roomId || user?.roomId;
               if (pId && !isNaN(Number(pId))) {
-                fetchMenu(Number(pId), rId ? Number(rId) : undefined);
+                fetchMenu(Number(pId));
               }
             }}
           >

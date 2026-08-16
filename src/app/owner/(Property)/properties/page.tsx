@@ -26,12 +26,12 @@ import {
 /* ───────────────────── data ───────────────────── */
 
 const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard",  href: "/owner",                          active: false },
-    { icon: Building2,       label: "Properties", href: "/owner/properties",               active: true  },
-    { icon: Users,           label: "Staff",      href: "/owner/staff",                    active: false },
-    { icon: Star,            label: "Reviews",    href: "/owner/reviews",                  active: false },
-    { icon: MessageSquare,   label: "Messages",   href: "/owner/message",                  active: false },
-    { icon: Settings,        label: "Settings",   href: "/owner/setting/accountSetting",   active: false },
+    { icon: LayoutDashboard, label: "Dashboard", href: "/owner", active: false },
+    { icon: Building2, label: "Properties", href: "/owner/properties", active: true },
+    { icon: Users, label: "Staff", href: "/owner/staff", active: false },
+    { icon: Star, label: "Reviews", href: "/owner/reviews", active: false },
+    { icon: MessageSquare, label: "Messages", href: "/owner/message", active: false },
+    { icon: Settings, label: "Settings", href: "/owner/setting/accountSetting", active: false },
 ];
 
 /* ───────────────────── component ───────────────────── */

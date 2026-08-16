@@ -17,10 +17,15 @@ import {
   Clock,
   Info,
   XCircle,
+  AlignLeft,
+  User,
+  Globe,
+  Navigation,
+  Download,
+  X,
 } from "lucide-react";
 import AdminPageLayout from "@/components/admin/admin-page-layout";
 import PaymentModel from "@/components/admin/properties/payment-model";
-import HostInformation from "@/components/admin/properties/host-information";
 import { useAdminPropertiesStore } from "@/store/admin/properties/properties.store";
 
 // ─── Document Card ────────────────────────────────────────────────────────────
@@ -30,23 +35,33 @@ function DocumentCard({
   type,
   updated,
   size,
+  onView,
+  onDownload,
 }: {
   image: string;
   label: string;
   type: string;
   updated: string;
   size: string;
+  onView?: () => void;
+  onDownload?: () => void;
 }) {
   return (
     <div className="rounded-xl overflow-hidden border border-[#E8DDD8]">
-      <div className="relative w-full h-40 bg-[#F3F4F6] flex items-center justify-center">
+      <div 
+        className="relative w-full h-40 bg-[#F3F4F6] flex items-center justify-center cursor-pointer group"
+        onClick={onView}
+      >
         {image ? (
-          <Image src={image} alt={label} fill className="object-cover" />
+          <>
+            <Image src={image} alt={label} fill className="object-cover transition-opacity group-hover:opacity-90" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-none"></div>
+          </>
         ) : (
           <span className="text-[#9E7B6A] text-xs">No preview available</span>
         )}
         {/* File type badge */}
-        <span className="absolute bottom-2 right-2 bg-[#1A1A1A]/70 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+        <span className="absolute bottom-2 right-2 bg-[#1A1A1A]/70 text-white text-[10px] font-bold px-2 py-0.5 rounded pointer-events-none">
           {type}
         </span>
       </div>
@@ -59,14 +74,26 @@ function DocumentCard({
             {updated} • {size}
           </p>
         </div>
-        <button
-          className="bg-transparent border-none cursor-pointer text-[#9E7B6A] hover:text-[#C05621] transition-colors flex"
-          onClick={() => {
-            if (image) window.open(image, "_blank");
-          }}
-        >
-          <Eye size={16} />
-        </button>
+        <div className="flex gap-2">
+          {onView && (
+            <button
+              className="bg-transparent border-none cursor-pointer text-[#9E7B6A] hover:text-[#C05621] transition-colors flex"
+              onClick={onView}
+              title="View Document"
+            >
+              <Eye size={16} />
+            </button>
+          )}
+          {onDownload && (
+            <button
+              className="bg-transparent border-none cursor-pointer text-[#9E7B6A] hover:text-[#C05621] transition-colors flex"
+              onClick={onDownload}
+              title="Download Document"
+            >
+              <Download size={16} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -178,6 +205,28 @@ export default function PropertyDetailsPage() {
   } = useAdminPropertiesStore();
 
   const [successState, setSuccessState] = useState<"APPROVED" | "REJECTED" | "UNDER_REVIEW" | null>(null);
+  
+  // Mocking multiple files for the gallery demonstration
+  const mockFiles = [
+    { type: 'image', url: selectedProperty?.mainImageUrl || "/evidence-photo.png", name: "property-photo-1.jpg" },
+    { type: 'image', url: "/evidence-photo.png", name: "property-photo-2.jpg" },
+    { type: 'pdf', url: "#", name: "business-registration.pdf" },
+  ];
+  const imageFiles = mockFiles.filter(f => f.type === 'image');
+
+  const [viewingImageIndex, setViewingImageIndex] = useState<number | null>(null);
+
+  const handleDownloadAll = () => {
+    mockFiles.forEach(file => {
+      const link = document.createElement("a");
+      link.href = file.url || "#"; 
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+    alert(`Downloading ${mockFiles.length} files...`);
+  };
 
   useEffect(() => {
     if (id) {
@@ -300,40 +349,52 @@ export default function PropertyDetailsPage() {
               </h2>
             </div>
 
+            {/* Description */}
+            <div className="bg-white border border-[#E8DDD8] rounded-xl p-5 mb-5">
+              <div className="flex items-center gap-2 mb-3 text-[#1A1A1A]">
+                <AlignLeft size={18} className="text-[#C05621]" />
+                <h3 className="text-[16px] font-bold m-0">Description</h3>
+              </div>
+              <p className="text-[14px] text-[#6B7280] leading-relaxed m-0 whitespace-pre-wrap">
+                {selectedProperty.description || "No description provided."}
+              </p>
+            </div>
+
             {/* Detail Cards Grid */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 mb-8">
               <DetailCard
                 icon={<MapPin size={18} />}
+                label="Address"
+                value={selectedProperty.addressLine1 || "N/A"}
+              />
+              <DetailCard
+                icon={<Home size={18} />}
                 label="City"
                 value={selectedProperty.city || "N/A"}
               />
               <DetailCard
-                icon={<Home size={18} />}
-                label="Type"
-                value={"N/A"}
+                icon={<Globe size={18} />}
+                label="Country"
+                value={selectedProperty.country || "N/A"}
               />
               <DetailCard
-                icon={<BedDouble size={18} />}
-                label="Configuration"
-                value="N/A"
+                icon={<User size={18} />}
+                label="Owner Name"
+                value={selectedProperty.ownerName || "N/A"}
               />
               <DetailCard
-                icon={
-                  <div className="flex items-center gap-1">
-                    <DollarSign size={18} />
-                    <ArrowRight size={14} />
-                  </div>
+                icon={<Clock size={18} />}
+                label="Submitted"
+                value={
+                  selectedProperty.createdAt
+                    ? new Date(selectedProperty.createdAt).toLocaleDateString()
+                    : "N/A"
                 }
-                label="Base Rate"
-                value="N/A"
               />
             </div>
 
             {/* Payment Model */}
             <PaymentModel />
-
-            {/* Host Information */}
-            <HostInformation />
           </div>
 
           {/* ── Right Column: Documents ── */}
@@ -343,19 +404,19 @@ export default function PropertyDetailsPage() {
                 Documents
               </h2>
               <span className="px-2.5 py-0.5 rounded-full bg-[#3B82F6] text-white text-[11px] font-bold">
-                1 File
+                {mockFiles.length} Files
               </span>
             </div>
 
             <div className="flex flex-col gap-4">
               <DocumentCard
-                image={
-                  selectedProperty.mainImageUrl || ""
-                }
-                label="Property Document"
-                type="DOC"
+                image={selectedProperty.mainImageUrl || ""}
+                label="Property Documents"
+                type="MULTIPLE"
                 updated="Submitted with application"
-                size="Unknown"
+                size="Contains Images & PDFs"
+                onView={() => setViewingImageIndex(0)}
+                onDownload={handleDownloadAll}
               />
             </div>
           </div>
@@ -398,6 +459,53 @@ export default function PropertyDetailsPage() {
               <CheckCircle2 size={16} />
               Approve Property
             </button>
+          </div>
+        </div>
+      )}
+      {/* ── Image Gallery Modal ── */}
+      {viewingImageIndex !== null && imageFiles.length > 0 && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4" onClick={() => setViewingImageIndex(null)}>
+          <div 
+            className="relative bg-black rounded-lg w-full max-w-5xl h-full max-h-[90vh] flex flex-col overflow-hidden" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center bg-black/80 p-4 absolute top-0 left-0 right-0 z-10">
+              <span className="text-white text-sm font-semibold">
+                Document View ({viewingImageIndex + 1} of {imageFiles.length})
+              </span>
+              <button 
+                onClick={() => setViewingImageIndex(null)}
+                className="text-white hover:text-gray-300 bg-transparent border-none cursor-pointer p-1"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="relative flex-1 flex items-center justify-center">
+              {viewingImageIndex > 0 && (
+                <button 
+                  className="absolute left-4 z-10 bg-black/50 text-white p-2 rounded-full border-none cursor-pointer hover:bg-black/70"
+                  onClick={() => setViewingImageIndex(viewingImageIndex - 1)}
+                >
+                  <ChevronRight size={32} className="rotate-180" />
+                </button>
+              )}
+              
+              <img 
+                src={imageFiles[viewingImageIndex].url} 
+                alt="Document Full View" 
+                className="max-w-full max-h-[80vh] object-contain"
+              />
+              
+              {viewingImageIndex < imageFiles.length - 1 && (
+                <button 
+                  className="absolute right-4 z-10 bg-black/50 text-white p-2 rounded-full border-none cursor-pointer hover:bg-black/70"
+                  onClick={() => setViewingImageIndex(viewingImageIndex + 1)}
+                >
+                  <ChevronRight size={32} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import StaffHeader from "@/components/staff/layout/staff-header";
 
 const TAB_ICONS: Record<QRTab, React.ReactNode> = {
   Table: <UtensilsCrossed size={13} />,
@@ -102,68 +103,79 @@ export default function QrList({ propertyId }: { propertyId: number }) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
+    <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden">
+      <StaffHeader
+        title="QR Management"
+        subtitle="Manage and track guest QR codes"
+        actions={
+          <Button asChild size="sm" className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#1A1A1A] to-[#2A2A2A] text-white hover:from-[#C05621] hover:to-[#99451A] shadow-md font-bold gap-2 transition-all" disabled={loading}>
+            <Link href={`/staff/qr/new?propertyId=${propertyId}`}>
+              <Plus size={16} /> Create QR
+            </Link>
+          </Button>
+        }
+      />
+      <div className="flex flex-col flex-1 px-6 py-4 gap-4 mt-[64px] overflow-y-auto">
       {/* Success banner */}
       {successMsg && (
-        <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-[10px] px-4 py-2 text-sm">
+        <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-xl px-4 py-2 text-sm">
           <CheckCircle size={16} className="text-[var(--state-success)]" />
           <span className="text-[var(--black-2)] font-medium flex-1">{successMsg}</span>
           <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setSuccess(null)}><X size={14} /></Button>
         </div>
       )}
 
-      {/* Error banner */}
+      {/* Error / Info banner */}
       {error && (
-        <div className="flex-none flex items-center gap-2 bg-[rgba(220,53,69,0.08)] border border-[rgba(220,53,69,0.2)] rounded-[10px] px-4 py-2 text-sm">
-          <AlertCircle size={16} className="text-red-500" />
-          <span className="text-[var(--black-2)] font-medium flex-1">{error}</span>
-          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setError(null)}><X size={14} /></Button>
+        <div className={`flex-none flex items-center gap-2 rounded-[10px] px-4 py-2 text-sm border ${
+          error.includes("offline") || error.includes("Connection")
+            ? "bg-[#FFF8F0] border-[#F0EBE7] text-[#C05621]"
+            : "bg-[rgba(220,53,69,0.08)] border-[rgba(220,53,69,0.2)] text-red-500"
+        }`}>
+          <AlertCircle size={16} className={error.includes("offline") || error.includes("Connection") ? "text-[#C05621]" : "text-red-500"} />
+          <span className="font-medium flex-1">
+            {error.includes("offline") || error.includes("Connection") 
+              ? "Viewing offline data. Changes will sync when connection is restored." 
+              : error}
+          </span>
+          <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-transparent" onClick={() => setError(null)}>
+            <X size={14} className={error.includes("offline") || error.includes("Connection") ? "text-[#C05621]" : "text-red-500"} />
+          </Button>
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex-none flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-[var(--black-2)] leading-tight">QR Management</h1>
-          <p className="text-xs text-[var(--gray-3)] mt-0.5">QR List</p>
-        </div>
-        <Button asChild size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1.5 hover:bg-[var(--brand-primary)]/90" disabled={loading}>
-          <Link href={`/staff/qr/new?propertyId=${propertyId}`}>
-            <Plus size={13} /> Create QR
-          </Link>
-        </Button>
-      </div>
-
       {/* Tabs + Search */}
       <div className="flex-none flex items-center justify-between">
-        <div className="flex border border-[var(--gray-5)] rounded-[8px] overflow-hidden">
+        <div className="flex bg-white/30 backdrop-blur-md border border-white/50 rounded-xl overflow-hidden p-1 gap-1">
           {(["Table", "Room"] as QRTab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium transition-colors ${
-                tab === t ? "bg-[var(--brand-primary)] text-white" : "bg-white text-[var(--gray-2)] hover:bg-[rgba(0,0,0,0.02)]"
+              className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold transition-colors ${
+                tab === t ? "bg-white text-[#1A1A1A] shadow-sm rounded-lg" : "bg-transparent text-[#9E7B6A] hover:bg-white/50 rounded-lg"
               }`}
             >
               {TAB_ICONS[t]} {t}
             </button>
           ))}
         </div>
-        <div className="relative w-[220px]">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-4)] z-10" />
-          <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} placeholder="Search contexts..." className="pl-8 text-xs rounded-[8px] border-[var(--gray-5)]" disabled={loading} />
+        <div className="relative w-[260px]">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E7B6A] z-10" />
+          <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} placeholder="Search contexts..." className="pl-9 h-10 text-xs rounded-xl border-white/50 bg-white/70 backdrop-blur-md shadow-sm font-semibold placeholder:text-[#9E7B6A]" disabled={loading} />
         </div>
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-hidden flex flex-col bg-white rounded-[10px] border border-[var(--gray-5)] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+      <div className="flex-1 overflow-hidden flex flex-col bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
         {/* Loading indicator */}
         {loading && (
-          <div className="flex items-center justify-center h-full">
-            <div className="flex flex-col items-center gap-2">
-              <Loader size={20} className="animate-spin text-[var(--brand-primary)]" />
-              <p className="text-xs text-[var(--gray-3)]">Loading QR codes...</p>
+          <div className="flex-1 flex flex-col p-4 gap-4">
+            <div className="grid grid-cols-[1fr_120px_100px_140px] gap-4 mb-2">
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-4 bg-gray-200 rounded animate-pulse" />)}
             </div>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-10 w-full bg-gray-100 rounded animate-pulse" />
+            ))}
           </div>
         )}
 
@@ -263,6 +275,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
         title="Delete QR Context?"
         description="This action cannot be undone. Guests will no longer be able to order using this QR code."
       />
+      </div>
     </div>
   );
 }

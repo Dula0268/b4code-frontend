@@ -61,11 +61,11 @@ type GuestMenuState = {
   loading: boolean;
   error: string | null;
   propertyId: number | null;
-  roomId: number | null;
+  location: string | null;
 };
 
 type GuestMenuActions = {
-  fetchMenu: (propertyId: number, roomId?: number) => Promise<void>;
+  fetchMenu: (propertyId: number, location?: string) => Promise<void>;
   getItemById: (id: string) => MenuItem | undefined;
   getCategoryItems: (categoryName: string) => MenuItem[];
   searchItems: (query: string) => MenuItem[];
@@ -79,15 +79,15 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
   loading: false,
   error: null,
   propertyId: null,
-  roomId: null,
+  location: null,
 
-  fetchMenu: async (propertyId: number, roomId?: number) => {
+  fetchMenu: async (propertyId: number, location?: string) => {
     try {
-      set({ loading: true, error: null, propertyId, roomId: roomId || null });
+      set({ loading: true, error: null, propertyId, location: location || null });
       
       let url = `/menu-items/property/${propertyId}`;
-      if (roomId) {
-        url += `?roomId=${roomId}`;
+      if (location) {
+        url += `?location=${location}`;
       }
       
       const response = await api.get(url);
@@ -191,5 +191,5 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
 
   setLoading: (value) => set({ loading: value }),
   setError: (message) => set({ error: message }),
-  reset: () => set({ loading: false, error: null, categories: [], propertyId: null, roomId: null }),
+  reset: () => set({ loading: false, error: null, categories: [], propertyId: null, location: null }),
 }));

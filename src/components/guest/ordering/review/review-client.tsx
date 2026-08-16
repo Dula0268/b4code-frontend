@@ -58,9 +58,10 @@ export default function ReviewClient() {
   const router = useRouter();
   const order = useOrderStore((s) => s.currentOrder);
   const addReview = useGuestReviewsStore((s) => s.addReview);
+  const submitReview = useGuestReviewsStore((s) => s.submitReview);
 
   const orderItems = order?.lines ?? [];
-  const roomNumber = order?.roomNumber ?? "304";
+  const location = order?.location ?? "";
 
   // State for item reviews
   const [itemReviews, setItemReviews] = React.useState<
@@ -81,25 +82,27 @@ export default function ReviewClient() {
     }));
   };
 
-  const handleSubmit = () => {
-    // Submit reviews for items that have been rated
-    Object.entries(itemReviews).forEach(([itemId, review]) => {
-      if (review.rating > 0) {
-        const item = orderItems.find((line) => line.item.id === itemId);
-        if (item) {
-          addReview({
-            itemId: item.item.id,
-            itemTitle: item.item.title,
-            rating: review.rating,
-            reviewText: review.text,
-            guestName: `Guest Room ${roomNumber}`,
-            timestamp: Date.now(),
-            helpful: 0,
-          });
-        }
-      }
-    });
+  const handleSubmit = async () => {
+    // Extract numeric order ID from #ORD-<id>
+    const numericOrderId = order?.id?.replace('#ORD-', '') || '';
 
+    // Submit reviews for items that have been rated
+    const reviewPromises = Object.entries(itemReviews)
+      .filter(([, review]) => review.rating > 0)
+      .map(([itemId, review]) => {
+        const item = orderItems.find((line) => line.item.id === itemId);
+        if (item && numericOrderId) {
+            return submitReview(numericOrderId, {
+              menuItemId: item.item.id,
+              rating: review.rating,
+              comment: review.text,
+              guestName: order?.guestName || `Guest ${location}`,
+            });
+        }
+        return Promise.resolve();
+      });
+
+    await Promise.all(reviewPromises);
     router.push("/guest/order/thank-you");
   };
 

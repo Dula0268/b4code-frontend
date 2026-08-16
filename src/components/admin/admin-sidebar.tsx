@@ -52,6 +52,11 @@ const NAV_ITEMS = [
     href: "/admin/finance",
     icon: Wallet,
   },
+  {
+    label: "Permissions",
+    href: "/admin/settings",
+    icon: Settings,
+  },
 ];
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -105,40 +110,6 @@ export default function AdminSidebar() {
           })}
         </ul>
       </nav>
-
-      {/* ── Bottom Section: Settings & Logout ── */}
-      <div>
-        {/* Divider */}
-        <div className="h-px bg-[var(--gray-5)] mx-5 my-4" />
-
-        <div className="px-3 flex flex-col gap-1">
-          {/* Settings */}
-          <Link
-            href="/admin/settings"
-            className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${pathname === "/admin/settings"
-              ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
-              : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
-              }`}
-          >
-            <Settings
-              size={18}
-              className="text-[var(--black-1)] flex-shrink-0"
-            />
-            <span>Settings</span>
-          </Link>
-
-          {/* Log Out */}
-          <button
-            onClick={() => {
-              router.push(`/auth/logout?redirect=${encodeURIComponent(pathname)}`);
-            }}
-            className="flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] border-none bg-transparent cursor-pointer text-sm font-normal text-[var(--black-1)] w-full text-left transition-colors hover:bg-[rgba(235,87,87,0.08)] hover:text-[var(--state-error)]"
-          >
-            <LogOut size={18} className="text-[var(--black-1)] flex-shrink-0" />
-            <span>Log Out</span>
-          </button>
-        </div>
-      </div>
     </aside>
   );
 }

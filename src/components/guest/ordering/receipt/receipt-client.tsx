@@ -29,13 +29,17 @@ export default function ReceiptClient() {
   const date = formatReceiptDate(placedDate);
   const time = formatReceiptTime(placedDate);
   const guest = order?.guestName ?? "Guest";
-  const roomNumber = order?.roomNumber ?? "304";
+  const location = order?.location ?? "";
   const items = order?.lines ?? [];
   const subtotal = order?.subtotal ?? 0;
   const serviceCharge = order?.serviceCharge ?? 0;
   const tax = order?.tax ?? 0;
   const grandTotal = order?.total ?? 0;
-  const paymentMethod = order?.paymentMethod === "card" ? "Visa ending in •••• 4242" : `Charged to Room ${roomNumber}`;
+  const paymentMethod = order?.paymentMethod === "room-charge" 
+    ? `Charged to ${location}` 
+    : order?.paymentMethod === "cash" || order?.paymentMethod === "pay-at-property"
+    ? "Pay with Cash / at Property"
+    : "Visa ending in •••• 4242";
 
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[#fafaf9] px-4 py-4 flex flex-col items-center">
@@ -73,10 +77,10 @@ export default function ReceiptClient() {
             </svg>
           </div>
           <h2 className="text-[16px] font-bold text-[#1D1D1D] tracking-[2px] uppercase leading-[22px]">
-            PRIME STAY
+            ORDER RECEIPT
           </h2>
           <p className="text-[11px] text-[#828282] leading-[16px] mt-0.5">
-            42 Galle Face Terrace, Colombo 03 • +94 11 254 1010
+            Thank you for your order!
           </p>
         </div>
 
@@ -96,8 +100,8 @@ export default function ReceiptClient() {
               <p className="text-[#333333] font-medium mt-0.5">{guest}</p>
             </div>
             <div className="text-right">
-              <span className="text-[#828282] uppercase tracking-wider text-[10px]">ROOM</span>
-              <p className="text-[#333333] font-medium mt-0.5">{roomNumber}</p>
+              <span className="text-[#828282] uppercase tracking-wider text-[10px]">LOCATION</span>
+              <p className="text-[#333333] font-medium mt-0.5">{location}</p>
             </div>
           </div>
         </div>
@@ -158,7 +162,7 @@ export default function ReceiptClient() {
           </p>
           <div className="border-t border-[#E0E0E0] pt-2">
             <p className="text-[12px] text-[#828282] leading-[18px] font-medium">
-              Thank you for staying with Prime Stay
+              Thank you for your order!
             </p>
             <p className="text-[10px] text-[#828282] leading-[14px] mt-0.5">
               All prices are inclusive of applicable taxes. This serves as your official receipt.

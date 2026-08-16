@@ -4,6 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCartStore } from "@/store/guest/ordering/cart.store";
+import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 
 /* ─── Helpers ─── */
 
@@ -20,20 +21,26 @@ const TAG_LABELS: Record<string, string> = {
 
 /* ─── Cart Client ─── */
 
-export default function CartClient({ roomNumber }: { roomNumber?: string }) {
+export default function CartClient({ location }: { location?: string }) {
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
   const remove = useCartStore((s) => s.remove);
+  
+  const qrContext = useOrderContextStore((s) => s.qrContext);
+  const locationText = qrContext ? `${qrContext.type} ${qrContext.location}` : "Unknown Location";
+
+  // To ensure reactivity, we compute derived state by accessing s.lines
+  const subtotal = useCartStore((s) => {
+    // Access s.lines to trigger re-renders
+    const _lines = s.lines;
+    return s.subtotal();
+  });
+  const serviceCharge = useCartStore((s) => { const _lines = s.lines; return s.serviceCharge(); });
+  const tax = useCartStore((s) => { const _lines = s.lines; return s.tax(); });
+  const total = useCartStore((s) => { const _lines = s.lines; return s.total(); });
+  const itemCount = useCartStore((s) => { const _lines = s.lines; return s.itemCount(); });
 
   const lines = React.useMemo(() => Object.values(linesMap), [linesMap]);
-  const itemCount = React.useMemo(() => lines.reduce((s, l) => s + l.qty, 0), [lines]);
-  const subtotal = React.useMemo(
-    () => lines.reduce((s, l) => s + l.item.priceLkr * l.qty, 0),
-    [lines],
-  );
-  const serviceCharge = Math.round(subtotal * 0.1);
-  const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + serviceCharge + tax;
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-4">
@@ -42,7 +49,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
         <>
           {/* Breadcrumbs */}
           <nav className="flex items-center gap-2 text-base mb-4 md:mb-8 px-1">
-            <Link href="/guest/order" className="flex items-center gap-1">
+            <Link href={qrContext ? `/guest/order?qrId=${qrContext.qrId}` : "/guest/order"} className="flex items-center gap-1">
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                 <path
                   d="M3 10L10 3L17 10M5 8.5V16.5C5 16.776 5.224 17 5.5 17H8.5V13C8.5 12.724 8.724 12.5 9 12.5H11C11.276 12.5 11.5 12.724 11.5 13V17H14.5C14.776 17 15 16.776 15 16.5V8.5"
@@ -55,7 +62,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
             </Link>
             <span className="text-[#828282]">Home</span>
             <ChevronRight />
-            <Link href="/guest/order/menu" className="text-[#828282] hover:underline">
+            <Link href={qrContext ? `/guest/order/menu?qrId=${qrContext.qrId}` : "/guest/order/menu"} className="text-[#828282] hover:underline">
               Menu
             </Link>
             <ChevronRight />
@@ -73,7 +80,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
             </svg>
             <p className="text-lg text-[#6b7280]">Your cart is empty</p>
             <Link
-              href="/guest/order/menu"
+              href={qrContext ? `/guest/order/menu?qrId=${qrContext.qrId}` : "/guest/order/menu"}
               className="px-6 py-3 rounded-lg bg-[#af3a04] text-white font-bold text-base hover:bg-[#923002] transition"
             >
               Browse Menu
@@ -86,7 +93,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
           <div className="flex-1 min-w-0 space-y-3">
             {/* Breadcrumbs */}
             <nav className="flex items-center gap-2 text-sm mb-2 px-1">
-              <Link href="/guest/order" className="flex items-center gap-1">
+              <Link href={qrContext ? `/guest/order?qrId=${qrContext.qrId}` : "/guest/order"} className="flex items-center gap-1">
                 <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                   <path
                     d="M3 10L10 3L17 10M5 8.5V16.5C5 16.776 5.224 17 5.5 17H8.5V13C8.5 12.724 8.724 12.5 9 12.5H11C11.276 12.5 11.5 12.724 11.5 13V17H14.5C14.776 17 15 16.776 15 16.5V8.5"
@@ -99,7 +106,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
               </Link>
               <span className="text-[#828282]">Home</span>
               <ChevronRight />
-              <Link href="/guest/order/menu" className="text-[#828282] hover:underline">
+              <Link href={qrContext ? `/guest/order/menu?qrId=${qrContext.qrId}` : "/guest/order/menu"} className="text-[#828282] hover:underline">
                 Menu
               </Link>
               <ChevronRight />
@@ -123,9 +130,9 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
               </span>
             </div>
 
-            {lines.map(({ item, qty }) => (
+            {Object.entries(linesMap).map(([lineKey, { item, qty }]) => (
               <div
-                key={item.id}
+                key={lineKey}
                 className="bg-white border border-[#f3f4f6] rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] p-3 flex gap-3 items-center"
               >
                 {/* Thumbnail – 72×72 */}
@@ -156,7 +163,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                       )}
                     </div>
                     <button
-                      onClick={() => remove(item.id)}
+                      onClick={() => remove(lineKey)}
                       className="p-0.5 cursor-pointer hover:opacity-70 transition shrink-0"
                       aria-label={`Remove ${item.title}`}
                     >
@@ -181,7 +188,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                     {/* Qty control pill */}
                     <div className="flex items-center bg-[#f9fafb] border border-[#e5e7eb] rounded-md">
                       <button
-                        onClick={() => setQty(item.id, qty - 1)}
+                        onClick={() => setQty(lineKey, qty - 1)}
                         className="px-1.5 py-0.5 cursor-pointer hover:bg-[#f3f4f6] rounded-l-md transition"
                         aria-label="Decrease quantity"
                       >
@@ -193,7 +200,7 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                         {qty}
                       </span>
                       <button
-                        onClick={() => setQty(item.id, qty + 1)}
+                        onClick={() => setQty(lineKey, qty + 1)}
                         className="px-1.5 py-0.5 cursor-pointer hover:bg-[#f3f4f6] rounded-r-md transition"
                         aria-label="Increase quantity"
                       >
@@ -211,7 +218,6 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                 </div>
               </div>
             ))}
-
 
           </div>
 
@@ -275,11 +281,8 @@ export default function CartClient({ roomNumber }: { roomNumber?: string }) {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[12px] font-semibold text-[#6b7280] uppercase tracking-[0.3px] leading-[16px]">
-                    Delivering to
-                  </p>
                   <p className="text-[14px] font-bold text-[#111827] leading-[20px]">
-                    Room {roomNumber}
+                    Delivering to {locationText}
                   </p>
                 </div>
               </div>

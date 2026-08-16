@@ -130,8 +130,14 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
       tag: tag || undefined,
       imageUrls: uploadedUrls,
       availability,
-      variants,
-      modifiers,
+      variants: variants.map(v => ({
+        ...v,
+        id: v.id.startsWith('vn-') ? undefined : v.id
+      })) as Variant[],
+      modifiers: modifiers.map(m => ({
+        ...m,
+        id: m.id.startsWith('mn-') ? undefined : m.id
+      })) as Modifier[],
     };
 
     try {
@@ -248,7 +254,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
                       <SelectTrigger className={categoryError ? errCls : inputCls}>
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white">
                         {categories.map((c) => (
                           <SelectItem key={c.id} value={c.id} className="text-xs">{c.name}</SelectItem>
                         ))}
