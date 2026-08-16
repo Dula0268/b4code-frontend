@@ -90,4 +90,8 @@ export const UsersApi = {
   // POST /api/admin/users/{id}/send-reset-password
   sendResetPasswordLink: (id: number): Promise<void> =>
     api.post(`/admin/users/${id}/send-reset-password`).then(() => undefined),
+
+  // POST /api/admin/users/invite
+  invite: (email: string, role: UserRole): Promise<void> =>
+    api.post('/admin/users/invite', { email, role }).then(() => undefined),
 };
