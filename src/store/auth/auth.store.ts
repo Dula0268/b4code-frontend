@@ -66,7 +66,7 @@ type AuthActions = {
   login: (email: string, password: string) => Promise<string>;
   loginForCheckout: (email: string, password: string) => Promise<void>;
   roomLogin: (lastName: string, roomNumber: string, propertyId: number) => Promise<void>;
-  register: (email: string, password: string, role: Role, propertyId?: number, staffRole?: string) => Promise<void>;
+  register: (email: string, password: string, role: Role, firstName: string, lastName: string, propertyId?: number, staffRole?: string) => Promise<void>;
   registerFromCheckout: (
     email: string,
     password: string,
@@ -226,17 +226,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     },
 
     // ─── REGISTER ─────────────────────────────────────────
-    register: async (email, password, role, propertyId, staffRole) => {
+    register: async (email, password, role, firstName, lastName, propertyId, staffRole) => {
       set({ loading: true, error: null });
 
       try {
-        const nameParts = email.split("@")[0].split(".");
-        const firstName =
-          nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) ||
-          "User";
-        const lastName =
-          nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || "";
-
         await authApi.register(email, password, role, firstName, lastName, undefined, propertyId, staffRole);
 
         set({ loading: false });
