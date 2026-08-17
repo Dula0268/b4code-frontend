@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 
 export default function StaffMenuEdit({ menuId }: { menuId: string }) {
   const router = useRouter();
@@ -30,6 +31,8 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [togglingItemId, setTogglingItemId] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{id: string, name: string} | null>(null);
 
   const categories = useMemo(() => {
     if (!menu) return [];
@@ -46,17 +49,23 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
     });
   }, [menu, search, category]);
 
-  const handleDeleteItem = async (itemId: string, itemName: string) => {
-    if (typeof window !== "undefined" && window.confirm(`Remove "${itemName}" from this menu? This action cannot be undone.`)) {
-      setDeletingItemId(itemId);
-      try {
-        await deleteItem(menuId, itemId);
-        setSuccess(`Item "${itemName}" removed.`);
-      } catch (_err) {
-        // Error handled by store
-      } finally {
-        setDeletingItemId(null);
-      }
+  const handleDeleteItem = (itemId: string, itemName: string) => {
+    setItemToDelete({ id: itemId, name: itemName });
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    setDeletingItemId(itemToDelete.id);
+    try {
+      await deleteItem(menuId, itemToDelete.id);
+      setSuccess(`Item "${itemToDelete.name}" removed.`);
+      setDeleteConfirmOpen(false);
+      setItemToDelete(null);
+    } catch (_err) {
+      // Error handled by store
+    } finally {
+      setDeletingItemId(null);
     }
   };
 
@@ -137,6 +146,15 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
 
   return (
     <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
+      <DeleteConfirmationDialog 
+        isOpen={deleteConfirmOpen}
+        onClose={() => { setDeleteConfirmOpen(false); setItemToDelete(null); }}
+        onConfirm={confirmDelete}
+        title="Delete Menu Item"
+        description={`Are you sure you want to remove "${itemToDelete?.name}" from this menu? This action cannot be undone.`}
+        loading={deletingItemId !== null}
+      />
+
       {/* ── Success Banner ── */}
       {successMsg && (
         <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-[10px] px-4 py-2 text-sm">

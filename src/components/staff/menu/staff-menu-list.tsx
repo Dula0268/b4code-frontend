@@ -50,6 +50,8 @@ export default function StaffMenuList() {
   const [editingCharge, setEditingCharge] = useState(false);
   const [chargeInput, setChargeInput] = useState("");
   const [categoryToDelete, setCategoryToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [menuToDelete, setMenuToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deletingMenu, setDeletingMenu] = useState(false);
   const perPage = 4;
   const total = menus.length;
   const paged = menus.slice(page * perPage, (page + 1) * perPage);
@@ -79,13 +81,19 @@ export default function StaffMenuList() {
     return () => clearTimeout(t);
   }, [successMsg, setSuccess]);
 
-  const handleDeleteMenu = async (menuId: string, menuName: string) => {
-    if (typeof window !== "undefined" && window.confirm(`Are you sure you want to delete the menu "${menuName}"? All items inside will be deleted.`)) {
-      await deleteMenu(menuId);
-      if (!useStaffMenuStore.getState().errorMsg) {
-        setSuccess(`Menu "${menuName}" deleted successfully.`);
-      }
+  const handleDeleteMenu = (menuId: string, menuName: string) => {
+    setMenuToDelete({ id: menuId, name: menuName });
+  };
+
+  const confirmDeleteMenu = async () => {
+    if (!menuToDelete) return;
+    setDeletingMenu(true);
+    await deleteMenu(menuToDelete.id);
+    if (!useStaffMenuStore.getState().errorMsg) {
+      setSuccess(`Menu "${menuToDelete.name}" deleted successfully.`);
     }
+    setDeletingMenu(false);
+    setMenuToDelete(null);
   };
 
   const handleAddCategory = async () => {
@@ -455,6 +463,15 @@ export default function StaffMenuList() {
         onConfirm={confirmDeleteCategory}
         title="Delete Category"
         description={`Are you sure you want to delete the category "${categoryToDelete?.name}"? Existing items linked to this category will lose their category reference.`}
+      />
+
+      <DeleteConfirmationDialog
+        isOpen={menuToDelete !== null}
+        onClose={() => setMenuToDelete(null)}
+        onConfirm={confirmDeleteMenu}
+        title="Delete Menu"
+        description={`Are you sure you want to delete the menu "${menuToDelete?.name}"? All items inside will be deleted.`}
+        loading={deletingMenu}
       />
         </div>
       </div>

@@ -13,6 +13,7 @@ import {
   Percent,
 } from "lucide-react";
 import Toast from "@/components/ui/toast";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import type { PayoutDto } from "@/api/admin/finance.api";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
@@ -53,9 +54,8 @@ export default function PayoutDetailPanel({
 }: PayoutDetailPanelProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const { processPayout, rejectPayout, actionLoading } = useAdminFinanceStore();
-  const [customCommissionRate, setCustomCommissionRate] = useState<number | "">(
-    "",
-  );
+  const [customCommissionRate, setCustomCommissionRate] = useState<number | "">("");
+  const [rejecting, setRejecting] = useState(false);
 
   useEffect(() => {
     if (payout) {
@@ -82,20 +82,25 @@ export default function PayoutDetailPanel({
     }
   };
 
-  const handleReject = async () => {
-    if (!window.confirm("Are you sure you want to reject this payout?")) return;
+  const confirmReject = async () => {
     try {
       await rejectPayout(payout.id);
       setToastMessage("Payout rejected successfully.");
       setTimeout(() => {
         setToastMessage(null);
+        setRejecting(false);
         onClose();
       }, 1000);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to reject payout";
       alert(message);
+      setRejecting(false);
     }
+  };
+
+  const handleReject = () => {
+    setRejecting(true);
   };
 
   const statusUpper = payout.status?.toUpperCase() || "";
@@ -404,6 +409,17 @@ export default function PayoutDetailPanel({
           </div>
         )}
       </div>
+
+      <DeleteConfirmationDialog 
+        isOpen={rejecting}
+        onClose={() => setRejecting(false)}
+        onConfirm={confirmReject}
+        title="Reject Payout"
+        description={`Are you sure you want to reject payout #${payout.id} for ${payout.hostName}?`}
+        confirmText="Reject"
+        loadingText="Rejecting..."
+        loading={actionLoading}
+      />
     </div>
   );
 }
