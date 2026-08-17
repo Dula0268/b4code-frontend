@@ -25,7 +25,8 @@ export default function CartClient({ location }: { location?: string }) {
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
   const remove = useCartStore((s) => s.remove);
-  
+  const serviceChargeRate = useCartStore((s) => s.serviceChargeRate);
+  const taxRate = useCartStore((s) => s.taxRate);
   const qrContext = useOrderContextStore((s) => s.qrContext);
   const locationText = qrContext ? `${qrContext.type} ${qrContext.location}` : "Unknown Location";
 
@@ -241,14 +242,14 @@ export default function CartClient({ location }: { location?: string }) {
                 </div>
                 <div className="flex items-start justify-between">
                   <span className="text-[13px] text-[#4b5563] leading-[18px]">
-                    Service Charge (10%)
+                    Service Charge ({Math.round(serviceChargeRate * 100)}%)
                   </span>
                   <span className="text-[13px] font-medium text-[#4b5563] leading-[18px]">
                     {formatLkr(serviceCharge)}
                   </span>
                 </div>
                 <div className="flex items-start justify-between">
-                  <span className="text-[13px] text-[#4b5563] leading-[18px]">Tax (5%)</span>
+                  <span className="text-[13px] text-[#4b5563] leading-[18px]">Tax ({Math.round(taxRate * 100)}%)</span>
                   <span className="text-[13px] font-medium text-[#4b5563] leading-[18px]">
                     {formatLkr(tax)}
                   </span>

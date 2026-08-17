@@ -116,6 +116,10 @@ export default function OrderSidebar({ formatLkr }: { formatLkr: (n: number) => 
               <span>Service Charge ({Math.round(serviceChargeRate * 100)}%)</span>
               <span>{formatLkr(serviceCharge)}</span>
             </div>
+            <div className="flex items-center justify-between text-sm text-[var(--gray-3)]">
+              <span>Tax ({Math.round(useCartStore((s) => s.taxRate) * 100)}%)</span>
+              <span>{formatLkr(useCartStore((s) => s.tax()))}</span>
+            </div>
             <div className="flex items-end justify-between pt-2 border-t border-dashed border-[var(--gray-4)] mt-2">
               <span className="text-base font-bold text-[var(--black-2)]">Total</span>
               <span className="text-xl font-bold text-[var(--brand-primary)]">

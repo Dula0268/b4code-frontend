@@ -442,6 +442,14 @@ export default function CheckoutClient() {
                     {formatLkr(serviceCharge)}
                   </span>
                 </div>
+                <div className="flex items-start justify-between">
+                  <span className="text-[14px] text-[#6b7280] leading-[20px]">
+                    Tax ({Math.round(taxRate * 100)}%)
+                  </span>
+                  <span className="text-[14px] text-[#6b7280] leading-[20px]">
+                    {formatLkr(tax)}
+                  </span>
+                </div>
                 <div className="border-t border-dashed border-[#e5e7eb]" />
                 <div className="flex items-start justify-between">
                   <span className="text-[18px] font-bold text-[#1f1f1f] leading-[28px]">Total</span>
