@@ -11,14 +11,12 @@ import {
   ClipboardList,
   UtensilsCrossed,
   QrCode,
-  MessageSquare,
   ArrowRight,
   Eye,
 } from "lucide-react";
 import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
-import { useStaffChatStore } from "@/store/staff/messages/staff-chat.store";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,7 +78,6 @@ function useManagementCards() {
   const menus = useStaffMenuStore((s) => s.menus);
   const outOfStockCount = menus.reduce((acc: number, menu: any) => acc + menu.items.filter((i: any) => i.status === "draft").length, 0);
   const activeQRs = useStaffQRStore((s) => s.qrs.filter(q => q.status === "active").length);
-  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
 
   return [
     {
@@ -110,15 +107,6 @@ function useManagementCards() {
       href: "/staff/qr",
       icon: QrCode,
     },
-    {
-      title: "Guest Chats",
-      highlight: unreadMessages > 0 ? (unreadMessages === 1 ? "1 Unread Message" : `${unreadMessages} Unread Messages`) : "No Unread Messages",
-      description: "Communicate directly with guests in real-time.",
-      buttonLabel: "Open Chats",
-      buttonIcon: MessageSquare,
-      href: "/staff/messages",
-      icon: MessageSquare,
-    },
   ];
 }
 
@@ -138,13 +126,11 @@ export default function StaffDashboard() {
   const canOrders = usePermission("order_management");
   const canMenu = usePermission("menu_management");
   const canQR = usePermission("qr_management");
-  const canMessages = usePermission("guest_messages");
 
   const permMap: Record<string, boolean> = {
     "/staff/orders": canOrders,
     "/staff/menu": canMenu,
     "/staff/qr": canQR,
-    "/staff/messages": canMessages,
   };
 
   const visibleCards = managementCards.filter((c) => permMap[c.href] !== false);

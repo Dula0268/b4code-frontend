@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { NAV_ITEMS, NavItem } from "@/components/staff/layout/staff-sidebar";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
-import { useStaffChatStore } from "@/store/staff/messages/staff-chat.store";
 
 interface StaffHeaderProps {
   title: string;
@@ -30,7 +29,6 @@ export default function StaffHeader({
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -57,7 +55,7 @@ export default function StaffHeader({
                   const isActive =
                     pathname === item.href ||
                     (item.href !== "/staff" && pathname.startsWith(item.href + "/"));
-                  const badge = item.isChat ? unreadMessages : null;
+                  const badge = null;
                   return (
                     <NavItem
                       key={item.href}

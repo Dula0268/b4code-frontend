@@ -9,7 +9,6 @@ import {
   ClipboardList,
   Package,
   QrCode,
-  MessageCircle,
   LogOut,
   BarChart3,
   Star,
@@ -18,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/store/auth/auth.store";
-import { useStaffChatStore } from "@/store/staff/messages/staff-chat.store";
 import { usePermission } from "@/hooks/use-permission";
 
 export const NAV_ITEMS = [
@@ -27,7 +25,6 @@ export const NAV_ITEMS = [
   { label: "Order Management", href: "/staff/orders", icon: ClipboardList, permKey: "order_management" },
   { label: "Menu Management", href: "/staff/menu", icon: Package, permKey: "menu_management" },
   { label: "QR Management", href: "/staff/qr", icon: QrCode, permKey: "qr_management" },
-  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, isChat: true, permKey: "guest_messages" },
   { label: "Reviews", href: "/staff/reviews", icon: Star, permKey: "reviews" },
 ];
 
@@ -72,7 +69,6 @@ export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuthStore();
-  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
   const [mounted, setMounted] = useState(false);
   const [propertyName, setPropertyName] = useState<string>("");
 
@@ -125,7 +121,7 @@ export default function StaffSidebar() {
             const isActive =
               pathname === item.href ||
               (item.href !== "/staff" && pathname.startsWith(item.href + "/"));
-            const badge = item.isChat ? unreadMessages : null;
+            const badge = null;
             return (
               <NavItem
                 key={item.href}
