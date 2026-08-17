@@ -27,7 +27,7 @@ export default async function CancelBookingPage({ params }: { params: Promise<{ 
               Cancel Booking
             </h1>
             <p className="text-white/80 max-w-lg text-lg">
-              We're sorry to see you cancel. Review the details and cancellation policy below before proceeding.
+              We&apos;re sorry to see you cancel. Review the details and cancellation policy below before proceeding.
             </p>
           </div>
         </div>

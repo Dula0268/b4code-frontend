@@ -134,7 +134,7 @@ export default function ComplainPage() {
             <AlertCircle className="h-10 w-10 text-red-500" />
           </div>
           <h2 className="text-2xl font-semibold text-slate-900 mb-2">Booking Not Found</h2>
-          <p className="text-slate-500 mb-8">We couldn't find the booking you're trying to submit a complaint for. It may have been removed or the reference is incorrect.</p>
+          <p className="text-slate-500 mb-8">We couldn&apos;t find the booking you&apos;re trying to submit a complaint for. It may have been removed or the reference is incorrect.</p>
           <Button onClick={() => router.push("/guest/booking")} className="w-full h-12 text-md">
             Return to My Bookings
           </Button>
@@ -159,7 +159,7 @@ export default function ComplainPage() {
               File a Complaint
             </h1>
             <p className="text-white/80 max-w-lg text-lg">
-              We're sorry your experience wasn't perfect. Please provide details so our team can investigate and resolve the issue.
+              We&apos;re sorry your experience wasn&apos;t perfect. Please provide details so our team can investigate and resolve the issue.
             </p>
           </div>
           <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20" onClick={() => router.back()}>

@@ -144,7 +144,7 @@ export default function ReviewPage() {
             <AlertCircle className="h-10 w-10 text-red-500" />
           </div>
           <h2 className="text-2xl font-semibold text-slate-900 mb-2">Booking Not Found</h2>
-          <p className="text-slate-500 mb-8">We couldn't find the booking you're trying to submit a review for. It may have been removed or the reference is incorrect.</p>
+          <p className="text-slate-500 mb-8">We couldn&apos;t find the booking you&apos;re trying to submit a review for. It may have been removed or the reference is incorrect.</p>
           <Button onClick={() => router.push("/guest/booking")} className="w-full h-12 text-md">
             Return to My Bookings
           </Button>
