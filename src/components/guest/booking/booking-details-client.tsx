@@ -9,7 +9,7 @@ import {
   ChevronLeft, Calendar, User, MapPin, CheckCircle2,
   Clock, XCircle, Download, Star, RefreshCw, FileText,
   CreditCard, Wallet, Edit3, X, AlertTriangle, AlertCircle,
-  Check, ArrowRight, Info, BedDouble
+  Check, ArrowRight, Info
 } from "lucide-react"
 import { guestApi } from "@/api/guest/guest.api"
 
