@@ -30,6 +30,25 @@ function FlagBadge({ status }: { status: string }) {
   );
 }
 
+// ─── Role Badge ───────────────────────────────────────────────────────────────
+export function RoleBadge({ role }: { role?: string }) {
+  if (!role) return null;
+  
+  const isOwner = role.toUpperCase() === "OWNER";
+  
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase border ${
+        isOwner 
+          ? "bg-[#FFF8F1] text-[#B45309] border-[#FED7AA]" 
+          : "bg-[#F0F9FF] text-[#0369A1] border-[#BAE6FD]"
+      }`}
+    >
+      {isOwner ? "Owner" : "Staff"}
+    </span>
+  );
+}
+
 // ─── Star Rating ──────────────────────────────────────────────────────────────
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -237,15 +256,20 @@ export default function ReviewsQueue() {
                     <td className="px-5 py-3.5 min-w-40">
                       <div className="flex items-center gap-2.5">
                         <div 
-                          className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0 bg-[#C05621]"
+                          className={`w-8.5 h-8.5 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0 shadow-sm ${
+                            review.flaggedByRole?.toUpperCase() === 'STAFF' ? 'bg-[#0284C7]' : 'bg-[#C05621]'
+                          }`}
                         >
                           {review.ownerName ? review.ownerName.charAt(0) : '?'}
                         </div>
                         <div>
-                          <p className="m-0 font-semibold text-[#1A1A1A]">
-                            {review.ownerName || "Unknown Owner"}
-                          </p>
-                          <p className="m-0 text-xs text-[#9E7B6A]">
+                          <div className="flex items-center gap-2 m-0">
+                            <span className="font-semibold text-[#1A1A1A]">
+                              {review.ownerName || "Unknown"}
+                            </span>
+                            <RoleBadge role={review.flaggedByRole} />
+                          </div>
+                          <p className="m-0 text-xs text-[#9E7B6A] mt-0.5">
                             {review.flaggedAt}
                           </p>
                         </div>
