@@ -11,6 +11,7 @@ import { guestApi } from "@/api/guest/guest.api";
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
 import { useGuestGuard } from "@/hooks/use-guest-guard"
+import { toast } from "sonner"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -81,8 +82,6 @@ function useReviewLogic() {
   const [photos, setPhotos]                       = useState<UploadedPhoto[]>([])
   const [submitted, setSubmitted]                 = useState(false)
   const [isSubmitting, setIsSubmitting]           = useState(false)
-  const [errorMsg, setErrorMsg]                   = useState<string | null>(null)
-  const [successMsg, setSuccessMsg]               = useState<string | null>(null)
   const router = useRouter()
 
   const isFormValid = overallRating > 0 && reviewText.trim().length >= 20
@@ -119,7 +118,6 @@ function useReviewLogic() {
     e.preventDefault()
     if (!isFormValid) return
     setIsSubmitting(true)
-    setErrorMsg(null)
     
     const guest = useAuthStore.getState().user
     const guestName = guest?.profile?.firstName ? `${guest.profile.firstName} ${guest.profile.lastName}` : "Guest"
@@ -127,9 +125,8 @@ function useReviewLogic() {
     const booking = bookingStore.bookings.find((item) => item.propertyId === propertyId) ?? bookingStore.bookings[0]
 
     if (!booking) {
-      setErrorMsg("You need a completed booking before leaving a review.")
+      toast.error("You need a completed booking before leaving a review.")
       setIsSubmitting(false)
-      setTimeout(() => setErrorMsg(null), 3500)
       return
     }
 
@@ -159,15 +156,14 @@ function useReviewLogic() {
         comment: reviewText,
         photoUrls 
       })
-      setSuccessMsg("Review submitted successfully! Redirecting...")
+      toast.success("Review submitted successfully! Redirecting...")
       setTimeout(() => {
         router.push(`/guest/property/${propertyId}`)
       }, 2000)
     } catch (err: any) {
       console.error("Submission error:", err.response?.data || err);
       const backendMsg = err.response?.data?.message || err.response?.data?.error || err.message;
-      setErrorMsg(`Failed to submit review: ${backendMsg}`);
-      setTimeout(() => setErrorMsg(null), 5000);
+      toast.error(`Failed to submit review: ${backendMsg}`);
     } finally {
       setIsSubmitting(false)
     }
@@ -177,7 +173,7 @@ function useReviewLogic() {
     setSubmitted(false); setOverallRating(0); setCategoryRatings({}); setReviewText(""); setPhotos([]);
   }
 
-  return { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, successMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm }
+  return { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -187,7 +183,7 @@ function SubmitReviewContent() {
   const { ready } = useGuestGuard()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const logic = useReviewLogic()
-  const { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, errorMsg, successMsg, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm } = logic
+  const { overallRating, setOverallRating, categoryRatings, setCategoryRating, reviewText, setReviewText, photos, submitted, isSubmitting, isFormValid, handlePhotoUpload, removePhoto, handleSubmit, resetForm } = logic
   const searchParams = useSearchParams()
   const propertyId = searchParams?.get("propertyId") || "1"
 
@@ -199,29 +195,6 @@ function SubmitReviewContent() {
 
   return (
     <>
-      {/* ── Success Notification ── */}
-      <div
-        className={[
-          "fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-emerald-500 text-white text-[13px] font-medium",
-          "px-4 py-2.5 rounded-xl shadow-[0_10px_30px_rgba(16,185,129,0.3)] transition-all duration-300 whitespace-nowrap",
-          successMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
-        ].join(" ")}
-      >
-        <span className="text-[16px]">✓</span>
-        {successMsg}
-      </div>
-      {/* ── Error Notification ── */}
-      <div
-        className={[
-          "fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-[#e53935] text-white text-[13px] font-medium",
-          "px-4 py-2.5 rounded-xl shadow-[0_10px_30px_rgba(229,57,53,0.3)] transition-all duration-300 whitespace-nowrap",
-          errorMsg ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
-        ].join(" ")}
-      >
-        <span className="text-[16px]">⚠️</span>
-        {errorMsg}
-      </div>
-
       <div className="max-w-[820px] mx-auto px-4 pt-6">
         <Link href="/guest/booking" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors">
           <ChevronLeft size={16} /> Back to My Bookings
