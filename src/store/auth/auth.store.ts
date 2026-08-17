@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { authApi } from "@/api/auth/auth.api";
-import { setToken, removeToken } from "@/lib/token";
+import { setToken, setRefreshToken, removeToken } from "@/lib/token";
 import { userApi } from "@/api/user/user.api";
 import { formatApiError } from "@/lib/error-formatter";
 
@@ -66,7 +66,7 @@ type AuthActions = {
   login: (email: string, password: string) => Promise<string>;
   loginForCheckout: (email: string, password: string) => Promise<void>;
   roomLogin: (lastName: string, roomNumber: string, propertyId: number) => Promise<void>;
-  register: (email: string, password: string, role: Role, firstName: string, lastName: string, propertyId?: number, staffRole?: string) => Promise<void>;
+  register: (email: string, password: string, role: Role, firstName: string, lastName: string, phone?: string, propertyId?: number, staffRole?: string) => Promise<void>;
   registerFromCheckout: (
     email: string,
     password: string,
@@ -126,6 +126,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           sessionStorage.setItem("authEmail", data.email);
           sessionStorage.setItem("authRole", role);
           sessionStorage.setItem("authUserId", String(data.userId));
+          // Save refresh token for silent renewal
+          if (data.refreshToken) {
+            setRefreshToken(data.refreshToken);
+          }
 
           // Auto-set selected property for staff so dashboard loads directly
           if (role === "staff" && data.propertyId) {
@@ -210,6 +214,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
 
         if (typeof window !== "undefined") {
           sessionStorage.setItem("auth_user", JSON.stringify(userData));
+          // Save refresh token for silent renewal
+          if (data.refreshToken) {
+            setRefreshToken(data.refreshToken);
+          }
         }
 
         set({
@@ -226,11 +234,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     },
 
     // ─── REGISTER ─────────────────────────────────────────
-    register: async (email, password, role, firstName, lastName, propertyId, staffRole) => {
+    register: async (email, password, role, firstName, lastName, phone, propertyId, staffRole) => {
       set({ loading: true, error: null });
 
       try {
-        await authApi.register(email, password, role, firstName, lastName, undefined, propertyId, staffRole);
+        await authApi.register(email, password, role, firstName, lastName, phone, propertyId, staffRole);
 
         set({ loading: false });
       } catch (err: unknown) {

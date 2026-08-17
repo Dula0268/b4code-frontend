@@ -6,7 +6,8 @@ import { User, Lock, LogOut, Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { imageApi } from "@/api/image/image.api";
-import { useState } from "react";
+import { formatApiError } from "@/lib/error-formatter";
+import { useState, useEffect } from "react";
 import LogoutSuccessModal from "./logout-success-modal";
 import { toast } from "sonner";
 
@@ -23,9 +24,20 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
   const pathname = usePathname();
   const { user, updateProfile } = useAuthStore();
   const [isUploading, setIsUploading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const displayName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : (user?.email?.split("@")[0] || "Staff");
-  const avatarUrl = user?.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=953002&color=fff`;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const displayName = mounted
+    ? (user?.profile?.firstName || user?.profile?.lastName
+        ? `${user.profile.firstName || ""} ${user.profile.lastName || ""}`.trim()
+        : (user?.email?.split("@")[0] || "Staff"))
+    : "Staff";
+  const avatarUrl = mounted && user?.profile?.avatarUrl
+    ? user.profile.avatarUrl
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName || "Staff")}&background=953002&color=fff`;
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -37,8 +49,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
       await updateProfile(user.email, { avatarUrl: result.url });
     } catch (err: unknown) {
       console.error("Failed to upload avatar:", err);
-      const errorMessage = err instanceof Error ? err.message : "Please check your Cloudinary configuration.";
-      toast.error(`Failed to upload image: ${errorMessage}`);
+      toast.error(formatApiError(err, "Failed to upload profile photo. Please try a different image."));
     } finally {
       setIsUploading(false);
     }
@@ -53,7 +64,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
           <div className="flex flex-col items-center justify-center mb-8">
             <div className="relative group">
               <div className="w-20 h-20 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center text-[var(--brand-primary)] text-2xl font-bold mb-3 border-[3px] border-white shadow-sm overflow-hidden">
-                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" suppressHydrationWarning />
                 
                 {isUploading && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
@@ -74,7 +85,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
               </label>
             </div>
             
-            <h2 className="text-xl font-bold text-[#1c1917] mb-1 truncate w-full text-center">{displayName}</h2>
+            <h2 className="text-xl font-bold text-[#1c1917] mb-1 truncate w-full text-center" suppressHydrationWarning>{displayName}</h2>
             <div className="bg-[rgba(149,48,2,0.1)] text-[var(--brand-primary)] text-xs font-semibold px-3 py-1 rounded-full">
               Staff
             </div>

@@ -34,6 +34,9 @@ export const authApi = {
   verifyEmail: (email: string, otp: string) =>
     api.post("/auth/verify-email", { email, otp }).then((r) => r.data),
 
+  resendOtp: (email: string) =>
+    api.post("/auth/resend-otp", { email }).then((r) => r.data),
+
   roomLogin: (lastName: string, roomNumber: string, propertyId: number) =>
     api.post("/auth/room-login", { lastName, roomNumber, propertyId }).then((r) => r.data),
 };

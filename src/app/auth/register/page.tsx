@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { Mail, Lock, CheckCircle2, Phone, User, Home, MapPin, Building2, Briefcase, Building } from "lucide-react";
+import { Mail, Lock, CheckCircle2, Phone, User, Home, MapPin, Building2, Briefcase, Building, RefreshCw } from "lucide-react";
 import clsx from "clsx";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { propertiesApi } from "@/api/properties/properties.api";
+import { authApi } from "@/api/auth/auth.api";
+import { formatApiError } from "@/lib/error-formatter";
 
 type Role = "guest" | "owner" | "staff";
 
@@ -66,6 +68,8 @@ function RegisterForm() {
     const [otp, setOtp] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [countdown, setCountdown] = useState(3);
+    const [resendCooldown, setResendCooldown] = useState(0);
+    const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
     const displayError = localError || authError;
 
@@ -149,6 +153,7 @@ function RegisterForm() {
                 role,
                 firstName,
                 lastName,
+                phone,
                 role === "staff" ? Number(selectedPropertyId) : undefined,
                 role === "staff" ? staffRole : undefined
             );
@@ -174,7 +179,7 @@ function RegisterForm() {
             await verifyEmail(email, otp);
             setShowSuccessModal(true);
         } catch (err) {
-            setLocalError(err instanceof Error ? err.message : "Verification failed");
+            setLocalError(formatApiError(err, "Verification failed. Please check the code and try again."));
         }
     };
 
@@ -191,6 +196,26 @@ function RegisterForm() {
         return () => clearTimeout(timer);
     }, [showSuccessModal, countdown, router, searchParams]);
 
+    // Resend cooldown countdown
+    useEffect(() => {
+        if (resendCooldown <= 0) return;
+        const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [resendCooldown]);
+
+    const handleResendOtp = async () => {
+        if (resendCooldown > 0) return;
+        setResendStatus("sending");
+        try {
+            await authApi.resendOtp(email);
+            setResendStatus("sent");
+            setResendCooldown(60); // 60-second cooldown
+            setTimeout(() => setResendStatus("idle"), 5000);
+        } catch {
+            setResendStatus("error");
+            setTimeout(() => setResendStatus("idle"), 4000);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-white relative flex flex-col p-4 md:p-8">
@@ -595,8 +620,32 @@ function RegisterForm() {
                                     </div>
 
                                     <p className="text-center text-[12px] text-neutral-400">
-                                        Didn&apos;t receive the code? <button type="button" className="text-[#953002] font-bold hover:underline">Resend Code</button>
+                                        Didn&apos;t receive the code?{" "}
+                                        <button
+                                            type="button"
+                                            onClick={handleResendOtp}
+                                            disabled={resendCooldown > 0 || resendStatus === "sending"}
+                                            className="text-[#953002] font-bold hover:underline disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1 transition-opacity"
+                                        >
+                                            {resendStatus === "sending" ? (
+                                                <><RefreshCw size={11} className="animate-spin" /> Sending…</>
+                                            ) : resendCooldown > 0 ? (
+                                                `Resend in ${resendCooldown}s`
+                                            ) : (
+                                                "Resend Code"
+                                            )}
+                                        </button>
                                     </p>
+                                    {resendStatus === "sent" && (
+                                        <p className="text-center text-[12px] text-emerald-600 font-bold animate-in fade-in duration-300">
+                                            ✓ A new code was sent to {email}
+                                        </p>
+                                    )}
+                                    {resendStatus === "error" && (
+                                        <p className="text-center text-[12px] text-red-500 font-bold animate-in fade-in duration-300">
+                                            Failed to resend. Please try again.
+                                        </p>
+                                    )}
                                 </form>
                             )}
                         </div>
