@@ -13,7 +13,7 @@ type AdminModerationState = {
   selectedReview: FlaggedReview | null;
   selectedDispute: Dispute | null;
   disputeResolved: { amount: string; bookingId: string; caseId: string; time: string } | null;
-  badgeCounts: { pendingReviews: number; openDisputes: number; removedToday: number };
+  badgeCounts: { pendingReviews: number; openDisputes: number; removedToday: number; resolvedDisputes: number; totalResolvedAmount: number };
   
   // Reviews
   reviews: FlaggedReview[];
@@ -57,7 +57,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
   selectedReview: null,
   selectedDispute: null,
   disputeResolved: null,
-  badgeCounts: { pendingReviews: 0, openDisputes: 0, removedToday: 0 },
+  badgeCounts: { pendingReviews: 0, openDisputes: 0, removedToday: 0, resolvedDisputes: 0, totalResolvedAmount: 0 },
   
   reviews: [],
   reviewsTotalPages: 0,

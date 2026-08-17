@@ -434,18 +434,26 @@ export default function TrackOrderClient() {
 
               {/* Totals */}
               <div className="space-y-1.5">
-                <div className="flex justify-between text-[12px]">
-                  <span className="text-[#828282]">Subtotal</span>
-                  <span className="text-[#333333]">{formatLkr(order.subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-[12px]">
-                  <span className="text-[#828282]">Service Charge (10%)</span>
-                  <span className="text-[#333333]">{formatLkr(order.serviceCharge)}</span>
-                </div>
-                <div className="flex justify-between text-[12px]">
-                  <span className="text-[#828282]">Tax (5%)</span>
-                  <span className="text-[#333333]">{formatLkr(order.tax)}</span>
-                </div>
+                {(() => {
+                  const scPercent = order.subtotal > 0 ? Math.round((order.serviceCharge / order.subtotal) * 100) : 10;
+                  const txPercent = order.subtotal > 0 ? Math.round((order.tax / order.subtotal) * 100) : 5;
+                  return (
+                    <>
+                      <div className="flex justify-between text-[12px]">
+                        <span className="text-[#828282]">Subtotal</span>
+                        <span className="text-[#333333]">{formatLkr(order.subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-[12px]">
+                        <span className="text-[#828282]">Service Charge ({scPercent}%)</span>
+                        <span className="text-[#333333]">{formatLkr(order.serviceCharge)}</span>
+                      </div>
+                      <div className="flex justify-between text-[12px]">
+                        <span className="text-[#828282]">Tax ({txPercent}%)</span>
+                        <span className="text-[#333333]">{formatLkr(order.tax)}</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               <div className="border-t border-dashed border-[#E0E0E0]" />

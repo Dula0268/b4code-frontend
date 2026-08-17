@@ -41,6 +41,9 @@ export default function ReceiptClient() {
     ? "Pay with Cash / at Property"
     : "Visa ending in •••• 4242";
 
+  const serviceChargeRatePercent = subtotal > 0 ? Math.round((serviceCharge / subtotal) * 100) : 10;
+  const taxRatePercent = subtotal > 0 ? Math.round((tax / subtotal) * 100) : 5;
+
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[#fafaf9] px-4 py-4 flex flex-col items-center">
       {/* ── Payment Successful badge ── */}
@@ -138,11 +141,11 @@ export default function ReceiptClient() {
             <span className="text-[#333333]">{formatLkr(subtotal)}</span>
           </div>
           <div className="flex justify-between text-[13px]">
-            <span className="text-[#828282]">Service Charge (10%)</span>
+            <span className="text-[#828282]">Service Charge ({serviceChargeRatePercent}%)</span>
             <span className="text-[#333333]">{formatLkr(serviceCharge)}</span>
           </div>
           <div className="flex justify-between text-[13px]">
-            <span className="text-[#828282]">Tax (5%)</span>
+            <span className="text-[#828282]">Tax ({taxRatePercent}%)</span>
             <span className="text-[#333333]">{formatLkr(tax)}</span>
           </div>
           <div className="border-t border-dashed border-[#E0E0E0] pt-2 flex justify-between">

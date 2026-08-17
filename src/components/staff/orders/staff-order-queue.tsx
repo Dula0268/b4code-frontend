@@ -212,8 +212,8 @@ function RejectModal({ orderId, onClose, onConfirm }: { orderId: string; onClose
   const quickTags = ["86'd Item", "Duplicate Order", "Customer Left", "Kitchen Closed", "Out of Stock"];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-[440px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-[440px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-3 mb-1">
@@ -296,7 +296,7 @@ export default function StaffOrderQueue() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
       <StaffHeader
         title="Orders Queue"
         subtitle="Manage incoming kitchen orders in real-time"
@@ -309,8 +309,8 @@ export default function StaffOrderQueue() {
         }
       />
       {/* Header Area */}
-      <div className="bg-white px-6 pt-5 pb-0 flex flex-col gap-4 mt-[64px]">
-
+      <div className="bg-white px-6 pt-5 pb-0 flex flex-col mt-[64px]">
+        <div className="max-w-7xl mx-auto w-full flex flex-col gap-4">
         {/* Status Tabs */}
         <div className="border-b border-[#e7e5e4] flex items-start gap-0 overflow-x-auto">
           {STATUS_TABS.map((tab) => {
@@ -338,12 +338,14 @@ export default function StaffOrderQueue() {
             );
           })}
         </div>
+        </div>
       </div>
 
       {/* Orders Grid */}
-      <div className="flex-1 px-6 py-6 overflow-y-auto">
+      <div className="flex-1 px-4 sm:px-6 py-6 overflow-y-auto">
+        <div className="max-w-7xl mx-auto w-full h-full">
         {filteredOrders.length > 0 ? (
-          <div className="grid grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {filteredOrders.map((order) => (
               <OrderCard
                 key={order.id}
@@ -365,6 +367,7 @@ export default function StaffOrderQueue() {
             </p>
           </div>
         )}
+        </div>
       </div>
 
       {/* Reject Modal */}

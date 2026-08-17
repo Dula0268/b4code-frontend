@@ -21,7 +21,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import { useStaffChatStore } from "@/store/staff/messages/staff-chat.store";
 import { usePermission } from "@/hooks/use-permission";
 
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { label: "Dashboard", href: "/staff", icon: LayoutDashboard, permKey: null },
   { label: "Analytics", href: "/staff/analytics", icon: BarChart3, permKey: "analytics" },
   { label: "Order Management", href: "/staff/orders", icon: ClipboardList, permKey: "order_management" },
@@ -31,10 +31,11 @@ const NAV_ITEMS = [
   { label: "Reviews", href: "/staff/reviews", icon: Star, permKey: "reviews" },
 ];
 
-function NavItem({ item, isActive, badge }: {
+export function NavItem({ item, isActive, badge, onClick }: {
   item: typeof NAV_ITEMS[0];
   isActive: boolean;
   badge: number | null;
+  onClick?: () => void;
 }) {
   const Icon = item.icon;
   const allowed = usePermission(item.permKey ?? "__always__", true);
@@ -45,6 +46,7 @@ function NavItem({ item, isActive, badge }: {
     <li>
       <Link
         href={item.href}
+        onClick={onClick}
         className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
           ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
           : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
@@ -94,11 +96,11 @@ export default function StaffSidebar() {
 
   if (!mounted) {
     // Return a skeleton or null during SSR/initial hydration to avoid mismatch
-    return <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] fixed top-0 left-0 bottom-0 z-50" />;
+    return <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] hidden lg:block fixed top-0 left-0 bottom-0 z-50" />;
   }
 
   return (
-    <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
+    <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] hidden lg:flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
       {/* Logo + Role Label */}
       <div className="px-5 pb-6">
         <Logo href="/staff" variant="default" width={140} height={48} />

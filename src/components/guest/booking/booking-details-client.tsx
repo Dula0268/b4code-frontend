@@ -9,7 +9,7 @@ import {
   ChevronLeft, Calendar, User, MapPin, CheckCircle2,
   Clock, XCircle, Download, Star, RefreshCw, FileText,
   CreditCard, Wallet, Edit3, X, AlertTriangle, AlertCircle,
-  Check, ArrowRight
+  Check, ArrowRight, Info, BedDouble
 } from "lucide-react"
 import { guestApi } from "@/api/guest/guest.api"
 
@@ -101,16 +101,18 @@ function StatusBadge({ status, isModified }: { status: string, isModified?: bool
 // ─────────────────────────────────────────────────────────────────────────────
 // Client Component
 // ─────────────────────────────────────────────────────────────────────────────
-export default function BookingDetailsClient({ id }: { id: string }) {
+export default function BookingDetailsClient({ id, initialTab = "modify", pageMode = "view" }: { id: string, initialTab?: "modify" | "cancel" | "refund", pageMode?: "view" | "modify" | "cancel" }) {
   const [booking, setBooking] = useState<StoredBooking | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   
   // UI States
-  const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "refund">("modify")
+  const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "refund">(initialTab)
   const [showReceiptModal, setShowReceiptModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
+  
+  const [cancelReasonCategory, setCancelReasonCategory] = useState<string>("Change of plans")
   
   // Edit Form States
   const [propertyDetail, setPropertyDetail] = useState<any>(null)
@@ -202,8 +204,8 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     const origNights = booking.nights || 1;
     const newNights = calculateNights(editCheckIn, editCheckOut) || 1; // prevent 0 nights
     
-    const origBasePrice = booking.totalPrice * 0.8;
-    const origTaxes = booking.totalPrice * 0.2;
+    const origBasePrice = booking.totalPrice + booking.discount;
+    const origTaxes = 0;
     
     const changes = editCheckIn !== booking.checkIn || 
                     editCheckOut !== booking.checkOut || 
@@ -217,14 +219,14 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     const room = propertyDetail?.rooms?.find((r: any) => String(r.id) === String(currentRoomId));
     
     // Fallback if property details haven't loaded yet
-    const fallbackPricePerNight = booking.totalPrice / origNights * 0.8;
+    const fallbackPricePerNight = origBasePrice / origNights;
     const pricePerNight = room?.pricePerNight || fallbackPricePerNight;
 
     // Price is now calculated solely on Room Price * Nights (Ignoring Guests)
     const newBasePriceMock = pricePerNight * newNights;
-    const newTaxesMock = origTaxes; // Tax remains the same, do not add new tax
+    const newTaxesMock = 0;
     
-    const newTotalBeforeDiscount = newBasePriceMock + newTaxesMock;
+    const newTotalBeforeDiscount = newBasePriceMock;
     const newTotal = newTotalBeforeDiscount - booking.discount;
     
     return {
@@ -241,14 +243,13 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   }, [booking, editCheckIn, editCheckOut, editGuests, editRoomId, propertyDetail])
 
   useEffect(() => {
-    if (successMessage || errorMessage) {
+    if (errorMessage) {
       const timer = setTimeout(() => {
-        setSuccessMessage("");
         setErrorMessage("");
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [successMessage, errorMessage]);
+  }, [errorMessage]);
 
   if (!booking) {
       return (
@@ -267,9 +268,20 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   const daysToStartText = getDaysToStart(booking.checkIn)
 
   // Calculate cancellation fee based on property's freeCancellation policy
-  const isFreeCancellation = propertyDetail?.freeCancellation ?? false;
-  const cancellationFee = isFreeCancellation ? 0 : booking.totalPrice * 0.20;
-  const eligibleRefund = Math.max(0, booking.totalPrice - cancellationFee);
+  const isFreeCancellationProperty = propertyDetail?.freeCancellation ?? false;
+  const checkInDateForPolicy = booking ? new Date(booking.checkIn) : new Date();
+  const freeCancellationDeadline = new Date(checkInDateForPolicy);
+  freeCancellationDeadline.setDate(freeCancellationDeadline.getDate() - 3);
+  freeCancellationDeadline.setHours(23, 59, 59, 999);
+  
+  const now = new Date();
+  const isWithinFreeWindow = isFreeCancellationProperty && now <= freeCancellationDeadline;
+  
+  // If payment method is PAY_AT_PROPERTY, there is no cancellation fee
+  const isPayAtProperty = booking?.paymentMethod === "property" || !booking?.paidInFull;
+  const isFreeCancellation = isPayAtProperty || isWithinFreeWindow;
+  const cancellationFee = isFreeCancellation ? 0 : (booking?.totalPrice || 0) * 0.20;
+  const eligibleRefund = Math.max(0, (booking?.totalPrice || 0) - cancellationFee);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Action Handlers
@@ -277,7 +289,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   const handleSaveChanges = async () => {
     if (!booking) return;
     setErrorMessage("");
-    setSuccessMessage("");
+    
     try {
       setLoading(true);
 
@@ -350,10 +362,15 @@ export default function BookingDetailsClient({ id }: { id: string }) {
       setEditGuests(updated.adults || 2);
 
       if (res.refundAmount > 0) {
-        setSuccessMessage("Modification saved. Request for refund submitted!");
+        
       } else {
-        setSuccessMessage("Modification saved successfully.");
+        
       }
+
+      import("sonner").then(({ toast }) => {
+        toast.success("Booking modified successfully!");
+      });
+      router.push("/guest/booking");
 
     } catch (error: any) {
       console.error("Failed to modify booking:", error);
@@ -365,9 +382,11 @@ export default function BookingDetailsClient({ id }: { id: string }) {
 
   const handleConfirmCancel = async () => {
     setErrorMessage("");
-    setSuccessMessage("");
+    
     try {
-      const res = await guestApi.cancelBooking(booking.id, cancelReason)
+      setLoading(true);
+      const fullReason = cancelReason.trim() ? `${cancelReasonCategory}: ${cancelReason}` : cancelReasonCategory;
+      const res = await guestApi.cancelBooking(booking.id, fullReason)
       
       const mappedBooking: StoredBooking = {
         ...booking,
@@ -379,18 +398,16 @@ export default function BookingDetailsClient({ id }: { id: string }) {
 
       setBooking(mappedBooking)
       
-      if (res.disputeStatus) {
-        setSuccessMessage("Booking cancelled. Request for refund submitted!");
-        setActiveTab("refund" as any);
-      } else {
-        setSuccessMessage("Booking cancelled successfully.");
-        // Switch to a safe tab so it doesn't stay on the cancel form
-        setActiveTab("modify");
-      }
+      import("sonner").then(({ toast }) => {
+        toast.success("Booking cancelled successfully!");
+      });
+      router.push("/guest/booking");
       
     } catch (error: any) {
       console.error("Failed to cancel booking:", error)
       setErrorMessage(error.response?.data?.message || "Failed to cancel booking. Please try again.")
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -422,69 +439,68 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         {errorMessage}
       </div>
 
-      {/* Success Notification */}
-      <div
-        className={[
-          "fixed top-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-emerald-600 text-white text-[13px] font-medium",
-          "px-5 py-3.5 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 whitespace-nowrap",
-          successMessage ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
-        ].join(" ")}
-      >
-        <span className="text-[16px]">✅</span>
-        {successMessage}
-      </div>
 
-      <Link href="/guest/booking" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors">
-        <ChevronLeft size={16} /> Back to My Bookings
-      </Link>
+      {pageMode === "view" && (
+        <>
+          <Link href="/guest/booking" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors">
+            <ChevronLeft size={16} /> Back to My Bookings
+          </Link>
 
-      {/* Hero Header (Full Width of Container) */}
-      <div className="relative rounded-[24px] overflow-hidden mb-6 h-[220px] sm:h-[300px] border border-[#e8ddcf] shadow-sm">
-        <Image src={booking.imageSrc} alt={booking.property} fill className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-        <div className="absolute top-4 left-4">
-          <StatusBadge status={booking.status} isModified={booking.isModified} />
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
-          <span className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1 block">
-            Ref: {booking.confirmationCode}
-          </span>
-          <h1 className="text-[2rem] font-black text-white mb-2 tracking-tight sm:text-[3rem] leading-none">
-            {booking.property}
-          </h1>
-          {booking.roomName && (
-            <div className="flex items-center gap-2 mt-3 text-[16px] font-medium text-[#2d2116] bg-white/50 w-fit px-4 py-2 rounded-xl border border-[#eadfce]">
-              <BedDouble size={18} /> {booking.roomQuantity && booking.roomQuantity > 1 ? `${booking.roomQuantity}x ` : ""}{booking.roomName}
+          {/* Hero Header (Full Width of Container) */}
+          <div className="relative rounded-[24px] overflow-hidden mb-6 h-[220px] sm:h-[300px] border border-[#e8ddcf] shadow-sm">
+            <Image src={booking.imageSrc} alt={booking.property} fill className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute top-4 left-4">
+              <StatusBadge status={booking.status} isModified={booking.isModified} />
             </div>
-          )}
-        </div>
-      </div>
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
+              <span className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1 block">
+                Ref: {booking.confirmationCode}
+              </span>
+              <h1 className="text-[2rem] font-black text-white mb-2 tracking-tight sm:text-[3rem] leading-none">
+                {booking.property}
+              </h1>
+              {booking.roomName && (
+                <div className="flex items-center gap-2 mt-3 text-[16px] font-medium text-[#2d2116] bg-white/50 w-fit px-4 py-2 rounded-xl border border-[#eadfce]">
+                  <BedDouble size={18} /> {booking.roomQuantity && booking.roomQuantity > 1 ? `${booking.roomQuantity}x ` : ""}{booking.roomName}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
-      {(isUpcoming || (isCancelled && booking.disputeStatus)) && (
+      {(isUpcoming || (isCancelled && booking.disputeStatus)) && pageMode === "view" && (
         <div className="flex bg-white rounded-[20px] border border-[#e8ddcf] p-2 mb-6 gap-2 overflow-x-auto">
           {isUpcoming && (
             <>
-              <button 
-                onClick={() => setActiveTab("modify")}
-                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "modify" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
-              >
-                Modify Booking
-              </button>
-              <button 
-                onClick={() => setActiveTab("cancel")}
-                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "cancel" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
-              >
-                Cancel Booking
-              </button>
-              <button 
-                onClick={handleCompleteBooking}
-                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors text-emerald-600 border border-emerald-200 hover:bg-emerald-50`}
-              >
-                Complete Stay (Test)
-              </button>
+              {pageMode !== "cancel" && (
+                <button 
+                  onClick={() => setActiveTab("modify")}
+                  className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "modify" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+                >
+                  Modify Booking
+                </button>
+              )}
+              {pageMode !== "modify" && (
+                <button 
+                  onClick={() => setActiveTab("cancel")}
+                  className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "cancel" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+                >
+                  Cancel Booking
+                </button>
+              )}
+              {pageMode === "view" && (
+                <button 
+                  onClick={handleCompleteBooking}
+                  className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors text-emerald-600 border border-emerald-200 hover:bg-emerald-50`}
+                >
+                  Complete Stay (Test)
+                </button>
+              )}
             </>
           )}
-          {booking.disputeStatus && (
+          {booking.disputeStatus && pageMode === "view" && (
             <button 
               onClick={() => setActiveTab("refund" as any)}
               className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "refund" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
@@ -510,73 +526,121 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         {/* Left Column (Details & Actions) */}
         <div className={`flex flex-col gap-8 ${activeTab === "refund" ? "lg:col-span-3" : "lg:col-span-2"}`}>
           
+          {/* Context Header for Modify and Cancel Mode */}
+          {(pageMode === "modify" || pageMode === "cancel") && (
+            <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-[24px] p-6 sm:p-8 animate-in fade-in duration-300">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <span className="text-[10px] font-black text-[#9f8f7c] uppercase tracking-widest block mb-1">
+                    Ref: {booking.confirmationCode}
+                  </span>
+                  <h3 className="text-xl font-black text-[#1d1d1d]">{booking.property}</h3>
+                  {booking.roomName && (
+                    <p className="text-sm font-medium text-[#6f6254] flex items-center gap-1 mt-1">
+                      <BedDouble size={16} className="text-[#9a3300]" /> 
+                      {booking.roomQuantity && booking.roomQuantity > 1 ? `${booking.roomQuantity}x ` : ""}{booking.roomName}
+                    </p>
+                  )}
+                </div>
+                <StatusBadge status={booking.status} isModified={booking.isModified} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-[#eadfce]">
+                 <div>
+                   <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Original Check-in</p>
+                   <p className="text-sm font-bold text-[#1d1d1d]">{booking.checkInFormatted}</p>
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Original Check-out</p>
+                   <p className="text-sm font-bold text-[#1d1d1d]">{booking.checkOutFormatted}</p>
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Original Guests</p>
+                   <p className="text-sm font-bold text-[#1d1d1d]">{booking.guests} {booking.guests === 1 ? 'Guest' : 'Guests'}</p>
+                 </div>
+              </div>
+            </div>
+          )}
+
           {/* Reservation Details */}
           {(!isUpcoming || activeTab === "modify") && activeTab !== "refund" && (
             <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 animate-in fade-in duration-300">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-black text-[#1d1d1d]">Reservation Details</h2>
+                <h2 className="text-xl font-black text-[#1d1d1d]">{pageMode === "modify" ? "What you can modify" : "Reservation Details"}</h2>
               </div>
               
               {isUpcoming ? (
-                <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-6 mb-6">
-                <p className="text-xs font-medium text-[#828282] mb-4">Update your dates, room type, or guest count. Price changes will be reflected in the payment summary.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 relative" ref={calRef}>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Dates</label>
-                    <div 
-                      onClick={() => setCalOpen(!calOpen)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium cursor-pointer flex justify-between items-center hover:border-[#9a3300] transition-colors"
-                    >
-                      <span>{editCheckIn && editCheckOut ? `${new Date(editCheckIn + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${new Date(editCheckOut + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : 'Select Dates'}</span>
-                      <Calendar size={16} className="text-[#9a3300]" />
-                    </div>
-                    {calOpen && (
-                      <div className="absolute top-[70px] left-0 z-[100] bg-white shadow-2xl border border-[#e8ddcf] rounded-xl">
-                        <CalendarPicker
-                          checkIn={editCheckIn ? new Date(editCheckIn + "T00:00:00") : null}
-                          checkOut={editCheckOut ? new Date(editCheckOut + "T00:00:00") : null}
-                          onChange={(ci, co) => {
-                            setEditCheckIn(ci ? ci.toISOString().split("T")[0] : "");
-                            setEditCheckOut(co ? co.toISOString().split("T")[0] : "");
-                          }}
-                          onComplete={() => setCalOpen(false)}
-                        />
+                <div className="flex flex-col gap-6">
+                  {pageMode === "modify" && (
+                    <p className="text-sm text-[#828282]">
+                      Update your dates, room type, or guest count. Changes to the total price will be reflected in the payment summary.
+                    </p>
+                  )}
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative" ref={calRef}>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Dates <span className="text-[10px] font-medium text-amber-600 normal-case ml-1">(Live Availability)</span></label>
+                      <div 
+                        onClick={() => setCalOpen(!calOpen)}
+                        className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium cursor-pointer flex justify-between items-center hover:border-[#9a3300] transition-colors"
+                      >
+                        <span>{editCheckIn && editCheckOut ? `${new Date(editCheckIn + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${new Date(editCheckOut + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : 'Select Dates'}</span>
+                        <Calendar size={16} className="text-[#9a3300]" />
                       </div>
-                    )}
+                      {calOpen && (
+                        <div className="absolute top-[70px] left-0 z-[100] bg-white shadow-2xl border border-[#e8ddcf] rounded-xl">
+                          <CalendarPicker
+                            checkIn={editCheckIn ? new Date(editCheckIn + "T00:00:00") : null}
+                            checkOut={editCheckOut ? new Date(editCheckOut + "T00:00:00") : null}
+                            onChange={(ci, co) => {
+                              setEditCheckIn(ci ? ci.toISOString().split("T")[0] : "");
+                              setEditCheckOut(co ? co.toISOString().split("T")[0] : "");
+                            }}
+                            onComplete={() => setCalOpen(false)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Room Type</label>
+                      <select value={editRoomId || booking.roomId} onChange={(e) => setEditRoomId(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
+                        {propertyDetail?.rooms?.map((r: any) => (
+                          <option key={r.id} value={r.id}>{r.name}</option>
+                        )) || <option value={booking.roomId}>{booking.roomName}</option>}
+                      </select>
+                    </div>
                   </div>
+                  
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Room Type</label>
-                    <select value={editRoomId || booking.roomId} onChange={(e) => setEditRoomId(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
-                      {propertyDetail?.rooms?.map((r: any) => (
-                        <option key={r.id} value={r.id}>{r.name}</option>
-                      )) || <option value={booking.roomId}>{booking.roomName}</option>}
+                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Guests</label>
+                    <select value={editGuests} onChange={(e) => setEditGuests(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
+                      {Array.from({ length: propertyDetail?.rooms?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.maxGuests || 6 }, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
+                      ))}
                     </select>
                   </div>
-                </div>
-                <div className="flex flex-col gap-1.5 mb-2">
-                  <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Guests</label>
-                  <select value={editGuests} onChange={(e) => setEditGuests(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
-                    {Array.from({ length: propertyDetail?.rooms?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.maxGuests || 6 }, (_, i) => i + 1).map(num => (
-                      <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-                <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-5">
-                  <p className="text-xs font-bold text-[#828282] uppercase tracking-wider mb-2">Check-in</p>
-                  <p className="text-base font-black text-[#1d1d1d]">{booking.checkInFormatted || booking.checkIn}</p>
-                  <p className="text-xs font-medium text-[#828282] mt-1">From 2:00 PM</p>
-                </div>
-                <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-5">
-                  <p className="text-xs font-bold text-[#828282] uppercase tracking-wider mb-2">Check-out</p>
-                  <p className="text-base font-black text-[#1d1d1d]">{booking.checkOutFormatted || booking.checkOut}</p>
-                  <p className="text-xs font-medium text-[#828282] mt-1">Until 12:00 PM</p>
-                </div>
-              </div>
-            )}
 
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Special Requests / Notes</label>
+                    <textarea 
+                      placeholder="Any special requests? (Note: Subject to property availability)"
+                      className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300] resize-none h-[100px]"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                  <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-5">
+                    <p className="text-xs font-bold text-[#828282] uppercase tracking-wider mb-2">Check-in</p>
+                    <p className="text-base font-black text-[#1d1d1d]">{booking.checkInFormatted || booking.checkIn}</p>
+                    <p className="text-xs font-medium text-[#828282] mt-1">From 2:00 PM</p>
+                  </div>
+                  <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-5">
+                    <p className="text-xs font-bold text-[#828282] uppercase tracking-wider mb-2">Check-out</p>
+                    <p className="text-base font-black text-[#1d1d1d]">{booking.checkOutFormatted || booking.checkOut}</p>
+                    <p className="text-xs font-medium text-[#828282] mt-1">Until 12:00 PM</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -590,23 +654,63 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                   </h3>
                 </div>
                 
-                <div className="bg-[#fdfaf6] rounded-xl p-4 border border-[#e8ddcf]">
-                  <h4 className="text-xs font-bold text-[#1d1d1d] mb-2 uppercase tracking-wider">Cancellation Policy</h4>
-                  <p className="text-sm text-[#828282] leading-relaxed">
-                    {isFreeCancellation ? (
-                      <>This property allows free cancellation. You will not be charged a cancellation fee. A refund request will automatically be submitted for the full amount paid: <span className="font-bold text-emerald-600">{formatLKR(eligibleRefund)}</span>.</>
-                    ) : (
-                      <>Cancellations made right now are subject to a 20% cancellation fee ({formatLKR(cancellationFee)}). A refund request will automatically be submitted for the eligible amount: <span className="font-bold text-[#1d1d1d]">{formatLKR(eligibleRefund)}</span>.</>
-                    )}
-                  </p>
+                {/* Cancellation Policy Summary */}
+                <div className="bg-[#fdfaf6] rounded-xl p-5 border border-[#e8ddcf]">
+                  <h4 className="text-sm font-bold text-[#1d1d1d] mb-3 uppercase tracking-wider flex items-center gap-2">
+                    <Info size={16} className="text-[#828282]"/> Cancellation Policy
+                  </h4>
+                  {isPayAtProperty ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm font-medium text-[#1d1d1d]">
+                        You chose to pay at the property. No cancellation fee applies.
+                      </p>
+                      <p className="text-sm text-emerald-600 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg w-fit border border-emerald-100">
+                        ✓ Free to cancel.
+                      </p>
+                    </div>
+                  ) : isFreeCancellationProperty ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm font-medium text-[#1d1d1d]">
+                        Free cancellation until {freeCancellationDeadline.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}, 11:59 PM.
+                      </p>
+                      {isWithinFreeWindow ? (
+                        <p className="text-sm text-emerald-600 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg w-fit border border-emerald-100">
+                          ✓ You are within the free cancellation window. No fees apply.
+                        </p>
+                      ) : (
+                        <p className="text-sm text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg w-fit border border-red-100">
+                          ⚠️ The free cancellation window has passed. A 20% cancellation fee applies.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm font-medium text-[#1d1d1d]">
+                        This property does not offer free cancellation.
+                      </p>
+                      <p className="text-sm text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg w-fit border border-red-100">
+                        ⚠️ A 20% cancellation fee applies immediately upon booking.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 mt-2">
                   <label className="text-sm font-bold text-[#1d1d1d]">Reason for cancellation <span className="text-red-500">*</span></label>
+                  <select 
+                    value={cancelReasonCategory}
+                    onChange={(e) => setCancelReasonCategory(e.target.value)}
+                    className="w-full p-4 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:border-red-300 focus:outline-none mb-2"
+                  >
+                    <option value="Change of plans">Change of plans</option>
+                    <option value="Found another property">Found another property</option>
+                    <option value="Property issue">Property issue</option>
+                    <option value="Other">Other</option>
+                  </select>
                   <textarea 
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
-                    placeholder="Please tell us why you are canceling..."
+                    placeholder="Additional details (optional)..."
                     className="w-full p-4 rounded-xl border border-[#e8ddcf] min-h-[100px] resize-none focus:border-red-300 focus:outline-none"
                   />
                 </div>
@@ -705,21 +809,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
             {/* Original Price Breakdown (Always shown for modify & cancel) */}
             {(activeTab === "modify" || activeTab === "cancel") && (
               <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-[#828282] font-medium">Original Base Price</span>
-                  <span className="text-[#1d1d1d] font-bold">{formatLKR(origBasePrice)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-[#828282] font-medium">Original Taxes</span>
-                  <span className="text-[#1d1d1d] font-bold">{formatLKR(origTaxes)}</span>
-                </div>
-                {booking.discount > 0 && (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-emerald-600 font-medium">Original Discount</span>
-                    <span className="text-emerald-700 font-bold">-{formatLKR(booking.discount)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center pt-4 border-t border-[#f2e7d9] mt-2 mb-6">
+                <div className="flex justify-between items-center mb-6">
                   <span className="text-sm text-[#1d1d1d] font-black">Original Total</span>
                   <span className="text-[#1d1d1d] font-black text-lg">{formatLKR(booking.totalPrice)}</span>
                 </div>
@@ -743,10 +833,10 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     <p className="text-xs text-amber-800/80 mt-2">You need to pay this amount to cancel the booking.</p>
                     <button 
                       onClick={handleConfirmCancel} 
-                      disabled={!cancelReason.trim() || loading}
+                      disabled={!cancelReasonCategory || loading}
                       className="w-full mt-4 py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Pay for Changes"}
+                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Cancellation"}
                     </button>
                   </div>
                 ) : (
@@ -756,10 +846,10 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     <p className="text-xs text-emerald-800/80 mt-2">You can request a refund for this amount.</p>
                     <button 
                       onClick={handleConfirmCancel} 
-                      disabled={!cancelReason.trim() || loading}
-                      className="w-full mt-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      disabled={!cancelReasonCategory || loading}
+                      className="w-full mt-4 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Request Refund"}
+                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Cancel & Send Refund Request"}
                     </button>
                   </div>
                 )}
@@ -770,24 +860,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
             {activeTab === "modify" && hasChanges && (
               <div className="animate-in fade-in duration-300 border-t border-[#f2e7d9] pt-4">
                 <div className="flex flex-col gap-4 mb-6">
-                  <div className="flex flex-col gap-1 mb-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-[#828282] font-medium">Price Change</span>
-                      <span className={`font-bold ${newBasePrice - origBasePrice > 0 ? 'text-amber-600' : newBasePrice - origBasePrice < 0 ? 'text-emerald-600' : 'text-[#1d1d1d]'}`}>
-                        {newBasePrice - origBasePrice > 0 ? '+' : ''}{formatLKR(newBasePrice - origBasePrice)}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-[#828282] bg-[#fdfaf6] p-2 rounded-lg border border-[#e8ddcf] mt-1">
-                      <div className="flex justify-between items-center mb-1">
-                        <span>New Base Price ({formatLKR(pricePerNight)} × {newNights} nights)</span>
-                        <span className="font-medium text-[#1d1d1d]">{formatLKR(newBasePrice)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Original Base Price</span>
-                        <span className="font-medium text-[#1d1d1d]">- {formatLKR(origBasePrice)}</span>
-                      </div>
-                    </div>
-                  </div>
+
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-[#1d1d1d] font-black">New Total Price</span>
                     <span className="text-[#9a3300] font-black text-lg">{formatLKR(newPrice)}</span>
@@ -801,7 +874,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     <p className="text-xs text-emerald-800/80 mt-2">You can request a refund for this difference.</p>
                     <div className="flex flex-col gap-3 mt-4">
                       <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Request Refund"}
+                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Modify & Send Refund Request"}
                       </button>
                       <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>
@@ -813,7 +886,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     <p className="text-xs text-amber-800/80 mt-2">You need to pay for these changes.</p>
                     <div className="flex flex-col gap-3 mt-4">
                       <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Pay for Changes"}
+                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Modification"}
                       </button>
                       <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>
@@ -823,7 +896,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     <p className="text-sm font-bold text-blue-900 mb-1">No price difference</p>
                     <div className="flex flex-col gap-3 mt-4">
                       <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Save Changes"}
+                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Modification"}
                       </button>
                       <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>

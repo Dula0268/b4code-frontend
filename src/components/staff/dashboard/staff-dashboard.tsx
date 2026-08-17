@@ -173,7 +173,7 @@ export default function StaffDashboard() {
     return (
       <div className="h-full overflow-y-auto px-6 py-4 flex flex-col gap-4">
         {/* Stat Cards Row Skeleton */}
-        <div className="grid grid-cols-4 gap-3 shrink-0">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white rounded-xl border border-[#e5e7eb] p-4 h-[88px] animate-pulse">
               <div className="flex justify-between items-start">
@@ -189,7 +189,7 @@ export default function StaffDashboard() {
         </div>
         
         {/* Management Cards Grid Skeleton */}
-        <div className="grid grid-cols-2 gap-3 flex-1 min-h-[300px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-[300px]">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white rounded-xl border border-[#e5e7eb] p-4 flex flex-col justify-between animate-pulse h-full">
               <div className="flex flex-col gap-3">
@@ -207,26 +207,27 @@ export default function StaffDashboard() {
   }
 
   return (
-    <div className="h-full overflow-hidden px-6 py-3 flex flex-col gap-3">
+    <div className="h-full overflow-y-auto px-4 lg:px-6 py-4 lg:py-6 flex flex-col gap-4 lg:gap-6">
+      <div className="max-w-7xl mx-auto w-full flex flex-col gap-4 lg:gap-6">
       {/* Stat Cards Row */}
-      <div className="grid grid-cols-4 gap-3 shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 shrink-0">
         {stats.map((stat) => {
           const Icon = stat.icon;
           const TrendIcon = stat.trendIcon;
           return (
-            <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 p-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden">
+            <div key={stat.label} className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/80 p-5 lg:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden min-h-[140px]">
               <div className="flex justify-between items-start z-10">
-                <div className={`p-2.5 ${stat.iconBg.replace('0.08', '0.15')} rounded-xl self-start group-hover:scale-110 transition-transform`}>
-                  <Icon size={18} className={stat.iconColor} />
+                <div className={`p-3 ${stat.iconBg.replace('0.08', '0.15')} rounded-xl self-start group-hover:scale-110 transition-transform`}>
+                  <Icon size={20} className={stat.iconColor} />
                 </div>
-                <div className={`flex items-center gap-1 ${stat.trendColor} mt-1`}>
+                <div className={`flex items-center gap-1.5 ${stat.trendColor} mt-1 bg-white/50 px-2 py-1 rounded-lg border border-white shadow-sm`}>
                   <TrendIcon size={12} />
-                  <span className="text-[10px] font-semibold tracking-wider uppercase">{stat.trend}</span>
+                  <span className="text-[10px] font-bold tracking-wider uppercase">{stat.trend}</span>
                 </div>
               </div>
-              <div className="z-10 mt-3 flex flex-col gap-0.5">
-                <h3 className="text-[10px] font-semibold tracking-wider text-[#6B7280] uppercase">{stat.label}</h3>
-                <span className="text-xl font-bold text-[#1A1A1A] leading-none">{stat.value}</span>
+              <div className="z-10 mt-6 flex flex-col gap-1">
+                <h3 className="text-[11px] font-bold tracking-[0.15em] text-[#6B7280] uppercase">{stat.label}</h3>
+                <span className="text-3xl font-extrabold text-[#1A1A1A] leading-none tracking-tight">{stat.value}</span>
               </div>
             </div>
           );
@@ -234,29 +235,29 @@ export default function StaffDashboard() {
       </div>
 
       {/* Management Cards Grid */}
-      <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 pb-10">
         {visibleCards.map((card) => {
           const Icon = card.icon;
           const ButtonIcon = card.buttonIcon;
           return (
-            <div key={card.title} className="bg-white/90 backdrop-blur-xl rounded-2xl border border-white/80 p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden h-full">
-              <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-2xl rounded-full group-hover:scale-150 group-hover:opacity-[0.06] transition-all duration-700" />
+            <div key={card.title} className="bg-white/90 backdrop-blur-xl rounded-3xl border border-white/80 p-6 lg:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] transition-all duration-500 flex flex-col justify-between group relative overflow-hidden min-h-[200px]">
+              <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#C05621] opacity-[0.03] blur-3xl rounded-full group-hover:scale-150 group-hover:opacity-[0.06] transition-all duration-700" />
               
-              <div className="flex flex-col gap-2 z-10">
-                <div className="bg-gradient-to-br from-[#FFF8F0] to-white border border-[#F0EBE7]/80 rounded-xl w-10 h-10 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                  <Icon size={20} className="text-[#C05621]" />
+              <div className="flex flex-col gap-5 z-10">
+                <div className="bg-gradient-to-br from-[#FFF8F0] to-white border border-[#F0EBE7]/80 rounded-2xl w-14 h-14 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Icon size={24} className="text-[#C05621]" />
                 </div>
-                <div className="flex flex-col">
-                  <h3 className="text-[11px] font-semibold tracking-wider text-[#6B7280] uppercase mb-0.5">{card.title}</h3>
-                  <p className="text-base font-bold m-0 text-[#1A1A1A]">{card.highlight}</p>
-                  <p className="text-xs text-[#6B7280] m-0 mt-0.5 line-clamp-1">{card.description}</p>
+                <div className="flex flex-col gap-1.5">
+                  <h3 className="text-[12px] font-bold tracking-[0.15em] text-[#6B7280] uppercase">{card.title}</h3>
+                  <p className="text-xl sm:text-2xl font-extrabold m-0 text-[#1A1A1A] tracking-tight">{card.highlight}</p>
+                  <p className="text-sm text-[#6B7280] m-0 line-clamp-2 leading-relaxed">{card.description}</p>
                 </div>
               </div>
               
-              <Button asChild className="bg-[#1A1A1A] hover:bg-[#C05621] text-white mt-auto rounded-xl h-9 text-xs font-bold tracking-wide transition-colors z-10 shrink-0">
-                <Link href={card.href} className="flex items-center gap-2">
+              <Button asChild className="bg-[#1A1A1A] hover:bg-[#C05621] text-white mt-8 rounded-xl h-11 text-sm font-bold tracking-wide transition-colors z-10 shrink-0 w-full sm:w-fit px-6">
+                <Link href={card.href} className="flex items-center justify-center gap-2">
                   {card.buttonLabel}
-                  <ButtonIcon size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <ButtonIcon size={18} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
             </div>
@@ -268,6 +269,7 @@ export default function StaffDashboard() {
             <p className="text-xs mt-1">Contact your administrator to enable access.</p>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

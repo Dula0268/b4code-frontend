@@ -7,9 +7,10 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withPWA = withPWAInit({
   dest: "public",
   disable: false, // Force enable in development for testing
-  register: true,
+  register: false, // We manually register it only for staff
   cacheOnFrontEndNav: true,
   reloadOnOnline: true,
+  scope: "/staff",
 });
 
 const nextConfig: NextConfig = {

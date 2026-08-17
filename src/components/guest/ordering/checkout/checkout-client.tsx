@@ -50,6 +50,9 @@ export default function CheckoutClient() {
   const isWalkIn = !user;
   const finalGuestName = isWalkIn ? walkInName : authGuestName;
 
+  const serviceChargeRate = useCartStore((s) => s.serviceChargeRate);
+  const taxRate = useCartStore((s) => s.taxRate);
+
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
   const remove = useCartStore((s) => s.remove);
@@ -60,8 +63,8 @@ export default function CheckoutClient() {
     () => lines.reduce((s, l) => s + l.item.priceLkr * l.qty, 0),
     [lines],
   );
-  const serviceCharge = Math.round(subtotal * 0.1);
-  const tax = Math.round(subtotal * 0.05);
+  const serviceCharge = Math.round(subtotal * serviceChargeRate);
+  const tax = Math.round(subtotal * taxRate);
   const total = subtotal + serviceCharge + tax;
 
   const [kitchenInstructions, setKitchenInstructions] = React.useState("");
@@ -433,7 +436,7 @@ export default function CheckoutClient() {
                 </div>
                 <div className="flex items-start justify-between">
                   <span className="text-[14px] text-[#6b7280] leading-[20px]">
-                    Service Charge (10%)
+                    Service Charge ({Math.round(serviceChargeRate * 100)}%)
                   </span>
                   <span className="text-[14px] text-[#6b7280] leading-[20px]">
                     {formatLkr(serviceCharge)}

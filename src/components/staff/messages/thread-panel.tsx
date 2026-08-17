@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Phone, MoreVertical, Send } from "lucide-react";
+import { Phone, MoreVertical, Send, ChevronLeft } from "lucide-react";
 import { useStaffChatStore, QUICK_REPLIES } from "@/store/staff/messages/staff-chat.store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export default function ThreadPanel() {
   const activeConv = useStaffChatStore((s) => s.getActiveConversation());
   const sendMessage = useStaffChatStore((s) => s.sendMessage);
+  const selectConversation = useStaffChatStore((s) => s.selectConversation);
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -38,9 +39,15 @@ export default function ThreadPanel() {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-white lg:bg-transparent">
       {/* Chat header */}
       <div className="flex-none px-4 py-2.5 border-b border-[var(--gray-5)] flex items-center gap-3">
+        <button 
+          onClick={() => selectConversation(null)}
+          className="lg:hidden p-1.5 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors -ml-2"
+        >
+          <ChevronLeft size={20} />
+        </button>
         <div className="w-9 h-9 rounded-full bg-[var(--brand-primary)] flex items-center justify-center">
           <span className="text-xs font-bold text-white">{activeConv.guestInitials}</span>
         </div>
@@ -49,7 +56,7 @@ export default function ThreadPanel() {
             <p className="text-xs font-bold text-[var(--black-2)]">{activeConv.roomName}</p>
             {activeConv.isOnline && <span className="w-2 h-2 rounded-full bg-[var(--state-success)]" />}
           </div>
-          <p className="text-[10px] text-[var(--gray-3)]">
+          <p className="text-[10px] text-[var(--gray-3)] truncate">
             {activeConv.guestName} · Checked in {activeConv.checkedIn}
           </p>
         </div>

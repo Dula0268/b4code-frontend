@@ -35,48 +35,49 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
     const availableCount = room.availableCount ?? 1;
 
     return (
-        <div className="flex flex-col sm:flex-row gap-4 p-4 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white">
-            <div className="relative w-full sm:w-[140px] h-[180px] sm:h-[100px] flex-shrink-0 rounded-xl overflow-hidden bg-[#f3ede8]">
-                <Image src={room.imageSrc} alt={room.name} fill className="object-cover" sizes="140px" />
+        <div className="flex flex-col gap-3 p-3 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white w-[240px] flex-shrink-0 snap-start">
+            <div className="relative w-full h-[140px] flex-shrink-0 rounded-xl overflow-hidden bg-[#f3ede8]">
+                <Image src={room.imageSrc} alt={room.name} fill className="object-cover" sizes="240px" />
             </div>
 
-            <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
-                <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-[15px] font-semibold text-[#1d1d1d] leading-snug">{room.name}</h3>
-                </div>
+            <div className="flex-1 flex flex-col justify-start gap-1">
+                <h3 className="text-[14px] font-semibold text-[#1d1d1d] leading-snug truncate">{room.name}</h3>
 
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#828282]">
-                    <span className="flex items-center gap-1"><Users size={12} /> {room.maxGuests} Guests</span>
-                    <span className="flex items-center gap-1"><BedDouble size={12} /> {room.bedType}</span>
-                    <span className="flex items-center gap-1 text-[var(--state-success)] font-medium">
-                        <CheckCircle2 size={12} /> {availableCount} {availableCount === 1 ? 'room' : 'rooms'} available
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#828282]">
+                    <span className="flex items-center gap-1"><Users size={11} /> {room.maxGuests}</span>
+                    <span className="flex items-center gap-1"><BedDouble size={11} /> {room.bedType}</span>
+                    <span className="flex items-center gap-1 text-[var(--state-success)] font-medium w-full mt-0.5">
+                        <CheckCircle2 size={11} /> {availableCount} {availableCount === 1 ? 'room' : 'rooms'} available
                     </span>
                 </div>
             </div>
 
-            <div className="flex-shrink-0 flex sm:flex-col items-center sm:items-end justify-between gap-2 mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#e8e8e8]">
-                <div className="text-left sm:text-right">
-                    <p className="text-[18px] font-bold text-[#1d1d1d]">{formatLKR(room.pricePerNight)}</p>
-                    <p className="text-[11px] text-[#828282]">per night</p>
+            <div className="flex items-end justify-between gap-2 mt-auto pt-3 border-t border-[#e8e8e8]">
+                <div>
+                    <p className="text-[15px] font-bold text-[#1d1d1d]">{formatLKR(room.pricePerNight)}</p>
+                    <p className="text-[10px] text-[#828282]">per night</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => onQuantityChange?.(Math.max(0, selectedQuantity - 1))}
-                        disabled={selectedQuantity === 0}
-                        className="w-8 h-8 flex items-center justify-center rounded-full border border-[#e8e8e8] text-[#1d1d1d] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                        -
-                    </button>
-                    <span className="text-[14px] font-semibold text-[#1d1d1d] w-4 text-center">
-                        {selectedQuantity}
-                    </span>
-                    <button
-                        onClick={() => onQuantityChange?.(Math.min(availableCount, selectedQuantity + 1))}
-                        disabled={selectedQuantity >= availableCount}
-                        className="w-8 h-8 flex items-center justify-center rounded-full border border-[#e8e8e8] text-[#1d1d1d] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                        +
-                    </button>
+                <div className="flex items-center gap-2">
+                    {selectedQuantity === 0 ? (
+                        <button
+                            onClick={() => onQuantityChange?.(1)}
+                            className="bg-[var(--brand-primary)] text-white px-4 py-1.5 rounded-lg text-[13px] font-semibold hover:bg-[var(--brand-primary)]/90 transition-colors"
+                        >
+                            Select
+                        </button>
+                    ) : (
+                        <select
+                            value={selectedQuantity}
+                            onChange={(e) => onQuantityChange?.(Number(e.target.value))}
+                            className="border border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 rounded-lg px-2 py-1.5 text-[13px] font-semibold text-[var(--brand-primary)] outline-none focus:ring-1 focus:ring-[var(--brand-primary)] cursor-pointer"
+                        >
+                            {Array.from({ length: availableCount + 1 }).map((_, i) => (
+                                <option key={i} value={i}>
+                                    {i === 0 ? '0 (Remove)' : `${i} Room${i > 1 ? 's' : ''}`}
+                                </option>
+                            ))}
+                        </select>
+                    )}
                 </div>
             </div>
         </div>

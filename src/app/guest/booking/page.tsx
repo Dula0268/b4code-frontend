@@ -26,9 +26,6 @@ function BookingsContent() {
   const user = useAuthStore(s => s.user)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [successBookingRef, setSuccessBookingRef] = useState("")
-  const [successType, setSuccessType] = useState<"booking" | "modification">("booking")
 
   async function loadBookings() {
       try {
@@ -121,7 +118,6 @@ function BookingsContent() {
           try {
             // If this was a modification payment, commit the pending modification first.
             if (isModification) {
-              setSuccessType("modification");
               const rawPending = sessionStorage.getItem("pendingBookingModification");
               if (rawPending) {
                 try {
@@ -141,16 +137,11 @@ function BookingsContent() {
               }
               // The backend modifyBooking method sends the booking modification email!
               // So we DO NOT call guestApi.sendReceipt(bookingRef) here.
-              setSuccessBookingRef(bookingRef);
-              setShowSuccessModal(true);
               window.history.replaceState(null, "", "/guest/booking");
               await loadBookings();
             } else {
-              setSuccessType("booking");
               // Send receipt email (confirms booking status from PENDING → CONFIRMED)
               await guestApi.sendReceipt(bookingRef);
-              setSuccessBookingRef(bookingRef);
-              setShowSuccessModal(true);
               window.history.replaceState(null, "", "/guest/booking");
               await loadBookings();
             }
@@ -244,41 +235,7 @@ function BookingsContent() {
       </div>
       <GuestFooter />
 
-      {/* Payment Success Modal */}
-      {showSuccessModal && (
-          <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
-                  <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
-                      <ShieldCheck size={40} />
-                  </div>
-                  <h2 className="text-[28px] font-bold text-[#1d1d1d] mb-2">
-                    {successType === "modification" ? "Booking Modified!" : "Payment Successful!"}
-                  </h2>
-                  <p className="text-[15px] text-[#555] mb-8">
-                    {successType === "modification"
-                      ? "Your booking has been successfully updated. A modification receipt has been sent to your email."
-                      : "Your room has been successfully booked. An itinerary has been sent to your email."}
-                  </p>
-                  
-                  {successBookingRef && (
-                      <div className="bg-[#f8f8f8] border border-[#e8e8e8] p-5 rounded-2xl w-full mb-8">
-                          <p className="text-[12px] text-[#828282] uppercase tracking-widest font-bold mb-2">Booking Reference</p>
-                          <p className="text-[24px] font-mono font-black text-[var(--brand-primary)]">{successBookingRef}</p>
-                      </div>
-                  )}
 
-                  <button
-                      onClick={() => {
-                          setShowSuccessModal(false);
-                          router.replace('/guest/booking');
-                      }}
-                      className="w-full bg-[#8b4513] hover:bg-[#6d2200] text-white font-bold py-4 rounded-xl transition-colors cursor-pointer text-center text-[16px] shadow-lg shadow-[#8b4513]/20"
-                  >
-                      View Bookings
-                  </button>
-              </div>
-          </div>
-      )}
     </div>
   )
 }

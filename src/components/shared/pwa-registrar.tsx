@@ -6,7 +6,7 @@ export default function PwaRegistrar() {
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js").then(
+        navigator.serviceWorker.register("/sw.js", { scope: "/staff/" }).then(
           (registration) => {
             console.log("Service Worker registration successful with scope: ", registration.scope);
           },

@@ -10,6 +10,7 @@ const generateUUID = () => {
 };
 
 import { useGuestSessionStore } from "./guest-session.store";
+import { useCartStore } from "./cart.store";
 
 /* ─── Types ─── */
 
@@ -345,6 +346,10 @@ export const useOrderStore = create<OrderState>()(
       
       // Map backend orders to frontend Order type, excluding payment-pending ones
       const now = new Date();
+      
+      const { serviceChargeRate = 0.1, taxRate = 0.05 } = useCartStore.getState();
+      const combinedRate = 1 + serviceChargeRate + taxRate;
+
       const mapped: Order[] = backendOrders
         .filter((bo: { status: string }) => bo.status !== 'PAYMENT_PENDING' && bo.status !== 'payment_pending')
         .map((bo: { id: number; status: string; createdAt: string; location?: string; guestName?: string; totalAmount?: number; paymentMethod?: string; items?: Array<{ menuItem: { name: string; imageUrl?: string; priceLkr?: number }; quantity: number; priceAtOrder: number; note?: string }> }) => {
@@ -361,9 +366,9 @@ export const useOrderStore = create<OrderState>()(
             } as MenuItem,
             qty: it.quantity,
           }));
-          const subtotal = (bo.totalAmount ?? 0) / 1.15;
-          const serviceCharge = subtotal * 0.1;
-          const tax = subtotal * 0.05;
+          const subtotal = (bo.totalAmount ?? 0) / combinedRate;
+          const serviceCharge = subtotal * serviceChargeRate;
+          const tax = subtotal * taxRate;
           return {
             id: `#ORD-${bo.id}`,
             location: bo.location || '',

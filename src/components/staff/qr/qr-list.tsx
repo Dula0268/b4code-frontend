@@ -103,7 +103,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden">
       <StaffHeader
         title="QR Management"
         subtitle="Manage and track guest QR codes"
@@ -116,6 +116,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
         }
       />
       <div className="flex flex-col flex-1 px-6 py-4 gap-4 mt-[64px] overflow-y-auto">
+        <div className="max-w-7xl mx-auto w-full flex flex-col gap-4 h-full">
       {/* Success banner */}
       {successMsg && (
         <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-xl px-4 py-2 text-sm">
@@ -145,13 +146,13 @@ export default function QrList({ propertyId }: { propertyId: number }) {
       )}
 
       {/* Tabs + Search */}
-      <div className="flex-none flex items-center justify-between">
-        <div className="flex bg-white/30 backdrop-blur-md border border-white/50 rounded-xl overflow-hidden p-1 gap-1">
+      <div className="flex-none flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+        <div className="flex bg-white/30 backdrop-blur-md border border-white/50 rounded-xl overflow-hidden p-1 gap-1 w-full sm:w-auto">
           {(["Table", "Room"] as QRTab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold transition-colors ${
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-1.5 text-xs font-bold transition-colors ${
                 tab === t ? "bg-white text-[#1A1A1A] shadow-sm rounded-lg" : "bg-transparent text-[#9E7B6A] hover:bg-white/50 rounded-lg"
               }`}
             >
@@ -159,14 +160,14 @@ export default function QrList({ propertyId }: { propertyId: number }) {
             </button>
           ))}
         </div>
-        <div className="relative w-[260px]">
+        <div className="relative w-full sm:w-[260px]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E7B6A] z-10" />
-          <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} placeholder="Search contexts..." className="pl-9 h-10 text-xs rounded-xl border-white/50 bg-white/70 backdrop-blur-md shadow-sm font-semibold placeholder:text-[#9E7B6A]" disabled={loading} />
+          <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} placeholder="Search contexts..." className="pl-9 h-10 text-xs rounded-xl border-white/50 bg-white/70 backdrop-blur-md shadow-sm font-semibold placeholder:text-[#9E7B6A] w-full" disabled={loading} />
         </div>
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-hidden flex flex-col bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+      <div className="flex-1 bg-white/80 backdrop-blur-xl rounded-2xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-0 overflow-hidden">
         {/* Loading indicator */}
         {loading && (
           <div className="flex-1 flex flex-col p-4 gap-4">
@@ -181,85 +182,91 @@ export default function QrList({ propertyId }: { propertyId: number }) {
 
         {!loading && (
           <>
-            {/* Table header */}
-            <div className="flex-none grid grid-cols-[1fr_120px_100px_140px] gap-4 px-4 py-2 border-b border-[var(--gray-5)]">
-              <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider">Context Name</span>
-              <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider">Type</span>
-              <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider">Status</span>
-              <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider text-right">Actions</span>
-            </div>
-
-            {/* Rows */}
-            <div className="flex-1 overflow-y-auto">
-              {paged.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-xs text-[var(--gray-3)]">No QR contexts found.</p>
+            <div className="flex-1 overflow-x-auto custom-scrollbar flex flex-col">
+              <div className="min-w-[600px] flex-1 flex flex-col">
+                {/* Table header */}
+                <div className="flex-none grid grid-cols-[1fr_120px_100px_140px] gap-4 px-4 py-2 border-b border-[var(--gray-5)] bg-white/50">
+                  <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider">Context Name</span>
+                  <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider">Type</span>
+                  <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider">Status</span>
+                  <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider text-right">Actions</span>
                 </div>
-              ) : (
-                paged.map((qr) => (
-                  <div key={qr.id} className="grid grid-cols-[1fr_120px_100px_140px] gap-4 items-center px-4 py-3 border-b border-[var(--gray-5)] last:border-b-0 hover:bg-[rgba(0,0,0,0.01)] transition-colors">
-                    {/* Name */}
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-[rgba(149,48,2,0.06)] flex items-center justify-center shrink-0">
-                        {TYPE_ICONS[qr.type] || <QrCode size={16} className="text-[var(--brand-primary)]" />}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-[var(--black-2)] truncate">{qr.name}</p>
-                        <p className="text-[10px] text-[var(--gray-3)] truncate">{qr.location}</p>
-                      </div>
+
+                {/* Rows */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  {paged.length === 0 ? (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-xs text-[var(--gray-3)]">No QR contexts found.</p>
                     </div>
-                    {/* Type */}
-                    <Badge variant="outline" className={`text-[9px] font-bold border-0 w-fit ${TYPE_COLORS[qr.type] ?? "bg-[rgba(0,0,0,0.04)] text-[var(--gray-2)]"}`}>
-                      {qr.type}
-                    </Badge>
-                    {/* Status */}
-                    <Badge variant="outline" className={`text-[9px] font-bold border-0 w-fit ${
-                      qr.status === "active" ? "bg-[rgba(39,174,96,0.08)] text-[var(--state-success)]" : "bg-[rgba(130,130,130,0.08)] text-[var(--gray-3)]"
-                    }`}>
-                      {qr.status === "active" ? "Active" : "Inactive"}
-                    </Badge>
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 justify-end">
-                      <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-[var(--gray-3)]">
-                        <Link href={`/staff/qr/${qr.id}`}><QrCode size={13} /></Link>
-                      </Button>
-                      <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-[var(--gray-3)]">
-                        <Link href={`/staff/qr/${qr.id}/edit`}><Pencil size={13} /></Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" onClick={() => handleDeleteQR(qr.id)} disabled={loading}>
-                        <Trash2 size={13} />
-                      </Button>
-                      <Switch
-                        checked={qr.status === "active"}
-                        onCheckedChange={() => handleToggleStatus(qr.id)}
-                        disabled={loading}
-                        className="data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)]"
-                      />
-                    </div>
-                  </div>
-                ))
-              )}
+                  ) : (
+                    paged.map((qr) => (
+                      <div key={qr.id} className="grid grid-cols-[1fr_120px_100px_140px] gap-4 items-center px-4 py-3 border-b border-[var(--gray-5)] last:border-b-0 hover:bg-[rgba(0,0,0,0.01)] transition-colors">
+                        {/* Name */}
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <div className="w-8 h-8 rounded-lg bg-[rgba(149,48,2,0.06)] flex items-center justify-center shrink-0">
+                            {TYPE_ICONS[qr.type] || <QrCode size={16} className="text-[var(--brand-primary)]" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-[var(--black-2)] truncate">{qr.name}</p>
+                            <p className="text-[10px] text-[var(--gray-3)] truncate">{qr.location}</p>
+                          </div>
+                        </div>
+                        {/* Type */}
+                        <Badge variant="outline" className={`text-[9px] font-bold border-0 w-fit ${TYPE_COLORS[qr.type] ?? "bg-[rgba(0,0,0,0.04)] text-[var(--gray-2)]"}`}>
+                          {qr.type}
+                        </Badge>
+                        {/* Status */}
+                        <Badge variant="outline" className={`text-[9px] font-bold border-0 w-fit ${
+                          qr.status === "active" ? "bg-[rgba(39,174,96,0.08)] text-[var(--state-success)]" : "bg-[rgba(130,130,130,0.08)] text-[var(--gray-3)]"
+                        }`}>
+                          {qr.status === "active" ? "Active" : "Inactive"}
+                        </Badge>
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 justify-end">
+                          <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-[var(--gray-3)]">
+                            <Link href={`/staff/qr/${qr.id}`}><QrCode size={13} /></Link>
+                          </Button>
+                          <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-[var(--gray-3)]">
+                            <Link href={`/staff/qr/${qr.id}/edit`}><Pencil size={13} /></Link>
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" onClick={() => handleDeleteQR(qr.id)} disabled={loading}>
+                            <Trash2 size={13} />
+                          </Button>
+                          <Switch
+                            checked={qr.status === "active"}
+                            onCheckedChange={() => handleToggleStatus(qr.id)}
+                            disabled={loading}
+                            className="data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)] ml-1"
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex-none flex items-center justify-between px-4 py-2 border-t border-[var(--gray-5)]">
-                <p className="text-[10px] text-[var(--gray-3)]">
+              <div className="flex-none flex items-center justify-between px-4 py-2 border-t border-[var(--gray-5)] bg-white/50">
+                <p className="text-[10px] text-[var(--gray-3)] hidden sm:block">
                   Showing <span className="font-bold text-[var(--black-2)]">{page * PER_PAGE + 1}</span> to <span className="font-bold text-[var(--black-2)]">{Math.min((page + 1) * PER_PAGE, filtered.length)}</span> of <span className="font-bold text-[var(--black-2)]">{filtered.length}</span> results
                 </p>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 w-full sm:w-auto justify-between sm:justify-end">
                   <Button variant="outline" size="icon" className="h-6 w-6" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft size={12} /></Button>
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <Button
-                      key={i}
-                      variant={page === i ? "default" : "outline"}
-                      size="icon"
-                      className={`h-6 w-6 text-[10px] ${page === i ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary)]/90" : ""}`}
-                      onClick={() => setPage(i)}
-                    >
-                      {i + 1}
-                    </Button>
-                  ))}
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <Button
+                        key={i}
+                        variant={page === i ? "default" : "outline"}
+                        size="icon"
+                        className={`h-6 w-6 text-[10px] ${page === i ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary)]/90" : ""}`}
+                        onClick={() => setPage(i)}
+                      >
+                        {i + 1}
+                      </Button>
+                    ))}
+                  </div>
                   <Button variant="outline" size="icon" className="h-6 w-6" disabled={page === totalPages - 1} onClick={() => setPage(page + 1)}><ChevronRight size={12} /></Button>
                 </div>
               </div>
@@ -275,6 +282,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
         title="Delete QR Context?"
         description="This action cannot be undone. Guests will no longer be able to order using this QR code."
       />
+        </div>
       </div>
     </div>
   );

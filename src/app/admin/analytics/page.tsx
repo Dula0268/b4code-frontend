@@ -95,7 +95,7 @@ function OccupancyRing({ pct }: { pct: number }) {
         transform="rotate(-90 65 65)"
       />
       <text x={65} y={65} textAnchor="middle" dominantBaseline="middle" fontSize={20} fontWeight={700} fill="#1A1A1A">
-        {pct}%
+        {Number.isInteger(pct) ? pct : pct.toFixed(1)}%
       </text>
     </svg>
   );

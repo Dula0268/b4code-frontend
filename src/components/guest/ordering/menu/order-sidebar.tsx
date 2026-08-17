@@ -11,6 +11,7 @@ export default function OrderSidebar({ formatLkr }: { formatLkr: (n: number) => 
   const linesObj = useCartStore((s) => s.lines);
   const subtotal = useCartStore((s) => s.subtotal());
   const serviceCharge = useCartStore((s) => s.serviceCharge());
+  const serviceChargeRate = useCartStore((s) => s.serviceChargeRate);
   const total = useCartStore((s) => s.total());
   const itemCount = useCartStore((s) => s.itemCount());
   const setQty = useCartStore((s) => s.setQty);
@@ -112,7 +113,7 @@ export default function OrderSidebar({ formatLkr }: { formatLkr: (n: number) => 
               <span>{formatLkr(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-sm text-[var(--gray-3)]">
-              <span>Service Charge (10%)</span>
+              <span>Service Charge ({Math.round(serviceChargeRate * 100)}%)</span>
               <span>{formatLkr(serviceCharge)}</span>
             </div>
             <div className="flex items-end justify-between pt-2 border-t border-dashed border-[var(--gray-4)] mt-2">
