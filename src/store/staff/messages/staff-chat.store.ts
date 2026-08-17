@@ -33,7 +33,7 @@ export interface StaffChatState {
 }
 
 export interface StaffChatActions {
-  selectConversation: (id: string) => void;
+  selectConversation: (id: string | null) => void;
   sendMessage: (convId: string, text: string) => void;
   markRead: (convId: string) => void;
   getActiveConversation: () => Conversation | undefined;

@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
 
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
+import { useCartStore } from "@/store/guest/ordering/cart.store";
 
 import GuestGlobalOrdersProvider from '@/components/guest/ordering/guest-global-orders-provider';
 import { MenuSkeleton } from "@/components/guest/ordering/menu/menu-skeleton";
@@ -20,12 +21,14 @@ export default function OrderingShell({ children }: OrderingShellProps) {
   const { user, isRestoring } = useAuthStore();
   const initializeSession = useGuestSessionStore((s) => s.initializeSession);
   const qrContext = useOrderContextStore((s) => s.qrContext);
+  const fetchChargesFromApi = useCartStore((s) => s.fetchChargesFromApi);
 
   useEffect(() => {
     if (qrContext && qrContext.propertyId && qrContext.location) {
       initializeSession(qrContext.propertyId, qrContext.location);
+      fetchChargesFromApi(qrContext.propertyId);
     }
-  }, [qrContext, initializeSession]);
+  }, [qrContext, initializeSession, fetchChargesFromApi]);
 
   if (isRestoring) return <MenuSkeleton />;
 
