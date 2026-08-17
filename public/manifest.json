@@ -3,6 +3,7 @@
   "short_name": "Primestay",
   "description": "Progressive Web Application for Primestay Staff",
   "start_url": "/staff",
+  "scope": "/staff",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#C05621",
