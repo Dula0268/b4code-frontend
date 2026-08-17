@@ -208,6 +208,9 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
             )}
             {isUpcoming && (
               <>
+                <Link href={`/guest/booking/${booking.orderId}/message`} className={btnPrimary} style={{ background: "#9a3300" }}>
+                  <MessageSquare size={12} /> Message
+                </Link>
                 <Link href={`/guest/booking/${booking.orderId}/modify`} className={btnOutline}>
                   <Edit3 size={12} /> Modify
                 </Link>

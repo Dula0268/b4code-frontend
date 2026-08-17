@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Package,
   QrCode,
+  MessageCircle,
   LogOut,
   BarChart3,
   Star,
@@ -25,6 +26,7 @@ export const NAV_ITEMS = [
   { label: "Order Management", href: "/staff/orders", icon: ClipboardList, permKey: "order_management" },
   { label: "Menu Management", href: "/staff/menu", icon: Package, permKey: "menu_management" },
   { label: "QR Management", href: "/staff/qr", icon: QrCode, permKey: "qr_management" },
+  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, permKey: "guest_messages" },
   { label: "Reviews", href: "/staff/reviews", icon: Star, permKey: "reviews" },
 ];
 
