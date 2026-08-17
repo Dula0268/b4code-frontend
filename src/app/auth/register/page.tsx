@@ -139,10 +139,16 @@ function RegisterForm() {
         }
 
         try {
+            const nameParts = fullName.trim().split(" ");
+            const firstName = nameParts[0] || "";
+            const lastName = nameParts.slice(1).join(" ") || "";
+
             await register(
                 email,
                 password,
                 role,
+                firstName,
+                lastName,
                 role === "staff" ? Number(selectedPropertyId) : undefined,
                 role === "staff" ? staffRole : undefined
             );
