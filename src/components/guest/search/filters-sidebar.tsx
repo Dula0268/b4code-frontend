@@ -103,9 +103,9 @@ function PriceRangeFilter({
     const heights = Array.from({ length: bars }, (_, i) => 18 + Math.round(Math.sin((i / bars) * Math.PI) * 42))
 
     return (
-        <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
+        <section className="mb-4 pb-4 border-b border-[#e0e0e0]">
             <h4 className="text-[17px] font-bold text-[#1d1d1d] mb-1">Price range</h4>
-            <p className="text-[13px] text-[#828282] mb-6">Nightly prices before fees and taxes</p>
+            <p className="text-[13px] text-[#828282] mb-4">Nightly prices before fees and taxes</p>
             <div className="text-[15px] font-semibold text-[#1d1d1d] mb-4 px-1">
                 {currency} {priceMin.toLocaleString("en-US")} - {currency} {priceMax.toLocaleString("en-US")}
             </div>
@@ -139,9 +139,9 @@ function AdvancedFilters({ selected, onChange }: { selected: string[]; onChange:
     }
 
     return (
-        <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
-            <h4 className="text-[17px] font-bold text-[#1d1d1d] mb-4">Advanced Filters</h4>
-            <div className="flex flex-col gap-2">
+        <section className="mb-4 pb-4 border-b border-[#e0e0e0]">
+            <h4 className="text-[17px] font-bold text-[#1d1d1d] mb-3">Advanced Filters</h4>
+            <div className="flex flex-col gap-1.5">
                 {filters.map(am => {
                     const checked = selected.includes(am)
                     const Icon = ADVANCED_ICONS[am] || ShieldCheck;
@@ -149,7 +149,7 @@ function AdvancedFilters({ selected, onChange }: { selected: string[]; onChange:
                         <div 
                             key={am} 
                             onClick={() => toggle(am)} 
-                            className={["flex items-center justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer select-none group", 
+                            className={["flex items-center justify-between p-2.5 rounded-xl border-2 transition-all cursor-pointer select-none group", 
                                 checked ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5" : "border-transparent bg-white hover:bg-[#f8f8f8]"
                             ].join(" ")}
                         >
@@ -173,14 +173,14 @@ function PropertyTypeFilter({ types, selected, onChange }: { types: PropertyType
     if (types.length === 0) return null
 
     return (
-        <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
-            <h4 className="text-[15px] font-semibold text-[#1d1d1d] mb-4">Property Type</h4>
+        <section className="mb-4 pb-4 border-b border-[#e0e0e0]">
+            <h4 className="text-[15px] font-semibold text-[#1d1d1d] mb-3">Property Type</h4>
             <div className="grid grid-cols-2 gap-2">
                 {types.map(({ value, label, icon, count }) => {
                     const active = selected.includes(value)
                     const Icon = resolveIcon(icon)
                     return (
-                        <button key={value} id={`property-type-${value.toLowerCase()}`} onClick={() => toggle(value)} className={["flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer text-left", active ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5" : "border-[#e0e0e0] bg-white hover:border-[var(--brand-primary)]/40"].join(" ")}>
+                        <button key={value} id={`property-type-${value.toLowerCase()}`} onClick={() => toggle(value)} className={["flex flex-col items-start gap-1 p-2.5 rounded-xl border-2 transition-all duration-200 cursor-pointer text-left", active ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5" : "border-[#e0e0e0] bg-white hover:border-[var(--brand-primary)]/40"].join(" ")}>
                             <Icon size={20} className={active ? "text-[var(--brand-primary)]" : "text-[#828282]"} />
                             <span className={`text-[13px] font-medium ${active ? "text-[var(--brand-primary)]" : "text-[#333333]"}`}>{label}</span>
                             <span className="text-[11px] text-[#828282]">{count} properties</span>
@@ -194,9 +194,9 @@ function PropertyTypeFilter({ types, selected, onChange }: { types: PropertyType
 
 function GuestRatingFilter({ selected, onChange }: { selected: string | null; onChange: (next: string | null) => void }) {
     return (
-        <section className="mb-7 pb-7 border-b border-[#e0e0e0]">
-            <h4 className="text-[17px] font-bold text-[#1d1d1d] mb-4">Guest Rating</h4>
-            <div className="flex flex-col gap-2">
+        <section className="mb-4 pb-4 border-b border-[#e0e0e0]">
+            <h4 className="text-[17px] font-bold text-[#1d1d1d] mb-3">Guest Rating</h4>
+            <div className="flex flex-col gap-1.5">
                 {[5, 4, 3, 2, 1].map((rating) => {
                     const value = String(rating);
                     const active = selected === value;
@@ -204,7 +204,7 @@ function GuestRatingFilter({ selected, onChange }: { selected: string | null; on
                         <div 
                             key={value}
                             onClick={() => onChange(active ? null : value)} 
-                            className={["flex items-center justify-between p-3.5 rounded-xl border-2 transition-all cursor-pointer select-none group", 
+                            className={["flex items-center justify-between p-2.5 rounded-xl border-2 transition-all cursor-pointer select-none group", 
                                 active ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5" : "border-transparent bg-white hover:bg-[#f8f8f8]"
                             ].join(" ")}
                         >
@@ -234,8 +234,8 @@ export default function FiltersSidebar(props: FiltersSidebarProps) {
 
     return (
         <aside className="w-full min-w-0 bg-white border border-[#e0e0e0] rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-5 sm:p-6">
-                <div className="flex items-center justify-between mb-6 pb-5 border-b border-[#f0f0f0]">
+            <div className="p-4 sm:p-5">
+                <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#f0f0f0]">
                     <span className="text-[18px] sm:text-[19px] font-bold text-[#1d1d1d]">Filters</span>
                 </div>
 
