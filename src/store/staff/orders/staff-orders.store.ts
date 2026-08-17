@@ -49,6 +49,7 @@ export interface Order {
   prepTime?: string;
   history: HistoryEntry[];
   internalNotes: { author: string; text: string; timeAgo: string }[];
+  createdAt: string;
 }
 
 // ─── Next status mapping ───────────────────────────────────────────────────────
@@ -219,11 +220,20 @@ interface BackendOrderResponse {
   guestInstructions?: string;
   totalAmount: number;
   status: string;
-  createdAt: string;
+  createdAt: string | number[];
   items?: BackendOrderItem[];
 }
 function convertBackendOrder(backendOrder: BackendOrderResponse): Order {
-  const createdAt = new Date(backendOrder.createdAt);
+  let createdAt: Date;
+  if (Array.isArray(backendOrder.createdAt)) {
+    const [y, m, d, hr = 0, min = 0, sec = 0] = backendOrder.createdAt;
+    createdAt = new Date(y, m - 1, d, hr, min, sec);
+  } else if (backendOrder.createdAt) {
+    createdAt = new Date(backendOrder.createdAt);
+  } else {
+    createdAt = new Date();
+  }
+  
   const status = mapBackendStatusToFrontend(backendOrder.status);
   
   const items: OrderItem[] = (backendOrder.items || []).map((it) => ({
@@ -261,6 +271,7 @@ function convertBackendOrder(backendOrder: BackendOrderResponse): Order {
       },
     ],
     internalNotes: [],
+    createdAt: createdAt.toISOString(),
   };
 }
 
