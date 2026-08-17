@@ -1,6 +1,5 @@
 "use client";
 
-import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
 import StaffHeader from "@/components/staff/layout/staff-header";
 import StaffDashboard from "@/components/staff/dashboard/staff-dashboard";
 import { useStaffGuard } from "@/hooks/use-staff-guard";
@@ -11,40 +10,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function StaffDashboardSkeleton() {
   return (
-    <div className="flex h-screen bg-[#f8f6f5] overflow-hidden">
-      {/* Sidebar Skeleton */}
-      <div className="w-[260px] bg-white border-r border-[#e5e7eb] flex flex-col p-5 gap-6">
-        <Skeleton className="h-10 w-3/4" />
-        <div className="flex-1 flex flex-col gap-4 mt-6">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
+    <div className="flex-1 flex flex-col h-full overflow-hidden p-6 gap-6 bg-[#F8F9FA] mt-[64px]">
+      <Skeleton className="h-24 bg-white rounded-3xl border border-[#E8EAED] w-full" />
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="lg:w-[65%] flex flex-col gap-6">
+          <Skeleton className="h-[400px] bg-white rounded-3xl border border-[#E8EAED]" />
         </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden p-6 gap-6">
-        {/* Header Row */}
-        <div className="flex justify-between items-center h-16 bg-white rounded-xl px-6">
-          <Skeleton className="h-8 w-1/3" />
-          <Skeleton className="h-8 w-40" />
-        </div>
-
-        {/* 4 Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Skeleton className="h-24 w-full rounded-xl" />
-          <Skeleton className="h-24 w-full rounded-xl" />
-          <Skeleton className="h-24 w-full rounded-xl" />
-          <Skeleton className="h-24 w-full rounded-xl" />
-        </div>
-
-        {/* 4 Management Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-          <Skeleton className="h-full w-full rounded-xl" />
-          <Skeleton className="h-full w-full rounded-xl" />
-          <Skeleton className="h-full w-full rounded-xl" />
-          <Skeleton className="h-full w-full rounded-xl" />
+        <div className="lg:w-[35%] flex flex-col gap-6">
+          <Skeleton className="h-[250px] bg-white rounded-3xl border border-[#E8EAED]" />
+          <Skeleton className="h-[200px] bg-white rounded-3xl border border-[#E8EAED]" />
         </div>
       </div>
     </div>
@@ -68,7 +42,7 @@ export default function StaffPage() {
   });
 
   return (
-    <StaffPageLayout>
+    <>
       <StaffHeader
         title={t('title')}
         subtitle={`Operational Overview • ${today}`}
@@ -77,6 +51,6 @@ export default function StaffPage() {
       <main className="mt-[64px] flex-1 overflow-hidden">
         <StaffDashboard />
       </main>
-    </StaffPageLayout>
+    </>
   );
 }
