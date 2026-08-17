@@ -350,150 +350,87 @@ export default function PropertyClient({ property }: { property: any }) {
                             </div>
                         </div>
 
-                        {/* Location / Map */}
-                        <div>
-                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Location</h2>
-                            <p className="text-[14px] text-[#555] mb-4">{property.fullAddress}</p>
-                            <div className="relative h-[400px] bg-[#e8f4f8] rounded-2xl overflow-hidden border border-[#e8e8e8]">
-                                <iframe
-                                    title="Property location map"
-                                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${property.lng - 0.05},${property.lat - 0.05},${property.lng + 0.05},${property.lat + 0.05}&layer=mapnik&marker=${property.lat},${property.lng}`}
-                                    className="w-full h-full border-none"
-                                    loading="lazy"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Policies */}
-                        <div className="pt-8 border-t border-[#e8e8e8]">
-                            <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Property Policies</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
-                                        <Clock size={16} className="text-[var(--brand-primary)]" /> Check-in / Check-out
-                                    </h3>
-                                    <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        <li>Check-in time: {property.checkInTime || "14:00 - 22:00"}</li>
-                                        <li>Check-out time: Until {property.checkOutTime || "11:00"}</li>
-                                        <li>Early check-in subject to availability</li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
-                                        <AlertTriangle size={16} className="text-[var(--brand-primary)]" /> Cancellation
-                                    </h3>
-                                    <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        {(property.cancellationPolicy || "Free cancellation until 48 hours before.\n50% refund within 48 hours.\nNo-shows will be charged full amount.").split('\n').map((line: string, i: number) => (
-                                            <li key={i}>{line}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
-                                        <Users size={16} className="text-[var(--brand-primary)]" /> Age & Children
-                                    </h3>
-                                    <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        {(property.childPolicy || "Children of any age are welcome.\nNo age restriction for check-in.\nExtra beds available upon request.").split('\n').map((line: string, i: number) => (
-                                            <li key={i}>{line}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
-                                        <Ban size={16} className="text-[var(--brand-primary)]" /> House Rules
-                                    </h3>
-                                    <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
-                                        {(property.houseRules || "No smoking indoors.\nNo pets allowed.\nNo parties or events.").split('\n').map((line: string, i: number) => (
-                                            <li key={i}>{line}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
+ 
                     </div>
                 </div>
 
                 {/* New Dedicated Booking Section */}
-                <div id="booking-section" className="mt-12 bg-white border border-[#e8e8e8] rounded-3xl p-6 md:p-8 shadow-sm">
-                    <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-6">Book Your Stay</h2>
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 xl:gap-12">
+                <div id="booking-section" className="mt-12 bg-white border border-[#e8e8e8] rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e8e8e8] pb-6">
+                        <h2 className="text-[24px] font-bold text-[#1d1d1d]">Book Your Stay</h2>
                         
-                        {/* Left: Availability & Room Selection */}
-                        <div className="flex flex-col gap-6">
-                            <div className="bg-[#fcfcfc] border border-[#e8e8e8] rounded-2xl p-6 shadow-sm flex flex-col relative">
-                            
-                            {/* SECTION 1: Availability */}
-                            <div>
-                                <h3 className="font-bold text-[#1d1d1d] text-[18px] mb-4">Availability</h3>
-                                <div className="flex flex-col gap-4">
-                                    {/* Date Picker */}
-                                    <div className="relative w-full">
-                                        <div 
-                                            className="w-full h-[46px] border border-[#d8d8d8] rounded-xl px-4 flex items-center justify-between text-[14px] cursor-pointer bg-white hover:border-[#aaa] transition-colors"
-                                            onClick={() => setCalOpen(!calOpen)}
-                                        >
-                                            <div className="flex items-center gap-2 text-[#1d1d1d]">
-                                                <Calendar size={16} className="text-[#828282]" />
-                                                <span className="font-medium">
-                                                    {editCheckIn ? new Date(editCheckIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-in'} - {editCheckOut ? new Date(editCheckOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-out'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        {calOpen && (
-                                            <div ref={calRef} className="absolute top-[52px] left-0 z-[100] bg-white border border-[#e0e0e0] rounded-2xl shadow-xl overflow-hidden p-2">
-                                                <CalendarPicker 
-                                                    checkIn={editCheckIn ? new Date(editCheckIn) : null} 
-                                                    checkOut={editCheckOut ? new Date(editCheckOut) : null} 
-                                                    onChange={(inDate, outDate) => {
-                                                        setEditCheckIn(inDate ? inDate.toISOString().split('T')[0] : "");
-                                                        setEditCheckOut(outDate ? outDate.toISOString().split('T')[0] : "");
-                                                        if (inDate && outDate) {
-                                                            setCalOpen(false);
-                                                        }
-                                                    }} 
-                                                />
-                                            </div>
-                                        )}
+                        {/* SECTION 1: Availability (Inline Search Bar) */}
+                        <div className="flex flex-col sm:flex-row items-center gap-2 bg-[#f8f8f8] p-1.5 rounded-2xl border border-[#e8e8e8]">
+                            {/* Date Picker */}
+                            <div className="relative w-full sm:w-auto">
+                                <div 
+                                    className="h-[42px] px-4 flex items-center gap-2 text-[14px] cursor-pointer bg-white rounded-xl border border-[#d8d8d8] hover:border-[#aaa] transition-colors"
+                                    onClick={() => setCalOpen(!calOpen)}
+                                >
+                                    <Calendar size={16} className="text-[#828282]" />
+                                    <span className="font-medium whitespace-nowrap text-[#1d1d1d]">
+                                        {editCheckIn ? new Date(editCheckIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-in'} - {editCheckOut ? new Date(editCheckOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-out'}
+                                    </span>
+                                </div>
+                                {calOpen && (
+                                    <div ref={calRef} className="absolute top-[48px] right-0 z-[100] bg-white border border-[#e0e0e0] rounded-2xl shadow-xl overflow-hidden p-2">
+                                        <CalendarPicker 
+                                            checkIn={editCheckIn ? new Date(editCheckIn) : null} 
+                                            checkOut={editCheckOut ? new Date(editCheckOut) : null} 
+                                            onChange={(inDate, outDate) => {
+                                                setEditCheckIn(inDate ? inDate.toISOString().split('T')[0] : "");
+                                                setEditCheckOut(outDate ? outDate.toISOString().split('T')[0] : "");
+                                                if (inDate && outDate) {
+                                                    setCalOpen(false);
+                                                }
+                                            }} 
+                                        />
                                     </div>
+                                )}
+                            </div>
 
-                                    {/* Guest Selector & Apply Button */}
-                                    <div className="flex gap-4">
-                                        <div className="flex-1 h-[46px] border border-[#d8d8d8] rounded-xl px-4 flex items-center justify-between text-[14px] bg-white">
-                                            <div className="flex items-center gap-2">
-                                                <User size={16} className="text-[#828282]" />
-                                                <span className="font-medium text-[#1d1d1d] hidden sm:inline">Guests</span>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <button 
-                                                    disabled={editGuests <= 1}
-                                                    onClick={() => setEditGuests(g => Math.max(1, g - 1))}
-                                                    className="w-7 h-7 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
-                                                >
-                                                    <span className="text-lg leading-none mb-0.5">-</span>
-                                                </button>
-                                                <span className="font-semibold text-[#1d1d1d] w-4 text-center">{editGuests}</span>
-                                                <button 
-                                                    disabled={editGuests >= 10}
-                                                    onClick={() => setEditGuests(g => Math.min(10, g + 1))}
-                                                    className="w-7 h-7 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
-                                                >
-                                                    <span className="text-lg leading-none mb-0.5">+</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <button 
-                                            onClick={handleApplyFilters}
-                                            className="h-[46px] px-6 bg-[#1d1d1d] hover:bg-black text-white font-bold rounded-xl transition-colors whitespace-nowrap cursor-pointer"
-                                        >
-                                            Apply
-                                        </button>
-                                    </div>
+                            {/* Guest Selector */}
+                            <div className="h-[42px] px-3 flex items-center gap-3 bg-white rounded-xl border border-[#d8d8d8] text-[14px]">
+                                <div className="flex items-center gap-2 border-r border-[#e8e8e8] pr-2">
+                                    <User size={16} className="text-[#828282]" />
+                                    <span className="font-medium text-[#1d1d1d] hidden sm:inline">Guests</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        disabled={editGuests <= 1}
+                                        onClick={() => setEditGuests(g => Math.max(1, g - 1))}
+                                        className="w-6 h-6 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
+                                    >
+                                        <span className="text-sm leading-none mb-0.5">-</span>
+                                    </button>
+                                    <span className="font-semibold text-[#1d1d1d] w-3 text-center">{editGuests}</span>
+                                    <button 
+                                        disabled={editGuests >= 10}
+                                        onClick={() => setEditGuests(g => Math.min(10, g + 1))}
+                                        className="w-6 h-6 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
+                                    >
+                                        <span className="text-sm leading-none mb-0.5">+</span>
+                                    </button>
                                 </div>
                             </div>
+
+                            {/* Apply Button */}
+                            <button 
+                                onClick={handleApplyFilters}
+                                className="h-[42px] px-5 bg-[#1d1d1d] hover:bg-black text-white font-bold rounded-xl transition-colors whitespace-nowrap cursor-pointer"
+                            >
+                                Apply
+                            </button>
                         </div>
+                    </div>
+
+                    <div className="flex flex-col gap-8">
+                        
+                        {/* Left: Room Selection */}
+                        <div className="flex flex-col gap-6">
                             
-                        {/* Inserted Room Types */}
-                            <div className="mt-2">
+                            {/* Inserted Room Types */}
+                            <div>
                                 {(() => {
                                     const displayedRooms = (property.rooms || []).filter((room: any) => room.maxGuests >= guestsFromSearch);
                                     if (displayedRooms.length === 0) {
@@ -506,7 +443,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                         );
                                     }
                                     return (
-                                        <div className="flex flex-col gap-3">
+                                        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x">
                                             {displayedRooms.map((room: any) => (
                                                 <RoomCard
                                                     key={room.id}
@@ -534,47 +471,6 @@ export default function PropertyClient({ property }: { property: any }) {
                         <div className="flex flex-col gap-6">
                             <div className="bg-[#fcfcfc] border border-[#e8e8e8] rounded-2xl p-6 shadow-sm flex flex-col relative h-full">
 
-                        {/* SECTION 2: Your Booking Details (Only shown if rooms selected) */}
-                        {bookingStep !== "confirmation" && Object.keys(selectedRooms).length > 0 && (
-                            <div>
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="font-bold text-[#1d1d1d] text-[18px]">Your Booking Details</h3>
-                                </div>
-                                <div className="flex flex-col gap-2.5">
-                                    <div className="flex justify-between items-center text-[14px]">
-                                        <span className="text-[#555]">Dates</span>
-                                        <span className="font-semibold text-[#1d1d1d]">{new Date(checkInDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(checkOutDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-[14px]">
-                                        <span className="text-[#555]">Guests</span>
-                                        <span className="font-semibold text-[#1d1d1d]">{guestsFromSearch} Guest{guestsFromSearch > 1 ? 's' : ''}</span>
-                                    </div>
-                                </div>
-
-                                {/* Selected Rooms Display */}
-                                <div className="mt-5 pt-5 border-t border-[#e8e8e8]">
-                                    <h4 className="text-[14px] font-semibold text-[#1d1d1d] mb-3">Selected Rooms</h4>
-                                    <div className="flex flex-col gap-3">
-                                        {Object.entries(selectedRooms).map(([id, r]) => (
-                                            <div key={id} className="flex justify-between items-center group text-[14px]">
-                                                <span className="font-medium text-[#1d1d1d]">{r.quantity}x {r.name}</span>
-                                                <div className="flex items-center gap-2 text-[#555]">
-                                                    <span>LKR {(r.quantity * r.price).toLocaleString()}</span>
-                                                    <button 
-                                                        onClick={() => setSelectedRooms({})} 
-                                                        className="text-[#aaa] hover:text-[#e53935] opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        title="Remove room"
-                                                    >
-                                                        <X size={16}/>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
                         {bookingStep === "confirmation" && (
                             <div className="text-center py-8">
                                 <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -585,41 +481,66 @@ export default function PropertyClient({ property }: { property: any }) {
                             </div>
                         )}
 
-                        {/* SECTION 3: Complete Booking (Payment Box) */}
+                        {/* SECTION 2 & 3: Your Booking Details and Checkout */}
                         {bookingStep !== "confirmation" && Object.keys(selectedRooms).length > 0 && (
-                            <div className="mt-6 pt-6 border-t border-[#e8e8e8] flex flex-col gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 w-full">
+                                {/* Left Column: Booking Details */}
+                                <div className="flex flex-col gap-6">
+                                    <h2 className="text-[20px] font-bold text-[#1d1d1d]">Booking Details</h2>
+                                    
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex justify-between border-b border-[#e8e8e8] pb-3">
+                                            <span className="text-[#555] font-medium text-[14px]">Property Name</span>
+                                            <span className="font-bold text-[#1d1d1d] text-[15px] text-right max-w-[60%]">{property.title}</span>
+                                        </div>
+                                        
+                                        <div className="flex justify-between border-b border-[#e8e8e8] pb-3">
+                                            <span className="text-[#555] font-medium text-[14px]">Room Type</span>
+                                            <span className="font-bold text-[#1d1d1d] text-[14px] text-right max-w-[60%]">
+                                                {Object.values(selectedRooms).map(r => r.name).join(", ")}
+                                            </span>
+                                        </div>
 
-                                <h2 className="text-[20px] font-bold text-[#1d1d1d]">Complete Booking</h2>
-                                
-                                {/* Price Breakdown */}
-                                <div>
-                                    <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Price Breakdown</h3>
-                                    <div className="flex flex-col gap-2 text-[14px] text-[#555]">
-                                        <div className="flex justify-between font-medium">
-                                                <span>Base Price</span>
-                                                <span>LKR {priceBreakdown ? priceBreakdown.subtotal.toLocaleString() : "..."}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Taxes & Fees (10%)</span>
-                                                <span>LKR {priceBreakdown ? priceBreakdown.taxAmount.toLocaleString() : "..."}</span>
-                                            </div>
-                                            {priceBreakdown && priceBreakdown.discountAmount > 0 && (
-                                                <div className="flex justify-between text-[var(--state-success)] font-medium">
-                                                    <span>Discounts ({priceBreakdown.promosApplied?.join(", ")})</span>
-                                                    <span>- LKR {priceBreakdown.discountAmount.toLocaleString()}</span>
-                                                </div>
-                                            )}
-                                            <div className="border-t border-[#e8e8e8] pt-2 mt-2 flex justify-between font-bold text-[#1d1d1d] text-[16px]">
-                                                <span>Total</span>
-                                                <span className="text-[var(--brand-primary)]">
-                                                    LKR {priceBreakdown ? priceBreakdown.totalAmount.toLocaleString() : "..."}
+                                        <div className="flex justify-between border-b border-[#e8e8e8] pb-3">
+                                            <span className="text-[#555] font-medium text-[14px]">Dates</span>
+                                            <span className="font-semibold text-[#1d1d1d] text-[14px] text-right">
+                                                {new Date(checkInDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(checkOutDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex justify-between border-b border-[#e8e8e8] pb-3">
+                                            <span className="text-[#555] font-medium text-[14px]">Guests</span>
+                                            <span className="font-semibold text-[#1d1d1d] text-[14px] text-right">{guestsFromSearch} Guest{guestsFromSearch > 1 ? 's' : ''}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Booking Summary */}
+                                    <div className="pt-2 border-t border-[#e8e8e8]">
+                                        <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Booking Summary</h2>
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex justify-between items-center text-[14px]">
+                                                <span className="text-[#555]">Rooms</span>
+                                                <span className="font-semibold text-[#1d1d1d]">
+                                                    {Object.values(selectedRooms).reduce((acc, curr) => acc + curr.quantity, 0)} Room{Object.values(selectedRooms).reduce((acc, curr) => acc + curr.quantity, 0) > 1 ? 's' : ''}
                                                 </span>
                                             </div>
+                                            <div className="flex justify-between items-center text-[14px]">
+                                                <span className="text-[#555]">Duration</span>
+                                                <span className="font-semibold text-[#1d1d1d]">
+                                                    {Math.max(1, Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 3600 * 24)))} Night{Math.max(1, Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 3600 * 24))) > 1 ? 's' : ''}
+                                                </span>
+                                            </div>
+                                            {Object.values(selectedRooms).map((r, idx) => (
+                                                <div key={idx} className="flex justify-between items-center text-[14px]">
+                                                    <span className="text-[#555]">Price per night ({r.name})</span>
+                                                    <span className="font-semibold text-[#1d1d1d]">LKR {r.price.toLocaleString()}</span>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
 
                                     {/* Promo Code */}
-                                    <div>
+                                    <div className="pt-5 border-t border-[#e8e8e8]">
                                         <h3 className="font-semibold text-[#1d1d1d] mb-2 text-[14px]">Promo Code</h3>
                                         <div className="flex flex-col gap-1.5">
                                             <div className="flex gap-2">
@@ -662,10 +583,37 @@ export default function PropertyClient({ property }: { property: any }) {
                                             {promoError && <span className="text-[12px] text-red-500 font-medium ml-1">{promoError}</span>}
                                         </div>
                                     </div>
+                                </div>
+
+                                {/* Right Column: Summary & Payment */}
+                                <div className="flex flex-col gap-6 lg:border-l lg:border-[#e8e8e8] lg:pl-12 lg:border-t-0 border-t border-[#e8e8e8] pt-6 lg:pt-0">
+                                    {/* Price Breakdown */}
+                                    <div className="pt-2">
+                                        <h3 className="font-bold text-[#1d1d1d] mb-3 text-[20px]">Price Breakdown</h3>
+                                        <div className="flex flex-col gap-2 text-[14px] text-[#555]">
+                                            <div className="flex justify-between font-medium">
+                                                <span>Base Price</span>
+                                                <span>LKR {priceBreakdown ? priceBreakdown.subtotal.toLocaleString() : "..."}</span>
+                                            </div>
+
+                                            {priceBreakdown && priceBreakdown.discountAmount > 0 && (
+                                                <div className="flex justify-between text-[var(--state-success)] font-medium">
+                                                    <span>Discounts ({priceBreakdown.promosApplied?.join(", ")})</span>
+                                                    <span>- LKR {priceBreakdown.discountAmount.toLocaleString()}</span>
+                                                </div>
+                                            )}
+                                            <div className="border-t border-[#e8e8e8] pt-2 mt-2 flex justify-between font-bold text-[#1d1d1d] text-[16px]">
+                                                <span>Total</span>
+                                                <span className="text-[var(--brand-primary)]">
+                                                    LKR {priceBreakdown ? priceBreakdown.totalAmount.toLocaleString() : "..."}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     {/* Payment Options */}
-                                    <div>
-                                        <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Payment Method</h3>
+                                    <div className="pt-5 border-t border-[#e8e8e8]">
+                                        <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Select Payment Method</h3>
                                         <div className="flex flex-col gap-3">
                                             <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'online' ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-[#e8e8e8] hover:border-[#ccc]'}`}>
                                                 <input type="radio" name="payment" checked={paymentMethod === 'online'} onChange={() => setPaymentMethod('online')} className="mt-1 cursor-pointer" />
@@ -743,11 +691,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                                     return;
                                                 }
 
-                                                setSuccessMsg("Booking Confirmed Successfully!");
-                                                setTimeout(() => {
-                                                    setSuccessMsg("");
-                                                    router.push("/guest/booking");
-                                                }, 1500);
+                                                router.push("/guest/booking");
                                             } catch (error: any) {
                                                 console.error("Booking failed:", error);
                                                 const msg = error.response?.data?.message || "Failed to confirm booking. Please try again.";
@@ -762,8 +706,70 @@ export default function PropertyClient({ property }: { property: any }) {
                                         {isSubmitting ? "Processing..." : "Confirm Booking"}
                                     </button>
                                 </div>
-                            )}
                             </div>
+                        )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                {/* Location / Map */}
+                <div className="mt-12 bg-white border border-[#e8e8e8] rounded-3xl p-6 md:p-8 shadow-sm">
+                    <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Location</h2>
+                    <p className="text-[14px] text-[#555] mb-4">{property.fullAddress}</p>
+                    <div className="relative h-[400px] bg-[#e8f4f8] rounded-2xl overflow-hidden border border-[#e8e8e8]">
+                        <iframe
+                            title="Property location map"
+                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${property.lng - 0.05},${property.lat - 0.05},${property.lng + 0.05},${property.lat + 0.05}&layer=mapnik&marker=${property.lat},${property.lng}`}
+                            className="w-full h-full border-none"
+                            loading="lazy"
+                        />
+                    </div>
+                </div>
+
+                {/* Policies */}
+                <div className="mt-12 bg-white border border-[#e8e8e8] rounded-3xl p-6 md:p-8 shadow-sm">
+                    <h2 className="text-[20px] font-bold text-[#1d1d1d] mb-4">Property Policies</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
+                                <Clock size={16} className="text-[var(--brand-primary)]" /> Check-in / Check-out
+                            </h3>
+                            <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
+                                <li>Check-in time: {property.checkInTime || "14:00 - 22:00"}</li>
+                                <li>Check-out time: Until {property.checkOutTime || "11:00"}</li>
+                                <li>Early check-in subject to availability</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
+                                <AlertTriangle size={16} className="text-[var(--brand-primary)]" /> Cancellation
+                            </h3>
+                            <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
+                                {(property.cancellationPolicy || "Free cancellation until 48 hours before.\n50% refund within 48 hours.\nNo-shows will be charged full amount.").split('\n').map((line: string, i: number) => (
+                                    <li key={i}>{line}</li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
+                                <Users size={16} className="text-[var(--brand-primary)]" /> Age & Children
+                            </h3>
+                            <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
+                                {(property.childPolicy || "Children of any age are welcome.\nNo age restriction for check-in.\nExtra beds available upon request.").split('\n').map((line: string, i: number) => (
+                                    <li key={i}>{line}</li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-2 flex items-center gap-2">
+                                <Ban size={16} className="text-[var(--brand-primary)]" /> House Rules
+                            </h3>
+                            <ul className="text-[14px] text-[#555] space-y-1.5 list-disc list-inside">
+                                {(property.houseRules || "No smoking indoors.\nNo pets allowed.\nNo parties or events.").split('\n').map((line: string, i: number) => (
+                                    <li key={i}>{line}</li>
+                                ))}
+                            </ul>
                         </div>
                     </div>
                 </div>

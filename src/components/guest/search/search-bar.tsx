@@ -154,7 +154,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       <div
         role="search"
         className={[
-          "bg-white flex flex-col md:flex-row border-[3px] border-[var(--brand-secondary)]",
+          "bg-white flex flex-col md:flex-row rounded-3xl md:rounded-full border border-gray-200",
         isCompact
           ? "shadow-sm w-full max-w-[680px]"
           : "shadow-2xl w-full max-w-[850px]",
@@ -165,7 +165,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       {/* ── Location ─────────────────────────────────────────────────── */}
       <div ref={locationRef} className="relative flex-[2]">
         <div
-          className="flex items-center gap-2 px-4 h-[58px] hover:bg-gray-50 transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 h-[58px] hover:bg-gray-50 transition-colors cursor-pointer rounded-t-3xl md:rounded-t-none md:rounded-l-full"
           onClick={() => { closeAll(); setLocationOpen(true) }}
         >
           <MapPin size={22} strokeWidth={2} className="text-[var(--brand-primary)] flex-shrink-0" />
@@ -188,7 +188,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
         />
       </div>
 
-      <div className="hidden md:block w-[3px] bg-[var(--brand-secondary)] flex-shrink-0" />
+      <div className="hidden md:block w-[1px] bg-gray-200 flex-shrink-0" />
 
       {/* ── Dates ────────────────────────────────────────────────────── */}
       <div ref={calRef} className="relative flex-[1.5]">
@@ -229,7 +229,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
         )}
       </div>
 
-      <div className="hidden md:block w-[3px] bg-[var(--brand-secondary)] flex-shrink-0" />
+      <div className="hidden md:block w-[1px] bg-gray-200 flex-shrink-0" />
 
       {/* ── Guests ───────────────────────────────────────────────────── */}
       <div ref={guestRef} className="relative flex-1">
@@ -252,7 +252,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       <button
         onClick={handleSearch}
         aria-label="Search"
-        className="bg-gradient-to-r from-[var(--brand-primary)] to-[#6d2200] hover:from-[#6d2200] hover:to-[#5a1c00] text-white px-8 h-[58px] flex items-center justify-center gap-2 font-bold text-[16px] transition-all duration-300 active:scale-95 flex-shrink-0"
+        className="bg-gradient-to-r from-[var(--brand-primary)] to-[#6d2200] hover:from-[#6d2200] hover:to-[#5a1c00] text-white px-8 h-[58px] flex items-center justify-center gap-2 font-bold text-[16px] transition-all duration-300 active:scale-95 flex-shrink-0 rounded-b-3xl rounded-t-none md:rounded-none md:rounded-r-full"
         suppressHydrationWarning
       >
         <span>Search</span>

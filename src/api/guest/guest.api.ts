@@ -109,6 +109,17 @@ export const guestApi = {
   }) =>
     api.post("/guest/reviews", reviewData).then((r) => r.data),
 
+  createComplaint: (complaintData: {
+    bookingId: number;
+    propertyId?: number;
+    category: string;
+    severity: string;
+    description: string;
+    relatedOrderRef?: string;
+    photoUrls?: string[];
+  }) =>
+    api.post("/guest/bookings/complaint", complaintData).then((r) => r.data),
+
   // Message Methods
   getConversation: (bookingId: number) =>
     api.get(`/guest/messages/conversation/${bookingId}`).then((r) => r.data),
