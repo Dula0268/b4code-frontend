@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
 import QrPrintCard from "@/components/staff/qr/qr-print-card";
 
 export default function QrPrintPage() {
@@ -9,8 +8,6 @@ export default function QrPrintPage() {
   const qrId = params.id as string;
 
   return (
-    <StaffPageLayout>
       <QrPrintCard qrId={qrId} />
-    </StaffPageLayout>
   );
 }

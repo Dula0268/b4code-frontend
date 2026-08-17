@@ -27,8 +27,8 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
-import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
 import StaffHeader from "@/components/staff/layout/staff-header";
 
 export default function AnalyticsPage() {
@@ -95,12 +95,12 @@ export default function AnalyticsPage() {
   }, [propertyId, timeframe]);
 
   if (!propertyId) return (
-    <StaffPageLayout>
+    <>
       <StaffHeader title="Analytics" subtitle="Performance Dashboard" searchPlaceholder="Search..." />
       <main className="mt-[64px] flex-1 p-8 text-[#9E7B6A]">
         No property selected.
       </main>
-    </StaffPageLayout>
+    </>
   );
 
   const formatCurrency = (amount: number) => {
@@ -114,7 +114,7 @@ export default function AnalyticsPage() {
   const mostSoldItem = topItems.length > 0 ? topItems[0] : null;
 
   return (
-    <StaffPageLayout>
+    <>
       <StaffHeader
         title="Analytics"
         subtitle="Performance Dashboard"
@@ -149,12 +149,22 @@ export default function AnalyticsPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex-1 flex justify-center items-center">
-            <Activity className="animate-spin text-[#C05621]" size={40} />
+          <div className="flex flex-col gap-5 flex-1 w-full animate-pulse">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-shrink-0">
+              <Skeleton className="col-span-1 lg:col-span-4 h-[160px] rounded-3xl" />
+              <div className="col-span-1 lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Skeleton className="col-span-1 h-[120px] rounded-3xl" />
+                <Skeleton className="col-span-1 h-[120px] rounded-3xl" />
+              </div>
+              <Skeleton className="col-span-1 lg:col-span-3 h-[140px] rounded-3xl" />
+            </div>
+            <div className="flex flex-col lg:flex-row gap-5 flex-1 lg:min-h-0 pb-10">
+              <Skeleton className="flex-[5] min-h-[300px] lg:min-h-0 rounded-3xl" />
+              <Skeleton className="flex-[3] min-h-[300px] lg:min-h-0 rounded-3xl" />
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-5 flex-1 min-h-0 animate-in fade-in zoom-in-95 duration-1000 relative z-10">
-            
             {/* ── KPI Bento Row ── */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-shrink-0">
               
@@ -345,6 +355,6 @@ export default function AnalyticsPage() {
         )}
         </div>
       </main>
-    </StaffPageLayout>
+    </>
   );
 }
