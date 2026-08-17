@@ -121,15 +121,9 @@ export const guestApi = {
     api.post("/guest/bookings/complaint", complaintData).then((r) => r.data),
 
   // Message Methods
-  getConversation: (bookingId: number) =>
-    api.get(`/guest/messages/conversation/${bookingId}`).then((r) => r.data),
+  getConversation: (bookingId: number | string) =>
+    api.get(`/guest/bookings/${bookingId}/messages`).then((r) => r.data),
 
-  sendMessage: (messageData: {
-    bookingId: number;
-    senderType: "GUEST" | "PROPERTY";
-    senderName: string;
-    content: string;
-    attachmentUrl?: string;
-  }) =>
-    api.post("/guest/messages", messageData).then((r) => r.data),
+  sendMessage: (bookingId: number | string, content: string) =>
+    api.post(`/guest/bookings/${bookingId}/messages`, { content }).then((r) => r.data),
 };

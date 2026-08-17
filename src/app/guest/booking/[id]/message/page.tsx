@@ -2,6 +2,8 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+import GuestMessageClient from "./guest-message-client";
+
 export default async function GuestMessagePage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const bookingId = params.id;
@@ -19,14 +21,7 @@ export default async function GuestMessagePage(props: { params: Promise<{ id: st
           <p className="text-sm text-[#6B7280] m-0">Chat with the property staff</p>
         </div>
       </div>
-      <div className="bg-white rounded-2xl border border-[#eadfce] p-6 min-h-[400px] flex items-center justify-center text-center">
-        <div className="max-w-md">
-          <h2 className="text-xl font-bold text-[#2d2116] mb-2">Messaging is currently unavailable</h2>
-          <p className="text-[#6f6254] text-sm">
-            We are working on bringing this feature back soon. Please contact the property directly via phone or email for any urgent requests.
-          </p>
-        </div>
-      </div>
+      <GuestMessageClient bookingId={bookingId} />
     </div>
   );
 }
