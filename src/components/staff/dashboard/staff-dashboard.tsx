@@ -184,8 +184,12 @@ export default function StaffDashboard() {
                         
                         <div className="flex items-center gap-4">
                           <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl ${isNew ? 'bg-[#FFF8F0] text-[#C05621]' : 'bg-[#F3F4F6] text-[#6B7280]'}`}>
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Room</span>
-                            <span className="text-lg font-extrabold leading-none">{order.location}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">
+                              {order.type === 'Table Order' ? 'Table' : 'Room'}
+                            </span>
+                            <span className="text-lg font-extrabold leading-none">
+                              {order.table.replace(/^(Room|Table)\s+/i, '')}
+                            </span>
                           </div>
                           
                           <div>
