@@ -9,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
+import { RoleBadge } from "./reports-table";
 
 // ─── Flag Badge (Larger) ──────────────────────────────────────────────────────
 function FlagBadge({ status }: { status: string }) {
@@ -154,24 +155,29 @@ export default function FlaggedReviewDetail() {
 
       {/* ── Review Card ── */}
       <div className="max-w-[680px] mx-auto w-full">
-        <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-[0_4px_24px_rgba(0,0,0,0.04)] p-8">
           {/* Header */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex items-center gap-4">
               <div 
-                className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-[15px] shrink-0 bg-[#C05621]"
+                className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-[16px] shrink-0 shadow-sm ${
+                  selectedReview.flaggedByRole?.toUpperCase() === 'STAFF' ? 'bg-[#0284C7]' : 'bg-[#C05621]'
+                }`}
               >
                 {selectedReview.ownerName ? selectedReview.ownerName.charAt(0) : '?'}
               </div>
               <div>
-                <p className="m-0 font-bold text-[15px] text-[#1A1A1A]">
-                  Flagged by: {selectedReview.ownerName || "Unknown Owner"}
-                </p>
-                <p className="m-0 text-[12px] text-[#9E7B6A]">
+                <div className="flex items-center gap-2 m-0">
+                  <span className="font-bold text-[16px] text-[#1A1A1A]">
+                    Flagged by: {selectedReview.ownerName || "Unknown"}
+                  </span>
+                  <RoleBadge role={selectedReview.flaggedByRole} />
+                </div>
+                <p className="m-0 text-[13px] text-[#9E7B6A] mt-1">
                   {selectedReview.flaggedAt}
-                  <span className="mx-1.5">•</span>
+                  <span className="mx-2">•</span>
                   Stayed at{" "}
-                  <span className="text-[#C05621] font-medium">
+                  <span className="text-[#C05621] font-semibold">
                     {selectedReview.propertyName}
                   </span>
                 </p>

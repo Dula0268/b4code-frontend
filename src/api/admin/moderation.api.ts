@@ -13,6 +13,7 @@ export interface FlaggedReview {
   rating: number;
   flagType: string;
   ownerName?: string;
+  flaggedByRole?: string;
   status: string;
   adminNote?: string;
   flaggedAt: string;
@@ -53,7 +54,7 @@ export interface PageResponse<T> {
 }
 
 export const ModerationApi = {
-  getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number }> =>
+  getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number; resolvedDisputes: number; totalResolvedAmount: number }> =>
     api.get('/admin/moderation/counts').then((res) => res.data),
 
   getReviews: (params: { flagType?: string; search?: string; page?: number; size?: number; rating?: number }): Promise<PageResponse<FlaggedReview>> =>

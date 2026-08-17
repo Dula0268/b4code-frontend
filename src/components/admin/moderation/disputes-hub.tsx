@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import OpenCasesCard from "@/components/admin/moderation/kpi-cards/open-cases-card";
-import PendingDecisionCard from "@/components/admin/moderation/kpi-cards/pending-decision-card";
+import ResolvedCasesCard from "@/components/admin/moderation/kpi-cards/resolved-cases-card";
 import TotalDisputedCard from "@/components/admin/moderation/kpi-cards/total-disputed-card";
 import AvgResolutionCard from "@/components/admin/moderation/kpi-cards/avg-resolution-card";
 import {
@@ -36,9 +36,9 @@ function ReasonBadge({ reason }: { reason: string }) {
   const bgClass = cfg[reason] || "bg-gray-50 text-gray-700 border-gray-200";
   return (
     <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${bgClass}`}
+      className={`inline-flex px-3 py-1.5 rounded-full text-[11px] font-bold border max-w-full ${bgClass}`}
     >
-      {reason}
+      <span className="truncate">{reason}</span>
     </span>
   );
 }
@@ -235,55 +235,78 @@ function ResolutionSummary({ dispute }: { dispute: Dispute }) {
           </div>
 
           {/* ── Evidence ── */}
-          <div>
-            <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-2">
-              EVIDENCE
-            </p>
-            <div className="flex gap-3">
-              <div 
-                className="relative w-30 h-22.5 rounded-xl overflow-hidden border border-[#E8DDD8] cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => setViewingImage("/evidence-photo.png")}
-              >
-                <Image
-                  src="/evidence-photo.png"
-                  alt="Evidence Photo"
-                  fill
-                  className="object-cover"
-                />
-                <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded pointer-events-none">
-                  Photo
-                </span>
-                <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center">
+          {(dispute.status === "Evidence Uploaded" || (dispute as any).hasEvidence) && (
+            <div>
+              <p className="text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase m-0 mb-2">
+                EVIDENCE
+              </p>
+              <div className="flex gap-3">
+                <div 
+                  className="relative w-30 h-22.5 rounded-xl overflow-hidden border border-[#E8DDD8] cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => setViewingImage("/evidence-photo.png")}
+                >
+                  <Image
+                    src="/evidence-photo.png"
+                    alt="Evidence Photo"
+                    fill
+                    className="object-cover"
+                  />
+                  <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded pointer-events-none">
+                    Photo
+                  </span>
+                </div>
+                <div 
+                  className="flex flex-col items-center justify-center w-22.5 h-22.5 rounded-xl border border-[#E8DDD8] bg-[#FAFAF8] cursor-pointer hover:bg-[#f5efec] transition-colors group"
+                  onClick={() => handleDownloadFile("chat_log.pdf")}
+                >
+                  <FileText size={22} className="text-[#9E7B6A] mb-1 group-hover:text-[#C05621] transition-colors" />
+                  <span className="text-[10px] text-[#9E7B6A] group-hover:text-[#C05621] transition-colors">chat_log.pdf</span>
                 </div>
               </div>
-              <div 
-                className="flex flex-col items-center justify-center w-22.5 h-22.5 rounded-xl border border-[#E8DDD8] bg-[#FAFAF8] cursor-pointer hover:bg-[#f5efec] transition-colors group"
-                onClick={() => handleDownloadFile("chat_log.pdf")}
-              >
-                <FileText size={22} className="text-[#9E7B6A] mb-1 group-hover:text-[#C05621] transition-colors" />
-                <span className="text-[10px] text-[#9E7B6A] group-hover:text-[#C05621] transition-colors">chat_log.pdf</span>
-              </div>
             </div>
-          </div>
+          )}
 
           {/* ── Actions ── */}
           <div className="flex flex-col gap-2.5">
-            <button
-              onClick={handleApprove}
-              disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#16A34A] text-white text-[14px] font-semibold border-none cursor-pointer hover:bg-[#15803D] transition-colors disabled:opacity-50"
-            >
-              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
-              Approve Refund
-            </button>
-            <button 
-              onClick={handleDeny}
-              disabled={actionLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#1A1A1A] text-[14px] font-semibold border-[1.5px] border-[#E8DDD8] cursor-pointer hover:border-[#C05621] transition-colors disabled:opacity-50"
-            >
-              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <XCircle size={16} />}
-              Deny Refund (Host Wins)
-            </button>
+            {dispute.amount.includes("0.00") ? (
+              <>
+                <button
+                  onClick={handleApprove}
+                  disabled={actionLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#16A34A] text-white text-[14px] font-semibold border-none cursor-pointer hover:bg-[#15803D] transition-colors disabled:opacity-50"
+                >
+                  {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
+                  Resolve Complaint
+                </button>
+                <button 
+                  onClick={handleDeny}
+                  disabled={actionLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#1A1A1A] text-[14px] font-semibold border-[1.5px] border-[#E8DDD8] cursor-pointer hover:border-[#C05621] transition-colors disabled:opacity-50"
+                >
+                  {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <XCircle size={16} />}
+                  Dismiss Complaint
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={handleApprove}
+                  disabled={actionLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#16A34A] text-white text-[14px] font-semibold border-none cursor-pointer hover:bg-[#15803D] transition-colors disabled:opacity-50"
+                >
+                  {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
+                  Approve Refund
+                </button>
+                <button 
+                  onClick={handleDeny}
+                  disabled={actionLoading}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#1A1A1A] text-[14px] font-semibold border-[1.5px] border-[#E8DDD8] cursor-pointer hover:border-[#C05621] transition-colors disabled:opacity-50"
+                >
+                  {actionLoading ? <Loader2 className="animate-spin" size={16} /> : <XCircle size={16} />}
+                  Deny Refund (Host Wins)
+                </button>
+              </>
+            )}
             
             {/* Request Info Area */}
             {requestingInfo ? (
@@ -470,7 +493,7 @@ export default function DisputeHubPage() {
       {/* ── KPI Cards ── */}
       <div className="flex gap-4">
         <OpenCasesCard />
-        <PendingDecisionCard />
+        <ResolvedCasesCard />
         <TotalDisputedCard />
         <AvgResolutionCard />
       </div>
@@ -598,8 +621,10 @@ export default function DisputeHubPage() {
                           </div>
                         </td>
                         {/* Reason */}
-                        <td className="px-5 py-3.5">
-                          <ReasonBadge reason={dispute.reason} />
+                        <td className="px-5 py-3.5 max-w-[200px]">
+                          <div className="truncate" title={dispute.reason}>
+                            <ReasonBadge reason={dispute.reason} />
+                          </div>
                         </td>
                         {/* Amount */}
                         <td className="px-5 py-3.5 font-semibold text-[#1A1A1A] whitespace-nowrap">
