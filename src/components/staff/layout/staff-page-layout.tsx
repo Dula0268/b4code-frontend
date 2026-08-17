@@ -34,7 +34,7 @@ export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
         <StaffSidebar />
 
         {/* Right side: header + page content */}
-        <div className="ml-[260px] flex-1 flex flex-col h-full overflow-hidden bg-[#F5F6F8]">
+        <div className="ml-0 lg:ml-[260px] flex-1 flex flex-col h-full overflow-hidden bg-[#F5F6F8]">
           {children}
         </div>
 

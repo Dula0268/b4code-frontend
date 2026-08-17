@@ -121,45 +121,47 @@ export default function ReviewManagementPage() {
         onSearch={(query) => setSearch(query)}
       />
       
-      <main className="mt-[64px] flex-1 p-8 text-[#9E7B6A] h-[calc(100vh-64px)] overflow-hidden flex flex-col">
-        
+      <main className="flex-1 h-full overflow-y-auto flex flex-col custom-scrollbar">
+        <div className="flex flex-col flex-1 px-4 lg:px-6 py-4 lg:py-6 gap-4 lg:gap-6 pt-[80px] lg:pt-[88px] min-h-min pb-10">
+          <div className="max-w-7xl mx-auto w-full flex flex-col gap-4 lg:gap-6 h-full">
         {/* Top Controls Box */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex justify-between items-center mb-6 flex-shrink-0">
-          <div className="flex items-center gap-6">
+        <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-4 lg:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 flex-shrink-0">
+          <div className="flex items-center gap-4 lg:gap-6 w-full lg:w-auto">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#FFF8F0] flex items-center justify-center shadow-inner">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-[#FFF8F0] flex items-center justify-center shadow-inner shrink-0">
                 <Star size={20} className="text-[#C05621]" />
               </div>
               <div>
-                <h2 className="text-[18px] font-extrabold text-[#1A1A1A] m-0">Guest Item Reviews</h2>
-                <p className="text-[13px] font-semibold text-[#9E7B6A] opacity-80 m-0">Flag inappropriate content for admin moderation</p>
+                <h2 className="text-[16px] lg:text-[18px] font-extrabold text-[#1A1A1A] m-0 leading-tight">Guest Item Reviews</h2>
+                <p className="text-[11px] lg:text-[13px] font-semibold text-[#9E7B6A] opacity-80 m-0 leading-tight hidden lg:block">Flag inappropriate content for admin moderation</p>
+                <p className="text-[11px] lg:text-[13px] font-semibold text-[#9E7B6A] opacity-80 m-0 leading-tight lg:hidden">Flag inappropriate content</p>
               </div>
             </div>
 
-            <div className="h-10 border-l border-[#F0EBE7]"></div>
+            <div className="hidden lg:block h-10 border-l border-[#F0EBE7]"></div>
+          </div>
 
-            <div className="flex items-center bg-[#F5F6F8] rounded-xl p-1 shadow-inner border border-[#E8E8E8]">
-              <button 
-                onClick={() => setActiveTab("all")}
-                className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all ${activeTab === "all" ? "bg-white text-[#1A1A1A] shadow-sm" : "text-[#9E7B6A] hover:text-[#1A1A1A]"}`}
-              >
-                All Reviews
-              </button>
-              <button 
-                onClick={() => setActiveTab("flagged")}
-                className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all flex items-center gap-2 ${activeTab === "flagged" ? "bg-white text-[#EB5757] shadow-sm" : "text-[#9E7B6A] hover:text-[#EB5757]"}`}
-              >
-                <ShieldAlert size={14} />
-                Flagged
-              </button>
-            </div>
+          <div className="flex items-center bg-[#F5F6F8] rounded-xl p-1 shadow-inner border border-[#E8E8E8] w-full lg:w-auto mt-2 lg:mt-0">
+            <button 
+              onClick={() => setActiveTab("all")}
+              className={`flex-1 lg:flex-none px-4 py-2 text-[12px] lg:text-[13px] font-bold rounded-lg transition-all text-center ${activeTab === "all" ? "bg-white text-[#1A1A1A] shadow-sm" : "text-[#9E7B6A] hover:text-[#1A1A1A]"}`}
+            >
+              All Reviews
+            </button>
+            <button 
+              onClick={() => setActiveTab("flagged")}
+              className={`flex-1 lg:flex-none px-4 py-2 text-[12px] lg:text-[13px] font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === "flagged" ? "bg-white text-[#EB5757] shadow-sm" : "text-[#9E7B6A] hover:text-[#EB5757]"}`}
+            >
+              <ShieldAlert size={14} />
+              Flagged
+            </button>
           </div>
         </div>
 
         {/* Reviews Table Container (Scrollable) */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-none flex flex-col overflow-hidden">
           
-          <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-[#F0EBE7] flex-shrink-0">
+          <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 border-b border-[#F0EBE7] flex-shrink-0">
             <div className="col-span-3 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">Guest & Date</div>
             <div className="col-span-2 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">Item</div>
             <div className="col-span-2 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">Rating</div>
@@ -167,8 +169,8 @@ export default function ReviewManagementPage() {
             <div className="col-span-1 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase text-center">Action</div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-            <div className="flex flex-col gap-2">
+          <div className="flex-none p-2">
+            <div className="flex flex-col gap-2 lg:gap-2">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-[#9E7B6A]">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C05621] mb-4"></div>
@@ -176,31 +178,31 @@ export default function ReviewManagementPage() {
                 </div>
               ) : filteredReviews.length > 0 ? (
                 filteredReviews.map((review) => (
-                  <div key={review.id} className="grid grid-cols-12 gap-4 px-4 py-4 items-center bg-white rounded-2xl border border-transparent hover:border-[#F0EBE7] hover:shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all duration-300">
+                  <div key={review.id} className="flex flex-col lg:grid lg:grid-cols-12 gap-3 lg:gap-4 px-4 py-4 lg:items-center bg-white rounded-2xl border border-[#F0EBE7] lg:border-transparent hover:border-[#F0EBE7] hover:shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all duration-300 relative">
                     
-                    <div className="col-span-3 flex flex-col justify-center">
+                    <div className="lg:col-span-3 flex flex-col justify-center pr-8 lg:pr-0">
                       <span className="text-[14px] font-bold text-[#1A1A1A]">{review.guest_name || "Guest"}</span>
                       <span className="text-[12px] font-medium text-[#9E7B6A]">
                         {new Date(review.created_at).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <div className="col-span-2 flex items-center">
-                      <span className="text-[13px] font-semibold text-[#1A1A1A] bg-[#FFF8F0] px-3 py-1 rounded-lg">
+                    <div className="lg:col-span-2 flex items-center">
+                      <span className="text-[13px] font-semibold text-[#1A1A1A] bg-[#FFF8F0] px-3 py-1 rounded-lg inline-block">
                         {review.menu_item_name}
                       </span>
                     </div>
 
-                    <div className="col-span-2 flex items-center">
+                    <div className="lg:col-span-2 flex items-center">
                       {renderStars(review.rating)}
                     </div>
 
-                    <div className="col-span-4 flex flex-col justify-center">
-                      <p className="text-[13px] text-[#1A1A1A] leading-relaxed line-clamp-2 m-0" title={review.comment}>
+                    <div className="lg:col-span-4 flex flex-col justify-center mt-1 lg:mt-0">
+                      <p className="text-[13px] text-[#1A1A1A] leading-relaxed line-clamp-3 lg:line-clamp-2 m-0" title={review.comment}>
                         &quot;{review.comment}&quot;
                       </p>
                       {review.flagged_status && (
-                        <div className="mt-2 flex items-center gap-1.5">
+                        <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                           <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
                             review.flagged_status === 'FLAGGED' ? 'bg-[#FFF8F0] text-[#C05621]' :
                             review.flagged_status === 'APPROVED' ? 'bg-[#E6F5EF] text-[#2D7D5C]' :
@@ -211,27 +213,28 @@ export default function ReviewManagementPage() {
                           {review.admin_note && (
                             <span className="text-[11px] text-[#9E7B6A] italic ml-1" title={review.admin_note}>
                               <MessageSquare size={10} className="inline mr-1" />
-                              Hover to read note
+                              <span className="hidden lg:inline">Hover to read note</span>
+                              <span className="inline lg:hidden">Admin note attached</span>
                             </span>
                           )}
                         </div>
                       )}
                     </div>
 
-                    <div className="col-span-1 flex justify-center">
+                    <div className="absolute top-4 right-4 lg:static lg:col-span-1 flex justify-center">
                       {!review.flagged_status ? (
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleOpenFlagModal(review)}
-                          className="text-[#9E7B6A] hover:bg-[#FFF6F6] hover:text-[#EB5757] transition-colors rounded-xl h-9 w-9"
+                          className="text-[#9E7B6A] hover:bg-[#FFF6F6] hover:text-[#EB5757] transition-colors rounded-xl h-8 w-8 lg:h-9 lg:w-9 bg-[#F5F6F8] lg:bg-transparent"
                           title="Flag Review"
                         >
-                          <Flag size={16} />
+                          <Flag size={14} className="lg:w-4 lg:h-4" />
                         </Button>
                       ) : (
-                        <div className="w-9 h-9 flex items-center justify-center text-[#9E7B6A] opacity-50 cursor-not-allowed" title="Already Flagged">
-                           <Flag size={16} className="fill-current" />
+                        <div className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center text-[#9E7B6A] opacity-50 cursor-not-allowed bg-[#F5F6F8] lg:bg-transparent rounded-xl" title="Already Flagged">
+                           <Flag size={14} className="fill-current lg:w-4 lg:h-4" />
                         </div>
                       )}
                     </div>
@@ -246,6 +249,8 @@ export default function ReviewManagementPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
           </div>
         </div>
       </main>
