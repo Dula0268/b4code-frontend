@@ -764,7 +764,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           {(isCompleted || isCancelled) && activeTab !== "refund" && (
             <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 flex flex-wrap gap-4">
               {isCompleted && (
-                  <Link href={`/guest/reviews?propertyId=${booking.propertyId}`} className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-sm font-bold transition-colors no-underline">
+                  <Link href={`/guest/booking/${booking.confirmationCode || booking.id}/review`} className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-sm font-bold transition-colors no-underline">
                     <Star size={18} /> Leave Review
                   </Link>
               )}
