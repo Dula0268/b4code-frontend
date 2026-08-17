@@ -108,7 +108,6 @@ function PaymentBadge({ paidInFull, method, status }: { paidInFull?: boolean, me
 // ─────────────────────────────────────────────────────────────────────────────
 // Button style constants
 // ─────────────────────────────────────────────────────────────────────────────
-const btnPrimary = "inline-flex items-center gap-1.5 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer no-underline"
 const btnOutline = "inline-flex items-center gap-1.5 border border-[#e8ddcf] hover:border-[#9a3300] text-[#6f6254] hover:text-[#9a3300] text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer no-underline bg-white"
 const btnGhost   = "inline-flex items-center gap-1 text-[11px] font-bold text-[#8b7d6d] hover:text-[#9a3300] transition-colors cursor-pointer"
 
@@ -208,7 +207,7 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
             )}
             {isUpcoming && (
               <>
-                <Link href={`/guest/booking/${booking.orderId}/message`} className={btnPrimary} style={{ background: "#9a3300" }}>
+                <Link href={`/guest/booking/${booking.orderId}/message`} className={btnOutline}>
                   <MessageSquare size={12} /> Message
                 </Link>
                 <Link href={`/guest/booking/${booking.orderId}/modify`} className={btnOutline}>
@@ -222,7 +221,7 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
             
             {isCompleted ? (
               <>
-                <Link href={`/guest/booking/${booking.orderId}/review`} className={btnPrimary} style={{ background: "#9a3300" }}>
+                <Link href={`/guest/booking/${booking.orderId}/review`} className={btnOutline}>
                   <Star size={12} /> Leave Review
                 </Link>
                 <Link href={`/guest/booking/${booking.orderId}/complain`} className={btnOutline}>
@@ -230,11 +229,11 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
                 </Link>
               </>
             ) : isCancelled ? (
-              <Link href={rebookHref} className={btnPrimary} style={{ background: "#9a3300" }}>
+              <Link href={rebookHref} className={btnOutline}>
                 <RefreshCw size={12} /> Rebook
               </Link>
             ) : (
-              <Link href={`/guest/booking/${booking.orderId}/receipt`} className={btnPrimary} style={{ background: "#9a3300" }}>
+              <Link href={`/guest/booking/${booking.orderId}/receipt`} className={btnOutline}>
                 <Download size={12} /> Receipt
               </Link>
             )}
