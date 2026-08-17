@@ -144,9 +144,9 @@ export const useCartStore = create<CartState>()(
 
   serviceCharge: () => Math.round(get().subtotal() * get().serviceChargeRate),
 
-  tax: () => Math.round(get().subtotal() * get().taxRate),
+  tax: () => 0, // Deprecated: Tax removed completely
 
-  total: () => get().subtotal() + get().serviceCharge() + get().tax(),
+  total: () => get().subtotal() + get().serviceCharge(),
 
   itemCount: () => Object.values(get().lines).reduce((sum, l) => sum + l.qty, 0),
 
