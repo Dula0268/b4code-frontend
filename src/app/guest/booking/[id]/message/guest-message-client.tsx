@@ -5,6 +5,7 @@ import { guestApi } from "@/api/guest/guest.api";
 import { Send, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Client } from "@stomp/stompjs";
 
 interface Message {
   id: number;
@@ -15,6 +16,7 @@ interface Message {
 
 export default function GuestMessageClient({ bookingId }: { bookingId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [quickRequests, setQuickRequests] = useState<{id: number, keyword: string}[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -22,10 +24,14 @@ export default function GuestMessageClient({ bookingId }: { bookingId: string })
 
   const fetchMessages = async () => {
     try {
-      const data = await guestApi.getConversation(bookingId);
+      const [data, qrData] = await Promise.all([
+        guestApi.getConversation(bookingId),
+        guestApi.getActiveQuickRequests(bookingId)
+      ]);
       setMessages(data);
+      setQuickRequests(qrData || []);
     } catch (error) {
-      console.error("Failed to load messages", error);
+      console.error("Failed to load messages or quick requests", error);
     } finally {
       setLoading(false);
     }
@@ -33,6 +39,40 @@ export default function GuestMessageClient({ bookingId }: { bookingId: string })
 
   useEffect(() => {
     fetchMessages();
+
+    // WebSocket Connection
+    const client = new Client({
+      brokerURL: "ws://localhost:8080/ws/messages/raw",
+      reconnectDelay: 5000,
+      onConnect: () => {
+        console.log("Connected to WebSocket");
+        client.subscribe(`/topic/booking/${bookingId}`, (message) => {
+          if (message.body) {
+            const newMessage = JSON.parse(message.body);
+            setMessages((prevMessages) => {
+              // Prevent duplicates if REST API and WS race
+              if (!prevMessages.find(m => m.id === newMessage.id)) {
+                return [...prevMessages, newMessage];
+              }
+              return prevMessages;
+            });
+          }
+        });
+      },
+      onStompError: (frame) => {
+        console.error("Broker reported error: " + frame.headers["message"]);
+        console.error("Additional details: " + frame.body);
+      },
+      debug: (str) => {
+        // console.log(new Date(), str);
+      }
+    });
+
+    client.activate();
+
+    return () => {
+      client.deactivate();
+    };
   }, [bookingId]);
 
   useEffect(() => {
@@ -46,7 +86,12 @@ export default function GuestMessageClient({ bookingId }: { bookingId: string })
     setSending(true);
     try {
       const sentMessage = await guestApi.sendMessage(bookingId, newMessage);
-      setMessages([...messages, sentMessage]);
+      setMessages((prev) => {
+        if (!prev.find(m => m.id === sentMessage.id)) {
+          return [...prev, sentMessage];
+        }
+        return prev;
+      });
       setNewMessage("");
     } catch (error) {
       console.error("Failed to send message", error);
@@ -95,7 +140,21 @@ export default function GuestMessageClient({ bookingId }: { bookingId: string })
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-[#fafafa] border-t border-[#eadfce]">
+      <div className="p-4 bg-[#fafafa] border-t border-[#eadfce] flex flex-col gap-3">
+        {/* Quick Requests */}
+        {quickRequests.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+            {quickRequests.map((req) => (
+              <button
+                key={req.id}
+                onClick={() => setNewMessage(req.keyword)}
+                className="whitespace-nowrap px-3 py-1.5 bg-white border border-[#eadfce] rounded-full text-xs text-[#6f6254] hover:bg-[#f4eee6] transition-colors"
+              >
+                {req.keyword}
+              </button>
+            ))}
+          </div>
+        )}
         <form onSubmit={handleSend} className="flex gap-2">
           <Input
             value={newMessage}

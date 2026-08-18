@@ -124,6 +124,9 @@ export const guestApi = {
   getConversation: (bookingId: number | string) =>
     api.get(`/guest/bookings/${bookingId}/messages`).then((r) => r.data),
 
+  getActiveQuickRequests: (bookingId: number | string) =>
+    api.get(`/guest/bookings/${bookingId}/messages/quick-requests`).then((r) => r.data),
+
   sendMessage: (bookingId: number | string, content: string) =>
     api.post(`/guest/bookings/${bookingId}/messages`, { content }).then((r) => r.data),
 };

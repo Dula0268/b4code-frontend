@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import { Send, RefreshCw, MessageSquare, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Client } from "@stomp/stompjs";
 
 interface Conversation {
   bookingId: number;
@@ -33,6 +34,11 @@ export default function StaffMessagesClient() {
   const [loadingMsg, setLoadingMsg] = useState(false);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const activeBookingIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    activeBookingIdRef.current = activeBookingId;
+  }, [activeBookingId]);
 
   const fetchConversations = async () => {
     if (!user?.propertyId) return;
@@ -47,7 +53,38 @@ export default function StaffMessagesClient() {
   };
 
   useEffect(() => {
-    if (user?.propertyId) fetchConversations();
+    if (user?.propertyId) {
+      fetchConversations();
+      
+      const client = new Client({
+        brokerURL: "ws://localhost:8080/ws/messages/raw",
+        reconnectDelay: 5000,
+        onConnect: () => {
+          console.log("Staff WS Connected");
+          client.subscribe(`/topic/property/${user.propertyId}/messages`, (message) => {
+            if (message.body) {
+              const newMsg = JSON.parse(message.body);
+              
+              if (activeBookingIdRef.current && activeBookingIdRef.current.toString() === newMsg.bookingId.toString()) {
+                setMessages((prev) => {
+                  if (!prev.find(m => m.id === newMsg.id)) {
+                    return [...prev, newMsg];
+                  }
+                  return prev;
+                });
+              }
+              // Refresh conversations list to show new latest message
+              fetchConversations();
+            }
+          });
+        }
+      });
+      
+      client.activate();
+      return () => {
+        client.deactivate();
+      };
+    }
   }, [user?.propertyId]);
 
   const fetchMessages = async (bookingId: number) => {
@@ -79,7 +116,12 @@ export default function StaffMessagesClient() {
     setSending(true);
     try {
       const sentMessage = await staffApi.sendMessage(activeBookingId, newMessage);
-      setMessages([...messages, sentMessage]);
+      setMessages((prev) => {
+        if (!prev.find(m => m.id === sentMessage.id)) {
+          return [...prev, sentMessage];
+        }
+        return prev;
+      });
       setNewMessage("");
       // Refresh conversations list to update latest message
       fetchConversations();

@@ -16,4 +16,17 @@ export const staffApi = {
 
   sendMessage: (bookingId: number | string, content: string) =>
     api.post(`/staff/messages/booking/${bookingId}`, { content }).then((r) => r.data),
+
+  // Auto-Reply Rules
+  getAutoReplyRules: (propertyId: number | string) =>
+    api.get(`/staff/properties/${propertyId}/auto-reply-rules`).then((r) => r.data),
+    
+  createAutoReplyRule: (propertyId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean }) =>
+    api.post(`/staff/properties/${propertyId}/auto-reply-rules`, payload).then((r) => r.data),
+    
+  updateAutoReplyRule: (propertyId: number | string, ruleId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean }) =>
+    api.put(`/staff/properties/${propertyId}/auto-reply-rules/${ruleId}`, payload).then((r) => r.data),
+    
+  deleteAutoReplyRule: (propertyId: number | string, ruleId: number | string) =>
+    api.delete(`/staff/properties/${propertyId}/auto-reply-rules/${ruleId}`).then((r) => r.data),
 };
