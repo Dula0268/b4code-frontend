@@ -2,16 +2,13 @@ import { ArrowUpRight, RotateCcw, ArrowDown, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
-type TransactionType = "payout" | "booking" | "refund" | "fee" | string;
-
 // ─── Icon helpers ─────────────────────────────────────────────────────────────
-function TransactionIcon({ type }: { type: TransactionType }) {
+function TransactionIcon({ type }: { type?: string }) {
   const base =
     "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0";
-  const normalizedType = type.toLowerCase();
+  const normalizedType = (type || "").toLowerCase();
 
-  if (normalizedType.includes("booking") || normalizedType === "payment") {
+  if (normalizedType.includes("booking") || normalizedType === "payment" || normalizedType === "completed" || normalizedType === "success") {
     return (
       <div className={`${base} bg-[#DCFCE7]`}>
         <ArrowUpRight size={16} className="text-[#16A34A]" />

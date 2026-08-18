@@ -28,7 +28,7 @@ import {
 export default function AddNewBankAccountPage() {
     const router = useRouter();
     const { user } = useAuthStore();
-    const ownerId = user?.userId ?? 1;
+    const ownerId = user?.userId;
     const [bankName, setBankName] = useState("");
     const [accountHolder, setAccountHolder] = useState("");
     const [accountNumber, setAccountNumber] = useState("");
@@ -45,14 +45,15 @@ export default function AddNewBankAccountPage() {
         try {
             await ownerSettingsApi.addBankAccount(ownerId, {
                 bankName,
-                accountHolderName: accountHolder,
+                accountHolder: accountHolder,
                 accountNumber,
                 branchCode: routingNumber,
                 isPrimary,
             });
-            router.push("/owner/setting/accountSetting");
+            router.push("/owner/setting/billing&Payout");
         } catch (err: any) {
-            setSaveError(err?.response?.data?.message ?? "Failed to add bank account.");
+            const message = err?.response?.data?.message || err?.message || "Failed to add bank account.";
+            setSaveError(message);
         } finally {
             setSaving(false);
         }

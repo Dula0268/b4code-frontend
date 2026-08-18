@@ -96,10 +96,15 @@ export default function StaffSidebar() {
     }
   }, [user?.propertyId]);
 
-  const displayName = user?.email?.split("@")[0] || "Alex Moore";
-  const names = displayName.split(" ");
+  const staffRole = user?.profile?.staffRole || "Staff";
+
+  const fullName = user?.profile?.firstName
+    ? `${user.profile.firstName} ${user.profile.lastName || ""}`.trim()
+    : user?.email?.split("@")[0] || "Staff Member";
+  const names = fullName.split(" ");
   const initials = names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
   const shortName = names.length > 1 ? `${names[0]} ${names[names.length - 1][0]}.` : names[0];
+  const displayName = fullName;
 
   if (!mounted) {
     // Return a skeleton or null during SSR/initial hydration to avoid mismatch
@@ -118,7 +123,7 @@ export default function StaffSidebar() {
             </span>
           )}
           <span className="text-[12px] uppercase tracking-widest font-semibold text-[rgba(149,48,2,0.7)] leading-none">
-            STAFF DASHBOARD
+            {staffRole}
           </span>
         </div>
       </div>

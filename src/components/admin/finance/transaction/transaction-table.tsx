@@ -31,14 +31,15 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
-function getInitials(name: string) {
+function getInitials(name?: string) {
   if (!name) return "??";
-  const parts = name.split(" ");
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2 && parts[0][0] && parts[1][0]) return (parts[0][0] + parts[1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
 }
 
-function getColorForName(name: string) {
+function getColorForName(name?: string) {
+  if (!name) return "#C05621";
   const colors = ["#C05621", "#2563EB", "#7C3AED", "#059669", "#DC2626", "#0891B2", "#CA8A04"];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -168,13 +169,13 @@ export default function TransactionTable() {
               >
                 {/* ID + date */}
                 <td className="px-6 py-4">
-                  <p className="text-sm font-bold text-[#1A1A1A]">#{tx.bookingId}</p>
-                  <p className="text-[11px] text-[#9E7B6A] mt-0.5">{new Date(tx.date).toLocaleDateString()}</p>
+                  <p className="text-sm font-bold text-[#1A1A1A]">#{tx.bookingId || tx.id}</p>
+                  <p className="text-[11px] text-[#9E7B6A] mt-0.5">{tx.date ? new Date(tx.date).toLocaleDateString() : "-"}</p>
                 </td>
 
                 {/* Property */}
                 <td className="px-6 py-4 text-sm text-[#1A1A1A]">
-                  {tx.propertyName}
+                  {tx.propertyName || "System / N/A"}
                 </td>
 
                 {/* Guest */}
@@ -182,24 +183,24 @@ export default function TransactionTable() {
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-                      style={{ backgroundColor: getColorForName(tx.guestName) }}
+                      style={{ backgroundColor: getColorForName(tx.guestName || "Guest") }}
                     >
-                      {getInitials(tx.guestName)}
+                      {getInitials(tx.guestName || "Guest")}
                     </div>
                     <span className="text-sm text-[#1A1A1A]">
-                      {tx.guestName}
+                      {tx.guestName || "Guest"}
                     </span>
                   </div>
                 </td>
 
                 {/* Amount */}
                 <td className="px-6 py-4 text-sm font-semibold text-[#1A1A1A]">
-                  LKR {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  LKR {(tx.amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
 
                 {/* Status */}
                 <td className="px-6 py-4">
-                  <StatusBadge status={tx.status} />
+                  <StatusBadge status={tx.status || "Completed"} />
                 </td>
               </tr>
             ))}
