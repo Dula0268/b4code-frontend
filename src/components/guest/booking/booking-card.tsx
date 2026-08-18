@@ -159,8 +159,11 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
       <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4">
           <div className="flex flex-col min-w-0 pr-0 sm:pr-4">
-             <span className="text-[10px] font-black text-[#9f8f7c] uppercase tracking-widest mb-0.5">
-              Ref: {booking.orderId || booking.orderNumber}
+             <span className="text-[10px] font-black text-[#9f8f7c] uppercase tracking-widest mb-0.5 flex gap-2">
+              <span>Ref: {booking.orderId || booking.orderNumber}</span>
+              {booking.passkey && (
+                  <span className="text-[#9a3300] bg-[#fdf8f4] px-1.5 rounded border border-[#fadbc7]">Passkey: {booking.passkey}</span>
+              )}
             </span>
              <h3 className="text-[16px] font-bold text-[#2d2116] truncate">{booking.property}</h3>
              {booking.roomName && (

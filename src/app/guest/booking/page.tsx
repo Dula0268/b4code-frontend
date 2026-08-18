@@ -58,6 +58,7 @@ function BookingsContent() {
                 paymentMethod?: string
                 createdAt?: string
                 roomQuantity?: number
+                passkey?: string
               }
 
               const normalizeStatus = (s?: string): BookingCardData["status"] => {
@@ -93,6 +94,7 @@ function BookingsContent() {
                       roomName: b.roomName,
                       roomQuantity: b.roomQuantity || 1,
                       isFromStore: false,
+                      passkey: b.passkey,
                   };
               })
               console.log("API BOOKINGS:", apiBookings)

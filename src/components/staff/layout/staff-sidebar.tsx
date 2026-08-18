@@ -21,6 +21,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { usePermission } from "@/hooks/use-permission";
+import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
+import { useStaffBookingsStore } from "@/store/staff/bookings/staff-bookings.store";
 
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/staff", icon: LayoutDashboard, permKey: null },
@@ -78,6 +80,9 @@ export default function StaffSidebar() {
   const [mounted, setMounted] = useState(false);
   const [propertyName, setPropertyName] = useState<string>("");
 
+  const pendingOrdersCount = useStaffOrdersStore((state) => state.getCountByStatus("placed"));
+  const unreadBookingsCount = useStaffBookingsStore((state) => state.unreadCount);
+
   useEffect(() => {
     setMounted(true);
     const pid = sessionStorage.getItem("selected_property_id") || user?.propertyId;
@@ -127,7 +132,13 @@ export default function StaffSidebar() {
             const isActive =
               pathname === item.href ||
               (item.href !== "/staff" && pathname.startsWith(item.href + "/"));
-            const badge = null;
+            
+            let badge = null;
+            if (item.href === "/staff/orders" && pendingOrdersCount > 0) {
+              badge = pendingOrdersCount;
+            } else if (item.href === "/staff/bookings" && unreadBookingsCount > 0) {
+              badge = unreadBookingsCount;
+            }
             return (
               <NavItem
                 key={item.href}

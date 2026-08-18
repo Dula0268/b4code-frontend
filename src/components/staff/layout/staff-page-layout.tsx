@@ -6,6 +6,8 @@ import RoleGuard from "@/components/shared/auth/role-guard";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useRBACStore } from "@/store/auth/rbac.store";
 import StaffGlobalOrdersProvider from "./staff-global-orders";
+import { useStaffBookingsStore } from "@/store/staff/bookings/staff-bookings.store";
+
 interface StaffPageLayoutProps {
   children: React.ReactNode;
   title?: string;
@@ -27,6 +29,24 @@ function PermissionLoader() {
   return null;
 }
 
+function BookingsSseLoader() {
+  const { user } = useAuthStore();
+  const { setupSse, stopSse } = useStaffBookingsStore();
+
+  useEffect(() => {
+    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
+    if (!propertyId) return;
+
+    setupSse(Number(propertyId));
+
+    return () => {
+      stopSse();
+    };
+  }, [user, setupSse, stopSse]);
+
+  return null;
+}
+
 export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
   return (
     <RoleGuard allowedRoles={["staff", "admin", "owner"]}>
@@ -42,6 +62,9 @@ export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
 
         {/* Global Staff Orders Notification Provider */}
         <StaffGlobalOrdersProvider />
+
+        {/* Global Bookings SSE Loader for Badges */}
+        <BookingsSseLoader />
       </div>
     </RoleGuard>
   );
