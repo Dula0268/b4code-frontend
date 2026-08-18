@@ -9,6 +9,16 @@ export const setToken = (token: string): void => {
   sessionStorage.setItem("auth_token", token);
 };
 
+export const getRefreshToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem("refreshToken");
+};
+
+export const setRefreshToken = (token: string): void => {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem("refreshToken", token);
+};
+
 export const removeToken = (): void => {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem("accessToken");

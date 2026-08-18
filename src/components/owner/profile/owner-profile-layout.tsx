@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import OwnerLogoutModal from "./owner-logout-modal";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { imageApi } from "@/api/image/image.api";
-import { useState } from "react";
+import { formatApiError } from "@/lib/error-formatter";
+import { useState, useEffect } from "react";
 
 interface OwnerProfileLayoutProps {
   children: React.ReactNode;
@@ -22,10 +23,21 @@ export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps
   const pathname = usePathname();
   const { user, updateProfile } = useAuthStore();
   const [isUploading, setIsUploading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const ownerEmail = user?.email || "owner@primestay.com";
-  const ownerName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : ownerEmail.split("@")[0];
-  const avatarUrl = user?.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(ownerName)}&background=953002&color=fff`;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const ownerEmail = mounted && user?.email ? user.email : "";
+  const ownerName = mounted
+    ? (user?.profile?.firstName || user?.profile?.lastName
+        ? `${user.profile.firstName || ""} ${user.profile.lastName || ""}`.trim()
+        : (user?.email ? user.email.split("@")[0] : "Owner"))
+    : "Owner";
+  const avatarUrl = mounted && user?.profile?.avatarUrl
+    ? user.profile.avatarUrl
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(ownerName || "Owner")}&background=953002&color=fff`;
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -37,8 +49,7 @@ export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps
       await updateProfile(user.email, { avatarUrl: result.url });
     } catch (err: unknown) {
       console.error("Failed to upload avatar:", err);
-      const errorMessage = err instanceof Error ? err.message : "Please check your Cloudinary configuration.";
-      alert(`Failed to upload image: ${errorMessage}`);
+      alert(formatApiError(err, "Failed to upload profile photo. Please try a different image."));
     } finally {
       setIsUploading(false);
     }
@@ -53,7 +64,7 @@ export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps
           <div className="flex flex-col items-center justify-center mb-8">
             <div className="relative group">
               <div className="w-20 h-20 rounded-full bg-[#953002]/10 flex items-center justify-center text-[#953002] text-2xl font-bold mb-3 border-[3px] border-white shadow-sm overflow-hidden">
-                <img src={avatarUrl} alt="Owner Avatar" className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt="Owner Avatar" className="w-full h-full object-cover" suppressHydrationWarning />
                 
                 {isUploading && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
@@ -74,7 +85,7 @@ export default function OwnerProfileLayout({ children }: OwnerProfileLayoutProps
               </label>
             </div>
             
-            <h2 className="text-xl font-bold text-[#1c1917] mb-1 truncate w-full text-center">{ownerName}</h2>
+            <h2 className="text-xl font-bold text-[#1c1917] mb-1 truncate w-full text-center" suppressHydrationWarning>{ownerName}</h2>
             <div className="bg-[#953002]/10 text-[#953002] text-xs font-semibold px-3 py-1 rounded-full">
               Property Owner
             </div>

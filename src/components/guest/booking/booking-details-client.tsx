@@ -9,7 +9,7 @@ import {
   ChevronLeft, Calendar, User, MapPin, CheckCircle2,
   Clock, XCircle, Download, Star, RefreshCw, FileText,
   CreditCard, Wallet, Edit3, X, AlertTriangle, AlertCircle,
-  Check, ArrowRight, Info, BedDouble
+  Check, ArrowRight, Info
 } from "lucide-react"
 import { guestApi } from "@/api/guest/guest.api"
 
@@ -108,6 +108,8 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
   
   // UI States
   const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "refund">(initialTab)
+  const [showReceiptModal, setShowReceiptModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   
   const [cancelReasonCategory, setCancelReasonCategory] = useState<string>("Change of plans")
@@ -472,30 +474,24 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
         <div className="flex bg-white rounded-[20px] border border-[#e8ddcf] p-2 mb-6 gap-2 overflow-x-auto">
           {isUpcoming && (
             <>
-              {pageMode !== "cancel" && (
-                <button 
-                  onClick={() => setActiveTab("modify")}
-                  className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "modify" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
-                >
-                  Modify Booking
-                </button>
-              )}
-              {pageMode !== "modify" && (
-                <button 
-                  onClick={() => setActiveTab("cancel")}
-                  className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "cancel" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
-                >
-                  Cancel Booking
-                </button>
-              )}
-              {pageMode === "view" && (
-                <button 
-                  onClick={handleCompleteBooking}
-                  className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors text-emerald-600 border border-emerald-200 hover:bg-emerald-50`}
-                >
-                  Complete Stay (Test)
-                </button>
-              )}
+              <button 
+                onClick={() => setActiveTab("modify")}
+                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "modify" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+              >
+                Modify Booking
+              </button>
+              <button 
+                onClick={() => setActiveTab("cancel")}
+                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "cancel" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+              >
+                Cancel Booking
+              </button>
+              <button 
+                onClick={handleCompleteBooking}
+                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors text-emerald-600 border border-emerald-200 hover:bg-emerald-50`}
+              >
+                Complete Stay (Test)
+              </button>
             </>
           )}
           {booking.disputeStatus && pageMode === "view" && (
@@ -904,17 +900,172 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
             )}
           </div>
           
+          {/* Digital Receipt & Payment History Card */}
+          <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="text-[#9a3300]" size={20} />
+                <h3 className="text-base font-black text-[#1d1d1d]">Digital Receipt</h3>
+              </div>
+              <span className="text-[10px] font-black text-[#828282] uppercase tracking-wider bg-[#fdfaf6] px-2.5 py-1 rounded-md border border-[#e8ddcf]">
+                REC-{booking.confirmationCode}
+              </span>
+            </div>
+
+            <p className="text-xs text-[#828282] leading-relaxed">
+              Official tax invoice & payment record for this booking. You can view or print your digital receipt anytime.
+            </p>
+
+            <div className="bg-[#fdfaf6] rounded-xl p-4 border border-[#e8ddcf] flex flex-col gap-2.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-[#828282] font-medium">Receipt No:</span>
+                <span className="font-bold text-[#1d1d1d]">REC-PS-{booking.confirmationCode}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#828282] font-medium">Payment Gateway:</span>
+                <span className="font-bold text-[#1d1d1d]">{booking.paymentMethod === "online" ? "PayHere (Card / Wallet)" : "Pay at Property"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#828282] font-medium">Transaction Status:</span>
+                <span className={`font-bold ${booking.paidInFull ? "text-emerald-600" : "text-amber-600"}`}>
+                  {booking.paidInFull ? "✓ SUCCESSFUL" : "PENDING"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-1">
+              <button
+                onClick={() => setShowReceiptModal(true)}
+                className="flex-1 py-3 px-4 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              >
+                <FileText size={14} /> View Receipt
+              </button>
+              <button
+                onClick={() => {
+                  setShowReceiptModal(true);
+                  setTimeout(() => window.print(), 300);
+                }}
+                className="py-3 px-4 rounded-xl border border-[#e8ddcf] hover:bg-[#fdfaf6] text-[#1d1d1d] text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Download size={14} /> Save PDF
+              </button>
+            </div>
+          </div>
 
         </div>
 
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          DIGITAL RECEIPT MODAL (PRINTABLE TAX INVOICE)
+         ───────────────────────────────────────────────────────────────────────────── */}
+      {showReceiptModal && (
+        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-[600px] rounded-[28px] p-6 sm:p-10 shadow-2xl relative border border-[#e8ddcf] text-[#1d1d1d]">
+            
+            {/* Modal Header Controls */}
+            <div className="flex items-center justify-between mb-8 print:hidden">
+              <span className="text-xs font-black uppercase tracking-widest text-[#9a3300]">Official Digital Receipt</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-[#9a3300] text-white rounded-xl text-xs font-bold hover:bg-[#7a2800] transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download size={14} /> Print / Save PDF
+                </button>
+                <button
+                  onClick={() => setShowReceiptModal(false)}
+                  className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Receipt Body */}
+            <div className="space-y-6">
+              
+              {/* Brand Header */}
+              <div className="flex justify-between items-start border-b border-[#e8ddcf] pb-6">
+                <div>
+                  <h2 className="text-2xl font-black text-[#9a3300] tracking-tight">PrimeStay</h2>
+                  <p className="text-xs font-semibold text-[#828282]">Hospitality & Resort Services</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-wider block mb-1">
+                    {booking.paidInFull ? "✓ PAID IN FULL" : "PAYMENT PENDING"}
+                  </span>
+                  <p className="text-[11px] text-[#828282]">Receipt #: <strong className="text-[#1d1d1d]">REC-PS-{booking.confirmationCode}</strong></p>
+                  <p className="text-[11px] text-[#828282]">Date: <strong className="text-[#1d1d1d]">{new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong></p>
+                </div>
+              </div>
+
+              {/* Guest & Property Details */}
+              <div className="grid grid-cols-2 gap-4 bg-[#fdfaf6] p-4 rounded-2xl border border-[#e8ddcf] text-xs">
+                <div>
+                  <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Billed To</p>
+                  <p className="font-bold text-[#1d1d1d]">{booking.userEmail}</p>
+                  <p className="text-[#828282] mt-0.5">Confirmation: <strong>{booking.confirmationCode}</strong></p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Property</p>
+                  <p className="font-bold text-[#1d1d1d]">{booking.property}</p>
+                  <p className="text-[#828282] mt-0.5">{booking.roomName} • {booking.nightsLabel}</p>
+                </div>
+              </div>
+
+              {/* Line Items Table */}
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-[#828282] border-b border-[#e8ddcf] pb-2">
+                  <span>Description</span>
+                  <span>Amount</span>
+                </div>
+
+                <div className="flex justify-between text-xs py-1">
+                  <span>Accommodation ({booking.roomName} - {booking.nightsLabel})</span>
+                  <span className="font-bold">{formatLKR(origBasePrice)}</span>
+                </div>
+
+                <div className="flex justify-between text-xs py-1 text-[#828282]">
+                  <span>Government Taxes & Service Fees</span>
+                  <span>{formatLKR(origTaxes)}</span>
+                </div>
+
+                {booking.discount > 0 && (
+                  <div className="flex justify-between text-xs py-1 text-emerald-600">
+                    <span>Promotional Discount</span>
+                    <span className="font-bold">-{formatLKR(booking.discount)}</span>
+                  </div>
+                )}
+
+                <div className="border-t-2 border-[#1d1d1d] pt-3 flex justify-between items-center text-sm font-black">
+                  <span>Total Amount Paid</span>
+                  <span className="text-[#9a3300] text-lg">{formatLKR(booking.totalPrice)}</span>
+                </div>
+              </div>
+
+              {/* Payment Details Footer */}
+              <div className="pt-4 border-t border-[#e8ddcf] flex justify-between items-center text-[11px] text-[#828282]">
+                <div className="flex items-center gap-1.5">
+                  <CreditCard size={14} className="text-[#9a3300]" />
+                  <span>Paid via <strong>{booking.paymentMethod === "online" ? "PayHere Online Checkout" : "Pay at Property"}</strong></span>
+                </div>
+                <span>🔒 SSL Encrypted & Verified</span>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
 
-function BedDouble({ size }: { size: number }) {
+function BedDouble({ size = 18, className }: { size?: number; className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/>
     </svg>
   )

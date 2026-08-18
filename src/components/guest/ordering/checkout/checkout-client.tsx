@@ -11,6 +11,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
 import { paymentApi } from "@/api/payment/payment.api";
+import { startPayHerePopup } from "@/lib/payhere";
 
 /* ─── Helpers ─── */
 
@@ -148,23 +149,22 @@ export default function CheckoutClient() {
           });
 
           if (response.checkoutUrl && response.payHereParams) {
-            const form = document.createElement("form");
-            form.method = "POST";
-            form.action = response.checkoutUrl;
-            form.style.display = "none";
-
-            const params = new URLSearchParams(response.payHereParams);
-            params.forEach((value, key) => {
-              const input = document.createElement("input");
-              input.type = "hidden";
-              input.name = key;
-              input.value = value;
-              form.appendChild(input);
+            await startPayHerePopup({
+              checkoutUrl: response.checkoutUrl,
+              payHereParams: response.payHereParams,
+              onSuccess: () => {
+                router.push("/guest/order/confirmation");
+              },
+              onDismiss: () => {
+                toast.info("Payment was cancelled.");
+                setIsProcessing(false);
+              },
+              onError: (err) => {
+                toast.error(`Payment failed: ${err || "Please try again."}`);
+                setIsProcessing(false);
+              },
             });
-
-            document.body.appendChild(form);
-            form.submit();
-            return; // PayHere will redirect to /guest/order/confirmation on success
+            return;
           }
         } catch (err) {
           console.error("Payment initiation failed:", err);
