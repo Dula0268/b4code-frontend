@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Logo from "@/components/shared/branding/logo";
 import { usePathname, useRouter } from "next/navigation";
+import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -44,6 +45,11 @@ const NAV_ITEMS = [
 export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  
+  const orders = useStaffOrdersStore((s) => s.orders);
+  const placedCount = Array.isArray(orders) 
+    ? orders.filter((o) => o.status === "placed").length 
+    : Object.values(orders).filter((o) => o.status === "placed").length;
 
   return (
     <aside className="w-65 min-h-screen bg-white border-r border-[#e0e0e0] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
@@ -64,21 +70,30 @@ export default function StaffSidebar() {
               pathname === item.href ||
               (item.href !== "/staff" && pathname.startsWith(item.href + "/"));
 
+            const showBadge = item.href === "/staff/orders" && placedCount > 0;
+
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-[10px] no-underline text-sm transition-colors ${isActive
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-[10px] no-underline text-sm transition-colors ${isActive
                       ? "font-semibold text-[#953002] bg-[rgba(149,48,2,0.08)]"
                       : "font-normal text-[#282828] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[#7a2600]"
                     }`}
                 >
-                  <Icon
-                    size={18}
-                    className={`shrink-0 ${isActive ? "text-[#953002]" : "text-[#282828]"
-                      }`}
-                  />
-                  <span>{item.label}</span>
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      size={18}
+                      className={`shrink-0 ${isActive ? "text-[#953002]" : "text-[#282828]"
+                        }`}
+                    />
+                    <span>{item.label}</span>
+                  </div>
+                  {showBadge && (
+                    <span className="bg-[#C05621] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                      {placedCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             );

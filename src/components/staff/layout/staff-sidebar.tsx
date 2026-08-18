@@ -64,6 +64,7 @@ export function NavItem({ item, isActive, badge, onClick }: {
         <span className="flex-1">{item.label}</span>
         {badge ? (
           <div className="bg-red-500 text-white rounded-full text-[11px] font-bold min-w-[20px] h-[20px] px-1.5 flex items-center justify-center ml-auto">
+          <Badge variant="destructive" className="text-[11px] font-bold min-w-[20px] h-[20px] px-1 bg-[var(--brand-primary)]">
             {badge}
           </div>
         ) : null}
@@ -72,10 +73,14 @@ export function NavItem({ item, isActive, badge, onClick }: {
   );
 }
 
+import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
+
 export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuthStore();
+  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
+  const placedOrdersCount = useStaffOrdersStore((s) => s.orders.filter((o) => o.status === "placed").length);
   const [mounted, setMounted] = useState(false);
   const [propertyName, setPropertyName] = useState<string>("");
 

@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { formatApiError } from "@/lib/error-formatter";
+
 function ResetPasswordContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -41,7 +43,7 @@ function ResetPasswordContent() {
             await authApi.resetPassword(token, password);
             setIsSuccess(true);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to reset password. The link may have expired.");
+            setError(formatApiError(err, "Failed to reset password. The link may have expired."));
         } finally {
             setLoading(false);
         }
@@ -113,10 +115,12 @@ function ResetPasswordContent() {
                                             <div className="relative">
                                                 <div className="bg-[rgba(149,48,2,0.1)] border border-[#e5e7eb] border-transparent focus-within:border-[#953002]/30 rounded-full w-full flex items-center transition-colors">
                                                     <Input
-                                                        type={showPw ? "text" : "password"}
+                                                        type="text"
+                                                        autoComplete="new-password"
                                                         placeholder="Min. 8 characters"
                                                         value={password}
                                                         onChange={(e) => setPassword(e.target.value)}
+                                                        style={{ WebkitTextSecurity: showPw ? 'none' : 'disc' } as never}
                                                         className="h-[54px] w-full rounded-full bg-transparent pl-[48px] pr-[48px] text-[16px] placeholder:text-[rgba(130,130,130,0.5)] border-0 focus-visible:ring-0"
                                                         required
                                                         minLength={8}
@@ -139,10 +143,12 @@ function ResetPasswordContent() {
                                             <div className="relative">
                                                 <div className="bg-[rgba(149,48,2,0.1)] border border-[#e5e7eb] border-transparent focus-within:border-[#953002]/30 rounded-full w-full flex items-center transition-colors">
                                                     <Input
-                                                        type={showConfirmPw ? "text" : "password"}
+                                                        type="text"
+                                                        autoComplete="new-password"
                                                         placeholder="Repeat new password"
                                                         value={confirmPassword}
                                                         onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        style={{ WebkitTextSecurity: showConfirmPw ? 'none' : 'disc' } as never}
                                                         className="h-[54px] w-full rounded-full bg-transparent pl-[48px] pr-[48px] text-[16px] placeholder:text-[rgba(130,130,130,0.5)] border-0 focus-visible:ring-0"
                                                         required
                                                         minLength={8}

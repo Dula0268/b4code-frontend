@@ -8,8 +8,8 @@ const COMMON_ISSUES = [
   {
     id: "missing",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-        <path d="M3 7l1.7 11.5a2 2 0 0 0 2 1.5h10.6a2 2 0 0 0 2-1.5L21 7M1 7h22M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-orange-500">
+        <path d="M3 7l1.7 11.5a2 2 0 0 0 2 1.5h10.6a2 2 0 0 0 2-1.5L21 7M1 7h22M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
     label: "Missing Item",
@@ -17,9 +17,9 @@ const COMMON_ISSUES = [
   {
     id: "special",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-orange-500">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
     label: "Special Requests",
@@ -27,8 +27,8 @@ const COMMON_ISSUES = [
   {
     id: "cutlery",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-orange-500">
+        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
     label: "Extra Cutlery",
@@ -36,9 +36,9 @@ const COMMON_ISSUES = [
   {
     id: "delay",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="#9ca3af" strokeWidth="1.5" />
-        <path d="M12 6v6l4 2" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-orange-500">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+        <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
     label: "Order Delay",
@@ -49,70 +49,75 @@ const COMMON_ISSUES = [
 
 export default function HelpClient() {
   return (
-    <div className="min-h-[calc(100vh-72px)] flex items-center justify-center px-4 py-6 bg-[#fafaf9]">
-      <div className="w-full max-w-[620px]">
+    <div className="min-h-[calc(100vh-72px)] flex items-center justify-center px-4 py-8 bg-gray-50/50">
+      <div className="w-full max-w-[560px] space-y-6">
         {/* Card */}
-        <div className="bg-white border border-[#e5e7eb] rounded-xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] overflow-hidden">
-          {/* ── Blue hero section ── */}
-          <div className="bg-[rgba(47,128,237,0.12)] px-5 md:px-8 pt-6 md:pt-8 pb-5 md:pb-6 text-center space-y-3">
+        <div className="bg-white/80 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden relative">
+          {/* Subtle background glow */}
+          <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--brand-primary)]/10 to-transparent pointer-events-none" />
+
+          {/* ── Hero section ── */}
+          <div className="px-6 md:px-8 pt-8 md:pt-10 pb-6 text-center space-y-4 relative z-10">
             {/* Kitchen icon */}
             <div className="flex justify-center">
-              <div className="w-[56px] h-[56px] rounded-full bg-white/80 flex items-center justify-center shadow-sm">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 7l1.7 11.5a2 2 0 0 0 2 1.5h10.6a2 2 0 0 0 2-1.5L21 7M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="#2F80ED" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M12 11v4M10 13h4" stroke="#2F80ED" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center shadow-inner border border-orange-100/50">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-[var(--brand-primary)]">
+                  <path d="M3 7l1.7 11.5a2 2 0 0 0 2 1.5h10.6a2 2 0 0 0 2-1.5L21 7M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 11v4M10 13h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>
-            <h2 className="text-[22px] font-bold text-[#1D1D1D] leading-[28px]">
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
               Staff Assistance
             </h2>
-            <p className="text-[14px] text-[#6b7280] leading-[20px] max-w-[400px] mx-auto">
+            <p className="text-[15px] text-gray-500 max-w-[400px] mx-auto leading-relaxed">
               Need help with your order? Our staff is ready to assist you with any concern.
             </p>
           </div>
 
           {/* ── Action buttons ── */}
-          <div className="px-5 md:px-8 py-5 space-y-3">
+          <div className="px-6 md:px-8 py-4 space-y-3 relative z-10">
             {/* Quick Call to Staff - Primary */}
-            <button className="w-full flex items-center justify-center gap-2 bg-[#953002] rounded-lg px-6 py-3 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] transition cursor-pointer">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3.09 5.18 2 2 0 0 1 5.09 3h3a2 2 0 0 1 2 1.72c.13.81.37 1.61.7 2.36a2 2 0 0 1-.45 2.11L8.09 11.5a16 16 0 0 0 6.41 6.41l2.31-2.31a2 2 0 0 1 2.11-.45c.75.33 1.55.57 2.36.7A2 2 0 0 1 22 16.92Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <button className="w-full flex items-center justify-center gap-2 bg-[var(--brand-primary)] rounded-2xl px-6 py-4 shadow-lg shadow-orange-500/20 hover:bg-[#C05621] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white transform group-hover:scale-110 transition-transform">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3.09 5.18 2 2 0 0 1 5.09 3h3a2 2 0 0 1 2 1.72c.13.81.37 1.61.7 2.36a2 2 0 0 1-.45 2.11L8.09 11.5a16 16 0 0 0 6.41 6.41l2.31-2.31a2 2 0 0 1 2.11-.45c.75.33 1.55.57 2.36.7A2 2 0 0 1 22 16.92Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-[15px] font-semibold text-white leading-[22px]">
+              <span className="text-base font-semibold text-white">
                 Quick Call to Staff
               </span>
             </button>
 
             {/* Chat with Staff - Outlined */}
-            <button className="w-full flex items-center justify-center gap-2 bg-white border border-[#E0E0E0] rounded-lg px-6 py-3 hover:bg-[#f8f6f5] transition cursor-pointer">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" stroke="#333333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <button className="w-full flex items-center justify-center gap-2 bg-white/80 border border-gray-200/80 rounded-2xl px-6 py-4 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 group cursor-pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-400 group-hover:text-gray-600 transition-colors">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-[15px] font-medium text-[#333333] leading-[22px]">
+              <span className="text-base font-medium text-gray-700">
                 Chat with Staff
               </span>
             </button>
           </div>
 
           {/* ── Divider with label ── */}
-          <div className="px-5 md:px-8 flex items-center gap-3">
-            <div className="flex-1 h-px bg-[#e5e7eb]" />
-            <span className="text-[12px] font-medium text-[#9ca3af] uppercase tracking-[0.5px] leading-[16px] shrink-0">
+          <div className="px-6 md:px-8 py-2 flex items-center gap-4 relative z-10">
+            <div className="flex-1 h-px bg-gray-200/80" />
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider shrink-0">
               Common Issues
             </span>
-            <div className="flex-1 h-px bg-[#e5e7eb]" />
+            <div className="flex-1 h-px bg-gray-200/80" />
           </div>
 
           {/* ── 2×2 Grid of common issues ── */}
-          <div className="px-5 md:px-8 py-5 grid grid-cols-2 gap-3">
+          <div className="px-6 md:px-8 py-4 grid grid-cols-2 gap-4 relative z-10">
             {COMMON_ISSUES.map((issue) => (
               <button
                 key={issue.id}
-                className="flex flex-col items-center justify-center gap-2 py-4 px-3 border border-[#f3f4f6] rounded-xl hover:border-[#953002]/30 hover:bg-[rgba(151,49,2,0.03)] transition cursor-pointer"
+                className="flex flex-col items-center justify-center gap-3 py-6 px-4 bg-white/60 backdrop-blur-md border border-gray-100/80 rounded-2xl hover:border-orange-500/30 hover:bg-orange-50/50 hover:shadow-sm transition-all duration-300 group cursor-pointer"
               >
-                {issue.icon}
-                <span className="text-[14px] font-medium text-[#4b5563] leading-[20px]">
+                <div className="p-2 bg-orange-50 rounded-xl group-hover:scale-110 group-hover:bg-orange-100/80 transition-all">
+                  {issue.icon}
+                </div>
+                <span className="text-sm font-medium text-gray-700">
                   {issue.label}
                 </span>
               </button>
@@ -120,22 +125,23 @@ export default function HelpClient() {
           </div>
 
           {/* ── Footer ── */}
-          <div className="bg-[#f9fafb] border-t border-[#f3f4f6] px-5 md:px-8 py-3 text-center">
-            <p className="text-[12px] text-[#9ca3af] leading-[16px]">
-              Service available 24/7. Current estimated wait time:{" "}
-              <span className="font-bold text-[#953002]">2 mins</span>
+          <div className="bg-gray-50/80 border-t border-gray-100/80 px-6 md:px-8 py-4 text-center mt-2 relative z-10">
+            <p className="text-sm text-gray-500 flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              Service available 24/7. Wait time:{" "}
+              <span className="font-semibold text-[var(--brand-primary)]">2 mins</span>
             </p>
           </div>
         </div>
 
         {/* ── Back link ── */}
-        <div className="text-center mt-4">
+        <div className="text-center">
           <Link
             href="/guest/order/menu"
-            className="inline-flex items-center gap-1 text-[14px] font-medium text-[#828282] hover:text-[#973102] transition"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-[var(--brand-primary)] transition-colors group"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M13 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="group-hover:-translate-x-0.5 transition-transform">
+              <path d="M13 8H3M3 8L7 4M3 8L7 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Back to Menu
           </Link>

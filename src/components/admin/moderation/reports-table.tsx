@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Star, Loader2 } from "lucide-react";
-import TotalDisputesCard from "./kpi-cards/total-disputes-card";
+import PendingReviewsCard from "./kpi-cards/pending-reviews-card";
 import UrgentCard from "./kpi-cards/urgent-card";
 import RemovedTodayCard from "./kpi-cards/removed-today-card";
-import AvgTimeCard from "./kpi-cards/avg-time-card";
+import TotalDisputesCard from "./kpi-cards/total-disputes-card";
 import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
 import type { FlaggedReview } from "@/api/admin/moderation.api";
 import { ModerationApi } from "@/api/admin/moderation.api";
@@ -199,10 +199,10 @@ export default function ReviewsQueue() {
 
       {/* ── KPI Cards ── */}
       <div className="flex gap-4">
-        <TotalDisputesCard />
+        <PendingReviewsCard />
         <UrgentCard />
         <RemovedTodayCard />
-        <AvgTimeCard />
+        <TotalDisputesCard />
       </div>
 
       {/* ── Reviews Table ── */}

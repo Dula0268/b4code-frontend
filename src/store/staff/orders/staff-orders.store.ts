@@ -49,6 +49,7 @@ export interface Order {
   prepTime?: string;
   history: HistoryEntry[];
   internalNotes: { author: string; text: string; timeAgo: string }[];
+  createdAt: string;
 }
 
 // ─── Next status mapping ───────────────────────────────────────────────────────
@@ -219,11 +220,20 @@ interface BackendOrderResponse {
   guestInstructions?: string;
   totalAmount: number;
   status: string;
-  createdAt: string;
+  createdAt: string | number[];
   items?: BackendOrderItem[];
 }
 function convertBackendOrder(backendOrder: BackendOrderResponse): Order {
-  const createdAt = new Date(backendOrder.createdAt);
+  let createdAt: Date;
+  if (Array.isArray(backendOrder.createdAt)) {
+    const [y, m, d, hr = 0, min = 0, sec = 0] = backendOrder.createdAt;
+    createdAt = new Date(y, m - 1, d, hr, min, sec);
+  } else if (backendOrder.createdAt) {
+    createdAt = new Date(backendOrder.createdAt);
+  } else {
+    createdAt = new Date();
+  }
+  
   const status = mapBackendStatusToFrontend(backendOrder.status);
   
   const items: OrderItem[] = (backendOrder.items || []).map((it) => ({
@@ -236,13 +246,32 @@ function convertBackendOrder(backendOrder: BackendOrderResponse): Order {
 
   const totalItems = items.reduce((acc, it) => acc + it.qty, 0);
 
+  const rawLocation = (backendOrder.location || "").trim();
+  const isTable = rawLocation.toLowerCase().startsWith("t");
+  
+  let formattedLocation = rawLocation;
+  let orderType = "Room Order";
+
+  if (isTable) {
+    const numMatch = rawLocation.match(/\d+/);
+    formattedLocation = "Table " + (numMatch ? numMatch[0] : rawLocation);
+    orderType = "Table Order";
+  } else if (rawLocation) {
+    const numMatch = rawLocation.match(/\d+/);
+    formattedLocation = "Room " + (numMatch ? numMatch[0] : rawLocation);
+    orderType = "Room Order";
+  } else {
+    formattedLocation = "Unknown";
+    orderType = "Order";
+  }
+
   return {
     id: `#ORD-${backendOrder.id}`,
     time: createdAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
     timeAgo: getTimeAgo(createdAt),
-    table: backendOrder.location || "Unknown",
-    type: "Room Service",
-    room: backendOrder.location,
+    table: formattedLocation,
+    type: orderType,
+    room: formattedLocation,
     guest: backendOrder.guestName || `Guest ${backendOrder.guestId}`,
     items,
     note: backendOrder.guestInstructions,
@@ -261,6 +290,7 @@ function convertBackendOrder(backendOrder: BackendOrderResponse): Order {
       },
     ],
     internalNotes: [],
+    createdAt: createdAt.toISOString(),
   };
 }
 

@@ -7,6 +7,7 @@ import PaymentSelection from "./steps/payment-selection";
 import PaymentCardForm from "./steps/payment-card-form";
 import PaymentStatus from "./steps/payment-status";
 import { paymentApi } from "@/api/payment/payment.api";
+import { startPayHerePopup } from "@/lib/payhere";
 import { useGuestGuard } from "@/hooks/use-guest-guard";
 import AccessDenied from "@/components/shared/auth/access-denied";
 
@@ -62,23 +63,19 @@ export default function PaymentFlow() {
                 });
 
                 if (response.checkoutUrl && response.payHereParams) {
-                    const form = document.createElement("form");
-                    form.method = "POST";
-                    form.action = response.checkoutUrl;
-                    form.style.display = "none";
-
-                    // Parse the param string from the backend and add each as a hidden input
-                    const params = new URLSearchParams(response.payHereParams);
-                    params.forEach((value, key) => {
-                        const input = document.createElement("input");
-                        input.type = "hidden";
-                        input.name = key;
-                        input.value = value;
-                        form.appendChild(input);
+                    await startPayHerePopup({
+                        checkoutUrl: response.checkoutUrl,
+                        payHereParams: response.payHereParams,
+                        onSuccess: () => {
+                            setStep("success");
+                        },
+                        onDismiss: () => {
+                            setStep("selection");
+                        },
+                        onError: () => {
+                            setStep("failed");
+                        },
                     });
-
-                    document.body.appendChild(form);
-                    form.submit();
                 } else {
                     // Fallback: simulate success if no PayHere URL returned
                     setTimeout(() => setStep("success"), 2000);
