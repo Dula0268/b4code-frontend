@@ -72,14 +72,10 @@ export function NavItem({ item, isActive, badge, onClick }: {
   );
 }
 
-import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
-
 export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuthStore();
-  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
-  const placedOrdersCount = useStaffOrdersStore((s) => s.orders.filter((o) => o.status === "placed").length);
   const [mounted, setMounted] = useState(false);
   const [propertyName, setPropertyName] = useState<string>("");
 
