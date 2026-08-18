@@ -81,7 +81,7 @@ export default function CartClient({ location }: { location?: string }) {
             </div>
             <div className="text-center">
               <h2 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">Your cart is empty</h2>
-              <p className="text-base text-gray-500 font-medium max-w-sm mx-auto">Looks like you haven't added anything to your cart yet. Explore our menu to discover delicious options.</p>
+              <p className="text-base text-gray-500 font-medium max-w-sm mx-auto">Looks like you haven&apos;t added anything to your cart yet. Explore our menu to discover delicious options.</p>
             </div>
             <Link
               href={qrContext ? `/guest/order/menu?qrId=${qrContext.qrId}` : "/guest/order/menu"}

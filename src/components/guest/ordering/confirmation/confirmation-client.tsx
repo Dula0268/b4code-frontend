@@ -53,7 +53,7 @@ export default function ConfirmationClient() {
   const orderNumber = order?.id ?? "#ORD-0000";
   const totalAmount = order?.total ?? 0;
   
-  let locationStr = order?.location ?? "";
+  const locationStr = order?.location ?? "";
   const cleanLoc = locationStr.replace(/^(RM|ROOM|TB|TABLE)-?/i, "");
   
   let formattedLocation = locationStr;

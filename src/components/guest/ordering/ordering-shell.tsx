@@ -23,6 +23,7 @@ export default function OrderingShell({ children }: OrderingShellProps) {
   const initializeSession = useGuestSessionStore((s) => s.initializeSession);
   const qrContext = useOrderContextStore((s) => s.qrContext);
   const fetchChargesFromApi = useCartStore((s) => s.fetchChargesFromApi);
+  const pathname = usePathname();
 
   useEffect(() => {
     if (qrContext && qrContext.propertyId && qrContext.location) {
@@ -37,7 +38,7 @@ export default function OrderingShell({ children }: OrderingShellProps) {
     return <AccessDenied userRole={user.role?.toLowerCase()} requiredRole="Guest" />;
   }
 
-  const pathname = usePathname();
+  
   
   // Build breadcrumbs dynamically based on the current guest-order route
   const getBreadcrumbs = () => {
