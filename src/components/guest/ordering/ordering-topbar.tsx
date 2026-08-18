@@ -79,7 +79,7 @@ export default function OrderingTopbar() {
     <>
       {/* ═══════════ Desktop / Top Bar ═══════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
-        <div className="max-w-[1400px] mx-auto px-6 h-[72px] flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto px-6 h-[64px] flex items-center justify-between">
           
           {/* Logo on Left */}
           <div className="flex-shrink-0 hover:scale-105 transition-transform duration-300">
@@ -99,7 +99,7 @@ export default function OrderingTopbar() {
                     key={item.href}
                     href={item.href}
                     className={[
-                      'relative flex items-center gap-2 px-4 py-2 rounded-2xl text-[15px] font-semibold transition-all duration-300 group no-underline',
+                      'relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all duration-300 group no-underline',
                       active
                         ? 'text-white bg-[var(--brand-primary)] shadow-md shadow-[var(--brand-primary)]/20'
                         : 'text-gray-600 hover:text-[var(--brand-primary)] hover:bg-white/60',
@@ -129,7 +129,7 @@ export default function OrderingTopbar() {
                 <div className="relative" ref={accountMenuRef}>
                   <button
                     onClick={() => setAccountMenuOpen((prev) => !prev)}
-                    className="relative w-11 h-11 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center text-[var(--brand-primary)] text-[14px] font-bold border-2 border-white shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300"
+                    className="relative w-9 h-9 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center text-[var(--brand-primary)] text-xs font-bold border-2 border-white shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300"
                     aria-label="Account menu"
                   >
                     {getInitials()}
@@ -192,7 +192,7 @@ export default function OrderingTopbar() {
 
         {/* Mobile nav drawer */}
         {mobileOpen && (
-          <div className="md:hidden absolute top-[72px] left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-lg px-6 py-6 flex flex-col gap-2 animate-in slide-in-from-top-4 duration-300">
+          <div className="md:hidden absolute top-[64px] left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-lg px-6 py-6 flex flex-col gap-2 animate-in slide-in-from-top-4 duration-300">
             {navigationItems.map((item) => {
               const active = isActive(item.href);
               const Icon = item.icon;

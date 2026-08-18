@@ -64,8 +64,8 @@ export default function OrderingShell({ children }: OrderingShellProps) {
         {/* New consolidated guest ordering navbar */}
         <OrderingTopbar />
 
-        {/* Topbar spacing (72px) + gap */}
-        <main className="max-w-7xl mx-auto w-full pt-[88px] pb-20 md:pb-8 flex-1 flex flex-col px-4">
+        {/* Topbar spacing (64px) + gap */}
+        <main className="max-w-5xl mx-auto w-full pt-[80px] pb-20 md:pb-8 flex-1 flex flex-col px-4 md:px-6">
           <div className="mb-4">
             <Breadcrumbs items={getBreadcrumbs()} />
           </div>

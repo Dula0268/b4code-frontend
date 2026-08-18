@@ -345,7 +345,7 @@ export default function MenuClient() {
         {/* LEFT */}
         <div className="col-span-12 xl:col-span-8 2xl:col-span-9">
           {/* category pills row — horizontally scrollable on mobile */}
-          <div className="flex items-center gap-2 md:gap-3 overflow-x-auto py-1 md:py-0 md:flex-wrap scrollbar-hide">
+          <div className="flex items-center gap-2 overflow-x-auto py-1 md:flex-wrap scrollbar-hide">
             {categoryNames.map((c) => {
               const active = c === activeCategory;
               return (
@@ -353,7 +353,7 @@ export default function MenuClient() {
                   key={c}
                   onClick={() => setActiveCategory(c)}
                   className={[
-                    "h-9 md:h-11 rounded-full border px-4 md:px-6 text-[13px] md:text-sm font-semibold transition-all duration-300 whitespace-nowrap shrink-0 shadow-sm",
+                    "h-8 md:h-9 rounded-full border px-4 md:px-5 text-xs md:text-[13px] font-semibold transition-all duration-300 whitespace-nowrap shrink-0 shadow-sm",
                     active
                       ? "bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-[0_4px_12px_rgba(217,119,6,0.2)] hover:-translate-y-0.5"
                       : "bg-white/60 backdrop-blur-md text-gray-700 border-white/40 hover:bg-white hover:border-gray-200 hover:-translate-y-0.5",
@@ -365,10 +365,10 @@ export default function MenuClient() {
             })}
           </div>
 
-          <div className="mt-4 md:mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h3 className="text-gray-900 text-xl md:text-3xl font-bold tracking-tight">
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h3 className="text-gray-900 text-lg md:text-xl font-bold tracking-tight">
               {activeCategory === "All Items" ? "All Dishes" : activeCategory}
-              <span className="text-base font-medium text-gray-400 ml-2">
+              <span className="text-xs font-medium text-gray-400 ml-2">
                 ({items.length} {items.length === 1 ? "item" : "items"})
               </span>
             </h3>
@@ -380,7 +380,7 @@ export default function MenuClient() {
                 variant="outline"
                 size="icon"
                 className={[
-                  "h-11 w-11 rounded-xl transition-all duration-300 shadow-sm",
+                  "h-10 w-10 rounded-xl transition-all duration-300 shadow-sm",
                   searchOpen ? "bg-[var(--brand-primary)] text-white border-transparent" : "bg-white/60 backdrop-blur-md border-white/40 text-gray-600 hover:bg-white hover:border-gray-200",
                 ].join(" ")}
                 aria-label="Search"
@@ -513,7 +513,7 @@ export default function MenuClient() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search dishes by name or description…"
-                  className="pl-12 pr-12 h-14 rounded-2xl bg-white/80 backdrop-blur-md border-white/60 shadow-sm focus-visible:ring-[var(--brand-primary)] focus-visible:border-[var(--brand-primary)] text-base font-medium placeholder:text-gray-400"
+                  className="pl-10 pr-10 h-12 rounded-xl bg-white/80 backdrop-blur-md border-white/60 shadow-sm focus-visible:ring-[var(--brand-primary)] focus-visible:border-[var(--brand-primary)] text-sm font-medium placeholder:text-gray-400"
                 />
                 {searchQuery && (
                   <button
@@ -531,7 +531,7 @@ export default function MenuClient() {
           )}
 
           {/* cards grid */}
-          <div className="mt-4 md:mt-8">
+          <div className="mt-3 md:mt-4">
              <ScrollArea className="h-[calc(100vh-180px)] md:h-[calc(100vh-220px)] pr-1 md:pr-4">
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-32 text-center bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm mt-4">
@@ -576,12 +576,12 @@ export default function MenuClient() {
 
         {/* Mobile floating cart bar — shown only on mobile when items in cart */}
         {itemCount > 0 && (
-          <div className="xl:hidden fixed bottom-[72px] md:bottom-8 left-0 right-0 z-40 px-4 pointer-events-none pb-safe">
+          <div className="xl:hidden fixed bottom-[64px] md:bottom-8 left-0 right-0 z-40 px-4 pointer-events-none pb-safe">
             <div className="flex justify-center w-full">
               <Link href="/guest/order/cart" className="w-full max-w-sm mx-auto pointer-events-auto">
-                <div className="flex items-center justify-between bg-[var(--brand-primary)]/95 backdrop-blur-xl text-white rounded-3xl px-6 py-4 shadow-[0_16px_32px_rgba(217,119,6,0.3)] border border-white/20 active:scale-95 transition-transform duration-300">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-white/20 rounded-2xl h-12 w-12 flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-sm relative">
+                <div className="flex items-center justify-between bg-[var(--brand-primary)]/95 backdrop-blur-xl text-white rounded-2xl px-5 py-3 shadow-[0_16px_32px_rgba(217,119,6,0.3)] border border-white/20 active:scale-95 transition-transform duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white/20 rounded-xl h-10 w-10 flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-sm relative">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>

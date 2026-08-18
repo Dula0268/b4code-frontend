@@ -40,7 +40,7 @@ export default function MenuItemCard({
   }, [item.tag]);
 
   return (
-    <Card className="group overflow-hidden rounded-3xl border border-white/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col !p-0 !gap-0 bg-white/60 backdrop-blur-xl relative">
+    <Card className="group overflow-hidden rounded-2xl border border-white/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col !p-0 !gap-0 bg-white/60 backdrop-blur-xl relative">
       {/* Subtle hover glow */}
       <div className="absolute inset-0 bg-gradient-to-t from-[var(--brand-primary)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
@@ -61,10 +61,10 @@ export default function MenuItemCard({
       </Link>
 
       {/* Content */}
-      <div className="p-4 md:p-5 flex flex-col flex-1 relative z-10">
+      <div className="p-3 flex flex-col flex-1 relative z-10">
         {/* Title + Tag + Rating */}
-        <div className="flex items-start justify-between gap-3 pb-2">
-          <h3 className="text-sm md:text-[15px] font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-[var(--brand-primary)] transition-colors">
+        <div className="flex items-start justify-between gap-2 pb-1.5">
+          <h3 className="text-xs md:text-sm font-bold text-gray-900 leading-tight line-clamp-2 group-hover:text-[var(--brand-primary)] transition-colors">
             {item.title}
           </h3>
           <div className="flex flex-wrap items-center gap-1.5 shrink-0 justify-end max-w-[140px]">
@@ -96,23 +96,23 @@ export default function MenuItemCard({
         </div>
 
         {/* Description */}
-        <p className="text-[11px] md:text-xs text-gray-500 font-medium leading-relaxed line-clamp-2 pb-4 hidden sm:block">
+        <p className="text-[10px] md:text-xs text-gray-500 font-medium leading-relaxed line-clamp-2 pb-3 hidden sm:block">
           {item.description}
         </p>
 
         {/* Price + Quick Add */}
         <div className="flex items-center justify-between mt-auto relative">
-          <span className="text-sm md:text-base font-bold tracking-tight text-[var(--brand-primary)]">
+          <span className="text-xs md:text-sm font-bold tracking-tight text-[var(--brand-primary)]">
             {formatLkr(item.priceLkr)}
           </span>
 
           <button
             onClick={(e) => { e.preventDefault(); onAdd(); }}
-            className="flex items-center justify-center gap-2 h-9 px-4 rounded-xl cursor-pointer transition-all duration-300 md:opacity-0 md:-translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0 text-white font-semibold text-sm shadow-[0_4px_12px_rgba(217,119,6,0.2)] hover:shadow-[0_4px_16px_rgba(217,119,6,0.3)] bg-[var(--brand-primary)] hover:bg-[#C05621]"
+            className="flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg cursor-pointer transition-all duration-300 md:opacity-0 md:-translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0 text-white font-semibold text-xs shadow-[0_4px_12px_rgba(217,119,6,0.2)] hover:shadow-[0_4px_16px_rgba(217,119,6,0.3)] bg-[var(--brand-primary)] hover:bg-[#C05621]"
             aria-label={`Add ${item.title}`}
           >
             <span>Add</span>
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7 1V13M1 7H13" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
           </button>
@@ -120,10 +120,10 @@ export default function MenuItemCard({
           {/* Mobile persistent add button (fallback for touch where hover isn't present) */}
           <button
             onClick={(e) => { e.preventDefault(); onAdd(); }}
-            className="md:hidden flex items-center justify-center h-9 w-9 rounded-xl cursor-pointer bg-orange-50 border border-orange-100/50 transition-colors absolute right-0 shadow-sm"
+            className="md:hidden flex items-center justify-center h-7 w-7 rounded-lg cursor-pointer bg-orange-50 border border-orange-100/50 transition-colors absolute right-0 shadow-sm"
             aria-label={`Add ${item.title}`}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7 1V13M1 7H13" stroke="var(--brand-primary)" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
           </button>

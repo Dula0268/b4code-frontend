@@ -35,7 +35,7 @@ export default function OrderSidebar({ formatLkr }: { formatLkr: (n: number) => 
         <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--brand-primary)]/10 to-transparent pointer-events-none" />
 
         {/* Header */}
-        <div className="px-6 py-6 flex items-center justify-between border-b border-gray-100/80 relative z-10">
+        <div className="px-5 py-5 flex items-center justify-between border-b border-gray-100/80 relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100/50 flex items-center justify-center shadow-inner">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[var(--brand-primary)]">
@@ -43,9 +43,9 @@ export default function OrderSidebar({ formatLkr }: { formatLkr: (n: number) => 
                 <path d="M21 11H3v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <div className="text-lg font-bold text-gray-900 tracking-tight">Your Order</div>
+            <div className="text-base font-bold text-gray-900 tracking-tight">Your Order</div>
           </div>
-          <div className="bg-[var(--brand-primary)] text-white text-xs font-bold tracking-wide rounded-full px-3 py-1.5 shadow-sm">
+          <div className="bg-[var(--brand-primary)] text-white text-xs font-bold tracking-wide rounded-full px-2.5 py-1 shadow-sm">
             {itemCount} items
           </div>
         </div>
@@ -64,16 +64,16 @@ export default function OrderSidebar({ formatLkr }: { formatLkr: (n: number) => 
           ) : (
             <div className="flex flex-col divide-y divide-gray-100/80">
             {lines.map((l) => (
-              <div key={l.item.id} className="flex items-center gap-4 w-full group p-5 hover:bg-white/50 transition-colors">
+              <div key={l.item.id} className="flex items-center gap-3 w-full group p-4 hover:bg-white/50 transition-colors">
                 {/* Image */}
-                <div className="relative h-16 w-16 shrink-0 rounded-2xl overflow-hidden bg-white/80 backdrop-blur-sm border border-white/60 shadow-sm">
+                <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden bg-white/80 backdrop-blur-sm border border-white/60 shadow-sm">
                   {l.item.imageUrl ? (
                     <Image
                       src={l.item.imageUrl}
                       alt={l.item.title}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      sizes="64px"
+                      sizes="56px"
                     />
                   ) : (
                     <div className="w-full h-full bg-orange-50/50 flex items-center justify-center">
@@ -135,19 +135,19 @@ export default function OrderSidebar({ formatLkr }: { formatLkr: (n: number) => 
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50/50 border-t border-gray-100/80 p-6 space-y-6 relative z-10">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm text-gray-500 font-medium">
+        <div className="bg-gray-50/50 border-t border-gray-100/80 p-5 space-y-5 relative z-10">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between text-xs text-gray-500 font-medium">
               <span>Subtotal</span>
               <span className="text-gray-900 font-semibold">{formatLkr(subtotal)}</span>
             </div>
-            <div className="flex items-center justify-between text-sm text-gray-500 font-medium">
+            <div className="flex items-center justify-between text-xs text-gray-500 font-medium">
               <span>Service Charge ({Math.round(serviceChargeRate * 100)}%)</span>
               <span className="text-gray-900 font-semibold">{formatLkr(serviceCharge)}</span>
             </div>
-            <div className="flex items-end justify-between pt-4 mt-2 border-t border-dashed border-gray-200">
-              <span className="text-base font-bold text-gray-900">Total</span>
-              <span className="text-xl font-bold text-[var(--brand-primary)]">
+            <div className="flex items-end justify-between pt-3 mt-2 border-t border-dashed border-gray-200">
+              <span className="text-sm font-bold text-gray-900">Total</span>
+              <span className="text-lg font-bold text-[var(--brand-primary)]">
                 {formatLkr(total)}
               </span>
             </div>
@@ -155,10 +155,10 @@ export default function OrderSidebar({ formatLkr }: { formatLkr: (n: number) => 
 
           <Link
             href="/guest/order/cart"
-            className={`w-full flex items-center justify-center gap-2 bg-[var(--brand-primary)] text-white rounded-2xl py-4 font-bold text-base shadow-[0_8px_16px_rgba(217,119,6,0.2)] hover:shadow-[0_8px_24px_rgba(217,119,6,0.3)] hover:-translate-y-0.5 transition-all duration-300 group ${lines.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`w-full flex items-center justify-center gap-2 bg-[var(--brand-primary)] text-white rounded-xl py-3.5 font-bold text-sm shadow-[0_8px_16px_rgba(217,119,6,0.2)] hover:shadow-[0_8px_24px_rgba(217,119,6,0.3)] hover:-translate-y-0.5 transition-all duration-300 group ${lines.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}
           >
             <span>View Cart</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="group-hover:translate-x-1 transition-transform">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="group-hover:translate-x-1 transition-transform">
               <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Link>
