@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Flag, Scale, BadgeDollarSign, Building2, Check, Loader2 } from "lucide-react";
+import { Bell, Flag, Scale, BadgeDollarSign, Building2, Check, Loader2, X } from "lucide-react";
 import { useAdminNotifications } from "@/store/admin/notifications/use-admin-notifications";
 import { AdminNotification } from "@/api/admin/admin-notification.api";
 
@@ -11,12 +11,14 @@ export default function AdminNotificationDropdown() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { notifications, unreadCount, loading, fetchNotifications, markAsRead, markAllAsRead } = useAdminNotifications();
+  
+  const unreadNotifications = notifications.filter(n => !n.isRead);
 
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(() => {
-      fetchNotifications();
-    }, 30000); // refresh every 30s
+      fetchNotifications(true);
+    }, 10000); // refresh every 10s
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
@@ -39,14 +41,17 @@ export default function AdminNotificationDropdown() {
     // Route based on type
     switch (notif.type) {
       case "FLAGGED_REVIEW":
+        router.push(`/admin/moderation?reviewId=${notif.referenceId}`);
+        break;
       case "DISPUTE":
-        router.push("/admin/moderation");
+        // The backend sets the case ID (e.g. 145HFG5G). We'll pass it to disputes page.
+        router.push(`/admin/moderation/disputes?caseId=${notif.referenceId}`);
         break;
       case "PAYOUT_REQUEST":
         router.push("/admin/finance/payouts");
         break;
       case "NEW_PROPERTY":
-        router.push("/admin/properties");
+        router.push(`/admin/properties/${notif.referenceId}`);
         break;
       default:
         break;
@@ -87,7 +92,9 @@ export default function AdminNotificationDropdown() {
       >
         <Bell size={18} className="text-[#6b3a2a]" />
         {unreadCount > 0 && (
-          <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+          <span className="absolute top-0 right-0 flex items-center justify-center min-w-[18px] h-[18px] bg-red-500 rounded-full border-2 border-[#F5F2F0] text-[10px] font-bold text-white px-1">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
         )}
       </button>
 
@@ -109,11 +116,11 @@ export default function AdminNotificationDropdown() {
           </div>
 
           <div className="max-h-[400px] overflow-y-auto">
-            {loading && notifications.length === 0 ? (
+            {loading && unreadNotifications.length === 0 ? (
               <div className="py-12 flex justify-center">
                 <Loader2 size={24} className="animate-spin text-[#C05621]" />
               </div>
-            ) : notifications.length === 0 ? (
+            ) : unreadNotifications.length === 0 ? (
               <div className="py-12 text-center">
                 <div className="w-12 h-12 rounded-full bg-[#F5F2F0] flex items-center justify-center mx-auto mb-3">
                   <Bell size={20} className="text-[#9E7B6A]" />
@@ -123,16 +130,16 @@ export default function AdminNotificationDropdown() {
               </div>
             ) : (
               <div className="flex flex-col">
-                {notifications.map((notif) => (
-                  <button
+                {unreadNotifications.map((notif) => (
+                  <div
                     key={notif.id}
                     onClick={() => handleNotificationClick(notif)}
-                    className={`flex items-start gap-3 p-4 border-b border-[#F5F2F0] last:border-0 w-full text-left transition-colors cursor-pointer outline-none hover:bg-[#F9F7F6] ${
+                    className={`group relative flex items-start gap-3 p-4 border-b border-[#F5F2F0] last:border-0 w-full text-left transition-colors cursor-pointer outline-none hover:bg-[#F9F7F6] ${
                       !notif.isRead ? "bg-[#FFF8F1]" : "bg-white"
                     }`}
                   >
                     {getIcon(notif.type)}
-                    <div className="flex-1 pr-2">
+                    <div className="flex-1 pr-6">
                       <p className={`text-[13px] m-0 ${!notif.isRead ? 'font-bold text-[#1A1A1A]' : 'font-medium text-[#4B5563]'}`}>
                         {notif.title}
                       </p>
@@ -146,7 +153,14 @@ export default function AdminNotificationDropdown() {
                     {!notif.isRead && (
                       <div className="w-2 h-2 rounded-full bg-[#C05621] shrink-0 mt-2" />
                     )}
-                  </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); markAsRead(notif.id); }}
+                      className="absolute right-2 top-2 p-1.5 text-[#9E7B6A] hover:text-[#C05621] hover:bg-white rounded-full opacity-0 group-hover:opacity-100 transition-all border-none bg-transparent cursor-pointer"
+                      title="Mark as read"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 ))}
               </div>
             )}

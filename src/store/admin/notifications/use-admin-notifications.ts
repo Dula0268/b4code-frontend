@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import { AdminNotification, AdminNotificationApi } from '@/api/admin/admin-notification.api';
+import { toast } from 'sonner';
 
 interface AdminNotificationState {
   notifications: AdminNotification[];
   loading: boolean;
   unreadCount: number;
+  lastSeenNotifId: number;
   
-  fetchNotifications: () => Promise<void>;
+  fetchNotifications: (isPolling?: boolean) => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
 }
@@ -15,17 +17,39 @@ export const useAdminNotifications = create<AdminNotificationState>((set, get) =
   notifications: [],
   loading: false,
   unreadCount: 0,
+  lastSeenNotifId: 0,
 
-  fetchNotifications: async () => {
+  fetchNotifications: async (isPolling = false) => {
     try {
-      set({ loading: true });
+      if (!isPolling) set({ loading: true });
       const res = await AdminNotificationApi.getNotifications(0, 50);
       const notifs = res.content || [];
       const unreadCount = notifs.filter(n => !n.isRead).length;
-      set({ notifications: notifs, unreadCount, loading: false });
+      
+      const { lastSeenNotifId } = get();
+      
+      if (isPolling) {
+        const newNotifs = notifs.filter(n => !n.isRead && n.id > lastSeenNotifId);
+        if (newNotifs.length > 0) {
+          newNotifs.forEach(notif => {
+            toast.info(notif.title, {
+              description: notif.message,
+              position: "bottom-right",
+              duration: 5000,
+            });
+          });
+        }
+      }
+
+      let newLastSeenId = lastSeenNotifId;
+      if (notifs.length > 0) {
+        newLastSeenId = Math.max(...notifs.map(n => n.id));
+      }
+
+      set({ notifications: notifs, unreadCount, lastSeenNotifId: newLastSeenId, loading: false });
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
-      set({ loading: false });
+      if (!isPolling) set({ loading: false });
     }
   },
 

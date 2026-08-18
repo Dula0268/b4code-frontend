@@ -31,6 +31,10 @@ export interface Dispute {
   stayDates: string;
   cancellationPolicy: string;
   daysUntilAutoClose: number;
+  category?: string;
+  severity?: string;
+  photoUrls?: string;
+  internalNote?: string;
 }
 
 export interface ModerationHistory {
@@ -66,7 +70,7 @@ export const ModerationApi = {
   removeReview: (id: number, adminNote: string): Promise<FlaggedReview> =>
     api.put(`/admin/moderation/reviews/${id}/remove`, { adminNote }).then((res) => res.data),
 
-  getDisputes: (params: { status?: string; search?: string; page?: number; size?: number }): Promise<PageResponse<Dispute>> =>
+  getDisputes: (params: { status?: string; search?: string; page?: number; size?: number; isComplaint?: boolean }): Promise<PageResponse<Dispute>> =>
     api.get('/admin/moderation/disputes', { params }).then((res) => res.data),
 
   resolveDispute: (id: string, resolution: string, refundApproved: boolean): Promise<Dispute> =>
@@ -87,3 +91,4 @@ export const ModerationApi = {
   exportDisputesPdf: (params: { status?: string; search?: string }): Promise<Blob> =>
     api.get('/admin/moderation/disputes/export/pdf', { params, responseType: 'blob' }).then((res) => res.data),
 };
+

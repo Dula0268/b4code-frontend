@@ -18,9 +18,9 @@ import {
 // ─── Navigation Items ──────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   {
-    label: "Dashboard",
+    label: "Platform Analytics",
     href: "/admin",
-    icon: LayoutDashboard,
+    icon: BarChart3,
   },
   {
     label: "Users Management",
@@ -36,11 +36,6 @@ const NAV_ITEMS = [
     label: "Moderation Dashboard",
     href: "/admin/moderation",
     icon: ShieldAlert,
-  },
-  {
-    label: "Platform Analytics",
-    href: "/admin/analytics",
-    icon: BarChart3,
   },
   {
     label: "Audit Logs",

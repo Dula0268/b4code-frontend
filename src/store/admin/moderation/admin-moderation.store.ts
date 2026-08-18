@@ -6,7 +6,7 @@ import {
   type ModerationHistory,
 } from '@/api/admin/moderation.api';
 
-export type ModerationTab = "reviews" | "disputes" | "history";
+export type ModerationTab = "reviews" | "history";
 
 type AdminModerationState = {
   activeTab: ModerationTab;
@@ -46,7 +46,7 @@ type AdminModerationActions = {
   approveReview: (id: number, adminNote?: string) => Promise<void>;
   removeReview: (id: number, adminNote: string) => Promise<void>;
 
-  fetchDisputes: (params?: { status?: string; search?: string; page?: number; size?: number }) => Promise<void>;
+  fetchDisputes: (params?: { status?: string; search?: string; page?: number; size?: number; isComplaint?: boolean }) => Promise<void>;
   resolveDispute: (id: string, resolution: string, refundApproved: boolean) => Promise<void>;
 
   fetchHistory: (params?: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }) => Promise<void>;
@@ -161,3 +161,4 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
     }
   },
 }));
+
