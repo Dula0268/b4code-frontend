@@ -305,7 +305,7 @@ export default function StaffBookingsClient() {
           <DialogHeader>
             <DialogTitle>Confirm Payment</DialogTitle>
             <DialogDescription>
-              Verify the guest's secret passkey to view payment details and complete the transaction.
+              Verify the guest&apos;s secret passkey to view payment details and complete the transaction.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
