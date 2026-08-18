@@ -119,7 +119,6 @@ export default function TrackOrderClient() {
   const order = useOrderStore((s) => s.currentOrder);
   const advanceStatus = useOrderStore((s) => s.advanceStatus);
   const syncCurrentOrder = useOrderStore((s) => s.syncCurrentOrder);
-  const eventSourceRef = React.useRef<EventSource | null>(null);
 
   const numericOrderId = order?.id?.replace('#ORD-', '');
 
@@ -127,36 +126,6 @@ export default function TrackOrderClient() {
     syncCurrentOrder();
   }, [syncCurrentOrder]);
 
-  /* ── SSE: real-time status updates ── */
-  React.useEffect(() => {
-    if (!numericOrderId) return;
-
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-    const apiBase = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
-    const es = new EventSource(`${apiBase}/orders/${numericOrderId}/stream`);
-    eventSourceRef.current = es;
-
-    es.addEventListener('status-update', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.status) {
-          const mappedStatus = mapBackendStatus(data.status);
-          advanceStatus(mappedStatus, data.rejectionReason);
-        }
-      } catch {
-        // Ignore malformed SSE data
-      }
-    });
-
-    es.onerror = () => {
-      // EventSource will auto-reconnect
-    };
-
-    return () => {
-      es.close();
-      eventSourceRef.current = null;
-    };
-  }, [numericOrderId, advanceStatus]);
 
   /* ── No order state ── */
   if (!order) {
