@@ -14,7 +14,8 @@ import {
   Moon,
   ChevronRight,
   AlertCircle,
-  BellRing
+  BellRing,
+  MessageSquare
 } from "lucide-react";
 import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";

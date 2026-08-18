@@ -155,7 +155,7 @@ export default function GuestMessageClient({ bookingId }: { bookingId: string })
         </div>
         <h1 className="text-2xl md:text-3xl font-extrabold text-[#facc15] mb-1.5">Front Desk Support</h1>
         <p className="text-white/90 text-sm md:text-base max-w-2xl">
-          Get in touch with the front desk for any assistance. We're here to make your stay perfect.
+          Get in touch with the front desk for any assistance. We&apos;re here to make your stay perfect.
         </p>
       </div>
 

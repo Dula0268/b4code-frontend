@@ -64,7 +64,6 @@ export function NavItem({ item, isActive, badge, onClick }: {
         <span className="flex-1">{item.label}</span>
         {badge ? (
           <div className="bg-red-500 text-white rounded-full text-[11px] font-bold min-w-[20px] h-[20px] px-1.5 flex items-center justify-center ml-auto">
-          <Badge variant="destructive" className="text-[11px] font-bold min-w-[20px] h-[20px] px-1 bg-[var(--brand-primary)]">
             {badge}
           </div>
         ) : null}
