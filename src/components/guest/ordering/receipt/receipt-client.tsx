@@ -33,7 +33,6 @@ export default function ReceiptClient() {
   const items = order?.lines ?? [];
   const subtotal = order?.subtotal ?? 0;
   const serviceCharge = order?.serviceCharge ?? 0;
-  const tax = order?.tax ?? 0;
   const grandTotal = order?.total ?? 0;
   const paymentMethod = order?.paymentMethod === "room-charge" 
     ? `Charged to ${location}` 
@@ -42,14 +41,13 @@ export default function ReceiptClient() {
     : "Visa ending in •••• 4242";
 
   const serviceChargeRatePercent = subtotal > 0 ? Math.round((serviceCharge / subtotal) * 100) : 10;
-  const taxRatePercent = subtotal > 0 ? Math.round((tax / subtotal) * 100) : 5;
 
   return (
-    <div className="min-h-[calc(100vh-72px)] bg-[#fafaf9] px-4 py-4 flex flex-col items-center">
+    <div className="min-h-[calc(100vh-72px)] bg-gray-50/50 px-4 py-8 flex flex-col items-center">
       {/* ── Payment Successful badge ── */}
-      <div className="flex items-center gap-2 mb-4">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" fill="#27AE60" />
+      <div className="flex items-center gap-2 mb-6 bg-green-50/80 backdrop-blur-md px-4 py-2 rounded-full border border-green-100/50 shadow-sm">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="#10B981" />
           <path
             d="M8 12l3 3 5-5"
             stroke="white"
@@ -58,76 +56,82 @@ export default function ReceiptClient() {
             strokeLinejoin="round"
           />
         </svg>
-        <span className="text-[14px] font-semibold text-[#27AE60] leading-[20px]">
+        <span className="text-sm font-semibold text-green-700 tracking-wide">
           Payment Successful
         </span>
       </div>
 
       {/* ── Receipt card ── */}
-      <div className="w-full max-w-[480px] bg-white border border-[#E0E0E0] rounded-xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] overflow-hidden">
+      <div className="w-full max-w-[480px] bg-white/80 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden relative">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--brand-primary)]/10 to-transparent pointer-events-none" />
+
         {/* Header with hotel branding */}
-        <div className="px-6 pt-4 pb-3 text-center border-b border-[#E0E0E0]">
+        <div className="px-8 pt-8 pb-6 text-center border-b border-gray-100/80 relative z-10">
           {/* Hotel icon */}
-          <div className="flex justify-center mb-1.5">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M10 21V17a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4M3 7l9-4 9 4"
-                stroke="#953002"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center shadow-inner border border-orange-100/50">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M10 21V17a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4M3 7l9-4 9 4"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-[var(--brand-primary)]"
+                />
+              </svg>
+            </div>
           </div>
-          <h2 className="text-[16px] font-bold text-[#1D1D1D] tracking-[2px] uppercase leading-[22px]">
+          <h2 className="text-lg font-bold text-gray-900 tracking-[3px] uppercase">
             ORDER RECEIPT
           </h2>
-          <p className="text-[11px] text-[#828282] leading-[16px] mt-0.5">
+          <p className="text-sm text-gray-500 mt-2 font-medium">
             Thank you for your order!
           </p>
         </div>
 
         {/* Guest & order info */}
-        <div className="px-6 py-3 border-b border-[#E0E0E0]">
-          <div className="grid grid-cols-2 gap-y-2 text-[12px]">
+        <div className="px-8 py-5 border-b border-gray-100/80 bg-white/40 relative z-10">
+          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
             <div>
-              <span className="text-[#828282] uppercase tracking-wider text-[10px]">DATE</span>
-              <p className="text-[#333333] font-medium mt-0.5">{date}</p>
+              <span className="text-gray-400 font-semibold uppercase tracking-wider text-[10px]">DATE</span>
+              <p className="text-gray-900 font-medium mt-1">{date}</p>
             </div>
             <div className="text-right">
-              <span className="text-[#828282] uppercase tracking-wider text-[10px]">TIME</span>
-              <p className="text-[#333333] font-medium mt-0.5">{time}</p>
+              <span className="text-gray-400 font-semibold uppercase tracking-wider text-[10px]">TIME</span>
+              <p className="text-gray-900 font-medium mt-1">{time}</p>
             </div>
             <div>
-              <span className="text-[#828282] uppercase tracking-wider text-[10px]">GUEST</span>
-              <p className="text-[#333333] font-medium mt-0.5">{guest}</p>
+              <span className="text-gray-400 font-semibold uppercase tracking-wider text-[10px]">GUEST</span>
+              <p className="text-gray-900 font-medium mt-1 truncate">{guest}</p>
             </div>
             <div className="text-right">
-              <span className="text-[#828282] uppercase tracking-wider text-[10px]">LOCATION</span>
-              <p className="text-[#333333] font-medium mt-0.5">{location}</p>
+              <span className="text-gray-400 font-semibold uppercase tracking-wider text-[10px]">LOCATION</span>
+              <p className="text-gray-900 font-medium mt-1 truncate">{location}</p>
             </div>
           </div>
         </div>
 
         {/* Receipt ID */}
-        <div className="px-6 py-2 border-b border-[#E0E0E0] bg-[#fafaf9]">
+        <div className="px-8 py-3 border-b border-gray-100/80 bg-gray-50/50 relative z-10">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-[#828282] uppercase tracking-wider">RECEIPT ID</span>
-            <span className="text-[13px] font-semibold text-[#1D1D1D]">{receiptId}</span>
+            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">RECEIPT ID</span>
+            <span className="text-sm font-bold text-gray-900 font-mono tracking-tight">{receiptId}</span>
           </div>
         </div>
 
         {/* Itemized list */}
-        <div className="px-6 py-3 border-b border-[#E0E0E0] space-y-2">
+        <div className="px-8 py-5 border-b border-gray-100/80 space-y-3 bg-white/60 relative z-10">
           {items.map((line, idx) => (
-            <div key={idx} className="flex items-start justify-between gap-3">
+            <div key={idx} className="flex items-start justify-between gap-4 group">
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] text-[#333333] leading-[18px]">
-                  <span className="text-[#828282]">{line.qty}x</span>{" "}
-                  <span className="font-medium">{line.item.title}</span>
+                <p className="text-sm text-gray-900 font-medium leading-relaxed">
+                  <span className="text-gray-400 font-semibold mr-2">{line.qty}x</span>
+                  <span className="group-hover:text-[var(--brand-primary)] transition-colors">{line.item.title}</span>
                 </p>
               </div>
-              <span className="text-[13px] text-[#333333] leading-[18px] shrink-0 font-medium">
+              <span className="text-sm text-gray-900 font-semibold shrink-0">
                 {formatLkr(line.item.priceLkr * line.qty)}
               </span>
             </div>
@@ -135,74 +139,74 @@ export default function ReceiptClient() {
         </div>
 
         {/* Totals */}
-        <div className="px-6 py-3 border-b border-[#E0E0E0] space-y-1.5">
-          <div className="flex justify-between text-[13px]">
-            <span className="text-[#828282]">Subtotal</span>
-            <span className="text-[#333333]">{formatLkr(subtotal)}</span>
+        <div className="px-8 py-5 border-b border-gray-100/80 space-y-2.5 bg-white/40 relative z-10">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500 font-medium">Subtotal</span>
+            <span className="text-gray-900 font-semibold">{formatLkr(subtotal)}</span>
           </div>
-          <div className="flex justify-between text-[13px]">
-            <span className="text-[#828282]">Service Charge ({serviceChargeRatePercent}%)</span>
-            <span className="text-[#333333]">{formatLkr(serviceCharge)}</span>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500 font-medium">Service Charge ({serviceChargeRatePercent}%)</span>
+            <span className="text-gray-900 font-semibold">{formatLkr(serviceCharge)}</span>
           </div>
-          <div className="flex justify-between text-[13px]">
-            <span className="text-[#828282]">Tax ({taxRatePercent}%)</span>
-            <span className="text-[#333333]">{formatLkr(tax)}</span>
-          </div>
-          <div className="border-t border-dashed border-[#E0E0E0] pt-2 flex justify-between">
-            <span className="text-[15px] font-bold text-[#1D1D1D] leading-[22px]">
+          <div className="border-t border-dashed border-gray-200/80 pt-4 mt-2 flex justify-between items-center">
+            <span className="text-base font-bold text-gray-900 tracking-wide">
               Grand Total
             </span>
-            <span className="text-[15px] font-bold text-[#973102] leading-[22px]">
+            <span className="text-lg font-bold text-[var(--brand-primary)]">
               {formatLkr(grandTotal)}
             </span>
           </div>
         </div>
 
         {/* Payment method + footer */}
-        <div className="px-6 py-3 text-center space-y-2">
-          <p className="text-[12px] text-[#828282] leading-[18px]">
-            Paid with <span className="font-medium text-[#333333]">{paymentMethod}</span>
-          </p>
-          <div className="border-t border-[#E0E0E0] pt-2">
-            <p className="text-[12px] text-[#828282] leading-[18px] font-medium">
+        <div className="px-8 py-6 text-center space-y-4 bg-gray-50/50 relative z-10">
+          <div className="inline-flex items-center gap-2 bg-white/80 border border-gray-200/80 px-4 py-2 rounded-xl shadow-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gray-400">
+              <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M1 10h22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="text-xs font-semibold text-gray-700">Paid via {paymentMethod}</span>
+          </div>
+          <div className="pt-2">
+            <p className="text-sm font-semibold text-gray-600">
               Thank you for your order!
             </p>
-            <p className="text-[10px] text-[#828282] leading-[14px] mt-0.5">
-              All prices are inclusive of applicable taxes. This serves as your official receipt.
+            <p className="text-xs text-gray-400 font-medium mt-1">
+              This serves as your official receipt.
             </p>
           </div>
         </div>
       </div>
 
       {/* ── Action buttons ── */}
-      <div className="flex items-center gap-3 mt-4 w-full max-w-[480px]">
+      <div className="flex items-center gap-4 mt-6 w-full max-w-[480px]">
         <Link
           href="/guest/order/confirmation"
-          className="flex-1 flex items-center justify-center gap-2 border border-[#E0E0E0] bg-white rounded-lg px-5 py-2.5 hover:bg-[#f8f6f5] transition"
+          className="flex-1 flex items-center justify-center gap-2 bg-white/80 border border-gray-200/80 rounded-2xl px-6 py-4 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 text-gray-700 font-medium group"
         >
-          <span className="text-[14px] font-medium text-[#333333] leading-[20px]">Go Back</span>
+          <span className="text-base">Go Back</span>
         </Link>
-        <button className="flex-1 flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-5 py-2.5 shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] transition cursor-pointer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <button className="flex-1 flex items-center justify-center gap-2 bg-[var(--brand-primary)] rounded-2xl px-6 py-4 shadow-lg shadow-orange-500/20 hover:bg-[#C05621] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-white transform group-hover:-translate-y-1 transition-transform">
             <path
               d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
-              stroke="white"
-              strokeWidth="1.5"
+              stroke="currentColor"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
-          <span className="text-[14px] font-semibold text-white leading-[20px]">Download PDF</span>
+          <span className="text-base font-semibold text-white">Download PDF</span>
         </button>
       </div>
 
       {/* ── Footer links ── */}
-      <div className="flex items-center gap-4 mt-3 text-[11px] text-[#828282]">
-        <button className="hover:text-[#973102] transition cursor-pointer underline">
+      <div className="flex items-center justify-center gap-6 mt-8 text-xs font-semibold text-gray-400">
+        <button className="hover:text-[var(--brand-primary)] transition-colors cursor-pointer">
           Terms of Service
         </button>
-        <span>•</span>
-        <button className="hover:text-[#973102] transition cursor-pointer underline">
+        <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+        <button className="hover:text-[var(--brand-primary)] transition-colors cursor-pointer">
           Privacy Policy
         </button>
       </div>

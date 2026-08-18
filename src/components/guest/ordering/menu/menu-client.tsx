@@ -293,14 +293,14 @@ export default function MenuClient() {
   if (paramError) {
     return (
       <div className="ps-container flex items-center justify-center min-h-[60vh]">
-        <div className="text-center max-w-sm">
-          <div className="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
+        <div className="text-center max-w-sm bg-white/60 backdrop-blur-xl border border-white/40 p-8 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+          <div className="w-16 h-16 mx-auto rounded-full bg-red-50/80 flex items-center justify-center mb-4 border border-red-100">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="text-lg font-bold text-[var(--black-2)]">Invalid Request</p>
-          <p className="text-sm text-[var(--gray-3)] mt-1">{paramError}</p>
+          <p className="text-xl font-bold text-gray-900 tracking-tight">Invalid Request</p>
+          <p className="text-sm text-gray-500 font-medium mt-2">{paramError}</p>
         </div>
       </div>
     );
@@ -315,14 +315,14 @@ export default function MenuClient() {
   if (menuError) {
     return (
       <div className="ps-container flex items-center justify-center min-h-[60vh]">
-        <div className="text-center max-w-sm">
-          <div className="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
+        <div className="text-center max-w-sm bg-white/60 backdrop-blur-xl border border-white/40 p-8 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+          <div className="w-16 h-16 mx-auto rounded-full bg-red-50/80 flex items-center justify-center mb-4 border border-red-100">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="text-lg font-bold text-[var(--black-2)]">Unable to load menu</p>
-          <p className="text-sm text-[var(--gray-3)] mt-1">{menuError}</p>
+          <p className="text-xl font-bold text-gray-900 tracking-tight">Unable to load menu</p>
+          <p className="text-sm text-gray-500 font-medium mt-2 mb-6">{menuError}</p>
           <Button
             onClick={() => {
               const pId = qrContext?.propertyId || user?.propertyId;
@@ -330,6 +330,7 @@ export default function MenuClient() {
                 fetchMenu(Number(pId));
               }
             }}
+            className="rounded-xl font-semibold w-full shadow-sm"
           >
             Try Again
           </Button>
@@ -340,11 +341,11 @@ export default function MenuClient() {
 
   return (
     <div className="ps-container">
-      <div className="grid grid-cols-12 gap-3 md:gap-[30px] py-3 md:py-8">
+      <div className="grid grid-cols-12 gap-4 md:gap-8 py-4 md:py-8">
         {/* LEFT */}
         <div className="col-span-12 xl:col-span-8 2xl:col-span-9">
           {/* category pills row — horizontally scrollable on mobile */}
-          <div className="flex items-center gap-1.5 md:gap-3 overflow-x-auto pb-1.5 md:pb-0 md:flex-wrap scrollbar-hide">
+          <div className="flex items-center gap-2 overflow-x-auto py-1 md:flex-wrap scrollbar-hide">
             {categoryNames.map((c) => {
               const active = c === activeCategory;
               return (
@@ -352,10 +353,10 @@ export default function MenuClient() {
                   key={c}
                   onClick={() => setActiveCategory(c)}
                   className={[
-                    "h-8 md:h-10 rounded-full border px-3 md:px-5 text-[11px] md:text-sm font-medium transition whitespace-nowrap shrink-0",
+                    "h-8 md:h-9 rounded-full border px-4 md:px-5 text-xs md:text-[13px] font-semibold transition-all duration-300 whitespace-nowrap shrink-0 shadow-sm",
                     active
-                      ? "bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]"
-                      : "bg-white text-[var(--black-2)] border-[var(--gray-5)] hover:border-[var(--brand-primary)]",
+                      ? "bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-[0_4px_12px_rgba(217,119,6,0.2)] hover:-translate-y-0.5"
+                      : "bg-white/60 backdrop-blur-md text-gray-700 border-white/40 hover:bg-white hover:border-gray-200 hover:-translate-y-0.5",
                   ].join(" ")}
                 >
                   {c}
@@ -364,23 +365,23 @@ export default function MenuClient() {
             })}
           </div>
 
-          <div className="mt-3 md:mt-8 flex items-center justify-between">
-            <h3 className="text-[#111827] text-base md:text-2xl font-bold">
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h3 className="text-gray-900 text-lg md:text-xl font-bold tracking-tight">
               {activeCategory === "All Items" ? "All Dishes" : activeCategory}
-              <span className="text-sm font-normal text-[var(--gray-3)] ml-2">
+              <span className="text-xs font-medium text-gray-400 ml-2">
                 ({items.length} {items.length === 1 ? "item" : "items"})
               </span>
             </h3>
 
             {/* right-side icons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 md:gap-3">
               {/* Search toggle button */}
               <Button
                 variant="outline"
                 size="icon"
                 className={[
-                  "h-10 w-10 rounded-md transition",
-                  searchOpen ? "bg-[var(--gray-6)] border-[var(--gray-4)]" : "border-[var(--gray-5)] hover:bg-[var(--gray-6)]",
+                  "h-10 w-10 rounded-xl transition-all duration-300 shadow-sm",
+                  searchOpen ? "bg-[var(--brand-primary)] text-white border-transparent" : "bg-white/60 backdrop-blur-md border-white/40 text-gray-600 hover:bg-white hover:border-gray-200",
                 ].join(" ")}
                 aria-label="Search"
                 onClick={() => {
@@ -390,9 +391,9 @@ export default function MenuClient() {
                   });
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <circle cx="11" cy="11" r="8" stroke={searchOpen ? "#111827" : "#6b7280"} strokeWidth="1.5" />
-                  <path d="M21 21l-4.35-4.35" stroke={searchOpen ? "#111827" : "#6b7280"} strokeWidth="1.5" strokeLinecap="round" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
+                  <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </Button>
 
@@ -402,59 +403,59 @@ export default function MenuClient() {
                   variant="outline"
                   size="icon"
                   className={[
-                    "h-10 w-10 rounded-md transition",
-                    filterOpen ? "bg-[var(--gray-6)] border-[var(--gray-4)]" : "border-[var(--gray-5)] hover:bg-[var(--gray-6)]",
+                    "h-11 w-11 rounded-xl transition-all duration-300 shadow-sm",
+                    filterOpen ? "bg-[var(--brand-primary)] text-white border-transparent" : "bg-white/60 backdrop-blur-md border-white/40 text-gray-600 hover:bg-white hover:border-gray-200",
                   ].join(" ")}
                   aria-label="Sort/Filter"
                   onClick={() => setFilterOpen((prev) => !prev)}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" stroke={filterOpen ? "#111827" : "#6b7280"} strokeWidth="1.5" strokeLinecap="round" />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                   </svg>
                   {hasActiveFilters && (
-                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[var(--brand-primary)] border-2 border-white" />
+                    <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-red-500 border-2 border-white animate-pulse" />
                   )}
                 </Button>
 
                 {/* Filter/Sort dropdown */}
                 {filterOpen && (
-                  <div className="absolute right-0 top-12 z-50 w-64 rounded-xl border border-[var(--gray-5)] bg-white shadow-lg p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 top-14 z-50 w-72 rounded-2xl border border-white/60 bg-white/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] p-5 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right">
                     {/* Sort section */}
                     <div>
-                      <p className="text-xs font-semibold text-[var(--gray-3)] uppercase tracking-wider mb-2">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
                         Sort By
                       </p>
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {SORT_OPTIONS.map((opt) => (
                           <button
                             key={opt.value}
                             onClick={() => setSortBy(opt.value)}
                             className={[
-                              "w-full text-left px-3 py-2 rounded-lg text-sm transition",
+                              "w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 flex items-center justify-between",
                               sortBy === opt.value
-                                ? "bg-[var(--gray-6)] text-[var(--black-2)] font-medium"
-                                : "text-[var(--black-2)] hover:bg-[var(--gray-6)]",
+                                ? "bg-orange-50 text-[var(--brand-primary)]"
+                                : "text-gray-700 hover:bg-gray-50",
                             ].join(" ")}
                           >
+                            {opt.label}
                             {sortBy === opt.value && (
-                              <svg className="inline-block mr-2 -mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none">
-                                <path d="M20 6L9 17l-5-5" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             )}
-                            {opt.label}
                           </button>
                         ))}
                       </div>
                     </div>
 
-                    <Separator />
+                    <Separator className="bg-gray-100" />
 
                     {/* Tag filter section */}
                     <div>
-                      <p className="text-xs font-semibold text-[var(--gray-3)] uppercase tracking-wider mb-2">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
                         Filter by Tag
                       </p>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2.5">
                         {TAG_OPTIONS.map((t) => {
                           const active = tagFilters.has(t.value);
                           return (
@@ -462,10 +463,10 @@ export default function MenuClient() {
                               key={t.value}
                               onClick={() => toggleTag(t.value)}
                               className={[
-                                "h-8 rounded-full border px-3 text-xs font-medium transition",
+                                "h-9 rounded-full border px-4 text-xs font-bold transition-all duration-200",
                                 active
-                                  ? "bg-[var(--gray-6)] text-[var(--black-2)] border-[var(--gray-4)]"
-                                  : "bg-white text-[var(--black-2)] border-[var(--gray-5)] hover:bg-[var(--gray-6)] hover:border-[var(--gray-4)]",
+                                  ? "bg-[var(--brand-primary)] text-white border-transparent shadow-sm"
+                                  : "bg-white text-gray-600 border-gray-200 hover:border-[var(--brand-primary)]/50 hover:bg-orange-50",
                               ].join(" ")}
                             >
                               {t.label}
@@ -478,13 +479,13 @@ export default function MenuClient() {
                     {/* Clear all */}
                     {hasActiveFilters && (
                       <>
-                        <Separator />
+                        <Separator className="bg-gray-100" />
                         <button
                           onClick={() => {
                             setSortBy("default");
                             setTagFilters(new Set());
                           }}
-                          className="w-full text-center text-sm text-[var(--brand-primary)] font-medium hover:underline py-1"
+                          className="w-full text-center text-sm text-[var(--brand-primary)] font-bold hover:text-[#C05621] py-2 transition-colors rounded-xl hover:bg-orange-50"
                         >
                           Clear All Filters
                         </button>
@@ -499,28 +500,28 @@ export default function MenuClient() {
           {/* Search input (expandable) */}
           {searchOpen && (
             <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="relative">
+              <div className="relative group">
                 <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                  width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-focus-within:text-[var(--brand-primary)] transition-colors"
+                  width="18" height="18" viewBox="0 0 24 24" fill="none"
                 >
-                  <circle cx="11" cy="11" r="8" stroke="#9ca3af" strokeWidth="1.5" />
-                  <path d="M21 21l-4.35-4.35" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
+                  <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
                 <Input
                   ref={searchInputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search dishes by name or description…"
-                  className="pl-10 pr-10 h-11 rounded-lg border-[var(--gray-5)] focus-visible:ring-[var(--gray-4)] focus-visible:border-[var(--gray-4)]"
+                  className="pl-10 pr-10 h-12 rounded-xl bg-white/80 backdrop-blur-md border-white/60 shadow-sm focus-visible:ring-[var(--brand-primary)] focus-visible:border-[var(--brand-primary)] text-sm font-medium placeholder:text-gray-400"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--gray-3)] hover:text-[var(--black-2)] transition"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 transition-colors bg-gray-100 hover:bg-gray-200 rounded-full p-1"
                     aria-label="Clear search"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                       <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                   </button>
@@ -530,23 +531,25 @@ export default function MenuClient() {
           )}
 
           {/* cards grid */}
-          <div className="mt-3 md:mt-6">
-             <ScrollArea className="h-[calc(100vh-48px-200px)] md:h-[calc(100vh-60px-180px)] pr-1 md:pr-2">
+          <div className="mt-3 md:mt-4">
+             <ScrollArea className="h-[calc(100vh-180px)] md:h-[calc(100vh-220px)] pr-1 md:pr-4">
               {items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="mb-4 text-[var(--gray-4)]">
-                    <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  <p className="text-lg font-medium text-[var(--black-2)]">No dishes found</p>
-                  <p className="text-sm text-[var(--gray-3)] mt-1">
+                <div className="flex flex-col items-center justify-center py-32 text-center bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm mt-4">
+                  <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center shadow-inner border border-gray-100 mb-6">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-gray-400">
+                      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
+                      <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <p className="text-xl font-bold text-gray-900 tracking-tight">No dishes found</p>
+                  <p className="text-sm font-medium text-gray-500 mt-2 max-w-[280px]">
                     {allItems.length === 0
                       ? "The menu hasn't been set up yet. Please check back later."
-                      : "Try adjusting your search or filters"}
+                      : "Try adjusting your search or filters to find what you're looking for."}
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 pb-24 md:pb-8">
                   {items.map((item) => (
                     <MenuItemCard
                       key={item.id}
@@ -563,37 +566,47 @@ export default function MenuClient() {
 
         {/* RIGHT (sticky order summary) — hidden on mobile, shown on xl+ */}
         <div className="hidden xl:block col-span-12 xl:col-span-4 2xl:col-span-3">
-          <div className="xl:sticky xl:top-6">
+          <div className="xl:sticky xl:top-8">
             <OrderSidebar formatLkr={formatLkr} />
-            <div className="mt-4 text-right text-sm text-[var(--gray-3)]">
-              {itemCount} items
+            <div className="mt-4 text-right text-sm font-semibold text-gray-400 uppercase tracking-widest px-2">
+              {itemCount} {itemCount === 1 ? 'item' : 'items'} in cart
             </div>
           </div>
         </div>
 
         {/* Mobile floating cart bar — shown only on mobile when items in cart */}
         {itemCount > 0 && (
-          <div className="xl:hidden fixed bottom-13 md:bottom-0 left-0 right-0 z-40 px-3 pb-2">
-            <Link href="/guest/order/cart">
-              <div className="flex items-center justify-between bg-[var(--brand-primary)] text-white rounded-xl px-4 py-3 shadow-[0px_8px_20px_rgba(151,49,2,0.35)]">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/20 rounded-lg h-8 w-8 flex items-center justify-center">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+          <div className="xl:hidden fixed bottom-[64px] md:bottom-8 left-0 right-0 z-40 px-4 pointer-events-none pb-safe">
+            <div className="flex justify-center w-full">
+              <Link href="/guest/order/cart" className="w-full max-w-sm mx-auto pointer-events-auto">
+                <div className="flex items-center justify-between bg-[var(--brand-primary)]/95 backdrop-blur-xl text-white rounded-2xl px-5 py-3 shadow-[0_16px_32px_rgba(217,119,6,0.3)] border border-white/20 active:scale-95 transition-transform duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white/20 rounded-xl h-10 w-10 flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-sm relative">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      {/* Pulse effect */}
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-[var(--brand-primary)]"></span>
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold tracking-wide">{itemCount} {itemCount === 1 ? 'item' : 'items'}</div>
+                      <div className="text-xs font-semibold text-white/80">View cart</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-bold">{itemCount} {itemCount === 1 ? 'item' : 'items'}</div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold tracking-tight">{formatLkr(useCartStore.getState().total())}</span>
+                    <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center text-[var(--brand-primary)] shadow-sm">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="translate-x-[2px]">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-base font-bold">{formatLkr(useCartStore.getState().total())}</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
           </div>
         )}
       </div>

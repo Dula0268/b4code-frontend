@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PwaRegistrar from "@/components/shared/pwa-registrar";
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
 
 export const metadata: Metadata = {
   title: "Primestay Staff Dashboard",
@@ -24,7 +25,9 @@ export default async function StaffLayout({
   return (
     <>
       <PwaRegistrar />
-      {children}
+      <StaffPageLayout>
+        {children}
+      </StaffPageLayout>
     </>
   );
 }

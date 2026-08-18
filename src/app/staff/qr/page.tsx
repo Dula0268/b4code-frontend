@@ -1,7 +1,6 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
 import QrList from "@/components/staff/qr/qr-list";
 
 import React, { Suspense, useState, useEffect } from "react";
@@ -33,10 +32,9 @@ function QrContent() {
   }, [propertyId, user]);
 
   return (
-    <StaffPageLayout>
+    <>
       {propertyId ? <QrList propertyId={propertyId} /> : <div className="p-6 text-sm text-[var(--gray-3)]">Select a property to view QR management.</div>}
-
-    </StaffPageLayout>
+    </>
   );
 }
 

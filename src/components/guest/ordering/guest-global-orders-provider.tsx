@@ -65,7 +65,7 @@ export default function GuestGlobalOrdersProvider({ children }: { children: Reac
             let isChanged = false;
             if (storeCurrentOrder && storeCurrentOrder.id === fullOrderId && storeCurrentOrder.currentStatus !== mappedStatus) {
               isChanged = true;
-              advanceStatus(mappedStatus);
+              advanceStatus(mappedStatus, data.rejectionReason);
             }
             
             const historyOrder = storeOrderHistory.find(o => o.id === fullOrderId);
@@ -75,7 +75,7 @@ export default function GuestGlobalOrdersProvider({ children }: { children: Reac
             }
 
             if (isChanged) {
-              toast.success(`Order ${fullOrderId} is now ${mappedStatus}`);
+              toast.success(`Order ${fullOrderId} is now ${mappedStatus}`, { duration: 5000 });
             }
 
             // Close stream if terminal state
