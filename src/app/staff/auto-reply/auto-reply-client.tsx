@@ -73,6 +73,9 @@ export default function AutoReplyClient() {
   const handleToggle = async (rule: AutoReplyRule) => {
     if (!user?.propertyId) return;
     
+    // Optimistic UI update
+    setRules(prev => prev.map(r => r.id === rule.id ? { ...r, isActive: !r.isActive } : r));
+
     try {
       const payload = {
         keyword: rule.keyword,
@@ -81,9 +84,11 @@ export default function AutoReplyClient() {
       };
 
       await staffApi.updateAutoReplyRule(user.propertyId, rule.id, payload);
-      fetchRules();
+      // fetchRules() happens in background or we can just rely on optimistic update
     } catch (error) {
       console.error("Failed to toggle rule", error);
+      // Revert on error
+      setRules(prev => prev.map(r => r.id === rule.id ? { ...r, isActive: rule.isActive } : r));
     }
   };
 
@@ -192,13 +197,13 @@ export default function AutoReplyClient() {
               <p className="text-[#2d2116] text-sm whitespace-pre-wrap">{rule.replyMessage}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => handleToggle(rule)}
-                className={`p-2 rounded-lg transition-colors ${rule.isActive ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-400 bg-gray-50 hover:bg-gray-100'}`}
-                title={rule.isActive ? "Turn Off" : "Turn On"}
-              >
-                <Power size={18} />
-              </button>
+              <div className="flex items-center gap-2 pr-2 border-r border-[#eadfce] mr-2">
+                <Switch 
+                  checked={rule.isActive}
+                  onCheckedChange={() => handleToggle(rule)}
+                  className="data-[state=checked]:bg-[#9a3300] data-[state=unchecked]:bg-[#d4c9bc]"
+                />
+              </div>
               <button 
                 onClick={() => startEdit(rule)}
                 className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"

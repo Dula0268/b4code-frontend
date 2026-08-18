@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { staffApi } from "@/api/staff/staff.api";
 import { useAuthStore } from "@/store/auth/auth.store";
-import { Send, RefreshCw, MessageSquare, Search } from "lucide-react";
+import { Send, RefreshCw, MessageSquare, Search, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Client } from "@stomp/stompjs";
+import { useStaffBookingsStore } from "@/store/staff/bookings/staff-bookings.store";
+import AutoReplyClient from "../auto-reply/auto-reply-client";
 
 interface Conversation {
   bookingId: number;
@@ -15,6 +17,7 @@ interface Conversation {
   propertyName: string;
   latestMessageContent: string;
   latestMessageAt: string;
+  latestMessageSenderRole: string;
 }
 
 interface Message {
@@ -36,6 +39,8 @@ export default function StaffMessagesClient() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const activeBookingIdRef = useRef<number | null>(null);
 
+  const setUnreadMessagesCount = useStaffBookingsStore((state) => state.setUnreadMessagesCount);
+
   useEffect(() => {
     activeBookingIdRef.current = activeBookingId;
   }, [activeBookingId]);
@@ -45,6 +50,8 @@ export default function StaffMessagesClient() {
     try {
       const data = await staffApi.getConversations(user.propertyId);
       setConversations(data);
+      const unrepliedCount = data.filter((c: Conversation) => c.latestMessageSenderRole === 'GUEST').length;
+      setUnreadMessagesCount(unrepliedCount);
     } catch (error) {
       console.error("Failed to load conversations", error);
     } finally {
@@ -141,13 +148,22 @@ export default function StaffMessagesClient() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#eadfce] flex h-[600px] overflow-hidden shadow-sm">
+    <div className="bg-white rounded-2xl border border-[#eadfce] flex h-[calc(100vh-60px)] min-h-[600px] overflow-hidden shadow-sm">
       {/* Left Sidebar - Conversations List */}
       <div className="w-1/3 border-r border-[#eadfce] flex flex-col bg-[#fafafa]">
-        <div className="p-4 border-b border-[#eadfce] bg-white">
+        <div className="p-4 border-b border-[#eadfce] bg-white flex justify-between items-center">
           <h2 className="text-lg font-bold text-[#2d2116] flex items-center gap-2">
-            <MessageSquare size={18} /> Active Conversations
+            <MessageSquare size={18} /> Conversations
           </h2>
+          <Button 
+            onClick={() => setActiveBookingId(null)}
+            variant={!activeBookingId ? "default" : "outline"}
+            size="sm" 
+            className={`h-8 text-xs ${!activeBookingId ? 'bg-[#9a3300] hover:bg-[#7a2800] text-white' : 'border-[#eadfce] text-[#6f6254] hover:bg-[#f4eee6]'}`}
+          >
+            <Settings size={14} className="mr-1" />
+            Auto-Reply
+          </Button>
         </div>
         <div className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
@@ -155,24 +171,30 @@ export default function StaffMessagesClient() {
               No messages found.
             </div>
           ) : (
-            conversations.map((conv) => (
+            conversations.map((conv) => {
+              const isUnreplied = conv.latestMessageSenderRole === "GUEST";
+              return (
               <button
                 key={conv.bookingId}
                 onClick={() => setActiveBookingId(conv.bookingId)}
-                className={`w-full text-left p-4 border-b border-[#eadfce] transition-colors ${
-                  activeBookingId === conv.bookingId ? "bg-white border-l-4 border-l-[#9a3300]" : "hover:bg-white"
+                className={`w-full text-left p-4 border-b border-[#eadfce] transition-colors relative ${
+                  activeBookingId === conv.bookingId ? "bg-white border-l-4 border-l-[#9a3300]" : isUnreplied ? "bg-orange-50/50 hover:bg-orange-50" : "hover:bg-white"
                 }`}
               >
                 <div className="flex justify-between items-start mb-1">
-                  <span className="font-bold text-[#2d2116] text-sm truncate">{conv.guestName}</span>
-                  <span className="text-[10px] text-[#8b7d6d] shrink-0">
+                  <span className={`font-bold text-sm truncate flex items-center gap-2 ${isUnreplied ? 'text-[#9a3300]' : 'text-[#2d2116]'}`}>
+                    {conv.guestName}
+                    {isUnreplied && <span className="h-2 w-2 rounded-full bg-red-500"></span>}
+                  </span>
+                  <span className={`text-[10px] shrink-0 ${isUnreplied ? 'text-[#9a3300] font-medium' : 'text-[#8b7d6d]'}`}>
                     {new Date(conv.latestMessageAt).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="text-[11px] font-semibold text-[#9a3300] mb-1">Ref: {conv.confirmationCode}</div>
-                <p className="text-xs text-[#6f6254] truncate">{conv.latestMessageContent}</p>
+                <p className={`text-xs truncate ${isUnreplied ? 'text-[#2d2116] font-medium' : 'text-[#6f6254]'}`}>{conv.latestMessageContent}</p>
               </button>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -180,9 +202,12 @@ export default function StaffMessagesClient() {
       {/* Right Panel - Chat View */}
       <div className="flex-1 flex flex-col bg-white">
         {!activeBookingId ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center text-[#8b7d6d]">
-            <MessageSquare size={48} className="mb-4 opacity-20" />
-            <p>Select a conversation to start messaging</p>
+          <div className="flex-1 overflow-y-auto bg-[#fafafa] p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-[#2d2116]">Auto-Reply Configuration</h2>
+              <p className="text-[#8b7d6d] mt-1">Set up automatic replies to common guest questions using keywords.</p>
+            </div>
+            <AutoReplyClient />
           </div>
         ) : (
           <>

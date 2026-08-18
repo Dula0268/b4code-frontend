@@ -5,16 +5,20 @@ let bookingsEventSource: EventSource | null = null;
 
 type StaffBookingsState = {
   unreadCount: number;
+  unreadMessagesCount: number;
 };
 
 type StaffBookingsActions = {
   setupSse: (propertyId: number, onUpdate?: () => void) => void;
   stopSse: () => void;
   resetUnreadCount: () => void;
+  resetUnreadMessagesCount: () => void;
+  setUnreadMessagesCount: (count: number) => void;
 };
 
 export const useStaffBookingsStore = create<StaffBookingsState & StaffBookingsActions>((set, get) => ({
   unreadCount: 0,
+  unreadMessagesCount: 0,
 
   setupSse: (propertyId, onUpdate) => {
     if (typeof window === "undefined") return;
@@ -44,6 +48,11 @@ export const useStaffBookingsStore = create<StaffBookingsState & StaffBookingsAc
       if (onUpdate) onUpdate();
     });
 
+    es.addEventListener("new-message", (event) => {
+      console.log("📩 Staff Bookings SSE: new-message received:", event.data);
+      set((state) => ({ unreadMessagesCount: state.unreadMessagesCount + 1 }));
+    });
+
     let reconnectDelay = 1000;
     es.onerror = (err) => {
       console.warn("⚠️ Staff Bookings SSE connection error (will auto-reconnect):", err);
@@ -65,4 +74,6 @@ export const useStaffBookingsStore = create<StaffBookingsState & StaffBookingsAc
   },
 
   resetUnreadCount: () => set({ unreadCount: 0 }),
+  resetUnreadMessagesCount: () => set({ unreadMessagesCount: 0 }),
+  setUnreadMessagesCount: (count) => set({ unreadMessagesCount: count }),
 }));

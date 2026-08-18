@@ -64,8 +64,9 @@ export default function StaffBookingsClient() {
   const handleCheckIn = async (id: number) => {
     if (!user?.propertyId) return;
     try {
-      await staffApi.checkInReservation(user.propertyId, id);
+      const updated = await staffApi.checkInReservation(user.propertyId, id);
       toast.success("Guest successfully checked in");
+      setReservations(prev => prev.map(r => r.id === id ? { ...r, status: "CHECKED_IN" } : r));
       setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to check in");
@@ -75,8 +76,9 @@ export default function StaffBookingsClient() {
   const handleCheckOut = async (id: number) => {
     if (!user?.propertyId) return;
     try {
-      await staffApi.checkOutReservation(user.propertyId, id);
+      const updated = await staffApi.checkOutReservation(user.propertyId, id);
       toast.success("Guest successfully checked out");
+      setReservations(prev => prev.map(r => r.id === id ? { ...r, status: "COMPLETED" } : r));
       setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to check out");
@@ -85,14 +87,15 @@ export default function StaffBookingsClient() {
 
   const handleTakePaymentSubmit = async () => {
     if (!user?.propertyId || !paymentBookingId || !nicNumber) {
-      toast.error("Please enter guest NIC number");
+      toast.error("Please enter guest passkey");
       return;
     }
     
     try {
       setProcessingPayment(true);
-      await staffApi.takePayment(user.propertyId, paymentBookingId, nicNumber);
+      const updated = await staffApi.takePayment(user.propertyId, paymentBookingId, nicNumber);
       toast.success("Payment successful");
+      setReservations(prev => prev.map(r => r.id === paymentBookingId ? { ...r, isPaid: true } : r));
       setPaymentModalOpen(false);
       setPaymentBookingId(null);
       setNicNumber("");

@@ -31,8 +31,7 @@ export const NAV_ITEMS = [
   { label: "Bookings", href: "/staff/bookings", icon: CalendarCheck, permKey: "order_management" },
   { label: "Menu Management", href: "/staff/menu", icon: Package, permKey: "menu_management" },
   { label: "QR Management", href: "/staff/qr", icon: QrCode, permKey: "qr_management" },
-  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, permKey: "guest_messages" },
-  { label: "Auto-Reply Config", href: "/staff/auto-reply", icon: Settings, permKey: "guest_messages" },
+  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, permKey: "guest_messages", badgeKey: "unreadMessagesCount" },
   { label: "Reviews", href: "/staff/reviews", icon: Star, permKey: "reviews" },
 ];
 
@@ -64,9 +63,9 @@ export function NavItem({ item, isActive, badge, onClick }: {
         />
         <span className="flex-1">{item.label}</span>
         {badge ? (
-          <Badge variant="destructive" className="text-[11px] font-bold min-w-[20px] h-[20px] px-1">
+          <div className="bg-red-500 text-white rounded-full text-[11px] font-bold min-w-[20px] h-[20px] px-1.5 flex items-center justify-center ml-auto">
             {badge}
-          </Badge>
+          </div>
         ) : null}
       </Link>
     </li>
@@ -82,6 +81,7 @@ export default function StaffSidebar() {
 
   const pendingOrdersCount = useStaffOrdersStore((state) => state.getCountByStatus("placed"));
   const unreadBookingsCount = useStaffBookingsStore((state) => state.unreadCount);
+  const unreadMessagesCount = useStaffBookingsStore((state) => state.unreadMessagesCount);
 
   useEffect(() => {
     setMounted(true);
@@ -134,11 +134,14 @@ export default function StaffSidebar() {
               (item.href !== "/staff" && pathname.startsWith(item.href + "/"));
             
             let badge = null;
-            if (item.href === "/staff/orders" && pendingOrdersCount > 0) {
-              badge = pendingOrdersCount;
-            } else if (item.href === "/staff/bookings" && unreadBookingsCount > 0) {
-              badge = unreadBookingsCount;
+            if (item.href === "/staff/orders") {
+              badge = pendingOrdersCount > 0 ? pendingOrdersCount : null;
+            } else if (item.href === "/staff/bookings") {
+              badge = unreadBookingsCount > 0 ? unreadBookingsCount : null;
+            } else if (item.href === "/staff/messages") {
+              badge = unreadMessagesCount > 0 ? unreadMessagesCount : null;
             }
+            
             return (
               <NavItem
                 key={item.href}
