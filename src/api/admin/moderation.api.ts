@@ -64,6 +64,9 @@ export const ModerationApi = {
   getReviews: (params: { flagType?: string; search?: string; page?: number; size?: number; rating?: number }): Promise<PageResponse<FlaggedReview>> =>
     api.get('/admin/moderation/reviews', { params }).then((res) => res.data),
 
+  getReviewById: (id: number): Promise<FlaggedReview> =>
+    api.get(`/admin/moderation/reviews/${id}`).then((res) => res.data),
+
   approveReview: (id: number, adminNote?: string): Promise<FlaggedReview> =>
     api.put(`/admin/moderation/reviews/${id}/approve`, { adminNote }).then((res) => res.data),
 

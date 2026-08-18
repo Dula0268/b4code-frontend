@@ -28,8 +28,9 @@ export default function FinancePage() {
 
   return (
     <AdminPageLayout>
-      <div className="flex flex-col gap-6">
-        {/* ── Page Header ── */}
+      <div className="h-full overflow-y-auto px-4 lg:px-6 py-4 lg:py-6 flex flex-col gap-4 lg:gap-6">
+        <div className="max-w-7xl mx-auto w-full flex flex-col gap-4 lg:gap-6">
+          {/* ── Page Header ── */}
         <div className="flex items-start justify-between flex-wrap gap-4">
           {/* Title + subtitle */}
           <div>
@@ -96,7 +97,7 @@ export default function FinancePage() {
         {activeTab === "overview" && (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-4 gap-4 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 shrink-0 w-full">
               <div className="w-full"><RevenueCard /></div>
               <div className="w-full"><PlatformCommissionCard /></div>
               <div className="w-full"><TotalPayoutCard /></div>
@@ -104,7 +105,7 @@ export default function FinancePage() {
             </div>
 
             {/* Chart + Recent Transactions */}
-            <div className="flex gap-5 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 lg:gap-6 pb-10">
               <RevenueTrendChart />
               <RecentTransactions />
             </div>
@@ -114,6 +115,7 @@ export default function FinancePage() {
         {activeTab === "transaction" && <TransactionTable />}
 
         {activeTab === "refunds" && <RefundTable />}
+        </div>
       </div>
     </AdminPageLayout>
   );

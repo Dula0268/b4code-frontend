@@ -11,6 +11,7 @@ import {
   type ModerationTab,
 } from "@/store/admin/moderation/admin-moderation.store";
 import { MessageSquareWarning, Scale, History } from "lucide-react";
+import { ModerationApi } from "@/api/admin/moderation.api";
 
 // ─── Tab Config Base ────────────────────────────────────────────────────────
 const getTabs = (badgeCounts: { pendingReviews: number }) => [
@@ -36,11 +37,21 @@ function ModerationPageContent() {
 
   useEffect(() => {
     const reviewId = searchParams?.get("reviewId");
-    if (reviewId && reviews.length > 0 && !selectedReview) {
-      const found = reviews.find(r => r.id.toString() === reviewId);
-      if (found) {
-        setSelectedReview(found);
+    if (reviewId && !selectedReview) {
+      if (reviews.length > 0) {
+        const found = reviews.find(r => r.id.toString() === reviewId);
+        if (found) {
+          setSelectedReview(found);
+          return;
+        }
       }
+      
+      // If not found in current page of reviews, fetch directly
+      ModerationApi.getReviewById(Number(reviewId))
+        .then(res => {
+          if (res) setSelectedReview(res);
+        })
+        .catch(err => console.error("Failed to load specific review", err));
     }
   }, [searchParams, reviews, selectedReview, setSelectedReview]);
 
