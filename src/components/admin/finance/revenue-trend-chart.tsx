@@ -1,18 +1,20 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
 interface TooltipPayload {
-  payload: { month: string };
+  payload: { month: string; revenue: number; netRevenue: number };
   value: number;
 }
 
@@ -25,12 +27,17 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white px-4 py-3 rounded-lg border border-[#F0EBE7] shadow-md">
-        <p className="text-[13px] font-semibold text-[#1A1A1A] mb-1">
+        <p className="text-[13px] font-semibold text-[#1A1A1A] mb-2">
           {payload[0].payload.month}
         </p>
-        <p className="text-[13px] font-medium text-[#C05621]">
-          Revenue : LKR {payload[0].value.toLocaleString()}
-        </p>
+        <div className="flex flex-col gap-1">
+          <p className="text-[13px] font-medium text-[#C05621] m-0">
+            Gross: LKR {payload[0].payload.revenue?.toLocaleString() || '0'}
+          </p>
+          <p className="text-[13px] font-medium text-[#2D7D5C] m-0">
+            Net: LKR {payload[0].payload.netRevenue?.toLocaleString() || '0'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -42,87 +49,99 @@ import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 import { Loader2 } from "lucide-react";
 
 export default function RevenueTrendChart() {
-  const { revenueTrend, trendLoading } = useAdminFinanceStore();
+  const { revenueTrend, fetchRevenueTrend, trendLoading } = useAdminFinanceStore();
+  const [timeframe, setTimeframe] = useState<"today" | "7days" | "month">("month");
+
+  useEffect(() => {
+    fetchRevenueTrend(timeframe);
+  }, [timeframe, fetchRevenueTrend]);
 
   return (
-    <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-5 relative">
-      {trendLoading && (
-        <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
-          <Loader2 className="animate-spin text-[#C05621]" size={32} />
+    <div className="flex flex-col lg:flex-row gap-5 relative w-full h-full min-h-[400px]">
+      
+      {/* ── Gross Booking Value Chart Section ── */}
+      <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-4 relative overflow-hidden">
+        {trendLoading && (
+          <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+            <Loader2 className="animate-spin text-[#C05621]" size={32} />
+          </div>
+        )}
+        
+        {/* ── Header ── */}
+        <div className="flex justify-end gap-4 z-10">
+          <div className="flex flex-col items-end gap-3">
+            {/* Timeframe Toggle */}
+            <div className="flex items-center bg-[#F8F6F5] rounded-xl p-1 border border-[#E8DDD8]/50">
+              {(["today", "7days", "month"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTimeframe(t)}
+                  className={`px-4 py-1.5 text-[13px] font-bold rounded-lg transition-all duration-300 ${
+                    timeframe === t
+                      ? "bg-white text-[#C05621] shadow-sm border border-[#E8DDD8]/50"
+                      : "text-[#9E7B6A] hover:text-[#1A1A1A] hover:bg-white/50"
+                  }`}
+                >
+                  {t === "today" ? "Today" : t === "7days" ? "7 Days" : "Month"}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      )}
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-[18px] font-bold text-[#1A1A1A]">
-            Revenue Trend
-          </h2>
-          <p className="text-[13px] text-[#9E7B6A] mt-1">
-            Gross volume over time
-          </p>
-        </div>
-        <button 
-          suppressHydrationWarning
-          className="px-4 py-2 text-[14px] font-medium text-[#C05621] bg-[#FDEADE] rounded-lg hover:bg-[#FBD5C0] transition-colors"
-        >
-          Monthly
-        </button>
-      </div>
 
-      {/* ── Chart ── */}
-      <ResponsiveContainer width="100%" height={300}>
-        <AreaChart
-          data={revenueTrend}
-          margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
-        >
-          <defs>
-            <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#C05621" stopOpacity={0.15} />
-              <stop offset="100%" stopColor="#C05621" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid
-            strokeDasharray="0"
-            stroke="#F0EBE7"
-            vertical={false}
-            horizontalPoints={[0, 75, 150, 225, 300]}
-          />
-          <XAxis
-            dataKey="month"
-            stroke="transparent"
-            tick={{ fill: "#9E7B6A", fontSize: 13, fontWeight: 400 }}
-            tickLine={false}
-            axisLine={false}
-            dy={10}
-          />
-          <YAxis
-            stroke="transparent"
-            tick={{ fill: "#9E7B6A", fontSize: 13, fontWeight: 400 }}
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={(value: number) => `${(value / 1000).toFixed(0)}k`}
-            ticks={[0, 250000, 500000, 750000, 1000000]}
-          />
-          <Tooltip
-            content={<CustomTooltip />}
-            cursor={{ stroke: "#E8DDD8", strokeWidth: 1 }}
-          />
-          <Area
-            type="natural"
-            dataKey="revenue"
-            stroke="#C05621"
-            strokeWidth={3}
-            fill="url(#revenueGradient)"
-            dot={false}
-            activeDot={{
-              r: 6,
-              fill: "#C05621",
-              stroke: "#fff",
-              strokeWidth: 2,
-            }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+        <div className="flex-1 min-h-[300px] z-10 w-full mt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={revenueTrend}
+              margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#E8DDD8"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="month"
+                stroke="transparent"
+                tick={{ fill: "#9E7B6A", fontSize: 12, fontWeight: 400 }}
+                tickLine={false}
+                axisLine={false}
+                dy={8}
+              />
+              <YAxis
+                stroke="transparent"
+                tick={{ fill: "#9E7B6A", fontSize: 12, fontWeight: 400 }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value: number) => {
+                  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                  if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+                  return value.toString();
+                }}
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: "transparent" }}
+              />
+              <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#9E7B6A', right: 0 }} />
+              <Bar
+                name="Gross Booking Value"
+                dataKey="revenue"
+                fill="#C05621"
+                radius={[4, 4, 0, 0]}
+                animationDuration={1500}
+              />
+              <Bar
+                name="Net Revenue"
+                dataKey="netRevenue"
+                fill="#2D7D5C"
+                radius={[4, 4, 0, 0]}
+                animationDuration={1500}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
