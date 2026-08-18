@@ -37,7 +37,7 @@ interface FinanceState {
 
   // Actions
   fetchSummary: () => Promise<void>;
-  fetchRevenueTrend: () => Promise<void>;
+  fetchRevenueTrend: (timeframe?: string) => Promise<void>;
   fetchTransactions: (params: { search?: string; type?: string; page?: number; size?: number }) => Promise<void>;
   fetchRefunds: (params: { search?: string; status?: string; page?: number; size?: number }) => Promise<void>;
   fetchPayouts: (params: { search?: string; status?: string; page?: number; size?: number }) => Promise<void>;
@@ -82,14 +82,13 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
     }
   },
 
-  fetchRevenueTrend: async () => {
+  fetchRevenueTrend: async (timeframe: string = 'month') => {
     set({ trendLoading: true, error: null });
     try {
-      const data = await FinanceApi.getRevenueTrend();
+      const data = await FinanceApi.getRevenueTrend(timeframe);
       set({ revenueTrend: data, trendLoading: false });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to fetch revenue trend";
-      set({ error: message, trendLoading: false });
+    } catch (err: any) {
+      set({ error: err.message || 'Failed to fetch revenue trend', trendLoading: false });
     }
   },
 

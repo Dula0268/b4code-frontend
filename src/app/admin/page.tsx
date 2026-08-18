@@ -305,145 +305,138 @@ export default function PlatformAnalyticsPage() {
           </div>
         </div>
 
-        {/* ── Row 3: Stat Cards ── */}
-        <div className="grid grid-cols-4 gap-5">
+        {/* ── Row 3 & 4: KPI Stat Cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Avg Lead Time */}
-          <div className="bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Clock size={14} color="#9E7B6A" />
-              <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">
-                Avg. Lead Time
-              </p>
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[140px] group">
+            <div className="p-2.5 bg-[#F8F6F5] rounded-xl self-start group-hover:scale-110 transition-transform">
+              <Clock size={18} className="text-[#9E7B6A]" />
             </div>
-            <p className="text-[30px] font-bold text-[#1A1A1A] leading-none m-0">
-              {platformSummary?.avgLeadTimeDays ?? 0} <span className="text-[16px] font-normal text-[#9E7B6A]">days</span>
-            </p>
-            <div className="flex items-center gap-1">
-              {(platformSummary?.avgLeadTimeChange ?? 0) <= 0 ? (
-                <TrendingDown size={13} color="#27ae60" />
-              ) : (
-                <TrendingUp size={13} color="#EB5757" />
-              )}
-              <span className="text-[12px] text-[#6B7280]">
-                {platformSummary?.avgLeadTimeChange ?? 0} days from last week
-              </span>
-            </div>
-          </div>
-
-          {/* Cancellation Rate */}
-          <div className="bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <XCircle size={14} color="#9E7B6A" />
-              <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">
-                Cancellation Rate
+            <div className="mt-4">
+              <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">Avg. Lead Time</h3>
+              <p className="text-[24px] font-bold text-[#1A1A1A] tracking-tight m-0">
+                {platformSummary?.avgLeadTimeDays ?? 0} <span className="text-[14px] font-medium text-[#9E7B6A]">days</span>
               </p>
-            </div>
-            <p className="text-[30px] font-bold text-[#EB5757] leading-none m-0">
-              {platformSummary?.cancellationRate ?? 0}%
-            </p>
-            <div className="h-[2px] w-12 rounded bg-[#EB5757]" />
-          </div>
-
-          {/* Total Bookings */}
-          <div className="bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <CalendarCheck size={14} color="#9E7B6A" />
-              <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">
-                Total Bookings
-              </p>
-            </div>
-            <p className="text-[30px] font-bold text-[#1A1A1A] leading-none m-0">
-              {formatCurrency(platformSummary?.totalBookings)}
-            </p>
-          </div>
-
-          {/* Active Bookings */}
-          <div className="bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <CalendarCheck size={14} color="#9E7B6A" />
-              <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0">
-                Active Bookings
-              </p>
-            </div>
-            <p className="text-[30px] font-bold text-[#1A1A1A] leading-none m-0">
-              {formatCurrency(platformSummary?.activeBookings)}
-            </p>
-          </div>
-        </div>
-
-        {/* ── Row 4: Total Properties + New Listings + Registered Users + Platform Commission ── */}
-        <div className="grid grid-cols-4 gap-5">
-          {/* Total Properties */}
-          <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#F0EBE7] flex items-center justify-center flex-shrink-0">
-              <Building2 size={22} color="#1A1A1A" />
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0 mb-1">
-                Total Properties
-              </p>
-              <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0">
-                {formatCurrency(platformSummary?.totalProperties)}
-              </p>
-              <p className="text-[12px] text-[#9E7B6A] mt-0.5">
-                Properties on platform
-              </p>
-            </div>
-          </div>
-
-          {/* New Listings */}
-          <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FFF4ED] flex items-center justify-center flex-shrink-0">
-              <Building2 size={22} color="#C05621" />
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0 mb-1">
-                New Listings
-              </p>
-              <p className="text-[28px] font-bold text-[#C05621] leading-none m-0">
-                {formatCurrency(platformSummary?.newListingsThisWeek)}
-              </p>
-              <p className="text-[12px] text-[#9E7B6A] mt-0.5">
-                Onboarded this week
-              </p>
-            </div>
-          </div>
-
-          {/* Registered Users */}
-          <div className="flex-1 bg-white rounded-2xl border border-[#F0EBE7] p-5 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#F0EBE7] flex items-center justify-center flex-shrink-0">
-              <Users size={22} color="#1A1A1A" />
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold tracking-widest text-[#9E7B6A] uppercase m-0 mb-1">
-                Registered Users
-              </p>
-              <p className="text-[28px] font-bold text-[#1A1A1A] leading-none m-0">
-                {formatCurrency(platformSummary?.registeredUsers)}
-              </p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <TrendingUp size={12} color="#27ae60" />
-                <p className="text-[12px] text-[#27ae60] m-0">↑ {platformSummary?.registeredUsersGrowthPct ?? 0}% this month</p>
+              <div className="flex items-center gap-1 mt-1.5">
+                {(platformSummary?.avgLeadTimeChange ?? 0) <= 0 ? (
+                  <TrendingDown size={14} color="#27ae60" />
+                ) : (
+                  <TrendingUp size={14} color="#EB5757" />
+                )}
+                <span className="text-[12px] font-medium text-[#6B7280]">
+                  {platformSummary?.avgLeadTimeChange ?? 0} days from last week
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Platform Commission */}
-          <div className="flex-1 bg-[#2D4A3E] rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center gap-2">
-              <BadgeDollarSign size={16} color="rgba(255,255,255,0.7)" />
-              <p className="text-[11px] font-semibold tracking-widest text-[rgba(255,255,255,0.7)] uppercase m-0">
-                Platform Commission
+          {/* Cancellation Rate */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(235,87,87,0.1)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[140px] group relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-24 h-24 bg-[#EB5757] opacity-[0.04] blur-2xl rounded-full group-hover:scale-150 group-hover:opacity-[0.08] transition-all duration-700" />
+            <div className="p-2.5 bg-red-50 rounded-xl self-start group-hover:scale-110 transition-transform z-10">
+              <XCircle size={18} className="text-[#EB5757]" />
+            </div>
+            <div className="mt-4 z-10">
+              <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">Cancel Rate</h3>
+              <p className="text-[24px] font-bold text-[#EB5757] tracking-tight m-0">
+                {platformSummary?.cancellationRate ?? 0}%
+              </p>
+              <div className="h-[3px] w-full rounded-full bg-[#F0EBE7] overflow-hidden mt-2.5">
+                <div className="h-full rounded-full bg-[#EB5757]" style={{ width: `${platformSummary?.cancellationRate ?? 0}%` }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Total Bookings */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[140px] group">
+            <div className="p-2.5 bg-[#F8F6F5] rounded-xl self-start group-hover:scale-110 transition-transform">
+              <CalendarCheck size={18} className="text-[#9E7B6A]" />
+            </div>
+            <div className="mt-4">
+              <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">Total Bookings</h3>
+              <p className="text-[24px] font-bold text-[#1A1A1A] tracking-tight m-0">
+                {formatCurrency(platformSummary?.totalBookings)}
               </p>
             </div>
-            <p className="text-[28px] font-bold text-white leading-none m-0 mt-3">
-              LKR {formatCurrency(platformSummary?.platformCommission)}
-            </p>
-            <div className="mt-4 flex items-center gap-2 bg-[rgba(255,255,255,0.12)] rounded-lg px-2 py-1.5 w-fit">
-              <span className="w-3 h-3 rounded-full bg-[#4CAF50] flex items-center justify-center flex-shrink-0">
-                <span className="block w-1.5 h-1 border-b-2 border-r-2 border-white rotate-45 -translate-y-px" />
-              </span>
-              <p className="text-[11px] text-white m-0">Payout on 1st Oct</p>
+          </div>
+
+          {/* Active Bookings */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(45,125,92,0.1)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[140px] group">
+            <div className="p-2.5 bg-[#E6F5EF] rounded-xl self-start group-hover:scale-110 transition-transform">
+              <CalendarCheck size={18} className="text-[#2D7D5C]" />
+            </div>
+            <div className="mt-4">
+              <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">Active Bookings</h3>
+              <p className="text-[24px] font-bold text-[#1A1A1A] tracking-tight m-0">
+                {formatCurrency(platformSummary?.activeBookings)}
+              </p>
+            </div>
+          </div>
+
+          {/* Total Properties */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[140px] group">
+            <div className="p-2.5 bg-[#F8F6F5] rounded-xl self-start group-hover:scale-110 transition-transform">
+              <Building2 size={18} className="text-[#1A1A1A]" />
+            </div>
+            <div className="mt-4">
+              <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">Total Properties</h3>
+              <p className="text-[24px] font-bold text-[#1A1A1A] tracking-tight m-0">
+                {formatCurrency(platformSummary?.totalProperties)}
+              </p>
+              <p className="text-[12px] font-medium text-[#9E7B6A] mt-1 m-0">Properties on platform</p>
+            </div>
+          </div>
+
+          {/* New Listings */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.1)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[140px] group">
+            <div className="p-2.5 bg-[#FFF8F0] rounded-xl self-start group-hover:scale-110 transition-transform">
+              <Building2 size={18} className="text-[#C05621]" />
+            </div>
+            <div className="mt-4">
+              <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">New Listings</h3>
+              <p className="text-[24px] font-bold text-[#C05621] tracking-tight m-0">
+                {formatCurrency(platformSummary?.newListingsThisWeek)}
+              </p>
+              <p className="text-[12px] font-medium text-[#9E7B6A] mt-1 m-0">Onboarded this week</p>
+            </div>
+          </div>
+
+          {/* Registered Users */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[140px] group">
+            <div className="p-2.5 bg-[#F8F6F5] rounded-xl self-start group-hover:scale-110 transition-transform">
+              <Users size={18} className="text-[#1A1A1A]" />
+            </div>
+            <div className="mt-4">
+              <h3 className="text-[11px] font-bold tracking-[0.2em] text-[#9E7B6A] uppercase mb-1">Registered Users</h3>
+              <p className="text-[24px] font-bold text-[#1A1A1A] tracking-tight m-0">
+                {formatCurrency(platformSummary?.registeredUsers)}
+              </p>
+              <div className="flex items-center gap-1 mt-1.5">
+                <TrendingUp size={14} color="#27ae60" />
+                <span className="text-[12px] font-medium text-[#27ae60]">
+                  ↑ {platformSummary?.registeredUsersGrowthPct ?? 0}% this month
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Platform Commission (Hero Style) */}
+          <div className="bg-gradient-to-br from-[#1A5039] to-[#2D7D5C] rounded-3xl p-6 shadow-[0_8px_30px_rgb(45,125,92,0.3)] hover:shadow-[0_12px_40px_rgb(45,125,92,0.4)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[140px] group relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none" />
+            <BadgeDollarSign className="absolute -right-4 -bottom-4 h-24 w-24 text-white opacity-[0.05] group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-700" />
+            
+            <div className="p-2 bg-white/10 backdrop-blur-md rounded-xl self-start border border-white/20">
+              <BadgeDollarSign size={18} className="text-white" />
+            </div>
+            <div className="mt-4 z-10">
+              <h3 className="text-[11px] font-bold tracking-[0.2em] text-white/70 uppercase mb-1">Platform Commission</h3>
+              <p className="text-[24px] font-bold text-white tracking-tight m-0 truncate">
+                LKR {formatCurrency(platformSummary?.platformCommission)}
+              </p>
+              <div className="mt-2.5 flex items-center gap-2 bg-white/10 rounded-lg px-2 py-1.5 w-fit border border-white/10">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#4CAF50] shadow-[0_0_8px_rgba(76,175,80,0.8)]" />
+                <p className="text-[10px] font-semibold tracking-wider text-white uppercase m-0">Payout 1st Oct</p>
+              </div>
             </div>
           </div>
         </div>
