@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { CalendarCheck, CheckCircle2, LogOut, Search, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export default function StaffBookingsClient() {
   const { user } = useAuthStore();
@@ -16,6 +18,10 @@ export default function StaffBookingsClient() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentBookingId, setPaymentBookingId] = useState<number | null>(null);
+  const [nicNumber, setNicNumber] = useState("");
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -24,9 +30,12 @@ export default function StaffBookingsClient() {
         setLoading(true);
         const data = await staffApi.getReservations(user.propertyId, search || undefined);
         setReservations(data);
-      } catch (error) {
-        console.error("Failed to fetch reservations", error);
-        toast.error("Failed to load bookings");
+      } catch (error: any) {
+        // Extract message to avoid Next.js dev overlay from catching raw Error objects
+        const errMsg = error?.response?.data?.message || error?.message || "Unknown error";
+        console.error("Failed to fetch reservations:", errMsg);
+        toast.error("Failed to load bookings: " + errMsg);
+        setReservations([]);
       } finally {
         setLoading(false);
       }
@@ -59,6 +68,33 @@ export default function StaffBookingsClient() {
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to check out");
     }
+  };
+
+  const handleTakePaymentSubmit = async () => {
+    if (!user?.propertyId || !paymentBookingId || !nicNumber) {
+      toast.error("Please enter guest NIC number");
+      return;
+    }
+    
+    try {
+      setProcessingPayment(true);
+      await staffApi.takePayment(user.propertyId, paymentBookingId, nicNumber);
+      toast.success("Payment collected successfully");
+      setPaymentModalOpen(false);
+      setPaymentBookingId(null);
+      setNicNumber("");
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to process payment");
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+  
+  const openPaymentModal = (id: number) => {
+    setPaymentBookingId(id);
+    setNicNumber("");
+    setPaymentModalOpen(true);
   };
 
   const upcoming = reservations.filter(r => r.status === "CONFIRMED");
@@ -150,10 +186,16 @@ export default function StaffBookingsClient() {
                         key={booking.id} 
                         booking={booking} 
                         actionButton={
-                          <Button onClick={() => handleCheckIn(booking.id)} className="bg-[#1A1A1A] hover:bg-[#C05621] text-white">
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Check In
-                          </Button>
+                          booking.paymentMethod === 'PAY_AT_PROPERTY' && !booking.isPaid ? (
+                            <Button onClick={() => openPaymentModal(booking.id)} className="bg-red-600 hover:bg-red-700 text-white">
+                              Take Payment
+                            </Button>
+                          ) : (
+                            <Button onClick={() => handleCheckIn(booking.id)} className="bg-[#1A1A1A] hover:bg-[#C05621] text-white">
+                              <CheckCircle2 className="w-4 h-4 mr-2" />
+                              Check In
+                            </Button>
+                          )
                         } 
                       />
                     ))
@@ -199,6 +241,33 @@ export default function StaffBookingsClient() {
           </div>
         </Tabs>
       </div>
+
+      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Take Physical Payment</DialogTitle>
+            <DialogDescription>
+              Verify the guest's NIC and collect physical payment for the booking before checking them in.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="nic">Guest NIC Number <span className="text-red-500">*</span></Label>
+            <Input 
+              id="nic"
+              placeholder="e.g. 199012345678" 
+              value={nicNumber}
+              onChange={(e) => setNicNumber(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPaymentModalOpen(false)} disabled={processingPayment}>Cancel</Button>
+            <Button onClick={handleTakePaymentSubmit} className="bg-[#C05621] hover:bg-[#A04518] text-white" disabled={processingPayment || !nicNumber}>
+              {processingPayment ? "Processing..." : "Confirm Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

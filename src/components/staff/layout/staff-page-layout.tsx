@@ -8,6 +8,8 @@ import { useRBACStore } from "@/store/auth/rbac.store";
 import StaffGlobalOrdersProvider from "./staff-global-orders";
 interface StaffPageLayoutProps {
   children: React.ReactNode;
+  title?: string;
+  subtitle?: string;
 }
 
 function PermissionLoader() {

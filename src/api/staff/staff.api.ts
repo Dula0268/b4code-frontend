@@ -10,6 +10,7 @@ export interface OwnerReservationDto {
   checkOut: string;
   status: string;
   paymentMethod: string;
+  isPaid: boolean;
   totalAmount: number;
   confirmationCode: string;
 }
@@ -62,10 +63,16 @@ export const staffApi = {
     return response.data;
   },
 
-  checkOutReservation: async (propertyId: number, reservationId: number) => {
-    const response = await api.patch<OwnerReservationDto>(
-      `/staff/properties/${propertyId}/reservations/${reservationId}/check-out`
-    );
+  checkOutReservation: async (propertyId: number, id: number) => {
+    const response = await api.patch<OwnerReservationDto>(`/staff/properties/${propertyId}/reservations/${id}/check-out`);
     return response.data;
   },
+
+  takePayment: async (propertyId: number, id: number, nicNumber: string) => {
+    const response = await api.post<OwnerReservationDto>(
+      `/staff/properties/${propertyId}/reservations/${id}/pay`,
+      { nicNumber }
+    );
+    return response.data;
+  }
 };
