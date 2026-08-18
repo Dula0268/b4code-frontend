@@ -14,6 +14,7 @@ import {
   BarChart3,
   Star,
   Settings,
+  CalendarCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -25,6 +26,7 @@ export const NAV_ITEMS = [
   { label: "Dashboard", href: "/staff", icon: LayoutDashboard, permKey: null },
   { label: "Analytics", href: "/staff/analytics", icon: BarChart3, permKey: "analytics" },
   { label: "Order Management", href: "/staff/orders", icon: ClipboardList, permKey: "order_management" },
+  { label: "Bookings", href: "/staff/bookings", icon: CalendarCheck, permKey: "order_management" },
   { label: "Menu Management", href: "/staff/menu", icon: Package, permKey: "menu_management" },
   { label: "QR Management", href: "/staff/qr", icon: QrCode, permKey: "qr_management" },
   { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, permKey: "guest_messages" },

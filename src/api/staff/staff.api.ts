@@ -1,5 +1,19 @@
 import api from "@/lib/axios";
 
+export interface OwnerReservationDto {
+  id: number;
+  propertyName: string;
+  roomName: string;
+  guestName: string;
+  guestEmail: string;
+  checkIn: string;
+  checkOut: string;
+  status: string;
+  paymentMethod: string;
+  totalAmount: number;
+  confirmationCode: string;
+}
+
 export const staffApi = {
   getAllProperties: () =>
     api.get("/staff/all-properties").then((r) => r.data),
@@ -29,4 +43,29 @@ export const staffApi = {
     
   deleteAutoReplyRule: (propertyId: number | string, ruleId: number | string) =>
     api.delete(`/staff/properties/${propertyId}/auto-reply-rules/${ruleId}`).then((r) => r.data),
+  // Staff Reservations
+  getReservations: async (propertyId: number, search?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (status) params.append("status", status);
+    
+    const response = await api.get<OwnerReservationDto[]>(
+      `/staff/properties/${propertyId}/reservations?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  checkInReservation: async (propertyId: number, reservationId: number) => {
+    const response = await api.patch<OwnerReservationDto>(
+      `/staff/properties/${propertyId}/reservations/${reservationId}/check-in`
+    );
+    return response.data;
+  },
+
+  checkOutReservation: async (propertyId: number, reservationId: number) => {
+    const response = await api.patch<OwnerReservationDto>(
+      `/staff/properties/${propertyId}/reservations/${reservationId}/check-out`
+    );
+    return response.data;
+  },
 };

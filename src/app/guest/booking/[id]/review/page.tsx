@@ -153,6 +153,24 @@ export default function ReviewPage() {
     )
   }
 
+  if (booking.status !== "COMPLETED") {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50/50">
+        <GuestTopbar />
+        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
+          <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-6">
+            <AlertCircle className="h-10 w-10 text-amber-500" />
+          </div>
+          <h2 className="text-2xl font-semibold text-slate-900 mb-2">Review Not Available Yet</h2>
+          <p className="text-slate-500 mb-8">You can only leave a review after your stay has been completed. We hope you are enjoying your time!</p>
+          <Button onClick={() => router.push("/guest/booking")} className="w-full h-12 text-md bg-[#9a3300] hover:bg-[#7a2800] text-white">
+            Return to My Bookings
+          </Button>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa]">
       <GuestTopbar />

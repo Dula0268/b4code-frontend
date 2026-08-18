@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { guestApi } from "@/api/guest/guest.api";
-import { Send, RefreshCw } from "lucide-react";
+import { Send, RefreshCw, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Client } from "@stomp/stompjs";
@@ -16,6 +16,7 @@ interface Message {
 
 export default function GuestMessageClient({ bookingId }: { bookingId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [quickRequests, setQuickRequests] = useState<{id: number, keyword: string}[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -30,8 +31,12 @@ export default function GuestMessageClient({ bookingId }: { bookingId: string })
       ]);
       setMessages(data);
       setQuickRequests(qrData || []);
-    } catch (error) {
-      console.error("Failed to load messages or quick requests", error);
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setError("Messaging is only available while you are checked in at the property.");
+      } else {
+        console.error("Failed to load messages or quick requests", err);
+      }
     } finally {
       setLoading(false);
     }
@@ -104,6 +109,18 @@ export default function GuestMessageClient({ bookingId }: { bookingId: string })
     return (
       <div className="bg-white rounded-2xl border border-[#eadfce] p-6 min-h-[400px] flex items-center justify-center">
         <RefreshCw size={24} className="animate-spin text-[#9a3300]" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+          <MessageSquareText className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Messaging Locked</h3>
+        <p className="text-gray-500 max-w-sm">{error}</p>
       </div>
     );
   }
