@@ -2,16 +2,13 @@ import { ArrowUpRight, RotateCcw, ArrowDown, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
-type TransactionType = "payout" | "booking" | "refund" | "fee" | string;
-
 // ─── Icon helpers ─────────────────────────────────────────────────────────────
-function TransactionIcon({ type }: { type: TransactionType }) {
+function TransactionIcon({ type }: { type?: string }) {
   const base =
     "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0";
-  const normalizedType = type.toLowerCase();
+  const normalizedType = (type || "").toLowerCase();
 
-  if (normalizedType.includes("booking") || normalizedType === "payment") {
+  if (normalizedType.includes("booking") || normalizedType === "payment" || normalizedType === "completed" || normalizedType === "success") {
     return (
       <div className={`${base} bg-[#DCFCE7]`}>
         <ArrowUpRight size={16} className="text-[#16A34A]" />
@@ -38,16 +35,14 @@ export default function RecentTransactions() {
   const { transactions, fetchTransactions, transactionsLoading } = useAdminFinanceStore();
 
   useEffect(() => {
-    // Only fetch if we don't have enough data or specifically need recent ones
     fetchTransactions({ page: 0, size: 5 });
   }, [fetchTransactions]);
 
-  // We only show top 5 here
-  const recent = transactions.slice(0, 5);
+  const recent = (transactions || []).slice(0, 5);
 
   return (
     <div className="w-[300px] flex-shrink-0 bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm flex flex-col gap-4 relative">
-      {transactionsLoading && transactions.length === 0 && (
+      {transactionsLoading && recent.length === 0 && (
         <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10 rounded-2xl">
           <Loader2 className="animate-spin text-[#C05621]" size={32} />
         </div>
@@ -69,21 +64,30 @@ export default function RecentTransactions() {
            <li className="text-[13px] text-[#9E7B6A] text-center py-4">No recent transactions.</li>
         )}
         {recent.map((tx) => {
-          // Attempt to map backend response to UI
-          const title = tx.status === 'Refunded' ? 'Refund Processed' : `Booking #${tx.bookingId}`;
-          const isPositive = tx.status !== 'Refunded' && !tx.status.includes('Payout');
-          const amountDisplay = `${isPositive ? '+' : '-'}LKR ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+          const statusStr = (tx.status || "").toString();
+          const isRefund = statusStr.toLowerCase().includes("refund");
+          const isPayout = statusStr.toLowerCase().includes("payout");
+          
+          const title = isRefund
+            ? "Refund Processed" 
+            : tx.bookingId 
+              ? `Booking #${tx.bookingId}` 
+              : `Transaction #${tx.id}`;
+
+          const isPositive = !isRefund && !isPayout;
+          const amountVal = tx.amount ?? 0;
+          const amountDisplay = `${isPositive ? "+" : "-"}LKR ${amountVal.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
           
           return (
             <li key={tx.id} className="flex items-center gap-3">
-              <TransactionIcon type={tx.status} />
+              <TransactionIcon type={statusStr} />
 
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-[#1A1A1A] truncate">
                   {title}
                 </p>
                 <p className="text-[11px] text-[#9E7B6A]">
-                  {new Date(tx.date).toLocaleDateString()}
+                  {tx.date ? new Date(tx.date).toLocaleDateString() : "-"}
                 </p>
               </div>
 

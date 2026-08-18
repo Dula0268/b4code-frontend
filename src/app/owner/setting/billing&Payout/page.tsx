@@ -33,12 +33,21 @@ import { paymentApi } from "@/api/payment/payment.api";
  */
 export default function BillingPayoutPage() {
     const { user } = useAuthStore();
-    const ownerId = user?.userId ?? 1;
+    const ownerId = user?.userId;
 
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
     const [invoices, setInvoices] = useState<any[]>([]);
+    const [requesting, setRequesting] = useState(false);
+    const [hasActivePayout, setHasActivePayout] = useState(false);
+    const [requestSuccess, setRequestSuccess] = useState<string | null>(null);
+    const [requestError, setRequestError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (!ownerId) {
+            setBankAccounts([]);
+            return;
+        }
+
         ownerSettingsApi.getBankAccounts(ownerId)
             .then((data: any[]) => setBankAccounts(data || []))
             .catch(() => {});
@@ -51,6 +60,28 @@ export default function BillingPayoutPage() {
     }, []);
 
     const primaryAccount = bankAccounts.find((a) => a.isPrimary) ?? bankAccounts[0] ?? null;
+    const canRequestPayout = Boolean(ownerId) && Boolean(primaryAccount) && !hasActivePayout && !requesting;
+
+    const handleRequestPayout = async () => {
+        if (!ownerId || !primaryAccount || hasActivePayout) return;
+
+        setRequesting(true);
+        setRequestError(null);
+        setRequestSuccess(null);
+        try {
+            await ownerSettingsApi.requestPayout(ownerId);
+            setHasActivePayout(true);
+            setRequestSuccess("Payout request submitted successfully! Pending Admin approval.");
+        } catch (err: any) {
+            const message = err?.response?.data?.message || err?.message || "Failed to submit payout request.";
+            setRequestError(message);
+            if (message.toLowerCase().includes("already pending") || message.toLowerCase().includes("already processed") || message.toLowerCase().includes("pending or has already been processed")) {
+                setHasActivePayout(true);
+            }
+        } finally {
+            setRequesting(false);
+        }
+    };
 
     const navItems = [
         { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
@@ -150,12 +181,43 @@ export default function BillingPayoutPage() {
                                         <h3 className="text-[18px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Billing & Payouts</h3>
                                         <p className="text-[12px] text-[#828282] m-0">Manage bank details and view invoices.</p>
                                     </div>
-                                    <a href="/owner/setting/accountSetting/addNewBankAccount" className="no-underline">
-                                        <button className="bg-white border border-[#e0e0e0] text-[#1d1d1d] text-[12px] font-bold py-1.5 px-3 rounded-lg cursor-pointer hover:bg-[#f5f5f5] transition-colors whitespace-nowrap">
-                                            Add New Bank Account
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleRequestPayout}
+                                            disabled={!canRequestPayout}
+                                            className={`text-[12px] font-bold py-1.5 px-3.5 rounded-lg cursor-pointer transition-colors whitespace-nowrap ${
+                                                !canRequestPayout
+                                                    ? "bg-[#e0e0e0] text-[#828282] cursor-not-allowed"
+                                                    : "bg-[#953002] text-white hover:bg-[#b03a02]"
+                                            }`}
+                                        >
+                                            {requesting ? "Submitting..." : hasActivePayout ? "Payout In Progress" : "Request Payout"}
                                         </button>
-                                    </a>
+                                        <a href="/owner/setting/accountSetting/addNewBankAccount" className="no-underline">
+                                            <button className="bg-white border border-[#e0e0e0] text-[#1d1d1d] text-[12px] font-bold py-1.5 px-3 rounded-lg cursor-pointer hover:bg-[#f5f5f5] transition-colors whitespace-nowrap">
+                                                Add New Bank Account
+                                            </button>
+                                        </a>
+                                    </div>
                                 </div>
+
+                                {hasActivePayout && !requestSuccess && (
+                                    <div className="mb-4 text-[12px] font-semibold text-[#b45309] bg-[#fff7ed] border border-[#fed7aa] py-2 px-3 rounded-lg">
+                                        A payout request is already pending or has already been processed. Please wait before requesting another payout.
+                                    </div>
+                                )}
+
+                                {requestSuccess && (
+                                    <div className="mb-4 text-[12px] font-semibold text-[#16a34a] bg-[#f0fdf4] border border-[#bbf7d0] py-2 px-3 rounded-lg">
+                                        {requestSuccess}
+                                    </div>
+                                )}
+
+                                {requestError && (
+                                    <div className="mb-4 text-[12px] font-semibold text-[#dc2626] bg-[#fef2f2] border border-[#fecaca] py-2 px-3 rounded-lg">
+                                        {requestError}
+                                    </div>
+                                )}
 
                                 {primaryAccount ? (
                                     <div className="flex justify-between items-center bg-[#fef5ef] rounded-[10px] py-3.5 px-4.5">

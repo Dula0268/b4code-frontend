@@ -29,7 +29,7 @@ export default function GuestTopbar() {
 
   const isGuestContextPage = pathname.startsWith("/guest");
   const isGuestUser = user?.role?.toLowerCase() === "guest";
-  const guestUser = isGuestContextPage ? (isGuestUser ? user : null) : user;
+  const guestUser = isGuestUser ? user : null;
 
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
