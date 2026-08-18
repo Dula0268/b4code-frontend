@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   UtensilsCrossed,
   QrCode,
-  MessageSquare,
   ArrowRight,
   ClipboardList,
   Clock,
@@ -15,14 +14,102 @@ import {
   Moon,
   ChevronRight,
   AlertCircle,
-  BellRing
+  BellRing,
+  MessageSquare
 } from "lucide-react";
 import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { usePermission } from "@/hooks/use-permission";
-import { formatDistanceToNow } from "date-fns";
+
+function useStats() {
+  const queueCount = useStaffOrdersStore((s) => s.getCountByStatus("placed"));
+  const acceptedCount = useStaffOrdersStore((s) => s.getCountByStatus("accepted"));
+  const inProgressCount = useStaffOrdersStore((s) => s.getCountByStatus("in-progress"));
+  const inProgress = acceptedCount + inProgressCount;
+  const deliveredCount = useStaffOrdersStore((s) => s.getCountByStatus("delivered"));
+
+  return [
+    {
+      label: "Orders in Queue",
+      value: String(queueCount),
+      icon: ClipboardList,
+      iconBg: "bg-[rgba(149,48,2,0.08)]",
+      iconColor: "text-[var(--brand-primary)]",
+      trend: queueCount > 0 ? "Action required" : "Queue clear",
+      trendIcon: TrendingUp,
+      trendColor: queueCount > 0 ? "text-[var(--brand-primary)]" : "text-[var(--gray-3)]",
+    },
+    {
+      label: "In-Progress",
+      value: String(inProgress),
+      icon: Hourglass,
+      iconBg: "bg-[rgba(255,180,1,0.08)]",
+      iconColor: "text-[var(--brand-secondary)]",
+      trend: inProgress > 0 ? "Actively prepping" : "Kitchen idle",
+      trendIcon: Hourglass,
+      trendColor: "text-[var(--brand-secondary)]",
+    },
+    {
+      label: "Delivered Today",
+      value: String(deliveredCount),
+      icon: CheckCheck,
+      iconBg: "bg-[rgba(39,174,96,0.08)]",
+      iconColor: "text-[var(--state-success)]",
+      trend: "Daily total",
+      trendIcon: CheckCheck,
+      trendColor: "text-[var(--state-success)]",
+    },
+    {
+      label: "Avg Prep Time",
+      value: "—",
+      icon: Timer,
+      iconBg: "bg-[rgba(47,128,237,0.08)]",
+      iconColor: "text-[var(--state-info)]",
+      trend: "Tracking active",
+      trendIcon: ArrowDown,
+      trendColor: "text-[var(--state-info)]",
+    },
+  ];
+}
+
+function useManagementCards() {
+  const placedCount = useStaffOrdersStore((s) => s.getCountByStatus("placed"));
+  const menus = useStaffMenuStore((s) => s.menus);
+  const outOfStockCount = menus.reduce((acc: number, menu: any) => acc + menu.items.filter((i: any) => i.status === "draft").length, 0);
+  const activeQRs = useStaffQRStore((s) => s.qrs.filter(q => q.status === "active").length);
+
+  return [
+    {
+      title: "Order Management",
+      highlight: placedCount > 0 ? (placedCount === 1 ? "1 New Order" : `${placedCount} New Orders`) : "No New Orders",
+      description: "Manage incoming guest orders and update prep status.",
+      buttonLabel: "Manage Orders",
+      buttonIcon: ArrowRight,
+      href: "/staff/orders",
+      icon: ClipboardList,
+    },
+    {
+      title: "Menu Management",
+      highlight: outOfStockCount > 0 ? (outOfStockCount === 1 ? "1 Item Unavailable" : `${outOfStockCount} Items Unavailable`) : "All Items Available",
+      description: "Update menu availability and manage property dishes.",
+      buttonLabel: "Update Menu",
+      buttonIcon: UtensilsCrossed,
+      href: "/staff/menu",
+      icon: UtensilsCrossed,
+    },
+    {
+      title: "QR Management",
+      highlight: activeQRs === 1 ? "1 Active QR Code" : `${activeQRs} Active QR Codes`,
+      description: "Monitor and manage QR code locations for guest ordering.",
+      buttonLabel: "View QR Codes",
+      buttonIcon: Eye,
+      href: "/staff/qr",
+      icon: QrCode,
+    },
+  ];
+}
 
 export default function StaffDashboard() {
   const { user } = useAuthStore();
@@ -58,9 +145,16 @@ export default function StaffDashboard() {
   const canOrders = usePermission("order_management");
   const canMenu = usePermission("menu_management");
   const canQR = usePermission("qr_management");
-  const canMessages = usePermission("guest_messages");
 
-  // Fetch all dashboard data
+  const permMap: Record<string, boolean> = {
+    "/staff/orders": canOrders,
+    "/staff/menu": canMenu,
+    "/staff/qr": canQR,
+  };
+
+  const visibleCards = managementCards.filter((c) => permMap[c.href] !== false);
+
+  // Fetch all dashboard data when component mounts
   useEffect(() => {
     const propertyId = user?.propertyId || (typeof window !== 'undefined' ? localStorage.getItem("selected_property_id") : null);
     if (propertyId) {

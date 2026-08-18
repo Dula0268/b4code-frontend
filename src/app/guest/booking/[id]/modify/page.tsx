@@ -16,7 +16,7 @@ export default async function ModifyBookingPage({ params }: { params: Promise<{ 
       <GuestTopbar />
       
       {/* Header Banner */}
-      <div className="bg-[#1e293b] text-white pt-24 pb-12 px-4 sm:px-6">
+      <div className="bg-[#9a3300] text-white pt-24 pb-12 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-white/80 mb-2">
