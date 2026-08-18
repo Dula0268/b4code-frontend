@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import AdminPageLayout from "@/components/admin/admin-page-layout";
 import ReviewsQueue from "@/components/admin/moderation/reports-table";
-import DisputesHub from "@/components/admin/moderation/disputes-hub";
 import HistoryTab from "@/components/admin/moderation/history-tab";
 import FlaggedReviewDetail from "@/components/admin/moderation/action-panel";
 import {
@@ -13,31 +13,36 @@ import {
 import { MessageSquareWarning, Scale, History } from "lucide-react";
 
 // ─── Tab Config Base ────────────────────────────────────────────────────────
-const getTabs = (badgeCounts: { pendingReviews: number; openDisputes: number }) => [
+const getTabs = (badgeCounts: { pendingReviews: number }) => [
   {
     key: "reviews" as ModerationTab,
     label: "Reviews Queue",
     badge: badgeCounts.pendingReviews > 0 ? badgeCounts.pendingReviews : undefined,
     icon: MessageSquareWarning,
   },
-  { 
-    key: "disputes" as ModerationTab,
-    label: "Disputes", 
-    badge: badgeCounts.openDisputes > 0 ? badgeCounts.openDisputes : undefined, 
-    icon: Scale 
-  },
   { key: "history" as ModerationTab, label: "History", icon: History },
 ];
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-export default function ModerationPage() {
-  const { activeTab, setActiveTab, selectedReview, badgeCounts, fetchBadgeCounts } = useAdminModerationStore();
+// ─── Main Page Content ─────────────────────────────────────────────────────────
+function ModerationPageContent() {
+  const { activeTab, setActiveTab, selectedReview, badgeCounts, fetchBadgeCounts, reviews, setSelectedReview } = useAdminModerationStore();
   const [isMounted, setIsMounted] = useState(false);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setIsMounted(true);
     fetchBadgeCounts();
   }, [fetchBadgeCounts]);
+
+  useEffect(() => {
+    const reviewId = searchParams?.get("reviewId");
+    if (reviewId && reviews.length > 0 && !selectedReview) {
+      const found = reviews.find(r => r.id.toString() === reviewId);
+      if (found) {
+        setSelectedReview(found);
+      }
+    }
+  }, [searchParams, reviews, selectedReview, setSelectedReview]);
 
   if (!isMounted) return null; // Prevent hydration mismatch on tabs
 
@@ -47,13 +52,26 @@ export default function ModerationPage() {
     <AdminPageLayout>
       <div className="flex flex-col gap-6">
         {/* ── Page Header ── */}
-        <div>
-          <h1 className="text-[26px] font-bold text-[#1A1A1A] leading-tight m-0">
-            Moderation Dashboard
-          </h1>
-          <p className="text-[13px] text-[#9E7B6A] mt-1 mb-0">
-            Manage pending guest reviews and resolve open property disputes.
-          </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-[26px] font-bold text-[#1A1A1A] leading-tight m-0">
+              Moderation Dashboard
+            </h1>
+            <p className="text-[13px] text-[#9E7B6A] mt-1 mb-0">
+              Manage pending guest reviews.
+            </p>
+          </div>
+          
+          {/* ── Go to Disputes Link ── */}
+          <a href="/admin/moderation/disputes" className="flex items-center gap-2 bg-[#C05621] hover:bg-[#A84A1C] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors no-underline">
+            <Scale size={16} />
+            Resolve Disputes
+            {badgeCounts.openDisputes > 0 && (
+              <span className="bg-white text-[#C05621] px-1.5 py-0.5 rounded-full text-[10px] font-bold">
+                {badgeCounts.openDisputes}
+              </span>
+            )}
+          </a>
         </div>
 
         {/* ── Tab Bar ── */}
@@ -95,11 +113,18 @@ export default function ModerationPage() {
         ) : (
           <>
             {activeTab === "reviews" && <ReviewsQueue />}
-            {activeTab === "disputes" && <DisputesHub />}
             {activeTab === "history" && <HistoryTab />}
           </>
         )}
       </div>
     </AdminPageLayout>
+  );
+}
+
+export default function ModerationPage() {
+  return (
+    <Suspense fallback={null}>
+      <ModerationPageContent />
+    </Suspense>
   );
 }
