@@ -44,8 +44,8 @@ export default function StaffGlobalOrdersProvider() {
       const newOrders = placedOrders.slice(0, newOrdersCount);
 
       newOrders.forEach((order) => {
-        toast.success(`New Order: ${order.table || "Room"}`, {
-          duration: 2000,
+        toast.success(`New order received from ${order.table || "Room"}`, {
+          duration: 5000,
           id: `new-order-${order.id}`
         });
       });
