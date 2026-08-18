@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useOrderStore } from "@/store/guest/ordering/order.store";
+import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 
 /* ─── Helpers ─── */
 
@@ -15,6 +16,7 @@ function formatLkr(n: number) {
 export default function ConfirmationClient() {
   const order = useOrderStore((s) => s.currentOrder);
   const syncCurrentOrder = useOrderStore((s) => s.syncCurrentOrder);
+  const qrContext = useOrderContextStore((s) => s.qrContext);
   const [simulated, setSimulated] = React.useState(false);
 
   React.useEffect(() => {
@@ -50,20 +52,43 @@ export default function ConfirmationClient() {
 
   const orderNumber = order?.id ?? "#ORD-0000";
   const totalAmount = order?.total ?? 0;
-  const location = order?.location ?? "";
+  
+  const locationStr = order?.location ?? "";
+  const cleanLoc = locationStr.replace(/^(RM|ROOM|TB|TABLE)-?/i, "");
+  
+  let formattedLocation = locationStr;
+  if (qrContext?.type) {
+    const t = qrContext.type.toLowerCase();
+    if (t === "room" || t === "table") {
+      formattedLocation = `${t.charAt(0).toUpperCase() + t.slice(1)} ${cleanLoc}`;
+    } else {
+      formattedLocation = cleanLoc;
+    }
+  } else {
+    if (/^(RM|ROOM)-?/i.test(locationStr)) {
+      formattedLocation = `Room ${cleanLoc}`;
+    } else if (/^(TB|TABLE)-?/i.test(locationStr)) {
+      formattedLocation = `Table ${cleanLoc}`;
+    } else if (!isNaN(Number(locationStr)) && locationStr !== "") {
+      formattedLocation = `Room ${locationStr}`; // fallback for numbers
+    }
+  }
 
   return (
-    <div className="min-h-[calc(100vh-72px)] flex items-center justify-center px-4 py-6 bg-[#fafaf9]">
-      <div className="w-full max-w-[480px] text-center space-y-5">
+    <div className="min-h-[calc(100vh-72px)] flex items-center justify-center px-4 py-8 bg-gray-50/50">
+      <div className="w-full max-w-[480px] bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] rounded-3xl p-8 text-center space-y-8 relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-green-50/50 to-transparent pointer-events-none" />
+
         {/* ── Green checkmark ── */}
-        <div className="flex justify-center">
-          <div className="w-[56px] h-[56px] rounded-full bg-[#e8f5e9] flex items-center justify-center">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" fill="#27AE60" />
+        <div className="flex justify-center relative">
+          <div className="absolute inset-0 bg-green-400/20 blur-xl rounded-full scale-150 animate-pulse" />
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-green-500 to-green-400 flex items-center justify-center shadow-lg shadow-green-500/30 relative z-10 border-4 border-white">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-white">
               <path
-                d="M8 12l3 3 5-5"
-                stroke="white"
-                strokeWidth="2"
+                d="M5 13l4 4L19 7"
+                stroke="currentColor"
+                strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -72,55 +97,55 @@ export default function ConfirmationClient() {
         </div>
 
         {/* ── Heading + description ── */}
-        <div className="space-y-2">
-          <h1 className="text-[22px] font-bold text-[#1D1D1D] leading-[28px]">
+        <div className="space-y-3 relative z-10">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
             Order Confirmed!
           </h1>
-          <p className="text-[14px] text-[#828282] leading-[20px] max-w-[380px] mx-auto">
+          <p className="text-gray-500 max-w-[320px] mx-auto text-[15px] leading-relaxed">
             Thank you for your order. We are preparing your meal and will deliver it shortly to{" "}
-            <span className="font-semibold text-[#333333]">{location}</span>.
+            <span className="font-semibold text-gray-900 bg-gray-100/80 px-2 py-0.5 rounded-md">{formattedLocation}</span>.
           </p>
         </div>
 
         {/* ── Order details card ── */}
-        <div className="bg-white border border-[#E0E0E0] rounded-xl p-4 space-y-3 text-left">
+        <div className="bg-white/60 backdrop-blur-md border border-gray-100/80 rounded-2xl p-5 space-y-4 text-left shadow-sm relative z-10">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[12px] text-[#828282] uppercase tracking-wider leading-[16px]">
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">
                 Order Number
               </p>
-              <p className="text-[16px] font-semibold text-[#1D1D1D] leading-[24px]">
+              <p className="text-[17px] font-semibold text-gray-900">
                 {orderNumber}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[12px] text-[#828282] uppercase tracking-wider leading-[16px]">
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">
                 Status
               </p>
-              <span className="inline-flex items-center gap-1.5 mt-1 px-3 py-1 rounded-full bg-[#e8f5e9] text-[12px] font-medium text-[#27AE60] leading-[16px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#27AE60]" />
-                Placed
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-xs font-medium text-green-600 border border-green-100/50 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                Preparing
               </span>
             </div>
           </div>
-          <div className="border-t border-dashed border-[#E0E0E0]" />
+          <div className="border-t border-dashed border-gray-200/80" />
           <div className="flex items-center justify-between">
-            <p className="text-[14px] text-[#828282] leading-[20px]">Total Amount</p>
-            <p className="text-[16px] font-bold text-[#973102] leading-[24px]">
+            <p className="text-gray-500 font-medium">Total Amount</p>
+            <p className="text-xl font-bold text-[var(--brand-primary)]">
               {formatLkr(totalAmount)}
             </p>
           </div>
         </div>
 
         {/* ── Actions ── */}
-        <div className="space-y-2">
+        <div className="space-y-3 relative z-10">
           {/* Track Order - Primary */}
           <Link
             href="/guest/order/track"
-            className="w-full flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] transition"
+            className="w-full flex items-center justify-center gap-2 bg-[var(--brand-primary)] rounded-2xl px-6 py-4 shadow-lg shadow-orange-500/20 hover:bg-[#C05621] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group"
           >
-            <span className="text-[16px] font-semibold text-white leading-[24px]">Track Order</span>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="ml-1">
+            <span className="text-base font-semibold text-white">Track Order</span>
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="ml-1 transform group-hover:translate-x-1 transition-transform">
               <path
                 d="M3 8H13M13 8L9 4M13 8L9 12"
                 stroke="white"
@@ -134,52 +159,50 @@ export default function ConfirmationClient() {
           {/* View Receipt - Outlined */}
           <Link
             href="/guest/order/receipt"
-            className="w-full flex items-center justify-center gap-2 border border-[#E0E0E0] bg-white rounded-lg px-6 py-3 hover:bg-[#f8f6f5] transition"
+            className="w-full flex items-center justify-center gap-2 bg-white/80 border border-gray-200/80 rounded-2xl px-6 py-4 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 text-gray-700 font-medium group"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-400 group-hover:text-gray-600 transition-colors">
               <path
                 d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"
-                stroke="#333333"
-                strokeWidth="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
               <path
                 d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
-                stroke="#333333"
-                strokeWidth="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="text-[16px] font-medium text-[#333333] leading-[24px]">
-              View Receipt
-            </span>
+            <span>View Receipt</span>
           </Link>
         </div>
 
         {/* ── Secondary links ── */}
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-4 pt-2 relative z-10">
           <Link
             href="/guest/order/help"
-            className="inline-flex items-center gap-1 text-[14px] font-medium text-[#828282] hover:text-[#973102] transition"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-[var(--brand-primary)] transition-colors group"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M3 18v-6a9 9 0 1 1 18 0v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5ZM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="group-hover:scale-110 transition-transform">
+              <path d="M3 18v-6a9 9 0 1 1 18 0v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5ZM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Need Help?
           </Link>
-          <span className="text-[#E0E0E0]">|</span>
+          <span className="text-gray-200">|</span>
           <Link
             href="/guest/order/menu"
-            className="inline-flex items-center gap-1 text-[14px] font-medium text-[#828282] hover:text-[#973102] transition"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-[var(--brand-primary)] transition-colors group"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="group-hover:-translate-x-0.5 transition-transform">
               <path
                 d="M13 8H3M3 8L7 4M3 8L7 12"
                 stroke="currentColor"
-                strokeWidth="1.5"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -191,3 +214,4 @@ export default function ConfirmationClient() {
     </div>
   );
 }
+

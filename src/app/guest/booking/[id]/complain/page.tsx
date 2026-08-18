@@ -148,7 +148,7 @@ export default function ComplainPage() {
       <GuestTopbar />
       
       {/* Header Banner */}
-      <div className="bg-[#1e293b] text-white py-12 px-4 sm:px-6">
+      <div className="bg-[#9a3300] text-white py-12 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-white/80 mb-2">
@@ -341,7 +341,7 @@ export default function ComplainPage() {
                 </div>
 
                 <div className="pt-4 mt-8 border-t border-[#e8ddcf]">
-                  <Button type="submit" size="lg" className="w-full sm:w-auto sm:min-w-[200px] h-12 text-base font-semibold shadow-md bg-slate-900 hover:bg-slate-800 text-yellow-400" disabled={submitting}>
+                  <Button type="submit" size="lg" className="w-full sm:w-auto sm:min-w-[200px] h-12 text-base font-semibold shadow-md bg-[#9a3300] hover:bg-[#7a2800] text-white" disabled={submitting}>
                     {submitting ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />

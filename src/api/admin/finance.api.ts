@@ -95,8 +95,8 @@ export const FinanceApi = {
   getSummary: (): Promise<FinanceSummaryDto> =>
     api.get('/admin/finance/summary').then((res) => res.data),
 
-  getRevenueTrend: (): Promise<RevenueTrendPointDto[]> =>
-    api.get('/admin/finance/revenue-trend').then((res) => res.data),
+  getRevenueTrend: (timeframe: string = 'month'): Promise<RevenueTrendPointDto[]> =>
+    api.get('/admin/finance/revenue-trend', { params: { timeframe } }).then((res) => res.data),
 
   getAllTransactions: (params: { search?: string; type?: string; from?: string; to?: string; page?: number; size?: number }): Promise<TransactionPageDto> =>
     api.get('/admin/finance/transactions', { params }).then((res) => res.data),

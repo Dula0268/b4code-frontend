@@ -632,17 +632,15 @@ export default function PropertyClient({ property }: { property: any }) {
                                                 </label>
                                                 {paymentMethod === 'property' && (
                                                     <div className="px-4 py-3 bg-[#f8f8f8] rounded-xl border border-[#e8e8e8] animate-in fade-in slide-in-from-top-2">
-                                                        <label className="text-[13px] font-semibold text-[#1d1d1d] block mb-1.5">National Identity Card (NIC) <span className="text-[#e53935]">*</span></label>
+                                                        <label className="text-[13px] font-semibold text-[#1d1d1d] block mb-0.5">Secret Passkey <span className="text-[#e53935]">*</span></label>
+                                                        <p className="text-[11px] text-[#828282] mb-1.5">You can enter any number or text as your passkey. You will use this to verify your booking at the property.</p>
                                                         <input 
                                                             type="text" 
                                                             value={nicNumber}
                                                             onChange={(e) => setNicNumber(e.target.value)}
-                                                            placeholder="e.g. 199012345678 or 901234567V" 
-                                                            className={`w-full border ${nicNumber.trim() && !/^([0-9]{9}[vVxX]|[0-9]{12})$/.test(nicNumber.trim()) ? 'border-red-400' : 'border-[#d8d8d8]'} rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)] bg-white`}
+                                                            placeholder="e.g. 12345, John123, or any custom passkey" 
+                                                            className="w-full border border-[#d8d8d8] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)] bg-white"
                                                         />
-                                                        {nicNumber.trim() && !/^([0-9]{9}[vVxX]|[0-9]{12})$/.test(nicNumber.trim()) && (
-                                                            <p className="text-red-500 text-[11px] mt-1 font-medium">Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).</p>
-                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -650,7 +648,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                     </div>
 
                                     <button
-                                        disabled={isSubmitting || (paymentMethod === 'property' && (!nicNumber.trim() || !/^([0-9]{9}[vVxX]|[0-9]{12})$/.test(nicNumber.trim())))}
+                                        disabled={isSubmitting || (paymentMethod === 'property' && !nicNumber.trim())}
                                         onClick={async () => {
                                             setIsSubmitting(true);
                                             try {

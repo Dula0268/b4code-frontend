@@ -50,7 +50,7 @@ export default function GuestTopbar() {
           newNotifs.forEach(notif => {
             toast.info(notif.title, {
               description: notif.message,
-              position: "bottom-right",
+              position: "top-right",
               duration: 5000,
             });
           });
@@ -186,9 +186,9 @@ export default function GuestTopbar() {
                   onClick={() => setNotificationsOpen(prev => !prev)}
                   className="relative p-2 text-[#4f4f4f] hover:text-[#1d1d1d] hover:bg-[#f5f5f5] rounded-full transition-colors"
                 >
-                  <Bell size={20} />
+                  <Bell size={24} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 flex items-center justify-center min-w-[16px] h-[16px] bg-red-500 rounded-full border-2 border-white text-[9px] font-bold text-white px-1">
+                    <span className="absolute top-0 right-0 flex items-center justify-center min-w-[20px] h-[20px] bg-[#FFC107] rounded-full border-2 border-white text-[11px] font-bold text-black px-1">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}

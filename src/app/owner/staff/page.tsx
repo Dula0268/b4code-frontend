@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, X, User, Building, Clock, ArrowLeft, Phone, Briefcase, Calendar } from "lucide-react";
 import { ownerApi } from "@/api/owner/owner.api";
 import { Button } from "@/components/ui/button";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 
 interface StaffMember {
     id: number;
@@ -23,6 +24,7 @@ export default function OwnerStaffPage() {
     const [pendingStaff, setPendingStaff] = useState<StaffMember[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [rejectingId, setRejectingId] = useState<number | null>(null);
 
     const fetchStaff = async () => {
         setLoading(true);
@@ -50,14 +52,20 @@ export default function OwnerStaffPage() {
         }
     };
 
-    const handleReject = async (id: number) => {
-        if (!confirm("Are you sure you want to reject this staff registration?")) return;
+    const confirmReject = async () => {
+        if (!rejectingId) return;
         try {
-            await ownerApi.rejectStaff(id);
-            setPendingStaff(prev => prev.filter(s => s.id !== id));
+            await ownerApi.rejectStaff(rejectingId);
+            setPendingStaff(prev => prev.filter(s => s.id !== rejectingId));
         } catch (err) {
             alert(err instanceof Error ? err.message : "Rejection failed");
+        } finally {
+            setRejectingId(null);
         }
+    };
+
+    const handleReject = (id: number) => {
+        setRejectingId(id);
     };
 
     return (
@@ -165,6 +173,16 @@ export default function OwnerStaffPage() {
                     Prime Stay &copy; 2024 • Owner Verification Portal
                 </div>
             </div>
+
+            <DeleteConfirmationDialog 
+                isOpen={rejectingId !== null}
+                onClose={() => setRejectingId(null)}
+                onConfirm={confirmReject}
+                title="Reject Staff Registration"
+                description="Are you sure you want to reject this staff registration? They will not be granted access to the property."
+                confirmText="Reject"
+                loadingText="Rejecting..."
+            />
         </div>
     );
 }

@@ -108,7 +108,6 @@ function PaymentBadge({ paidInFull, method, status }: { paidInFull?: boolean, me
 // ─────────────────────────────────────────────────────────────────────────────
 // Button style constants
 // ─────────────────────────────────────────────────────────────────────────────
-const btnPrimary = "inline-flex items-center gap-1.5 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer no-underline"
 const btnOutline = "inline-flex items-center gap-1.5 border border-[#e8ddcf] hover:border-[#9a3300] text-[#6f6254] hover:text-[#9a3300] text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer no-underline bg-white"
 const btnGhost   = "inline-flex items-center gap-1 text-[11px] font-bold text-[#8b7d6d] hover:text-[#9a3300] transition-colors cursor-pointer"
 
@@ -160,8 +159,11 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
       <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4">
           <div className="flex flex-col min-w-0 pr-0 sm:pr-4">
-             <span className="text-[10px] font-black text-[#9f8f7c] uppercase tracking-widest mb-0.5">
-              Ref: {booking.orderId || booking.orderNumber}
+             <span className="text-[10px] font-black text-[#9f8f7c] uppercase tracking-widest mb-0.5 flex gap-2">
+              <span>Ref: {booking.orderId || booking.orderNumber}</span>
+              {booking.passkey && (
+                  <span className="text-[#9a3300] bg-[#fdf8f4] px-1.5 rounded border border-[#fadbc7]">Passkey: {booking.passkey}</span>
+              )}
             </span>
              <h3 className="text-[16px] font-bold text-[#2d2116] truncate">{booking.property}</h3>
              {booking.roomName && (
@@ -208,6 +210,9 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
             )}
             {isUpcoming && (
               <>
+                <Link href={`/guest/booking/${booking.orderId}/message`} className={btnOutline}>
+                  <MessageSquare size={12} /> Message
+                </Link>
                 <Link href={`/guest/booking/${booking.orderId}/modify`} className={btnOutline}>
                   <Edit3 size={12} /> Modify
                 </Link>
@@ -219,7 +224,7 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
             
             {isCompleted ? (
               <>
-                <Link href={`/guest/booking/${booking.orderId}/review`} className={btnPrimary} style={{ background: "#9a3300" }}>
+                <Link href={`/guest/booking/${booking.orderId}/review`} className={btnOutline}>
                   <Star size={12} /> Leave Review
                 </Link>
                 <Link href={`/guest/booking/${booking.orderId}/complain`} className={btnOutline}>
@@ -227,11 +232,11 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
                 </Link>
               </>
             ) : isCancelled ? (
-              <Link href={rebookHref} className={btnPrimary} style={{ background: "#9a3300" }}>
+              <Link href={rebookHref} className={btnOutline}>
                 <RefreshCw size={12} /> Rebook
               </Link>
             ) : (
-              <Link href={`/guest/booking/${booking.orderId}/receipt`} className={btnPrimary} style={{ background: "#9a3300" }}>
+              <Link href={`/guest/booking/${booking.orderId}/receipt`} className={btnOutline}>
                 <Download size={12} /> Receipt
               </Link>
             )}

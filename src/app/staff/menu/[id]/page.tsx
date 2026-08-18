@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
 import StaffMenuEdit from "@/components/staff/menu/staff-menu-edit";
 import StaffMenuForm from "@/components/staff/menu/staff-menu-form";
 
@@ -18,8 +17,8 @@ export default function MenuDetailPage({
   const isEditDetails = searchParamsResolved.get("edit") === "true";
 
   return (
-    <StaffPageLayout>
+    <>
       {isEditDetails ? <StaffMenuForm menuId={menuId} /> : <StaffMenuEdit menuId={menuId} />}
-    </StaffPageLayout>
+    </>
   );
 }

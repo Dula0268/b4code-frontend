@@ -153,12 +153,30 @@ export default function ReviewPage() {
     )
   }
 
+  if (booking.status !== "COMPLETED") {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50/50">
+        <GuestTopbar />
+        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
+          <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-6">
+            <AlertCircle className="h-10 w-10 text-amber-500" />
+          </div>
+          <h2 className="text-2xl font-semibold text-slate-900 mb-2">Review Not Available Yet</h2>
+          <p className="text-slate-500 mb-8">You can only leave a review after your stay has been completed. We hope you are enjoying your time!</p>
+          <Button onClick={() => router.push("/guest/booking")} className="w-full h-12 text-md bg-[#9a3300] hover:bg-[#7a2800] text-white">
+            Return to My Bookings
+          </Button>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa]">
       <GuestTopbar />
       
       {/* Header Banner */}
-      <div className="bg-[#1e293b] text-white py-12 px-4 sm:px-6">
+      <div className="bg-[#9a3300] text-white py-12 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-white/80 mb-2">
@@ -354,7 +372,7 @@ export default function ReviewPage() {
                 </div>
 
                 <div className="pt-4 mt-8 border-t border-slate-200">
-                  <Button type="submit" size="lg" className="w-full sm:w-auto sm:min-w-[200px] h-12 text-base font-semibold shadow-md bg-slate-900 hover:bg-slate-800 text-yellow-400" disabled={submitting}>
+                  <Button type="submit" size="lg" className="w-full sm:w-auto sm:min-w-[200px] h-12 text-base font-semibold shadow-md bg-[#9a3300] hover:bg-[#7a2800] text-white" disabled={submitting}>
                     {submitting ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />

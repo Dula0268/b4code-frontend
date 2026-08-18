@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
 import StaffHeader from "@/components/staff/layout/staff-header";
 import { Flag, Star, Search, ShieldAlert, CheckCircle2, MessageSquare, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -113,7 +112,7 @@ export default function ReviewManagementPage() {
   };
 
   return (
-    <StaffPageLayout>
+    <>
       <StaffHeader 
         title="Review Management" 
         subtitle="Monitor and moderate guest reviews" 
@@ -318,6 +317,6 @@ export default function ReviewManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </StaffPageLayout>
+    </>
   );
 }

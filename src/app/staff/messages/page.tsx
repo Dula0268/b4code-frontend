@@ -1,10 +1,15 @@
-import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
-import StaffMessages from "@/components/staff/messages/staff-messages";
+"use client";
 
-export default function MessagesPage() {
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
+import StaffMessagesClient from "./staff-messages-client";
+
+export default function StaffMessagesPage() {
   return (
-    <StaffPageLayout>
-      <StaffMessages />
+    <StaffPageLayout
+      title="Guest Messages"
+      subtitle="Communicate directly with guests"
+    >
+      <StaffMessagesClient />
     </StaffPageLayout>
   );
 }
