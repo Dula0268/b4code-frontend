@@ -198,7 +198,7 @@ export default function PropertiesPage() {
                       <div className="flex flex-col items-center justify-center text-[#9E7B6A]">
                         <Building2 size={48} className="mb-4 text-[#E8DDD8] opacity-50" />
                         <p className="text-lg font-bold text-[#1A1A1A] m-0">No properties found</p>
-                        <p className="text-sm mt-1 mb-0">Try adjusting your search or filters to find what you're looking for.</p>
+                        <p className="text-sm mt-1 mb-0">Try adjusting your search or filters to find what you&apos;re looking for.</p>
                       </div>
                     </td>
                   </tr>
