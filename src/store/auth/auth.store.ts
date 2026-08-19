@@ -177,6 +177,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
 
         if (typeof window !== "undefined") {
           localStorage.setItem("auth_user", JSON.stringify(userData));
+          // Save refresh token for silent renewal (BUG FIX: missing previously)
+          if (data.refreshToken) {
+            setRefreshToken(data.refreshToken);
+          }
         }
 
         set({
