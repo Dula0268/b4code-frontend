@@ -13,6 +13,7 @@ export interface OwnerReservationDto {
   isPaid: boolean;
   totalAmount: number;
   confirmationCode: string;
+  nicNumber?: string;
 }
 
 export const staffApi = {

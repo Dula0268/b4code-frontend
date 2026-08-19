@@ -48,8 +48,8 @@ export default function StaffSidebar() {
   
   const orders = useStaffOrdersStore((s) => s.orders);
   const placedCount = Array.isArray(orders) 
-    ? orders.filter((o) => o.status === "placed").length 
-    : Object.values(orders).filter((o) => o.status === "placed").length;
+    ? orders.filter((o: any) => o.status === "placed").length 
+    : Object.values(orders).filter((o: any) => o.status === "placed").length;
 
   return (
     <aside className="w-65 min-h-screen bg-white border-r border-[#e0e0e0] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">

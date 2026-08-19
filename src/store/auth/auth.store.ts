@@ -34,16 +34,16 @@ const REDIRECT_MAP: Record<Role, string> = {
 function hydrateUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
   try {
-    const stored = sessionStorage.getItem("auth_user");
+    const stored = localStorage.getItem("auth_user");
     if (stored) {
       return JSON.parse(stored);
     }
 
     // Legacy support
-    const token = sessionStorage.getItem("accessToken");
-    const email = sessionStorage.getItem("authEmail");
-    const role = sessionStorage.getItem("authRole") as Role | null;
-    const userId = sessionStorage.getItem("authUserId");
+    const token = localStorage.getItem("accessToken");
+    const email = localStorage.getItem("authEmail");
+    const role = localStorage.getItem("authRole") as Role | null;
+    const userId = localStorage.getItem("authUserId");
     if (token && email && role) {
       return { email, role, userId: userId ? Number(userId) : undefined };
     }
@@ -120,12 +120,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         };
 
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_user", JSON.stringify(userData));
+          localStorage.setItem("auth_user", JSON.stringify(userData));
           // Also keep legacy keys for compatibility
-          sessionStorage.setItem("accessToken", data.token);
-          sessionStorage.setItem("authEmail", data.email);
-          sessionStorage.setItem("authRole", role);
-          sessionStorage.setItem("authUserId", String(data.userId));
+          localStorage.setItem("accessToken", data.token);
+          localStorage.setItem("authEmail", data.email);
+          localStorage.setItem("authRole", role);
+          localStorage.setItem("authUserId", String(data.userId));
           // Save refresh token for silent renewal
           if (data.refreshToken) {
             setRefreshToken(data.refreshToken);
@@ -134,7 +134,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           // Auto-set selected property for staff so dashboard loads directly
           if (role === "staff" && data.propertyId) {
             const pid = String(data.propertyId);
-            sessionStorage.setItem("selected_property_id", pid);
             localStorage.setItem("selected_property_id", pid);
           }
         }
@@ -177,7 +176,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         };
 
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_user", JSON.stringify(userData));
+          localStorage.setItem("auth_user", JSON.stringify(userData));
         }
 
         set({
@@ -213,7 +212,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         };
 
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_user", JSON.stringify(userData));
+          localStorage.setItem("auth_user", JSON.stringify(userData));
           // Save refresh token for silent renewal
           if (data.refreshToken) {
             setRefreshToken(data.refreshToken);
@@ -308,12 +307,19 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     logout: () => {
       removeToken();
       if (typeof window !== "undefined") {
-        sessionStorage.removeItem("accessToken");
-        sessionStorage.removeItem("refreshToken");
-        sessionStorage.removeItem("authEmail");
-        sessionStorage.removeItem("authRole");
-        sessionStorage.removeItem("authUserId");
-        sessionStorage.removeItem("auth_user");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("authEmail");
+        localStorage.removeItem("authRole");
+        localStorage.removeItem("authUserId");
+        localStorage.removeItem("auth_user");
+        
+        // Clear staff-related storage to prevent data leakage between sessions
+        localStorage.removeItem("selected_property_id");
+        localStorage.removeItem("staff-menu-storage");
+        localStorage.removeItem("staff-offline-sync-queue");
+        localStorage.removeItem("staff-orders-storage");
+        localStorage.removeItem("staff-qr-storage");
       }
 
       set({ user: null, isAuthenticated: false, error: null });
@@ -363,7 +369,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           const updatedUser = { ...state.user, profile };
 
           if (typeof window !== "undefined") {
-            sessionStorage.setItem("auth_user", JSON.stringify(updatedUser));
+            localStorage.setItem("auth_user", JSON.stringify(updatedUser));
           }
 
           return {
@@ -387,7 +393,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         const updatedUser = { ...state.user, propertyId, roomId };
 
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_user", JSON.stringify(updatedUser));
+          localStorage.setItem("auth_user", JSON.stringify(updatedUser));
         }
 
         console.log("📍 Stay Assigned to Session:", { propertyId, roomId });
@@ -419,7 +425,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         // Auto-set selected property for staff so dashboard loads directly
         if (typeof window !== "undefined" && role === "staff" && data.propertyId) {
           const pid = String(data.propertyId);
-          sessionStorage.setItem("selected_property_id", pid);
           localStorage.setItem("selected_property_id", pid);
         }
 
@@ -441,7 +446,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           // Token is invalid/expired — quietly clear state
           set({ user: null, isAuthenticated: false, isRestoring: false });
           if (typeof window !== "undefined") {
-            sessionStorage.removeItem("auth-storage");
+            localStorage.removeItem("auth-storage");
           }
         } else {
           console.error("Failed to fetch user:", err);
@@ -451,3 +456,25 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     }
   };
 });
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === "auth_user") {
+      if (event.newValue) {
+        try {
+          const user = JSON.parse(event.newValue);
+          useAuthStore.setState({ user, isAuthenticated: true, error: null });
+        } catch (e) {
+          console.error("Failed to parse auth_user from storage event");
+        }
+      } else {
+        useAuthStore.setState({ user: null, isAuthenticated: false, error: null });
+      }
+    }
+    
+    if (event.key === "accessToken" && !event.newValue) {
+      // Token was cleared in another tab, ensure this tab also logs out
+      useAuthStore.setState({ user: null, isAuthenticated: false, error: null });
+    }
+  });
+}

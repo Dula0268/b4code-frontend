@@ -15,8 +15,15 @@ import {
   ChevronRight,
   AlertCircle,
   BellRing,
-  MessageSquare
+  MessageSquare,
+  TrendingUp,
+  Hourglass,
+  CheckCheck,
+  Timer,
+  ArrowDown,
+  Eye
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
 import { useStaffMenuStore } from "@/store/staff/menu/staff-menu.store";
 import { useStaffQRStore } from "@/store/staff/qr/staff-qr.store";
@@ -116,7 +123,7 @@ export default function StaffDashboard() {
   const fetchOrders = useStaffOrdersStore((s) => s.fetchOrders);
   const loadingOrders = useStaffOrdersStore((s) => s.loading);
   const orders = useStaffOrdersStore((s) => s.orders);
-  const updateStatus = useStaffOrdersStore((s) => s.updateStatus);
+  const acceptOrder = useStaffOrdersStore((s) => s.acceptOrder);
   
   const loadingMenus = useStaffMenuStore((s) => s.isLoading);
   const loadingQRs = useStaffQRStore((s) => s.loading);
@@ -145,6 +152,7 @@ export default function StaffDashboard() {
   const canOrders = usePermission("order_management");
   const canMenu = usePermission("menu_management");
   const canQR = usePermission("qr_management");
+  const canMessages = usePermission("guest_chat");
 
   const permMap: Record<string, boolean> = {
     "/staff/orders": canOrders,
@@ -152,6 +160,7 @@ export default function StaffDashboard() {
     "/staff/qr": canQR,
   };
 
+  const managementCards = useManagementCards();
   const visibleCards = managementCards.filter((c) => permMap[c.href] !== false);
 
   // Fetch all dashboard data when component mounts
@@ -226,7 +235,7 @@ export default function StaffDashboard() {
             </div>
             <div>
               <h1 className="text-2xl lg:text-3xl font-extrabold text-[#1A1A1A] tracking-tight m-0">
-                {greeting}, {user?.firstName || "Staff"}
+                {greeting}, {user?.profile?.firstName || "Staff"}
               </h1>
               <p className="text-[#6B7280] font-medium mt-1">Here is what is happening at your property today.</p>
             </div>
@@ -294,7 +303,7 @@ export default function StaffDashboard() {
                               </span>
                             </div>
                             <p className="text-sm text-[#6B7280] mt-1 line-clamp-1">
-                              {order.items.length} items • {order.items.map(i => i.menuItemName).join(", ")}
+                              {order.items.length} items • {order.items.map(i => i.name).join(", ")}
                             </p>
                           </div>
                         </div>
@@ -302,7 +311,7 @@ export default function StaffDashboard() {
                         <div className="flex items-center gap-2 shrink-0">
                           {isNew ? (
                             <button 
-                              onClick={() => updateStatus(order.id, "accepted")}
+                              onClick={() => acceptOrder(order.id)}
                               className="bg-[#1A1A1A] hover:bg-[#C05621] text-white text-sm font-bold px-4 py-2 rounded-xl transition-colors w-full sm:w-auto"
                             >
                               Accept Order

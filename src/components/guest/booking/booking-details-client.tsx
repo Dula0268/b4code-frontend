@@ -309,7 +309,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           checkOutDate: editCheckOut,
           guests: editGuests,
         };
-        sessionStorage.setItem("pendingBookingModification", JSON.stringify(pendingModification));
+        localStorage.setItem("pendingBookingModification", JSON.stringify(pendingModification));
 
         const params = new URLSearchParams();
         params.set("total", amountDue.toFixed(2));
