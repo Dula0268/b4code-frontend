@@ -427,7 +427,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           user: {
             email: data.email,
             role,
-            userId: data.userId,
+            userId: data.userId || data.id,
             propertyId: data.propertyId,
             profile,
           },
