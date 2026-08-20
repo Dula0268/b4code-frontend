@@ -1,32 +1,15 @@
 "use client";
 
-import { MapPin } from "lucide-react";
-
-// ─── Sri Lanka locations ──────────────────────────────────────────────────
-export const SRI_LANKA_LOCATIONS = [
-  "Colombo",
-  "Galle",
-  "Kandy",
-  "Negombo",
-  "Mirissa",
-  "Ella",
-  "Nuwara Eliya",
-  "Trincomalee",
-  "Arugam Bay",
-  "Sigiriya",
-  "Bentota",
-  "Hikkaduwa",
-  "Unawatuna",
-  "Jaffna",
-  "Polonnaruwa",
-];
+import { useState, useEffect } from "react";
+import { MapPin, Bed, Loader2 } from "lucide-react";
+import { getFilterOptions, LocationSuggestionDTO } from "@/api/guest/search.api";
 
 // ─── Props ────────────────────────────────────────────────────────────────
 export interface LocationPickerProps {
   /** Current controlled value of the text input */
   value: string;
-  /** Called on every keystroke */
-  onChange: (value: string) => void;
+  /** Called when the input value changes (optional) */
+  onChange?: (value: string) => void;
   /** Called when the user picks a suggestion */
   onSelect: (location: string) => void;
   /** Whether the suggestions dropdown is visible */
@@ -36,47 +19,94 @@ export interface LocationPickerProps {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────
+// Locations are fetched from backend API (no hardcoded list).
 export default function LocationPicker({
   value,
-  onChange,
   onSelect,
   open,
-  maxSuggestions = 7,
+  maxSuggestions = 5,
 }: LocationPickerProps) {
+  const [suggestions, setSuggestions] = useState<LocationSuggestionDTO[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Fetch locations from backend when dropdown opens for the first time
+  useEffect(() => {
+    if (!open || loaded) return;
+
+    let active = true;
+    setLoading(true);
+
+    getFilterOptions()
+      .then((opts) => {
+        if (active) {
+          setSuggestions(opts.locationSuggestions || []);
+          setLoaded(true);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load locations:", err);
+        if (active) setLoaded(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [open, loaded]);
+
+  if (!open) return null;
+
+  // Filter locations based on user input
   const filtered =
     value.trim().length > 0
-      ? SRI_LANKA_LOCATIONS.filter((l) =>
-          l.toLowerCase().includes(value.toLowerCase()),
+      ? suggestions.filter((l) =>
+          l.name.toLowerCase().includes(value.toLowerCase()),
         )
-      : SRI_LANKA_LOCATIONS;
+      : suggestions;
 
-  const suggestions = filtered.slice(0, maxSuggestions);
-
-  if (!open || suggestions.length === 0) return null;
+  const displaySuggestions = filtered.slice(0, maxSuggestions);
 
   return (
     <div
-      className="absolute top-full left-0 mt-2 bg-white rounded-xl z-50 w-[220px] overflow-hidden
+      className="absolute top-full left-0 mt-2 bg-white rounded-xl z-50 w-[260px] overflow-hidden
                  shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]"
     >
-      <p className="text-[10px] font-semibold text-[#828282] uppercase tracking-wide px-4 pt-3 pb-1">
-        Suggested
+      <p className="hidden">
+        {loading ? "Loading..." : "Suggested"}
       </p>
 
-      {suggestions.map((loc) => (
-        <div
-          key={loc}
-          onMouseDown={(e) => {
-            // Prevent the parent onBlur from firing before onSelect
-            e.preventDefault();
-            onSelect(loc);
-          }}
-          className="flex items-center gap-2 px-4 py-2.5 hover:bg-[#953002]/5 cursor-pointer transition-colors"
-        >
-          <MapPin size={13} className="text-[#953002] flex-shrink-0" />
-          <span className="text-sm text-[#333333]">{loc}</span>
+      {loading ? (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 size={16} className="text-[var(--brand-primary)] animate-spin" />
         </div>
-      ))}
+      ) : displaySuggestions.length === 0 ? (
+        <div className="px-4 py-3 text-sm text-[#828282]">
+          No locations found
+        </div>
+      ) : (
+        displaySuggestions.map((loc, idx) => (
+          <div
+            key={`${loc.name}-${loc.type}-${idx}`}
+            onMouseDown={(e) => {
+              // Prevent the parent onBlur from firing before onSelect
+              e.preventDefault();
+              onSelect(loc.name);
+            }}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+          >
+            {loc.type === "property" ? (
+              <Bed size={20} className="text-black flex-shrink-0" strokeWidth={1.75} />
+            ) : (
+              <MapPin size={20} className="text-black flex-shrink-0" strokeWidth={1.75} />
+            )}
+            <div className="flex flex-col">
+              <span className="text-[15px] font-bold text-black leading-tight">{loc.name}</span>
+              <span className="text-xs text-[#828282] capitalize">{loc.type}</span>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }

@@ -1,0 +1,97 @@
+import api from '@/lib/axios';
+
+// DTOs
+export interface FlaggedReview {
+  id: number;
+  propertyId: number;
+  propertyName: string;
+  guestId: number;
+  guestName: string;
+  guestInitial: string;
+  guestAvatarColor: string;
+  reviewText: string;
+  rating: number;
+  flagType: string;
+  ownerName?: string;
+  flaggedByRole?: string;
+  status: string;
+  adminNote?: string;
+  flaggedAt: string;
+}
+
+export interface Dispute {
+  id: string;
+  disputeId: string;
+  guestName: string;
+  propertyName: string;
+  reason: string;
+  amount: string;
+  status: string;
+  bookingId: string;
+  stayDates: string;
+  cancellationPolicy: string;
+  daysUntilAutoClose: number;
+  category?: string;
+  severity?: string;
+  photoUrls?: string;
+  internalNote?: string;
+}
+
+export interface ModerationHistory {
+  id: string;
+  resolvedDate: string;
+  resolvedTime: string;
+  caseId: string;
+  actionTaken: string;
+  adminInitials: string;
+  adminName: string;
+  adminColor: string;
+  outcome: string;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+export const ModerationApi = {
+  getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number; resolvedDisputes: number; totalResolvedAmount: number }> =>
+    api.get('/admin/moderation/counts').then((res) => res.data),
+
+  getReviews: (params: { flagType?: string; search?: string; page?: number; size?: number; rating?: number }): Promise<PageResponse<FlaggedReview>> =>
+    api.get('/admin/moderation/reviews', { params }).then((res) => res.data),
+
+  getReviewById: (id: number): Promise<FlaggedReview> =>
+    api.get(`/admin/moderation/reviews/${id}`).then((res) => res.data),
+
+  approveReview: (id: number, adminNote?: string): Promise<FlaggedReview> =>
+    api.put(`/admin/moderation/reviews/${id}/approve`, { adminNote }).then((res) => res.data),
+
+  removeReview: (id: number, adminNote: string): Promise<FlaggedReview> =>
+    api.put(`/admin/moderation/reviews/${id}/remove`, { adminNote }).then((res) => res.data),
+
+  getDisputes: (params: { status?: string; search?: string; page?: number; size?: number; isComplaint?: boolean }): Promise<PageResponse<Dispute>> =>
+    api.get('/admin/moderation/disputes', { params }).then((res) => res.data),
+
+  resolveDispute: (id: string, resolution: string, refundApproved: boolean): Promise<Dispute> =>
+    api.put(`/admin/moderation/disputes/${id}/resolve`, { resolution, refundApproved }).then((res) => res.data),
+
+  getHistory: (params: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }): Promise<PageResponse<ModerationHistory>> =>
+    api.get('/admin/moderation/history', { params }).then((res) => res.data),
+
+  exportReviewsCsv: (params: { flagType?: string; rating?: number }): Promise<Blob> =>
+    api.get('/admin/moderation/reviews/export/csv', { params, responseType: 'blob' }).then((res) => res.data),
+
+  exportReviewsPdf: (params: { flagType?: string; rating?: number }): Promise<Blob> =>
+    api.get('/admin/moderation/reviews/export/pdf', { params, responseType: 'blob' }).then((res) => res.data),
+
+  exportDisputesCsv: (params: { status?: string; search?: string }): Promise<Blob> =>
+    api.get('/admin/moderation/disputes/export/csv', { params, responseType: 'blob' }).then((res) => res.data),
+
+  exportDisputesPdf: (params: { status?: string; search?: string }): Promise<Blob> =>
+    api.get('/admin/moderation/disputes/export/pdf', { params, responseType: 'blob' }).then((res) => res.data),
+};
+

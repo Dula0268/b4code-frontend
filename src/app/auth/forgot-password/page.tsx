@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { authApi } from "@/api/auth/auth.api";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +14,21 @@ export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         setLoading(true);
-        // Mock API call to send reset link
-        await new Promise((r) => setTimeout(r, 800));
-        setLoading(false);
-        setIsSubmitted(true);
+        setError(null);
+        try {
+            const result = await authApi.forgotPassword(email);
+            console.log(result);
+            setIsSubmitted(true);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -32,7 +40,7 @@ export default function ForgotPasswordPage() {
                     <div className="relative h-52 md:h-auto md:block">
                         <div className="absolute inset-0 bg-[#1a0a05]" />
                         <Image
-                            src="/login-cover.jpg"
+                            src="/images/auth/login-cover.jpg"
                             alt="PrimeStay cover"
                             fill
                             className="object-cover opacity-100"
@@ -86,6 +94,12 @@ export default function ForgotPasswordPage() {
                                             </div>
                                         </div>
 
+                                        {error && (
+                                            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                                {error}
+                                            </div>
+                                        )}
+
                                         <Button type="submit" disabled={loading} size="lg" className="w-full h-[56px] text-[16px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] mt-8 transition-all">
                                             {loading ? "Sending..." : "Send Reset Link"}
                                         </Button>
@@ -113,30 +127,9 @@ export default function ForgotPasswordPage() {
                                         We&apos;ve sent a recovery link to your email address. Please check your inbox and your spam folder just in case.
                                     </p>
 
+
+
                                     <div className="w-full mt-10 space-y-6">
-                                        {/* Mock Email UI for User Consideration */}
-                                        <div className="rounded-xl border border-neutral-200 p-5 mt-4 text-left shadow-sm">
-                                            <div className="flex items-center gap-3 border-b border-neutral-100 pb-3 mb-3">
-                                                <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500">
-                                                    <Mail className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-neutral-900">PrimeStay Support</p>
-                                                    <p className="text-xs text-neutral-500">to {email || "you"}</p>
-                                                </div>
-                                            </div>
-                                            <h3 className="text-base font-bold text-neutral-900 mb-2">Reset your PrimeStay password</h3>
-                                            <p className="text-sm text-neutral-600 mb-4 leading-relaxed">
-                                                We received a request to reset the password for your PrimeStay account. Click the button below to choose a new password.
-                                            </p>
-                                            <div className="flex justify-center mt-6 mb-2">
-                                                <Link href="/auth/reset-password" className="inline-block w-[80%] max-w-[280px]">
-                                                    <Button type="button" size="lg" className="w-full h-[52px] text-[16px] font-extrabold rounded-full bg-[#137333] hover:bg-[#0d5324] text-white shadow-lg tracking-wide transition-all transform hover:scale-[1.02]">
-                                                        Reset Password
-                                                    </Button>
-                                                </Link>
-                                            </div>
-                                        </div>
 
                                         <div className="pt-4 text-center space-y-4">
                                             <p className="text-[14px] text-neutral-500 font-medium">

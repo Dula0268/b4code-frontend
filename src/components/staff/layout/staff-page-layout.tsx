@@ -1,0 +1,70 @@
+"use client";
+
+import { useEffect } from "react";
+import StaffSidebar from "@/components/staff/layout/staff-sidebar";
+import RoleGuard from "@/components/shared/auth/role-guard";
+import { useAuthStore } from "@/store/auth/auth.store";
+import { useRBACStore } from "@/store/auth/rbac.store";
+import StaffGlobalOrdersProvider from "./staff-global-orders";
+import { useStaffBookingsStore } from "@/store/staff/bookings/staff-bookings.store";
+
+interface StaffPageLayoutProps {
+  children: React.ReactNode;
+}
+
+function PermissionLoader() {
+  const { user } = useAuthStore();
+  const { permissionsData, loading, fetchMyPermissions } = useRBACStore();
+
+  useEffect(() => {
+    if (!user?.role || loading) return;
+    const role = user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase();
+    if (!permissionsData[role]) {
+      fetchMyPermissions(role);
+    }
+  }, [user, permissionsData, loading, fetchMyPermissions]);
+
+  return null;
+}
+
+function BookingsSseLoader() {
+  const { user } = useAuthStore();
+  const { setupSse, stopSse } = useStaffBookingsStore();
+
+  useEffect(() => {
+    const propertyId = user?.propertyId || localStorage.getItem("selected_property_id");
+    if (!propertyId) return;
+
+    setupSse(Number(propertyId));
+
+    return () => {
+      stopSse();
+    };
+  }, [user, setupSse, stopSse]);
+
+  return null;
+}
+
+export default function StaffPageLayout({ children }: StaffPageLayoutProps) {
+  return (
+    <RoleGuard allowedRoles={["staff", "admin", "owner"]}>
+      <PermissionLoader />
+      <div className="flex h-screen overflow-hidden bg-[#FAFBFC]">
+        {/* Fixed Sidebar */}
+        <StaffSidebar />
+
+        {/* Right side: header + page content */}
+        <div className="ml-0 lg:ml-[260px] flex-1 flex flex-col h-full overflow-hidden bg-[#F5F6F8]">
+          {children}
+        </div>
+
+        {/* Global Staff Orders Notification Provider */}
+        <StaffGlobalOrdersProvider />
+
+        {/* Global Bookings SSE Loader for Badges */}
+        <BookingsSseLoader />
+      </div>
+    </RoleGuard>
+  );
+}
+

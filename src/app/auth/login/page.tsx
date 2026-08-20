@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { Suspense } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,22 +13,73 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth/auth.store";
 
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
-  const { login, loading, error, setError } = useAuthStore();
+  const searchParams = useSearchParams();
+  const { login, logout, loading, error, setError, isAuthenticated, user, isRestoring } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
 
+  // Clear any previous global auth errors on mount
+  useEffect(() => {
+    setError(null);
+  }, [setError]);
+
+  // If already authenticated, redirect immediately to role-based dashboard.
+  // This handles the case where the guest guard redirects a staff/owner to /auth/login
+  // — they shouldn't have to log in again.
+  useEffect(() => {
+    if (isRestoring || !isAuthenticated || !user) return;
+    const rolePaths: Record<string, string> = {
+      guest: "/guest/booking",
+      staff: "/staff",
+      owner: "/owner",
+      admin: "/admin",
+    };
+    router.replace(rolePaths[user.role.toLowerCase()] ?? "/");
+  }, [isAuthenticated, user, isRestoring, router]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     try {
+      // login() returns the role-based home path (e.g. "/guest/booking", "/staff", "/owner")
       const path = await login(email, password);
-      router.push(path);
-    } catch {
+      const redirect = searchParams?.get("redirect");
 
+      // Derive the role prefix from the returned path (e.g. "/guest", "/staff", "/owner", "/admin")
+      const rolePrefix = "/" + (path.split("/")[1] ?? "");
+
+      // GUEST CONTEXT BLOCK: If the user clicked Login from a guest page (/guest/...)
+      // but logged in with a non-guest account, don't logout — just send them to their
+      // own dashboard. Avoids unexpectedly logging out a staff/owner/admin user.
+      if (redirect?.startsWith("/guest") && rolePrefix !== "/guest") {
+        router.push(path);
+        return;
+      }
+
+      // Only honor the redirect if it belongs to the same role's URL space.
+      // Prevents staff/owner/admin from being routed into guest pages (and vice versa).
+      const isRedirectValidForRole =
+        redirect && redirect !== "/" && redirect.startsWith(rolePrefix);
+
+      router.push(isRedirectValidForRole ? redirect : path);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Login failed.";
+
+      if (message.includes("pending")) {
+        setError("⏳ Your account is pending approval.");
+        return;
+      }
+
+      if (message.includes("rejected")) {
+        setError("❌ Your account has been rejected.");
+        return;
+      }
+
+      setError(message || "Invalid email or password.");
     }
   }
 
@@ -40,7 +92,7 @@ export default function LoginPage() {
           <div className="relative h-52 md:h-auto md:block">
             <div className="absolute inset-0 bg-[#1a0a05]" />
             <Image
-              src="/login-cover.jpg"
+              src="/images/auth/login-cover.jpg"
               alt="PrimeStay login cover"
               fill
               className="object-cover opacity-100"
@@ -106,27 +158,35 @@ export default function LoginPage() {
 
                   <div className="relative">
                     <div className="bg-[rgba(149,48,2,0.1)] border border-[#e5e7eb] rounded-full w-full flex items-center">
+
                       <Input
                         type={showPw ? "text" : "password"}
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="h-[54px] w-full rounded-full bg-transparent pl-[48px] pr-[48px] text-[16px] placeholder:text-[rgba(130,130,130,0.5)] border-0"
+                        autoComplete="new-password"
+                        className="h-[54px] w-full rounded-full bg-transparent pl-[48px] pr-[52px] text-[16px] placeholder:text-[rgba(130,130,130,0.5)] border-0 appearance-none"
                         required
+                        hideToggle
+                        suppressHydrationWarning
                       />
+
                       <Lock className="absolute left-4 h-6 w-6 text-[#953002] pointer-events-none" />
+
                       <button
                         type="button"
                         onClick={() => setShowPw((s) => !s)}
-                        className="absolute right-4 text-[#666] hover:text-[#000]"
+                        className="absolute right-4 z-10 text-[#666] hover:text-[#000]"
                         aria-label={showPw ? "Hide password" : "Show password"}
+                        suppressHydrationWarning
                       >
                         {showPw ? (
-                          <EyeOff className="h-6 w-6" />
+                          <Eye className="h-5 w-5" />
                         ) : (
-                          <Eye className="h-6 w-6" />
+                          <EyeOff className="h-5 w-5" />
                         )}
                       </button>
+
                     </div>
                   </div>
                 </div>
@@ -137,20 +197,37 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                <Button type="submit" disabled={loading} size="lg" className="w-full h-[56px] text-[16px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] mt-8">
+                <Button type="submit" disabled={loading} size="lg" className="w-full h-[56px] text-[16px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] mt-8" suppressHydrationWarning>
                   {loading ? "Logging in…" : "Login to Platform"}
                 </Button>
 
 
-                <div className="text-center text-sm text-neutral-700">
-                  Don’t have an account yet?{" "}
-                  <Link
-                    href="/auth/register"
-                    className="font-extrabold text-[var(--brand-primary)] hover:underline"
-                  >
-                    Register for an account
-                  </Link>
-                </div>
+                {!searchParams?.get("redirect")?.includes("/admin") && searchParams?.get("role") !== "admin" && (
+                  <div className="text-center text-sm text-neutral-700">
+                    Don&apos;t have an account yet?{" "}
+                    <Link
+                      href={(() => {
+                        const roleParam = searchParams?.get("role");
+                        const redirectParam = searchParams?.get("redirect");
+                        // Determine role: prefer explicit ?role= param, then fall back to redirect path
+                        const detectedRole =
+                          roleParam === "staff" || redirectParam?.includes("/staff") ? "staff"
+                          : roleParam === "owner" || redirectParam?.includes("/owner") ? "owner"
+                          : redirectParam ? "guest"
+                          : roleParam ?? null;
+
+                        if (!detectedRole) return "/auth/register";
+                        const redirectSuffix = redirectParam
+                          ? `&redirect=${encodeURIComponent(redirectParam)}`
+                          : "";
+                        return `/auth/register?role=${detectedRole}${redirectSuffix}`;
+                      })()}
+                      className="font-extrabold text-[var(--brand-primary)] hover:underline"
+                    >
+                      Register for an account
+                    </Link>
+                  </div>
+                )}
 
                 <div className="text-center">
                   <Link
@@ -166,5 +243,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading login...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

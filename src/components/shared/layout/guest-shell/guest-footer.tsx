@@ -29,17 +29,46 @@ const SOCIAL_LINKS = [
   { icon: Mail, href: "mailto:hello@primestay.lk", label: "Email" },
 ]
 
-export default function GuestFooter() {
+type GuestFooterProps = {
+  variant?: "full" | "compact"
+}
+
+const POLICY_LINKS = ["Privacy", "Terms", "Sitemap"]
+
+export default function GuestFooter({ variant = "compact" }: GuestFooterProps) {
+  if (variant === "compact") {
+    return (
+      <footer className="bg-white border-t border-[var(--brand-primary)]/20">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-[var(--brand-primary)] text-[12px] m-0 text-center sm:text-left font-medium">
+            © 2026 PRIME STAY Sri Lanka. All rights reserved.
+          </p>
+          <div className="flex items-center gap-5">
+            {POLICY_LINKS.map(link => (
+              <Link
+                key={link}
+                href={`/${link.toLowerCase()}`}
+                className="text-[var(--brand-primary)]/80 text-[12px] font-medium no-underline hover:text-[var(--brand-secondary)] transition-colors duration-200"
+              >
+                {link}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </footer>
+    )
+  }
+
   return (
-    <footer className="bg-[#0f1923] text-white">
+    <footer className="bg-white text-[var(--brand-primary)] border-t border-[var(--brand-primary)]/20">
       <div className="max-w-[1440px] mx-auto px-[30px] pt-16 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.5fr] gap-10 mb-12">
 
           <div>
             <div className="mb-4">
-              <Logo variant="white" href="/" width={140} height={40} />
+              <Logo variant="default" href="/" width={140} height={40} />
             </div>
-            <p className="text-[#828282] text-sm leading-relaxed max-w-[220px] mb-5">
+            <p className="text-[var(--gray-2)] text-sm leading-relaxed max-w-[220px] mb-5">
               The premier platform for luxury villa rentals and boutique stays in Sri Lanka. Experience the island like never before.
             </p>
             <div className="flex gap-3">
@@ -50,7 +79,7 @@ export default function GuestFooter() {
                   aria-label={label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#828282] hover:text-[#ffb401] transition-colors duration-200"
+                  className="text-[var(--brand-primary)] hover:text-[var(--brand-secondary)] transition-colors duration-200"
                 >
                   <Icon size={18} />
                 </a>
@@ -60,13 +89,13 @@ export default function GuestFooter() {
 
           {Object.entries(FOOTER_LINKS).map(([title, links]) => (
             <div key={title}>
-              <h3 className="text-white text-sm font-bold mb-4">{title}</h3>
+              <h3 className="text-[var(--brand-primary)] text-sm font-bold mb-4">{title}</h3>
               <ul className="space-y-2.5 list-none p-0 m-0">
                 {links.map(({ label, href }) => (
                   <li key={label}>
                     <Link
                       href={href}
-                      className="text-[#828282] text-sm no-underline hover:text-white transition-colors duration-200"
+                      className="text-[var(--gray-2)] text-sm font-medium no-underline hover:text-[var(--brand-secondary)] transition-colors duration-200"
                     >
                       {label}
                     </Link>
@@ -77,11 +106,11 @@ export default function GuestFooter() {
           ))}
 
           <div>
-            <h3 className="text-white text-sm font-bold mb-4">Contact Us</h3>
+            <h3 className="text-[var(--brand-primary)] text-sm font-bold mb-4">Contact Us</h3>
             <ul className="space-y-3 list-none p-0 m-0">
               {CONTACT_INFO.map(({ icon: Icon, text }) => (
-                <li key={text} className="flex gap-2.5 text-[#828282] text-[13px]">
-                  <Icon size={15} className="text-[#ffb401] flex-shrink-0 mt-0.5" />
+                <li key={text} className="flex gap-2.5 text-[var(--gray-2)] text-[13px] font-medium">
+                  <Icon size={15} className="text-[var(--brand-secondary)] flex-shrink-0 mt-0.5" />
                   <span>{text}</span>
                 </li>
               ))}
@@ -89,16 +118,16 @@ export default function GuestFooter() {
           </div>
         </div>
 
-        <div className="border-t border-[#1f2d3a] pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-[#828282] text-[13px] m-0">
+        <div className="border-t border-[var(--brand-primary)]/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-[var(--brand-primary)]/80 font-medium text-[13px] m-0">
             © 2026 PRIME STAY Sri Lanka. All rights reserved.
           </p>
           <div className="flex gap-6">
-            {["Privacy", "Terms", "Sitemap"].map(link => (
+            {POLICY_LINKS.map(link => (
               <Link
                 key={link}
                 href={`/${link.toLowerCase()}`}
-                className="text-[#828282] text-[13px] no-underline hover:text-white transition-colors duration-200"
+                className="text-[var(--brand-primary)]/80 font-medium text-[13px] no-underline hover:text-[var(--brand-secondary)] transition-colors duration-200"
               >
                 {link}
               </Link>

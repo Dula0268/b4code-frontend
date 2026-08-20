@@ -1,0 +1,30 @@
+import AdminSidebar from "@/components/admin/admin-sidebar";
+import AdminHeader from "@/components/admin/admin-header";
+
+interface AdminPageLayoutProps {
+  children: React.ReactNode;
+  adminName?: string;
+  avatarSrc?: string;
+}
+
+export default function AdminPageLayout({
+  children,
+  adminName = "Admin",
+  avatarSrc,
+}: AdminPageLayoutProps) {
+  return (
+    <div className="flex min-h-screen bg-[#F6F8F7]">
+      {/* Fixed Sidebar */}
+      <AdminSidebar />
+
+      {/* Right side: header + page content */}
+      <div className="ml-65 flex-1 flex flex-col min-w-0">
+        {/* Fixed Header */}
+        <AdminHeader adminName={adminName} avatarSrc={avatarSrc} />
+
+        {/* Page Content — padded down below the fixed header */}
+        <main className="mt-17 p-7 flex-1">{children}</main>
+      </div>
+    </div>
+  );
+}

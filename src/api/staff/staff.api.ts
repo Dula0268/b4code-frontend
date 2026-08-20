@@ -1,0 +1,92 @@
+import api from "@/lib/axios";
+
+export interface OwnerReservationDto {
+  id: number;
+  propertyName: string;
+  roomId?: number;
+  roomName: string;
+  roomNumber?: string;
+  guestName: string;
+  guestEmail: string;
+  checkIn: string;
+  checkOut: string;
+  status: string;
+  paymentMethod: string;
+  isPaid: boolean;
+  totalAmount: number;
+  confirmationCode: string;
+  nicNumber?: string;
+}
+
+export const staffApi = {
+  getAllProperties: () =>
+    api.get("/staff/all-properties").then((r) => r.data),
+
+  getMyProperties: (staffId: number) =>
+    api.get(`/staff/properties/${staffId}`).then((r) => r.data),
+
+  // Message Methods
+  getConversations: (propertyId: number | string) =>
+    api.get(`/staff/messages/property/${propertyId}/conversations`).then((r) => r.data),
+
+  getConversation: (bookingId: number | string) =>
+    api.get(`/staff/messages/booking/${bookingId}`).then((r) => r.data),
+
+  sendMessage: (bookingId: number | string, content: string) =>
+    api.post(`/staff/messages/booking/${bookingId}`, { content }).then((r) => r.data),
+
+  // Order Messages (Kitchen Staff / Staff Admin)
+  getOrderConversations: (propertyId: number | string) =>
+    api.get(`/staff/order-messages/property/${propertyId}/conversations`).then((r) => r.data),
+
+  getOrderConversation: (orderId: number | string) =>
+    api.get(`/staff/order-messages/order/${orderId}`).then((r) => r.data),
+
+  sendOrderMessage: (orderId: number | string, content: string) =>
+    api.post(`/staff/order-messages/order/${orderId}`, { content }).then((r) => r.data),
+
+  // Auto-Reply Rules
+  getAutoReplyRules: (propertyId: number | string) =>
+    api.get(`/staff/properties/${propertyId}/auto-reply-rules`).then((r) => r.data),
+    
+  createAutoReplyRule: (propertyId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean }) =>
+    api.post(`/staff/properties/${propertyId}/auto-reply-rules`, payload).then((r) => r.data),
+    
+  updateAutoReplyRule: (propertyId: number | string, ruleId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean }) =>
+    api.put(`/staff/properties/${propertyId}/auto-reply-rules/${ruleId}`, payload).then((r) => r.data),
+    
+  deleteAutoReplyRule: (propertyId: number | string, ruleId: number | string) =>
+    api.delete(`/staff/properties/${propertyId}/auto-reply-rules/${ruleId}`).then((r) => r.data),
+  // Staff Reservations
+  getReservations: async (propertyId: number, search?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (status) params.append("status", status);
+    
+    const response = await api.get<OwnerReservationDto[]>(
+      `/staff/properties/${propertyId}/reservations?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  checkInReservation: async (propertyId: number, reservationId: number, roomNumber: string) => {
+    const response = await api.patch<OwnerReservationDto>(
+      `/staff/properties/${propertyId}/reservations/${reservationId}/check-in`,
+      { roomNumber }
+    );
+    return response.data;
+  },
+
+  checkOutReservation: async (propertyId: number, id: number) => {
+    const response = await api.patch<OwnerReservationDto>(`/staff/properties/${propertyId}/reservations/${id}/check-out`);
+    return response.data;
+  },
+
+  takePayment: async (propertyId: number, id: number, nicNumber: string) => {
+    const response = await api.post<OwnerReservationDto>(
+      `/staff/properties/${propertyId}/reservations/${id}/pay`,
+      { nicNumber }
+    );
+    return response.data;
+  }
+};

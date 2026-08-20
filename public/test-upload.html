@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudinary Upload Test</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        .card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        button { padding: 10px 15px; background: #0070f3; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005bb5; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 4px; display: none; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        img { max-width: 100%; margin-top: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Test Image Upload</h2>
+        <p>This will upload an image to Cloudinary via your backend API.</p>
+        
+        <form id="uploadForm">
+            <input type="file" id="imageFile" accept="image/*" required style="margin-bottom: 15px; display: block;">
+            <button type="submit" id="submitBtn">Upload to Cloudinary</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('imageFile');
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            
+            if (fileInput.files.length === 0) return;
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+            resultDiv.style.display = 'none';
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            try {
+                // Call the test controller we just created
+                const response = await fetch('http://localhost:8080/api/guest/test/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.style.display = 'block';
+                if (response.ok && data.success) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <strong>Success!</strong> ${data.message}
+                        <br><br>
+                        <a href="${data.url}" target="_blank">${data.url}</a>
+                        <img src="${data.url}" alt="Uploaded image preview">
+                    `;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `<strong>Error!</strong> ${data.message || 'Upload failed'}`;
+                }
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `<strong>Error!</strong> Failed to connect to backend: ${error.message}`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Upload to Cloudinary';
+            }
+        });
+    </script>
+</body>
+</html>

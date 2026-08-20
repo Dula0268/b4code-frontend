@@ -1,4 +1,4 @@
-import MyOrdersClient from "@/components/guest/order/my-orders/my-orders-client";
+import MyOrdersClient from "@/components/guest/ordering/my-orders/my-orders-client";
 
 export default function MyOrdersPage() {
   return <MyOrdersClient />;

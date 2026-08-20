@@ -2,36 +2,51 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import { Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { authApi } from "@/api/auth/auth.api";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function ResetPasswordPage() {
+import { formatApiError } from "@/lib/error-formatter";
+
+function ResetPasswordContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const token = searchParams?.get("token") || "";
+
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPw, setShowPw] = useState(false);
     const [showConfirmPw, setShowConfirmPw] = useState(false);
-
     const [isSuccess, setIsSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(2);
+    const [error, setError] = useState<string | null>(null);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (password !== confirmPassword) {
-            alert("Passwords do not match!");
+            setError("Passwords do not match!");
+            return;
+        }
+        if (!token) {
+            setError("Invalid reset link. Please request a new one.");
             return;
         }
         setLoading(true);
-        // Mock API call to reset password
-        await new Promise((r) => setTimeout(r, 800));
-        setLoading(false);
-        setIsSuccess(true);
+        setError(null);
+        try {
+            await authApi.resetPassword(token, password);
+            setIsSuccess(true);
+        } catch (err) {
+            setError(formatApiError(err, "Failed to reset password. The link may have expired."));
+        } finally {
+            setLoading(false);
+        }
     }
 
     // Handle countdown for redirect
@@ -61,7 +76,7 @@ export default function ResetPasswordPage() {
                     <div className="relative h-52 md:h-auto md:block">
                         <div className="absolute inset-0 bg-[#1a0a05]" />
                         <Image
-                            src="/login-cover.jpg"
+                            src="/images/auth/login-cover.jpg"
                             alt="PrimeStay cover"
                             fill
                             className="object-cover opacity-100"
@@ -100,10 +115,12 @@ export default function ResetPasswordPage() {
                                             <div className="relative">
                                                 <div className="bg-[rgba(149,48,2,0.1)] border border-[#e5e7eb] border-transparent focus-within:border-[#953002]/30 rounded-full w-full flex items-center transition-colors">
                                                     <Input
-                                                        type={showPw ? "text" : "password"}
+                                                        type="text"
+                                                        autoComplete="new-password"
                                                         placeholder="Min. 8 characters"
                                                         value={password}
                                                         onChange={(e) => setPassword(e.target.value)}
+                                                        style={{ WebkitTextSecurity: showPw ? 'none' : 'disc' } as never}
                                                         className="h-[54px] w-full rounded-full bg-transparent pl-[48px] pr-[48px] text-[16px] placeholder:text-[rgba(130,130,130,0.5)] border-0 focus-visible:ring-0"
                                                         required
                                                         minLength={8}
@@ -126,10 +143,12 @@ export default function ResetPasswordPage() {
                                             <div className="relative">
                                                 <div className="bg-[rgba(149,48,2,0.1)] border border-[#e5e7eb] border-transparent focus-within:border-[#953002]/30 rounded-full w-full flex items-center transition-colors">
                                                     <Input
-                                                        type={showConfirmPw ? "text" : "password"}
+                                                        type="text"
+                                                        autoComplete="new-password"
                                                         placeholder="Repeat new password"
                                                         value={confirmPassword}
                                                         onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        style={{ WebkitTextSecurity: showConfirmPw ? 'none' : 'disc' } as never}
                                                         className="h-[54px] w-full rounded-full bg-transparent pl-[48px] pr-[48px] text-[16px] placeholder:text-[rgba(130,130,130,0.5)] border-0 focus-visible:ring-0"
                                                         required
                                                         minLength={8}
@@ -145,6 +164,12 @@ export default function ResetPasswordPage() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {error && (
+                                            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                                {error}
+                                            </div>
+                                        )}
 
                                         <Button type="submit" disabled={loading} size="lg" className="w-full h-[56px] text-[16px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] mt-8 transition-all">
                                             {loading ? "Resetting..." : "Reset Password"}
@@ -204,5 +229,13 @@ export default function ResetPasswordPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <ResetPasswordContent />
+        </Suspense>
     );
 }
