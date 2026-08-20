@@ -302,7 +302,6 @@ export default function ComplainPage() {
                   <div className="flex flex-wrap gap-4 p-4 border border-dashed border-slate-300 rounded-xl bg-slate-50/50 min-h-[140px] items-center">
                     {photoUrls.map((url, i) => (
                       <div key={i} className="group relative h-24 w-24 rounded-lg overflow-hidden border border-slate-200 shadow-sm ring-1 ring-black/5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={url} alt={`Evidence ${i+1}`} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <button

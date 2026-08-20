@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useOrderStore } from "@/store/guest/ordering/order.store";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
-import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
 
 /* ─── Helpers ─── */
 
@@ -26,11 +25,9 @@ export default function ConfirmationClient() {
     const numericOrderId = order.id.replace('#ORD-', '');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
     const apiBase = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
-    const guestSessionId = useGuestSessionStore.getState().sessionId;
-    const orderQuery = guestSessionId ? `?guestSessionId=${encodeURIComponent(guestSessionId)}` : "";
 
     // Always check the backend status directly - don't trust Zustand store alone
-    fetch(`${apiBase}/orders/${numericOrderId}${orderQuery}`)
+    fetch(`${apiBase}/orders/${numericOrderId}`)
       .then((r) => r.json())
       .then((backendOrder) => {
         if (backendOrder.status === 'PAYMENT_PENDING') {
@@ -50,7 +47,8 @@ export default function ConfirmationClient() {
         }
       })
       .catch(console.error);
-  }, [order?.id, simulated, syncCurrentOrder]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id]);
 
   const orderNumber = order?.id ?? "#ORD-0000";
   const totalAmount = order?.total ?? 0;

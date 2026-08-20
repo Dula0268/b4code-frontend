@@ -16,7 +16,6 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("@/store/guest/ordering/cart.store", () => ({
   useCartStore: jest.fn(),
-  getLineUnitPrice: jest.fn((line: any) => line.item.priceLkr ?? line.item.price ?? 0),
 }));
 
 jest.mock("@/store/guest/ordering/order.store", () => ({
@@ -74,15 +73,11 @@ describe("CheckoutClient", () => {
       return selector({
         lines: {
           "item-1": {
-            item: { id: 1, title: "Burger", priceLkr: 1500, price: 1500 },
+            item: { id: 1, title: "Burger", priceLkr: 1500 },
             qty: 1,
           }
         },
-        clear: mockClearCart,
-        subtotal: () => 1500,
-        serviceCharge: () => 150,
-        total: () => 1650,
-        serviceChargeRate: 0.1,
+        clear: mockClearCart
       });
     });
 

@@ -44,13 +44,13 @@ export default function SecurityPage() {
   };
 
   return (
-    <div className="p-5 max-w-3xl relative">
+    <div className="p-10 max-w-3xl relative">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[#1c1917] mb-2">Login & Security</h1>
         <p className="text-[#78716c]">Update your password and manage your account security.</p>
       </div>
 
-      <div className="bg-[#fdfaf8] border border-[#f3f4f6] rounded-2xl p-5">
+      <div className="bg-[#fdfaf8] border border-[#f3f4f6] rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center text-[var(--brand-primary)]">
             <Lock size={20} />
@@ -126,9 +126,9 @@ export default function SecurityPage() {
       {/* Password Reset Success Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 flex flex-col items-center text-center shadow-xl animate-in zoom-in-95 duration-300">
-            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center mb-6 text-green-500">
-              <CheckCircle2 size={24} />
+          <div className="bg-white rounded-3xl p-10 max-w-sm w-full mx-4 flex flex-col items-center text-center shadow-xl animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-6 text-green-500">
+              <CheckCircle2 size={32} />
             </div>
 
             <h2 className="text-xl font-bold text-[#1c1917] mb-2">

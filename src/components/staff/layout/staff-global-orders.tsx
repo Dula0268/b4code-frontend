@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
-import { BellRing, CheckCircle2, ChevronRight, X, AlertTriangle, MapPin, Utensils } from "lucide-react";
+import { BellRing, CheckCircle2, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function StaffGlobalOrdersProvider() {
@@ -36,7 +36,7 @@ export default function StaffGlobalOrdersProvider() {
 
   const placedOrders = orders.filter((o) => o.status === "placed");
 
-  // Trigger custom notification sound when a new placed order arrives
+  // Trigger toast when a new placed order arrives
   useEffect(() => {
     if (placedOrders.length > prevCountRef.current) {
       // Find the new orders (assuming the new ones are at the start of the array)
@@ -44,12 +44,10 @@ export default function StaffGlobalOrdersProvider() {
       const newOrders = placedOrders.slice(0, newOrdersCount);
 
       newOrders.forEach((order) => {
-        // Attempt to play a notification sound
-        try {
-          const audio = new Audio('/sounds/notification.mp3');
-          audio.volume = 0.5;
-          audio.play().catch(() => {});
-        } catch(e) {}
+        toast.success(`New order received from ${order.table || "Room"}`, {
+          duration: 5000,
+          id: `new-order-${order.id}`
+        });
       });
     }
     prevCountRef.current = placedOrders.length;

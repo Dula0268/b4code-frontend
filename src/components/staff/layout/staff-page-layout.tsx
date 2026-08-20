@@ -10,6 +10,8 @@ import { useStaffBookingsStore } from "@/store/staff/bookings/staff-bookings.sto
 
 interface StaffPageLayoutProps {
   children: React.ReactNode;
+  title?: string;
+  subtitle?: string;
 }
 
 function PermissionLoader() {

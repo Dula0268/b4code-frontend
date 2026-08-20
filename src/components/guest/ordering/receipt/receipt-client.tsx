@@ -186,12 +186,8 @@ export default function ReceiptClient() {
         >
           <span className="text-base">Go Back</span>
         </Link>
-        <button
-          disabled
-          title="Coming soon"
-          className="flex-1 flex items-center justify-center gap-2 bg-gray-200 rounded-2xl px-6 py-4 cursor-not-allowed opacity-70"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-500">
+        <button className="flex-1 flex items-center justify-center gap-2 bg-[var(--brand-primary)] rounded-2xl px-6 py-4 shadow-lg shadow-orange-500/20 hover:bg-[#C05621] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-white transform group-hover:-translate-y-1 transition-transform">
             <path
               d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
               stroke="currentColor"
@@ -200,17 +196,17 @@ export default function ReceiptClient() {
               strokeLinejoin="round"
             />
           </svg>
-          <span className="text-base font-semibold text-gray-500">Download PDF (Coming soon)</span>
+          <span className="text-base font-semibold text-white">Download PDF</span>
         </button>
       </div>
 
-      {/* ── Footer links (disabled: no ToS/Privacy pages exist yet) ── */}
-      <div className="flex items-center justify-center gap-6 mt-8 text-xs font-semibold text-gray-300">
-        <button disabled title="Coming soon" className="cursor-not-allowed">
+      {/* ── Footer links ── */}
+      <div className="flex items-center justify-center gap-6 mt-8 text-xs font-semibold text-gray-400">
+        <button className="hover:text-[var(--brand-primary)] transition-colors cursor-pointer">
           Terms of Service
         </button>
         <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-        <button disabled title="Coming soon" className="cursor-not-allowed">
+        <button className="hover:text-[var(--brand-primary)] transition-colors cursor-pointer">
           Privacy Policy
         </button>
       </div>

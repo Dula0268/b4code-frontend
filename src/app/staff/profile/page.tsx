@@ -150,7 +150,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="p-4 sm:p-5 max-w-4xl">
+    <div className="p-6 sm:p-8 max-w-4xl">
       {/* Page Title Header */}
       <div className="mb-4 pb-3 border-b border-[#f3eee8]">
         <div className="flex items-center gap-1.5 text-xs font-black text-[#953002] uppercase tracking-wider mb-0.5">

@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import StaffBookingsClient from "./staff-bookings-client";
+import StaffPageLayout from "@/components/staff/layout/staff-page-layout";
 
 export const metadata: Metadata = {
   title: "Staff Bookings | b4code",
@@ -8,8 +9,8 @@ export const metadata: Metadata = {
 
 export default function StaffBookingsPage() {
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <StaffPageLayout>
       <StaffBookingsClient />
-    </div>
+    </StaffPageLayout>
   );
 }

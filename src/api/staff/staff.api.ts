@@ -3,9 +3,7 @@ import api from "@/lib/axios";
 export interface OwnerReservationDto {
   id: number;
   propertyName: string;
-  roomId?: number;
   roomName: string;
-  roomNumber?: string;
   guestName: string;
   guestEmail: string;
   checkIn: string;
@@ -35,16 +33,6 @@ export const staffApi = {
   sendMessage: (bookingId: number | string, content: string) =>
     api.post(`/staff/messages/booking/${bookingId}`, { content }).then((r) => r.data),
 
-  // Order Messages (Kitchen Staff / Staff Admin)
-  getOrderConversations: (propertyId: number | string) =>
-    api.get(`/staff/order-messages/property/${propertyId}/conversations`).then((r) => r.data),
-
-  getOrderConversation: (orderId: number | string) =>
-    api.get(`/staff/order-messages/order/${orderId}`).then((r) => r.data),
-
-  sendOrderMessage: (orderId: number | string, content: string) =>
-    api.post(`/staff/order-messages/order/${orderId}`, { content }).then((r) => r.data),
-
   // Auto-Reply Rules
   getAutoReplyRules: (propertyId: number | string) =>
     api.get(`/staff/properties/${propertyId}/auto-reply-rules`).then((r) => r.data),
@@ -69,10 +57,9 @@ export const staffApi = {
     return response.data;
   },
 
-  checkInReservation: async (propertyId: number, reservationId: number, roomNumber: string) => {
+  checkInReservation: async (propertyId: number, reservationId: number) => {
     const response = await api.patch<OwnerReservationDto>(
-      `/staff/properties/${propertyId}/reservations/${reservationId}/check-in`,
-      { roomNumber }
+      `/staff/properties/${propertyId}/reservations/${reservationId}/check-in`
     );
     return response.data;
   },

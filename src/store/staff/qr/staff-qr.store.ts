@@ -205,10 +205,14 @@ export const useStaffQRStore = create<StaffQRState & StaffQRActions>()(
   fetchQRs: async (propertyId, page = 0, size = 10) => {
     set({ loading: true, error: null });
     try {
+      // Trying both common patterns observed in the codebase
       const response = await api.get("/qr/list", {
         params: { propertyId, page, size },
+      }).catch(async () => {
+        // Fallback to the other common pattern
+        return await api.get(`/staff/qr/property/${propertyId}?skip=${page * size}&limit=${size}`);
       });
-
+      
       const data = response.data;
       
       // Handle array or paginated response
