@@ -4,10 +4,9 @@ import { Wallet, Waves, CircleDollarSign, DollarSign, TrendingUp, TrendingDown, 
 import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
 export default function PayoutKpiCards() {
-  const { summary, summaryLoading } = useAdminFinanceStore();
+  const { summary, summaryLoading, payoutsTotalElements, payouts } = useAdminFinanceStore();
 
-  const pendingPayouts = summary?.pendingPayouts || 0;
-  const allPayouts = summary?.allPayoutsCount || 0;
+  const pendingPayouts = payouts.filter(p => p.status === "Hold" || p.status === "Pending").length;
 
   if (summaryLoading || !summary) {
     return (
@@ -41,7 +40,7 @@ export default function PayoutKpiCards() {
         </div>
         <div className="flex flex-col gap-1.5 mt-2">
           <p className="text-[24px] font-bold text-[#1A1A1A] tracking-tight m-0">
-            {allPayouts}
+            {payoutsTotalElements}
           </p>
           <div className="flex items-center gap-1.5 mt-1">
             <span className="text-[12px] font-medium text-[#6B7280]">All payouts in whole system</span>

@@ -13,7 +13,7 @@ export default function StaffProfileLayout({
         subtitle="Manage your profile and security preferences."
         searchPlaceholder="Search settings..."
       />
-      <main className="mt-[64px] flex-1 p-8 overflow-y-auto w-full h-full bg-[#F5F6F8]">
+      <main className="mt-[64px] flex-1 p-5 overflow-y-auto w-full h-full bg-[#F5F6F8]">
         <ProfileLayout>{children}</ProfileLayout>
       </main>
     </>

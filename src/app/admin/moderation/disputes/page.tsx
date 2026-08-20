@@ -20,65 +20,57 @@ export default function DisputesPage() {
     <AdminPageLayout>
       <div className="flex flex-col gap-6">
         {/* ── Page Header ── */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FAFAFA] to-[#F5F2F0] border border-[#E8DDD8] p-8 shadow-sm">
-          {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#C05621]/10 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#953002]/5 to-transparent rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col gap-4">
-            <Link 
-              href="/admin/moderation"
-              className="flex items-center gap-1.5 text-sm text-[#9E7B6A] hover:text-[#C05621] w-fit no-underline font-semibold transition-all hover:-translate-x-1"
-            >
-              <ArrowLeft size={16} />
-              Back to Moderation
-            </Link>
-            
+        <div className="flex flex-col gap-3">
+          <Link 
+            href="/admin/moderation"
+            className="flex items-center gap-1.5 text-sm text-[#9E7B6A] hover:text-[#C05621] w-fit no-underline font-medium transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Back to Moderation
+          </Link>
+          
+          <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-[28px] font-extrabold text-[#1A1A1A] leading-tight m-0 flex items-center gap-3 drop-shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C05621] to-[#953002] flex items-center justify-center text-white shadow-md">
-                  <Scale size={24} />
-                </div>
+              <h1 className="text-[26px] font-bold text-[#1A1A1A] leading-tight m-0 flex items-center gap-3">
+                <Scale className="text-[#C05621]" size={28} />
                 Dispute Resolution
               </h1>
-              <p className="text-[15px] text-[#6B7280] mt-2 mb-0 font-medium max-w-2xl">
-                Manage guest refund requests and handle property complaints efficiently.
+              <p className="text-[13px] text-[#9E7B6A] mt-1 mb-0">
+                Manage guest refund requests and handle property complaints.
               </p>
             </div>
           </div>
         </div>
 
         {/* ── Tab Bar ── */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 p-1.5 bg-[#F5F2F0] rounded-xl border border-[#E8DDD8]/60 inline-flex shadow-inner">
-            <button
-              onClick={() => setActiveTab("REFUNDS")}
-              className={`flex items-center gap-2 px-6 py-2.5 text-[14px] font-bold rounded-lg border-none cursor-pointer transition-all duration-300 ${
-                activeTab === "REFUNDS"
-                  ? "bg-white text-[#1A1A1A] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
-                  : "bg-transparent text-[#6B7280] hover:text-[#1A1A1A] hover:bg-black/5"
-              }`}
-            >
-              <Wallet size={18} className={activeTab === "REFUNDS" ? "text-[#C05621]" : ""} />
-              Refund Requests
-            </button>
-            
-            <button
-              onClick={() => setActiveTab("COMPLAINTS")}
-              className={`flex items-center gap-2 px-6 py-2.5 text-[14px] font-bold rounded-lg border-none cursor-pointer transition-all duration-300 ${
-                activeTab === "COMPLAINTS"
-                  ? "bg-white text-[#1A1A1A] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
-                  : "bg-transparent text-[#6B7280] hover:text-[#1A1A1A] hover:bg-black/5"
-              }`}
-            >
-              <FileWarning size={18} className={activeTab === "COMPLAINTS" ? "text-[#C05621]" : ""} />
-              Guest Complaints
-            </button>
-          </div>
+        <div className="flex items-center gap-1 border-b-2 border-[#F0EBE7]">
+          <button
+            onClick={() => setActiveTab("REFUNDS")}
+            className={`flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium border-b-[3px] -mb-0.5 bg-transparent cursor-pointer transition-colors ${
+              activeTab === "REFUNDS"
+                ? "text-[#C05621] border-[#C05621] font-semibold"
+                : "text-[#9E7B6A] border-transparent hover:text-[#C05621]"
+            }`}
+          >
+            <Wallet size={16} />
+            Refund Requests
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("COMPLAINTS")}
+            className={`flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium border-b-[3px] -mb-0.5 bg-transparent cursor-pointer transition-colors ${
+              activeTab === "COMPLAINTS"
+                ? "text-[#C05621] border-[#C05621] font-semibold"
+                : "text-[#9E7B6A] border-transparent hover:text-[#C05621]"
+            }`}
+          >
+            <FileWarning size={16} />
+            Guest Complaints
+          </button>
         </div>
 
         {/* ── Tab Content ── */}
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-md border border-[#E8DDD8] overflow-hidden relative transition-all duration-300">
+        <div className="bg-white rounded-xl shadow-sm border border-[#E8DDD8] overflow-hidden">
           <DisputesTable category={activeTab === "COMPLAINTS" ? "COMPLAIN" : "REFUND"} />
         </div>
       </div>

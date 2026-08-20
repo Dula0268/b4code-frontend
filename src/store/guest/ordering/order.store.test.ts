@@ -9,12 +9,12 @@ jest.mock("@/lib/axios", () => ({
   },
 }));
 
-describe("Order Store - Prefix Stripping Tests", () => {
+describe("Order Store - menuItemId Conversion Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("should successfully strip prefixes (mn- and vn-) from menuItemId and convert to number when placing an order", async () => {
+  it("should convert menuItemId to a number when placing an order", async () => {
     // Mock the backend API response to return a mock order ID
     const mockedPost = api.post as jest.Mock;
     mockedPost.mockResolvedValue({
@@ -27,7 +27,7 @@ describe("Order Store - Prefix Stripping Tests", () => {
     const lines = [
       {
         item: {
-          id: "mn-101",
+          id: "101",
           name: "Test Pizza",
           title: "Test Pizza",
           description: "A yummy pizza to test",
@@ -39,7 +39,7 @@ describe("Order Store - Prefix Stripping Tests", () => {
       },
       {
         item: {
-          id: "vn-202",
+          id: "202",
           name: "Test Burger",
           title: "Test Burger",
           description: "A yummy burger to test",
@@ -71,12 +71,12 @@ describe("Order Store - Prefix Stripping Tests", () => {
     expect(api.post).toHaveBeenCalledWith("/orders", expect.objectContaining({
       items: [
         expect.objectContaining({
-          menuItemId: 101, // 'mn-101' -> 101
+          menuItemId: 101, // '101' -> 101
           quantity: 2,
           priceAtOrder: 1500,
         }),
         expect.objectContaining({
-          menuItemId: 202, // 'vn-202' -> 202
+          menuItemId: 202, // '202' -> 202
           quantity: 1,
           priceAtOrder: 1200,
         }),

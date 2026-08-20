@@ -105,7 +105,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
             <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
             <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
           </div>
-          <div className="flex-1 rounded-xl border border-[var(--gray-5)] bg-white p-6 shadow-sm flex flex-col gap-4">
+          <div className="flex-1 rounded-xl border border-[var(--gray-5)] bg-white p-5 shadow-sm flex flex-col gap-4">
             <div className="h-10 w-full bg-gray-100 rounded animate-pulse" />
             <div className="h-24 w-full bg-gray-100 rounded animate-pulse" />
             <div className="h-10 w-32 bg-gray-100 rounded animate-pulse mt-4" />
@@ -116,8 +116,8 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
 
   if (!menu) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-4 p-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-[rgba(130,130,130,0.05)] flex items-center justify-center">
+      <div className="h-full flex flex-col items-center justify-center gap-4 p-5 text-center">
+        <div className="w-10 h-10 rounded-full bg-[rgba(130,130,130,0.05)] flex items-center justify-center">
           <UtensilsCrossed size={32} className="text-[var(--gray-3)] opacity-20" />
         </div>
         <div>
@@ -262,8 +262,8 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
       <div className="flex-1 min-h-0 overflow-y-auto">
         {filteredItems.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-[rgba(149,48,2,0.08)] flex items-center justify-center">
-              <UtensilsCrossed size={20} className="text-[var(--brand-primary)]" />
+            <div className="w-10 h-10 rounded-full bg-[rgba(149,48,2,0.08)] flex items-center justify-center">
+              <UtensilsCrossed size={18} className="text-[var(--brand-primary)]" />
             </div>
             <p className="text-xs font-bold text-[var(--black-2)]">No items yet</p>
             <p className="text-[10px] text-[var(--gray-3)]">Add your first menu item to get started.</p>

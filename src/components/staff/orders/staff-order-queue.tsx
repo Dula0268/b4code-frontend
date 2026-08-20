@@ -103,7 +103,7 @@ function OrderCard({
 
   return (
     <Card
-      className="bg-white/80 backdrop-blur-xl border border-white py-0 gap-0 overflow-hidden cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)] hover:-translate-y-1 transition-all duration-500 rounded-3xl flex flex-col group relative"
+      className="bg-white/80 backdrop-blur-xl border border-white py-0 gap-0 overflow-hidden cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)] hover:-translate-y-1 transition-all duration-500 rounded-2xl flex flex-col group relative"
       onClick={onViewDetail}
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-3xl rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
@@ -215,7 +215,7 @@ function RejectModal({ orderId, onClose, onConfirm }: { orderId: string; onClose
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-[440px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="px-6 pt-6 pb-4">
+        <div className="px-5 pt-5 pb-4">
           <div className="flex items-center gap-3 mb-1">
             <div className="w-10 h-10 rounded-full bg-[rgba(235,87,87,0.1)] flex items-center justify-center">
               <XCircle size={20} className="text-[var(--state-error)]" />
@@ -228,7 +228,7 @@ function RejectModal({ orderId, onClose, onConfirm }: { orderId: string; onClose
         </div>
 
         {/* Body */}
-        <div className="px-6 pb-4 flex flex-col gap-3">
+        <div className="px-5 pb-4 flex flex-col gap-3">
           <label className="text-sm font-medium text-[#44403c]">Reason for rejection</label>
           <Textarea
             value={reason}
@@ -254,7 +254,7 @@ function RejectModal({ orderId, onClose, onConfirm }: { orderId: string; onClose
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6 flex gap-3">
+        <div className="px-5 pb-5 flex gap-3">
           <Button variant="outline" className="flex-1" onClick={onClose}>Keep Order</Button>
           <Button className="flex-1 bg-[var(--state-error)] text-white hover:bg-[rgba(235,87,87,0.85)]" onClick={() => onConfirm(reason || "No reason provided")}>
             Reject Order
@@ -309,7 +309,7 @@ export default function StaffOrderQueue() {
         }
       />
       {/* Header Area */}
-      <div className="bg-white px-6 pt-5 pb-0 flex flex-col mt-[64px]">
+      <div className="bg-white px-5 pt-5 pb-0 flex flex-col mt-[64px]">
         <div className="max-w-7xl mx-auto w-full flex flex-col gap-4">
         {/* Status Tabs */}
         <div className="border-b border-[#e7e5e4] flex items-start gap-0 overflow-x-auto">
@@ -342,7 +342,7 @@ export default function StaffOrderQueue() {
       </div>
 
       {/* Orders Grid */}
-      <div className="flex-1 px-4 sm:px-6 py-6 overflow-y-auto">
+      <div className="flex-1 px-4 sm:px-5 py-5 overflow-y-auto">
         <div className="max-w-7xl mx-auto w-full h-full">
         {filteredOrders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">

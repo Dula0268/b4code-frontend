@@ -16,6 +16,8 @@ export interface MenuItem {
   tag?: string;
   variants?: { id: string; label: string; price: number }[];
   modifiers?: { id: string; name: string; options: { label: string; price: number }[] }[];
+  avgRating?: number;
+  reviewCount?: number;
 }
 
 export interface MenuCategory {
@@ -54,6 +56,8 @@ type ApiMenuItem = {
   tag?: string;
   variants?: ApiVariant[];
   modifiers?: ApiModifier[];
+  avgRating?: number;
+  reviewCount?: number;
 };
 
 type GuestMenuState = {
@@ -107,6 +111,8 @@ export const useGuestMenuStore = create<GuestMenuState & GuestMenuActions>((set,
         isAvailable: item.isAvailable !== false,
         tag: item.tag,
         imageUrls: item.imageUrls || [],
+        avgRating: item.avgRating ?? undefined,
+        reviewCount: item.reviewCount ?? 0,
         variants: item.variants?.map((v: any, idx: number) => ({
           id: String(v.id ?? `var-${idx}`),
           label: v.label || "",

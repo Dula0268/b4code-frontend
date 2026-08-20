@@ -292,25 +292,6 @@ export default function GuestTopbar() {
               )}
             </div>
             </div>
-          ) : user ? (
-            <div className="flex items-center gap-3">
-              <Link
-                href={
-                  user.role.toLowerCase() === "owner" ? "/owner" :
-                  user.role.toLowerCase() === "staff" ? "/staff" :
-                  user.role.toLowerCase() === "admin" ? "/admin" : "/"
-                }
-                className="px-4 py-2 text-sm font-semibold text-[#953002] border-2 border-[#953002] rounded-lg hover:bg-[#953002]/5 transition-colors no-underline whitespace-nowrap"
-              >
-                Go to Dashboard
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm font-semibold text-white bg-[#953002] rounded-lg hover:bg-[#6d2200] transition-colors no-underline whitespace-nowrap"
-              >
-                Log Out
-              </button>
-            </div>
           ) : (
             <div className="flex items-center gap-3">
               <Link
@@ -379,25 +360,6 @@ export default function GuestTopbar() {
               <button
                 onClick={() => { handleLogout(); setMobileOpen(false) }}
                 className="px-4 py-2 text-sm font-semibold text-center text-red-500 border-2 border-red-400 rounded-lg cursor-pointer"
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : user ? (
-            <div className="flex flex-col gap-2 pt-2 border-t border-[#e0e0e0]">
-              <Link 
-                href={
-                  user.role.toLowerCase() === "owner" ? "/owner" :
-                  user.role.toLowerCase() === "staff" ? "/staff" :
-                  user.role.toLowerCase() === "admin" ? "/admin" : "/"
-                }
-                className="px-4 py-2 text-sm font-semibold text-center text-[#953002] border-2 border-[#953002] rounded-lg no-underline"
-              >
-                Go to Dashboard
-              </Link>
-              <button
-                onClick={() => { handleLogout(); setMobileOpen(false) }}
-                className="px-4 py-2 text-sm font-semibold text-center text-white bg-[#953002] rounded-lg cursor-pointer"
               >
                 Sign Out
               </button>

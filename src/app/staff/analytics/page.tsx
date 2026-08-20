@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
   if (!propertyId) return (
     <>
       <StaffHeader title="Analytics" subtitle="Performance Dashboard" searchPlaceholder="Search..." />
-      <main className="mt-[64px] flex-1 p-8 text-[#9E7B6A]">
+      <main className="mt-[64px] flex-1 p-5 text-[#9E7B6A]">
         No property selected.
       </main>
     </>
@@ -120,7 +120,7 @@ export default function AnalyticsPage() {
         subtitle="Performance Dashboard"
         searchPlaceholder="Search order #, room, or item..."
       />
-      <main className="mt-[64px] flex-1 p-4 lg:p-6 min-h-[calc(100vh-64px)] lg:h-[calc(100vh-64px)] overflow-y-auto lg:overflow-hidden bg-[#F5F6F8] flex flex-col custom-scrollbar">
+      <main className="mt-[64px] flex-1 p-4 lg:p-5 min-h-[calc(100vh-64px)] lg:h-[calc(100vh-64px)] overflow-y-auto lg:overflow-hidden bg-[#F5F6F8] flex flex-col custom-scrollbar">
         <div className="max-w-7xl mx-auto w-full flex flex-col h-full">
         {/* ── Page Header ── */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end flex-shrink-0 mb-4 gap-3 sm:gap-0">
@@ -151,16 +151,16 @@ export default function AnalyticsPage() {
         {isLoading ? (
           <div className="flex flex-col gap-5 flex-1 w-full animate-pulse">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-shrink-0">
-              <Skeleton className="col-span-1 lg:col-span-4 h-[160px] rounded-3xl" />
+              <Skeleton className="col-span-1 lg:col-span-4 h-[160px] rounded-2xl" />
               <div className="col-span-1 lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <Skeleton className="col-span-1 h-[120px] rounded-3xl" />
-                <Skeleton className="col-span-1 h-[120px] rounded-3xl" />
+                <Skeleton className="col-span-1 h-[120px] rounded-2xl" />
+                <Skeleton className="col-span-1 h-[120px] rounded-2xl" />
               </div>
-              <Skeleton className="col-span-1 lg:col-span-3 h-[140px] rounded-3xl" />
+              <Skeleton className="col-span-1 lg:col-span-3 h-[140px] rounded-2xl" />
             </div>
             <div className="flex flex-col lg:flex-row gap-5 flex-1 lg:min-h-0 pb-10">
-              <Skeleton className="flex-[5] min-h-[300px] lg:min-h-0 rounded-3xl" />
-              <Skeleton className="flex-[3] min-h-[300px] lg:min-h-0 rounded-3xl" />
+              <Skeleton className="flex-[5] min-h-[300px] lg:min-h-0 rounded-2xl" />
+              <Skeleton className="flex-[3] min-h-[300px] lg:min-h-0 rounded-2xl" />
             </div>
           </div>
         ) : (
@@ -169,7 +169,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-shrink-0">
               
               {/* Total Revenue - Big feature card */}
-              <div className="col-span-1 lg:col-span-4 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between relative overflow-hidden group min-h-[160px]">
+              <div className="col-span-1 lg:col-span-4 bg-white/70 backdrop-blur-xl rounded-2xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.12)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between relative overflow-hidden group min-h-[160px]">
                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#C05621] opacity-[0.08] blur-3xl rounded-full group-hover:scale-150 group-hover:opacity-[0.12] transition-all duration-700" />
                 <div className="flex justify-between items-start z-10">
                   <div className="p-2 bg-gradient-to-br from-[#FFF8F0] to-white rounded-xl shadow-sm border border-[#F0EBE7]/50">
@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
               {/* Middle KPIs */}
               <div className="col-span-1 lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {/* Avg Order Value */}
-                <div className="col-span-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[120px]">
+                <div className="col-span-1 bg-white/70 backdrop-blur-xl rounded-2xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[120px]">
                   <div className="p-2 bg-[#F8F6F5] rounded-xl self-start">
                     <Activity size={16} className="text-[#9E7B6A]" />
                   </div>
@@ -206,7 +206,7 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Most Sold Item */}
-                <div className="col-span-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group min-h-[120px]">
+                <div className="col-span-1 bg-white/70 backdrop-blur-xl rounded-2xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group min-h-[120px]">
                   <div className="p-2 bg-[#FFF8F0] rounded-xl self-start group-hover:scale-110 transition-transform">
                     <Flame size={16} className="text-[#C05621]" />
                   </div>
@@ -223,7 +223,7 @@ export default function AnalyticsPage() {
               {/* View Order History Button */}
               <div 
                 onClick={() => router.push('/staff/orders')}
-                className="col-span-1 lg:col-span-3 bg-gradient-to-br from-[#1A5039] to-[#2D7D5C] rounded-3xl p-6 shadow-[0_8px_30px_rgb(45,125,92,0.3)] hover:shadow-[0_12px_40px_rgb(45,125,92,0.4)] hover:-translate-y-1 flex flex-col justify-between cursor-pointer transition-all duration-500 group relative overflow-hidden min-h-[140px]"
+                className="col-span-1 lg:col-span-3 bg-gradient-to-br from-[#1A5039] to-[#2D7D5C] rounded-2xl p-5 shadow-[0_8px_30px_rgb(45,125,92,0.3)] hover:shadow-[0_12px_40px_rgb(45,125,92,0.4)] hover:-translate-y-1 flex flex-col justify-between cursor-pointer transition-all duration-500 group relative overflow-hidden min-h-[140px]"
               >
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none" />
                 <History className="absolute -right-4 -bottom-4 h-28 w-28 text-white opacity-[0.05] group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-700" />
@@ -243,7 +243,7 @@ export default function AnalyticsPage() {
             <div className="flex flex-col lg:flex-row gap-5 flex-1 lg:min-h-0 pb-10">
               
               {/* Revenue Chart Box */}
-              <div className="flex-[5] bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-[300px] lg:min-h-0">
+              <div className="flex-[5] bg-white/70 backdrop-blur-xl rounded-2xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-[300px] lg:min-h-0">
                 <div className="flex justify-between items-center mb-6 flex-shrink-0">
                   <h2 className="text-[17px] font-extrabold text-[#1A1A1A] m-0 flex items-center gap-2.5">
                     <span className="w-2 h-6 bg-[#C05621] rounded-full" />
@@ -301,7 +301,7 @@ export default function AnalyticsPage() {
               {/* Right Column: Top Items Leaderboard */}
               <div className="flex-[3] flex flex-col gap-5 min-h-[300px] lg:min-h-0">
                 
-                <div className="flex-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-0 relative overflow-hidden">
+                <div className="flex-1 bg-white/70 backdrop-blur-xl rounded-2xl border border-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col min-h-0 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-[#FFF8F0] to-transparent opacity-80 rounded-bl-full pointer-events-none" />
                   
                   <div className="flex items-center justify-between mb-5 flex-shrink-0 relative z-10">

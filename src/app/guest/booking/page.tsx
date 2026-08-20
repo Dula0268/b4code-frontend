@@ -120,7 +120,7 @@ function BookingsContent() {
           try {
             // If this was a modification payment, commit the pending modification first.
             if (isModification) {
-              const rawPending = localStorage.getItem("pendingBookingModification");
+              const rawPending = sessionStorage.getItem("pendingBookingModification");
               if (rawPending) {
                 try {
                   const pending = JSON.parse(rawPending);
@@ -134,7 +134,7 @@ function BookingsContent() {
                 } catch (modErr) {
                   console.error("Failed to commit pending modification after payment:", modErr);
                 } finally {
-                  localStorage.removeItem("pendingBookingModification");
+                  sessionStorage.removeItem("pendingBookingModification");
                 }
               }
               // The backend modifyBooking method sends the booking modification email!

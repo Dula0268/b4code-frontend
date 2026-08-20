@@ -39,13 +39,13 @@ interface FinanceState {
   fetchSummary: () => Promise<void>;
   fetchRevenueTrend: (timeframe?: string) => Promise<void>;
   fetchTransactions: (params: { search?: string; type?: string; page?: number; size?: number }) => Promise<void>;
-  fetchRefunds: (params: { search?: string; status?: string; resolved?: boolean; page?: number; size?: number }) => Promise<void>;
+  fetchRefunds: (params: { search?: string; status?: string; page?: number; size?: number }) => Promise<void>;
   fetchPayouts: (params: { search?: string; status?: string; page?: number; size?: number }) => Promise<void>;
   
   approveRefund: (id: string) => Promise<void>;
   rejectRefund: (id: string, adminNote: string) => Promise<void>;
   processPayout: (id: string, bankReference: string, commissionRate?: number) => Promise<void>;
-  rejectPayout: (id: string, reason: string) => Promise<void>;
+  rejectPayout: (id: string) => Promise<void>;
   downloadPayoutExport: (params: { search?: string; status?: string }) => Promise<void>;
 }
 
@@ -186,10 +186,10 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
     }
   },
 
-  rejectPayout: async (id: string, reason: string) => {
+  rejectPayout: async (id: string) => {
     set({ actionLoading: true, error: null });
     try {
-      const updated = await FinanceApi.rejectPayout(id, { adminNote: reason });
+      const updated = await FinanceApi.rejectPayout(id);
       set((state) => ({
         payouts: state.payouts.map(p => p.id === id ? updated : p),
         actionLoading: false

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "@/lib/axios";
 import type { MenuItem } from "./cart.store";
+import { getLineUnitPrice } from "./cart.store";
 const generateUUID = () => {
   if (typeof window !== "undefined" && window.crypto && window.crypto.randomUUID) {
     return window.crypto.randomUUID();
@@ -79,6 +80,9 @@ type OrderState = {
 
   /** Sync current order status from backend */
   syncCurrentOrder: () => Promise<void>;
+
+  /** Cancel the current order (guest-initiated). Returns true on success. */
+  cancelOrder: () => Promise<boolean>;
 
   /** Advance the order to the next status */
   advanceStatus: (status: OrderStatus, rejectionReason?: string) => void;
@@ -260,21 +264,31 @@ export const useOrderStore = create<OrderState>()(
         // Online/card payments wait for PayHere confirmation before becoming active
         status: (opts.paymentMethod === "online" || opts.paymentMethod === "card") ? "PAYMENT_PENDING" : "PLACED",
         items: opts.lines.map((line) => {
+          const selectedVariant = line.selectedVariantId && line.item.variants
+            ? line.item.variants.find((v) => v.id === line.selectedVariantId)
+            : undefined;
+
           let note = "";
-          if (line.selectedVariantId && line.item.variants) {
-            const v = line.item.variants.find((v) => v.id === line.selectedVariantId);
-            if (v) note += v.label;
-          }
+          if (selectedVariant) note += selectedVariant.label;
           if (line.selectedModifiers && line.selectedModifiers.length > 0) {
             if (note) note += " • ";
             note += line.selectedModifiers.map(m => m.optionLabel).join(", ");
           }
 
           return {
-            menuItemId: Number(line.item.id.replace(/^(mn-|vn-)/, "")),
+            menuItemId: Number(line.item.id),
             quantity: line.qty,
-            priceAtOrder: line.item.price, // NOTE: We don't need to recalculate base price, cart subtotal handles it
+            priceAtOrder: getLineUnitPrice(line), // Resolved unit price including variant/modifier adjustments — display only, server recomputes authoritatively
             note: note || undefined,
+            // Structured selection so the backend can resolve the REAL price server-side
+            // (variants have no DB id, so label is the join key; modifiers use their real id).
+            selectedVariantLabel: selectedVariant?.label,
+            selectedModifiers: line.selectedModifiers
+              ?.map((m) => {
+                const modifierId = Number(m.modifierId);
+                return Number.isFinite(modifierId) ? { modifierId, optionLabel: m.optionLabel } : null;
+              })
+              .filter((m): m is { modifierId: number; optionLabel: string } => m !== null),
           };
         }),
       });
@@ -347,8 +361,9 @@ export const useOrderStore = create<OrderState>()(
       // Map backend orders to frontend Order type, excluding payment-pending ones
       const now = new Date();
       
-      const { serviceChargeRate = 0.1, taxRate = 0.05 } = useCartStore.getState();
-      const combinedRate = 1 + serviceChargeRate + taxRate;
+      // Tax is deprecated (always 0) — only service charge is applied on top of subtotal.
+      const { serviceChargeRate = 0.1 } = useCartStore.getState();
+      const combinedRate = 1 + serviceChargeRate;
 
       const mapped: Order[] = backendOrders
         .filter((bo: { status: string }) => bo.status !== 'PAYMENT_PENDING' && bo.status !== 'payment_pending')
@@ -368,7 +383,7 @@ export const useOrderStore = create<OrderState>()(
           }));
           const subtotal = (bo.totalAmount ?? 0) / combinedRate;
           const serviceCharge = subtotal * serviceChargeRate;
-          const tax = subtotal * taxRate;
+          const tax = 0; // Deprecated: tax is always 0
           return {
             id: `#ORD-${bo.id}`,
             location: bo.location || '',
@@ -401,8 +416,11 @@ export const useOrderStore = create<OrderState>()(
     const currentOrder = get().currentOrder;
     if (!currentOrder) return;
     const numericOrderId = currentOrder.id.replace('#ORD-', '');
+    const guestSessionId = useGuestSessionStore.getState().sessionId;
     try {
-      const response = await api.get(`/orders/${numericOrderId}`);
+      const response = await api.get(`/orders/${numericOrderId}`, {
+        params: guestSessionId ? { guestSessionId } : undefined,
+      });
       const backendOrder = response.data;
       const mappedStatus = mapBackendStatus(backendOrder.status);
       
@@ -426,6 +444,26 @@ export const useOrderStore = create<OrderState>()(
       });
     } catch (error) {
       console.error("Failed to sync current order:", error);
+    }
+  },
+
+  cancelOrder: async () => {
+    const currentOrder = get().currentOrder;
+    if (!currentOrder) return false;
+    const numericOrderId = currentOrder.id.replace('#ORD-', '');
+    const guestSessionId = useGuestSessionStore.getState().sessionId;
+    set({ loading: true, error: null });
+    try {
+      await api.post(`/orders/${numericOrderId}/cancel`, null, {
+        params: guestSessionId ? { guestSessionId } : undefined,
+      });
+      get().advanceStatus("cancelled");
+      set({ loading: false });
+      return true;
+    } catch (error: unknown) {
+      const errorMessage = extractApiErrorMessage(error, "Failed to cancel order");
+      set({ error: errorMessage, loading: false });
+      return false;
     }
   },
 

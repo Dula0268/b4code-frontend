@@ -31,7 +31,7 @@ function TransactionIcon({ type }: { type?: string }) {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function RecentTransactions({ onViewAll }: { onViewAll?: () => void }) {
+export default function RecentTransactions() {
   const { payouts, refunds, fetchPayouts, fetchRefunds, payoutsLoading, refundsLoading } = useAdminFinanceStore();
 
   useEffect(() => {
@@ -82,7 +82,13 @@ export default function RecentTransactions({ onViewAll }: { onViewAll?: () => vo
         </div>
         <button 
           onClick={() => {
-            if (onViewAll) onViewAll();
+            const tabs = document.querySelectorAll('[role="tablist"] button');
+            // Find tab with text 'Payouts' or similar, assuming the main page has a tabs component
+            // We can also dispatch a custom event or update URL if we use searchParams for tabs
+            // Assuming we use setTab state in the parent, we can just change URL parameter if applicable.
+            // For now, let's just trigger a click on the Payouts tab
+            const payoutTab = Array.from(tabs).find(t => t.textContent?.includes('Payouts')) as HTMLElement;
+            if (payoutTab) payoutTab.click();
           }}
           className="text-[13px] font-semibold text-[#C05621] hover:underline cursor-pointer bg-transparent border-none"
         >
