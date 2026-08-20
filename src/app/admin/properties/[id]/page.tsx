@@ -49,19 +49,23 @@ function DocumentCard({
   return (
     <div className="rounded-xl overflow-hidden border border-[#E8DDD8]">
       <div 
-        className="relative w-full h-40 bg-[#F3F4F6] flex items-center justify-center cursor-pointer group"
+        className="relative w-full h-40 bg-[#F3F4F6] flex items-center justify-center cursor-pointer group overflow-hidden"
         onClick={onView}
       >
         {image ? (
           <>
-            <Image src={image} alt={label} fill className="object-cover transition-opacity group-hover:opacity-90" />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-none"></div>
+            <Image src={image} alt={label} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2">
+              <span className="text-white text-sm font-bold flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                <Eye size={16} /> View Document
+              </span>
+            </div>
           </>
         ) : (
           <span className="text-[#9E7B6A] text-xs">No preview available</span>
         )}
         {/* File type badge */}
-        <span className="absolute bottom-2 right-2 bg-[#1A1A1A]/70 text-white text-[10px] font-bold px-2 py-0.5 rounded pointer-events-none">
+        <span className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm pointer-events-none z-10">
           {type}
         </span>
       </div>
@@ -101,20 +105,27 @@ function DocumentCard({
 
 // ─── Property Detail Card ─────────────────────────────────────────────────────
 function DetailCard({
-  icon,
-  label,
-  value,
+  icon: Icon,
+  title,
+  children,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
+  icon: any;
+  title: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-[#E8DDD8] rounded-xl p-4 flex flex-col gap-2">
-      <div className="text-[#6B7280]">{icon}</div>
-      <div>
-        <p className="m-0 text-[14px] font-bold text-[#1A1A1A]">{label}</p>
-        <p className="m-0 text-[12px] text-[#9E7B6A]">{value}</p>
+    <div className="bg-white rounded-2xl border border-[#F0EBE7] p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative group overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#C05621]/5 to-transparent rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="flex items-start gap-4 relative z-10">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFF5F0] to-[#FFE8DE] text-[#C05621] flex items-center justify-center shrink-0 shadow-sm border border-[#C05621]/10">
+          <Icon size={22} />
+        </div>
+        <div className="flex-1">
+          <h3 className="m-0 text-[15px] font-bold text-[#1A1A1A] mb-3">
+            {title}
+          </h3>
+          <div className="space-y-3">{children}</div>
+        </div>
       </div>
     </div>
   );
@@ -299,43 +310,51 @@ export default function PropertyDetailsPage() {
             <Loader2 className="animate-spin text-[#C05621]" size={48} />
           </div>
         )}
-        {/* ── Breadcrumb ── */}
-        <div className="flex items-center gap-1.5 text-sm">
-          <button
-            onClick={() => router.push("/admin/properties")}
-            className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-[#9E7B6A] text-sm p-0 hover:text-[#1A1A1A] transition-colors"
-          >
-            Back
-          </button>
-          <ChevronRight size={14} className="text-[#D1D5DB]" />
-          <span className="text-[#C05621] font-semibold">
-            {selectedProperty.name}
-          </span>
-        </div>
+        {/* ── Hero Banner ── */}
+        <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden mb-8 shadow-sm">
+          {/* Blurred Background from Main Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center blur-xl scale-110 opacity-60"
+            style={{ backgroundImage: `url(${selectedProperty.mainImageUrl})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A1A]/30 via-[#1A1A1A]/50 to-[#1A1A1A]/90" />
+          
+          <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-between z-10">
+            {/* Top Bar */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => router.push("/admin/properties")}
+                className="flex items-center gap-2 text-sm text-white/90 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md px-4 py-2 rounded-full font-medium transition-all shadow-sm cursor-pointer border-none"
+              >
+                <ArrowLeft size={16} />
+                Back to Properties
+              </button>
+              <span
+                className={`px-3 py-1 rounded-full text-[12px] font-bold ${
+                  isUnderReview
+                    ? "bg-[#DBEAFE] text-[#1E40AF]"
+                    : isPending
+                      ? "bg-[#FEF3C7] text-[#92400E]"
+                      : selectedProperty.status === "Approved"
+                        ? "bg-[#D1FAE5] text-[#065F46]"
+                        : "bg-[#FEE2E2] text-[#991B1B]"
+                }`}
+              >
+                {selectedProperty.status}
+              </span>
+            </div>
 
-        {/* ── Title ── */}
-        <div className="border-b border-[#F0EBE7] pb-6">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-[24px] font-bold text-[#1A1A1A] m-0">
-              {selectedProperty.name}
-            </h1>
-            <span
-              className={`px-3 py-1 rounded-full text-[12px] font-bold ${
-                isUnderReview
-                  ? "bg-[#DBEAFE] text-[#1E40AF]"
-                  : isPending
-                    ? "bg-[#FEF3C7] text-[#92400E]"
-                    : selectedProperty.status === "Approved"
-                      ? "bg-[#D1FAE5] text-[#065F46]"
-                      : "bg-[#FEE2E2] text-[#991B1B]"
-              }`}
-            >
-              {selectedProperty.status}
-            </span>
+            {/* Title Section */}
+            <div>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white m-0 mb-2 drop-shadow-md">
+                {selectedProperty.name}
+              </h1>
+              <div className="flex items-center gap-2 text-white/90 text-sm md:text-base font-medium">
+                <MapPin size={16} className="text-[#F59E0B]" />
+                {selectedProperty.city}, ID: #{selectedProperty.id}
+              </div>
+            </div>
           </div>
-          <p className="text-[13px] text-[#9E7B6A] mt-1.5 m-0">
-            Submitted on {submittedDateLabel} • ID: #{selectedProperty.id}
-          </p>
         </div>
 
         {/* ── Two-Column Layout ── */}
@@ -362,35 +381,33 @@ export default function PropertyDetailsPage() {
 
             {/* Detail Cards Grid */}
             <div className="grid grid-cols-2 gap-3 mb-8">
-              <DetailCard
-                icon={<MapPin size={18} />}
-                label="Address"
-                value={selectedProperty.addressLine1 || "N/A"}
-              />
-              <DetailCard
-                icon={<Home size={18} />}
-                label="City"
-                value={selectedProperty.city || "N/A"}
-              />
-              <DetailCard
-                icon={<Globe size={18} />}
-                label="Country"
-                value={selectedProperty.country || "N/A"}
-              />
-              <DetailCard
-                icon={<User size={18} />}
-                label="Owner Name"
-                value={selectedProperty.ownerName || "N/A"}
-              />
-              <DetailCard
-                icon={<Clock size={18} />}
-                label="Submitted"
-                value={
-                  selectedProperty.createdAt
+              <DetailCard icon={MapPin} title="Address">
+                <p className="m-0 text-[14px] text-[#6B7280]">
+                  {selectedProperty.addressLine1 || "N/A"}
+                </p>
+              </DetailCard>
+              <DetailCard icon={Home} title="City">
+                <p className="m-0 text-[14px] text-[#6B7280]">
+                  {selectedProperty.city || "N/A"}
+                </p>
+              </DetailCard>
+              <DetailCard icon={Globe} title="Country">
+                <p className="m-0 text-[14px] text-[#6B7280]">
+                  {selectedProperty.country || "N/A"}
+                </p>
+              </DetailCard>
+              <DetailCard icon={User} title="Owner Name">
+                <p className="m-0 text-[14px] text-[#6B7280]">
+                  {selectedProperty.ownerName || "N/A"}
+                </p>
+              </DetailCard>
+              <DetailCard icon={Clock} title="Submitted">
+                <p className="m-0 text-[14px] text-[#6B7280]">
+                  {selectedProperty.createdAt
                     ? new Date(selectedProperty.createdAt).toLocaleDateString()
-                    : "N/A"
-                }
-              />
+                    : "N/A"}
+                </p>
+              </DetailCard>
             </div>
 
             {/* Payment Model */}
@@ -423,42 +440,58 @@ export default function PropertyDetailsPage() {
         </div>
       </div>
 
-      {/* ── Sticky Verification Bar ── */}
+      {/* ── Sticky Action Bar ── */}
       {isActionRequired && (
-        <div className="fixed bottom-0 left-65 right-0 bg-white border-t-2 border-[#E8DDD8] px-7 py-4 z-50 flex items-center justify-between shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-          <div>
-            <p className="m-0 text-[10px] font-bold text-[#9E7B6A] tracking-wider uppercase">
-              VERIFICATION STATUS
-            </p>
-            <p className="m-0 text-[13px] font-bold text-[#DC2626]">
-              Action Required
-            </p>
-          </div>
+        <div className="fixed bottom-0 left-64 right-0 bg-white/95 backdrop-blur-md border-t border-[#E8DDD8] px-8 py-4 z-50 flex items-center justify-between shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
           <div className="flex items-center gap-4">
-            <button
-              onClick={handleReject}
-              disabled={actionLoading}
-              className="text-[14px] font-semibold text-[#DC2626] bg-transparent border-none cursor-pointer hover:underline px-2 disabled:opacity-50"
-            >
-              Reject
-            </button>
-            {isPending && (
+            <div className="w-10 h-10 rounded-full bg-[#FEF3C7] flex items-center justify-center relative shrink-0">
+              <div className="absolute inset-0 rounded-full bg-[#F59E0B]/20 animate-ping" />
+              <Clock className="text-[#D97706] relative z-10" size={20} />
+            </div>
+            <div>
+              <p className="m-0 text-[11px] font-bold text-[#D97706] tracking-wider uppercase mb-0.5">
+                Verification Required
+              </p>
+              <p className="m-0 text-[14px] font-medium text-[#1A1A1A]">
+                Review the details and documents to approve this property listing.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {(isPending || isUnderReview) && (
+              <button
+                onClick={handleReject}
+                disabled={actionLoading}
+                className="px-5 py-2.5 bg-white border border-[#E8DDD8] text-[#1A1A1A] text-[14px] font-semibold rounded-lg hover:border-[#DC2626] hover:text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-50 transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
+              >
+                <XCircle size={16} />
+                Reject
+              </button>
+            )}
+            
+            {!isUnderReview && (
               <button
                 onClick={handleUnderReview}
                 disabled={actionLoading}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-[1.5px] border-[#E8DDD8] bg-white text-[14px] font-semibold text-[#1A1A1A] cursor-pointer hover:border-[#C05621] hover:text-[#C05621] transition-colors disabled:opacity-50"
+                className="px-5 py-2.5 bg-white border border-[#E8DDD8] text-[#1A1A1A] text-[14px] font-semibold rounded-lg hover:border-[#2563EB] hover:text-[#2563EB] hover:bg-[#EFF6FF] disabled:opacity-50 transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
               >
-                Mark Under Review
+                <Info size={16} />
+                Under Review
               </button>
             )}
-            <button
-              onClick={handleApprove}
-              disabled={actionLoading}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#16A34A] text-white text-[14px] font-semibold border-none cursor-pointer hover:bg-[#15803D] transition-colors shadow-[0_2px_10px_rgba(22,163,74,0.3)] disabled:opacity-50"
-            >
-              <CheckCircle2 size={16} />
-              Approve Property
-            </button>
+            
+            {(isPending || isUnderReview) && (
+              <button
+                onClick={handleApprove}
+                disabled={actionLoading}
+                className="group relative px-6 py-2.5 bg-gradient-to-r from-[#16A34A] to-[#15803D] text-white text-[14px] font-semibold rounded-lg hover:from-[#15803D] hover:to-[#16A34A] disabled:opacity-50 transition-all shadow-[0_2px_8px_rgba(22,163,74,0.25)] cursor-pointer flex items-center justify-center gap-2 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-white/20 -translate-x-[150%] skew-x-12 group-hover:animate-[shimmer_1.5s_infinite]" />
+                <CheckCircle2 size={16} className="relative z-10" />
+                <span className="relative z-10">Approve Listing</span>
+              </button>
+            )}
           </div>
         </div>
       )}

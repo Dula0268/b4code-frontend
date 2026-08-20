@@ -16,7 +16,7 @@ export default function AuthInitializer() {
       try {
         const token = getToken();
         if (token) {
-          const storedUserStr = sessionStorage.getItem("auth_user");
+          const storedUserStr = localStorage.getItem("auth_user");
           if (storedUserStr) {
             const user = JSON.parse(storedUserStr);
             restoreSession(user);

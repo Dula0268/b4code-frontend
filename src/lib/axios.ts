@@ -39,13 +39,9 @@ const processQueue = (error: unknown, token: string | null = null) => {
 
 const clearSessionAndRedirect = () => {
   if (typeof window === 'undefined') return;
-  sessionStorage.removeItem('accessToken');
-  sessionStorage.removeItem('auth_token');
-  sessionStorage.removeItem('refreshToken');
-  sessionStorage.removeItem('authEmail');
-  sessionStorage.removeItem('authRole');
-  sessionStorage.removeItem('authUserId');
-  sessionStorage.removeItem('auth_user');
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('auth_user');
   const currentPath = window.location.pathname;
   if (!currentPath.startsWith('/auth')) {
     window.location.href = `/auth/login?redirect=${encodeURIComponent(currentPath)}`;
@@ -104,9 +100,9 @@ api.interceptors.response.use(
         setToken(newAccessToken);
         setRefreshToken(newRefreshToken);
 
-        // Also update legacy sessionStorage key used by auth store
+        // Also update legacy localStorage key used by auth store
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem('accessToken', newAccessToken);
+          localStorage.setItem('accessToken', newAccessToken);
         }
 
         // Unblock all queued requests with the new token

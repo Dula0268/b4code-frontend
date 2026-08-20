@@ -44,7 +44,7 @@ export function NavItem({ item, isActive, badge, onClick }: {
   onClick?: () => void;
 }) {
   const Icon = item.icon;
-  const allowed = usePermission(item.permKey ?? "__always__", true);
+  const allowed = usePermission(item.permKey ?? "__always__", false);
   // Dashboard (permKey null) is always visible
   if (item.permKey !== null && !allowed) return null;
 
