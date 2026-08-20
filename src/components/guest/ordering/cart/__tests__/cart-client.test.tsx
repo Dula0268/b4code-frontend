@@ -11,6 +11,7 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("@/store/guest/ordering/cart.store", () => ({
   useCartStore: jest.fn(),
+  getLineUnitPrice: jest.fn((line: any) => line.item.priceLkr ?? line.item.price ?? 0),
 }));
 
 jest.mock("@/store/guest/ordering/order-context.store", () => ({

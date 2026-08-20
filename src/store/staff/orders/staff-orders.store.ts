@@ -354,7 +354,10 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
           set({ orders, loading: false });
         }
       } catch (error: unknown) {
-        if (axios.isCancel(error)) {
+        // A newer fetchOrders call already superseded this one and aborted it —
+        // that's expected, not a real failure, regardless of how axios/the
+        // browser happens to shape the resulting error for this abort.
+        if (activeAbortController !== controller || axios.isCancel(error)) {
           console.log("🔄 Stale fetch orders request aborted successfully.");
           return;
         }

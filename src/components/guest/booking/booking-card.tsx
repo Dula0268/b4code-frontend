@@ -34,7 +34,6 @@ export interface BookingCardData {
   propertyId?: string
   orderNumber?: string
   cancelledDate?: string
-  passkey?: string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

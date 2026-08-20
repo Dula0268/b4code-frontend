@@ -51,16 +51,14 @@ export default function ReviewManagementPage() {
     fetchReviews();
   }, [propertyId]);
 
-  const filteredReviews = reviews.filter((r) => {
-    const matchesSearch = r.guest_name?.toLowerCase().includes(search.toLowerCase()) || 
+  const searchFiltered = reviews.filter((r) => {
+    return r.guest_name?.toLowerCase().includes(search.toLowerCase()) ||
       r.menu_item_name?.toLowerCase().includes(search.toLowerCase()) ||
       r.comment?.toLowerCase().includes(search.toLowerCase());
-    
-    if (activeTab === "flagged") {
-      return matchesSearch && r.flagged_status != null;
-    }
-    return matchesSearch;
   });
+
+  const flaggedCount = searchFiltered.filter((r) => r.flagged_status != null).length;
+  const filteredReviews = activeTab === "flagged" ? searchFiltered.filter((r) => r.flagged_status != null) : searchFiltered;
 
   const handleOpenFlagModal = (review: any) => {
     setSelectedReview(review);
@@ -124,10 +122,10 @@ export default function ReviewManagementPage() {
         <div className="flex flex-col flex-1 px-4 lg:px-6 py-4 lg:py-6 gap-4 lg:gap-6 pt-[80px] lg:pt-[88px] min-h-min pb-10">
           <div className="max-w-7xl mx-auto w-full flex flex-col gap-4 lg:gap-6 h-full">
         {/* Top Controls Box */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-4 lg:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 flex-shrink-0">
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white p-4 lg:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 flex-shrink-0">
           <div className="flex items-center gap-4 lg:gap-6 w-full lg:w-auto">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-[#FFF8F0] flex items-center justify-center shadow-inner shrink-0">
+              <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-[#FFF8F0] flex items-center justify-center shadow-inner shrink-0">
                 <Star size={20} className="text-[#C05621]" />
               </div>
               <div>
@@ -141,24 +139,30 @@ export default function ReviewManagementPage() {
           </div>
 
           <div className="flex items-center bg-[#F5F6F8] rounded-xl p-1 shadow-inner border border-[#E8E8E8] w-full lg:w-auto mt-2 lg:mt-0">
-            <button 
+            <button
               onClick={() => setActiveTab("all")}
-              className={`flex-1 lg:flex-none px-4 py-2 text-[12px] lg:text-[13px] font-bold rounded-lg transition-all text-center ${activeTab === "all" ? "bg-white text-[#1A1A1A] shadow-sm" : "text-[#9E7B6A] hover:text-[#1A1A1A]"}`}
+              className={`flex-1 lg:flex-none px-4 py-2 text-[12px] lg:text-[13px] font-bold rounded-lg transition-all text-center flex items-center justify-center gap-1.5 ${activeTab === "all" ? "bg-white text-[#1A1A1A] shadow-sm" : "text-[#9E7B6A] hover:text-[#1A1A1A]"}`}
             >
               All Reviews
+              <span className={`text-[10px] font-bold rounded-full px-1.5 py-0 ${activeTab === "all" ? "bg-[#F5F6F8] text-[#6B7280]" : "bg-[#E8E8E8] text-[#6B7280]"}`}>
+                {searchFiltered.length}
+              </span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab("flagged")}
               className={`flex-1 lg:flex-none px-4 py-2 text-[12px] lg:text-[13px] font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === "flagged" ? "bg-white text-[#EB5757] shadow-sm" : "text-[#9E7B6A] hover:text-[#EB5757]"}`}
             >
               <ShieldAlert size={14} />
               Flagged
+              <span className={`text-[10px] font-bold rounded-full px-1.5 py-0 ${activeTab === "flagged" ? "bg-[#EB5757] text-white" : "bg-[#E8E8E8] text-[#6B7280]"}`}>
+                {flaggedCount}
+              </span>
             </button>
           </div>
         </div>
 
         {/* Reviews Table Container (Scrollable) */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-none flex flex-col overflow-hidden">
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-none flex flex-col overflow-hidden">
           
           <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 border-b border-[#F0EBE7] flex-shrink-0">
             <div className="col-span-3 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">Guest & Date</div>
@@ -176,11 +180,32 @@ export default function ReviewManagementPage() {
                   <p className="text-[15px] font-bold text-[#1A1A1A]">Loading reviews...</p>
                 </div>
               ) : filteredReviews.length > 0 ? (
-                filteredReviews.map((review) => (
-                  <div key={review.id} className="flex flex-col lg:grid lg:grid-cols-12 gap-3 lg:gap-4 px-4 py-4 lg:items-center bg-white rounded-2xl border border-[#F0EBE7] lg:border-transparent hover:border-[#F0EBE7] hover:shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all duration-300 relative">
-                    
+                filteredReviews.map((review) => {
+                  const isFlagged = review.flagged_status != null;
+                  return (
+                  <div
+                    key={review.id}
+                    className={`flex flex-col lg:grid lg:grid-cols-12 gap-3 lg:gap-4 px-4 py-4 lg:items-center rounded-2xl border transition-all duration-300 relative ${
+                      isFlagged
+                        ? "bg-[#FFFAFA] border-[#FBD5D5] hover:shadow-[0_4px_20px_rgb(235,87,87,0.08)]"
+                        : "bg-white border-[#F0EBE7] lg:border-transparent hover:border-[#F0EBE7] hover:shadow-[0_4px_20px_rgb(0,0,0,0.03)]"
+                    }`}
+                  >
+                    {isFlagged && <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-[#EB5757]" />}
+
                     <div className="lg:col-span-3 flex flex-col justify-center pr-8 lg:pr-0">
-                      <span className="text-[14px] font-bold text-[#1A1A1A]">{review.guest_name || "Guest"}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[14px] font-bold text-[#1A1A1A]">{review.guest_name || "Guest"}</span>
+                        {isFlagged ? (
+                          <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[#FDE8E8] text-[#EB5757] flex items-center gap-1">
+                            <Flag size={9} className="fill-current" /> Flagged
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[#E6F5EF] text-[#2D7D5C]">
+                            Unflagged
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[12px] font-medium text-[#9E7B6A]">
                         {new Date(review.created_at).toLocaleDateString()}
                       </span>
@@ -207,7 +232,7 @@ export default function ReviewManagementPage() {
                             review.flagged_status === 'APPROVED' ? 'bg-[#E6F5EF] text-[#2D7D5C]' :
                             'bg-[#FDE8E8] text-[#EB5757]'
                           }`}>
-                            Admin Status: {review.flagged_status}
+                            Admin review: {review.flagged_status}
                           </span>
                           {review.admin_note && (
                             <span className="text-[11px] text-[#9E7B6A] italic ml-1" title={review.admin_note}>
@@ -239,7 +264,8 @@ export default function ReviewManagementPage() {
                     </div>
 
                   </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-[#9E7B6A]">
                   <CheckCircle2 className="h-12 w-12 text-[#2D7D5C] opacity-40 mb-4" />
@@ -256,10 +282,10 @@ export default function ReviewManagementPage() {
 
       {/* Flagging Modal */}
       <Dialog open={isFlagModalOpen} onOpenChange={setIsFlagModalOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-white rounded-3xl border-0 shadow-2xl p-6">
+        <DialogContent className="sm:max-w-[425px] bg-white rounded-2xl border-0 shadow-2xl p-5">
           <DialogHeader className="mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#FFF6F6] flex items-center justify-center shadow-inner mb-4">
-              <ShieldAlert size={24} className="text-[#EB5757]" />
+            <div className="w-10 h-10 rounded-xl bg-[#FFF6F6] flex items-center justify-center shadow-inner mb-4">
+              <ShieldAlert size={20} className="text-[#EB5757]" />
             </div>
             <DialogTitle className="text-[20px] font-extrabold text-[#1A1A1A]">Flag Review</DialogTitle>
             <DialogDescription className="text-[#9E7B6A] font-medium">

@@ -137,7 +137,7 @@ export default function MyOrdersClient() {
   );
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-6 md:py-10">
+    <div className="max-w-[1680px] mx-auto px-4 md:px-8 py-6 md:py-10">
       {/* ─── Breadcrumbs ─── */}
       <nav className="flex items-center gap-2 text-sm mb-6 bg-white/40 backdrop-blur-md px-4 py-2 rounded-full w-fit border border-white/60">
         <Link href="/guest/order" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-900 transition-colors group">

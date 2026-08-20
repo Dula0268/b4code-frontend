@@ -39,12 +39,12 @@ export default function DisputesTable({ category }: { category: "REFUND" | "COMP
       {/* Table Toolbar */}
       <div className="p-4 border-b border-[#E8DDD8] flex items-center justify-between bg-white">
         <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C05621] transition-colors" size={16} />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
               type="text" 
               placeholder="Search guest, property..." 
-              className="pl-9 pr-4 py-2 border border-[#E8DDD8] rounded-xl text-[14px] focus:outline-none focus:ring-4 focus:ring-[#C05621]/10 focus:border-[#C05621] w-[260px] shadow-sm transition-all text-[#1A1A1A] bg-white placeholder:text-[#9E7B6A]"
+              className="pl-9 pr-4 py-2 border border-[#E8DDD8] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#953002]/20 focus:border-[#953002] w-[260px]"
             />
           </div>
           <DropdownMenu>
@@ -96,7 +96,7 @@ export default function DisputesTable({ category }: { category: "REFUND" | "COMP
               </tr>
             ) : (
               disputes.map((dispute) => (
-                <tr key={dispute.id} onClick={() => setSelectedDispute(dispute)} className="hover:bg-[#FAFAF8] group cursor-pointer border-b border-[#F0EBE7] hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:-translate-y-[2px] transition-all duration-300 relative z-0 hover:z-10">
+                <tr key={dispute.id} onClick={() => setSelectedDispute(dispute)} className="hover:bg-[#FAFAF8] transition-colors group cursor-pointer">
                   <td className="px-5 py-4">
                     <span className="font-bold text-[#953002] uppercase text-[11px] tracking-wider bg-[#953002]/10 px-2 py-1 rounded">
                       #{dispute.disputeId.replace('DSP-', '').split('-')[0]}
@@ -131,7 +131,7 @@ export default function DisputesTable({ category }: { category: "REFUND" | "COMP
                       onClick={() => setSelectedDispute(dispute)}
                       variant="outline"
                       size="sm"
-                      className="border border-[#E8DDD8] text-[#1A1A1A] font-semibold hover:border-transparent hover:text-white hover:bg-gradient-to-r hover:from-[#C05621] hover:to-[#953002] hover:shadow-[0_4px_12px_rgba(192,86,33,0.3)] transition-all rounded-lg"
+                      className="border-[#953002] text-[#953002] hover:bg-[#953002] hover:text-white"
                     >
                       Review Case
                     </Button>

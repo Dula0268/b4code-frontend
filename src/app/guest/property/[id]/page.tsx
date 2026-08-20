@@ -23,7 +23,8 @@ async function fetchProperty(id: string, checkIn?: string, checkOut?: string) {
         }
 
         return backend
-    } catch {
+    } catch (err) {
+        console.error("fetchProperty error:", err);
         return null
     }
 }

@@ -40,7 +40,7 @@ function PayoutStatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-[0_1px_2px_rgba(0,0,0,0.05)] ${s.bg} ${s.text}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {status}
@@ -51,15 +51,14 @@ function PayoutStatusBadge({ status }: { status: string }) {
 // ─── Property placeholder images ────────────────────────────────────────────────
 const PROPERTY_COLORS = ["#E8DDD8", "#D4C5BC", "#C4B5AB", "#B5A59B"];
 
-function getInitials(name?: string) {
+function getInitials(name: string) {
   if (!name) return "??";
   const parts = name.split(" ");
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
 }
 
-function getColorForName(name?: string) {
-  if (!name) return "#C05621";
+function getColorForName(name: string) {
   const colors = [
     "#C05621",
     "#2563EB",
@@ -96,7 +95,7 @@ export default function PayoutTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("PENDING");
+  const [statusFilter, setStatusFilter] = useState("");
   const perPage = 10;
 
   const {
@@ -128,7 +127,7 @@ export default function PayoutTable({
   }, [fetchPayouts, currentPage, debouncedSearch, statusFilter]);
 
   return (
-    <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-[#F0EBE7] shadow-md overflow-hidden relative transition-all duration-300">
+    <div className="bg-white rounded-2xl border border-[#F0EBE7] shadow-sm overflow-hidden relative">
       {payoutsLoading && payouts.length === 0 && (
         <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
           <Loader2 className="animate-spin text-[#C05621]" size={32} />
@@ -137,7 +136,11 @@ export default function PayoutTable({
 
       {/* ── Search & Filter ── */}
       <div className="p-5 flex items-center justify-between gap-4 flex-wrap">
-        <div className="relative flex-1 min-w-[250px] max-w-[420px] group">
+        <div className="relative flex-1 min-w-62.5 max-w-105">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#C4B5AB]"
+          />
           <input
             type="text"
             value={searchQuery}
@@ -146,11 +149,7 @@ export default function PayoutTable({
               setCurrentPage(1);
             }}
             placeholder="Search by name, email, or role..."
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#E8DDD8] bg-white text-[14px] text-[#1A1A1A] placeholder:text-[#9E7B6A] focus:outline-none focus:ring-4 focus:ring-[#C05621]/10 focus:border-[#C05621] transition-all shadow-sm"
-          />
-          <Search
-            size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9E7B6A] pointer-events-none transition-colors group-focus-within:text-[#C05621] z-10"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] placeholder:text-[#C4B5AB] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition"
           />
         </div>
         <div className="relative flex items-center gap-2">
@@ -161,7 +160,7 @@ export default function PayoutTable({
                 setStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="appearance-none flex items-center gap-2 pl-10 pr-10 py-3 rounded-xl border border-[#E8DDD8] text-[14px] font-bold text-[#1A1A1A] hover:bg-[#FAF5F2] hover:border-[#C05621] focus:outline-none focus:ring-4 focus:ring-[#C05621]/10 focus:border-[#C05621] transition-all cursor-pointer bg-white shadow-sm"
+              className="appearance-none flex items-center gap-2 pl-9 pr-10 py-2.5 rounded-xl border border-[#E8DDD8] text-sm font-medium text-[#1A1A1A] hover:bg-[#FAF5F2] focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition cursor-pointer bg-white"
             >
               <option value="">All Statuses</option>
               <option value="PENDING">Pending</option>
@@ -169,8 +168,8 @@ export default function PayoutTable({
               <option value="REJECTED">Rejected</option>
             </select>
             <SlidersHorizontal
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9E7B6A] pointer-events-none"
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A1A1A] pointer-events-none"
             />
           </div>
         </div>
@@ -180,14 +179,14 @@ export default function PayoutTable({
       <div className="overflow-x-auto min-h-75">
         <table className="w-full">
           <thead>
-            <tr className="border-y border-[#F0EBE7] bg-[#FAFAFA]">
+            <tr className="border-y border-[#F0EBE7]">
               {(selectedPayoutId
                 ? ["Property", "Owner", "Period", "Req. Balance"]
                 : ["Property", "Owner", "Period", "Req. Balance", "Status"]
               ).map((h) => (
                 <th
                   key={h}
-                  className="text-left px-6 py-4 text-[12px] font-extrabold text-[#9E7B6A] uppercase tracking-widest whitespace-nowrap"
+                  className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider whitespace-nowrap"
                 >
                   {h}
                 </th>
@@ -215,31 +214,23 @@ export default function PayoutTable({
               return (
                 <tr
                   key={p.id}
-                  className={`border-b border-[#F0EBE7] last:border-b-0 transition-all duration-300 cursor-pointer hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:-translate-y-[2px] relative z-0 hover:z-10 group ${
+                  className={`border-b border-[#F0EBE7] last:border-b-0 transition-colors cursor-pointer hover:bg-[#f5efec] ${
                     isSelected
                       ? "border-l-[3px] border-l-[#C05621] bg-[#FFF8F5]"
-                      : "bg-white hover:bg-[#FAFAFA]"
+                      : "bg-white"
                   }`}
                   onClick={() => onRowClick(p)}
                 >
                   {/* Property */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      {p.propertyImage ? (
-                        <img
-                          src={p.propertyImage}
-                          alt={p.propertyName || "Property"}
-                          className="w-10 h-10 rounded-lg shrink-0 object-cover"
-                        />
-                      ) : (
-                        <div
-                          className="w-10 h-10 rounded-lg shrink-0"
-                          style={{
-                            backgroundColor:
-                              PROPERTY_COLORS[idx % PROPERTY_COLORS.length],
-                          }}
-                        />
-                      )}
+                      <div
+                        className="w-10 h-10 rounded-lg shrink-0"
+                        style={{
+                          backgroundColor:
+                            PROPERTY_COLORS[idx % PROPERTY_COLORS.length],
+                        }}
+                      />
                       <div>
                         <p className="text-sm font-semibold text-[#1A1A1A]">
                           {p.propertyName}

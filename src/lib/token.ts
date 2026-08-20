@@ -1,26 +1,31 @@
 export const getToken = (): string | null => {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("accessToken");
+  return sessionStorage.getItem("accessToken") || sessionStorage.getItem("auth_token");
 };
 
 export const setToken = (token: string): void => {
   if (typeof window === "undefined") return;
-  localStorage.setItem("accessToken", token);
+  sessionStorage.setItem("accessToken", token);
+  sessionStorage.setItem("auth_token", token);
 };
 
 export const getRefreshToken = (): string | null => {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("refreshToken");
+  return sessionStorage.getItem("refreshToken");
 };
 
 export const setRefreshToken = (token: string): void => {
   if (typeof window === "undefined") return;
-  localStorage.setItem("refreshToken", token);
+  sessionStorage.setItem("refreshToken", token);
 };
 
 export const removeToken = (): void => {
   if (typeof window === "undefined") return;
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("auth_user");
-  localStorage.removeItem("refreshToken");
+  sessionStorage.removeItem("accessToken");
+  sessionStorage.removeItem("auth_token");
+  sessionStorage.removeItem("auth_user");
+  sessionStorage.removeItem("refreshToken");
+  sessionStorage.removeItem("authEmail");
+  sessionStorage.removeItem("authRole");
+  sessionStorage.removeItem("authUserId");
 };

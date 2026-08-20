@@ -38,9 +38,9 @@ export default function PayoutPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push("/admin/finance")}
-              className="flex items-center justify-center text-[#9E7B6A] hover:text-[#C05621] transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-lg border border-[#E8DDD8] flex items-center justify-center text-[#9E7B6A] hover:bg-[#FAF5F2] hover:text-[#1A1A1A] transition-colors cursor-pointer"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={18} />
             </button>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-[#9E7B6A]">Finance</span>
