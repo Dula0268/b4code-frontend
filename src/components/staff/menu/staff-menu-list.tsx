@@ -235,7 +235,7 @@ export default function StaffMenuList() {
               { label: "Active Items", value: String(activeItems), sub: "Across all menus", icon: Layers, iconBg: "bg-[rgba(45,125,92,0.1)]", iconColor: "text-[#2D7D5C]" },
               { label: "Categories", value: String(categories.length), sub: "Custom defined", icon: Tag, iconBg: "bg-[rgba(99,102,241,0.1)]", iconColor: "text-indigo-500" },
             ].map((s) => (
-              <div key={s.label} className="col-span-1 bg-white/70 backdrop-blur-xl rounded-2xl border border-white p-5 lg:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group min-h-[160px]">
+              <div key={s.label} className="col-span-1 bg-white/70 backdrop-blur-xl rounded-3xl border border-white p-6 lg:p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group min-h-[160px]">
                 <div className="flex justify-between items-start">
                   <div className={`p-3 ${s.iconBg.replace('0.1', '0.15')} rounded-2xl self-start group-hover:scale-110 transition-transform`}>
                     <s.icon size={22} className={s.iconColor} />
@@ -254,8 +254,8 @@ export default function StaffMenuList() {
 
           <div className="flex-none grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* ── Categories Manager ── */}
-            <Card className="bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-full flex flex-col">
-            <CardContent className="p-5 lg:p-6 flex-1 flex flex-col">
+            <Card className="bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-full flex flex-col">
+            <CardContent className="p-6 lg:p-7 flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm font-extrabold text-[var(--black-2)] flex items-center gap-2">
@@ -319,8 +319,8 @@ export default function StaffMenuList() {
           </Card>
 
             {/* ── Order Settings ── */}
-            <Card className="bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-full flex flex-col">
-              <CardContent className="p-5 lg:p-6 flex-1 flex flex-col justify-between">
+            <Card className="bg-white/80 backdrop-blur-xl py-0 gap-0 border border-white/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-full flex flex-col">
+              <CardContent className="p-6 lg:p-7 flex-1 flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-extrabold text-[var(--black-2)] flex items-center gap-2">
@@ -362,7 +362,7 @@ export default function StaffMenuList() {
           </div>
 
           {/* ── Menus Table ── */}
-          <div className="flex-none bg-white/80 backdrop-blur-xl border border-white/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
+          <div className="flex-none bg-white/80 backdrop-blur-xl border border-white/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
             <div className="flex-1 overflow-x-auto custom-scrollbar flex flex-col">
               <div className="min-w-[700px] flex-1 flex flex-col">
                 {/* Header row */}

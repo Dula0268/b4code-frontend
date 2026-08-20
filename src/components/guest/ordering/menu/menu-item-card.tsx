@@ -4,6 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { useGuestReviewsStore } from "@/store/guest/reviews/reviews.store";
 import type { MenuItem } from "@/store/guest/ordering/cart.store";
 
 const TAG_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
@@ -22,10 +23,16 @@ export default function MenuItemCard({
   onAdd: () => void;
   formatLkr: (n: number) => string;
 }) {
-  // Rating/count come straight from the menu API response (server-aggregated
-  // across all reviews for this item) — no per-item review fetch needed here.
-  const avgRating = item.avgRating ?? 0;
-  const reviewCount = item.reviewCount ?? 0;
+  const getAverageRating = useGuestReviewsStore((s) => s.getAverageRating);
+  const getReviewsForItem = useGuestReviewsStore((s) => s.getReviewsForItem);
+
+  const avgRating = React.useMemo(() => {
+    return getAverageRating(item.id);
+  }, [item.id, getAverageRating]);
+
+  const reviewCount = React.useMemo(() => {
+    return getReviewsForItem(item.id).length;
+  }, [item.id, getReviewsForItem]);
 
   const tagsList = React.useMemo(() => {
     if (!item.tag) return [];

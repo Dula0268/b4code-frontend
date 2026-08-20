@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -35,7 +35,7 @@ export interface StoredBooking {
   nights?: number
   paymentMethod: string
   paidInFull: boolean
-  status: "UPCOMING" | "CHECKED_IN" | "COMPLETED" | "CANCELLED"
+  status: "UPCOMING" | "COMPLETED" | "CANCELLED"
   roomName: string
   roomQuantity: number
   confirmationCode: string
@@ -44,9 +44,9 @@ export interface StoredBooking {
   disputeStatus?: string
   disputeAmount?: number
 }
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Format Helpers
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 function formatLKR(amount: number) {
   return new Intl.NumberFormat("en-LK", {
     style: "currency",
@@ -73,23 +73,16 @@ function calculateNights(inDate: string, outDate: string) {
   return diffDays > 0 ? diffDays : 1;
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 function StatusBadge({ status, isModified }: { status: string, isModified?: boolean }) {
   const styles: Record<string, string> = {
     UPCOMING: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    CHECKED_IN: "bg-teal-500/20 text-teal-400 border-teal-500/30",
     COMPLETED: "bg-blue-500/20 text-blue-400 border-blue-500/30",
     CANCELLED: "bg-red-500/20 text-red-400 border-red-500/30",
   }
-  const labels: Record<string, string> = {
-    UPCOMING: "Upcoming",
-    CHECKED_IN: "Currently Staying",
-    COMPLETED: "Completed",
-    CANCELLED: "Cancelled",
-  }
-  const displayStatus = labels[status] ?? (status.charAt(0).toUpperCase() + status.slice(1).toLowerCase())
+  const displayStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
 
   return (
     <div className="flex gap-2">
@@ -105,16 +98,16 @@ function StatusBadge({ status, isModified }: { status: string, isModified?: bool
   )
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // Client Component
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 export default function BookingDetailsClient({ id, initialTab = "modify", pageMode = "view" }: { id: string, initialTab?: "modify" | "cancel" | "refund", pageMode?: "view" | "modify" | "cancel" }) {
   const [booking, setBooking] = useState<StoredBooking | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   
   // UI States
-  const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "refund" | "none">(initialTab)
+  const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "refund">(initialTab)
   const [showReceiptModal, setShowReceiptModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
@@ -150,13 +143,6 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
 
   // Cancel Form States
   const [cancelReason, setCancelReason] = useState("")
-  const [cancelAck, setCancelAck] = useState(false)
-
-  // Reset the cancellation acknowledgement whenever the guest leaves the cancel tab,
-  // so a stale confirmation can't silently carry over to a later visit.
-  useEffect(() => {
-    if (activeTab !== "cancel") setCancelAck(false)
-  }, [activeTab])
 
   useEffect(() => {
     async function loadBooking() {
@@ -190,7 +176,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           nightsLabel: `${diffDays} Night(s)`,
           paymentMethod: b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online",
           paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
-          status: (b.status === "COMPLETED" ? "COMPLETED" : b.status === "CANCELLED" ? "CANCELLED" : b.status === "CHECKED_IN" ? "CHECKED_IN" : "UPCOMING") as any,
+          status: (b.status === "COMPLETED" ? "COMPLETED" : b.status === "CANCELLED" ? "CANCELLED" : "UPCOMING") as any,
           roomName: b.roomName || "Room",
           roomQuantity: b.roomQuantity || 1,
           confirmationCode: b.confirmationCode,
@@ -211,20 +197,6 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
     loadBooking()
   }, [id])
 
-  // Once the real status is known, make sure the active tab can't be stuck on
-  // "modify"/"cancel" for a booking that isn't UPCOMING (e.g. CHECKED_IN via a
-  // stale route param or the default initialTab) — those actions are only
-  // ever valid for UPCOMING bookings.
-  useEffect(() => {
-    if (!booking || pageMode !== "view") return
-    if (booking.status === "UPCOMING") return
-    if (booking.status === "CANCELLED" && booking.disputeStatus) {
-      setActiveTab("refund")
-      return
-    }
-    setActiveTab("none")
-  }, [booking, pageMode])
-
   // Real-time calculation of new price when editing
   const { newPrice, diffAmount, hasChanges, newBasePrice, newTaxes, origBasePrice, origTaxes, pricePerNight, newNights } = useMemo(() => {
     if (!booking) return { newPrice: 0, diffAmount: 0, hasChanges: false, newBasePrice: 0, newTaxes: 0, origBasePrice: 0, origTaxes: 0, pricePerNight: 0, newNights: 1 }
@@ -244,7 +216,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
 
     // Use actual room data from backend
     const currentRoomId = editRoomId || booking.roomId;
-    const room = propertyDetail?.roomTypes?.find((r: any) => String(r.id) === String(currentRoomId));
+    const room = propertyDetail?.rooms?.find((r: any) => String(r.id) === String(currentRoomId));
     
     // Fallback if property details haven't loaded yet
     const fallbackPricePerNight = origBasePrice / origNights;
@@ -291,42 +263,9 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
     }
 
   const isUpcoming = booking.status === "UPCOMING"
-  const isCheckedIn = booking.status === "CHECKED_IN"
   const isCompleted = booking.status === "COMPLETED"
   const isCancelled = booking.status === "CANCELLED"
   const daysToStartText = getDaysToStart(booking.checkIn)
-
-  // Guard the dedicated /modify and /cancel routes: those actions are only
-  // ever valid while a booking is still UPCOMING. If a guest lands here via a
-  // stale link/bookmark after checking in (or after the stay has completed or
-  // been cancelled), show a clear explanation instead of a broken/empty form.
-  if ((pageMode === "modify" || pageMode === "cancel") && !isUpcoming) {
-    const reasonText = isCheckedIn
-      ? "You've already checked in, so this booking's room and dates are locked in. Please speak to our front desk for any changes."
-      : isCompleted
-      ? "This stay has already been completed, so it can no longer be modified or cancelled."
-      : "This booking has already been cancelled."
-    return (
-      <div className="max-w-3xl mx-auto pb-16">
-        <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-8 sm:p-10 flex flex-col items-center text-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
-            <AlertCircle className="text-amber-500" size={26} />
-          </div>
-          <StatusBadge status={booking.status} isModified={booking.isModified} />
-          <h2 className="text-xl font-black text-[#1d1d1d]">
-            {pageMode === "modify" ? "Modification unavailable" : "Cancellation unavailable"}
-          </h2>
-          <p className="text-sm text-[#6f6254] max-w-md">{reasonText}</p>
-          <Link
-            href={`/guest/booking/${booking.confirmationCode || booking.id}`}
-            className="mt-2 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-sm font-bold no-underline transition-colors"
-          >
-            View Booking Details
-          </Link>
-        </div>
-      </div>
-    )
-  }
 
   // Calculate cancellation fee based on property's freeCancellation policy
   const isFreeCancellationProperty = propertyDetail?.freeCancellation ?? false;
@@ -344,9 +283,9 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
   const cancellationFee = isFreeCancellation ? 0 : (booking?.totalPrice || 0) * 0.20;
   const eligibleRefund = Math.max(0, (booking?.totalPrice || 0) - cancellationFee);
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─────────────────────────────────────────────────────────────────────────────
   // Action Handlers
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─────────────────────────────────────────────────────────────────────────────
   const handleSaveChanges = async () => {
     if (!booking) return;
     setErrorMessage("");
@@ -370,7 +309,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           checkOutDate: editCheckOut,
           guests: editGuests,
         };
-        sessionStorage.setItem("pendingBookingModification", JSON.stringify(pendingModification));
+        localStorage.setItem("pendingBookingModification", JSON.stringify(pendingModification));
 
         const params = new URLSearchParams();
         params.set("total", amountDue.toFixed(2));
@@ -384,7 +323,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
         return;
       }
 
-      // No payment required â€“ commit the modification immediately.
+      // No payment required – commit the modification immediately.
       const res = await guestApi.modifyBooking(booking.id, {
         roomId: Number(editRoomId || booking.roomId),
         propertyId: Number(booking.propertyId),
@@ -483,7 +422,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
     }
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─────────────────────────────────────────────────────────────────────────────
   // Render Helpers
 
   return (
@@ -496,7 +435,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           errorMessage ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
         ].join(" ")}
       >
-        <span className="text-[16px]">âš ï¸</span>
+        <span className="text-[16px]">⚠️</span>
         {errorMessage}
       </div>
 
@@ -563,16 +502,6 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
               Refund Status
             </button>
           )}
-        </div>
-      )}
-
-      {isCheckedIn && pageMode === "view" && (
-        <div className="bg-teal-50 border border-teal-200 rounded-2xl p-4 flex items-start gap-3 mb-6">
-          <CheckCircle2 className="text-teal-600 mt-0.5 shrink-0" size={20} />
-          <div>
-            <h4 className="text-sm font-black text-teal-900">Currently Staying</h4>
-            <p className="text-xs font-medium text-teal-700 mt-1">Modifications aren&apos;t available once you&apos;ve checked in — please speak to our front desk for changes.</p>
-          </div>
         </div>
       )}
 
@@ -668,7 +597,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Room Type</label>
                       <select value={editRoomId || booking.roomId} onChange={(e) => setEditRoomId(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
-                        {propertyDetail?.roomTypes?.map((r: any) => (
+                        {propertyDetail?.rooms?.map((r: any) => (
                           <option key={r.id} value={r.id}>{r.name}</option>
                         )) || <option value={booking.roomId}>{booking.roomName}</option>}
                       </select>
@@ -678,7 +607,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Guests</label>
                     <select value={editGuests} onChange={(e) => setEditGuests(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
-                      {Array.from({ length: propertyDetail?.roomTypes?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.maxGuests || 6 }, (_, i) => i + 1).map(num => (
+                      {Array.from({ length: propertyDetail?.rooms?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.maxGuests || 6 }, (_, i) => i + 1).map(num => (
                         <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
                       ))}
                     </select>
@@ -730,7 +659,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                         You chose to pay at the property. No cancellation fee applies.
                       </p>
                       <p className="text-sm text-emerald-600 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg w-fit border border-emerald-100">
-                        âœ“ Free to cancel.
+                        ✓ Free to cancel.
                       </p>
                     </div>
                   ) : isFreeCancellationProperty ? (
@@ -740,11 +669,11 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                       </p>
                       {isWithinFreeWindow ? (
                         <p className="text-sm text-emerald-600 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg w-fit border border-emerald-100">
-                          âœ“ You are within the free cancellation window. No fees apply.
+                          ✓ You are within the free cancellation window. No fees apply.
                         </p>
                       ) : (
                         <p className="text-sm text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg w-fit border border-red-100">
-                          âš ï¸ The free cancellation window has passed. A 20% cancellation fee applies.
+                          ⚠️ The free cancellation window has passed. A 20% cancellation fee applies.
                         </p>
                       )}
                     </div>
@@ -754,7 +683,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                         This property does not offer free cancellation.
                       </p>
                       <p className="text-sm text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg w-fit border border-red-100">
-                        âš ï¸ A 20% cancellation fee applies immediately upon booking.
+                        ⚠️ A 20% cancellation fee applies immediately upon booking.
                       </p>
                     </div>
                   )}
@@ -890,25 +819,15 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                     {isFreeCancellation ? 'Free' : formatLKR(cancellationFee)}
                   </span>
                 </div>
-
-                <label className="flex items-start gap-2.5 text-xs text-[#4f4f4f] font-medium bg-[#fdfaf6] border border-[#e8ddcf] rounded-xl p-3.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={cancelAck}
-                    onChange={(e) => setCancelAck(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 accent-[#9a3300] cursor-pointer shrink-0"
-                  />
-                  I understand this cancellation is final and cannot be undone.
-                </label>
-
+                
                 {!booking.paidInFull ? (
                   <div className="bg-amber-50 rounded-xl p-4 mt-2 border border-amber-200">
                     <p className="text-sm font-bold text-amber-900 mb-1">Amount to Pay</p>
                     <p className="text-xl font-black text-amber-700">{formatLKR(cancellationFee)}</p>
                     <p className="text-xs text-amber-800/80 mt-2">You need to pay this amount to cancel the booking.</p>
-                    <button
-                      onClick={handleConfirmCancel}
-                      disabled={!cancelReasonCategory || !cancelAck || loading}
+                    <button 
+                      onClick={handleConfirmCancel} 
+                      disabled={!cancelReasonCategory || loading}
                       className="w-full mt-4 py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Cancellation"}
@@ -919,9 +838,9 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                     <p className="text-sm font-bold text-emerald-900 mb-1">Eligible Refund</p>
                     <p className="text-xl font-black text-emerald-700">{formatLKR(eligibleRefund)}</p>
                     <p className="text-xs text-emerald-800/80 mt-2">You can request a refund for this amount.</p>
-                    <button
-                      onClick={handleConfirmCancel}
-                      disabled={!cancelReasonCategory || !cancelAck || loading}
+                    <button 
+                      onClick={handleConfirmCancel} 
+                      disabled={!cancelReasonCategory || loading}
                       className="w-full mt-4 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Cancel & Send Refund Request"}
@@ -1009,7 +928,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
               <div className="flex justify-between items-center">
                 <span className="text-[#828282] font-medium">Transaction Status:</span>
                 <span className={`font-bold ${booking.paidInFull ? "text-emerald-600" : "text-amber-600"}`}>
-                  {booking.paidInFull ? "âœ“ SUCCESSFUL" : "PENDING"}
+                  {booking.paidInFull ? "✓ SUCCESSFUL" : "PENDING"}
                 </span>
               </div>
             </div>
@@ -1037,9 +956,9 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
 
       </div>
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ─────────────────────────────────────────────────────────────────────────────
           DIGITAL RECEIPT MODAL (PRINTABLE TAX INVOICE)
-         â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+         ───────────────────────────────────────────────────────────────────────────── */}
       {showReceiptModal && (
         <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-[600px] rounded-[28px] p-6 sm:p-10 shadow-2xl relative border border-[#e8ddcf] text-[#1d1d1d]">
@@ -1074,7 +993,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-wider block mb-1">
-                    {booking.paidInFull ? "âœ“ PAID IN FULL" : "PAYMENT PENDING"}
+                    {booking.paidInFull ? "✓ PAID IN FULL" : "PAYMENT PENDING"}
                   </span>
                   <p className="text-[11px] text-[#828282]">Receipt #: <strong className="text-[#1d1d1d]">REC-PS-{booking.confirmationCode}</strong></p>
                   <p className="text-[11px] text-[#828282]">Date: <strong className="text-[#1d1d1d]">{new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong></p>
@@ -1091,7 +1010,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                 <div>
                   <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Property</p>
                   <p className="font-bold text-[#1d1d1d]">{booking.property}</p>
-                  <p className="text-[#828282] mt-0.5">{booking.roomName} â€¢ {booking.nightsLabel}</p>
+                  <p className="text-[#828282] mt-0.5">{booking.roomName} • {booking.nightsLabel}</p>
                 </div>
               </div>
 
@@ -1131,7 +1050,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                   <CreditCard size={14} className="text-[#9a3300]" />
                   <span>Paid via <strong>{booking.paymentMethod === "online" ? "PayHere Online Checkout" : "Pay at Property"}</strong></span>
                 </div>
-                <span>ðŸ”’ SSL Encrypted & Verified</span>
+                <span>🔒 SSL Encrypted & Verified</span>
               </div>
 
             </div>

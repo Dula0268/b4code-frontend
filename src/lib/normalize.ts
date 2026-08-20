@@ -96,7 +96,7 @@ export const normalizePropertyDetail = (property: PropertyData) => ({
         locationRating: rev?.locationRating != null ? toNumber(rev.locationRating) : undefined,
         valueRating: rev?.valueRating != null ? toNumber(rev.valueRating) : undefined,
     })) : [],
-    rooms: Array.isArray(property?.roomTypes) ? property.roomTypes.map(normalizeRoom) : Array.isArray(property?.availableRooms) ? property.availableRooms.map(normalizeRoom) : [],
+    rooms: Array.isArray(property?.rooms) ? property.rooms.map(normalizeRoom) : Array.isArray(property?.availableRooms) ? property.availableRooms.map(normalizeRoom) : [],
     lat: property?.lat == null ? undefined : toNumber(property.lat),
     lng: property?.lng == null ? undefined : toNumber(property.lng),
     checkInTime: property?.checkInTime ?? "14:00",

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCartStore, getLineUnitPrice } from "@/store/guest/ordering/cart.store";
+import { useCartStore } from "@/store/guest/ordering/cart.store";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 
 /* ─── Helpers ─── */
@@ -42,7 +42,7 @@ export default function CartClient({ location }: { location?: string }) {
   const lines = React.useMemo(() => Object.values(linesMap), [linesMap]);
 
   return (
-    <div className="max-w-[1680px] mx-auto px-4 md:px-6 py-4 animate-in fade-in duration-500">
+    <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-4 animate-in fade-in duration-500">
       {/* ─── Empty state ─── */}
       {lines.length === 0 ? (
         <>
@@ -141,10 +141,7 @@ export default function CartClient({ location }: { location?: string }) {
 
             <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden">
               <div className="flex flex-col divide-y divide-gray-100/80">
-              {Object.entries(linesMap).map(([lineKey, line]) => {
-                const { item, qty } = line;
-                const unitPrice = getLineUnitPrice(line);
-                return (
+              {Object.entries(linesMap).map(([lineKey, { item, qty }]) => (
                 <div
                   key={lineKey}
                   className="group hover:bg-white/80 p-5 flex gap-4 md:gap-6 items-center transition-colors duration-300 relative"
@@ -205,7 +202,7 @@ export default function CartClient({ location }: { location?: string }) {
 
                     <div className="flex items-center justify-between mt-auto pt-2">
                       <span className="text-base font-bold text-[var(--brand-primary)]">
-                        {formatLkr(unitPrice)}
+                        {formatLkr(item.priceLkr)}
                       </span>
 
                       <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-full p-1 shadow-sm group-hover:border-[var(--brand-primary)]/20 transition-colors">
@@ -233,13 +230,12 @@ export default function CartClient({ location }: { location?: string }) {
                       </div>
 
                       <span className="hidden sm:block text-lg font-bold text-gray-900">
-                        {formatLkr(unitPrice * qty)}
+                        {formatLkr(item.priceLkr * qty)}
                       </span>
                     </div>
                   </div>
                 </div>
-                );
-              })}
+              ))}
               </div>
             </div>
           </div>

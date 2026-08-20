@@ -5,8 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useCartStore, getLineUnitPrice } from "@/store/guest/ordering/cart.store";
+import { useCartStore } from "@/store/guest/ordering/cart.store";
 import { useOrderStore } from "@/store/guest/ordering/order.store";
+import { useAuthStore } from "@/store/auth/auth.store";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
 import { paymentApi } from "@/api/payment/payment.api";
@@ -23,26 +24,18 @@ type PaymentMethod = "cash" | "online" | "pay-at-property" | "card" | "room-char
 /* ─── Checkout Client ─── */
 
 export default function CheckoutClient() {
+  const user = useAuthStore((s) => s.user);
+  
   // Derived data from session
   const qrContext = useOrderContextStore((s) => s.qrContext);
-  const roomStatus = useOrderContextStore((s) => s.roomStatus);
-  const roomStatusLoading = useOrderContextStore((s) => s.roomStatusLoading);
-  const fetchRoomStatus = useOrderContextStore((s) => s.fetchRoomStatus);
-  const location = qrContext?.location || "";
-  const propertyId = qrContext?.propertyId;
+  const location = qrContext?.location || (user?.roomId ? String(user.roomId) : "");
+  const authGuestName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "";
+  const propertyId = user?.propertyId || qrContext?.propertyId;
+  const guestId = user?.userId;
 
   const isRoomQr = qrContext?.type?.toUpperCase().includes("ROOM");
   const isTableQr = !isRoomQr;
-
-  // Room ordering is gated on a real front-desk check-in for this room
-  // number — not on being logged into a site account.
-  React.useEffect(() => {
-    if (isRoomQr && propertyId && location) {
-      fetchRoomStatus(propertyId, location);
-    }
-  }, [isRoomQr, propertyId, location, fetchRoomStatus]);
-  const isRoomCheckedIn = !!(isRoomQr && roomStatus?.checkedIn);
-
+  
   const sessionGuestName = useGuestSessionStore((s) => s.guestName);
   const sessionGuestPhone = useGuestSessionStore((s) => s.guestPhone);
   const setGuestDetails = useGuestSessionStore((s) => s.setGuestDetails);
@@ -53,11 +46,9 @@ export default function CheckoutClient() {
   React.useEffect(() => {
     setGuestDetails(walkInName, walkInPhone);
   }, [walkInName, walkInPhone, setGuestDetails]);
-
-  // Room guests are identified by their check-in record, not a form —
-  // table/walk-in guests still provide their own name and phone.
-  const isWalkIn = isTableQr;
-  const finalGuestName = isRoomQr ? (roomStatus?.guestName || "") : walkInName;
+  
+  const isWalkIn = !user;
+  const finalGuestName = isWalkIn ? walkInName : authGuestName;
 
   const serviceChargeRate = useCartStore((s) => s.serviceChargeRate);
 
@@ -67,19 +58,17 @@ export default function CheckoutClient() {
   const clearCart = useCartStore((s) => s.clear);
 
   const lines = React.useMemo(() => Object.values(linesMap), [linesMap]);
-
-  // Use the cart store's own subtotal()/serviceCharge()/total() selectors as
-  // the single source of truth — they correctly resolve variant/modifier
-  // pricing, unlike a naive `item.priceLkr * qty` recomputation.
-  const subtotal = useCartStore((s) => {
-    const _lines = s.lines; // access to trigger re-renders on cart changes
-    return s.subtotal();
-  });
-  const serviceCharge = useCartStore((s) => { const _lines = s.lines; return s.serviceCharge(); });
-  const total = useCartStore((s) => { const _lines = s.lines; return s.total(); });
+  const subtotal = React.useMemo(
+    () => lines.reduce((s, l) => s + l.item.priceLkr * l.qty, 0),
+    [lines],
+  );
+  const serviceCharge = Math.round(subtotal * serviceChargeRate);
+  const total = subtotal + serviceCharge;
 
   const [kitchenInstructions, setKitchenInstructions] = React.useState("");
-  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("cash");
+  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>(
+    user ? "room-charge" : "cash"
+  );
   const router = useRouter();
   const placeOrder = useOrderStore((s) => s.placeOrder);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -88,10 +77,8 @@ export default function CheckoutClient() {
     if (isProcessing) return;
     setIsProcessing(true);
     try {
-    // Room QR but the room hasn't been checked in at the front desk yet — block ordering
-    if (isRoomQr && !isRoomCheckedIn) {
-      toast.error("This room hasn't been checked in yet. Please check in with our front desk first.");
-      setIsProcessing(false);
+    // Room QR but not logged in — block ordering
+    if (isRoomQr && !user) {
       return;
     }
 
@@ -102,14 +89,21 @@ export default function CheckoutClient() {
     }
 
     // Walk-in (table QR) requires phone
-    if (isTableQr && !walkInPhone) {
+    if (isTableQr && !user && !walkInPhone) {
       toast.error("Please provide your phone number.");
       setIsProcessing(false);
       return;
     }
 
-    // Room and table guests now share the same two payment options.
-    const resolvedPaymentMethod: "cash" | "online" = paymentMethod === "online" ? "online" : "cash";
+    // Determine actual payment method value for the API
+    let resolvedPaymentMethod: "cash" | "online" | "pay-at-property" | "card" | "room-charge" = paymentMethod;
+    if (!user) {
+      // Walk-in: cash or online
+      resolvedPaymentMethod = paymentMethod === "online" ? "online" : "cash";
+    } else {
+      // Logged-in room guest: card (online/PayHere) or pay-at-property (room charge)
+      resolvedPaymentMethod = paymentMethod === "room-charge" ? "pay-at-property" : "online";
+    }
 
     const guestSessionId = useGuestSessionStore.getState().sessionId;
 
@@ -132,6 +126,7 @@ export default function CheckoutClient() {
       guestInstructions: kitchenInstructions,
       paymentMethod: resolvedPaymentMethod,
       propertyId,
+      guestId,
       guestSessionId: guestSessionId || undefined,
     });
     
@@ -190,7 +185,7 @@ export default function CheckoutClient() {
   };
 
   return (
-    <div className="max-w-[1680px] mx-auto px-4 md:px-6 py-6 pb-24 md:pb-12">
+    <div className="max-w-[1280px] mx-auto px-4 md:px-6 py-6 pb-24 md:pb-12">
       {/* ─── Breadcrumbs + Subtitle ─── */}
       <div className="space-y-1.5 mb-8">
         <nav className="flex items-center gap-2 text-sm font-medium">
@@ -231,7 +226,7 @@ export default function CheckoutClient() {
       {/* ─── Two-column layout ─── */}
       <div className="flex flex-col md:flex-row gap-6 lg:gap-8 items-start">
         {/* ════════════════════ LEFT: Order + Instructions ════════════════════ */}
-        <div className="w-full md:w-[700px] lg:w-[820px] xl:w-[900px] md:shrink-0 space-y-6">
+        <div className="w-full md:w-[700px] lg:w-[800px] md:shrink-0 space-y-6">
           {/* ── Your Order card ── */}
           <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden relative">
             <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none" />
@@ -264,10 +259,7 @@ export default function CheckoutClient() {
 
             {/* Items list */}
             <div className="flex flex-col divide-y divide-gray-100/80 relative z-10">
-              {Object.entries(linesMap).map(([lineKey, line], idx) => {
-                const { item, qty } = line;
-                const unitPrice = getLineUnitPrice(line);
-                return (
+              {Object.entries(linesMap).map(([lineKey, { item, qty }], idx) => (
                 <div
                   key={lineKey}
                   className="flex gap-4 md:gap-6 items-center px-6 md:px-8 py-5 bg-white/50 hover:bg-white/80 transition-colors duration-300 group"
@@ -293,7 +285,7 @@ export default function CheckoutClient() {
                         {item.title}
                       </h3>
                       <span className="text-lg font-bold text-gray-900 shrink-0">
-                        {formatLkr(unitPrice)}
+                        {formatLkr(item.priceLkr)}
                       </span>
                     </div>
 
@@ -337,8 +329,7 @@ export default function CheckoutClient() {
                     </div>
                   </div>
                 </div>
-                );
-              })}
+              ))}
 
               {lines.length === 0 && (
                 <div className="px-6 py-16 text-center bg-white/40 rounded-2xl border border-dashed border-gray-200">
@@ -405,7 +396,7 @@ export default function CheckoutClient() {
         </div>
 
         {/* ════════════════════ RIGHT: Payment & Actions ════════════════════ */}
-        <div className="w-full md:flex-1 md:min-w-[380px] md:max-w-[460px] space-y-6 md:sticky md:top-[88px]">
+        <div className="w-full md:flex-1 md:min-w-[380px] space-y-6 md:sticky md:top-[88px]">
           {/* ── Payment Details card ── */}
           <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] overflow-hidden relative">
             <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--brand-primary)]/5 to-transparent pointer-events-none" />
@@ -456,9 +447,9 @@ export default function CheckoutClient() {
                   Select Method
                 </p>
 
-                {/* ── ROOM QR, NOT CHECKED IN: block ordering, no payment selector ── */}
-                {isRoomQr && !roomStatusLoading && !isRoomCheckedIn && (
-                  <div className="bg-amber-50/80 border border-amber-200/60 rounded-2xl p-6 space-y-3 text-center shadow-sm">
+                {/* ── ROOM QR + NOT LOGGED IN: Room Verification ── */}
+                {isRoomQr && !user && (
+                  <div className="bg-amber-50/80 border border-amber-200/60 rounded-2xl p-6 space-y-5 text-center shadow-sm">
                     <div className="flex justify-center">
                       <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 border border-amber-200/50">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -468,122 +459,186 @@ export default function CheckoutClient() {
                       </div>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 tracking-tight">
-                      Room Not Checked In
+                      Room Verification
                     </h3>
                     <p className="text-sm font-medium text-amber-900/70">
-                      Room {location} hasn&apos;t been checked in yet. Please check in with our front desk before ordering to this room.
+                      To place an order to your room, please enter your name to verify that this room is occupied.
                     </p>
-                  </div>
-                )}
-
-                {isRoomQr && roomStatusLoading && (
-                  <div className="h-24 rounded-2xl bg-gray-100 animate-pulse" />
-                )}
-
-                {/* ── ROOM QR, CHECKED IN: identity confirmation + shared payment options ── */}
-                {isRoomQr && isRoomCheckedIn && (
-                  <div className="flex items-center gap-3 bg-green-50/80 border border-green-200/60 rounded-2xl px-5 py-4 mb-2 shadow-sm">
-                    <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-700 shrink-0">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                    <div className="space-y-3 pt-2 text-left">
+                      <input
+                        type="text"
+                        placeholder="Your Name *"
+                        value={walkInName}
+                        onChange={(e) => setWalkInName(e.target.value)}
+                        className="w-full bg-white border border-amber-200/80 rounded-xl px-4 py-4 text-base font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all shadow-sm"
+                      />
+                      <input
+                        type="text"
+                        value={location}
+                        disabled
+                        className="w-full bg-amber-100/50 border border-amber-200/50 rounded-xl px-4 py-4 text-base font-bold text-amber-800 cursor-not-allowed opacity-80"
+                      />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-green-800 truncate">{roomStatus?.guestName || "Checked-in guest"}</p>
-                      <p className="text-xs font-medium text-green-700/70">
-                        {roomStatus?.roomTypeName ? `${roomStatus.roomTypeName} ${roomStatus.roomNumber}` : `Room ${location}`} · Checked In
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── TABLE QR: Name/Phone (walk-in) ── */}
-                {isTableQr && (
-                  <div className="space-y-4 mb-8 bg-white/50 p-5 rounded-3xl border border-gray-100 shadow-sm">
-                    <p className="text-sm font-bold text-gray-900 mb-2 px-1">Guest Details <span className="text-gray-400 font-medium ml-1">(Walk-in)</span></p>
-                    <input
-                      type="text"
-                      placeholder="Your Full Name *"
-                      value={walkInName}
-                      onChange={(e) => setWalkInName(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-base font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Phone Number *"
-                      value={walkInPhone}
-                      onChange={(e) => setWalkInPhone(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-base font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
-                      required
-                    />
-                  </div>
-                )}
-
-                {/* ── Shared Cash/Online selector — room (checked in) and table both use it ── */}
-                {(isTableQr || isRoomCheckedIn) && (
-                  <div className="space-y-3">
-                    {/* Pay with Cash */}
                     <button
-                      onClick={() => setPaymentMethod("cash")}
-                      className={`w-full flex items-center gap-5 p-4 md:p-5 rounded-3xl border-2 transition-all duration-300 cursor-pointer group ${
-                        paymentMethod === "cash"
-                          ? "bg-orange-50 border-[var(--brand-primary)]/40 shadow-sm"
-                          : "bg-white border-transparent hover:border-gray-200 hover:bg-gray-50 shadow-sm"
-                      }`}
+                      onClick={async () => {
+                        try {
+                          await useAuthStore.getState().roomLogin(walkInName, location, Number(propertyId));
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : "Verification failed");
+                        }
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-amber-600 shadow-[0_4px_12px_rgba(217,119,6,0.2)] hover:shadow-[0_8px_20px_rgba(217,119,6,0.3)] hover:-translate-y-0.5 rounded-xl px-6 py-4 text-white font-bold text-base active:scale-95 transition-all cursor-pointer mt-2"
                     >
-                      <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm ${paymentMethod === 'cash' ? 'bg-[var(--brand-primary)] text-white scale-105' : 'bg-gray-50 text-gray-400 group-hover:text-gray-600 border border-gray-100'}`}>
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                          <rect x="2" y="6" width="20" height="12" rx="4" stroke="currentColor" strokeWidth="2" />
-                          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
-                        </svg>
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className={`text-base font-bold leading-tight mb-1 transition-colors ${paymentMethod === "cash" ? "text-[var(--brand-primary)]" : "text-gray-900"}`}>
-                          Pay with Cash
-                        </p>
-                        <p className="text-sm font-medium text-gray-500 leading-tight">
-                          Pay at counter or on delivery
-                        </p>
-                      </div>
-                      <div className={`shrink-0 w-7 h-7 rounded-full border-[2.5px] flex items-center justify-center transition-colors ${paymentMethod === "cash" ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-gray-200"}`}>
-                        {paymentMethod === "cash" && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
-                      </div>
+                      Verify & Continue
                     </button>
+                  </div>
+                )}
 
-                    {/* Online Payment */}
+                {/* ── TABLE QR + WALK-IN (not logged in): Name/Phone + Cash/Online ── */}
+                {isTableQr && !user && (
+                  <>
+                    <div className="space-y-4 mb-8 bg-white/50 p-5 rounded-3xl border border-gray-100 shadow-sm">
+                      <p className="text-sm font-bold text-gray-900 mb-2 px-1">Guest Details <span className="text-gray-400 font-medium ml-1">(Walk-in)</span></p>
+                      <input
+                        type="text"
+                        placeholder="Your Full Name *"
+                        value={walkInName}
+                        onChange={(e) => setWalkInName(e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-base font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Phone Number *"
+                        value={walkInPhone}
+                        onChange={(e) => setWalkInPhone(e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-base font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      {/* Pay with Cash */}
+                      <button
+                        onClick={() => setPaymentMethod("cash")}
+                        className={`w-full flex items-center gap-5 p-4 md:p-5 rounded-3xl border-2 transition-all duration-300 cursor-pointer group ${
+                          paymentMethod === "cash"
+                            ? "bg-orange-50 border-[var(--brand-primary)]/40 shadow-sm"
+                            : "bg-white border-transparent hover:border-gray-200 hover:bg-gray-50 shadow-sm"
+                        }`}
+                      >
+                        <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm ${paymentMethod === 'cash' ? 'bg-[var(--brand-primary)] text-white scale-105' : 'bg-gray-50 text-gray-400 group-hover:text-gray-600 border border-gray-100'}`}>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                            <rect x="2" y="6" width="20" height="12" rx="4" stroke="currentColor" strokeWidth="2" />
+                            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className={`text-base font-bold leading-tight mb-1 transition-colors ${paymentMethod === "cash" ? "text-[var(--brand-primary)]" : "text-gray-900"}`}>
+                            Pay with Cash
+                          </p>
+                          <p className="text-sm font-medium text-gray-500 leading-tight">
+                            Pay at counter or on delivery
+                          </p>
+                        </div>
+                        <div className={`shrink-0 w-7 h-7 rounded-full border-[2.5px] flex items-center justify-center transition-colors ${paymentMethod === "cash" ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-gray-200"}`}>
+                          {paymentMethod === "cash" && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                        </div>
+                      </button>
+
+                      {/* Online Payment */}
+                      <button
+                        onClick={() => setPaymentMethod("online")}
+                        className={`w-full flex items-center gap-5 p-4 md:p-5 rounded-3xl border-2 transition-all duration-300 cursor-pointer group ${
+                          paymentMethod === "online"
+                            ? "bg-orange-50 border-[var(--brand-primary)]/40 shadow-sm"
+                            : "bg-white border-transparent hover:border-gray-200 hover:bg-gray-50 shadow-sm"
+                        }`}
+                      >
+                        <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm ${paymentMethod === 'online' ? 'bg-[var(--brand-primary)] text-white scale-105' : 'bg-gray-50 text-gray-400 group-hover:text-gray-600 border border-gray-100'}`}>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                            <rect x="2" y="5" width="20" height="14" rx="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M2 10h20" stroke="currentColor" strokeWidth="2" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className={`text-base font-bold leading-tight mb-1 transition-colors ${paymentMethod === "online" ? "text-[var(--brand-primary)]" : "text-gray-900"}`}>
+                            Online Payment
+                          </p>
+                          <p className="text-sm font-medium text-gray-500 leading-tight">
+                            Pay securely via PayHere
+                          </p>
+                        </div>
+                        <div className={`shrink-0 w-7 h-7 rounded-full border-[2.5px] flex items-center justify-center transition-colors ${paymentMethod === "online" ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-gray-200"}`}>
+                          {paymentMethod === "online" && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                        </div>
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {/* ── LOGGED IN (room guest): Card + Room Charge ── */}
+                {user && (
+                  <div className="space-y-3">
+                    {/* Pay with Card (online/PayHere) */}
                     <button
-                      onClick={() => setPaymentMethod("online")}
+                      onClick={() => setPaymentMethod("card")}
                       className={`w-full flex items-center gap-5 p-4 md:p-5 rounded-3xl border-2 transition-all duration-300 cursor-pointer group ${
-                        paymentMethod === "online"
+                        paymentMethod === "card"
                           ? "bg-orange-50 border-[var(--brand-primary)]/40 shadow-sm"
                           : "bg-white border-transparent hover:border-gray-200 hover:bg-gray-50 shadow-sm"
                       }`}
                     >
-                      <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm ${paymentMethod === 'online' ? 'bg-[var(--brand-primary)] text-white scale-105' : 'bg-gray-50 text-gray-400 group-hover:text-gray-600 border border-gray-100'}`}>
+                      <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm ${paymentMethod === 'card' ? 'bg-[var(--brand-primary)] text-white scale-105' : 'bg-gray-50 text-gray-400 group-hover:text-gray-600 border border-gray-100'}`}>
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                           <rect x="2" y="5" width="20" height="14" rx="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                           <path d="M2 10h20" stroke="currentColor" strokeWidth="2" />
                         </svg>
                       </div>
                       <div className="flex-1 text-left">
-                        <p className={`text-base font-bold leading-tight mb-1 transition-colors ${paymentMethod === "online" ? "text-[var(--brand-primary)]" : "text-gray-900"}`}>
-                          Online Payment
+                        <p className={`text-base font-bold leading-tight mb-1 transition-colors ${paymentMethod === "card" ? "text-[var(--brand-primary)]" : "text-gray-900"}`}>
+                          Pay with Card
                         </p>
                         <p className="text-sm font-medium text-gray-500 leading-tight">
-                          Pay securely via PayHere
+                          Online payment via PayHere
                         </p>
                       </div>
-                      <div className={`shrink-0 w-7 h-7 rounded-full border-[2.5px] flex items-center justify-center transition-colors ${paymentMethod === "online" ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-gray-200"}`}>
-                        {paymentMethod === "online" && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                      <div className={`shrink-0 w-7 h-7 rounded-full border-[2.5px] flex items-center justify-center transition-colors ${paymentMethod === "card" ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-gray-200"}`}>
+                        {paymentMethod === "card" && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                       </div>
                     </button>
 
-                    {/* Table QR only: hint that a checked-in guest could ask staff to bill their room instead */}
-                    {isTableQr && (
-                      <p className="text-center text-sm font-medium text-gray-500 pt-2">
-                        Already staying with us? Ask our staff to add this bill to your room!
-                      </p>
-                    )}
+                    {/* Charge to Room */}
+                    <button
+                      onClick={() => setPaymentMethod("room-charge")}
+                      className={`w-full flex items-center gap-5 p-4 md:p-5 rounded-3xl border-2 transition-all duration-300 cursor-pointer group ${
+                        paymentMethod === "room-charge"
+                          ? "bg-orange-50 border-[var(--brand-primary)]/40 shadow-sm"
+                          : "bg-white border-transparent hover:border-gray-200 hover:bg-gray-50 shadow-sm"
+                      }`}
+                    >
+                      <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm ${paymentMethod === 'room-charge' ? 'bg-[var(--brand-primary)] text-white scale-105' : 'bg-gray-50 text-gray-400 group-hover:text-gray-600 border border-gray-100'}`}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M10 21V17a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4M3 7l9-4 9 4"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className={`text-base font-bold leading-tight mb-1 transition-colors ${paymentMethod === "room-charge" ? "text-[var(--brand-primary)]" : "text-gray-900"}`}>
+                          Charge to Room
+                        </p>
+                        <p className={`text-sm font-medium leading-tight flex items-center gap-2 ${paymentMethod === "room-charge" ? "text-[var(--brand-primary)]/80" : "text-gray-500"}`}>
+                          {location} <span className="w-1 h-1 rounded-full bg-current opacity-50" /> Verified
+                        </p>
+                      </div>
+                      <div className={`shrink-0 w-7 h-7 rounded-full border-[2.5px] flex items-center justify-center transition-colors ${paymentMethod === "room-charge" ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-gray-200"}`}>
+                        {paymentMethod === "room-charge" && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                      </div>
+                    </button>
                   </div>
                 )}
               </div>
@@ -622,7 +677,7 @@ export default function CheckoutClient() {
               {/* Place Order button */}
               <button
                 onClick={handlePlaceOrder}
-                disabled={isProcessing || (isRoomQr && !isRoomCheckedIn)}
+                disabled={isProcessing}
                 className="w-full flex items-center justify-center gap-2 bg-[var(--brand-primary)] rounded-2xl px-6 py-4 md:py-5 shadow-[0_8px_16px_rgba(217,119,6,0.2)] hover:shadow-[0_12px_24px_rgba(217,119,6,0.3)] hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:-translate-y-0 disabled:scale-100 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-300 cursor-pointer group"
               >
                 {isProcessing ? (
@@ -650,12 +705,6 @@ export default function CheckoutClient() {
                   </>
                 )}
               </button>
-
-              {isRoomQr && !isRoomCheckedIn && (
-                <p className="text-center text-xs font-bold text-amber-600">
-                  Ask our front desk to check you in to enable ordering.
-                </p>
-              )}
 
               {/* Secure badge */}
               <div className="flex items-center justify-center gap-2.5 pt-2">

@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { NAV_ITEMS, NavItem } from "@/components/staff/layout/staff-sidebar";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
-import StaffNotificationDropdown from "./staff-notification-dropdown";
 
 interface StaffHeaderProps {
   title: string;
@@ -97,7 +96,6 @@ export default function StaffHeader({
         <div className="hidden sm:flex items-center gap-2">
           {actions}
         </div>
-        <StaffNotificationDropdown />
         <UserAvatarDropdown />
       </div>
     </header>

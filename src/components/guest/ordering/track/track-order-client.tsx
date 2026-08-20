@@ -3,11 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { toast } from "sonner";
 import { useOrderStore, type OrderStatus } from "@/store/guest/ordering/order.store";
-
-/* Statuses the kitchen hasn't finished acting on yet — the only ones a guest can still cancel */
-const CANCELLABLE_STATUSES: OrderStatus[] = ["placed", "accepted", "in-progress", "payment-pending"];
 
 /* ─── Helpers ─── */
 
@@ -123,43 +119,18 @@ export default function TrackOrderClient() {
   const order = useOrderStore((s) => s.currentOrder);
   const advanceStatus = useOrderStore((s) => s.advanceStatus);
   const syncCurrentOrder = useOrderStore((s) => s.syncCurrentOrder);
-  const cancelOrder = useOrderStore((s) => s.cancelOrder);
-
-  const [showCancelConfirm, setShowCancelConfirm] = React.useState(false);
-  const [cancelling, setCancelling] = React.useState(false);
 
   const numericOrderId = order?.id?.replace('#ORD-', '');
 
-  const handleConfirmCancel = async () => {
-    setCancelling(true);
-    const ok = await cancelOrder();
-    setCancelling(false);
-    setShowCancelConfirm(false);
-    if (ok) {
-      toast.success("Your order has been cancelled.");
-    } else {
-      toast.error("Couldn't cancel your order. It may already be too far along — please check with staff.");
-    }
-  };
-
   React.useEffect(() => {
     syncCurrentOrder();
-
-    // Belt-and-suspenders fallback: periodically re-sync in case the SSE
-    // stream drops silently (e.g. backgrounded tab, wifi blip) and its own
-    // reconnect logic fails to recover.
-    const interval = setInterval(() => {
-      syncCurrentOrder();
-    }, 30000);
-
-    return () => clearInterval(interval);
   }, [syncCurrentOrder]);
 
 
   /* ── No order state ── */
   if (!order) {
     return (
-      <div className="max-w-[1680px] mx-auto px-4 md:px-8 py-6 md:py-8">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-6 md:py-8">
         <nav className="flex items-center gap-2 text-sm mb-6 bg-white/40 backdrop-blur-md px-4 py-2 rounded-full w-fit border border-white/60 shadow-sm">
           <Link href="/guest/order" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-900 transition-colors group">
             <HomeIcon />
@@ -210,7 +181,7 @@ export default function TrackOrderClient() {
   const lastCompletedStatus = completedList.length > 0 ? completedList[completedList.length - 1] : null;
 
   return (
-    <div className="max-w-[1680px] mx-auto px-4 md:px-8 py-6 md:py-10">
+    <div className="max-w-[1440px] mx-auto px-4 md:px-8 py-6 md:py-10">
       {/* ─── Breadcrumbs ─── */}
       <nav className="flex items-center gap-2 text-sm mb-6 bg-white/40 backdrop-blur-md px-4 py-2 rounded-full w-fit border border-white/60 shadow-sm">
         <Link href="/guest/order" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-900 transition-colors group">
@@ -400,17 +371,6 @@ export default function TrackOrderClient() {
               </svg>
               <span className="text-base font-bold text-gray-700">Need Help?</span>
             </Link>
-            {order.currentStatus !== "cancelled" && (
-              <Link
-                href="/guest/order/messages"
-                className="flex items-center justify-center gap-2 bg-white/80 border border-gray-200/80 rounded-2xl px-6 py-4 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 shadow-sm group"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-600 group-hover:text-[var(--brand-primary)] transition-colors">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="text-base font-bold text-gray-700">Message Staff</span>
-              </Link>
-            )}
             {order.currentStatus === "cancelled" && (
               <Link
                 href="/guest/order/menu"
@@ -418,18 +378,6 @@ export default function TrackOrderClient() {
               >
                 <span className="text-base font-bold text-white">Back to Menu</span>
               </Link>
-            )}
-            {CANCELLABLE_STATUSES.includes(order.currentStatus) && (
-              <button
-                onClick={() => setShowCancelConfirm(true)}
-                className="flex items-center justify-center gap-2 bg-white/80 border border-red-200/80 rounded-2xl px-6 py-4 hover:bg-red-50 hover:border-red-300 transition-all duration-300 shadow-sm group"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-red-500">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                  <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                <span className="text-base font-bold text-red-600">Cancel Order</span>
-              </button>
             )}
           </div>
         </div>
@@ -535,42 +483,6 @@ export default function TrackOrderClient() {
           </div>
         </div>
       </div>
-
-      {/* ─── Cancel confirmation modal ─── */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="w-[420px] max-w-full rounded-2xl bg-white shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)] p-6">
-            <div className="flex items-center justify-center rounded-full bg-red-50 size-14 mb-4 mx-auto">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#EF4444" strokeWidth="2" />
-                <path d="M15 9l-6 6M9 9l6 6" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 text-center">Cancel this order?</h3>
-            <p className="text-sm text-gray-500 text-center mt-2 leading-relaxed">
-              {order.currentStatus === "accepted" || order.currentStatus === "in-progress"
-                ? "The kitchen has already started on your order. Cancelling now may not be possible if it's too far along — you can also check with staff directly."
-                : "This can't be undone. You'll need to place a new order if you change your mind."}
-            </p>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowCancelConfirm(false)}
-                disabled={cancelling}
-                className="flex-1 rounded-xl border border-gray-200 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                Keep Order
-              </button>
-              <button
-                onClick={handleConfirmCancel}
-                disabled={cancelling}
-                className="flex-1 rounded-xl bg-red-500 py-3 text-sm font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-50"
-              >
-                {cancelling ? "Cancelling..." : "Yes, Cancel"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

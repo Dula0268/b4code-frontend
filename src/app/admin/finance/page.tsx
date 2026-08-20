@@ -107,7 +107,7 @@ export default function FinancePage() {
             {/* Chart + Recent Transactions */}
             <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 lg:gap-6 pb-10">
               <RevenueTrendChart />
-              <RecentTransactions />
+              <RecentTransactions onViewAll={() => setActiveTab("transaction")} />
             </div>
           </>
         )}

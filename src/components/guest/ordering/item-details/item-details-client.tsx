@@ -124,36 +124,36 @@ export default function ItemDetailsClient({
   };
 
   return (
-    <div className="max-w-[1680px] mx-auto px-4 md:px-6 py-4 md:py-12">
+    <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-4 md:py-12">
       {/* ─── Breadcrumbs ─── */}
       <nav className="flex items-center gap-2 text-sm md:text-base mb-4 md:mb-8 px-1">
-        <Link href="/guest/order" className="flex items-center gap-1 text-gray-400 hover:text-[var(--brand-primary)] transition-colors">
+        <Link href="/guest/order" className="flex items-center gap-1">
           {/* Home icon */}
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
             <path
               d="M3 10L10 3L17 10M5 8.5V16.5C5 16.776 5.224 17 5.5 17H8.5V13C8.5 12.724 8.724 12.5 9 12.5H11C11.276 12.5 11.5 12.724 11.5 13V17H14.5C14.776 17 15 16.776 15 16.5V8.5"
-              stroke="currentColor"
+              stroke="#828282"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
         </Link>
-        <span className="text-gray-400">Home</span>
+        <span className="text-[#828282]">Home</span>
         <ChevronRight />
-        <Link href="/guest/order/menu" className="text-gray-400 hover:text-[var(--brand-primary)] transition-colors">
+        <Link href="/guest/order/menu" className="text-[#828282] hover:underline">
           Menu
         </Link>
         <ChevronRight />
-        <span className="text-[var(--brand-primary)] font-medium">{itemTitle}</span>
+        <span className="text-[#953002] font-medium">{itemTitle}</span>
       </nav>
 
       <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-start">
         {/* ════════════════════ LEFT: Item Info ════════════════════ */}
         <div className="flex-1 min-w-0 space-y-8">
           {/* Hero image */}
-          <div className="relative overflow-hidden rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
-            <div className="relative h-[220px] md:h-[352px] w-full bg-gray-100">
+          <div className="relative overflow-hidden rounded-xl shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)]">
+            <div className="relative h-[220px] md:h-[352px] w-full bg-[#f3f4f6]">
               {heroSrc ? (
                 <Image
                   src={heroSrc}
@@ -171,7 +171,7 @@ export default function ItemDetailsClient({
                 {item.tag.split(",").map((tagStr) => {
                   const tagTrimmed = tagStr.trim();
                   return (
-                    <span key={tagTrimmed} className="inline-block rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--brand-primary)] shadow-sm">
+                    <span key={tagTrimmed} className="inline-block rounded bg-white/90 backdrop-blur-sm px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#923002] shadow-sm">
                       {TAG_LABELS[tagTrimmed] ?? tagTrimmed}
                     </span>
                   );
@@ -188,9 +188,9 @@ export default function ItemDetailsClient({
                   key={idx}
                   onClick={() => setActiveImage(idx)}
                   className={[
-                    "relative h-20 w-24 overflow-hidden rounded-xl border-2 transition cursor-pointer",
+                    "relative h-20 w-24 overflow-hidden rounded-lg border-2 transition cursor-pointer",
                     idx === activeImage
-                      ? "border-[var(--brand-primary)] shadow-md"
+                      ? "border-[#953002] shadow-md"
                       : "border-transparent opacity-70 hover:opacity-100",
                   ].join(" ")}
                 >
@@ -207,24 +207,24 @@ export default function ItemDetailsClient({
           )}
 
           {/* Title row + Price */}
-          <div className="border-b border-gray-100 pb-6">
+          <div className="border-b border-[rgba(146,48,2,0.1)] pb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 md:gap-4 mb-2">
-              <h1 className="text-2xl md:text-4xl font-bold text-gray-900 tracking-tight leading-tight">
+              <h1 className="text-2xl md:text-4xl font-bold text-[#111827] leading-tight">
                 {itemTitle}
               </h1>
-              <span className="text-xl md:text-3xl font-bold text-[var(--brand-primary)] leading-7 md:leading-9 whitespace-nowrap">
+              <span className="text-xl md:text-3xl font-bold text-[#923002] leading-7 md:leading-9 whitespace-nowrap">
                 {formatLkr(unitPrice)}
               </span>
             </div>
 
             {/* Rating · Tag · Prep time */}
-            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-[#6b7280]">
             {detailItem.rating ? (
                 <div className="flex items-center gap-1">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
                   </svg>
-                  <span className="font-semibold text-gray-700">{detailItem.rating}</span>
+                  <span className="font-medium text-[#374151]">{detailItem.rating}</span>
                   {detailItem.reviewCount ? (
                     <span>({detailItem.reviewCount} reviews)</span>
                   ) : null}
@@ -251,7 +251,7 @@ export default function ItemDetailsClient({
           </div>
 
           {/* Description */}
-          <div className="space-y-4 text-base text-gray-600 leading-6">
+          <div className="space-y-4 text-base text-[#4b5563] leading-6">
             <p>{item.description}</p>
             {detailItem.longDescription ? <p>{detailItem.longDescription}</p> : null}
           </div>
@@ -262,7 +262,7 @@ export default function ItemDetailsClient({
               {detailItem.allergens.map((tag: string) => (
                 <div
                   key={tag}
-                  className="rounded-full border border-orange-100/60 bg-orange-50/60 px-3.5 py-1.5 text-sm font-medium text-[var(--brand-primary)]"
+                  className="rounded border border-[rgba(146,48,2,0.1)] bg-[rgba(146,48,2,0.05)] px-3.5 py-1.5 text-sm font-medium text-[#923002]"
                 >
                   {tag}
                 </div>
@@ -273,61 +273,55 @@ export default function ItemDetailsClient({
 
         {/* ════════════════════ RIGHT: Customisation Panel ════════════════════ */}
         <div className="w-full md:w-[432px] md:shrink-0 md:sticky md:top-6">
-          <div className="bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] p-6 space-y-6 overflow-hidden relative">
-            {/* Subtle background glow */}
-            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--brand-primary)]/5 to-transparent pointer-events-none" />
+          <div className="bg-white rounded-xl border border-[rgba(146,48,2,0.05)] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] p-6 space-y-6 overflow-hidden">
             {/* Header */}
-            <div className="border-b border-gray-100 pb-4 space-y-2 relative z-10">
+            <div className="border-b border-[rgba(146,48,2,0.1)] pb-4 space-y-2">
               <div className="space-y-1">
-                <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                <h2 className="text-lg font-bold text-[#111827]">
                   Customize your order
                 </h2>
-                <p className="text-xs font-semibold text-[var(--brand-primary)]">
+                <p className="text-xs font-medium text-[#923002]">
                   For {location}
                 </p>
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[#6b7280]">
                 Select options and quantity
               </p>
             </div>
 
             {/* Quantity selector */}
-            <div className="flex items-center justify-between rounded-2xl bg-white/80 border border-gray-100 shadow-sm p-4 relative z-10">
-              <span className="font-semibold text-gray-700">Quantity</span>
-              <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-full p-1 shadow-sm">
+            <div className="flex items-center justify-between rounded-lg bg-[#f8f6f5] p-4">
+              <span className="font-semibold text-[#374151]">Quantity</span>
+              <div className="flex items-center gap-4">
                 <button
                   onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer"
+                  className="flex h-8 w-8 items-center justify-center rounded border border-[#e5e7eb] bg-white shadow-sm text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer"
                 >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M3 7h8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
+                  −
                 </button>
-                <span className="text-sm font-bold text-gray-900 w-5 text-center">
+                <span className="text-lg font-bold text-[#111827] w-4 text-center">
                   {qty}
                 </span>
                 <button
                   onClick={() => setQty(qty + 1)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-50 text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white transition-colors cursor-pointer"
+                  className="flex h-8 w-8 items-center justify-center rounded border border-[#e5e7eb] bg-white shadow-sm text-[#4b5563] hover:bg-[#f9fafb] cursor-pointer"
                 >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
+                  +
                 </button>
               </div>
             </div>
 
             {/* Portion/Size selector */}
             {item.variants && item.variants.length > 0 && (
-              <div className="space-y-3 relative z-10">
-                <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#6b7280]">
                   Portion / Size
                 </p>
                 <div className="space-y-2">
                   {item.variants.map((v) => (
                     <label
                       key={v.id}
-                      className="flex cursor-pointer items-center justify-between rounded-xl border border-gray-100 p-3.5 hover:bg-gray-50 transition-colors"
+                      className="flex cursor-pointer items-center justify-between rounded-lg border border-[#e5e7eb] p-3.5 hover:bg-[#f9fafb] transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <input
@@ -335,13 +329,13 @@ export default function ItemDetailsClient({
                           name="variant"
                           checked={selectedVariantId === v.id}
                           onChange={() => setSelectedVariantId(v.id)}
-                          className="h-4 w-4 border-gray-300 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+                          className="h-4 w-4 border-gray-300 text-[#923002] focus:ring-[#923002]"
                         />
-                        <span className="text-sm font-semibold text-gray-700">
+                        <span className="text-sm font-semibold text-[#374151]">
                           {v.label}
                         </span>
                       </div>
-                      <span className="text-sm font-semibold text-[var(--brand-primary)]">
+                      <span className="text-sm font-semibold text-[#923002]">
                         {formatLkr(v.price)}
                       </span>
                     </label>
@@ -352,10 +346,10 @@ export default function ItemDetailsClient({
 
             {/* Customisable Modifiers */}
             {item.modifiers && item.modifiers.length > 0 && (
-              <div className="space-y-4 relative z-10">
+              <div className="space-y-4">
                 {item.modifiers.map((m) => (
                   <div key={m.id} className="space-y-2">
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#6b7280]">
                       {m.name}
                     </p>
                     <div className="space-y-1">
@@ -364,7 +358,7 @@ export default function ItemDetailsClient({
                         return (
                           <label
                             key={o.label}
-                            className="flex cursor-pointer items-center justify-between rounded-xl p-2.5 hover:bg-gray-50 transition-colors"
+                            className="flex cursor-pointer items-center justify-between rounded-lg p-2.5 hover:bg-[#f9fafb] transition-colors"
                           >
                             <div className="flex items-center gap-3">
                               <Checkbox
@@ -378,13 +372,13 @@ export default function ItemDetailsClient({
                                     },
                                   }))
                                 }
-                                className="border-gray-300 data-[state=checked]:bg-[var(--brand-primary)] data-[state=checked]:border-[var(--brand-primary)]"
+                                className="border-[#d1d5db] data-[state=checked]:bg-[#923002] data-[state=checked]:border-[#923002]"
                               />
-                              <span className="text-sm text-gray-700">
+                              <span className="text-sm text-[#374151]">
                                 {o.label}
                               </span>
                             </div>
-                            <span className="text-xs font-medium text-gray-500">
+                            <span className="text-xs font-medium text-[#6b7280]">
                               {o.price === 0 ? "Free" : `+${formatLkr(o.price)}`}
                             </span>
                           </label>
@@ -399,12 +393,12 @@ export default function ItemDetailsClient({
             {/* Removed Special Instructions */}
 
             {/* Total + CTA */}
-            <div className="pt-2 relative z-10">
-              <div className="border-t border-gray-100 pt-4 space-y-4">
+            <div className="pt-2">
+              <div className="border-t border-[rgba(146,48,2,0.1)] pt-4 space-y-4">
                 {/* Total */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Total Amount</span>
-                  <span className="text-2xl font-bold text-gray-900 tracking-tight">
+                  <span className="text-sm text-[#6b7280]">Total Amount</span>
+                  <span className="text-2xl font-bold text-[#111827]">
                     {formatLkr(totalPrice)}
                   </span>
                 </div>
@@ -412,10 +406,10 @@ export default function ItemDetailsClient({
                 {/* Add to Cart button */}
                 <button
                   onClick={handleAddToCart}
-                  className="w-full h-14 rounded-2xl bg-[var(--brand-primary)] text-white font-bold text-base flex items-center justify-center gap-2 shadow-[0_8px_16px_rgba(217,119,6,0.2)] hover:shadow-[0_8px_24px_rgba(217,119,6,0.3)] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 cursor-pointer"
+                  className="w-full h-12 rounded-lg bg-[#973102] text-white font-bold text-base flex items-center justify-center gap-2 shadow-[0px_10px_15px_-3px_rgba(151,49,2,0.3),0px_4px_6px_-4px_rgba(151,49,2,0.3)] hover:bg-[#7c2802] transition cursor-pointer"
                 >
                   Add to Cart
-                  <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path
                       d="M3 8H13M13 8L9 4M13 8L9 12"
                       stroke="white"
@@ -427,7 +421,7 @@ export default function ItemDetailsClient({
                 </button>
 
                 {/* Note */}
-                <p className="text-center text-xs text-gray-400 font-medium">
+                <p className="text-center text-xs text-[#9ca3af]">
                   Charges will be added to {location} bill
                 </p>
               </div>
@@ -437,15 +431,15 @@ export default function ItemDetailsClient({
       </div>
 
       {/* ════════════════════ GUEST REVIEWS SECTION ════════════════════ */}
-      <div className="mt-16 pt-12 border-t border-gray-100">
+      <div className="mt-16 pt-12 border-t border-[rgba(146,48,2,0.1)]">
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-2">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#111827] mb-2">
               Guest Reviews
             </h2>
             {itemReviews.length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <p className="text-[14px] text-[#6b7280]">
                 No reviews yet for this dish.
               </p>
             ) : (
@@ -466,10 +460,10 @@ export default function ItemDetailsClient({
                       </svg>
                     ))}
                   </div>
-                  <span className="text-sm font-semibold text-gray-700">
+                  <span className="text-[14px] font-medium text-[#374151]">
                     {avgRating.toFixed(1)} out of 5
                   </span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-[14px] text-[#6b7280]">
                     ({itemReviews.length} {itemReviews.length === 1 ? "review" : "reviews"})
                   </span>
                 </div>
@@ -478,7 +472,7 @@ export default function ItemDetailsClient({
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as "newest" | "rating-high" | "helpful")}
-                  className="px-3 py-2 text-[13px] border border-gray-200 rounded-xl bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] cursor-pointer"
+                  className="px-3 py-2 text-[13px] border border-[#e5e7eb] rounded-lg bg-white text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#953002] cursor-pointer"
                 >
                   <option value="newest">Newest first</option>
                   <option value="rating-high">Highest rating</option>
@@ -490,8 +484,8 @@ export default function ItemDetailsClient({
 
           {/* Reviews List */}
           {itemReviews.length === 0 ? (
-            <div className="bg-gray-50/60 border border-gray-100 rounded-2xl p-6 text-center">
-              <p className="text-sm text-gray-500 m-0">
+            <div className="bg-[#f9fafb] border border-[#e5e7eb] rounded-lg p-6 text-center">
+              <p className="text-[14px] text-[#6b7280] m-0">
                 Guests can leave reviews for this dish after ordering.
               </p>
             </div>
@@ -500,15 +494,15 @@ export default function ItemDetailsClient({
               {sortedReviews.map((review) => (
                 <div
                   key={review.id}
-                  className="border border-gray-100 rounded-2xl p-5 hover:shadow-md transition"
+                  className="border border-[#e5e7eb] rounded-lg p-5 hover:shadow-md transition"
                 >
                   {/* Review header */}
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-900">
+                      <h4 className="text-[14px] font-semibold text-[#111827]">
                         {review.guestName || "Guest"}
                       </h4>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-[12px] text-[#9ca3af] mt-1">
                         {new Date(review.timestamp).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -535,14 +529,14 @@ export default function ItemDetailsClient({
 
                   {/* Review text */}
                   {review.reviewText && (
-                    <p className="text-[13px] text-gray-600 leading-[18px] mb-3">
+                    <p className="text-[13px] text-[#4b5563] leading-[18px] mb-3">
                       {review.reviewText}
                     </p>
                   )}
 
                   {/* Helpful count */}
                   {review.helpful > 0 && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-[12px] text-[#6b7280]">
                       👍 {review.helpful} {review.helpful === 1 ? "person found" : "people found"} this helpful
                     </div>
                   )}
@@ -559,15 +553,15 @@ export default function ItemDetailsClient({
 /* ─── Small helper components ─── */
 
 function Dot() {
-  return <div className="h-1 w-1 rounded-full bg-gray-300" />;
+  return <div className="h-1 w-1 rounded-full bg-[#d1d5db]" />;
 }
 
 function ChevronRight() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-gray-300">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
       <path
         d="M6 4L10 8L6 12"
-        stroke="currentColor"
+        stroke="#828282"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"

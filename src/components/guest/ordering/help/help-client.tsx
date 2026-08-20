@@ -77,38 +77,25 @@ export default function HelpClient() {
 
           {/* ── Action buttons ── */}
           <div className="px-6 md:px-8 py-4 space-y-3 relative z-10">
-            {/* Quick Call to Staff - Primary (disabled: no live call channel wired up yet) */}
-            <button
-              disabled
-              title="Coming soon — please contact the front desk directly"
-              className="w-full flex items-center justify-center gap-2 bg-gray-200 rounded-2xl px-6 py-4 cursor-not-allowed opacity-70"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-500">
+            {/* Quick Call to Staff - Primary */}
+            <button className="w-full flex items-center justify-center gap-2 bg-[var(--brand-primary)] rounded-2xl px-6 py-4 shadow-lg shadow-orange-500/20 hover:bg-[#C05621] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white transform group-hover:scale-110 transition-transform">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3.09 5.18 2 2 0 0 1 5.09 3h3a2 2 0 0 1 2 1.72c.13.81.37 1.61.7 2.36a2 2 0 0 1-.45 2.11L8.09 11.5a16 16 0 0 0 6.41 6.41l2.31-2.31a2 2 0 0 1 2.11-.45c.75.33 1.55.57 2.36.7A2 2 0 0 1 22 16.92Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-base font-semibold text-gray-500">
+              <span className="text-base font-semibold text-white">
                 Quick Call to Staff
-              </span>
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1">
-                (Coming soon)
               </span>
             </button>
 
             {/* Chat with Staff - Outlined */}
-            <Link
-              href="/guest/order/messages"
-              className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200/80 rounded-2xl px-6 py-4 hover:bg-orange-50/60 hover:border-[var(--brand-primary)]/30 transition-all shadow-sm group no-underline"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-500 group-hover:text-[var(--brand-primary)] transition-colors">
+            <button className="w-full flex items-center justify-center gap-2 bg-white/80 border border-gray-200/80 rounded-2xl px-6 py-4 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 group cursor-pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-400 group-hover:text-gray-600 transition-colors">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="text-base font-semibold text-gray-800 group-hover:text-[var(--brand-primary)] transition-colors">
+              <span className="text-base font-medium text-gray-700">
                 Chat with Staff
               </span>
-            </Link>
-            <p className="text-center text-xs text-gray-400 font-medium px-2">
-              Message the kitchen about your current order, or contact the front desk directly for urgent issues.
-            </p>
+            </button>
           </div>
 
           {/* ── Divider with label ── */}
@@ -120,19 +107,17 @@ export default function HelpClient() {
             <div className="flex-1 h-px bg-gray-200/80" />
           </div>
 
-          {/* ── 2×2 Grid of common issues (disabled: no live staff channel wired up yet) ── */}
+          {/* ── 2×2 Grid of common issues ── */}
           <div className="px-6 md:px-8 py-4 grid grid-cols-2 gap-4 relative z-10">
             {COMMON_ISSUES.map((issue) => (
               <button
                 key={issue.id}
-                disabled
-                title="Coming soon — please contact the front desk directly"
-                className="flex flex-col items-center justify-center gap-3 py-6 px-4 bg-gray-50/60 border border-gray-100/80 rounded-2xl cursor-not-allowed opacity-60"
+                className="flex flex-col items-center justify-center gap-3 py-6 px-4 bg-white/60 backdrop-blur-md border border-gray-100/80 rounded-2xl hover:border-orange-500/30 hover:bg-orange-50/50 hover:shadow-sm transition-all duration-300 group cursor-pointer"
               >
-                <div className="p-2 bg-gray-100 rounded-xl">
+                <div className="p-2 bg-orange-50 rounded-xl group-hover:scale-110 group-hover:bg-orange-100/80 transition-all">
                   {issue.icon}
                 </div>
-                <span className="text-sm font-medium text-gray-500">
+                <span className="text-sm font-medium text-gray-700">
                   {issue.label}
                 </span>
               </button>

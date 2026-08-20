@@ -432,7 +432,7 @@ export default function PropertyClient({ property }: { property: any }) {
                             {/* Inserted Room Types */}
                             <div>
                                 {(() => {
-                                    const displayedRooms = (property.roomTypes || []).filter((room: any) => room.maxGuests >= guestsFromSearch);
+                                    const displayedRooms = (property.rooms || []).filter((room: any) => room.maxGuests >= guestsFromSearch);
                                     if (displayedRooms.length === 0) {
                                         return (
                                             <div className="p-8 bg-[#fff5f5] border border-[#ffe0e0] rounded-2xl text-[#d32f2f] flex flex-col items-center justify-center text-center">
