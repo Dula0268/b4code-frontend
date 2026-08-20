@@ -1,20 +1,36 @@
-# Use Node.js LTS
-FROM node:18-alpine
+# Stage 1: Install dependencies
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+# --legacy-peer-deps: next-intl bundles its own @swc/core whose optional peerDependency
+# on @swc/helpers doesn't match next's pinned version. npm's newer peer resolver treats
+# this as a hard lockfile-sync error under `npm ci` even though the peer is optional and
+# harmless; the legacy resolver (pre-npm7 behavior) ignores it like earlier npm always did.
+RUN npm ci --legacy-peer-deps
 
-# Set working directory
+# Stage 2: Build the application
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+# Stage 3: Production runner (minimal image)
+FROM node:22-alpine AS runner
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install dependencies
-RUN npm install
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
 
-# Copy source
-COPY . .
+# Copy only what's needed to run
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Expose Next.js port
+USER nextjs
 EXPOSE 3000
-
-# Start dev server
-CMD ["npm", "run", "dev"]
+CMD ["node", "server.js"]

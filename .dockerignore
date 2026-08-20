@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.github
+Dockerfile
+.dockerignore
+README.md
+build*.log
+lint*.txt
+scratch
+.env
+.env.*
+!.env.example
