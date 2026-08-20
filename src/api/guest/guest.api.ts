@@ -129,4 +129,21 @@ export const guestApi = {
 
   sendMessage: (bookingId: number | string, content: string) =>
     api.post(`/guest/bookings/${bookingId}/messages`, { content }).then((r) => r.data),
+
+  // Order Message Methods (public/unauthenticated, scoped by guestSessionId)
+  getOrderMessages: (orderId: number | string, guestSessionId?: string) =>
+    api
+      .get(`/orders/${orderId}/messages`, {
+        params: guestSessionId ? { guestSessionId } : undefined,
+      })
+      .then((r) => r.data),
+
+  sendOrderMessage: (orderId: number | string, content: string, guestSessionId?: string) =>
+    api
+      .post(
+        `/orders/${orderId}/messages`,
+        { content },
+        { params: guestSessionId ? { guestSessionId } : undefined }
+      )
+      .then((r) => r.data),
 };

@@ -88,7 +88,7 @@ export default function QrDetail({ qrId }: { qrId: string }) {
       <div className="flex-1 flex gap-5 min-h-0 overflow-hidden">
         {/* Left: QR Code */}
         <Card className="bg-white flex-1 py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-          <CardContent className="p-6 h-full flex flex-col items-center justify-center gap-3">
+          <CardContent className="p-5 h-full flex flex-col items-center justify-center gap-3">
             <div className="w-[200px] h-[200px] bg-white border border-[var(--gray-5)] rounded-[12px] flex items-center justify-center overflow-hidden p-2 shadow-sm">
               {qr.qrImageUrl ? (
                 <img src={qr.qrImageUrl} alt={`QR Code for ${qr.name}`} className="w-full h-full object-contain" />

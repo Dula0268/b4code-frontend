@@ -3,10 +3,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Utensils, ShoppingCart, ClipboardList, HelpCircle, LogOut, Settings, Menu, X } from 'lucide-react';
+import { Utensils, ShoppingCart, ClipboardList, HelpCircle, LogOut, Settings, Menu, X, BedDouble } from 'lucide-react';
 import Logo from '@/components/shared/branding/logo';
 import { useCartStore } from '@/store/guest/ordering/cart.store';
 import { useAuthStore } from '@/store/auth/auth.store';
+import { useOrderContextStore } from '@/store/guest/ordering/order-context.store';
+import type { RoomStatus } from '@/api/properties/properties.api';
 
 const navigationItems = [
   {
@@ -39,12 +41,27 @@ export default function OrderingTopbar() {
   const isRestoring = useAuthStore((s) => s.isRestoring);
   const logout = useAuthStore((s) => s.logout);
 
+  const qrContext = useOrderContextStore((s) => s.qrContext);
+  const roomStatus = useOrderContextStore((s) => s.roomStatus);
+  const roomStatusLoading = useOrderContextStore((s) => s.roomStatusLoading);
+  const fetchRoomStatus = useOrderContextStore((s) => s.fetchRoomStatus);
+  const isRoomQr = qrContext?.type?.toUpperCase().includes('ROOM');
+
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Room QR: show a live "checked in" badge in the navbar instead of the
+  // login/logout controls, driven by a real front-desk check-in — not by
+  // whether the guest happens to be logged into an account.
+  useEffect(() => {
+    if (isRoomQr && qrContext?.propertyId && qrContext?.location) {
+      fetchRoomStatus(qrContext.propertyId, qrContext.location);
+    }
+  }, [isRoomQr, qrContext?.propertyId, qrContext?.location, fetchRoomStatus]);
 
   // Close account menu on outside click
   useEffect(() => {
@@ -79,7 +96,7 @@ export default function OrderingTopbar() {
     <>
       {/* ═══════════ Desktop / Top Bar ═══════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
-        <div className="max-w-[1400px] mx-auto px-6 h-[64px] flex items-center justify-between">
+        <div className="max-w-[1680px] mx-auto px-6 h-[64px] flex items-center justify-between">
           
           {/* Logo on Left */}
           <div className="flex-shrink-0 hover:scale-105 transition-transform duration-300">
@@ -123,7 +140,11 @@ export default function OrderingTopbar() {
 
             {/* Desktop Auth / Avatar */}
             <div className="hidden md:block pl-2 border-l border-gray-200/60">
-              {!mounted || (isRestoring && !user) ? (
+              {!mounted ? (
+                <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
+              ) : isRoomQr ? (
+                <RoomStatusBadge loading={roomStatusLoading} status={roomStatus} fallbackLabel={qrContext?.locationLabel} />
+              ) : isRestoring && !user ? (
                 <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
               ) : user ? (
                 <div className="relative" ref={accountMenuRef}>
@@ -222,7 +243,9 @@ export default function OrderingTopbar() {
             {/* Mobile auth */}
             {mounted && (
               <div className="pt-4 border-t border-gray-100 mt-2">
-                {user ? (
+                {isRoomQr ? (
+                  <RoomStatusBadge loading={roomStatusLoading} status={roomStatus} fallbackLabel={qrContext?.locationLabel} full />
+                ) : user ? (
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-[var(--brand-primary)] text-[16px] font-bold flex-shrink-0 shadow-inner">
@@ -303,5 +326,46 @@ export default function OrderingTopbar() {
         </div>
       </nav>
     </>
+  );
+}
+
+/** Replaces the login/logout controls for a ROOM QR context — status comes
+ * from a real front-desk check-in, not from being logged into an account. */
+function RoomStatusBadge({
+  loading,
+  status,
+  fallbackLabel,
+  full,
+}: {
+  loading: boolean;
+  status: RoomStatus | null;
+  fallbackLabel?: string;
+  full?: boolean;
+}) {
+  const label = status?.roomTypeName ? `${status.roomTypeName} ${status.roomNumber}` : fallbackLabel || "Room";
+
+  if (loading) {
+    return (
+      <div className={full ? "w-full h-11 rounded-2xl bg-gray-100 animate-pulse" : "w-32 h-9 rounded-full bg-gray-100 animate-pulse"} />
+    );
+  }
+
+  const checkedIn = !!status?.checkedIn;
+
+  return (
+    <div
+      className={[
+        "flex items-center gap-2 font-bold border shadow-sm",
+        full ? "w-full justify-center py-3.5 rounded-2xl text-[14px]" : "px-4 py-2 rounded-full text-[13px]",
+        checkedIn
+          ? "bg-green-50 border-green-200 text-green-700"
+          : "bg-amber-50 border-amber-200 text-amber-700",
+      ].join(" ")}
+    >
+      <BedDouble size={16} />
+      <span className="truncate">{label}</span>
+      <span className="opacity-60">·</span>
+      <span>{checkedIn ? "Checked In" : "Not Checked In"}</span>
+    </div>
   );
 }
