@@ -31,7 +31,9 @@ export const NAV_ITEMS = [
   { label: "Bookings", href: "/staff/bookings", icon: CalendarCheck, permKey: "order_management" },
   { label: "Menu Management", href: "/staff/menu", icon: Package, permKey: "menu_management" },
   { label: "QR Management", href: "/staff/qr", icon: QrCode, permKey: "qr_management" },
-  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, permKey: "guest_messages", badgeKey: "unreadMessagesCount" },
+  // permKey is null: the messages page itself gates content by staffRole (booking inbox / order inbox / both),
+  // so the nav entry always shows for every staff member rather than being hidden by a role-agnostic RBAC flag.
+  { label: "Messages", href: "/staff/messages", icon: MessageCircle, permKey: null, badgeKey: "unreadMessagesCount" },
   { label: "Reviews", href: "/staff/reviews", icon: Star, permKey: "reviews" },
 ];
 
@@ -82,6 +84,7 @@ export default function StaffSidebar() {
   const pendingOrdersCount = useStaffOrdersStore((state) => state.getCountByStatus("placed"));
   const unreadBookingsCount = useStaffBookingsStore((state) => state.unreadCount);
   const unreadMessagesCount = useStaffBookingsStore((state) => state.unreadMessagesCount);
+  const unreadOrderMessagesCount = useStaffBookingsStore((state) => state.unreadOrderMessagesCount);
 
   useEffect(() => {
     setMounted(true);
@@ -144,7 +147,14 @@ export default function StaffSidebar() {
             } else if (item.href === "/staff/bookings") {
               badge = unreadBookingsCount > 0 ? unreadBookingsCount : null;
             } else if (item.href === "/staff/messages") {
-              badge = unreadMessagesCount > 0 ? unreadMessagesCount : null;
+              // Combine both inboxes' unread counts; the page itself gates which inbox each role actually sees.
+              const combined =
+                staffRole === "Kitchen Staff"
+                  ? unreadOrderMessagesCount
+                  : staffRole === "Property Staff"
+                  ? unreadMessagesCount
+                  : unreadMessagesCount + unreadOrderMessagesCount;
+              badge = combined > 0 ? combined : null;
             }
             
             return (
