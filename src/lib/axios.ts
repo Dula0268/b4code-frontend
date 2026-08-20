@@ -40,11 +40,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
 const clearSessionAndRedirect = () => {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('accessToken');
-  localStorage.removeItem('auth_token');
   localStorage.removeItem('refreshToken');
-  localStorage.removeItem('authEmail');
-  localStorage.removeItem('authRole');
-  localStorage.removeItem('authUserId');
   localStorage.removeItem('auth_user');
   const currentPath = window.location.pathname;
   if (!currentPath.startsWith('/auth')) {
