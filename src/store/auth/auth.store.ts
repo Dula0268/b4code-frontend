@@ -38,15 +38,6 @@ function hydrateUser(): AuthUser | null {
     if (stored) {
       return JSON.parse(stored);
     }
-
-    // Legacy support
-    const token = localStorage.getItem("accessToken");
-    const email = localStorage.getItem("authEmail");
-    const role = localStorage.getItem("authRole") as Role | null;
-    const userId = localStorage.getItem("authUserId");
-    if (token && email && role) {
-      return { email, role, userId: userId ? Number(userId) : undefined };
-    }
   } catch {
     /* ignore */
   }
@@ -121,11 +112,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
 
         if (typeof window !== "undefined") {
           localStorage.setItem("auth_user", JSON.stringify(userData));
+          
+          if (role !== "guest") {
+            // Isolate staff/owner state from stale guest session data
+            localStorage.removeItem("cart-storage");
+            localStorage.removeItem("guest-order-store");
+            localStorage.removeItem("guest-session-store");
+          }
+
           // Also keep legacy keys for compatibility
           localStorage.setItem("accessToken", data.token);
-          localStorage.setItem("authEmail", data.email);
-          localStorage.setItem("authRole", role);
-          localStorage.setItem("authUserId", String(data.userId));
           // Save refresh token for silent renewal
           if (data.refreshToken) {
             setRefreshToken(data.refreshToken);
@@ -313,9 +309,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
       if (typeof window !== "undefined") {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
-        localStorage.removeItem("authEmail");
-        localStorage.removeItem("authRole");
-        localStorage.removeItem("authUserId");
         localStorage.removeItem("auth_user");
         
         // Clear staff-related storage to prevent data leakage between sessions
@@ -324,6 +317,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         localStorage.removeItem("staff-offline-sync-queue");
         localStorage.removeItem("staff-orders-storage");
         localStorage.removeItem("staff-qr-storage");
+        
+        // Clear guest storage to fully sanitize the browser state
+        localStorage.removeItem("cart-storage");
+        localStorage.removeItem("guest-order-store");
+        localStorage.removeItem("guest-session-store");
       }
 
       set({ user: null, isAuthenticated: false, error: null });
