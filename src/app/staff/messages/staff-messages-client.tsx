@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { staffApi } from "@/api/staff/staff.api";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { getWsBrokerUrl } from "@/lib/ws";
 import {
   Send,
   RefreshCw,
@@ -257,7 +258,7 @@ export default function StaffMessagesClient() {
     if (canOrders) fetchOrderConversations();
 
     const client = new Client({
-      brokerURL: "ws://localhost:8080/ws/messages/raw",
+      brokerURL: getWsBrokerUrl(),
       reconnectDelay: 5000,
       onConnect: () => {
         console.log("Staff WS Connected");
