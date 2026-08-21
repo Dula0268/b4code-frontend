@@ -17,7 +17,7 @@ export function usePermission(permissionKey: string, failOpen = true): boolean {
   const roleData = permissionsData[role];
 
   // While loading for the first time, respect the failOpen default
-  if (!roleData) return loading ? failOpen : true;
+  if (!roleData) return failOpen;
 
   // Search across all sections for the key
   const allPermissions = [

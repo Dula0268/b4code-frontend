@@ -88,7 +88,31 @@ export async function startPayHerePopup({
 
     const orderId = paymentObj["order_id"] || "";
 
+    // Failsafe: PayHere's anti-debug scripts sometimes freeze the UI and leave pointer-events: none
+    // even after the modal crashes or is removed. This background interval rescues the UI.
+    const rescueInterval = setInterval(() => {
+      // Check if PayHere applied its lock
+      if (document.body.style.pointerEvents === 'none') {
+        // Look for the PayHere iframe/modal container (usually injected at the end of body)
+        const hasPayhereModal = document.querySelector('iframe[src*="payhere"]') || document.getElementById('payhere-modal');
+        
+        if (!hasPayhereModal) {
+          console.warn("PayHere modal not found but UI is locked. Rescuing pointer events...");
+          document.body.style.pointerEvents = 'auto';
+          document.body.style.overflow = 'auto';
+          clearInterval(rescueInterval);
+        }
+      }
+    }, 1500);
+
+    const cleanup = () => {
+      document.body.style.pointerEvents = 'auto';
+      document.body.style.overflow = 'auto';
+      clearInterval(rescueInterval);
+    };
+
     window.payhere.onCompleted = async (completedOrderId: string) => {
+      cleanup();
       const targetOrderId = completedOrderId || orderId;
       console.log("PayHere Popup payment completed. Order ID:", targetOrderId);
       if (targetOrderId) {
@@ -102,15 +126,18 @@ export async function startPayHerePopup({
     };
 
     window.payhere.onDismissed = () => {
+      cleanup();
       console.log("PayHere Popup payment dismissed.");
       if (onDismiss) onDismiss();
     };
 
     window.payhere.onError = (error: string) => {
+      cleanup();
       console.error("PayHere Popup payment error:", error);
       if (onError) onError(error);
     };
 
+    console.log("Launching PayHere popup. NOTE: If DevTools is open, PayHere may intentionally freeze the page for security.");
     window.payhere.startPayment(paymentObj);
     return true;
   } catch (err) {
