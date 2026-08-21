@@ -5,12 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useCartStore } from "@/store/guest/ordering/cart.store";
+import { useCartStore, getLineUnitPrice } from "@/store/guest/ordering/cart.store";
 import { useOrderStore } from "@/store/guest/ordering/order.store";
-import { useAuthStore } from "@/store/auth/auth.store";
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
 import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
 import { paymentApi } from "@/api/payment/payment.api";
+import { startPayHerePopup } from "@/lib/payhere";
 
 /* ─── Helpers ─── */
 
@@ -23,18 +23,26 @@ type PaymentMethod = "cash" | "online" | "pay-at-property" | "card" | "room-char
 /* ─── Checkout Client ─── */
 
 export default function CheckoutClient() {
-  const user = useAuthStore((s) => s.user);
-  
   // Derived data from session
   const qrContext = useOrderContextStore((s) => s.qrContext);
-  const location = qrContext?.location || (user?.roomId ? String(user.roomId) : "");
-  const authGuestName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "";
-  const propertyId = user?.propertyId || qrContext?.propertyId;
-  const guestId = user?.userId;
+  const roomStatus = useOrderContextStore((s) => s.roomStatus);
+  const roomStatusLoading = useOrderContextStore((s) => s.roomStatusLoading);
+  const fetchRoomStatus = useOrderContextStore((s) => s.fetchRoomStatus);
+  const location = qrContext?.location || "";
+  const propertyId = qrContext?.propertyId;
 
   const isRoomQr = qrContext?.type?.toUpperCase().includes("ROOM");
   const isTableQr = !isRoomQr;
-  
+
+  // Room ordering is gated on a real front-desk check-in for this room
+  // number — not on being logged into a site account.
+  React.useEffect(() => {
+    if (isRoomQr && propertyId && location) {
+      fetchRoomStatus(propertyId, location);
+    }
+  }, [isRoomQr, propertyId, location, fetchRoomStatus]);
+  const isRoomCheckedIn = !!(isRoomQr && roomStatus?.checkedIn);
+
   const sessionGuestName = useGuestSessionStore((s) => s.guestName);
   const sessionGuestPhone = useGuestSessionStore((s) => s.guestPhone);
   const setGuestDetails = useGuestSessionStore((s) => s.setGuestDetails);
@@ -45,9 +53,13 @@ export default function CheckoutClient() {
   React.useEffect(() => {
     setGuestDetails(walkInName, walkInPhone);
   }, [walkInName, walkInPhone, setGuestDetails]);
-  
-  const isWalkIn = !user;
-  const finalGuestName = isWalkIn ? walkInName : authGuestName;
+
+  // Room guests are identified by their check-in record, not a form —
+  // table/walk-in guests still provide their own name and phone.
+  const isWalkIn = isTableQr;
+  const finalGuestName = isRoomQr ? (roomStatus?.guestName || "") : walkInName;
+
+  const serviceChargeRate = useCartStore((s) => s.serviceChargeRate);
 
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
@@ -55,18 +67,19 @@ export default function CheckoutClient() {
   const clearCart = useCartStore((s) => s.clear);
 
   const lines = React.useMemo(() => Object.values(linesMap), [linesMap]);
-  const subtotal = React.useMemo(
-    () => lines.reduce((s, l) => s + l.item.priceLkr * l.qty, 0),
-    [lines],
-  );
-  const serviceCharge = Math.round(subtotal * 0.1);
-  const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + serviceCharge + tax;
+
+  // Use the cart store's own subtotal()/serviceCharge()/total() selectors as
+  // the single source of truth — they correctly resolve variant/modifier
+  // pricing, unlike a naive `item.priceLkr * qty` recomputation.
+  const subtotal = useCartStore((s) => {
+    const _lines = s.lines; // access to trigger re-renders on cart changes
+    return s.subtotal();
+  });
+  const serviceCharge = useCartStore((s) => { const _lines = s.lines; return s.serviceCharge(); });
+  const total = useCartStore((s) => { const _lines = s.lines; return s.total(); });
 
   const [kitchenInstructions, setKitchenInstructions] = React.useState("");
-  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>(
-    user ? "room-charge" : "cash"
-  );
+  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("cash");
   const router = useRouter();
   const placeOrder = useOrderStore((s) => s.placeOrder);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -75,8 +88,10 @@ export default function CheckoutClient() {
     if (isProcessing) return;
     setIsProcessing(true);
     try {
-    // Room QR but not logged in — block ordering
-    if (isRoomQr && !user) {
+    // Room QR but the room hasn't been checked in at the front desk yet — block ordering
+    if (isRoomQr && !isRoomCheckedIn) {
+      toast.error("This room hasn't been checked in yet. Please check in with our front desk first.");
+      setIsProcessing(false);
       return;
     }
 
@@ -87,21 +102,14 @@ export default function CheckoutClient() {
     }
 
     // Walk-in (table QR) requires phone
-    if (isTableQr && !user && !walkInPhone) {
+    if (isTableQr && !walkInPhone) {
       toast.error("Please provide your phone number.");
       setIsProcessing(false);
       return;
     }
 
-    // Determine actual payment method value for the API
-    let resolvedPaymentMethod: "cash" | "online" | "pay-at-property" | "card" | "room-charge" = paymentMethod;
-    if (!user) {
-      // Walk-in: cash or online
-      resolvedPaymentMethod = paymentMethod === "online" ? "online" : "cash";
-    } else {
-      // Logged-in room guest: card (online/PayHere) or pay-at-property (room charge)
-      resolvedPaymentMethod = paymentMethod === "room-charge" ? "pay-at-property" : "online";
-    }
+    // Room and table guests now share the same two payment options.
+    const resolvedPaymentMethod: "cash" | "online" = paymentMethod === "online" ? "online" : "cash";
 
     const guestSessionId = useGuestSessionStore.getState().sessionId;
 
@@ -116,7 +124,7 @@ export default function CheckoutClient() {
       })),
       subtotal,
       serviceCharge,
-      tax,
+      tax: 0,
       total,
       location,
       guestName: finalGuestName,
@@ -124,7 +132,6 @@ export default function CheckoutClient() {
       guestInstructions: kitchenInstructions,
       paymentMethod: resolvedPaymentMethod,
       propertyId,
-      guestId,
       guestSessionId: guestSessionId || undefined,
     });
     
@@ -147,23 +154,22 @@ export default function CheckoutClient() {
           });
 
           if (response.checkoutUrl && response.payHereParams) {
-            const form = document.createElement("form");
-            form.method = "POST";
-            form.action = response.checkoutUrl;
-            form.style.display = "none";
-
-            const params = new URLSearchParams(response.payHereParams);
-            params.forEach((value, key) => {
-              const input = document.createElement("input");
-              input.type = "hidden";
-              input.name = key;
-              input.value = value;
-              form.appendChild(input);
+            await startPayHerePopup({
+              checkoutUrl: response.checkoutUrl,
+              payHereParams: response.payHereParams,
+              onSuccess: () => {
+                router.push("/guest/order/confirmation");
+              },
+              onDismiss: () => {
+                toast.info("Payment was cancelled.");
+                setIsProcessing(false);
+              },
+              onError: (err) => {
+                toast.error(`Payment failed: ${err || "Please try again."}`);
+                setIsProcessing(false);
+              },
             });
-
-            document.body.appendChild(form);
-            form.submit();
-            return; // PayHere will redirect to /guest/order/confirmation on success
+            return;
           }
         } catch (err) {
           console.error("Payment initiation failed:", err);
@@ -184,160 +190,167 @@ export default function CheckoutClient() {
   };
 
   return (
-    <div className="max-w-[1280px] mx-auto px-4 md:px-6 py-4">
+    <div className="max-w-[1680px] mx-auto px-4 md:px-6 py-6 pb-24 md:pb-12">
       {/* ─── Breadcrumbs + Subtitle ─── */}
-      <div className="space-y-1 mb-4">
-        <nav className="flex items-center gap-2 text-base">
-          <Link href={qrContext ? `/guest/order?qrId=${qrContext.qrId}` : "/guest/order"} className="flex items-center gap-1">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <div className="space-y-1.5 mb-8">
+        <nav className="flex items-center gap-2 text-sm font-medium">
+          <Link href={qrContext ? `/guest/order?qrId=${qrContext.qrId}` : "/guest/order"} className="flex items-center gap-1.5 text-gray-400 hover:text-[var(--brand-primary)] transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path
                 d="M3 12L12 3L21 12M5 10.5V20.5C5 20.776 5.224 21 5.5 21H10.5V16C10.5 15.724 10.724 15.5 11 15.5H13C13.276 15.5 13.5 15.724 13.5 16V21H18.5C18.776 21 19 20.776 19 20.5V10.5"
-                stroke="#828282"
+                stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
+            Home
           </Link>
-          <span className="text-[16px] font-medium text-[#828282] leading-[22.4px]">Home</span>
           <ChevronRight />
           <Link
             href={qrContext ? `/guest/order/menu?qrId=${qrContext.qrId}` : "/guest/order/menu"}
-            className="text-[16px] font-medium text-[#828282] leading-[22.4px] hover:underline"
+            className="text-gray-400 hover:text-[var(--brand-primary)] transition-colors"
           >
             Menu
           </Link>
           <ChevronRight />
           <Link
             href="/guest/order/cart"
-            className="text-[16px] font-medium text-[#828282] leading-[22.4px] hover:underline"
+            className="text-gray-400 hover:text-[var(--brand-primary)] transition-colors"
           >
             Cart
           </Link>
           <ChevronRight />
-          <span className="text-[16px] font-medium text-[#953002] leading-[22.4px]">Checkout</span>
+          <span className="text-[var(--brand-primary)] font-bold">Checkout</span>
         </nav>
-        <p className="text-[16px] text-[#6b7280] leading-[24px]">
+        <p className="text-base text-gray-500 font-medium pt-2">
           Review your items and select a payment method.
         </p>
       </div>
 
       {/* ─── Two-column layout ─── */}
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+      <div className="flex flex-col md:flex-row gap-6 lg:gap-8 items-start">
         {/* ════════════════════ LEFT: Order + Instructions ════════════════════ */}
-        <div className="w-full md:w-[800px] md:shrink-0 space-y-4">
+        <div className="w-full md:w-[700px] lg:w-[820px] xl:w-[900px] md:shrink-0 space-y-6">
           {/* ── Your Order card ── */}
-          <div className="bg-white border border-[#e5e7eb] rounded-xl shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden relative">
+            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none" />
+            
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#e5e7eb]">
-              <div className="flex items-center gap-2">
-                {/* Shopping bag icon */}
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4ZM3 6h18M16 10a4 4 0 0 1-8 0"
-                    stroke="#1f1f1f"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <h2 className="text-[18px] font-semibold text-[#1f1f1f] leading-[28px]">
+            <div className="flex items-center justify-between px-6 md:px-8 py-6 border-b border-gray-100/80 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-900 shadow-sm">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4ZM3 6h18M16 10a4 4 0 0 1-8 0"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
                   Your Order
                 </h2>
               </div>
               <Link
                 href="/guest/order/cart"
-                className="text-[14px] font-medium text-[#973102] leading-[20px] underline hover:opacity-80 transition"
+                className="text-sm font-bold px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
               >
-                Edit Items
+                Edit
               </Link>
             </div>
 
             {/* Items list */}
-            <div>
-              {Object.entries(linesMap).map(([lineKey, { item, qty }], idx) => (
+            <div className="flex flex-col divide-y divide-gray-100/80 relative z-10">
+              {Object.entries(linesMap).map(([lineKey, line], idx) => {
+                const { item, qty } = line;
+                const unitPrice = getLineUnitPrice(line);
+                return (
                 <div
                   key={lineKey}
-                  className={`flex gap-4 items-center px-4 py-3 ${idx > 0 ? "border-t border-[#e5e7eb]" : ""}`}
+                  className="flex gap-4 md:gap-6 items-center px-6 md:px-8 py-5 bg-white/50 hover:bg-white/80 transition-colors duration-300 group"
                 >
                   {/* Thumbnail 96×96 */}
-                  <div className="relative shrink-0 w-[64px] h-[64px] rounded-lg overflow-hidden bg-[#f3f4f6]">
+                  <div className="relative shrink-0 w-24 h-24 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
                     {item.imageUrl ? (
                       <Image
                         src={item.imageUrl}
                         alt={item.title}
                         fill
-                        className="object-cover"
-                        sizes="64px"
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        sizes="96px"
                       />
                     ) : null}
                   </div>
 
                   {/* Details */}
-                  <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex-1 min-w-0 space-y-2 py-1">
                     {/* Title + price row */}
-                    <div className="flex items-start justify-between">
-                      <h3 className="text-[18px] font-semibold text-[#1f1f1f] leading-[28px]">
+                    <div className="flex items-start justify-between gap-4">
+                      <h3 className="text-lg font-bold text-gray-900 leading-tight group-hover:text-[var(--brand-primary)] transition-colors">
                         {item.title}
                       </h3>
-                      <span className="text-[16px] font-semibold text-[#1f1f1f] leading-[24px] shrink-0">
-                        {formatLkr(item.priceLkr)}
+                      <span className="text-lg font-bold text-gray-900 shrink-0">
+                        {formatLkr(unitPrice)}
                       </span>
                     </div>
 
                     {/* Notes/description */}
-                    <p className="text-[14px] text-[#6b7280] leading-[20px] truncate">
+                    <p className="text-sm text-gray-500 font-medium truncate pr-8">
                       {item.description}
                     </p>
 
                     {/* Qty control + Remove */}
                     <div className="flex items-center gap-4 pt-2">
                       {/* Qty pill */}
-                      <div className="flex items-center bg-[#f8f6f5] border border-[#e5e7eb] rounded-lg">
+                      <div className="flex items-center bg-white border border-gray-100 rounded-full group-hover:border-[var(--brand-primary)]/20 transition-colors shadow-sm p-1">
                         <button
                           onClick={() => setQty(lineKey, qty - 1)}
-                          className="px-2 py-1 text-[16px] text-[#6b7280] leading-[24px] cursor-pointer hover:bg-[#f0ebe8] rounded-l-lg transition"
+                          className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                         >
-                          -
+                          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                            <path d="M3 7h8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                          </svg>
                         </button>
-                        <span className="px-2 text-[14px] font-medium text-[#1f1f1f] leading-[20px]">
+                        <span className="w-8 text-center text-sm font-bold text-gray-900">
                           {qty}
                         </span>
                         <button
                           onClick={() => setQty(lineKey, qty + 1)}
-                          className="px-2 py-1 text-[16px] text-[#6b7280] leading-[24px] cursor-pointer hover:bg-[#f0ebe8] rounded-r-lg transition"
+                          className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-50 text-[var(--brand-primary)] hover:bg-[var(--brand-primary)] hover:text-white transition-colors"
                         >
-                          +
+                          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                          </svg>
                         </button>
                       </div>
 
                       {/* Remove button */}
                       <button
                         onClick={() => remove(lineKey)}
-                        className="flex items-center gap-1 cursor-pointer hover:opacity-70 transition"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-bold text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="py-[4px]">
-                          <path
-                            d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14ZM10 11v6M14 11v6"
-                            stroke="#6b7280"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        <span className="text-[12px] text-[#6b7280] leading-[16px]">Remove</span>
+                        Remove
                       </button>
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
               {lines.length === 0 && (
-                <div className="px-6 py-12 text-center">
-                  <p className="text-[16px] text-[#6b7280]">No items in your order.</p>
+                <div className="px-6 py-16 text-center bg-white/40 rounded-2xl border border-dashed border-gray-200">
+                  <div className="w-20 h-20 mx-auto bg-gray-50 rounded-full flex items-center justify-center mb-4 shadow-inner border border-gray-100">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-gray-300">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <p className="text-lg font-medium text-gray-500">No items in your order.</p>
                   <Link
                     href="/guest/order/menu"
-                    className="inline-block mt-4 text-[14px] font-medium text-[#973102] underline"
+                    className="inline-flex mt-6 items-center gap-2 px-8 py-3.5 bg-white border border-gray-200 rounded-2xl text-base font-bold text-[var(--brand-primary)] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
                   >
                     Browse Menu
                   </Link>
@@ -349,298 +362,235 @@ export default function CheckoutClient() {
           {/* ── Kitchen Instructions card ── */}
           <div
             id="kitchen-instructions"
-            className="bg-white border border-[#e5e7eb] rounded-xl shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] p-4 space-y-3 scroll-mt-4"
+            className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] p-6 md:p-8 space-y-5 scroll-mt-24 transition-all focus-within:shadow-[0_12px_40px_rgba(0,0,0,0.06)]"
           >
-            <div className="flex items-center gap-2">
-              {/* Notepad / writing icon */}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"
-                  stroke="#1f1f1f"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
-                  stroke="#1f1f1f"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <h2 className="text-[18px] font-semibold text-[#1f1f1f] leading-[28px]">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100/50 flex items-center justify-center text-[var(--brand-primary)] shadow-sm">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight">
                 Kitchen Instructions
               </h2>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <textarea
                 value={kitchenInstructions}
                 onChange={(e) => {
                   if (e.target.value.length <= 150) setKitchenInstructions(e.target.value);
                 }}
                 placeholder="e.g. Allergies, extra cutlery, sauce on the side..."
-                className="w-full h-[100px] bg-[#f8f6f5] border border-[#e5e7eb] rounded-lg px-3 pt-3 text-[14px] text-[#1f1f1f] placeholder:text-[#6b7280] leading-[20px] resize-none focus:outline-none focus:ring-2 focus:ring-[#973102]/20 focus:border-[#973102] transition"
+                className="w-full h-[140px] bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl p-5 text-base font-medium text-gray-900 placeholder:text-gray-400 placeholder:font-normal resize-none focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
               />
-              <p className="text-right text-[12px] text-[#6b7280] leading-[16px]">
-                {kitchenInstructions.length}/150 characters
+              <p className="text-right text-xs font-bold text-gray-400 uppercase tracking-widest">
+                {kitchenInstructions.length}/150 chars
               </p>
             </div>
           </div>
         </div>
 
         {/* ════════════════════ RIGHT: Payment & Actions ════════════════════ */}
-        <div className="w-full md:flex-1 md:min-w-0 space-y-4 md:sticky md:top-4">
+        <div className="w-full md:flex-1 md:min-w-[380px] md:max-w-[460px] space-y-6 md:sticky md:top-[88px]">
           {/* ── Payment Details card ── */}
-          <div className="bg-white border border-[#e5e7eb] rounded-xl shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] overflow-hidden relative">
+            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--brand-primary)]/5 to-transparent pointer-events-none" />
+
             {/* Top section: summary + payment methods */}
-            <div className="px-4 pt-4 pb-4 border-b border-[#e5e7eb] space-y-4">
+            <div className="p-6 md:p-8 border-b border-gray-100/80 space-y-8 relative z-10">
               {/* Heading */}
-              <div className="flex items-center gap-2">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <rect
-                    x="1"
-                    y="4"
-                    width="22"
-                    height="16"
-                    rx="2"
-                    stroke="#1f1f1f"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M1 10h22"
-                    stroke="#1f1f1f"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <h2 className="text-[18px] font-semibold text-[#1f1f1f] leading-[28px]">
-                  Payment Details
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100/50 flex items-center justify-center text-blue-600 shadow-sm">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M2 10h20" stroke="currentColor" strokeWidth="2.5" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                  Payment
                 </h2>
               </div>
 
               {/* Totals */}
-              <div className="space-y-3">
-                <div className="flex items-start justify-between">
-                  <span className="text-[14px] text-[#6b7280] leading-[20px]">Subtotal</span>
-                  <span className="text-[14px] text-[#6b7280] leading-[20px]">
+              <div className="bg-white/80 rounded-2xl p-5 md:p-6 space-y-4 border border-gray-100 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-500">Subtotal</span>
+                  <span className="text-base font-bold text-gray-900">
                     {formatLkr(subtotal)}
                   </span>
                 </div>
-                <div className="flex items-start justify-between">
-                  <span className="text-[14px] text-[#6b7280] leading-[20px]">
-                    Service Charge (10%)
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-500">
+                    Service Charge ({Math.round(serviceChargeRate * 100)}%)
                   </span>
-                  <span className="text-[14px] text-[#6b7280] leading-[20px]">
+                  <span className="text-base font-bold text-gray-900">
                     {formatLkr(serviceCharge)}
                   </span>
                 </div>
-                <div className="border-t border-dashed border-[#e5e7eb]" />
-                <div className="flex items-start justify-between">
-                  <span className="text-[18px] font-bold text-[#1f1f1f] leading-[28px]">Total</span>
-                  <span className="text-[18px] font-bold text-[#973102] leading-[28px]">
+                <div className="border-t border-dashed border-gray-200 pt-4 mt-2" />
+                <div className="flex items-end justify-between">
+                  <span className="text-lg font-bold text-gray-900">Total</span>
+                  <span className="text-3xl font-bold text-[var(--brand-primary)] leading-none tracking-tight">
                     {formatLkr(total)}
                   </span>
                 </div>
               </div>
 
               {/* Payment Method */}
-              <div className="space-y-3">
-                <p className="text-[14px] font-medium text-[#6b7280] uppercase tracking-[0.35px] leading-[20px]">
-                  Payment Method
+              <div className="space-y-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1 mb-2">
+                  Select Method
                 </p>
 
-                {/* ── ROOM QR + NOT LOGGED IN: Room Verification ── */}
-                {isRoomQr && !user && (
-                  <div className="bg-[#fff8f0] border border-[#f0c896] rounded-xl p-6 space-y-4 text-center">
+                {/* ── ROOM QR, NOT CHECKED IN: block ordering, no payment selector ── */}
+                {isRoomQr && !roomStatusLoading && !isRoomCheckedIn && (
+                  <div className="bg-amber-50/80 border border-amber-200/60 rounded-2xl p-6 space-y-3 text-center shadow-sm">
                     <div className="flex justify-center">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                        <rect x="3" y="11" width="18" height="11" rx="2" stroke="#973102" strokeWidth="1.5" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#973102" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
+                      <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 border border-amber-200/50">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      </div>
                     </div>
-                    <h3 className="text-[18px] font-semibold text-[#1f1f1f] leading-[28px]">
-                      Room Verification
+                    <h3 className="text-xl font-bold text-gray-900 tracking-tight">
+                      Room Not Checked In
                     </h3>
-                    <p className="text-[14px] text-[#6b7280] leading-[20px]">
-                      To place an order to your room, please enter your name. We will verify that this room is currently occupied.
+                    <p className="text-sm font-medium text-amber-900/70">
+                      Room {location} hasn&apos;t been checked in yet. Please check in with our front desk before ordering to this room.
                     </p>
-                    <div className="space-y-3 mt-4 text-left">
-                      <input
-                        type="text"
-                        placeholder="Your Name *"
-                        value={walkInName}
-                        onChange={(e) => setWalkInName(e.target.value)}
-                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
-                      />
-                      <input
-                        type="text"
-                        value={location}
-                        disabled
-                        className="w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-sm text-gray-500 cursor-not-allowed"
-                      />
-                    </div>
-                    <button
-                      onClick={async () => {
-                        try {
-                          await useAuthStore.getState().roomLogin(walkInName, location, Number(propertyId));
-                        } catch (err) {
-                          toast.error(err instanceof Error ? err.message : "Verification failed");
-                        }
-                      }}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 text-white font-semibold text-[14px] hover:bg-[#7c2802] transition cursor-pointer"
-                    >
-                      Verify & Continue
-                    </button>
                   </div>
                 )}
 
-                {/* ── TABLE QR + WALK-IN (not logged in): Name/Phone + Cash/Online ── */}
-                {isTableQr && !user && (
-                  <>
-                    <div className="space-y-3 mb-4">
-                      <p className="text-[14px] font-medium text-[#1f1f1f]">Guest Details (Walk-in)</p>
-                      <input
-                        type="text"
-                        placeholder="Your Full Name *"
-                        value={walkInName}
-                        onChange={(e) => setWalkInName(e.target.value)}
-                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Phone Number *"
-                        value={walkInPhone}
-                        onChange={(e) => setWalkInPhone(e.target.value)}
-                        className="w-full border border-gray-300 rounded-md p-2 text-sm text-black"
-                        required
-                      />
-                    </div>
+                {isRoomQr && roomStatusLoading && (
+                  <div className="h-24 rounded-2xl bg-gray-100 animate-pulse" />
+                )}
 
+                {/* ── ROOM QR, CHECKED IN: identity confirmation + shared payment options ── */}
+                {isRoomQr && isRoomCheckedIn && (
+                  <div className="flex items-center gap-3 bg-green-50/80 border border-green-200/60 rounded-2xl px-5 py-4 mb-2 shadow-sm">
+                    <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-700 shrink-0">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-green-800 truncate">{roomStatus?.guestName || "Checked-in guest"}</p>
+                      <p className="text-xs font-medium text-green-700/70">
+                        {roomStatus?.roomTypeName ? `${roomStatus.roomTypeName} ${roomStatus.roomNumber}` : `Room ${location}`} · Checked In
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── TABLE QR: Name/Phone (walk-in) ── */}
+                {isTableQr && (
+                  <div className="space-y-4 mb-8 bg-white/50 p-5 rounded-3xl border border-gray-100 shadow-sm">
+                    <p className="text-sm font-bold text-gray-900 mb-2 px-1">Guest Details <span className="text-gray-400 font-medium ml-1">(Walk-in)</span></p>
+                    <input
+                      type="text"
+                      placeholder="Your Full Name *"
+                      value={walkInName}
+                      onChange={(e) => setWalkInName(e.target.value)}
+                      className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-base font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Phone Number *"
+                      value={walkInPhone}
+                      onChange={(e) => setWalkInPhone(e.target.value)}
+                      className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-base font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
+                      required
+                    />
+                  </div>
+                )}
+
+                {/* ── Shared Cash/Online selector — room (checked in) and table both use it ── */}
+                {(isTableQr || isRoomCheckedIn) && (
+                  <div className="space-y-3">
                     {/* Pay with Cash */}
                     <button
                       onClick={() => setPaymentMethod("cash")}
-                      className={`w-full flex items-center gap-3 p-[13px] rounded-lg border transition cursor-pointer ${
+                      className={`w-full flex items-center gap-5 p-4 md:p-5 rounded-3xl border-2 transition-all duration-300 cursor-pointer group ${
                         paymentMethod === "cash"
-                          ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)]"
-                          : "bg-[#f8f6f5] border-[#e5e7eb]"
+                          ? "bg-orange-50 border-[var(--brand-primary)]/40 shadow-sm"
+                          : "bg-white border-transparent hover:border-gray-200 hover:bg-gray-50 shadow-sm"
                       }`}
                     >
-                      <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <rect x="2" y="6" width="20" height="12" rx="2" stroke={paymentMethod === "cash" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" />
-                          <circle cx="12" cy="12" r="3" stroke={paymentMethod === "cash" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" />
+                      <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm ${paymentMethod === 'cash' ? 'bg-[var(--brand-primary)] text-white scale-105' : 'bg-gray-50 text-gray-400 group-hover:text-gray-600 border border-gray-100'}`}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <rect x="2" y="6" width="20" height="12" rx="4" stroke="currentColor" strokeWidth="2" />
+                          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
                         </svg>
                       </div>
                       <div className="flex-1 text-left">
-                        <p className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "cash" ? "text-[#953002]" : "text-[#1f1f1f]"}`}>
+                        <p className={`text-base font-bold leading-tight mb-1 transition-colors ${paymentMethod === "cash" ? "text-[var(--brand-primary)]" : "text-gray-900"}`}>
                           Pay with Cash
                         </p>
-                        <p className={`text-[12px] leading-[16px] ${paymentMethod === "cash" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}>
-                          Pay at the counter or upon delivery
+                        <p className="text-sm font-medium text-gray-500 leading-tight">
+                          Pay at counter or on delivery
                         </p>
                       </div>
-                      <div className={`shrink-0 w-5 h-5 rounded-full border ${paymentMethod === "cash" ? "bg-[#953002] border-[#953002]" : "border-[#d1d5db]"}`} />
+                      <div className={`shrink-0 w-7 h-7 rounded-full border-[2.5px] flex items-center justify-center transition-colors ${paymentMethod === "cash" ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-gray-200"}`}>
+                        {paymentMethod === "cash" && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                      </div>
                     </button>
 
                     {/* Online Payment */}
                     <button
                       onClick={() => setPaymentMethod("online")}
-                      className={`w-full flex items-center gap-3 p-[13px] rounded-lg border transition cursor-pointer ${
+                      className={`w-full flex items-center gap-5 p-4 md:p-5 rounded-3xl border-2 transition-all duration-300 cursor-pointer group ${
                         paymentMethod === "online"
-                          ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)]"
-                          : "bg-[#f8f6f5] border-[#e5e7eb]"
+                          ? "bg-orange-50 border-[var(--brand-primary)]/40 shadow-sm"
+                          : "bg-white border-transparent hover:border-gray-200 hover:bg-gray-50 shadow-sm"
                       }`}
                     >
-                      <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <rect x="2" y="5" width="20" height="14" rx="2" stroke={paymentMethod === "online" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M2 10h20" stroke={paymentMethod === "online" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" />
+                      <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm ${paymentMethod === 'online' ? 'bg-[var(--brand-primary)] text-white scale-105' : 'bg-gray-50 text-gray-400 group-hover:text-gray-600 border border-gray-100'}`}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <rect x="2" y="5" width="20" height="14" rx="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M2 10h20" stroke="currentColor" strokeWidth="2" />
                         </svg>
                       </div>
                       <div className="flex-1 text-left">
-                        <p className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "online" ? "text-[#953002]" : "text-[#1f1f1f]"}`}>
+                        <p className={`text-base font-bold leading-tight mb-1 transition-colors ${paymentMethod === "online" ? "text-[var(--brand-primary)]" : "text-gray-900"}`}>
                           Online Payment
                         </p>
-                        <p className={`text-[12px] leading-[16px] ${paymentMethod === "online" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}>
-                          Pay via PayHere
+                        <p className="text-sm font-medium text-gray-500 leading-tight">
+                          Pay securely via PayHere
                         </p>
                       </div>
-                      <div className={`shrink-0 w-5 h-5 rounded-full border ${paymentMethod === "online" ? "bg-[#953002] border-[#953002]" : "border-[#d1d5db]"}`} />
-                    </button>
-                  </>
-                )}
-
-                {/* ── LOGGED IN (room guest): Card + Room Charge ── */}
-                {user && (
-                  <>
-                    {/* Pay with Card (online/PayHere) */}
-                    <button
-                      onClick={() => setPaymentMethod("card")}
-                      className={`w-full flex items-center gap-3 p-[13px] rounded-lg border transition cursor-pointer ${
-                        paymentMethod === "card"
-                          ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)]"
-                          : "bg-[#f8f6f5] border-[#e5e7eb]"
-                      }`}
-                    >
-                      <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <rect x="2" y="5" width="20" height="14" rx="2" stroke={paymentMethod === "card" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M2 10h20" stroke={paymentMethod === "card" ? "#953002" : "#1f1f1f"} strokeWidth="1.5" />
-                        </svg>
+                      <div className={`shrink-0 w-7 h-7 rounded-full border-[2.5px] flex items-center justify-center transition-colors ${paymentMethod === "online" ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-gray-200"}`}>
+                        {paymentMethod === "online" && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                       </div>
-                      <div className="flex-1 text-left">
-                        <p className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "card" ? "text-[#953002]" : "text-[#1f1f1f]"}`}>
-                          Pay with Card
-                        </p>
-                        <p className={`text-[12px] leading-[16px] ${paymentMethod === "card" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}>
-                          Online payment via PayHere
-                        </p>
-                      </div>
-                      <div className={`shrink-0 w-5 h-5 rounded-full border ${paymentMethod === "card" ? "bg-[#953002] border-[#953002]" : "border-[#d1d5db]"}`} />
                     </button>
 
-                    {/* Charge to Room */}
-                    <button
-                      onClick={() => setPaymentMethod("room-charge")}
-                      className={`w-full flex items-center gap-3 rounded-lg border transition cursor-pointer ${
-                        paymentMethod === "room-charge"
-                          ? "bg-[rgba(151,49,2,0.05)] border-2 border-[rgba(149,48,2,0.5)] p-[14px]"
-                          : "bg-[#f8f6f5] border-[#e5e7eb] p-[13px]"
-                      }`}
-                    >
-                      <div className="shrink-0 w-10 h-10 rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center justify-center">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M10 21V17a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4M3 7l9-4 9 4"
-                            stroke={paymentMethod === "room-charge" ? "#953002" : "#1f1f1f"}
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className={`text-[14px] font-medium leading-[20px] ${paymentMethod === "room-charge" ? "text-[#953002]" : "text-[#1f1f1f]"}`}>
-                          Charge to Room
-                        </p>
-                        <p className={`text-[12px] leading-[16px] ${paymentMethod === "room-charge" ? "text-[rgba(151,49,2,0.8)]" : "text-[#6b7280]"}`}>
-                          {location} • Verified
-                        </p>
-                      </div>
-                      <div className={`shrink-0 w-5 h-5 rounded-full border ${paymentMethod === "room-charge" ? "bg-[#953002] border-[#953002]" : "border-[#d1d5db]"}`} />
-                    </button>
-                  </>
+                    {/* Table QR only: hint that a checked-in guest could ask staff to bill their room instead */}
+                    {isTableQr && (
+                      <p className="text-center text-sm font-medium text-gray-500 pt-2">
+                        Already staying with us? Ask our staff to add this bill to your room!
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Bottom action area */}
-            <div className="bg-[#f8f6f5] rounded-b-xl px-4 py-4 space-y-3">
+            <div className="bg-gray-50/50 px-6 py-6 space-y-5 relative z-10 border-t border-gray-100/80">
               {/* Add instructions link */}
               <button
                 onClick={() =>
@@ -648,20 +598,20 @@ export default function CheckoutClient() {
                     .getElementById("kitchen-instructions")
                     ?.scrollIntoView({ behavior: "smooth" })
                 }
-                className="w-full flex items-center justify-center gap-2 text-[14px] font-medium text-[#973102] hover:underline transition cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 text-sm font-bold text-gray-500 hover:text-[var(--brand-primary)] transition-colors cursor-pointer group"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="group-hover:-translate-y-0.5 transition-transform">
                   <path
                     d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"
-                    stroke="#973102"
-                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                   <path
                     d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
-                    stroke="#973102"
-                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -672,23 +622,27 @@ export default function CheckoutClient() {
               {/* Place Order button */}
               <button
                 onClick={handlePlaceOrder}
-                disabled={isProcessing}
-                className="w-full flex items-center justify-center gap-2 bg-[#973102] rounded-lg px-6 py-3 shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] hover:bg-[#7c2802] disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                disabled={isProcessing || (isRoomQr && !isRoomCheckedIn)}
+                className="w-full flex items-center justify-center gap-2 bg-[var(--brand-primary)] rounded-2xl px-6 py-4 md:py-5 shadow-[0_8px_16px_rgba(217,119,6,0.2)] hover:shadow-[0_12px_24px_rgba(217,119,6,0.3)] hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:-translate-y-0 disabled:scale-100 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-300 cursor-pointer group"
               >
                 {isProcessing ? (
-                  <span className="text-[16px] font-semibold text-white leading-[24px]">
+                  <span className="text-lg font-bold text-white tracking-wide flex items-center gap-3">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                     Processing...
                   </span>
                 ) : (
                   <>
-                    <span className="text-[16px] font-semibold text-white leading-[24px]">
+                    <span className="text-lg font-bold text-white tracking-wide">
                       Confirm & Place Order
                     </span>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="ml-1">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="group-hover:translate-x-1 transition-transform">
                       <path
-                        d="M3 8H13M13 8L9 4M13 8L9 12"
+                        d="M5 12h14M12 5l7 7-7 7"
                         stroke="white"
-                        strokeWidth="2"
+                        strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
@@ -697,62 +651,67 @@ export default function CheckoutClient() {
                 )}
               </button>
 
+              {isRoomQr && !isRoomCheckedIn && (
+                <p className="text-center text-xs font-bold text-amber-600">
+                  Ask our front desk to check you in to enable ordering.
+                </p>
+              )}
+
               {/* Secure badge */}
-              <div className="flex items-center justify-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <div className="flex items-center justify-center gap-2.5 pt-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-green-500">
                   <rect
                     x="3"
                     y="11"
                     width="18"
                     height="11"
-                    rx="2"
-                    stroke="#6b7280"
-                    strokeWidth="1.5"
+                    rx="3"
+                    stroke="currentColor"
+                    strokeWidth="2"
                   />
                   <path
                     d="M7 11V7a5 5 0 0 1 10 0v4"
-                    stroke="#6b7280"
-                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
                     strokeLinecap="round"
                   />
                 </svg>
-                <span className="text-[12px] text-[#6b7280] leading-[16px]">
-                  Secure SSL Encrypted Transaction
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Secure SSL Encrypted
                 </span>
               </div>
             </div>
           </div>
 
           {/* ── Estimated Time card ── */}
-          <div className="bg-[rgba(151,49,2,0.05)] border border-[rgba(151,49,2,0.2)] rounded-xl p-[17px] flex gap-3 items-start">
-            <div className="shrink-0 pt-[2px]">
-              {/* Clock icon */}
+          <div className="bg-white/60 backdrop-blur-md border border-white/40 rounded-3xl p-5 flex gap-4 items-start shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+            <div className="shrink-0 w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100/50 flex items-center justify-center text-[var(--brand-primary)] shadow-sm">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <circle
                   cx="12"
                   cy="12"
                   r="10"
-                  stroke="#973102"
-                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
                 <path
                   d="M12 6v6l4 2"
-                  stroke="#973102"
-                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
             </div>
-            <div className="space-y-1">
-              <h4 className="text-[14px] font-semibold text-[#973102] leading-[20px]">
+            <div className="space-y-1 py-1">
+              <h4 className="text-base font-bold text-gray-900">
                 Estimated Time
               </h4>
-              <p className="text-[12px] text-[rgba(151,49,2,0.8)] leading-[19.5px]">
-                Based on current kitchen volume, your order will be ready in approximately{" "}
-                <span className="font-bold">20-25 minutes</span>.
+              <p className="text-sm font-medium text-gray-500 leading-relaxed">
+                Your order will be ready in approximately{" "}
+                <span className="font-bold text-gray-900">20-25 minutes</span>.
               </p>
             </div>
           </div>
@@ -760,13 +719,15 @@ export default function CheckoutClient() {
           {/* ── Need Help? link ── */}
           <Link
             href="/guest/order/help"
-            className="flex items-center justify-center gap-2 text-[13px] text-[#828282] hover:text-[#973102] transition py-1"
+            className="flex items-center justify-center gap-3 text-sm font-bold text-gray-500 hover:text-[var(--brand-primary)] transition-colors py-2 group"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M9 9a3 3 0 1 1 3.95 2.84c-.58.2-1 .74-1 1.33V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="currentColor" strokeWidth="0.5" />
-            </svg>
+            <div className="w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center group-hover:bg-orange-50 group-hover:border-orange-100 group-hover:shadow transition-all">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="group-hover:text-[var(--brand-primary)] transition-colors">
+                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z" stroke="currentColor" strokeWidth="2" />
+                <path d="M9 9a3 3 0 1 1 3.95 2.84c-.58.2-1 .74-1 1.33V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="12" cy="17" r="1.5" fill="currentColor" />
+              </svg>
+            </div>
             Need Help?
           </Link>
         </div>
@@ -779,11 +740,11 @@ export default function CheckoutClient() {
 
 function ChevronRight() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-gray-300">
       <path
         d="M6 4L10 8L6 12"
-        stroke="#828282"
-        strokeWidth="1.5"
+        stroke="currentColor"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

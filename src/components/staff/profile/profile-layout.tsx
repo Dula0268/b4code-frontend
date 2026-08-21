@@ -6,9 +6,12 @@ import { User, Lock, LogOut, Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { imageApi } from "@/api/image/image.api";
-import { useState } from "react";
+import { formatApiError } from "@/lib/error-formatter";
+import { useState, useEffect } from "react";
 import LogoutSuccessModal from "./logout-success-modal";
 import { toast } from "sonner";
+import { validateUploadFile } from "@/lib/file-validator";
+import AvatarModal from "@/components/shared/profile/avatar-modal";
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -23,60 +26,129 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
   const pathname = usePathname();
   const { user, updateProfile } = useAuthStore();
   const [isUploading, setIsUploading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const displayName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : (user?.email?.split("@")[0] || "Staff");
-  const avatarUrl = user?.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=953002&color=fff`;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user?.email) return;
+  const displayName = mounted
+    ? (user?.profile?.firstName || user?.profile?.lastName
+        ? `${user.profile.firstName || ""} ${user.profile.lastName || ""}`.trim()
+        : (user?.email?.split("@")[0] || "Staff Member"))
+    : "Staff Member";
 
+  const hasCustomAvatar = Boolean(previewUrl || (mounted && user?.profile?.avatarUrl));
+  const displayAvatar = previewUrl || (mounted && user?.profile?.avatarUrl
+    ? user.profile.avatarUrl
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName || "Staff")}&background=953002&color=fff`);
+
+  const handleAvatarDelete = async () => {
+    if (!user?.email) return;
     setIsUploading(true);
     try {
-      const result = await imageApi.upload(file, "avatars");
-      await updateProfile(user.email, { avatarUrl: result.url });
+      await updateProfile(user.email, { avatarUrl: "" });
+      setPreviewUrl(null);
+      toast.success("Profile photo removed successfully!");
     } catch (err: unknown) {
-      console.error("Failed to upload avatar:", err);
-      const errorMessage = err instanceof Error ? err.message : "Please check your Cloudinary configuration.";
-      toast.error(`Failed to upload image: ${errorMessage}`);
+      console.error("Failed to remove avatar:", err);
+      toast.error(formatApiError(err, "Failed to remove profile photo."));
     } finally {
       setIsUploading(false);
     }
   };
 
+  const processAvatarFile = async (file: File) => {
+    if (!user?.email) return;
+
+    const validation = validateUploadFile(file, { maxSizeMB: 5, allowedTypes: ["image/jpeg", "image/jpg", "image/png", "image/webp"] });
+    if (!validation.valid) {
+      toast.error(validation.error || "Invalid file");
+      return;
+    }
+
+    const localUrl = URL.createObjectURL(file);
+    setPreviewUrl(localUrl);
+
+    setIsUploading(true);
+    try {
+      const result = await imageApi.upload(file, "avatars");
+      await updateProfile(user.email, { avatarUrl: result.url });
+      toast.success("Profile photo updated successfully!");
+    } catch (err: unknown) {
+      console.error("Failed to upload avatar:", err);
+      setPreviewUrl(null);
+      toast.error(formatApiError(err, "Failed to upload profile photo. Please try a different image."));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processAvatarFile(file);
+  };
+
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col bg-white rounded-2xl shadow-sm border border-[#f3f4f6] overflow-hidden min-h-[700px]">
-      <div className="flex flex-1 relative">
+    <div className="w-full max-w-6xl mx-auto flex flex-col bg-white rounded-2xl shadow-lg border border-[#e8ddcf]/60 overflow-hidden my-2">
+      {/* Sleek Top Banner Accent */}
+      <div className="h-10 w-full bg-gradient-to-r from-[#7a2600] via-[#953002] to-[#c2410c] relative overflow-hidden">
+        <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute left-1/3 -bottom-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      </div>
+
+      <div className="flex flex-1 relative flex-col md:flex-row">
         {/* Left Sidebar */}
-        <aside className="w-[280px] bg-[#fdfaf8] border-r border-[#f3f4f6] flex flex-col py-8 px-6 relative z-10">
-          {/* User Info */}
-          <div className="flex flex-col items-center justify-center mb-8">
-            <div className="relative group">
-              <div className="w-20 h-20 rounded-full bg-[rgba(149,48,2,0.1)] flex items-center justify-center text-[var(--brand-primary)] text-2xl font-bold mb-3 border-[3px] border-white shadow-sm overflow-hidden">
-                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+        <aside className="w-full md:w-[260px] bg-[#fcfaf8] border-r border-[#f3eee8] flex flex-col py-6 px-5 relative z-10">
+          {/* User Info Card */}
+          <div className="flex flex-col items-center justify-center mb-6 -mt-8">
+            <div 
+              className={`relative group cursor-pointer transition-transform duration-300 ${isDragging ? "scale-105" : ""}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => setIsModalOpen(true)}
+              title="Click to view or update photo"
+            >
+              <div className={`w-20 h-20 rounded-full bg-white flex items-center justify-center text-[#953002] text-2xl font-bold mb-2 border-3 shadow-md overflow-hidden transition-all duration-300 ${
+                isDragging ? "border-[#953002] ring-4 ring-[#953002]/20" : "border-white ring-2 ring-[#953002]/10 group-hover:ring-[#953002]/30"
+              }`}>
+                <img src={displayAvatar} alt="Profile" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" suppressHydrationWarning />
                 
                 {isUploading && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
-                    <Loader2 size={24} className="text-white animate-spin" />
+                  <div className="absolute inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-20">
+                    <Loader2 size={22} className="text-white animate-spin" />
                   </div>
                 )}
               </div>
-              
-              <label className="absolute bottom-3 right-0 w-7 h-7 bg-[#953002] text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-[#7a2600] transition-colors shadow-md border-2 border-white z-30 group-hover:scale-110 duration-200">
-                <Camera size={14} />
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*" 
-                  onChange={handleAvatarUpload}
-                  disabled={isUploading}
-                />
-              </label>
+
+              <div className="absolute bottom-2 right-0 w-7 h-7 bg-[#953002] text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-[#7a2600] transition-colors shadow-md border-2 border-white z-30 group-hover:scale-110 duration-200" title="Manage photo">
+                <Camera size={13} />
+              </div>
             </div>
             
-            <h2 className="text-xl font-bold text-[#1c1917] mb-1 truncate w-full text-center">{displayName}</h2>
-            <div className="bg-[rgba(149,48,2,0.1)] text-[var(--brand-primary)] text-xs font-semibold px-3 py-1 rounded-full">
-              Staff
+            <h2 className="text-base font-black text-[#1c1917] mb-1 truncate w-full text-center tracking-tight" suppressHydrationWarning>{displayName}</h2>
+            <div className="inline-flex items-center gap-1.5 bg-[#953002]/10 text-[#953002] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[#953002]/15 shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#953002]" />
+              {user?.profile?.staffRole || "Staff Member"}
             </div>
           </div>
 
@@ -90,45 +162,54 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium text-sm ${isActive
-                      ? "bg-[rgba(149,48,2,0.1)] text-[var(--brand-primary)]"
-                      : "text-[#78716c] hover:bg-gray-100 hover:text-[#1c1917]"
+                  className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl transition-all font-bold text-sm ${isActive
+                      ? "bg-gradient-to-r from-[#953002]/15 to-[#953002]/5 text-[#953002] shadow-xs border-l-4 border-[#953002]"
+                      : "text-[#78716c] hover:bg-gray-100/80 hover:text-[#1c1917]"
                     }`}
                 >
-                  <Icon size={18} className={isActive ? "text-[var(--brand-primary)]" : "text-[#a8a29e]"} />
+                  <Icon size={19} className={isActive ? "text-[#953002]" : "text-[#a8a29e]"} />
                   {item.label}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Bottom Actions */}
-          <div className="mt-auto flex flex-col gap-4 relative z-10">
-            <div className="bg-[rgba(149,48,2,0.05)] rounded-xl p-4 border border-[rgba(149,48,2,0.1)]">
-              <p className="text-xs text-[var(--brand-primary)]/80 leading-relaxed text-center">
-                Please remember to log out of the portal when you finish your work.
+          {/* Bottom Security Info & Logout Button */}
+          <div className="mt-8 md:mt-auto flex flex-col gap-4 relative z-10">
+            <div className="bg-[#953002]/5 rounded-2xl p-3 border border-[#953002]/10 text-center">
+              <p className="text-[11px] text-[#953002] font-semibold leading-relaxed">
+                💼 Operational Staff Portal
               </p>
             </div>
             <Button
               variant="outline"
-              className="w-full justify-center gap-2 border-[#fca5a5] text-[#ef4444] hover:bg-[#fef2f2] hover:text-[#dc2626] transition-colors"
+              className="w-full justify-center gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold transition-all rounded-xl h-10 text-xs"
               onClick={() => {
                 window.dispatchEvent(new CustomEvent('trigger-staff-logout'));
               }}
             >
-              <LogOut size={16} />
-              Log Out
+              <LogOut size={15} />
+              Sign Out
             </Button>
           </div>
         </aside>
 
         {/* Right Content */}
-        <main className="flex-1 relative z-10">
+        <main className="flex-1 relative z-10 bg-white">
           {children}
         </main>
       </div>
 
       <LogoutSuccessModal />
+      <AvatarModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        avatarUrl={displayAvatar}
+        userName={displayName}
+        hasCustomAvatar={hasCustomAvatar}
+        onUpload={processAvatarFile}
+        onDelete={handleAvatarDelete}
+      />
     </div>
   );
 }

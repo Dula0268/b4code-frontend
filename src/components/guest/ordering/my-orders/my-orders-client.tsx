@@ -33,12 +33,12 @@ function formatTimeShort(timestamp: number) {
 /* ─── Status badge ─── */
 
 const STATUS_STYLES: Record<OrderStatus, { bg: string; dot: string; text: string }> = {
-  placed:       { bg: "bg-[#dbeafe] border-[#bfdbfe]", dot: "bg-[#3b82f6]", text: "text-[#1e40af]" },
-  accepted:     { bg: "bg-[#fef3c7] border-[#fde68a]", dot: "bg-[#f59e0b]", text: "text-[#92400e]" },
-  "in-progress":{ bg: "bg-[#fef3c7] border-[#fde68a]", dot: "bg-[#f59e0b]", text: "text-[#92400e]" },
-  delivered:    { bg: "bg-[#dcfce7] border-[#bbf7d0]", dot: "bg-[#22c55e]", text: "text-[#166534]" },
-  cancelled:    { bg: "bg-[#fee2e2] border-[#fecaca]", dot: "bg-[#ef4444]", text: "text-[#991b1b]" },
-  "payment-pending": { bg: "bg-[#f3f4f6] border-[#d1d5db]", dot: "bg-[#9ca3af]", text: "text-[#4b5563]" },
+  placed:       { bg: "bg-blue-50/80 backdrop-blur-md border border-blue-100", dot: "bg-blue-500", text: "text-blue-700" },
+  accepted:     { bg: "bg-orange-50/80 backdrop-blur-md border border-orange-100", dot: "bg-orange-500", text: "text-orange-700" },
+  "in-progress":{ bg: "bg-orange-50/80 backdrop-blur-md border border-orange-100", dot: "bg-orange-500", text: "text-orange-700" },
+  delivered:    { bg: "bg-green-50/80 backdrop-blur-md border border-green-100", dot: "bg-green-500", text: "text-green-700" },
+  cancelled:    { bg: "bg-red-50/80 backdrop-blur-md border border-red-100", dot: "bg-red-500", text: "text-red-700" },
+  "payment-pending": { bg: "bg-gray-50/80 backdrop-blur-md border border-gray-200", dot: "bg-gray-400", text: "text-gray-600" },
 };
 
 function StatusBadge({ status }: { status: OrderStatus }) {
@@ -52,8 +52,8 @@ function StatusBadge({ status }: { status: OrderStatus }) {
     "payment-pending": "Payment Pending",
   };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12px] font-medium leading-[16px] ${s.bg} ${s.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${s.bg} ${s.text} shadow-sm`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot} animate-pulse`} />
       {labelMap[status]}
     </span>
   );
@@ -63,9 +63,9 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 
 function ServiceIcon() {
   return (
-    <div className="w-8 h-8 rounded-lg bg-[#ffedd5] flex items-center justify-center shrink-0">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-        <path d="M3 7l1.7 11.5a2 2 0 0 0 2 1.5h10.6a2 2 0 0 0 2-1.5L21 7M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="#ea580c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center shrink-0 border border-orange-100/50 shadow-inner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M3 7l1.7 11.5a2 2 0 0 0 2 1.5h10.6a2 2 0 0 0 2-1.5L21 7M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--brand-primary)]" />
       </svg>
     </div>
   );
@@ -137,44 +137,44 @@ export default function MyOrdersClient() {
   );
 
   return (
-    <div className="max-w-[1280px] mx-auto px-4 md:px-6 py-4 md:py-5">
+    <div className="max-w-[1680px] mx-auto px-4 md:px-8 py-6 md:py-10">
       {/* ─── Breadcrumbs ─── */}
-      <nav className="flex items-center gap-2 text-base mb-1">
-        <Link href="/guest/order" className="flex items-center gap-1">
+      <nav className="flex items-center gap-2 text-sm mb-6 bg-white/40 backdrop-blur-md px-4 py-2 rounded-full w-fit border border-white/60">
+        <Link href="/guest/order" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-900 transition-colors group">
           <HomeIcon />
+          <span className="font-medium">Home</span>
         </Link>
-        <span className="text-[16px] font-medium text-[#828282] leading-[22.4px]">Home</span>
         <ChevronRight />
-        <span className="text-[16px] font-medium text-[#af3a04] leading-[22.4px]">Order History</span>
+        <span className="font-semibold text-[var(--brand-primary)]">Order History</span>
       </nav>
 
       {/* ─── Header ─── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 mb-5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-[22px] md:text-[28px] font-bold text-[#1D1D1D] leading-[30px] md:leading-[36px] tracking-[-0.5px]">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
             Order History
           </h1>
-          <p className="text-[14px] text-[#835748] leading-[20px] mt-1">
+          <p className="text-base text-gray-500 mt-2">
             View and manage your past orders during your stay
           </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 px-4 py-2 border border-[#ede4de] rounded-lg bg-white text-[14px] font-medium text-[#1D1D1D] hover:bg-[#f8f6f5] transition cursor-pointer shadow-sm">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" stroke="#1D1D1D" strokeWidth="1.5" strokeLinecap="round" />
+            <button className="flex items-center gap-2 px-5 py-2.5 bg-white/80 backdrop-blur-md border border-white/60 rounded-xl text-sm font-semibold text-gray-700 hover:bg-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] cursor-pointer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
               Filter: {filter}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[150px]">
-            <DropdownMenuItem onClick={() => setFilter("All")} className="cursor-pointer">
+          <DropdownMenuContent align="end" className="w-[160px] rounded-xl border-white/60 shadow-lg bg-white/90 backdrop-blur-xl">
+            <DropdownMenuItem onClick={() => setFilter("All")} className="cursor-pointer font-medium focus:bg-orange-50 focus:text-[var(--brand-primary)]">
               All Orders
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setFilter("Active")} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => setFilter("Active")} className="cursor-pointer font-medium focus:bg-orange-50 focus:text-[var(--brand-primary)]">
               Active
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setFilter("Past")} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => setFilter("Past")} className="cursor-pointer font-medium focus:bg-orange-50 focus:text-[var(--brand-primary)]">
               Past
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -182,182 +182,192 @@ export default function MyOrdersClient() {
       </div>
 
       {/* ─── Table ─── */}
-      <div className="bg-white border border-[#ede4de] rounded-xl shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden mb-5">
+      <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden mb-8 relative">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--brand-primary)]/5 to-transparent pointer-events-none" />
+
         {/* Table header — desktop only */}
-        <div className="hidden md:grid bg-[#fcfaf9] border-b border-[#ede4de] px-6 py-3 grid-cols-[140px_180px_220px_1fr_160px_100px_50px] gap-4 items-center">
-          <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px]">Order ID</span>
-          <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px]">Date & Time</span>
-          <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px]">Service</span>
-          <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px] text-right">Total LKR</span>
-          <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px] text-center">Status</span>
-          <span className="text-[12px] font-semibold text-[#835748] uppercase tracking-[0.6px] leading-[16px] text-center">Action</span>
+        <div className="hidden md:grid bg-white/40 border-b border-gray-100/80 px-8 py-4 grid-cols-[140px_180px_220px_1fr_160px_100px_50px] gap-4 items-center relative z-10">
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Order ID</span>
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Date & Time</span>
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Service</span>
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Total LKR</span>
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</span>
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Action</span>
           <span />
         </div>
 
         {/* Table rows */}
-        {paged.length === 0 ? (
-          <div className="px-6 py-12 text-center">
-            <p className="text-[14px] text-[#6b7280]">No orders yet.</p>
-            <Link href="/guest/order/menu" className="inline-block mt-2 text-[14px] font-medium text-[#af3a04] underline">Browse Menu</Link>
-          </div>
-        ) : (
-          paged.map((order, idx) => {
-            const placedTs = order.timeline?.[0]?.timestamp ?? Date.now();
-            // Use unique key combining order ID and timeline timestamp to avoid duplicates
-            const uniqueKey = `${order.id}-${order.timeline?.[0]?.timestamp ?? idx}`;
-            return (
-              <React.Fragment key={uniqueKey}>
-                {/* Desktop row */}
-                <div
-                  onClick={() => {
-                    useOrderStore.setState({ currentOrder: order });
-                    router.push("/guest/order/track");
-                  }}
-                  className={`hidden md:grid px-6 py-4 grid-cols-[140px_180px_220px_1fr_160px_100px_50px] gap-4 items-center hover:bg-[#faf8f7] transition cursor-pointer ${idx > 0 ? "border-t border-[#ede4de]" : ""}`}
-                >
-                  {/* Order ID */}
-                  <span className="text-[14px] font-medium text-[#af3a04] leading-[20px]">
-                    {order.id}
-                  </span>
+        <div className="relative z-10">
+          {paged.length === 0 ? (
+            <div className="px-8 py-16 text-center">
+              <p className="text-base text-gray-500 font-medium">No orders found.</p>
+              <Link href="/guest/order/menu" className="inline-block mt-3 px-6 py-2 bg-[var(--brand-primary)] text-white font-semibold rounded-xl hover:bg-[#C05621] transition-colors shadow-sm">
+                Browse Menu
+              </Link>
+            </div>
+          ) : (
+            paged.map((order, idx) => {
+              const placedTs = order.timeline?.[0]?.timestamp ?? Date.now();
+              const uniqueKey = `${order.id}-${order.timeline?.[0]?.timestamp ?? idx}`;
+              return (
+                <React.Fragment key={uniqueKey}>
+                  {/* Desktop row */}
+                  <div
+                    onClick={() => {
+                      useOrderStore.setState({ currentOrder: order });
+                      router.push("/guest/order/track");
+                    }}
+                    className={`hidden md:grid px-8 py-5 grid-cols-[140px_180px_220px_1fr_160px_100px_50px] gap-4 items-center hover:bg-white/80 transition-colors cursor-pointer group ${idx > 0 ? "border-t border-gray-100/80" : ""}`}
+                  >
+                    {/* Order ID */}
+                    <span className="text-sm font-bold text-[var(--brand-primary)] tracking-wide group-hover:scale-105 transition-transform origin-left">
+                      {order.id}
+                    </span>
 
-                  {/* Date & Time */}
-                  <div>
-                    <p className="text-[14px] text-[#1D1D1D] leading-[20px]">{formatDate(placedTs)}</p>
-                    <p className="text-[12px] text-[#1D1D1D] leading-[16px]">{formatTimeShort(placedTs)}</p>
+                    {/* Date & Time */}
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{formatDate(placedTs)}</p>
+                      <p className="text-xs text-gray-500 font-medium mt-0.5">{formatTimeShort(placedTs)}</p>
+                    </div>
+
+                    {/* Service */}
+                    <div className="flex items-center gap-3">
+                      <ServiceIcon />
+                      <span className="text-sm font-medium text-gray-700">In-Room Dining</span>
+                    </div>
+
+                    {/* Total */}
+                    <span className="text-base font-bold text-gray-900 text-right">
+                      {formatLkr(order.total)}
+                    </span>
+
+                    {/* Status */}
+                    <div className="flex justify-center">
+                      <StatusBadge status={order.currentStatus} />
+                    </div>
+
+                    {/* Review button */}
+                    <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => {
+                          useOrderStore.setState({ currentOrder: order });
+                          router.push("/guest/order/review");
+                        }}
+                        className="text-sm font-semibold text-[var(--brand-primary)] hover:text-[#C05621] hover:underline underline-offset-4 transition-all cursor-pointer"
+                      >
+                        Review
+                      </button>
+                    </div>
+
+                    {/* Chevron */}
+                    <div className="flex justify-end">
+                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100 group-hover:border-orange-200 group-hover:bg-orange-50 transition-colors">
+                        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-gray-400 group-hover:text-[var(--brand-primary)] group-hover:translate-x-0.5 transition-all">
+                          <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Service */}
-                  <div className="flex items-center gap-3">
-                    <ServiceIcon />
-                    <span className="text-[14px] text-[#835748] leading-[20px]">In-Room Dining</span>
-                  </div>
-
-                  {/* Total */}
-                  <span className="text-[14px] font-bold text-[#1D1D1D] leading-[20px] text-right">
-                    {formatLkr(order.total)}
-                  </span>
-
-                  {/* Status */}
-                  <div className="flex justify-center">
-                    <StatusBadge status={order.currentStatus} />
-                  </div>
-
-                  {/* Review button */}
-                  <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                  {/* Mobile card */}
+                  <div
+                    onClick={() => {
+                      useOrderStore.setState({ currentOrder: order });
+                      router.push("/guest/order/track");
+                    }}
+                    className={`md:hidden px-5 py-4 hover:bg-white/80 transition-colors cursor-pointer group ${idx > 0 ? "border-t border-gray-100/80" : ""}`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-bold text-[var(--brand-primary)] tracking-wide">
+                        {order.id}
+                      </span>
+                      <StatusBadge status={order.currentStatus} />
+                    </div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <ServiceIcon />
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{formatDate(placedTs)}</p>
+                          <p className="text-xs font-medium text-gray-500 mt-0.5">{formatTimeShort(placedTs)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base font-bold text-gray-900">
+                          {formatLkr(order.total)} LKR
+                        </span>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400 group-hover:translate-x-1 transition-transform">
+                          <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </div>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         useOrderStore.setState({ currentOrder: order });
                         router.push("/guest/order/review");
                       }}
-                      className="text-[12px] font-medium text-[#af3a04] hover:text-[#973102] underline transition cursor-pointer"
+                      className="w-full py-2 bg-orange-50/50 hover:bg-orange-100/50 rounded-xl text-sm font-semibold text-center text-[var(--brand-primary)] hover:text-[#C05621] transition-colors cursor-pointer"
                     >
-                      Review
+                      Write Review
                     </button>
                   </div>
-
-                  {/* Chevron */}
-                  <div className="flex justify-end">
-                    <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                      <path d="M6 4L10 8L6 12" stroke="#1D1D1D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Mobile card */}
-                <div
-                  onClick={() => {
-                    useOrderStore.setState({ currentOrder: order });
-                    router.push("/guest/order/track");
-                  }}
-                  className={`md:hidden px-4 py-3 hover:bg-[#faf8f7] transition cursor-pointer ${idx > 0 ? "border-t border-[#ede4de]" : ""}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[14px] font-medium text-[#af3a04] leading-[20px]">
-                      {order.id}
-                    </span>
-                    <StatusBadge status={order.currentStatus} />
-                  </div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <ServiceIcon />
-                      <div>
-                        <p className="text-[13px] text-[#1D1D1D] leading-[18px]">{formatDate(placedTs)}</p>
-                        <p className="text-[11px] text-[#835748] leading-[14px]">{formatTimeShort(placedTs)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px] font-bold text-[#1D1D1D] leading-[20px]">
-                        {formatLkr(order.total)} LKR
-                      </span>
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M6 4L10 8L6 12" stroke="#1D1D1D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      useOrderStore.setState({ currentOrder: order });
-                      router.push("/guest/order/review");
-                    }}
-                    className="w-full text-[12px] font-medium text-center text-[#af3a04] hover:text-[#973102] underline transition cursor-pointer"
-                  >
-                    Write Review
-                  </button>
-                </div>
-              </React.Fragment>
-            );
-          })
-        )}
+                </React.Fragment>
+              );
+            })
+          )}
+        </div>
 
         {/* Pagination footer */}
         {allOrders.length > 0 && (
-          <div className="border-t border-[#ede4de] px-6 py-3 flex items-center justify-between">
-            <p className="text-[14px] text-[#835748] leading-[20px]">
+          <div className="border-t border-gray-100/80 bg-white/40 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+            <p className="text-sm font-medium text-gray-500">
               Showing{" "}
-              <span className="font-medium text-[#af3a04]">{(page - 1) * PAGE_SIZE + 1}</span>
+              <span className="font-bold text-gray-900">{(page - 1) * PAGE_SIZE + 1}</span>
               {" "}to{" "}
-              <span className="font-medium text-[#af3a04]">{Math.min(page * PAGE_SIZE, allOrders.length)}</span>
+              <span className="font-bold text-gray-900">{Math.min(page * PAGE_SIZE, allOrders.length)}</span>
               {" "}of{" "}
-              <span className="font-medium text-[#af3a04]">{allOrders.length}</span>
+              <span className="font-bold text-gray-900">{allOrders.length}</span>
               {" "}results
             </p>
 
-            <div className="flex items-center border border-[#1D1D1D] rounded-md overflow-hidden shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center bg-white border border-gray-200/80 rounded-xl overflow-hidden shadow-sm">
               {/* Prev */}
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-2.5 py-2 border-r border-[#1D1D1D] bg-white hover:bg-[#f8f6f5] disabled:opacity-40 transition cursor-pointer"
+                className="px-3 py-2 border-r border-gray-200/80 hover:bg-gray-50 disabled:opacity-30 transition-colors cursor-pointer"
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M10 4L6 8L10 12" stroke="#1D1D1D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-gray-600">
+                  <path d="M10 4L6 8L10 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
 
               {/* Page numbers */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`px-4 py-1.5 text-[14px] font-medium leading-[20px] border-r border-[#1D1D1D] last:border-r-0 transition cursor-pointer ${
-                    p === page
-                      ? "bg-[rgba(175,58,4,0.1)] text-[#af3a04] border-[#af3a04]"
-                      : "bg-white text-[#1D1D1D] hover:bg-[#f8f6f5]"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
+              <div className="flex">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`px-4 py-2 text-sm font-bold border-r border-gray-200/80 last:border-r-0 transition-colors cursor-pointer ${
+                      p === page
+                        ? "bg-orange-50 text-[var(--brand-primary)]"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
 
               {/* Next */}
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-2.5 py-2 border-l border-[#1D1D1D] bg-white hover:bg-[#f8f6f5] disabled:opacity-40 transition cursor-pointer"
+                className="px-3 py-2 border-l border-gray-200/80 hover:bg-gray-50 disabled:opacity-30 transition-colors cursor-pointer"
               >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4L10 8L6 12" stroke="#1D1D1D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" className="text-gray-600">
+                  <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>
@@ -366,35 +376,35 @@ export default function MyOrdersClient() {
       </div>
 
       {/* ─── Footer summary cards ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {/* Total Spent */}
-        <div className="bg-white border border-[#ede4de] rounded-lg p-6 flex items-center justify-between shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl p-6 flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-shadow">
           <div className="space-y-1">
-            <p className="text-[14px] font-medium text-[#1D1D1D] leading-[20px]">Total Spent</p>
-            <p className="text-[24px] font-bold text-[#1D1D1D] leading-[32px]">
-              {formatLkr(totalSpent)} LKR
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Total Spent</p>
+            <p className="text-2xl font-bold text-gray-900 tracking-tight">
+              {formatLkr(totalSpent)} <span className="text-base font-semibold text-gray-400">LKR</span>
             </p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-[rgba(175,58,4,0.1)] flex items-center justify-center">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z" stroke="#af3a04" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M1 10h22" stroke="#af3a04" strokeWidth="1.5" />
+          <div className="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100/50 flex items-center justify-center shadow-inner">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-[var(--brand-primary)]">
+              <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M1 10h22" stroke="currentColor" strokeWidth="2" />
             </svg>
           </div>
         </div>
 
         {/* Total Orders */}
-        <div className="bg-white border border-[#ede4de] rounded-lg p-6 flex items-center justify-between shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl p-6 flex items-center justify-between shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-shadow">
           <div className="space-y-1">
-            <p className="text-[14px] font-medium text-[#1D1D1D] leading-[20px]">Total Orders</p>
-            <p className="text-[24px] font-bold text-[#1D1D1D] leading-[32px]">
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Total Orders</p>
+            <p className="text-3xl font-bold text-gray-900 tracking-tight">
               {allOrders.length}
             </p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-[rgba(175,58,4,0.1)] flex items-center justify-center">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" stroke="#af3a04" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#af3a04" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <div className="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100/50 flex items-center justify-center shadow-inner">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-[var(--brand-primary)]">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         </div>
@@ -402,17 +412,23 @@ export default function MyOrdersClient() {
         {/* Need Help? */}
         <Link
           href="/guest/order/help"
-          className="relative overflow-hidden rounded-lg p-6 flex flex-col justify-center shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)]"
-          style={{ background: "linear-gradient(165deg, #af3a04 0%, #9a3412 100%)" }}
+          className="relative overflow-hidden rounded-3xl p-6 flex flex-col justify-center shadow-[0_8px_32px_rgba(217,119,6,0.15)] group transition-transform hover:-translate-y-1"
+          style={{ background: "linear-gradient(135deg, var(--brand-primary) 0%, #C05621 100%)" }}
         >
-          <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-xl" />
-          <p className="text-[14px] font-medium text-white/80 leading-[20px]">Need Help?</p>
-          <div className="flex items-center gap-2 mt-2">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M3 18v-6a9 9 0 1 1 18 0v6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5ZM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="text-[16px] font-bold text-white leading-[24px]">Contact Front Desk</span>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform duration-700" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl transform -translate-x-1/2 translate-y-1/2" />
+          
+          <div className="relative z-10">
+            <p className="text-sm font-semibold text-white/80 uppercase tracking-wider mb-1">Need Help?</p>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm group-hover:scale-110 transition-transform">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <path d="M3 18v-6a9 9 0 1 1 18 0v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5ZM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <span className="text-lg font-bold text-white group-hover:translate-x-1 transition-transform">Contact Front Desk</span>
+            </div>
           </div>
         </Link>
       </div>
@@ -424,10 +440,10 @@ export default function MyOrdersClient() {
 
 function HomeIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="group-hover:scale-110 transition-transform">
       <path
         d="M3 12L12 3L21 12M5 10.5V20.5C5 20.776 5.224 21 5.5 21H10.5V16C10.5 15.724 10.724 15.5 11 15.5H13C13.276 15.5 13.5 15.724 13.5 16V21H18.5C18.776 21 19 20.776 19 20.5V10.5"
-        stroke="#828282" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
       />
     </svg>
   );
@@ -435,8 +451,8 @@ function HomeIcon() {
 
 function ChevronRight() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="shrink-0">
-      <path d="M6 4L10 8L6 12" stroke="#828282" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400 shrink-0">
+      <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

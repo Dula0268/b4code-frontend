@@ -13,6 +13,7 @@ export interface FlaggedReview {
   rating: number;
   flagType: string;
   ownerName?: string;
+  flaggedByRole?: string;
   status: string;
   adminNote?: string;
   flaggedAt: string;
@@ -30,6 +31,10 @@ export interface Dispute {
   stayDates: string;
   cancellationPolicy: string;
   daysUntilAutoClose: number;
+  category?: string;
+  severity?: string;
+  photoUrls?: string;
+  internalNote?: string;
 }
 
 export interface ModerationHistory {
@@ -53,11 +58,14 @@ export interface PageResponse<T> {
 }
 
 export const ModerationApi = {
-  getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number }> =>
+  getBadgeCounts: (): Promise<{ pendingReviews: number; openDisputes: number; removedToday: number; resolvedDisputes: number; totalResolvedAmount: number }> =>
     api.get('/admin/moderation/counts').then((res) => res.data),
 
   getReviews: (params: { flagType?: string; search?: string; page?: number; size?: number; rating?: number }): Promise<PageResponse<FlaggedReview>> =>
     api.get('/admin/moderation/reviews', { params }).then((res) => res.data),
+
+  getReviewById: (id: number): Promise<FlaggedReview> =>
+    api.get(`/admin/moderation/reviews/${id}`).then((res) => res.data),
 
   approveReview: (id: number, adminNote?: string): Promise<FlaggedReview> =>
     api.put(`/admin/moderation/reviews/${id}/approve`, { adminNote }).then((res) => res.data),
@@ -65,7 +73,7 @@ export const ModerationApi = {
   removeReview: (id: number, adminNote: string): Promise<FlaggedReview> =>
     api.put(`/admin/moderation/reviews/${id}/remove`, { adminNote }).then((res) => res.data),
 
-  getDisputes: (params: { status?: string; search?: string; page?: number; size?: number }): Promise<PageResponse<Dispute>> =>
+  getDisputes: (params: { status?: string; search?: string; page?: number; size?: number; isComplaint?: boolean }): Promise<PageResponse<Dispute>> =>
     api.get('/admin/moderation/disputes', { params }).then((res) => res.data),
 
   resolveDispute: (id: string, resolution: string, refundApproved: boolean): Promise<Dispute> =>
@@ -86,3 +94,4 @@ export const ModerationApi = {
   exportDisputesPdf: (params: { status?: string; search?: string }): Promise<Blob> =>
     api.get('/admin/moderation/disputes/export/pdf', { params, responseType: 'blob' }).then((res) => res.data),
 };
+

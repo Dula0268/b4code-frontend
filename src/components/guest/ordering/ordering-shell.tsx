@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import GuestTopbar from '@/components/shared/layout/guest-shell/guest-topbar';
-import OrderTabBar from '@/components/guest/ordering/order-tab-bar';
+import OrderingTopbar from '@/components/guest/ordering/ordering-topbar';
 import AccessDenied from "@/components/shared/auth/access-denied";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useGuestSessionStore } from "@/store/guest/ordering/guest-session.store";
 
 import { useOrderContextStore } from "@/store/guest/ordering/order-context.store";
+import { useCartStore } from "@/store/guest/ordering/cart.store";
 
 import GuestGlobalOrdersProvider from '@/components/guest/ordering/guest-global-orders-provider';
 import { MenuSkeleton } from "@/components/guest/ordering/menu/menu-skeleton";
@@ -20,12 +20,14 @@ export default function OrderingShell({ children }: OrderingShellProps) {
   const { user, isRestoring } = useAuthStore();
   const initializeSession = useGuestSessionStore((s) => s.initializeSession);
   const qrContext = useOrderContextStore((s) => s.qrContext);
+  const fetchChargesFromApi = useCartStore((s) => s.fetchChargesFromApi);
 
   useEffect(() => {
     if (qrContext && qrContext.propertyId && qrContext.location) {
       initializeSession(qrContext.propertyId, qrContext.location);
+      fetchChargesFromApi(qrContext.propertyId);
     }
-  }, [qrContext, initializeSession]);
+  }, [qrContext, initializeSession, fetchChargesFromApi]);
 
   if (isRestoring) return <MenuSkeleton />;
 
@@ -35,19 +37,12 @@ export default function OrderingShell({ children }: OrderingShellProps) {
 
   return (
     <GuestGlobalOrdersProvider>
-      <div className="bg-white min-h-screen overflow-x-hidden">
-        {/* Main guest navbar — identical to /guest/my-room */}
-        <GuestTopbar />
+      <div className="bg-[#FCFAFC] min-h-screen overflow-x-hidden flex flex-col">
+        {/* New consolidated guest ordering navbar */}
+        <OrderingTopbar />
 
-        {/* Order-specific sub-tabs (Menu / Cart / My Orders / Help) */}
-        <OrderTabBar />
-
-        {/*
-          pt-16  = GuestTopbar (64px)
-          md:pt-[108px] = GuestTopbar (64px) + OrderTabBar (44px) on desktop
-          pb-14 md:pb-0  = space for the mobile bottom tab bar
-        */}
-        <main className="max-w-7xl mx-auto pt-16 md:pt-[108px] pb-14 md:pb-0">
+        {/* Topbar spacing (64px) + gap */}
+        <main className="max-w-5xl mx-auto w-full pt-[80px] pb-20 md:pb-8 flex-1 flex flex-col px-4 md:px-6">
           {children}
         </main>
       </div>

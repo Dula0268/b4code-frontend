@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -9,7 +9,7 @@ import {
   ChevronLeft, Calendar, User, MapPin, CheckCircle2,
   Clock, XCircle, Download, Star, RefreshCw, FileText,
   CreditCard, Wallet, Edit3, X, AlertTriangle, AlertCircle,
-  Check, ArrowRight
+  Check, ArrowRight, Info
 } from "lucide-react"
 import { guestApi } from "@/api/guest/guest.api"
 
@@ -35,7 +35,7 @@ export interface StoredBooking {
   nights?: number
   paymentMethod: string
   paidInFull: boolean
-  status: "UPCOMING" | "COMPLETED" | "CANCELLED"
+  status: "UPCOMING" | "CHECKED_IN" | "COMPLETED" | "CANCELLED"
   roomName: string
   roomQuantity: number
   confirmationCode: string
@@ -44,9 +44,9 @@ export interface StoredBooking {
   disputeStatus?: string
   disputeAmount?: number
 }
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Format Helpers
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function formatLKR(amount: number) {
   return new Intl.NumberFormat("en-LK", {
     style: "currency",
@@ -73,16 +73,23 @@ function calculateNights(inDate: string, outDate: string) {
   return diffDays > 0 ? diffDays : 1;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Sub-components
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function StatusBadge({ status, isModified }: { status: string, isModified?: boolean }) {
   const styles: Record<string, string> = {
     UPCOMING: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    CHECKED_IN: "bg-teal-500/20 text-teal-400 border-teal-500/30",
     COMPLETED: "bg-blue-500/20 text-blue-400 border-blue-500/30",
     CANCELLED: "bg-red-500/20 text-red-400 border-red-500/30",
   }
-  const displayStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
+  const labels: Record<string, string> = {
+    UPCOMING: "Upcoming",
+    CHECKED_IN: "Currently Staying",
+    COMPLETED: "Completed",
+    CANCELLED: "Cancelled",
+  }
+  const displayStatus = labels[status] ?? (status.charAt(0).toUpperCase() + status.slice(1).toLowerCase())
 
   return (
     <div className="flex gap-2">
@@ -98,18 +105,21 @@ function StatusBadge({ status, isModified }: { status: string, isModified?: bool
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Client Component
-// ─────────────────────────────────────────────────────────────────────────────
-export default function BookingDetailsClient({ id }: { id: string }) {
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export default function BookingDetailsClient({ id, initialTab = "modify", pageMode = "view" }: { id: string, initialTab?: "modify" | "cancel" | "refund", pageMode?: "view" | "modify" | "cancel" }) {
   const [booking, setBooking] = useState<StoredBooking | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   
   // UI States
-  const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "refund">("modify")
+  const [activeTab, setActiveTab] = useState<"modify" | "cancel" | "refund" | "none">(initialTab)
+  const [showReceiptModal, setShowReceiptModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
+  
+  const [cancelReasonCategory, setCancelReasonCategory] = useState<string>("Change of plans")
   
   // Edit Form States
   const [propertyDetail, setPropertyDetail] = useState<any>(null)
@@ -140,6 +150,13 @@ export default function BookingDetailsClient({ id }: { id: string }) {
 
   // Cancel Form States
   const [cancelReason, setCancelReason] = useState("")
+  const [cancelAck, setCancelAck] = useState(false)
+
+  // Reset the cancellation acknowledgement whenever the guest leaves the cancel tab,
+  // so a stale confirmation can't silently carry over to a later visit.
+  useEffect(() => {
+    if (activeTab !== "cancel") setCancelAck(false)
+  }, [activeTab])
 
   useEffect(() => {
     async function loadBooking() {
@@ -173,7 +190,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
           nightsLabel: `${diffDays} Night(s)`,
           paymentMethod: b.paymentMethod === "PAY_AT_PROPERTY" ? "property" : "online",
           paidInFull: b.paymentMethod !== "PAY_AT_PROPERTY",
-          status: (b.status === "COMPLETED" ? "COMPLETED" : b.status === "CANCELLED" ? "CANCELLED" : "UPCOMING") as any,
+          status: (b.status === "COMPLETED" ? "COMPLETED" : b.status === "CANCELLED" ? "CANCELLED" : b.status === "CHECKED_IN" ? "CHECKED_IN" : "UPCOMING") as any,
           roomName: b.roomName || "Room",
           roomQuantity: b.roomQuantity || 1,
           confirmationCode: b.confirmationCode,
@@ -194,6 +211,20 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     loadBooking()
   }, [id])
 
+  // Once the real status is known, make sure the active tab can't be stuck on
+  // "modify"/"cancel" for a booking that isn't UPCOMING (e.g. CHECKED_IN via a
+  // stale route param or the default initialTab) — those actions are only
+  // ever valid for UPCOMING bookings.
+  useEffect(() => {
+    if (!booking || pageMode !== "view") return
+    if (booking.status === "UPCOMING") return
+    if (booking.status === "CANCELLED" && booking.disputeStatus) {
+      setActiveTab("refund")
+      return
+    }
+    setActiveTab("none")
+  }, [booking, pageMode])
+
   // Real-time calculation of new price when editing
   const { newPrice, diffAmount, hasChanges, newBasePrice, newTaxes, origBasePrice, origTaxes, pricePerNight, newNights } = useMemo(() => {
     if (!booking) return { newPrice: 0, diffAmount: 0, hasChanges: false, newBasePrice: 0, newTaxes: 0, origBasePrice: 0, origTaxes: 0, pricePerNight: 0, newNights: 1 }
@@ -201,8 +232,8 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     const origNights = booking.nights || 1;
     const newNights = calculateNights(editCheckIn, editCheckOut) || 1; // prevent 0 nights
     
-    const origBasePrice = booking.totalPrice * 0.8;
-    const origTaxes = booking.totalPrice * 0.2;
+    const origBasePrice = booking.totalPrice + booking.discount;
+    const origTaxes = 0;
     
     const changes = editCheckIn !== booking.checkIn || 
                     editCheckOut !== booking.checkOut || 
@@ -213,17 +244,17 @@ export default function BookingDetailsClient({ id }: { id: string }) {
 
     // Use actual room data from backend
     const currentRoomId = editRoomId || booking.roomId;
-    const room = propertyDetail?.rooms?.find((r: any) => String(r.id) === String(currentRoomId));
+    const room = propertyDetail?.roomTypes?.find((r: any) => String(r.id) === String(currentRoomId));
     
     // Fallback if property details haven't loaded yet
-    const fallbackPricePerNight = booking.totalPrice / origNights * 0.8;
+    const fallbackPricePerNight = origBasePrice / origNights;
     const pricePerNight = room?.pricePerNight || fallbackPricePerNight;
 
     // Price is now calculated solely on Room Price * Nights (Ignoring Guests)
     const newBasePriceMock = pricePerNight * newNights;
-    const newTaxesMock = origTaxes; // Tax remains the same, do not add new tax
+    const newTaxesMock = 0;
     
-    const newTotalBeforeDiscount = newBasePriceMock + newTaxesMock;
+    const newTotalBeforeDiscount = newBasePriceMock;
     const newTotal = newTotalBeforeDiscount - booking.discount;
     
     return {
@@ -240,14 +271,13 @@ export default function BookingDetailsClient({ id }: { id: string }) {
   }, [booking, editCheckIn, editCheckOut, editGuests, editRoomId, propertyDetail])
 
   useEffect(() => {
-    if (successMessage || errorMessage) {
+    if (errorMessage) {
       const timer = setTimeout(() => {
-        setSuccessMessage("");
         setErrorMessage("");
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [successMessage, errorMessage]);
+  }, [errorMessage]);
 
   if (!booking) {
       return (
@@ -261,22 +291,66 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     }
 
   const isUpcoming = booking.status === "UPCOMING"
+  const isCheckedIn = booking.status === "CHECKED_IN"
   const isCompleted = booking.status === "COMPLETED"
   const isCancelled = booking.status === "CANCELLED"
   const daysToStartText = getDaysToStart(booking.checkIn)
 
-  // Calculate cancellation fee based on property's freeCancellation policy
-  const isFreeCancellation = propertyDetail?.freeCancellation ?? false;
-  const cancellationFee = isFreeCancellation ? 0 : booking.totalPrice * 0.20;
-  const eligibleRefund = Math.max(0, booking.totalPrice - cancellationFee);
+  // Guard the dedicated /modify and /cancel routes: those actions are only
+  // ever valid while a booking is still UPCOMING. If a guest lands here via a
+  // stale link/bookmark after checking in (or after the stay has completed or
+  // been cancelled), show a clear explanation instead of a broken/empty form.
+  if ((pageMode === "modify" || pageMode === "cancel") && !isUpcoming) {
+    const reasonText = isCheckedIn
+      ? "You've already checked in, so this booking's room and dates are locked in. Please speak to our front desk for any changes."
+      : isCompleted
+      ? "This stay has already been completed, so it can no longer be modified or cancelled."
+      : "This booking has already been cancelled."
+    return (
+      <div className="max-w-3xl mx-auto pb-16">
+        <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-8 sm:p-10 flex flex-col items-center text-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
+            <AlertCircle className="text-amber-500" size={26} />
+          </div>
+          <StatusBadge status={booking.status} isModified={booking.isModified} />
+          <h2 className="text-xl font-black text-[#1d1d1d]">
+            {pageMode === "modify" ? "Modification unavailable" : "Cancellation unavailable"}
+          </h2>
+          <p className="text-sm text-[#6f6254] max-w-md">{reasonText}</p>
+          <Link
+            href={`/guest/booking/${booking.confirmationCode || booking.id}`}
+            className="mt-2 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-sm font-bold no-underline transition-colors"
+          >
+            View Booking Details
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  // Calculate cancellation fee based on property's freeCancellation policy
+  const isFreeCancellationProperty = propertyDetail?.freeCancellation ?? false;
+  const checkInDateForPolicy = booking ? new Date(booking.checkIn) : new Date();
+  const freeCancellationDeadline = new Date(checkInDateForPolicy);
+  freeCancellationDeadline.setDate(freeCancellationDeadline.getDate() - 3);
+  freeCancellationDeadline.setHours(23, 59, 59, 999);
+  
+  const now = new Date();
+  const isWithinFreeWindow = isFreeCancellationProperty && now <= freeCancellationDeadline;
+  
+  // If payment method is PAY_AT_PROPERTY, there is no cancellation fee
+  const isPayAtProperty = booking?.paymentMethod === "property" || !booking?.paidInFull;
+  const isFreeCancellation = isPayAtProperty || isWithinFreeWindow;
+  const cancellationFee = isFreeCancellation ? 0 : (booking?.totalPrice || 0) * 0.20;
+  const eligibleRefund = Math.max(0, (booking?.totalPrice || 0) - cancellationFee);
+
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Action Handlers
-  // ─────────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSaveChanges = async () => {
     if (!booking) return;
     setErrorMessage("");
-    setSuccessMessage("");
+    
     try {
       setLoading(true);
 
@@ -296,7 +370,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
           checkOutDate: editCheckOut,
           guests: editGuests,
         };
-        sessionStorage.setItem("pendingBookingModification", JSON.stringify(pendingModification));
+        localStorage.setItem("pendingBookingModification", JSON.stringify(pendingModification));
 
         const params = new URLSearchParams();
         params.set("total", amountDue.toFixed(2));
@@ -310,7 +384,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         return;
       }
 
-      // No payment required – commit the modification immediately.
+      // No payment required â€“ commit the modification immediately.
       const res = await guestApi.modifyBooking(booking.id, {
         roomId: Number(editRoomId || booking.roomId),
         propertyId: Number(booking.propertyId),
@@ -349,10 +423,15 @@ export default function BookingDetailsClient({ id }: { id: string }) {
       setEditGuests(updated.adults || 2);
 
       if (res.refundAmount > 0) {
-        setSuccessMessage("Modification saved. Request for refund submitted!");
+        
       } else {
-        setSuccessMessage("Modification saved successfully.");
+        
       }
+
+      import("sonner").then(({ toast }) => {
+        toast.success("Booking modified successfully!");
+      });
+      router.push("/guest/booking");
 
     } catch (error: any) {
       console.error("Failed to modify booking:", error);
@@ -364,9 +443,11 @@ export default function BookingDetailsClient({ id }: { id: string }) {
 
   const handleConfirmCancel = async () => {
     setErrorMessage("");
-    setSuccessMessage("");
+    
     try {
-      const res = await guestApi.cancelBooking(booking.id, cancelReason)
+      setLoading(true);
+      const fullReason = cancelReason.trim() ? `${cancelReasonCategory}: ${cancelReason}` : cancelReasonCategory;
+      const res = await guestApi.cancelBooking(booking.id, fullReason)
       
       const mappedBooking: StoredBooking = {
         ...booking,
@@ -378,18 +459,16 @@ export default function BookingDetailsClient({ id }: { id: string }) {
 
       setBooking(mappedBooking)
       
-      if (res.disputeStatus) {
-        setSuccessMessage("Booking cancelled. Request for refund submitted!");
-        setActiveTab("refund" as any);
-      } else {
-        setSuccessMessage("Booking cancelled successfully.");
-        // Switch to a safe tab so it doesn't stay on the cancel form
-        setActiveTab("modify");
-      }
+      import("sonner").then(({ toast }) => {
+        toast.success("Booking cancelled successfully!");
+      });
+      router.push("/guest/booking");
       
     } catch (error: any) {
       console.error("Failed to cancel booking:", error)
       setErrorMessage(error.response?.data?.message || "Failed to cancel booking. Please try again.")
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -404,7 +483,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Render Helpers
 
   return (
@@ -417,49 +496,42 @@ export default function BookingDetailsClient({ id }: { id: string }) {
           errorMessage ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
         ].join(" ")}
       >
-        <span className="text-[16px]">⚠️</span>
+        <span className="text-[16px]">âš ï¸</span>
         {errorMessage}
       </div>
 
-      {/* Success Notification */}
-      <div
-        className={[
-          "fixed top-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 bg-emerald-600 text-white text-[13px] font-medium",
-          "px-5 py-3.5 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 whitespace-nowrap",
-          successMessage ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
-        ].join(" ")}
-      >
-        <span className="text-[16px]">✅</span>
-        {successMessage}
-      </div>
 
-      <Link href="/guest/booking" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors">
-        <ChevronLeft size={16} /> Back to My Bookings
-      </Link>
+      {pageMode === "view" && (
+        <>
+          <Link href="/guest/booking" className="inline-flex items-center gap-2 text-sm font-bold mb-6 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors">
+            <ChevronLeft size={16} /> Back to My Bookings
+          </Link>
 
-      {/* Hero Header (Full Width of Container) */}
-      <div className="relative rounded-[24px] overflow-hidden mb-6 h-[220px] sm:h-[300px] border border-[#e8ddcf] shadow-sm">
-        <Image src={booking.imageSrc} alt={booking.property} fill className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-        <div className="absolute top-4 left-4">
-          <StatusBadge status={booking.status} isModified={booking.isModified} />
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
-          <span className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1 block">
-            Ref: {booking.confirmationCode}
-          </span>
-          <h1 className="text-[2rem] font-black text-white mb-2 tracking-tight sm:text-[3rem] leading-none">
-            {booking.property}
-          </h1>
-          {booking.roomName && (
-            <div className="flex items-center gap-2 mt-3 text-[16px] font-medium text-[#2d2116] bg-white/50 w-fit px-4 py-2 rounded-xl border border-[#eadfce]">
-              <BedDouble size={18} /> {booking.roomQuantity && booking.roomQuantity > 1 ? `${booking.roomQuantity}x ` : ""}{booking.roomName}
+          {/* Hero Header (Full Width of Container) */}
+          <div className="relative rounded-[24px] overflow-hidden mb-6 h-[220px] sm:h-[300px] border border-[#e8ddcf] shadow-sm">
+            <Image src={booking.imageSrc} alt={booking.property} fill className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute top-4 left-4">
+              <StatusBadge status={booking.status} isModified={booking.isModified} />
             </div>
-          )}
-        </div>
-      </div>
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
+              <span className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1 block">
+                Ref: {booking.confirmationCode}
+              </span>
+              <h1 className="text-[2rem] font-black text-white mb-2 tracking-tight sm:text-[3rem] leading-none">
+                {booking.property}
+              </h1>
+              {booking.roomName && (
+                <div className="flex items-center gap-2 mt-3 text-[16px] font-medium text-[#2d2116] bg-white/50 w-fit px-4 py-2 rounded-xl border border-[#eadfce]">
+                  <BedDouble size={18} /> {booking.roomQuantity && booking.roomQuantity > 1 ? `${booking.roomQuantity}x ` : ""}{booking.roomName}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
-      {(isUpcoming || (isCancelled && booking.disputeStatus)) && (
+      {(isUpcoming || (isCancelled && booking.disputeStatus)) && pageMode === "view" && (
         <div className="flex bg-white rounded-[20px] border border-[#e8ddcf] p-2 mb-6 gap-2 overflow-x-auto">
           {isUpcoming && (
             <>
@@ -483,7 +555,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
               </button>
             </>
           )}
-          {booking.disputeStatus && (
+          {booking.disputeStatus && pageMode === "view" && (
             <button 
               onClick={() => setActiveTab("refund" as any)}
               className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "refund" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
@@ -491,6 +563,16 @@ export default function BookingDetailsClient({ id }: { id: string }) {
               Refund Status
             </button>
           )}
+        </div>
+      )}
+
+      {isCheckedIn && pageMode === "view" && (
+        <div className="bg-teal-50 border border-teal-200 rounded-2xl p-4 flex items-start gap-3 mb-6">
+          <CheckCircle2 className="text-teal-600 mt-0.5 shrink-0" size={20} />
+          <div>
+            <h4 className="text-sm font-black text-teal-900">Currently Staying</h4>
+            <p className="text-xs font-medium text-teal-700 mt-1">Modifications aren&apos;t available once you&apos;ve checked in — please speak to our front desk for changes.</p>
+          </div>
         </div>
       )}
 
@@ -509,73 +591,121 @@ export default function BookingDetailsClient({ id }: { id: string }) {
         {/* Left Column (Details & Actions) */}
         <div className={`flex flex-col gap-8 ${activeTab === "refund" ? "lg:col-span-3" : "lg:col-span-2"}`}>
           
+          {/* Context Header for Modify and Cancel Mode */}
+          {(pageMode === "modify" || pageMode === "cancel") && (
+            <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-[24px] p-6 sm:p-8 animate-in fade-in duration-300">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <span className="text-[10px] font-black text-[#9f8f7c] uppercase tracking-widest block mb-1">
+                    Ref: {booking.confirmationCode}
+                  </span>
+                  <h3 className="text-xl font-black text-[#1d1d1d]">{booking.property}</h3>
+                  {booking.roomName && (
+                    <p className="text-sm font-medium text-[#6f6254] flex items-center gap-1 mt-1">
+                      <BedDouble size={16} className="text-[#9a3300]" /> 
+                      {booking.roomQuantity && booking.roomQuantity > 1 ? `${booking.roomQuantity}x ` : ""}{booking.roomName}
+                    </p>
+                  )}
+                </div>
+                <StatusBadge status={booking.status} isModified={booking.isModified} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-[#eadfce]">
+                 <div>
+                   <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Original Check-in</p>
+                   <p className="text-sm font-bold text-[#1d1d1d]">{booking.checkInFormatted}</p>
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Original Check-out</p>
+                   <p className="text-sm font-bold text-[#1d1d1d]">{booking.checkOutFormatted}</p>
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Original Guests</p>
+                   <p className="text-sm font-bold text-[#1d1d1d]">{booking.guests} {booking.guests === 1 ? 'Guest' : 'Guests'}</p>
+                 </div>
+              </div>
+            </div>
+          )}
+
           {/* Reservation Details */}
           {(!isUpcoming || activeTab === "modify") && activeTab !== "refund" && (
             <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 animate-in fade-in duration-300">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-black text-[#1d1d1d]">Reservation Details</h2>
+                <h2 className="text-xl font-black text-[#1d1d1d]">{pageMode === "modify" ? "What you can modify" : "Reservation Details"}</h2>
               </div>
               
               {isUpcoming ? (
-                <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-6 mb-6">
-                <p className="text-xs font-medium text-[#828282] mb-4">Update your dates, room type, or guest count. Price changes will be reflected in the payment summary.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 relative" ref={calRef}>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Dates</label>
-                    <div 
-                      onClick={() => setCalOpen(!calOpen)}
-                      className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium cursor-pointer flex justify-between items-center hover:border-[#9a3300] transition-colors"
-                    >
-                      <span>{editCheckIn && editCheckOut ? `${new Date(editCheckIn + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${new Date(editCheckOut + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : 'Select Dates'}</span>
-                      <Calendar size={16} className="text-[#9a3300]" />
-                    </div>
-                    {calOpen && (
-                      <div className="absolute top-[70px] left-0 z-[100] bg-white shadow-2xl border border-[#e8ddcf] rounded-xl">
-                        <CalendarPicker
-                          checkIn={editCheckIn ? new Date(editCheckIn + "T00:00:00") : null}
-                          checkOut={editCheckOut ? new Date(editCheckOut + "T00:00:00") : null}
-                          onChange={(ci, co) => {
-                            setEditCheckIn(ci ? ci.toISOString().split("T")[0] : "");
-                            setEditCheckOut(co ? co.toISOString().split("T")[0] : "");
-                          }}
-                          onComplete={() => setCalOpen(false)}
-                        />
+                <div className="flex flex-col gap-6">
+                  {pageMode === "modify" && (
+                    <p className="text-sm text-[#828282]">
+                      Update your dates, room type, or guest count. Changes to the total price will be reflected in the payment summary.
+                    </p>
+                  )}
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative" ref={calRef}>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Dates <span className="text-[10px] font-medium text-amber-600 normal-case ml-1">(Live Availability)</span></label>
+                      <div 
+                        onClick={() => setCalOpen(!calOpen)}
+                        className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium cursor-pointer flex justify-between items-center hover:border-[#9a3300] transition-colors"
+                      >
+                        <span>{editCheckIn && editCheckOut ? `${new Date(editCheckIn + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${new Date(editCheckOut + "T00:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : 'Select Dates'}</span>
+                        <Calendar size={16} className="text-[#9a3300]" />
                       </div>
-                    )}
+                      {calOpen && (
+                        <div className="absolute top-[70px] left-0 z-[100] bg-white shadow-2xl border border-[#e8ddcf] rounded-xl">
+                          <CalendarPicker
+                            checkIn={editCheckIn ? new Date(editCheckIn + "T00:00:00") : null}
+                            checkOut={editCheckOut ? new Date(editCheckOut + "T00:00:00") : null}
+                            onChange={(ci, co) => {
+                              setEditCheckIn(ci ? ci.toISOString().split("T")[0] : "");
+                              setEditCheckOut(co ? co.toISOString().split("T")[0] : "");
+                            }}
+                            onComplete={() => setCalOpen(false)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Room Type</label>
+                      <select value={editRoomId || booking.roomId} onChange={(e) => setEditRoomId(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
+                        {propertyDetail?.roomTypes?.map((r: any) => (
+                          <option key={r.id} value={r.id}>{r.name}</option>
+                        )) || <option value={booking.roomId}>{booking.roomName}</option>}
+                      </select>
+                    </div>
                   </div>
+                  
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Room Type</label>
-                    <select value={editRoomId || booking.roomId} onChange={(e) => setEditRoomId(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
-                      {propertyDetail?.rooms?.map((r: any) => (
-                        <option key={r.id} value={r.id}>{r.name}</option>
-                      )) || <option value={booking.roomId}>{booking.roomName}</option>}
+                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Guests</label>
+                    <select value={editGuests} onChange={(e) => setEditGuests(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
+                      {Array.from({ length: propertyDetail?.roomTypes?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.maxGuests || 6 }, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
+                      ))}
                     </select>
                   </div>
-                </div>
-                <div className="flex flex-col gap-1.5 mb-2">
-                  <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Guests</label>
-                  <select value={editGuests} onChange={(e) => setEditGuests(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
-                    {Array.from({ length: propertyDetail?.rooms?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.maxGuests || 6 }, (_, i) => i + 1).map(num => (
-                      <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-                <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-5">
-                  <p className="text-xs font-bold text-[#828282] uppercase tracking-wider mb-2">Check-in</p>
-                  <p className="text-base font-black text-[#1d1d1d]">{booking.checkInFormatted || booking.checkIn}</p>
-                  <p className="text-xs font-medium text-[#828282] mt-1">From 2:00 PM</p>
-                </div>
-                <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-5">
-                  <p className="text-xs font-bold text-[#828282] uppercase tracking-wider mb-2">Check-out</p>
-                  <p className="text-base font-black text-[#1d1d1d]">{booking.checkOutFormatted || booking.checkOut}</p>
-                  <p className="text-xs font-medium text-[#828282] mt-1">Until 12:00 PM</p>
-                </div>
-              </div>
-            )}
 
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Special Requests / Notes</label>
+                    <textarea 
+                      placeholder="Any special requests? (Note: Subject to property availability)"
+                      className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300] resize-none h-[100px]"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                  <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-5">
+                    <p className="text-xs font-bold text-[#828282] uppercase tracking-wider mb-2">Check-in</p>
+                    <p className="text-base font-black text-[#1d1d1d]">{booking.checkInFormatted || booking.checkIn}</p>
+                    <p className="text-xs font-medium text-[#828282] mt-1">From 2:00 PM</p>
+                  </div>
+                  <div className="bg-[#fdfaf6] border border-[#e8ddcf] rounded-2xl p-5">
+                    <p className="text-xs font-bold text-[#828282] uppercase tracking-wider mb-2">Check-out</p>
+                    <p className="text-base font-black text-[#1d1d1d]">{booking.checkOutFormatted || booking.checkOut}</p>
+                    <p className="text-xs font-medium text-[#828282] mt-1">Until 12:00 PM</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -589,23 +719,63 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                   </h3>
                 </div>
                 
-                <div className="bg-[#fdfaf6] rounded-xl p-4 border border-[#e8ddcf]">
-                  <h4 className="text-xs font-bold text-[#1d1d1d] mb-2 uppercase tracking-wider">Cancellation Policy</h4>
-                  <p className="text-sm text-[#828282] leading-relaxed">
-                    {isFreeCancellation ? (
-                      <>This property allows free cancellation. You will not be charged a cancellation fee. A refund request will automatically be submitted for the full amount paid: <span className="font-bold text-emerald-600">{formatLKR(eligibleRefund)}</span>.</>
-                    ) : (
-                      <>Cancellations made right now are subject to a 20% cancellation fee ({formatLKR(cancellationFee)}). A refund request will automatically be submitted for the eligible amount: <span className="font-bold text-[#1d1d1d]">{formatLKR(eligibleRefund)}</span>.</>
-                    )}
-                  </p>
+                {/* Cancellation Policy Summary */}
+                <div className="bg-[#fdfaf6] rounded-xl p-5 border border-[#e8ddcf]">
+                  <h4 className="text-sm font-bold text-[#1d1d1d] mb-3 uppercase tracking-wider flex items-center gap-2">
+                    <Info size={16} className="text-[#828282]"/> Cancellation Policy
+                  </h4>
+                  {isPayAtProperty ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm font-medium text-[#1d1d1d]">
+                        You chose to pay at the property. No cancellation fee applies.
+                      </p>
+                      <p className="text-sm text-emerald-600 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg w-fit border border-emerald-100">
+                        âœ“ Free to cancel.
+                      </p>
+                    </div>
+                  ) : isFreeCancellationProperty ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm font-medium text-[#1d1d1d]">
+                        Free cancellation until {freeCancellationDeadline.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}, 11:59 PM.
+                      </p>
+                      {isWithinFreeWindow ? (
+                        <p className="text-sm text-emerald-600 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg w-fit border border-emerald-100">
+                          âœ“ You are within the free cancellation window. No fees apply.
+                        </p>
+                      ) : (
+                        <p className="text-sm text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg w-fit border border-red-100">
+                          âš ï¸ The free cancellation window has passed. A 20% cancellation fee applies.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm font-medium text-[#1d1d1d]">
+                        This property does not offer free cancellation.
+                      </p>
+                      <p className="text-sm text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg w-fit border border-red-100">
+                        âš ï¸ A 20% cancellation fee applies immediately upon booking.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 mt-2">
                   <label className="text-sm font-bold text-[#1d1d1d]">Reason for cancellation <span className="text-red-500">*</span></label>
+                  <select 
+                    value={cancelReasonCategory}
+                    onChange={(e) => setCancelReasonCategory(e.target.value)}
+                    className="w-full p-4 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:border-red-300 focus:outline-none mb-2"
+                  >
+                    <option value="Change of plans">Change of plans</option>
+                    <option value="Found another property">Found another property</option>
+                    <option value="Property issue">Property issue</option>
+                    <option value="Other">Other</option>
+                  </select>
                   <textarea 
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
-                    placeholder="Please tell us why you are canceling..."
+                    placeholder="Additional details (optional)..."
                     className="w-full p-4 rounded-xl border border-[#e8ddcf] min-h-[100px] resize-none focus:border-red-300 focus:outline-none"
                   />
                 </div>
@@ -661,7 +831,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
           {(isCompleted || isCancelled) && activeTab !== "refund" && (
             <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 flex flex-wrap gap-4">
               {isCompleted && (
-                  <Link href={`/guest/reviews?propertyId=${booking.propertyId}`} className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-sm font-bold transition-colors no-underline">
+                  <Link href={`/guest/booking/${booking.confirmationCode || booking.id}/review`} className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-sm font-bold transition-colors no-underline">
                     <Star size={18} /> Leave Review
                   </Link>
               )}
@@ -704,21 +874,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
             {/* Original Price Breakdown (Always shown for modify & cancel) */}
             {(activeTab === "modify" || activeTab === "cancel") && (
               <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-[#828282] font-medium">Original Base Price</span>
-                  <span className="text-[#1d1d1d] font-bold">{formatLKR(origBasePrice)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-[#828282] font-medium">Original Taxes</span>
-                  <span className="text-[#1d1d1d] font-bold">{formatLKR(origTaxes)}</span>
-                </div>
-                {booking.discount > 0 && (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-emerald-600 font-medium">Original Discount</span>
-                    <span className="text-emerald-700 font-bold">-{formatLKR(booking.discount)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center pt-4 border-t border-[#f2e7d9] mt-2 mb-6">
+                <div className="flex justify-between items-center mb-6">
                   <span className="text-sm text-[#1d1d1d] font-black">Original Total</span>
                   <span className="text-[#1d1d1d] font-black text-lg">{formatLKR(booking.totalPrice)}</span>
                 </div>
@@ -734,18 +890,28 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     {isFreeCancellation ? 'Free' : formatLKR(cancellationFee)}
                   </span>
                 </div>
-                
+
+                <label className="flex items-start gap-2.5 text-xs text-[#4f4f4f] font-medium bg-[#fdfaf6] border border-[#e8ddcf] rounded-xl p-3.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={cancelAck}
+                    onChange={(e) => setCancelAck(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-[#9a3300] cursor-pointer shrink-0"
+                  />
+                  I understand this cancellation is final and cannot be undone.
+                </label>
+
                 {!booking.paidInFull ? (
                   <div className="bg-amber-50 rounded-xl p-4 mt-2 border border-amber-200">
                     <p className="text-sm font-bold text-amber-900 mb-1">Amount to Pay</p>
                     <p className="text-xl font-black text-amber-700">{formatLKR(cancellationFee)}</p>
                     <p className="text-xs text-amber-800/80 mt-2">You need to pay this amount to cancel the booking.</p>
-                    <button 
-                      onClick={handleConfirmCancel} 
-                      disabled={!cancelReason.trim() || loading}
+                    <button
+                      onClick={handleConfirmCancel}
+                      disabled={!cancelReasonCategory || !cancelAck || loading}
                       className="w-full mt-4 py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Pay for Changes"}
+                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Cancellation"}
                     </button>
                   </div>
                 ) : (
@@ -753,12 +919,12 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     <p className="text-sm font-bold text-emerald-900 mb-1">Eligible Refund</p>
                     <p className="text-xl font-black text-emerald-700">{formatLKR(eligibleRefund)}</p>
                     <p className="text-xs text-emerald-800/80 mt-2">You can request a refund for this amount.</p>
-                    <button 
-                      onClick={handleConfirmCancel} 
-                      disabled={!cancelReason.trim() || loading}
-                      className="w-full mt-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    <button
+                      onClick={handleConfirmCancel}
+                      disabled={!cancelReasonCategory || !cancelAck || loading}
+                      className="w-full mt-4 py-3 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Request Refund"}
+                      {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Cancel & Send Refund Request"}
                     </button>
                   </div>
                 )}
@@ -769,24 +935,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
             {activeTab === "modify" && hasChanges && (
               <div className="animate-in fade-in duration-300 border-t border-[#f2e7d9] pt-4">
                 <div className="flex flex-col gap-4 mb-6">
-                  <div className="flex flex-col gap-1 mb-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-[#828282] font-medium">Price Change</span>
-                      <span className={`font-bold ${newBasePrice - origBasePrice > 0 ? 'text-amber-600' : newBasePrice - origBasePrice < 0 ? 'text-emerald-600' : 'text-[#1d1d1d]'}`}>
-                        {newBasePrice - origBasePrice > 0 ? '+' : ''}{formatLKR(newBasePrice - origBasePrice)}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-[#828282] bg-[#fdfaf6] p-2 rounded-lg border border-[#e8ddcf] mt-1">
-                      <div className="flex justify-between items-center mb-1">
-                        <span>New Base Price ({formatLKR(pricePerNight)} × {newNights} nights)</span>
-                        <span className="font-medium text-[#1d1d1d]">{formatLKR(newBasePrice)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Original Base Price</span>
-                        <span className="font-medium text-[#1d1d1d]">- {formatLKR(origBasePrice)}</span>
-                      </div>
-                    </div>
-                  </div>
+
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-[#1d1d1d] font-black">New Total Price</span>
                     <span className="text-[#9a3300] font-black text-lg">{formatLKR(newPrice)}</span>
@@ -800,7 +949,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     <p className="text-xs text-emerald-800/80 mt-2">You can request a refund for this difference.</p>
                     <div className="flex flex-col gap-3 mt-4">
                       <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Request Refund"}
+                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Modify & Send Refund Request"}
                       </button>
                       <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>
@@ -812,7 +961,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     <p className="text-xs text-amber-800/80 mt-2">You need to pay for these changes.</p>
                     <div className="flex flex-col gap-3 mt-4">
                       <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Pay for Changes"}
+                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Modification"}
                       </button>
                       <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>
@@ -822,7 +971,7 @@ export default function BookingDetailsClient({ id }: { id: string }) {
                     <p className="text-sm font-bold text-blue-900 mb-1">No price difference</p>
                     <div className="flex flex-col gap-3 mt-4">
                       <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Save Changes"}
+                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Modification"}
                       </button>
                       <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>
@@ -832,17 +981,172 @@ export default function BookingDetailsClient({ id }: { id: string }) {
             )}
           </div>
           
+          {/* Digital Receipt & Payment History Card */}
+          <div className="bg-white rounded-[24px] border border-[#e8ddcf] shadow-sm p-6 sm:p-8 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="text-[#9a3300]" size={20} />
+                <h3 className="text-base font-black text-[#1d1d1d]">Digital Receipt</h3>
+              </div>
+              <span className="text-[10px] font-black text-[#828282] uppercase tracking-wider bg-[#fdfaf6] px-2.5 py-1 rounded-md border border-[#e8ddcf]">
+                REC-{booking.confirmationCode}
+              </span>
+            </div>
+
+            <p className="text-xs text-[#828282] leading-relaxed">
+              Official tax invoice & payment record for this booking. You can view or print your digital receipt anytime.
+            </p>
+
+            <div className="bg-[#fdfaf6] rounded-xl p-4 border border-[#e8ddcf] flex flex-col gap-2.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-[#828282] font-medium">Receipt No:</span>
+                <span className="font-bold text-[#1d1d1d]">REC-PS-{booking.confirmationCode}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#828282] font-medium">Payment Gateway:</span>
+                <span className="font-bold text-[#1d1d1d]">{booking.paymentMethod === "online" ? "PayHere (Card / Wallet)" : "Pay at Property"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#828282] font-medium">Transaction Status:</span>
+                <span className={`font-bold ${booking.paidInFull ? "text-emerald-600" : "text-amber-600"}`}>
+                  {booking.paidInFull ? "âœ“ SUCCESSFUL" : "PENDING"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-1">
+              <button
+                onClick={() => setShowReceiptModal(true)}
+                className="flex-1 py-3 px-4 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              >
+                <FileText size={14} /> View Receipt
+              </button>
+              <button
+                onClick={() => {
+                  setShowReceiptModal(true);
+                  setTimeout(() => window.print(), 300);
+                }}
+                className="py-3 px-4 rounded-xl border border-[#e8ddcf] hover:bg-[#fdfaf6] text-[#1d1d1d] text-xs font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Download size={14} /> Save PDF
+              </button>
+            </div>
+          </div>
 
         </div>
 
       </div>
+
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          DIGITAL RECEIPT MODAL (PRINTABLE TAX INVOICE)
+         â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {showReceiptModal && (
+        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-[600px] rounded-[28px] p-6 sm:p-10 shadow-2xl relative border border-[#e8ddcf] text-[#1d1d1d]">
+            
+            {/* Modal Header Controls */}
+            <div className="flex items-center justify-between mb-8 print:hidden">
+              <span className="text-xs font-black uppercase tracking-widest text-[#9a3300]">Official Digital Receipt</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-[#9a3300] text-white rounded-xl text-xs font-bold hover:bg-[#7a2800] transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download size={14} /> Print / Save PDF
+                </button>
+                <button
+                  onClick={() => setShowReceiptModal(false)}
+                  className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Receipt Body */}
+            <div className="space-y-6">
+              
+              {/* Brand Header */}
+              <div className="flex justify-between items-start border-b border-[#e8ddcf] pb-6">
+                <div>
+                  <h2 className="text-2xl font-black text-[#9a3300] tracking-tight">PrimeStay</h2>
+                  <p className="text-xs font-semibold text-[#828282]">Hospitality & Resort Services</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-wider block mb-1">
+                    {booking.paidInFull ? "âœ“ PAID IN FULL" : "PAYMENT PENDING"}
+                  </span>
+                  <p className="text-[11px] text-[#828282]">Receipt #: <strong className="text-[#1d1d1d]">REC-PS-{booking.confirmationCode}</strong></p>
+                  <p className="text-[11px] text-[#828282]">Date: <strong className="text-[#1d1d1d]">{new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong></p>
+                </div>
+              </div>
+
+              {/* Guest & Property Details */}
+              <div className="grid grid-cols-2 gap-4 bg-[#fdfaf6] p-4 rounded-2xl border border-[#e8ddcf] text-xs">
+                <div>
+                  <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Billed To</p>
+                  <p className="font-bold text-[#1d1d1d]">{booking.userEmail}</p>
+                  <p className="text-[#828282] mt-0.5">Confirmation: <strong>{booking.confirmationCode}</strong></p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-[#828282] uppercase tracking-wider mb-1">Property</p>
+                  <p className="font-bold text-[#1d1d1d]">{booking.property}</p>
+                  <p className="text-[#828282] mt-0.5">{booking.roomName} â€¢ {booking.nightsLabel}</p>
+                </div>
+              </div>
+
+              {/* Line Items Table */}
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-[#828282] border-b border-[#e8ddcf] pb-2">
+                  <span>Description</span>
+                  <span>Amount</span>
+                </div>
+
+                <div className="flex justify-between text-xs py-1">
+                  <span>Accommodation ({booking.roomName} - {booking.nightsLabel})</span>
+                  <span className="font-bold">{formatLKR(origBasePrice)}</span>
+                </div>
+
+                <div className="flex justify-between text-xs py-1 text-[#828282]">
+                  <span>Government Taxes & Service Fees</span>
+                  <span>{formatLKR(origTaxes)}</span>
+                </div>
+
+                {booking.discount > 0 && (
+                  <div className="flex justify-between text-xs py-1 text-emerald-600">
+                    <span>Promotional Discount</span>
+                    <span className="font-bold">-{formatLKR(booking.discount)}</span>
+                  </div>
+                )}
+
+                <div className="border-t-2 border-[#1d1d1d] pt-3 flex justify-between items-center text-sm font-black">
+                  <span>Total Amount Paid</span>
+                  <span className="text-[#9a3300] text-lg">{formatLKR(booking.totalPrice)}</span>
+                </div>
+              </div>
+
+              {/* Payment Details Footer */}
+              <div className="pt-4 border-t border-[#e8ddcf] flex justify-between items-center text-[11px] text-[#828282]">
+                <div className="flex items-center gap-1.5">
+                  <CreditCard size={14} className="text-[#9a3300]" />
+                  <span>Paid via <strong>{booking.paymentMethod === "online" ? "PayHere Online Checkout" : "Pay at Property"}</strong></span>
+                </div>
+                <span>ðŸ”’ SSL Encrypted & Verified</span>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
 
-function BedDouble({ size }: { size: number }) {
+function BedDouble({ size = 18, className }: { size?: number; className?: string }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/>
     </svg>
   )

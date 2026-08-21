@@ -7,6 +7,7 @@ export interface FinanceSummaryDto {
   platformCommission: number;
   commissionGrowth: string;
   totalPayouts: number;
+  allPayoutsCount: number;
   payoutGrowth: string;
   pendingRefunds: number;
   refundsGrowth: string;
@@ -26,13 +27,17 @@ export interface CommissionConfigDto {
 
 export interface TransactionDto {
   id: string;
-  bookingId: string;
-  guestName: string;
-  propertyName: string;
+  bookingId?: string;
+  referenceNumber?: string;
+  guestName?: string;
+  userName?: string;
+  propertyName?: string;
   amount: number;
-  date: string;
-  status: string;
-  paymentMethod: string;
+  date?: string;
+  createdAt?: string;
+  status?: string;
+  type?: string;
+  paymentMethod?: string;
 }
 
 export interface TransactionPageDto {
@@ -69,6 +74,7 @@ export interface PayoutDto {
   ownerName?: string;
   propertyId?: number;
   propertyName?: string;
+  propertyImage?: string;
   amount: number;
   hotelAmount?: number;
   foodAmount?: number;
@@ -78,6 +84,10 @@ export interface PayoutDto {
   period: string;
   status: string;
   bankDetails: string;
+  bankName?: string;
+  accountHolder?: string;
+  accountNumber?: string;
+  branchCode?: string;
   bankReference?: string;
   requestedAt?: string;
   processedAt?: string;
@@ -95,8 +105,8 @@ export const FinanceApi = {
   getSummary: (): Promise<FinanceSummaryDto> =>
     api.get('/admin/finance/summary').then((res) => res.data),
 
-  getRevenueTrend: (): Promise<RevenueTrendPointDto[]> =>
-    api.get('/admin/finance/revenue-trend').then((res) => res.data),
+  getRevenueTrend: (timeframe: string = 'month'): Promise<RevenueTrendPointDto[]> =>
+    api.get('/admin/finance/revenue-trend', { params: { timeframe } }).then((res) => res.data),
 
   getAllTransactions: (params: { search?: string; type?: string; from?: string; to?: string; page?: number; size?: number }): Promise<TransactionPageDto> =>
     api.get('/admin/finance/transactions', { params }).then((res) => res.data),
@@ -104,7 +114,7 @@ export const FinanceApi = {
   getTransactionById: (id: string): Promise<TransactionDto> =>
     api.get(`/admin/finance/transactions/${id}`).then((res) => res.data),
 
-  getAllRefunds: (params: { search?: string; status?: string; page?: number; size?: number }): Promise<RefundPageDto> =>
+  getAllRefunds: (params: { search?: string; status?: string; resolved?: boolean; page?: number; size?: number }): Promise<RefundPageDto> =>
     api.get('/admin/finance/refunds', { params }).then((res) => res.data),
 
   approveRefund: (id: string): Promise<RefundDto> =>
@@ -125,8 +135,8 @@ export const FinanceApi = {
   processPayout: (id: string, payload: { bankReference: string, commissionRate?: number }): Promise<PayoutDto> =>
     api.put(`/admin/finance/payouts/${id}/process`, payload).then((res) => res.data),
 
-  rejectPayout: (id: string): Promise<PayoutDto> =>
-    api.put(`/admin/finance/payouts/${id}/reject`).then((res) => res.data),
+  rejectPayout: (id: string, payload: { adminNote: string }): Promise<PayoutDto> =>
+    api.put(`/admin/finance/payouts/${id}/reject`, payload).then((res) => res.data),
 
   getCommissionRate: (): Promise<CommissionConfigDto> =>
     api.get('/admin/finance/commission').then((res) => res.data),

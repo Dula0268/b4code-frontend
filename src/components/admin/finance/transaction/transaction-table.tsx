@@ -13,32 +13,33 @@ import { useAdminFinanceStore } from "@/store/admin/finance/finance.store";
 
 // ─── Status badge ───────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { bg: string; text: string }> = {
-    Completed: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]" },
-    Pending: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]" },
-    Failed: { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]" },
-    Refunded: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]" },
+  const map: Record<string, { bg: string; text: string; label: string }> = {
+    BOOKING_PAYMENT: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]", label: "Payment" },
+    PAYOUT: { bg: "bg-[#FFFBEB]", text: "text-[#D97706]", label: "Payout" },
+    COMMISSION: { bg: "bg-[#EEF2FF]", text: "text-[#4F46E5]", label: "Commission" },
+    REFUND: { bg: "bg-[#FEF2F2]", text: "text-[#DC2626]", label: "Refund" },
   };
-  const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]" };
+  const s = map[status] || { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: status };
 
   return (
     <span
       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}
     >
-      {status}
+      {s.label}
     </span>
   );
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
-function getInitials(name: string) {
+function getInitials(name?: string) {
   if (!name) return "??";
-  const parts = name.split(" ");
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2 && parts[0][0] && parts[1][0]) return (parts[0][0] + parts[1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
 }
 
-function getColorForName(name: string) {
+function getColorForName(name?: string) {
+  if (!name) return "#C05621";
   const colors = ["#C05621", "#2563EB", "#7C3AED", "#059669", "#DC2626", "#0891B2", "#CA8A04"];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -52,7 +53,7 @@ export default function TransactionTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [statusFilter, setStatusFilter] = useState("All Types");
   const perPage = 10;
 
   const { transactions, transactionsTotalElements, transactionsTotalPages, fetchTransactions, transactionsLoading } = useAdminFinanceStore();
@@ -69,7 +70,7 @@ export default function TransactionTable() {
       page: currentPage - 1,
       size: perPage,
       search: debouncedSearch,
-      type: statusFilter === "All Status" ? undefined : statusFilter.toUpperCase()
+      type: statusFilter === "All Types" ? undefined : statusFilter
     });
   }, [fetchTransactions, currentPage, debouncedSearch, statusFilter]);
 
@@ -109,7 +110,7 @@ export default function TransactionTable() {
         {/* Status */}
         <div className="min-w-35">
           <label className="block text-xs font-semibold text-[#9E7B6A] mb-1.5">
-            Status
+            Type
           </label>
           <select 
             value={statusFilter}
@@ -119,11 +120,11 @@ export default function TransactionTable() {
             }}
             className="w-full px-4 py-2.5 rounded-xl border border-[#E8DDD8] text-sm text-[#1A1A1A] bg-white focus:outline-none focus:ring-2 focus:ring-[#C05621]/20 focus:border-[#C05621] transition appearance-none cursor-pointer"
           >
-            <option>All Status</option>
-            <option>Completed</option>
-            <option>Pending</option>
-            <option>Failed</option>
-            <option>Refunded</option>
+            <option value="All Types">All Types</option>
+            <option value="BOOKING_PAYMENT">Payment</option>
+            <option value="PAYOUT">Payout</option>
+            <option value="COMMISSION">Commission</option>
+            <option value="REFUND">Refund</option>
           </select>
         </div>
       </div>
@@ -146,7 +147,7 @@ export default function TransactionTable() {
                 Amount
               </th>
               <th className="text-left px-6 py-4 text-[11px] font-bold text-[#9E7B6A] uppercase tracking-wider">
-                Status
+                Type
               </th>
             </tr>
           </thead>
@@ -168,13 +169,13 @@ export default function TransactionTable() {
               >
                 {/* ID + date */}
                 <td className="px-6 py-4">
-                  <p className="text-sm font-bold text-[#1A1A1A]">#{tx.bookingId}</p>
-                  <p className="text-[11px] text-[#9E7B6A] mt-0.5">{new Date(tx.date).toLocaleDateString()}</p>
+                  <p className="text-sm font-bold text-[#1A1A1A]">#{tx.bookingId || tx.referenceNumber || tx.id}</p>
+                  <p className="text-[11px] text-[#9E7B6A] mt-0.5">{tx.date || tx.createdAt ? new Date(tx.date || tx.createdAt || "").toLocaleDateString() : "-"}</p>
                 </td>
 
                 {/* Property */}
                 <td className="px-6 py-4 text-sm text-[#1A1A1A]">
-                  {tx.propertyName}
+                  {tx.propertyName || "System"}
                 </td>
 
                 {/* Guest */}
@@ -182,24 +183,24 @@ export default function TransactionTable() {
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-                      style={{ backgroundColor: getColorForName(tx.guestName) }}
+                      style={{ backgroundColor: getColorForName(tx.guestName || tx.userName || "System") }}
                     >
-                      {getInitials(tx.guestName)}
+                      {getInitials(tx.guestName || tx.userName || "System")}
                     </div>
                     <span className="text-sm text-[#1A1A1A]">
-                      {tx.guestName}
+                      {tx.guestName || tx.userName || "System"}
                     </span>
                   </div>
                 </td>
 
                 {/* Amount */}
                 <td className="px-6 py-4 text-sm font-semibold text-[#1A1A1A]">
-                  LKR {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  LKR {(tx.amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
 
-                {/* Status */}
+                {/* Status/Type */}
                 <td className="px-6 py-4">
-                  <StatusBadge status={tx.status} />
+                  <StatusBadge status={tx.type || tx.status || "Unknown"} />
                 </td>
               </tr>
             ))}

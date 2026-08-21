@@ -83,7 +83,7 @@
     --grid-gutter: 30px;
 
     /* Desktop HD */
-    --grid-desktop-hd-frame: 1440px;
+    --grid-desktop-hd-frame: 1680px;
     --grid-desktop-hd-cols: 12;
     --grid-desktop-hd-colw: 65px;
 
@@ -346,8 +346,11 @@ input[type="password"]::-ms-clear {
   display: none;
 }
 
-input[type="password"]::-webkit-credentials-auto-fill-button {
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-strong-password-auto-fill-button,
+input[type="password"]::-webkit-textfield-decoration-container {
   visibility: hidden;
   display: none !important;
   pointer-events: none;
-}
+  position: absolute;
+}

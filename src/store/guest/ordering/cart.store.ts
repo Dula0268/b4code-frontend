@@ -14,6 +14,8 @@ export type MenuItem = {
   category: string;
   variants?: { id: string; label: string; price: number }[];
   modifiers?: { id: string; name: string; options: { label: string; price: number }[] }[];
+  avgRating?: number;
+  reviewCount?: number;
 };
 
 type CartLine = {
@@ -22,6 +24,44 @@ type CartLine = {
   selectedVariantId?: string;
   selectedModifiers?: { modifierId: string; optionLabel: string }[];
 };
+
+/**
+ * Resolves the correct unit price for a cart line, taking the selected
+ * variant (overrides base price) and selected modifiers (additive) into
+ * account. This is the single source of truth for line pricing — use it
+ * anywhere a line's price is displayed or sent to the backend instead of
+ * duplicating this logic or falling back to `item.price`/`item.priceLkr`.
+ */
+export function getLineUnitPrice(line: {
+  item: MenuItem;
+  selectedVariantId?: string;
+  selectedModifiers?: { modifierId: string; optionLabel: string }[];
+}): number {
+  let price = line.item.price;
+
+  // Variant price overrides base price
+  if (line.selectedVariantId && line.item.variants) {
+    const variant = line.item.variants.find((v) => v.id === line.selectedVariantId);
+    if (variant) {
+      price = variant.price;
+    }
+  }
+
+  // Add modifier option prices
+  if (line.selectedModifiers && line.item.modifiers) {
+    line.selectedModifiers.forEach((sm) => {
+      const modifier = line.item.modifiers?.find((m) => m.id === sm.modifierId);
+      if (modifier) {
+        const option = modifier.options.find((o) => o.label === sm.optionLabel);
+        if (option) {
+          price += option.price;
+        }
+      }
+    });
+  }
+
+  return price;
+}
 
 type CartState = {
   lines: Record<string, CartLine>;
@@ -115,38 +155,13 @@ export const useCartStore = create<CartState>()(
   clear: () => set({ lines: {} }),
 
   subtotal: () =>
-    Object.values(get().lines).reduce((sum, l) => {
-      let price = l.item.price;
-
-      // Variant price overrides base price
-      if (l.selectedVariantId && l.item.variants) {
-        const variant = l.item.variants.find((v) => v.id === l.selectedVariantId);
-        if (variant) {
-          price = variant.price;
-        }
-      }
-
-      // Add modifier option prices
-      if (l.selectedModifiers && l.item.modifiers) {
-        l.selectedModifiers.forEach((sm) => {
-          const modifier = l.item.modifiers?.find((m) => m.id === sm.modifierId);
-          if (modifier) {
-            const option = modifier.options.find((o) => o.label === sm.optionLabel);
-            if (option) {
-              price += option.price;
-            }
-          }
-        });
-      }
-
-      return sum + price * l.qty;
-    }, 0),
+    Object.values(get().lines).reduce((sum, l) => sum + getLineUnitPrice(l) * l.qty, 0),
 
   serviceCharge: () => Math.round(get().subtotal() * get().serviceChargeRate),
 
-  tax: () => Math.round(get().subtotal() * get().taxRate),
+  tax: () => 0, // Deprecated: Tax removed completely
 
-  total: () => get().subtotal() + get().serviceCharge() + get().tax(),
+  total: () => get().subtotal() + get().serviceCharge(),
 
   itemCount: () => Object.values(get().lines).reduce((sum, l) => sum + l.qty, 0),
 

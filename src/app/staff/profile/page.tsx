@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Lock, UploadCloud, ShieldCheck, Mail, Phone, Briefcase, Building } from "lucide-react";
+import { CheckCircle2, Lock, UploadCloud, User as UserIcon, Phone, Briefcase, Building } from "lucide-react";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { imageApi } from "@/api/image/image.api";
+import { toast } from "sonner";
+import { validateUploadFile } from "@/lib/file-validator";
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuthStore();
@@ -24,6 +26,8 @@ export default function ProfilePage() {
   const [isUploadingId, setIsUploadingId] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [propertyName, setPropertyName] = useState<string>("");
+  const [idPreviewUrl, setIdPreviewUrl] = useState<string | null>(null);
+  const [isIdDragging, setIsIdDragging] = useState(false);
 
   useEffect(() => {
     const pid = user?.propertyId;
@@ -37,7 +41,6 @@ export default function ProfilePage() {
     }
   }, [user?.propertyId]);
 
-  // Sync form data with user store data
   useEffect(() => {
     if (user) {
       setFormData({
@@ -45,17 +48,32 @@ export default function ProfilePage() {
         lastName: user.profile?.lastName || "",
         email: user.email || "",
         phone: user.profile?.phone || "",
-        staffRole: user.profile?.staffRole || "Staff",
-        assignedProperty: propertyName || (user.propertyId ? "Property #" + user.propertyId : "Unassigned"),
+        staffRole: user.profile?.staffRole || "Operational Staff",
+        assignedProperty: propertyName || (user.propertyId ? "Property #" + user.propertyId : "Primary Hotel Branch"),
         avatarUrl: user.profile?.avatarUrl || "",
         nationalIdUrl: user.profile?.nationalIdUrl || "",
       });
+      if (user.profile?.nationalIdUrl) {
+        setIdPreviewUrl(user.profile.nationalIdUrl);
+      }
     }
   }, [user, propertyName]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processIdFile = async (file: File) => {
+    const validation = validateUploadFile(file, {
+      maxSizeMB: 5,
+      allowedTypes: ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"],
+    });
+
+    if (!validation.valid) {
+      toast.error(validation.error || "Invalid document format");
+      return;
+    }
+
+    if (file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(file);
+      setIdPreviewUrl(url);
+    }
 
     setIsUploadingId(true);
 
@@ -65,12 +83,38 @@ export default function ProfilePage() {
         ...prev,
         nationalIdUrl: result.url
       }));
+      toast.success("Identity document uploaded successfully!");
     } catch (err) {
       console.error("Upload failed:", err);
-      alert("Failed to upload image. Please try again.");
+      toast.error("Failed to upload identity document.");
     } finally {
       setIsUploadingId(false);
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processIdFile(file);
+  };
+
+  const handleIdDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsIdDragging(true);
+  };
+
+  const handleIdDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsIdDragging(false);
+  };
+
+  const handleIdDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsIdDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processIdFile(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,9 +133,11 @@ export default function ProfilePage() {
 
       setIsSaving(false);
       setShowSuccess(true);
+      toast.success("Staff profile details saved successfully!");
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to update staff profile.");
       setIsSaving(false);
     }
   };
@@ -104,186 +150,188 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 mb-2">Personal Details</h1>
-        <p className="text-neutral-500 text-[15px]">Manage your personal information and official identification documents.</p>
+    <div className="p-4 sm:p-5 max-w-4xl">
+      {/* Page Title Header */}
+      <div className="mb-4 pb-3 border-b border-[#f3eee8]">
+        <div className="flex items-center gap-1.5 text-xs font-black text-[#953002] uppercase tracking-wider mb-0.5">
+          <UserIcon size={13} />
+          <span>Operational Staff Profile</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-black text-[#1c1917] tracking-tight">Personal & Staff Details</h1>
+        <p className="text-[#78716c] text-xs mt-0.5">Manage your staff contact info and official employment verification identity.</p>
       </div>
 
       {showSuccess && (
-        <div className="mb-8 bg-[#f0fdf4] border border-[#bbf7d0] text-[#15803d] px-5 py-4 rounded-xl flex items-center gap-3 shadow-sm animate-in fade-in slide-in-from-top-2">
-          <CheckCircle2 className="text-[#22c55e]" size={20} />
-          <p className="font-medium text-sm">Your profile has been successfully updated.</p>
+        <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2 shadow-xs">
+          <CheckCircle2 className="text-emerald-500 shrink-0" size={18} />
+          <div>
+            <p className="text-xs font-bold">Staff profile updated successfully!</p>
+            <p className="text-[11px] text-emerald-600 font-medium">Your changes have been updated across your shift operations.</p>
+          </div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        
-        {/* SECTION 1: Personal Information */}
-        <div className="bg-white rounded-2xl border border-neutral-200/60 shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-neutral-100 bg-neutral-50/50 flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-neutral-800">Basic Information</h2>
-          </div>
-          
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">First Name</label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-extrabold text-[#44403c] uppercase tracking-wider">First Name</label>
+            <div className="relative">
               <Input
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="h-12 bg-white border-neutral-200 text-neutral-900 focus-visible:ring-[#953002]/30 text-[15px] rounded-xl"
+                className="h-10 bg-[#faf7f4] border-[#e7e5e4] focus-visible:ring-[#953002]/20 font-semibold text-xs rounded-lg pl-9"
               />
+              <UserIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8a29e]" />
             </div>
-            
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">Last Name</label>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-extrabold text-[#44403c] uppercase tracking-wider">Last Name</label>
+            <div className="relative">
               <Input
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="h-12 bg-white border-neutral-200 text-neutral-900 focus-visible:ring-[#953002]/30 text-[15px] rounded-xl"
+                className="h-10 bg-[#faf7f4] border-[#e7e5e4] focus-visible:ring-[#953002]/20 font-semibold text-xs rounded-lg pl-9"
               />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">Phone Number</label>
-              <div className="relative">
-                <Input
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="h-12 bg-white border-neutral-200 pl-11 text-neutral-900 focus-visible:ring-[#953002]/30 text-[15px] rounded-xl"
-                />
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-              </div>
+              <UserIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8a29e]" />
             </div>
           </div>
         </div>
 
-        {/* SECTION 2: Official Identification */}
-        <div className="bg-white rounded-2xl border border-neutral-200/60 shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-neutral-100 bg-neutral-50/50 flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-neutral-800">Official Identification</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-extrabold text-[#44403c] uppercase tracking-wider">Email Address</label>
+            <div className="relative">
+              <Input
+                name="email"
+                type="email"
+                value={formData.email}
+                disabled
+                className="h-10 bg-[#f4f2ef] border-[#e7e5e4] text-[#78716c] font-semibold text-xs rounded-lg pl-9 pr-9"
+              />
+              <UserIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8a29e]" />
+              <Lock size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a8a29e]" />
+            </div>
+            <p className="text-[10px] text-[#a8a29e] mt-0.5 font-medium">Work email address is managed by hotel admin.</p>
           </div>
-          
-          <div className="p-6">
-            <div className="relative max-w-xl">
-              {formData.nationalIdUrl ? (
-                <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden border border-neutral-200 group bg-neutral-100">
-                  <img src={formData.nationalIdUrl} alt="National ID" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <label className="cursor-pointer bg-white text-neutral-900 px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-neutral-50 transition-colors shadow-lg">
-                      Upload New ID
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*,application/pdf"
-                        onChange={handleFileUpload}
-                      />
-                    </label>
-                  </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-extrabold text-[#44403c] uppercase tracking-wider">Phone Number</label>
+            <div className="relative">
+              <Input
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="+94 7X XXX XXXX"
+                className="h-10 bg-[#faf7f4] border-[#e7e5e4] focus-visible:ring-[#953002]/20 font-semibold text-xs rounded-lg pl-9"
+              />
+              <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8a29e]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-extrabold text-[#44403c] uppercase tracking-wider">Staff Role</label>
+            <div className="relative">
+              <Input
+                name="staffRole"
+                value={formData.staffRole}
+                disabled
+                className="h-10 bg-[#f4f2ef] border-[#e7e5e4] text-[#78716c] font-semibold text-xs rounded-lg pl-9"
+              />
+              <Briefcase size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8a29e]" />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-extrabold text-[#44403c] uppercase tracking-wider">Assigned Property</label>
+            <div className="relative">
+              <Input
+                name="assignedProperty"
+                value={formData.assignedProperty}
+                disabled
+                className="h-10 bg-[#f4f2ef] border-[#e7e5e4] text-[#78716c] font-semibold text-xs rounded-lg pl-9"
+              />
+              <Building size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8a29e]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] font-extrabold text-[#44403c] uppercase tracking-wider">Government Identity Document</label>
+            <span className="text-[10px] text-[#953002] font-semibold bg-[#953002]/5 px-2 py-0.5 rounded border border-[#953002]/10">
+              Official Identity Verification
+            </span>
+          </div>
+          <div className="relative">
+            {(idPreviewUrl || formData.nationalIdUrl) ? (
+              <div className="relative w-full h-32 rounded-xl overflow-hidden border border-[#e5e7eb] group shadow-sm">
+                <img src={idPreviewUrl || formData.nationalIdUrl} alt="National ID" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center backdrop-blur-xs">
+                  <label className="cursor-pointer bg-white text-[#1c1917] px-4 py-2 rounded-lg font-bold text-xs hover:bg-neutral-100 transition-all shadow-md active:scale-95">
+                    Change ID Document
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*,application/pdf"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
                 </div>
-              ) : (
-                <label className="border-2 border-dashed border-neutral-300 rounded-xl flex flex-col items-center justify-center py-14 px-6 bg-neutral-50/50 cursor-pointer hover:bg-neutral-50 transition-colors relative group">
-                  {isUploadingId ? (
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 border-4 border-[#953002]/30 border-t-[#953002] rounded-full animate-spin mb-4"></div>
-                      <p className="text-sm font-semibold text-[#953002]">Uploading document securely...</p>
+              </div>
+            ) : (
+              <label
+                onDragOver={handleIdDragOver}
+                onDragLeave={handleIdDragLeave}
+                onDrop={handleIdDrop}
+                className={`border-2 border-dashed rounded-xl flex flex-row items-center justify-center py-4 px-5 gap-3 cursor-pointer transition-all relative ${
+                  isIdDragging
+                    ? "border-[#953002] bg-[#953002]/5 ring-2 ring-[#953002]/10"
+                    : "border-[#e5e7eb] bg-[#faf7f4] hover:bg-[#f3eee8] hover:border-[#953002]/40"
+                }`}
+              >
+                {isUploadingId ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-[#953002] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-xs font-bold text-[#953002]">Uploading document...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-9 h-9 bg-white rounded-lg shadow-2xs border border-[#e5e7eb] flex items-center justify-center text-[#953002] shrink-0">
+                      <UploadCloud size={18} />
                     </div>
-                  ) : (
-                    <>
-                      <div className="w-14 h-14 bg-white rounded-full shadow-sm border border-neutral-200 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                        <UploadCloud size={24} className="text-neutral-500" />
-                      </div>
-                      <p className="font-semibold text-[15px] text-neutral-800 mb-1">Upload Government ID</p>
-                      <p className="text-sm text-neutral-500 text-center max-w-[260px]">
-                        SVG, PNG, JPG or PDF. Maximum file size of 5MB.
-                      </p>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*,application/pdf"
-                    onChange={handleFileUpload}
-                    disabled={isUploadingId}
-                  />
-                </label>
-              )}
-            </div>
+                    <div>
+                      <p className="font-bold text-xs text-[#1c1917]">Click to upload or drag & drop Government ID</p>
+                      <p className="text-[10px] text-[#9ca3af]">JPG, PNG, WebP or PDF (max 5MB)</p>
+                    </div>
+                  </>
+                )}
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*,application/pdf"
+                  onChange={handleFileUpload}
+                  disabled={isUploadingId}
+                />
+              </label>
+            )}
           </div>
         </div>
 
-        {/* SECTION 3: Account & Employment Details (Read-only) */}
-        <div className="bg-white rounded-2xl border border-neutral-200/60 shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-neutral-100 bg-[#fdfaf8] flex items-center gap-2">
-            <ShieldCheck className="text-[#953002]" size={20} />
-            <h2 className="text-lg font-semibold text-[#953002]">Account & Employment Details</h2>
-          </div>
-          
-          <div className="p-6 grid grid-cols-1 gap-5">
-            <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-4">
-              <div className="mt-1 bg-white p-2 rounded-lg border border-neutral-200 shadow-sm">
-                <Mail className="text-neutral-500" size={18} />
-              </div>
-              <div className="flex-1">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1 block">Registered Email</label>
-                <div className="flex items-center justify-between">
-                  <p className="text-[15px] font-medium text-neutral-800">{formData.email}</p>
-                  <Lock size={14} className="text-neutral-300" />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-4">
-                <div className="mt-1 bg-white p-2 rounded-lg border border-neutral-200 shadow-sm">
-                  <Briefcase className="text-neutral-500" size={18} />
-                </div>
-                <div className="flex-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1 block">Staff Role</label>
-                  <div className="flex items-center justify-between">
-                    <p className="text-[15px] font-medium text-neutral-800">{formData.staffRole}</p>
-                    <Lock size={14} className="text-neutral-300" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-neutral-50/80 border border-neutral-100 flex items-start gap-4">
-                <div className="mt-1 bg-white p-2 rounded-lg border border-neutral-200 shadow-sm">
-                  <Building className="text-neutral-500" size={18} />
-                </div>
-                <div className="flex-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-1 block">Assigned Property</label>
-                  <div className="flex items-center justify-between">
-                    <p className="text-[15px] font-medium text-neutral-800">{formData.assignedProperty}</p>
-                    <Lock size={14} className="text-neutral-300" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <p className="text-xs text-neutral-400 mt-2 px-2">
-              Employment details and email address are locked by the property administrator. Contact support if changes are required.
-            </p>
-          </div>
-        </div>
-
-        {/* Action Bar */}
-        <div className="flex items-center justify-end pt-4 pb-12">
+        <div className="pt-4 border-t border-[#f3eee8] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-[11px] text-[#9ca3af] max-w-md leading-tight">
+            🛡️ Staff identity credentials are preserved under confidential employee privacy standard.
+          </p>
           <Button
             type="submit"
-            className="bg-[#953002] hover:bg-[#7a2600] text-white px-10 h-12 text-[15px] font-bold rounded-xl shadow-md shadow-[#953002]/20 transition-all hover:shadow-lg hover:-translate-y-0.5"
+            className="w-full sm:w-auto bg-gradient-to-r from-[#953002] to-[#c2410c] hover:from-[#7a2600] hover:to-[#953002] text-white px-7 h-10 font-bold text-xs rounded-lg shadow-md shadow-[#953002]/20 active:scale-98 transition-all"
             disabled={isSaving || isUploadingId}
           >
-            {isSaving ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Saving Updates...
-              </div>
-            ) : "Save Changes"}
+            {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>

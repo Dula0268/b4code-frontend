@@ -15,8 +15,10 @@ import {
   Trash2,
   Ban,
   ShieldCheck,
+  Send,
 } from "lucide-react";
 import AdminPageLayout from "@/components/admin/admin-page-layout";
+import { UsersApi } from "@/api/admin/users.api";
 import {
   useAdminUsersStore,
   type User,
@@ -182,93 +184,78 @@ function RowMenu({
   );
 }
 
-// ─── Add User Modal ───────────────────────────────────────────────────────────
-function AddUserModal({
+// ─── Invite User Drawer ───────────────────────────────────────────────────────────
+function InviteUserDrawer({
   onClose,
-  onSave,
+  onInvite,
   saving,
 }: {
   onClose: () => void;
-  onSave: (data: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    role: string;
-    password: string;
-  }) => void;
+  onInvite: (data: { email: string; role: string }) => void;
   saving: boolean;
 }) {
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
     email: "",
-    role: "GUEST",
-    password: "",
+    role: "STAFF",
   });
-  const roles = ["OWNER", "STAFF", "GUEST"];
+  const roles = ["OWNER", "STAFF", "ADMIN", "GUEST"];
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[440px] p-8 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-[var(--gray-3)] hover:text-[var(--black-2)] bg-transparent border-none cursor-pointer"
-        >
-          <X size={18} />
-        </button>
-        <h2 className="text-[18px] font-extrabold text-[var(--black-2)] mb-6">
-          Add New User
-        </h2>
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 z-[300] bg-black/40 transition-opacity" 
+        onClick={onClose}
+      />
+      
+      {/* Drawer */}
+      <div className="fixed top-0 right-0 h-full w-[400px] bg-white shadow-2xl z-[301] flex flex-col transition-transform duration-300 transform translate-x-0">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+          <h2 className="text-[18px] font-extrabold text-[var(--black-2)] m-0 flex items-center gap-2">
+            <Send size={18} className="text-[var(--brand-primary)]" />
+            Invite New User
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-[var(--gray-3)] hover:text-[var(--black-2)] bg-transparent border-none cursor-pointer p-1"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-        <div className="flex flex-col gap-4">
-          {[
-            {
-              label: "First Name",
-              key: "firstName",
-              type: "text",
-              placeholder: "John",
-            },
-            {
-              label: "Last Name",
-              key: "lastName",
-              type: "text",
-              placeholder: "Doe",
-            },
-            {
-              label: "Email",
-              key: "email",
-              type: "email",
-              placeholder: "john@example.com",
-            },
-            {
-              label: "Password",
-              key: "password",
-              type: "password",
-              placeholder: "Min 6 characters",
-            },
-          ].map(({ label, key, type, placeholder }) => (
-            <div key={key}>
-              <label className="block text-[13px] font-semibold text-[var(--gray-2)] mb-1">
-                {label}
-              </label>
-              <input
-                type={type}
-                placeholder={placeholder}
-                value={form[key as keyof typeof form]}
-                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                className="w-full px-3 py-[9px] rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] outline-none box-border"
-              />
-            </div>
-          ))}
+        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
+          <p className="text-sm text-[var(--gray-3)] m-0 leading-relaxed">
+            Send an invitation link to a new user. They will be able to set their own name, password, and personal details securely.
+          </p>
 
           <div>
             <label className="block text-[13px] font-semibold text-[var(--gray-2)] mb-1">
-              Role
+              Email Address
+            </label>
+            <input
+              type="email"
+              placeholder="user@example.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full px-4 py-[10px] rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] outline-none box-border focus:border-[var(--brand-primary)] transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-semibold text-[var(--gray-2)] mb-1">
+              Assign Role
             </label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full px-3 py-[9px] rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] outline-none bg-white"
+              className="w-full px-4 py-[10px] rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] outline-none bg-white focus:border-[var(--brand-primary)] transition-colors cursor-pointer appearance-none"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 12px center",
+                paddingRight: "36px",
+              }}
             >
               {roles.map((r) => (
                 <option key={r} value={r}>
@@ -279,28 +266,28 @@ function AddUserModal({
           </div>
         </div>
 
-        <div className="flex gap-3 mt-6">
+        <div className="border-t border-gray-100 px-6 py-5 flex gap-3 bg-gray-50/50">
           <button
             onClick={onClose}
-            className="flex-1 py-[10px] rounded-[10px] border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] font-semibold cursor-pointer hover:bg-[var(--gray-6)]"
+            className="flex-1 py-[10px] rounded-xl border border-[var(--gray-5)] bg-white text-[13px] text-[var(--gray-2)] font-semibold cursor-pointer hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
           <button
-            disabled={saving}
-            onClick={() => onSave(form as Parameters<typeof onSave>[0])}
-            className="flex-1 py-[10px] rounded-[10px] bg-[var(--brand-primary)] text-white text-[13px] font-semibold cursor-pointer hover:bg-[var(--primary-hover)] disabled:opacity-60 flex items-center justify-center gap-2"
+            disabled={saving || !form.email}
+            onClick={() => onInvite(form)}
+            className="flex-1 py-[10px] rounded-xl bg-[var(--brand-primary)] text-white text-[13px] font-semibold cursor-pointer hover:bg-[var(--primary-hover)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm transition-all"
           >
             {saving ? (
               <Loader2 size={14} className="animate-spin" />
             ) : (
-              <Check size={14} />
+              <Send size={14} />
             )}
-            {saving ? "Saving…" : "Create User"}
+            {saving ? "Sending…" : "Send Invite"}
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -390,11 +377,12 @@ export default function UsersManagementPage() {
   const [roleOpen, setRoleOpen] = useState(false);
 
   // ── Modal state ──
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showInviteDrawer, setShowInviteDrawer] = useState(false);
+  const [inviting, setInviting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   const PAGE_SIZE = 6;
-  const roles = ["All", "OWNER", "STAFF", "GUEST"];
+  const roles = ["All", "OWNER", "STAFF", "ADMIN", "GUEST"];
 
   // ── Initial fetch ──
   useEffect(() => {
@@ -434,24 +422,24 @@ export default function UsersManagementPage() {
     setDeleteTarget(null);
   }
 
-  async function handleCreateUser(data: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    role: string;
-    password: string;
-  }) {
+  async function handleInviteUser(data: { email: string; role: string }) {
     try {
-      await createUser({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        role: data.role as import("@/api/admin/users.api").UserRole,
-        password: data.password,
-      });
-      setShowAddModal(false);
-    } catch {
-      // error displayed via store
+      setInviting(true);
+      await UsersApi.invite(data.email, data.role as import("@/api/admin/users.api").UserRole);
+      setShowInviteDrawer(false);
+      // Reload table
+      fetchUsers(
+        search || undefined,
+        roleFilter === "All" ? undefined : roleFilter,
+        undefined,
+        0,
+      );
+    } catch (err: any) {
+      // Extract backend error message if available
+      const errorMessage = err.response?.data?.message || err.message || "Failed to send invite";
+      alert(errorMessage);
+    } finally {
+      setInviting(false);
     }
   }
 
@@ -473,11 +461,11 @@ export default function UsersManagementPage() {
             </p>
           </div>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => setShowInviteDrawer(true)}
             className="flex items-center gap-2 px-5 py-[10px] rounded-[10px] bg-[var(--brand-primary)] text-white border-none cursor-pointer text-sm font-semibold shadow-[0_2px_8px_rgba(149,48,2,0.25)] transition-colors hover:bg-[var(--primary-hover)]"
           >
-            <UserPlus size={16} />
-            Add New User
+            <Send size={16} />
+            Invite User
           </button>
         </div>
 
@@ -720,12 +708,12 @@ export default function UsersManagementPage() {
         </div>
       </div>
 
-      {/* ── Add User Modal ── */}
-      {showAddModal && (
-        <AddUserModal
-          onClose={() => setShowAddModal(false)}
-          onSave={handleCreateUser}
-          saving={actionLoading}
+      {/* ── Invite User Drawer ── */}
+      {showInviteDrawer && (
+        <InviteUserDrawer
+          onClose={() => setShowInviteDrawer(false)}
+          onInvite={handleInviteUser}
+          saving={inviting}
         />
       )}
 

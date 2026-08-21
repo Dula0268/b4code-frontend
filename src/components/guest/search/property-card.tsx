@@ -44,7 +44,7 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
         >
             <article className="h-full flex flex-col bg-[var(--bg)] rounded-[var(--radius-lg)] overflow-hidden border border-[var(--border)] shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] sm:active:scale-100">
                 {/* Image */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-[var(--gray-5)]">
+                <div className="relative aspect-[3/2] sm:aspect-[4/3] overflow-hidden bg-[var(--gray-5)]">
                     {!imgError ? (
                         <Image
                             src={listing.imageSrc}
@@ -70,17 +70,17 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                 </div>
 
                 {/* Content */}
-                <div className="p-3 sm:p-4 flex flex-col flex-1 gap-1.5">
+                <div className="p-2.5 flex flex-col flex-1 gap-1">
 
                     {/* Title + Rating */}
-                    <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-[14px] sm:text-[15px] font-semibold text-[var(--fg)] leading-snug line-clamp-2 sm:line-clamp-1">
+                    <div className="flex items-start justify-between gap-1.5">
+                        <h3 className="text-[13px] sm:text-[14px] font-semibold text-[var(--fg)] leading-snug line-clamp-1">
                             {listing.title}
                         </h3>
                         {listing.rating > 0 && (
                             <div className="flex items-center gap-0.5 flex-shrink-0">
-                                <Star size={12} className="text-[var(--brand-secondary)]" fill="currentColor" />
-                                <span className="text-[12px] sm:text-[13px] font-semibold text-[var(--fg)]">
+                                <Star size={11} className="text-[var(--brand-secondary)]" fill="currentColor" />
+                                <span className="text-[11px] sm:text-[12px] font-semibold text-[var(--fg)]">
                                     {listing.rating.toFixed(2)}
                                 </span>
                             </div>
@@ -109,19 +109,19 @@ export default function PropertyCard({ listing }: { listing: PropertyListing }) 
                             ))}
                         </div>
                     )}                    {/* Price Range */}
-                    <div className="border-t border-[var(--border)] mt-auto pt-2 flex flex-col">
+                    <div className="border-t border-[var(--border)] mt-auto pt-1.5 flex flex-col">
                         {maxPrice > listing.pricePerNight ? (
                             <>
-                                <span className="text-[10px] sm:text-[11px] text-[var(--muted)] uppercase tracking-wide font-semibold mb-0.5">Price Range</span>
-                                <p className="text-[14px] sm:text-[15px] font-bold text-[var(--fg)]">
-                                    {formatLKR(listing.pricePerNight)} <span className="text-[12px] font-medium text-[var(--muted)]">-</span> {formatLKR(maxPrice)}
+                                <span className="text-[9px] sm:text-[10px] text-[var(--muted)] uppercase tracking-wide font-semibold mb-0.5">Price Range</span>
+                                <p className="text-[13px] sm:text-[14px] font-bold text-[var(--fg)]">
+                                    {formatLKR(listing.pricePerNight)} <span className="text-[11px] font-medium text-[var(--muted)]">-</span> {formatLKR(maxPrice)}
                                 </p>
                             </>
                         ) : (
                             <>
-                                <span className="text-[10px] sm:text-[11px] text-[var(--muted)] uppercase tracking-wide font-semibold mb-0.5">Price</span>
-                                <p className="text-[14px] sm:text-[15px] font-bold text-[var(--fg)]">
-                                    {formatLKR(listing.pricePerNight)} <span className="text-[12px] font-medium text-[var(--muted)]">/ night</span>
+                                <span className="text-[9px] sm:text-[10px] text-[var(--muted)] uppercase tracking-wide font-semibold mb-0.5">Price</span>
+                                <p className="text-[13px] sm:text-[14px] font-bold text-[var(--fg)]">
+                                    {formatLKR(listing.pricePerNight)} <span className="text-[11px] font-medium text-[var(--muted)]">/ night</span>
                                 </p>
                             </>
                         )}

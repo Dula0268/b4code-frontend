@@ -6,15 +6,19 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: false, // Force enable in development for testing
-  register: true,
+  disable: process.env.NODE_ENV === 'development', // Disable in dev for faster compilation
+  register: false,
   cacheOnFrontEndNav: true,
   reloadOnOnline: true,
+  scope: "/staff",
 });
 
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
+  },
+  experimental: {
+    optimizePackageImports: ["lucide-react", "date-fns"],
   },
   images: {
     remotePatterns: [

@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import UserAvatarDropdown from "@/components/shared/auth/user-avatar-dropdown";
+import AdminNotificationDropdown from "@/components/admin/notifications/admin-notification-dropdown";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface AdminHeaderProps {
@@ -57,6 +58,9 @@ export default function AdminHeader({
           className="border-none outline-none bg-transparent text-sm w-full placeholder:text-[#b07a6e] text-[#6b3a2a]"
         />
       </div>
+
+      {/* ── Notification Dropdown ── */}
+      <AdminNotificationDropdown />
 
       {/* ── User Avatar Dropdown ── */}
       <UserAvatarDropdown />

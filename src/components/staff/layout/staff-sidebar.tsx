@@ -13,31 +13,38 @@ import {
   LogOut,
   BarChart3,
   Star,
+  Settings,
+  CalendarCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/store/auth/auth.store";
-import { useStaffChatStore } from "@/store/staff/messages/staff-chat.store";
 import { usePermission } from "@/hooks/use-permission";
+import { useStaffOrdersStore } from "@/store/staff/orders/staff-orders.store";
+import { useStaffBookingsStore } from "@/store/staff/bookings/staff-bookings.store";
 
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { label: "Dashboard", href: "/staff", icon: LayoutDashboard, permKey: null },
   { label: "Analytics", href: "/staff/analytics", icon: BarChart3, permKey: "analytics" },
   { label: "Order Management", href: "/staff/orders", icon: ClipboardList, permKey: "order_management" },
+  { label: "Bookings", href: "/staff/bookings", icon: CalendarCheck, permKey: "order_management" },
   { label: "Menu Management", href: "/staff/menu", icon: Package, permKey: "menu_management" },
   { label: "QR Management", href: "/staff/qr", icon: QrCode, permKey: "qr_management" },
-  { label: "Guest Messages", href: "/staff/messages", icon: MessageCircle, isChat: true, permKey: "guest_messages" },
+  // permKey is null: the messages page itself gates content by staffRole (booking inbox / order inbox / both),
+  // so the nav entry always shows for every staff member rather than being hidden by a role-agnostic RBAC flag.
+  { label: "Messages", href: "/staff/messages", icon: MessageCircle, permKey: null, badgeKey: "unreadMessagesCount" },
   { label: "Reviews", href: "/staff/reviews", icon: Star, permKey: "reviews" },
 ];
 
-function NavItem({ item, isActive, badge }: {
+export function NavItem({ item, isActive, badge, onClick }: {
   item: typeof NAV_ITEMS[0];
   isActive: boolean;
   badge: number | null;
+  onClick?: () => void;
 }) {
   const Icon = item.icon;
-  const allowed = usePermission(item.permKey ?? "__always__", true);
+  const allowed = usePermission(item.permKey ?? "__always__", false);
   // Dashboard (permKey null) is always visible
   if (item.permKey !== null && !allowed) return null;
 
@@ -45,6 +52,7 @@ function NavItem({ item, isActive, badge }: {
     <li>
       <Link
         href={item.href}
+        onClick={onClick}
         className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
           ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
           : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
@@ -57,9 +65,9 @@ function NavItem({ item, isActive, badge }: {
         />
         <span className="flex-1">{item.label}</span>
         {badge ? (
-          <Badge variant="destructive" className="text-[11px] font-bold min-w-[20px] h-[20px] px-1">
+          <div className="bg-red-500 text-white rounded-full text-[11px] font-bold min-w-[20px] h-[20px] px-1.5 flex items-center justify-center ml-auto">
             {badge}
-          </Badge>
+          </div>
         ) : null}
       </Link>
     </li>
@@ -70,9 +78,13 @@ export default function StaffSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuthStore();
-  const unreadMessages = useStaffChatStore((s: any) => s.conversations.reduce((acc: number, conv: any) => acc + conv.unread, 0));
   const [mounted, setMounted] = useState(false);
   const [propertyName, setPropertyName] = useState<string>("");
+
+  const pendingOrdersCount = useStaffOrdersStore((state) => state.getCountByStatus("placed"));
+  const unreadBookingsCount = useStaffBookingsStore((state) => state.unreadCount);
+  const unreadMessagesCount = useStaffBookingsStore((state) => state.unreadMessagesCount);
+  const unreadOrderMessagesCount = useStaffBookingsStore((state) => state.unreadOrderMessagesCount);
 
   useEffect(() => {
     setMounted(true);
@@ -87,18 +99,23 @@ export default function StaffSidebar() {
     }
   }, [user?.propertyId]);
 
-  const displayName = user?.email?.split("@")[0] || "Alex Moore";
-  const names = displayName.split(" ");
+  const staffRole = user?.profile?.staffRole || "Staff";
+
+  const fullName = user?.profile?.firstName
+    ? `${user.profile.firstName} ${user.profile.lastName || ""}`.trim()
+    : user?.email?.split("@")[0] || "Staff Member";
+  const names = fullName.split(" ");
   const initials = names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
   const shortName = names.length > 1 ? `${names[0]} ${names[names.length - 1][0]}.` : names[0];
+  const displayName = fullName;
 
   if (!mounted) {
     // Return a skeleton or null during SSR/initial hydration to avoid mismatch
-    return <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] fixed top-0 left-0 bottom-0 z-50" />;
+    return <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] hidden lg:block fixed top-0 left-0 bottom-0 z-50" />;
   }
 
   return (
-    <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
+    <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] hidden lg:flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
       {/* Logo + Role Label */}
       <div className="px-5 pb-6">
         <Logo href="/staff" variant="default" width={140} height={48} />
@@ -109,7 +126,7 @@ export default function StaffSidebar() {
             </span>
           )}
           <span className="text-[12px] uppercase tracking-widest font-semibold text-[rgba(149,48,2,0.7)] leading-none">
-            STAFF DASHBOARD
+            {staffRole}
           </span>
         </div>
       </div>
@@ -123,7 +140,23 @@ export default function StaffSidebar() {
             const isActive =
               pathname === item.href ||
               (item.href !== "/staff" && pathname.startsWith(item.href + "/"));
-            const badge = item.isChat ? unreadMessages : null;
+            
+            let badge = null;
+            if (item.href === "/staff/orders") {
+              badge = pendingOrdersCount > 0 ? pendingOrdersCount : null;
+            } else if (item.href === "/staff/bookings") {
+              badge = unreadBookingsCount > 0 ? unreadBookingsCount : null;
+            } else if (item.href === "/staff/messages") {
+              // Combine both inboxes' unread counts; the page itself gates which inbox each role actually sees.
+              const combined =
+                staffRole === "Kitchen Staff"
+                  ? unreadOrderMessagesCount
+                  : staffRole === "Property Staff"
+                  ? unreadMessagesCount
+                  : unreadMessagesCount + unreadOrderMessagesCount;
+              badge = combined > 0 ? combined : null;
+            }
+            
             return (
               <NavItem
                 key={item.href}

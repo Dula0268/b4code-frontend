@@ -162,7 +162,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
                     <SelectContent position="popper" className="bg-white border-[var(--gray-5)] z-[100]">
                       {rooms.map(r => (
                         <SelectItem key={r.id} value={String(r.id)} className="text-xs">
-                          Room ID {r.id} ({r.roomType})
+                          {r.roomType}
                         </SelectItem>
                       ))}
                       {rooms.length === 0 && (

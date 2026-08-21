@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { authApi } from "@/api/auth/auth.api";
-import { setToken, removeToken } from "@/lib/token";
+import { setToken, setRefreshToken, removeToken } from "@/lib/token";
 import { userApi } from "@/api/user/user.api";
 import { formatApiError } from "@/lib/error-formatter";
 
@@ -34,18 +34,9 @@ const REDIRECT_MAP: Record<Role, string> = {
 function hydrateUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
   try {
-    const stored = sessionStorage.getItem("auth_user");
+    const stored = localStorage.getItem("auth_user");
     if (stored) {
       return JSON.parse(stored);
-    }
-
-    // Legacy support
-    const token = sessionStorage.getItem("accessToken");
-    const email = sessionStorage.getItem("authEmail");
-    const role = sessionStorage.getItem("authRole") as Role | null;
-    const userId = sessionStorage.getItem("authUserId");
-    if (token && email && role) {
-      return { email, role, userId: userId ? Number(userId) : undefined };
     }
   } catch {
     /* ignore */
@@ -66,7 +57,7 @@ type AuthActions = {
   login: (email: string, password: string) => Promise<string>;
   loginForCheckout: (email: string, password: string) => Promise<void>;
   roomLogin: (lastName: string, roomNumber: string, propertyId: number) => Promise<void>;
-  register: (email: string, password: string, role: Role, propertyId?: number, staffRole?: string) => Promise<void>;
+  register: (email: string, password: string, role: Role, firstName: string, lastName: string, phone?: string, propertyId?: number, staffRole?: string) => Promise<void>;
   registerFromCheckout: (
     email: string,
     password: string,
@@ -120,17 +111,25 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         };
 
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_user", JSON.stringify(userData));
+          localStorage.setItem("auth_user", JSON.stringify(userData));
+          
+          if (role !== "guest") {
+            // Isolate staff/owner state from stale guest session data
+            localStorage.removeItem("cart-storage");
+            localStorage.removeItem("guest-order-store");
+            localStorage.removeItem("guest-session-store");
+          }
+
           // Also keep legacy keys for compatibility
-          sessionStorage.setItem("accessToken", data.token);
-          sessionStorage.setItem("authEmail", data.email);
-          sessionStorage.setItem("authRole", role);
-          sessionStorage.setItem("authUserId", String(data.userId));
+          localStorage.setItem("accessToken", data.token);
+          // Save refresh token for silent renewal
+          if (data.refreshToken) {
+            setRefreshToken(data.refreshToken);
+          }
 
           // Auto-set selected property for staff so dashboard loads directly
           if (role === "staff" && data.propertyId) {
             const pid = String(data.propertyId);
-            sessionStorage.setItem("selected_property_id", pid);
             localStorage.setItem("selected_property_id", pid);
           }
         }
@@ -173,7 +172,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         };
 
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_user", JSON.stringify(userData));
+          localStorage.setItem("auth_user", JSON.stringify(userData));
+          // Save refresh token for silent renewal (BUG FIX: missing previously)
+          if (data.refreshToken) {
+            setRefreshToken(data.refreshToken);
+          }
         }
 
         set({
@@ -209,7 +212,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         };
 
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_user", JSON.stringify(userData));
+          localStorage.setItem("auth_user", JSON.stringify(userData));
+          // Save refresh token for silent renewal
+          if (data.refreshToken) {
+            setRefreshToken(data.refreshToken);
+          }
         }
 
         set({
@@ -226,18 +233,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     },
 
     // ─── REGISTER ─────────────────────────────────────────
-    register: async (email, password, role, propertyId, staffRole) => {
+    register: async (email, password, role, firstName, lastName, phone, propertyId, staffRole) => {
       set({ loading: true, error: null });
 
       try {
-        const nameParts = email.split("@")[0].split(".");
-        const firstName =
-          nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) ||
-          "User";
-        const lastName =
-          nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || "";
-
-        await authApi.register(email, password, role, firstName, lastName, undefined, propertyId, staffRole);
+        await authApi.register(email, password, role, firstName, lastName, phone, propertyId, staffRole);
 
         set({ loading: false });
       } catch (err: unknown) {
@@ -307,12 +307,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     logout: () => {
       removeToken();
       if (typeof window !== "undefined") {
-        sessionStorage.removeItem("accessToken");
-        sessionStorage.removeItem("refreshToken");
-        sessionStorage.removeItem("authEmail");
-        sessionStorage.removeItem("authRole");
-        sessionStorage.removeItem("authUserId");
-        sessionStorage.removeItem("auth_user");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("auth_user");
+        
+        // Clear staff-related storage to prevent data leakage between sessions
+        localStorage.removeItem("selected_property_id");
+        localStorage.removeItem("staff-menu-storage");
+        localStorage.removeItem("staff-offline-sync-queue");
+        localStorage.removeItem("staff-orders-storage");
+        localStorage.removeItem("staff-qr-storage");
+        
+        // Clear guest storage to fully sanitize the browser state
+        localStorage.removeItem("cart-storage");
+        localStorage.removeItem("guest-order-store");
+        localStorage.removeItem("guest-session-store");
       }
 
       set({ user: null, isAuthenticated: false, error: null });
@@ -362,7 +371,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           const updatedUser = { ...state.user, profile };
 
           if (typeof window !== "undefined") {
-            sessionStorage.setItem("auth_user", JSON.stringify(updatedUser));
+            localStorage.setItem("auth_user", JSON.stringify(updatedUser));
           }
 
           return {
@@ -386,7 +395,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         const updatedUser = { ...state.user, propertyId, roomId };
 
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("auth_user", JSON.stringify(updatedUser));
+          localStorage.setItem("auth_user", JSON.stringify(updatedUser));
         }
 
         console.log("📍 Stay Assigned to Session:", { propertyId, roomId });
@@ -418,7 +427,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
         // Auto-set selected property for staff so dashboard loads directly
         if (typeof window !== "undefined" && role === "staff" && data.propertyId) {
           const pid = String(data.propertyId);
-          sessionStorage.setItem("selected_property_id", pid);
           localStorage.setItem("selected_property_id", pid);
         }
 
@@ -426,7 +434,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           user: {
             email: data.email,
             role,
-            userId: data.userId,
+            userId: data.userId || (data as any).id,
             propertyId: data.propertyId,
             profile,
           },
@@ -440,7 +448,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           // Token is invalid/expired — quietly clear state
           set({ user: null, isAuthenticated: false, isRestoring: false });
           if (typeof window !== "undefined") {
-            sessionStorage.removeItem("auth-storage");
+            localStorage.removeItem("auth-storage");
           }
         } else {
           console.error("Failed to fetch user:", err);
@@ -450,3 +458,25 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     }
   };
 });
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === "auth_user") {
+      if (event.newValue) {
+        try {
+          const user = JSON.parse(event.newValue);
+          useAuthStore.setState({ user, isAuthenticated: true, error: null });
+        } catch (e) {
+          console.error("Failed to parse auth_user from storage event");
+        }
+      } else {
+        useAuthStore.setState({ user: null, isAuthenticated: false, error: null });
+      }
+    }
+    
+    if (event.key === "accessToken" && !event.newValue) {
+      // Token was cleared in another tab, ensure this tab also logs out
+      useAuthStore.setState({ user: null, isAuthenticated: false, error: null });
+    }
+  });
+}

@@ -10,6 +10,9 @@ interface DeleteConfirmationDialogProps {
   title: string;
   description: string;
   loading?: boolean;
+  confirmText?: string;
+  loadingText?: string;
+  cancelText?: string;
 }
 
 export function DeleteConfirmationDialog({
@@ -19,6 +22,9 @@ export function DeleteConfirmationDialog({
   title,
   description,
   loading = false,
+  confirmText = "Delete Now",
+  loadingText = "Deleting...",
+  cancelText = "Cancel",
 }: DeleteConfirmationDialogProps) {
   if (!isOpen) return null;
 
@@ -54,14 +60,14 @@ export function DeleteConfirmationDialog({
               onClick={onClose}
               disabled={loading}
             >
-              Cancel
+              {cancelText}
             </Button>
             <Button
               className="flex-1 rounded-xl h-12 text-sm font-semibold bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-200 transition-all active:scale-[0.98]"
               onClick={onConfirm}
               disabled={loading}
             >
-              {loading ? "Deleting..." : "Delete Now"}
+              {loading ? loadingText : confirmText}
             </Button>
           </div>
         </div>

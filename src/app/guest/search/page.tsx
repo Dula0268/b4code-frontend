@@ -46,8 +46,8 @@ function CardSkeleton() {
 
 function ResultsSkeleton() {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {Array.from({ length: 6 }, (_, i) => <CardSkeleton key={i} />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            {Array.from({ length: 10 }, (_, i) => <CardSkeleton key={i} />)}
         </div>
     )
 }
@@ -177,7 +177,7 @@ function SearchResultsContent() {
     const [mapOpen, setMapOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
 
-    const PAGE_SIZE = 9
+    const PAGE_SIZE = 10
 
     // Load filter options once
     useEffect(() => {
@@ -292,17 +292,17 @@ function SearchResultsContent() {
     const totalPages = results?.totalPages || 0
 
     return (
-        <div className="w-full pb-16 pt-16">
-            <div className="sticky top-[32px] z-[60] w-full flex justify-center mt-[-28px] pb-4 px-4 pointer-events-none">
+        <div className="w-full pb-10 pt-[80px]">
+            <div className="sticky top-[72px] z-[40] w-full flex justify-center pb-3 px-4 pointer-events-none">
                 <div className="pointer-events-auto">
                     <SearchBar />
                 </div>
             </div>
             
-            <div className="px-4 sm:px-6 lg:px-8 pt-4 flex flex-col lg:flex-row gap-6 lg:gap-8 w-full">
+            <div className="px-4 sm:px-6 lg:px-8 pt-2 flex flex-col lg:flex-row gap-4 lg:gap-6 w-full">
                 {/* Filters Sidebar */}
-                <div className="w-full lg:w-[290px] xl:w-[320px] flex-shrink-0">
-                    <div className="sticky top-[130px]">
+                <div className="w-full lg:w-[260px] xl:w-[280px] flex-shrink-0">
+                    <div>
                         <FiltersSidebar
                             filters={filters}
                             onChange={handleFiltersChange}
@@ -332,7 +332,7 @@ function SearchResultsContent() {
                             ) : error ? (
                                 <ErrorState message={error} onRetry={fetchResults} />
                             ) : listings.length > 0 ? (
-                                <div className={["grid gap-5", mapOpen ? "grid-cols-1" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"].join(" ")}>
+                                <div className={["grid gap-4", mapOpen ? "grid-cols-1" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"].join(" ")}>
                                     {listings.map(listing => (
                                         <div
                                             key={listing.id}

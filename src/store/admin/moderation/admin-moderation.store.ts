@@ -6,14 +6,14 @@ import {
   type ModerationHistory,
 } from '@/api/admin/moderation.api';
 
-export type ModerationTab = "reviews" | "disputes" | "history";
+export type ModerationTab = "reviews" | "history";
 
 type AdminModerationState = {
   activeTab: ModerationTab;
   selectedReview: FlaggedReview | null;
   selectedDispute: Dispute | null;
   disputeResolved: { amount: string; bookingId: string; caseId: string; time: string } | null;
-  badgeCounts: { pendingReviews: number; openDisputes: number; removedToday: number };
+  badgeCounts: { pendingReviews: number; openDisputes: number; removedToday: number; resolvedDisputes: number; totalResolvedAmount: number };
   
   // Reviews
   reviews: FlaggedReview[];
@@ -46,7 +46,7 @@ type AdminModerationActions = {
   approveReview: (id: number, adminNote?: string) => Promise<void>;
   removeReview: (id: number, adminNote: string) => Promise<void>;
 
-  fetchDisputes: (params?: { status?: string; search?: string; page?: number; size?: number }) => Promise<void>;
+  fetchDisputes: (params?: { status?: string; search?: string; page?: number; size?: number; isComplaint?: boolean }) => Promise<void>;
   resolveDispute: (id: string, resolution: string, refundApproved: boolean) => Promise<void>;
 
   fetchHistory: (params?: { action?: string; search?: string; from?: string; to?: string; page?: number; size?: number }) => Promise<void>;
@@ -57,7 +57,7 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
   selectedReview: null,
   selectedDispute: null,
   disputeResolved: null,
-  badgeCounts: { pendingReviews: 0, openDisputes: 0, removedToday: 0 },
+  badgeCounts: { pendingReviews: 0, openDisputes: 0, removedToday: 0, resolvedDisputes: 0, totalResolvedAmount: 0 },
   
   reviews: [],
   reviewsTotalPages: 0,
@@ -161,3 +161,4 @@ export const useAdminModerationStore = create<AdminModerationState & AdminModera
     }
   },
 }));
+

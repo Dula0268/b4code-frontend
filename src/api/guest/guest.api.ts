@@ -109,16 +109,41 @@ export const guestApi = {
   }) =>
     api.post("/guest/reviews", reviewData).then((r) => r.data),
 
-  // Message Methods
-  getConversation: (bookingId: number) =>
-    api.get(`/guest/messages/conversation/${bookingId}`).then((r) => r.data),
-
-  sendMessage: (messageData: {
+  createComplaint: (complaintData: {
     bookingId: number;
-    senderType: "GUEST" | "PROPERTY";
-    senderName: string;
-    content: string;
-    attachmentUrl?: string;
+    propertyId?: number;
+    category: string;
+    severity: string;
+    description: string;
+    relatedOrderRef?: string;
+    photoUrls?: string[];
   }) =>
-    api.post("/guest/messages", messageData).then((r) => r.data),
+    api.post("/guest/bookings/complaint", complaintData).then((r) => r.data),
+
+  // Message Methods
+  getConversation: (bookingId: number | string) =>
+    api.get(`/guest/bookings/${bookingId}/messages`).then((r) => r.data),
+
+  getActiveQuickRequests: (bookingId: number | string) =>
+    api.get(`/guest/bookings/${bookingId}/messages/quick-requests`).then((r) => r.data),
+
+  sendMessage: (bookingId: number | string, content: string) =>
+    api.post(`/guest/bookings/${bookingId}/messages`, { content }).then((r) => r.data),
+
+  // Order Message Methods (public/unauthenticated, scoped by guestSessionId)
+  getOrderMessages: (orderId: number | string, guestSessionId?: string) =>
+    api
+      .get(`/orders/${orderId}/messages`, {
+        params: guestSessionId ? { guestSessionId } : undefined,
+      })
+      .then((r) => r.data),
+
+  sendOrderMessage: (orderId: number | string, content: string, guestSessionId?: string) =>
+    api
+      .post(
+        `/orders/${orderId}/messages`,
+        { content },
+        { params: guestSessionId ? { guestSessionId } : undefined }
+      )
+      .then((r) => r.data),
 };

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Star, Loader2 } from "lucide-react";
-import TotalDisputesCard from "./kpi-cards/total-disputes-card";
+import PendingReviewsCard from "./kpi-cards/pending-reviews-card";
 import UrgentCard from "./kpi-cards/urgent-card";
 import RemovedTodayCard from "./kpi-cards/removed-today-card";
-import AvgTimeCard from "./kpi-cards/avg-time-card";
+import TotalDisputesCard from "./kpi-cards/total-disputes-card";
 import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
 import type { FlaggedReview } from "@/api/admin/moderation.api";
 import { ModerationApi } from "@/api/admin/moderation.api";
@@ -26,6 +26,25 @@ function FlagBadge({ status }: { status: string }) {
     >
       <span className="text-[10px]">{c.icon}</span>
       {status}
+    </span>
+  );
+}
+
+// ─── Role Badge ───────────────────────────────────────────────────────────────
+export function RoleBadge({ role }: { role?: string }) {
+  if (!role) return null;
+  
+  const isOwner = role.toUpperCase() === "OWNER";
+  
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase border ${
+        isOwner 
+          ? "bg-[#FFF8F1] text-[#B45309] border-[#FED7AA]" 
+          : "bg-[#F0F9FF] text-[#0369A1] border-[#BAE6FD]"
+      }`}
+    >
+      {isOwner ? "Owner" : "Staff"}
     </span>
   );
 }
@@ -180,10 +199,10 @@ export default function ReviewsQueue() {
 
       {/* ── KPI Cards ── */}
       <div className="flex gap-4">
-        <TotalDisputesCard />
+        <PendingReviewsCard />
         <UrgentCard />
         <RemovedTodayCard />
-        <AvgTimeCard />
+        <TotalDisputesCard />
       </div>
 
       {/* ── Reviews Table ── */}
@@ -237,15 +256,20 @@ export default function ReviewsQueue() {
                     <td className="px-5 py-3.5 min-w-40">
                       <div className="flex items-center gap-2.5">
                         <div 
-                          className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0 bg-[#C05621]"
+                          className={`w-8.5 h-8.5 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0 shadow-sm ${
+                            review.flaggedByRole?.toUpperCase() === 'STAFF' ? 'bg-[#0284C7]' : 'bg-[#C05621]'
+                          }`}
                         >
                           {review.ownerName ? review.ownerName.charAt(0) : '?'}
                         </div>
                         <div>
-                          <p className="m-0 font-semibold text-[#1A1A1A]">
-                            {review.ownerName || "Unknown Owner"}
-                          </p>
-                          <p className="m-0 text-xs text-[#9E7B6A]">
+                          <div className="flex items-center gap-2 m-0">
+                            <span className="font-semibold text-[#1A1A1A]">
+                              {review.ownerName || "Unknown"}
+                            </span>
+                            <RoleBadge role={review.flaggedByRole} />
+                          </div>
+                          <p className="m-0 text-xs text-[#9E7B6A] mt-0.5">
                             {review.flaggedAt}
                           </p>
                         </div>

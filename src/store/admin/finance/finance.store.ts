@@ -37,15 +37,15 @@ interface FinanceState {
 
   // Actions
   fetchSummary: () => Promise<void>;
-  fetchRevenueTrend: () => Promise<void>;
+  fetchRevenueTrend: (timeframe?: string) => Promise<void>;
   fetchTransactions: (params: { search?: string; type?: string; page?: number; size?: number }) => Promise<void>;
-  fetchRefunds: (params: { search?: string; status?: string; page?: number; size?: number }) => Promise<void>;
+  fetchRefunds: (params: { search?: string; status?: string; resolved?: boolean; page?: number; size?: number }) => Promise<void>;
   fetchPayouts: (params: { search?: string; status?: string; page?: number; size?: number }) => Promise<void>;
   
   approveRefund: (id: string) => Promise<void>;
   rejectRefund: (id: string, adminNote: string) => Promise<void>;
   processPayout: (id: string, bankReference: string, commissionRate?: number) => Promise<void>;
-  rejectPayout: (id: string) => Promise<void>;
+  rejectPayout: (id: string, reason: string) => Promise<void>;
   downloadPayoutExport: (params: { search?: string; status?: string }) => Promise<void>;
 }
 
@@ -82,14 +82,13 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
     }
   },
 
-  fetchRevenueTrend: async () => {
+  fetchRevenueTrend: async (timeframe: string = 'month') => {
     set({ trendLoading: true, error: null });
     try {
-      const data = await FinanceApi.getRevenueTrend();
+      const data = await FinanceApi.getRevenueTrend(timeframe);
       set({ revenueTrend: data, trendLoading: false });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to fetch revenue trend";
-      set({ error: message, trendLoading: false });
+    } catch (err: any) {
+      set({ error: err.message || 'Failed to fetch revenue trend', trendLoading: false });
     }
   },
 
@@ -187,10 +186,10 @@ export const useAdminFinanceStore = create<FinanceState>((set, get) => ({
     }
   },
 
-  rejectPayout: async (id: string) => {
+  rejectPayout: async (id: string, reason: string) => {
     set({ actionLoading: true, error: null });
     try {
-      const updated = await FinanceApi.rejectPayout(id);
+      const updated = await FinanceApi.rejectPayout(id, { adminNote: reason });
       set((state) => ({
         payouts: state.payouts.map(p => p.id === id ? updated : p),
         actionLoading: false

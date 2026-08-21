@@ -3,10 +3,12 @@
 import { Suspense, useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, X, CalendarCheck, User, LogOut, Settings } from "lucide-react"
+import { Menu, X, CalendarCheck, User, LogOut, Settings, Bell, Check } from "lucide-react"
+import { toast } from "sonner"
 import Logo from "@/components/shared/branding/logo"
 import SearchBar from "@/components/guest/search/search-bar"
 import { useAuthStore } from "@/store/auth/auth.store"
+import { notificationApi, Notification } from "@/api/guest/notification.api"
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -25,18 +27,78 @@ export default function GuestTopbar() {
   const isRestoring = useAuthStore((s) => s.isRestoring)
   const logout = useAuthStore((s) => s.logout)
 
-  // Issue #1 fix: On /guest/* pages, only show profile for GUEST role users.
-  // On the home page (/), any logged-in user sees their profile.
-  // This prevents cross-tab leaks (e.g. staff profile showing on /guest/search)
-  // while still allowing staff/owner/admin to see their avatar on the home screen.
   const isGuestContextPage = pathname.startsWith("/guest");
   const isGuestUser = user?.role?.toLowerCase() === "guest";
-  const guestUser = isGuestContextPage ? (isGuestUser ? user : null) : user;
+  const guestUser = isGuestUser ? user : null;
+
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const notifMenuRef = useRef<HTMLDivElement>(null)
+  const lastSeenNotifId = useRef<number>(0)
 
   const [mounted, setMounted] = useState(false)
+  
+  const fetchNotifications = async (isPolling = false) => {
+    try {
+      const data = await notificationApi.getNotifications()
+      const unread = data.filter((n) => n.isRead === false || (n as any).read === false)
+      
+      if (isPolling) {
+        const newNotifs = unread.filter(n => n.id > lastSeenNotifId.current);
+        if (newNotifs.length > 0) {
+          newNotifs.forEach(notif => {
+            toast.info(notif.title, {
+              description: notif.message,
+              position: "top-right",
+              duration: 5000,
+            });
+          });
+        }
+      }
+      
+      if (unread.length > 0) {
+        lastSeenNotifId.current = Math.max(...unread.map(n => n.id));
+      }
+
+      setNotifications(unread)
+      setUnreadCount(unread.length)
+    } catch (e) {
+      console.error("Failed to fetch notifications", e)
+    }
+  }
+
   useEffect(() => {
     setMounted(true)
-  }, [])
+    if (guestUser) {
+      fetchNotifications()
+      const intervalId = setInterval(() => {
+        fetchNotifications(true)
+      }, 10000)
+      return () => clearInterval(intervalId)
+    }
+  }, [guestUser])
+
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      await notificationApi.markAsRead(id)
+      const updated = notifications.filter(n => n.id !== id)
+      setNotifications(updated)
+      setUnreadCount(updated.length)
+    } catch (e) {
+      console.error("Failed to mark as read", e)
+    }
+  }
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationApi.markAllAsRead()
+      setNotifications([])
+      setUnreadCount(0)
+    } catch (e) {
+      console.error("Failed to mark all as read", e)
+    }
+  }
 
 
   const isSearchPage = pathname.startsWith("/guest/search")
@@ -47,12 +109,15 @@ export default function GuestTopbar() {
       if (accountMenuRef.current && !accountMenuRef.current.contains(e.target as Node)) {
         setAccountMenuOpen(false)
       }
+      if (notifMenuRef.current && !notifMenuRef.current.contains(e.target as Node)) {
+        setNotificationsOpen(false)
+      }
     }
-    if (accountMenuOpen) {
+    if (accountMenuOpen || notificationsOpen) {
       document.addEventListener("mousedown", handleClickOutside)
       return () => document.removeEventListener("mousedown", handleClickOutside)
     }
-  }, [accountMenuOpen])
+  }, [accountMenuOpen, notificationsOpen])
 
   const handleLogout = () => {
     setAccountMenuOpen(false)
@@ -114,6 +179,73 @@ export default function GuestTopbar() {
           {!mounted || (isRestoring && !guestUser) ? (
             <div className="w-24 h-9 bg-gray-100 animate-pulse rounded-lg" />
           ) : guestUser ? (
+            <div className="flex items-center gap-4">
+              {/* Notification Bell */}
+              <div className="relative" ref={notifMenuRef}>
+                <button
+                  onClick={() => setNotificationsOpen(prev => !prev)}
+                  className="relative p-2 text-[#4f4f4f] hover:text-[#1d1d1d] hover:bg-[#f5f5f5] rounded-full transition-colors"
+                >
+                  <Bell size={24} />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 flex items-center justify-center min-w-[20px] h-[20px] bg-[#FFC107] rounded-full border-2 border-white text-[11px] font-bold text-black px-1">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                
+                {/* Notification Dropdown */}
+                {notificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-[#e8e8e8] py-2 z-60 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="px-4 py-2.5 border-b border-[#f0f0f0] flex justify-between items-center">
+                      <p className="text-[14px] font-bold text-[#1d1d1d]">Notifications</p>
+                      {unreadCount > 0 && (
+                        <button onClick={handleMarkAllAsRead} className="text-xs text-[#953002] font-semibold hover:underline">
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="px-4 py-6 text-center text-sm text-[#828282]">
+                          No notifications yet.
+                        </div>
+                      ) : (
+                        notifications.map((notif) => (
+                          <div 
+                            key={notif.id} 
+                            className="group relative px-4 py-3 border-b border-[#f0f0f0] last:border-0 bg-[#fdfaf6] hover:bg-[#f2e7d9] transition-colors"
+                          >
+                            <div className="flex justify-between items-start mb-1">
+                              <p className="text-[13px] font-bold text-[#1d1d1d] pr-6">{notif.title}</p>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleMarkAsRead(notif.id) }}
+                                className="absolute right-3 top-3 p-1 text-[#828282] hover:text-[#953002] hover:bg-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                                title="Mark as read"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                            <p className="text-[12px] text-[#4f4f4f] leading-snug">{notif.message}</p>
+                            <div className="flex justify-between items-center mt-2">
+                              <p className="text-[10px] text-[#828282]">
+                                {new Date(notif.createdAt).toLocaleDateString()} at {new Date(notif.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </p>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleMarkAsRead(notif.id) }}
+                                className="text-[11px] font-semibold text-[#953002] md:hidden"
+                              >
+                                Dismiss
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
             <div className="relative" ref={accountMenuRef}>
               <button
                 onClick={() => setAccountMenuOpen((prev) => !prev)}
@@ -158,6 +290,26 @@ export default function GuestTopbar() {
                   </div>
                 </div>
               )}
+            </div>
+            </div>
+          ) : user ? (
+            <div className="flex items-center gap-3">
+              <Link
+                href={
+                  user.role.toLowerCase() === "owner" ? "/owner" :
+                  user.role.toLowerCase() === "staff" ? "/staff" :
+                  user.role.toLowerCase() === "admin" ? "/admin" : "/"
+                }
+                className="px-4 py-2 text-sm font-semibold text-[#953002] border-2 border-[#953002] rounded-lg hover:bg-[#953002]/5 transition-colors no-underline whitespace-nowrap"
+              >
+                Go to Dashboard
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm font-semibold text-white bg-[#953002] rounded-lg hover:bg-[#6d2200] transition-colors no-underline whitespace-nowrap"
+              >
+                Log Out
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-3">
@@ -227,6 +379,25 @@ export default function GuestTopbar() {
               <button
                 onClick={() => { handleLogout(); setMobileOpen(false) }}
                 className="px-4 py-2 text-sm font-semibold text-center text-red-500 border-2 border-red-400 rounded-lg cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : user ? (
+            <div className="flex flex-col gap-2 pt-2 border-t border-[#e0e0e0]">
+              <Link 
+                href={
+                  user.role.toLowerCase() === "owner" ? "/owner" :
+                  user.role.toLowerCase() === "staff" ? "/staff" :
+                  user.role.toLowerCase() === "admin" ? "/admin" : "/"
+                }
+                className="px-4 py-2 text-sm font-semibold text-center text-[#953002] border-2 border-[#953002] rounded-lg no-underline"
+              >
+                Go to Dashboard
+              </Link>
+              <button
+                onClick={() => { handleLogout(); setMobileOpen(false) }}
+                className="px-4 py-2 text-sm font-semibold text-center text-white bg-[#953002] rounded-lg cursor-pointer"
               >
                 Sign Out
               </button>
