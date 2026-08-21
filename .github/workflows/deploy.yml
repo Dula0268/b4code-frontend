@@ -1,0 +1,77 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-southeast-2
+  ECR_REGISTRY: 502869771838.dkr.ecr.ap-southeast-2.amazonaws.com
+  IMAGE: primestay-frontend
+  API_URL: https://api.prime-stay.app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required to request the OIDC token
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::502869771838:role/primestay-github-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # NEXT_PUBLIC_* is inlined into the client bundle at BUILD time. Omitting
+      # this build-arg does NOT fail the build - it silently ships a bundle that
+      # calls http://localhost:8080, breaking the live site while CI stays green.
+      - name: Build and push
+        run: |
+          docker build --provenance=false --sbom=false \
+            --build-arg NEXT_PUBLIC_API_URL=$API_URL \
+            -t $ECR_REGISTRY/$IMAGE:${{ github.sha }} \
+            -t $ECR_REGISTRY/$IMAGE:latest .
+          docker push $ECR_REGISTRY/$IMAGE:${{ github.sha }}
+          docker push $ECR_REGISTRY/$IMAGE:latest
+
+      # Guard against the failure mode above: fail loudly if the built bundle
+      # still references localhost.
+      - name: Verify API URL was baked in
+        run: |
+          n=$(docker run --rm --entrypoint sh $ECR_REGISTRY/$IMAGE:${{ github.sha }} \
+                -c 'grep -rl "localhost:8080" .next/static 2>/dev/null | wc -l')
+          echo "chunks referencing localhost:8080 = $n"
+          if [ "$n" != "0" ]; then
+            echo "::error::Client bundle still references localhost:8080 - NEXT_PUBLIC_API_URL was not applied"
+            exit 1
+          fi
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.ECR_REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }}"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+
+  deploy:
+    runs-on: self-hosted
+    needs: build-and-push
+    env:
+      KUBECONFIG: /home/ubuntu/.kube/config
+    steps:
+      - name: Roll out frontend
+        run: |
+          kubectl set image deployment/primestay-frontend \
+            frontend=502869771838.dkr.ecr.ap-southeast-2.amazonaws.com/primestay-frontend:${{ github.sha }}
+          kubectl rollout status deployment/primestay-frontend --timeout=300s

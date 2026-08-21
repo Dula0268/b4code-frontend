@@ -21,6 +21,7 @@ function LoginPageContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Clear any previous global auth errors on mount
   useEffect(() => {
@@ -60,11 +61,12 @@ function LoginPageContent() {
         return;
       }
 
-      // Only honor the redirect if it belongs to the same role's URL space.
+      // Only honor the redirect if it belongs to the same role's URL space, or if it is a payment redirect.
       // Prevents staff/owner/admin from being routed into guest pages (and vice versa).
       const isRedirectValidForRole =
-        redirect && redirect !== "/" && redirect.startsWith(rolePrefix);
+        redirect && redirect !== "/" && (redirect.startsWith(rolePrefix) || redirect.startsWith("/payment"));
 
+      setIsNavigating(true);
       router.push(isRedirectValidForRole ? redirect : path);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed.";
@@ -197,8 +199,8 @@ function LoginPageContent() {
                   </div>
                 )}
 
-                <Button type="submit" disabled={loading} size="lg" className="w-full h-[56px] text-[16px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] mt-8" suppressHydrationWarning>
-                  {loading ? "Logging in…" : "Login to Platform"}
+                <Button type="submit" disabled={loading || isNavigating} size="lg" className="w-full h-[56px] text-[16px] font-extrabold rounded-full bg-[#953002] hover:bg-[#7a2600] mt-8" suppressHydrationWarning>
+                  {loading || isNavigating ? "Logging in…" : "Login to Platform"}
                 </Button>
 
 
