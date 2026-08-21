@@ -626,105 +626,121 @@ export default function PropertyClient({ property }: { property: any }) {
                                         </div>
                                     </div>
 
-                                    {/* Payment Options */}
-                                    <div className="pt-5 border-t border-[#e8e8e8]">
-                                        <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Select Payment Method</h3>
-                                        <div className="flex flex-col gap-3">
-                                            <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'online' ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-[#e8e8e8] hover:border-[#ccc]'}`}>
-                                                <input type="radio" name="payment" checked={paymentMethod === 'online'} onChange={() => setPaymentMethod('online')} className="mt-1 cursor-pointer" />
-                                                <div>
-                                                    <p className="font-semibold text-[#1d1d1d] text-[14px]">Pay online now</p>
-                                                    <p className="text-[12px] text-[#828282]">Securely pay the full amount instantly.</p>
+                                    {user ? (
+                                        <>
+                                            {/* Payment Options */}
+                                            <div className="pt-5 border-t border-[#e8e8e8]">
+                                                <h3 className="font-semibold text-[#1d1d1d] mb-3 text-[16px]">Select Payment Method</h3>
+                                                <div className="flex flex-col gap-3">
+                                                    <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'online' ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-[#e8e8e8] hover:border-[#ccc]'}`}>
+                                                        <input type="radio" name="payment" checked={paymentMethod === 'online'} onChange={() => setPaymentMethod('online')} className="mt-1 cursor-pointer" />
+                                                        <div>
+                                                            <p className="font-semibold text-[#1d1d1d] text-[14px]">Pay online now</p>
+                                                            <p className="text-[12px] text-[#828282]">Securely pay the full amount instantly.</p>
+                                                        </div>
+                                                    </label>
+                                                    <div className="flex flex-col gap-2">
+                                                        <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'property' ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-[#e8e8e8] hover:border-[#ccc]'}`}>
+                                                            <input type="radio" name="payment" checked={paymentMethod === 'property'} onChange={() => setPaymentMethod('property')} className="mt-1 cursor-pointer" />
+                                                            <div>
+                                                                <p className="font-semibold text-[#1d1d1d] text-[14px]">Pay at property</p>
+                                                                <p className="text-[12px] text-[#828282]">Your room is held, settle the bill on arrival.</p>
+                                                            </div>
+                                                        </label>
+                                                        {paymentMethod === 'property' && (
+                                                            <div className="px-4 py-3 bg-[#f8f8f8] rounded-xl border border-[#e8e8e8] animate-in fade-in slide-in-from-top-2">
+                                                                <label className="text-[13px] font-semibold text-[#1d1d1d] block mb-0.5">Secret Passkey <span className="text-[#e53935]">*</span></label>
+                                                                <p className="text-[11px] text-[#828282] mb-1.5">You can enter any number or text as your passkey. You will use this to verify your booking at the property.</p>
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={nicNumber}
+                                                                    onChange={(e) => setNicNumber(e.target.value)}
+                                                                    placeholder="e.g. 12345, John123, or any custom passkey" 
+                                                                    className="w-full border border-[#d8d8d8] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)] bg-white"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </label>
-                                            <div className="flex flex-col gap-2">
-                                                <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'property' ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-[#e8e8e8] hover:border-[#ccc]'}`}>
-                                                    <input type="radio" name="payment" checked={paymentMethod === 'property'} onChange={() => setPaymentMethod('property')} className="mt-1 cursor-pointer" />
-                                                    <div>
-                                                        <p className="font-semibold text-[#1d1d1d] text-[14px]">Pay at property</p>
-                                                        <p className="text-[12px] text-[#828282]">Your room is held, settle the bill on arrival.</p>
-                                                    </div>
-                                                </label>
-                                                {paymentMethod === 'property' && (
-                                                    <div className="px-4 py-3 bg-[#f8f8f8] rounded-xl border border-[#e8e8e8] animate-in fade-in slide-in-from-top-2">
-                                                        <label className="text-[13px] font-semibold text-[#1d1d1d] block mb-0.5">Secret Passkey <span className="text-[#e53935]">*</span></label>
-                                                        <p className="text-[11px] text-[#828282] mb-1.5">You can enter any number or text as your passkey. You will use this to verify your booking at the property.</p>
-                                                        <input 
-                                                            type="text" 
-                                                            value={nicNumber}
-                                                            onChange={(e) => setNicNumber(e.target.value)}
-                                                            placeholder="e.g. 12345, John123, or any custom passkey" 
-                                                            className="w-full border border-[#d8d8d8] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)] bg-white"
-                                                        />
-                                                    </div>
-                                                )}
                                             </div>
+
+                                            <button
+                                                disabled={isSubmitting || (paymentMethod === 'property' && !nicNumber.trim())}
+                                                onClick={async () => {
+                                                    setIsSubmitting(true);
+                                                    try {
+                                                        const roomId = Object.keys(selectedRooms)[0];
+                                                        const roomData = selectedRooms[roomId];
+                                                        if (!roomId) return;
+                                                        
+                                                        const payload = {
+                                                            roomId: Number(roomId),
+                                                            propertyId: Number(property.id),
+                                                            roomQuantity: roomData.quantity,
+                                                            checkIn: checkInDate,
+                                                            checkOut: checkOutDate,
+                                                            adults: guestsFromSearch,
+                                                            guestName: user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Guest User",
+                                                            guestEmail: user?.email || "guest@example.com",
+                                                            nicNumber: nicNumber || null,
+                                                            promoCodes: appliedPromos.length > 0 ? appliedPromos : null,
+                                                            paymentMethod: paymentMethod === 'property' ? 'PAY_AT_PROPERTY' : 'ONLINE_CARD'
+                                                        };
+                                                        
+                                                        const res = await api.post('/guest/bookings', payload);
+                                                        
+                                                        if (paymentMethod === 'online') {
+                                                            const params = new URLSearchParams();
+                                                            // Use toFixed(2) to ensure a clean decimal string (avoids BigDecimal toString quirks)
+                                                            params.set("total", Number(priceBreakdown.totalAmount).toFixed(2));
+                                                            params.set("confirmationCode", res.data.confirmationCode);
+                                                            params.set("bookingId", String(res.data.id));
+                                                            if (user?.profile) {
+                                                                params.set("firstName", user.profile.firstName);
+                                                                params.set("lastName", user.profile.lastName);
+                                                            }
+                                                            if (user?.email) {
+                                                                params.set("email", user.email);
+                                                            }
+                                                            router.push(`/payment?${params.toString()}`);
+                                                            return;
+                                                        }
+
+                                                        router.push("/guest/booking");
+                                                    } catch (error: any) {
+                                                        console.error("Booking failed:", error);
+                                                        const msg = error.response?.data?.message || "Failed to confirm booking. Please try again.";
+                                                        setErrorMsg(msg);
+                                                        setBookingStep("failed");
+                                                    } finally {
+                                                        setIsSubmitting(false);
+                                                    }
+                                                }}
+                                                className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 disabled:opacity-70 transition-colors cursor-pointer mt-2"
+                                            >
+                                                {isSubmitting ? "Processing..." : "Confirm Booking"}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="pt-5 border-t border-[#e8e8e8] flex flex-col gap-4">
+                                            <div className="bg-[#fff8e1] p-4 rounded-xl border border-[#ffe082]">
+                                                <h3 className="font-semibold text-[#1d1d1d] text-[15px] mb-1 flex items-center gap-2">
+                                                    <AlertTriangle size={16} className="text-[#f57f17]" />
+                                                    Login Required
+                                                </h3>
+                                                <p className="text-[13px] text-[#555]">Please log in to your account to select a payment method and complete this booking.</p>
+                                            </div>
+                                            <button 
+                                                onClick={() => {
+                                                    const params = new URLSearchParams(window.location.search);
+                                                    router.push(`/auth/login?redirect=${encodeURIComponent(window.location.pathname + '?' + params.toString())}`);
+                                                }}
+                                                className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 transition-colors cursor-pointer mt-2"
+                                            >
+                                                Login to Continue Booking
+                                            </button>
                                         </div>
-                                    </div>
-
-                                    <button
-                                        disabled={isSubmitting || (paymentMethod === 'property' && !nicNumber.trim())}
-                                        onClick={async () => {
-                                            if (!user) {
-                                                sessionStorage.setItem("pendingBookingRooms", JSON.stringify(selectedRooms));
-                                                const currentPath = window.location.pathname + window.location.search;
-                                                router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`);
-                                                return;
-                                            }
-
-                                            setIsSubmitting(true);
-                                            try {
-                                                const roomId = Object.keys(selectedRooms)[0];
-                                                const roomData = selectedRooms[roomId];
-                                                if (!roomId) return;
-                                                
-                                                const payload = {
-                                                    roomId: Number(roomId),
-                                                    propertyId: Number(property.id),
-                                                    roomQuantity: roomData.quantity,
-                                                    checkIn: checkInDate,
-                                                    checkOut: checkOutDate,
-                                                    adults: guestsFromSearch,
-                                                    guestName: user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Guest User",
-                                                    guestEmail: user?.email || "guest@example.com",
-                                                    nicNumber: nicNumber || null,
-                                                    promoCodes: appliedPromos.length > 0 ? appliedPromos : null,
-                                                    paymentMethod: paymentMethod === 'property' ? 'PAY_AT_PROPERTY' : 'ONLINE_CARD'
-                                                };
-                                                
-                                                const res = await api.post('/guest/bookings', payload);
-                                                
-                                                if (paymentMethod === 'online') {
-                                                    const params = new URLSearchParams();
-                                                    // Use toFixed(2) to ensure a clean decimal string (avoids BigDecimal toString quirks)
-                                                    params.set("total", Number(priceBreakdown.totalAmount).toFixed(2));
-                                                    params.set("confirmationCode", res.data.confirmationCode);
-                                                    params.set("bookingId", String(res.data.id));
-                                                    if (user?.profile) {
-                                                        params.set("firstName", user.profile.firstName);
-                                                        params.set("lastName", user.profile.lastName);
-                                                    }
-                                                    if (user?.email) {
-                                                        params.set("email", user.email);
-                                                    }
-                                                    router.push(`/payment?${params.toString()}`);
-                                                    return;
-                                                }
-
-                                                router.push("/guest/booking");
-                                            } catch (error: any) {
-                                                console.error("Booking failed:", error);
-                                                const msg = error.response?.data?.message || "Failed to confirm booking. Please try again.";
-                                                setErrorMsg(msg);
-                                                setBookingStep("failed");
-                                            } finally {
-                                                setIsSubmitting(false);
-                                            }
-                                        }}
-                                        className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 disabled:opacity-70 transition-colors cursor-pointer mt-2"
-                                    >
-                                        {!user ? "Sign in to Book" : isSubmitting ? "Processing..." : "Confirm Booking"}
-                                    </button>
+                                    )}
                                 </div>
                             </div>
                         )}

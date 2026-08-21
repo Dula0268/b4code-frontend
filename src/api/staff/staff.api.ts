@@ -6,6 +6,7 @@ export interface OwnerReservationDto {
   roomId?: number;
   roomName: string;
   roomNumber?: string;
+  roomQuantity: number;
   guestName: string;
   guestEmail: string;
   checkIn: string;

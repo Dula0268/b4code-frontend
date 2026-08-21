@@ -75,6 +75,7 @@ export const guestApi = {
     checkInDate: string;
     checkOutDate: string;
     guests: number;
+    roomQuantity: number;
   }) => api.put(`/guest/bookings/${id}`, payload).then((r) => r.data),
 
   sendReceipt: (confirmationCode: string) =>
