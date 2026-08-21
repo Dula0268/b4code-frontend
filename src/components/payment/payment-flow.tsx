@@ -19,7 +19,7 @@ export default function PaymentFlow() {
     const router = useRouter();
     const [step, setStep] = useState<PaymentStep>("selection");
 
-    if (status === "loading") return (
+    if (status === "loading" || status === "unauthenticated") return (
         <div className="min-h-screen flex items-center justify-center bg-[#1a1a1a]">
             <div className="w-8 h-8 border-4 border-t-white border-neutral-600 rounded-full animate-spin" />
         </div>

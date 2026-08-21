@@ -101,6 +101,21 @@ export default function PropertyClient({ property }: { property: any }) {
     };
 
     useEffect(() => {
+        const pending = sessionStorage.getItem("pendingBookingRooms");
+        if (pending) {
+            try {
+                setSelectedRooms(JSON.parse(pending));
+                sessionStorage.removeItem("pendingBookingRooms");
+                
+                // Also scroll down to the booking section
+                setTimeout(() => {
+                    document.getElementById("booking-section")?.scrollIntoView({ behavior: "smooth" });
+                }, 500);
+            } catch (e) {}
+        }
+    }, []);
+
+    useEffect(() => {
         const fetchBreakdown = async () => {
             const roomId = Object.keys(selectedRooms)[0];
             if (!roomId) {
@@ -650,6 +665,13 @@ export default function PropertyClient({ property }: { property: any }) {
                                     <button
                                         disabled={isSubmitting || (paymentMethod === 'property' && !nicNumber.trim())}
                                         onClick={async () => {
+                                            if (!user) {
+                                                sessionStorage.setItem("pendingBookingRooms", JSON.stringify(selectedRooms));
+                                                const currentPath = window.location.pathname + window.location.search;
+                                                router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`);
+                                                return;
+                                            }
+
                                             setIsSubmitting(true);
                                             try {
                                                 const roomId = Object.keys(selectedRooms)[0];
@@ -701,7 +723,7 @@ export default function PropertyClient({ property }: { property: any }) {
                                         }}
                                         className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 disabled:opacity-70 transition-colors cursor-pointer mt-2"
                                     >
-                                        {isSubmitting ? "Processing..." : "Confirm Booking"}
+                                        {!user ? "Sign in to Book" : isSubmitting ? "Processing..." : "Confirm Booking"}
                                     </button>
                                 </div>
                             </div>
