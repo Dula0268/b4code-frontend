@@ -138,7 +138,7 @@ export default function StaffMenuList() {
         subtitle="Manage menus, categories, and dining options for your guests."
         actions={
           <>
-            <Button asChild variant="outline" size="sm" className="h-9 px-4 rounded-xl border-[#E8EAED] bg-white shadow-sm font-bold text-[#1A1A1A] gap-2 transition-all">
+            <Button asChild variant="outline" size="sm" className="h-9 px-4 rounded-xl border-[#E8EAED] bg-white shadow-sm font-bold text-[#1A1A1A] gap-2 transition-all whitespace-nowrap">
               <Link href="/staff/menu/availability">
                 <ToggleRight size={16} className="text-[#C05621]" /> Item Availability
               </Link>

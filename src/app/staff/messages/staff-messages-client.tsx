@@ -12,6 +12,7 @@ import {
   BedDouble,
   Calendar,
   ChevronDown,
+  ChevronLeft,
   Hash,
   ClipboardList,
   MapPin,
@@ -437,10 +438,12 @@ export default function StaffMessagesClient() {
   const showBoth = canBooking && canOrders;
   const loadingConv = activeDomain === "booking" ? loadingBookingConv : loadingOrderConv;
 
+  const hasActiveThread = activeDomain === "booking" ? !!activeBookingId : !!activeOrderId;
+
   return (
-    <div className="bg-white rounded-2xl border border-[#eadfce] flex h-full min-h-[600px] overflow-hidden shadow-sm">
+    <div className="bg-white rounded-2xl border border-[#eadfce] flex flex-col md:flex-row h-full min-h-[600px] overflow-hidden shadow-sm">
       {/* Left Sidebar - Conversations List */}
-      <div className="w-1/3 border-r border-[#eadfce] flex flex-col bg-[#fafafa]">
+      <div className={`w-full md:w-1/3 border-r border-[#eadfce] flex-col bg-[#fafafa] ${hasActiveThread ? "hidden md:flex" : "flex"}`}>
         <div className="p-4 border-b border-[#eadfce] bg-white flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-bold text-[#2d2116] flex items-center gap-2">
@@ -588,7 +591,7 @@ export default function StaffMessagesClient() {
       </div>
 
       {/* Right Panel - Chat View */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className={`flex-1 flex-col bg-white min-w-0 ${hasActiveThread ? "flex" : "hidden md:flex"}`}>
         {activeDomain === "booking" ? (
           !activeBookingId ? (
             <div className="flex-1 overflow-y-auto bg-[#fafafa] p-6">
@@ -603,9 +606,18 @@ export default function StaffMessagesClient() {
               {/* Chat Header — click the profile to reveal guest details */}
               {activeBookingConv && (
                 <div className="border-b border-[#eadfce]">
+                  <div className="w-full flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setActiveBookingId(null)}
+                      className="md:hidden shrink-0 p-3 pr-0 text-[#8b7d6d] hover:text-[#2d2116]"
+                      aria-label="Back to conversations"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
                   <button
                     onClick={() => setShowGuestDetails((v) => !v)}
-                    className="w-full p-3 flex items-center gap-3 hover:bg-[#fafafa] transition-colors text-left"
+                    className="w-full p-3 flex items-center gap-3 hover:bg-[#fafafa] transition-colors text-left min-w-0"
                   >
                     <Avatar name={activeBookingConv.guestName || "Guest"} size="md" />
                     <div className="min-w-0 flex-1">
@@ -623,6 +635,7 @@ export default function StaffMessagesClient() {
                       className={`text-[#8b7d6d] shrink-0 transition-transform ${showGuestDetails ? "rotate-180" : ""}`}
                     />
                   </button>
+                  </div>
 
                   {showGuestDetails && (
                     <div className="px-4 pb-3 flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
@@ -719,9 +732,18 @@ export default function StaffMessagesClient() {
             {/* Chat Header — click to reveal order details */}
             {activeOrderConv && (
               <div className="border-b border-[#eadfce]">
+                <div className="w-full flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setActiveOrderId(null)}
+                    className="md:hidden shrink-0 p-3 pr-0 text-[#8b7d6d] hover:text-[#2d2116]"
+                    aria-label="Back to conversations"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
                 <button
                   onClick={() => setShowOrderDetails((v) => !v)}
-                  className="w-full p-3 flex items-center gap-3 hover:bg-[#fafafa] transition-colors text-left"
+                  className="w-full p-3 flex items-center gap-3 hover:bg-[#fafafa] transition-colors text-left min-w-0"
                 >
                   <Avatar name={activeOrderConv.guestName || "Guest"} size="md" />
                   <div className="min-w-0 flex-1">
@@ -736,6 +758,7 @@ export default function StaffMessagesClient() {
                     className={`text-[#8b7d6d] shrink-0 transition-transform ${showOrderDetails ? "rotate-180" : ""}`}
                   />
                 </button>
+                </div>
 
                 {showOrderDetails && (
                   <div className="px-4 pb-3 flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-200">

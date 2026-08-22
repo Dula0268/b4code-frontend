@@ -198,17 +198,17 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
   return (
     <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
       {/* Header */}
-      <div className="flex-none flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <button onClick={back} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors">
+      <div className="flex-none flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button onClick={back} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors shrink-0">
             <ArrowLeft size={16} />
           </button>
-          <div>
-            <h1 className="text-sm font-bold text-[var(--black-2)] leading-tight">{isEdit ? "Edit Item" : "Add New Item"}</h1>
-            <p className="text-[10px] text-[var(--gray-3)]">{menu.name}</p>
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold text-[var(--black-2)] leading-tight truncate">{isEdit ? "Edit Item" : "Add New Item"}</h1>
+            <p className="text-[10px] text-[var(--gray-3)] truncate">{menu.name}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={back}>Cancel</Button>
           <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave} disabled={isLoading}>
             <Save size={12} /> {isLoading ? "Saving..." : "Save Item"}
@@ -225,14 +225,14 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
       )}
 
       {/* Body — 2-column, scrollable left */}
-      <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* Left column — scrollable */}
-        <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-3">
+        <div className="flex-1 lg:overflow-y-auto pr-1 flex flex-col gap-3">
           {/* Basic Details */}
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4 flex flex-col gap-2.5">
               <h3 className="text-xs font-bold text-[var(--black-2)]">Basic Details</h3>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
                   <Label className={labelCls}>Item Name <span className="text-[var(--state-error)]">*</span></Label>
                   <Input value={name} onChange={(e) => { setName(e.target.value); setNameError(false); }} placeholder="e.g. Margherita Pizza" className={nameError ? errCls : inputCls} />
@@ -242,7 +242,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
                   <Input value={price} onChange={(e) => { setPrice(e.target.value); setPriceError(false); }} placeholder="e.g. 3000" className={priceError ? errCls : inputCls} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
                   <Label className={labelCls}>Category <span className="text-[var(--state-error)]">*</span></Label>
                   {categories.length === 0 ? (
@@ -289,7 +289,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
                   <Switch checked={isActive} onCheckedChange={setIsActive} className="data-[state=checked]:bg-[var(--brand-primary)] scale-90" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
                   <Label className={labelCls}><Clock size={10} className="inline mr-1" />Start Time</Label>
                   <Input type="time" value={availability.startTime} onChange={(e) => setAvailability((a) => ({ ...a, startTime: e.target.value }))} className={inputCls} />
@@ -411,7 +411,7 @@ export default function StaffMenuItemForm({ menuId, itemId }: { menuId: string; 
         </div>
 
         {/* Right column — Availability + Images */}
-        <div className="w-[240px] shrink-0 flex flex-col gap-3">
+        <div className="w-full lg:w-[240px] lg:shrink-0 flex flex-col gap-3">
           {/* Prominent availability toggle */}
           <Card className={`py-0 gap-0 border rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] ${isActive ? "border-[var(--state-success)] bg-[rgba(39,174,96,0.04)]" : "border-[var(--state-error)] bg-[rgba(235,87,87,0.04)]"}`}>
             <CardContent className="p-4 flex flex-col gap-2">

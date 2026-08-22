@@ -43,8 +43,13 @@ export default function CartClient({ location }: { location?: string }) {
 
   const lines = React.useMemo(() => Object.values(linesMap), [linesMap]);
 
+  // w-full below is required: this div is a flex item of the <main> in ordering-shell.tsx
+  // (flex flex-col). Without an explicit width, mx-auto's auto margins take priority over
+  // flex "stretch" cross-axis sizing, so the box shrinks to fit its widest unbroken content
+  // (e.g. a long non-wrapping item title) instead of the viewport — causing horizontal
+  // overflow/clipping on narrow phones.
   return (
-    <div className="max-w-[1680px] mx-auto px-4 md:px-6 py-4 animate-in fade-in duration-500">
+    <div className="w-full max-w-[1680px] mx-auto px-4 md:px-6 py-4 animate-in fade-in duration-500">
       {/* ─── Empty state ─── */}
       {lines.length === 0 ? (
         <>

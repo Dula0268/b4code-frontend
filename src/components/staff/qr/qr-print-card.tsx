@@ -52,17 +52,17 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
   return (
     <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
       {/* Header */}
-      <div className="flex-none flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <button onClick={() => router.push(`/staff/qr/${qrId}`)} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors">
+      <div className="flex-none flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button onClick={() => router.push(`/staff/qr/${qrId}`)} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors shrink-0">
             <ArrowLeft size={16} />
           </button>
-          <div>
-            <h1 className="text-sm font-bold text-[var(--black-2)] leading-tight">Print QR — {qr.name}</h1>
-            <p className="text-[10px] text-[var(--gray-3)]">Customize and download your QR card for printing.</p>
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold text-[var(--black-2)] leading-tight truncate">Print QR — {qr.name}</h1>
+            <p className="text-[10px] text-[var(--gray-3)] truncate">Customize and download your QR card for printing.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => router.push("/staff/qr")}>Back to List</Button>
           <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSaveAndPrint}>
             <Printer size={12} /> Save & Print
@@ -71,9 +71,9 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
       </div>
 
       {/* Body — 2 column */}
-      <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* Left: Customization */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 lg:overflow-y-auto">
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-5 flex flex-col gap-5">
               <h2 className="text-xs font-bold text-[var(--black-2)]">Customization</h2>
@@ -107,7 +107,7 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
         </div>
 
         {/* Right: Live Preview */}
-        <div className="w-[300px] shrink-0">
+        <div className="w-full lg:w-[300px] lg:shrink-0">
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] h-full">
             <CardContent className="p-5 h-full flex flex-col">
               <h2 className="text-xs font-bold text-[var(--black-2)] mb-3">Live Preview</h2>

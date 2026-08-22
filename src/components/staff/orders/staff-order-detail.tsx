@@ -115,19 +115,19 @@ export default function StaffOrderDetail({ orderId }: { orderId: string }) {
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-[#f8fafc]">
       {/* Header */}
-      <header className="flex-none bg-white border-b border-[var(--gray-5)] px-5 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => router.push("/staff/orders")}>
+      <header className="flex-none bg-white border-b border-[var(--gray-5)] px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => router.push("/staff/orders")}>
             <ArrowLeft size={16} />
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-sm font-bold text-[var(--black-2)] leading-none">Order {order.id}</h1>
               <Badge variant="outline" className={`px-2 py-px text-[9px] font-bold uppercase tracking-wider border-0 ${STATUS_BADGE_STYLE[order.status]}`}>
                 {STATUS_LABELS[order.status]}
               </Badge>
             </div>
-            <div className="flex items-center gap-3 mt-0.5 text-[10px] text-[var(--gray-3)]">
+            <div className="flex items-center gap-3 mt-0.5 text-[10px] text-[var(--gray-3)] flex-wrap">
               <span className="flex items-center gap-1"><MapPin size={10} /> {order.room || order.table}</span>
               <span className="flex items-center gap-1"><User size={10} /> {order.guest}</span>
               <span className="flex items-center gap-1"><Clock size={10} /> {order.timeAgo}</span>
@@ -135,17 +135,17 @@ export default function StaffOrderDetail({ orderId }: { orderId: string }) {
           </div>
         </div>
         {canReject && (
-          <Button variant="outline" size="sm" className="text-[var(--state-error)] border-[var(--state-error)] hover:bg-[rgba(235,87,87,0.06)] text-[11px] h-7 px-2.5" onClick={() => setIsRejectOpen(true)}>
+          <Button variant="outline" size="sm" className="text-[var(--state-error)] border-[var(--state-error)] hover:bg-[rgba(235,87,87,0.06)] text-[11px] h-7 px-2.5 shrink-0" onClick={() => setIsRejectOpen(true)}>
             <XCircle size={12} className="mr-1" /> Reject
           </Button>
         )}
       </header>
 
-      {/* Body: 2-column layout */}
-      <div className="flex-1 flex gap-3 overflow-hidden p-3">
+      {/* Body: 2-column layout (stacks on mobile) */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden p-3">
 
         {/* Left Column: Items + Guest Notes + Internal Notes */}
-        <div className="flex-1 flex flex-col gap-3 overflow-y-auto min-w-0">
+        <div className="flex-1 flex flex-col gap-3 lg:overflow-y-auto min-w-0">
 
           {/* Order Items Card */}
           <Card className="bg-white border-0 py-0 gap-0">
@@ -284,7 +284,7 @@ export default function StaffOrderDetail({ orderId }: { orderId: string }) {
         </div>
 
         {/* Right Column: Status + History */}
-        <div className="w-[300px] shrink-0 flex flex-col gap-3 overflow-y-auto">
+        <div className="w-full lg:w-[300px] shrink-0 flex flex-col gap-3 lg:overflow-y-auto">
 
           {/* Update Status Card */}
           <Card className="bg-white border-0 py-0 gap-0 p-4 flex flex-col gap-4">
