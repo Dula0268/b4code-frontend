@@ -36,6 +36,7 @@ export interface PropertyData {
     rooms?: RoomData[]; lat?: unknown; lng?: unknown; amenities?: unknown;
     checkInTime?: unknown; checkOutTime?: unknown;
     cancellationPolicy?: unknown; childPolicy?: unknown; houseRules?: unknown;
+    freeCancellation?: unknown;
     [key: string]: unknown;
 }
 
@@ -104,4 +105,5 @@ export const normalizePropertyDetail = (property: PropertyData) => ({
     cancellationPolicy: property?.cancellationPolicy ?? "Free cancellation until 48 hours before.\n50% refund within 48 hours.\nNo-shows will be charged full amount.",
     childPolicy: property?.childPolicy ?? "Children of any age are welcome.\nNo age restriction for check-in.\nExtra beds available upon request.",
     houseRules: property?.houseRules ?? "No smoking indoors.\nNo pets allowed.\nNo parties or events.",
+    freeCancellation: Boolean(property?.freeCancellation),
 });

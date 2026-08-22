@@ -14,10 +14,10 @@ export default async function GuestMessagePage(props: { params: Promise<{ id: st
       <GuestTopbar />
       <main className="flex-1 pt-24 px-4 sm:px-6 pb-6 flex flex-col">
         <Link
-          href={`/guest/booking/${bookingId}`}
+          href="/guest/booking"
           className="inline-flex items-center gap-2 text-sm font-bold mb-4 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors"
         >
-          <ChevronLeft size={16} /> Back to Booking
+          <ChevronLeft size={16} /> Back to My Bookings
         </Link>
         <div className="flex-1 min-h-0 flex flex-col">
           <GuestMessageClient bookingId={bookingId} />

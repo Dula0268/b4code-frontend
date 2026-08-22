@@ -24,7 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, AlertCircle, ImagePlus, X, CalendarIcon, MapPinIcon, HashIcon, BedDoubleIcon, ShieldAlertIcon, CheckCircle2 } from "lucide-react"
+import { Loader2, AlertCircle, ImagePlus, X, CalendarIcon, MapPinIcon, HashIcon, BedDoubleIcon, ShieldAlertIcon, CheckCircle2, ChevronLeft } from "lucide-react"
+import Link from "next/link"
 
 export default function ComplainPage() {
   const router = useRouter()
@@ -147,29 +148,29 @@ export default function ComplainPage() {
     <div className="min-h-screen flex flex-col bg-[#fafafa]">
       <GuestTopbar />
       
-      {/* Header Banner */}
-      <div className="bg-[#9a3300] text-white py-12 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 text-white/80 mb-2">
-              <ShieldAlertIcon className="w-5 h-5" />
-              <span className="text-sm font-semibold tracking-wider uppercase text-white/90">Support Center</span>
+      <main className="flex-1 pt-24 px-4 sm:px-6 pb-12 flex flex-col">
+        <div className="max-w-3xl mx-auto w-full">
+          <Link
+            href="/guest/booking"
+            className="inline-flex items-center gap-2 text-sm font-bold mb-4 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors"
+          >
+            <ChevronLeft size={16} /> Back to My Bookings
+          </Link>
+
+          {/* Header Banner */}
+          <div className="bg-[#9a3300] w-full px-4 py-4 sm:px-6 sm:py-5 md:px-10 md:py-6 shadow-md shrink-0 mb-6 sm:mb-8">
+            <div className="flex items-center gap-2 text-white font-bold tracking-wider text-xs uppercase mb-1.5 opacity-90">
+              <ShieldAlertIcon size={16} /> SUPPORT CENTER
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2 text-yellow-400">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#facc15] mb-1.5">
               File a Complaint
             </h1>
-            <p className="text-white/80 max-w-lg text-lg">
+            <p className="text-white/90 text-xs sm:text-sm md:text-base max-w-2xl hidden sm:block">
               We&apos;re sorry your experience wasn&apos;t perfect. Please provide details so our team can investigate and resolve the issue.
             </p>
           </div>
-          <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20" onClick={() => router.back()}>
-            Cancel & Return
-          </Button>
-        </div>
-      </div>
 
-      <main className="flex-1 max-w-3xl w-full mx-auto py-8 px-4 sm:px-6 -mt-8">
-        <div className="space-y-6">
+          <div className="space-y-6">
           
           {/* Context Card */}
           <Card className="border-0 shadow-md overflow-hidden bg-white">
@@ -354,6 +355,7 @@ export default function ComplainPage() {
               </CardContent>
             </Card>
           </form>
+        </div>
         </div>
       </main>
       <GuestFooter />

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -9,7 +9,7 @@ import {
   ChevronLeft, Calendar, User, MapPin, CheckCircle2,
   Clock, XCircle, Download, Star, RefreshCw, FileText,
   CreditCard, Wallet, Edit3, X, AlertTriangle, AlertCircle,
-  Check, ArrowRight, Info
+  Check, ArrowRight, Info, Key
 } from "lucide-react"
 import { guestApi } from "@/api/guest/guest.api"
 
@@ -43,6 +43,7 @@ export interface StoredBooking {
   cancelReason?: string
   disputeStatus?: string
   disputeAmount?: number
+  passkey?: string
 }
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Format Helpers
@@ -125,6 +126,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
   const [propertyDetail, setPropertyDetail] = useState<any>(null)
   const [editRoomId, setEditRoomId] = useState<string>("")
   const [editGuests, setEditGuests] = useState<number>(2)
+  const [editRoomQuantity, setEditRoomQuantity] = useState<number>(1)
   const [editCheckIn, setEditCheckIn] = useState<string>("")
   const [editCheckOut, setEditCheckOut] = useState<string>("")
   const [calOpen, setCalOpen] = useState(false)
@@ -196,10 +198,12 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           confirmationCode: b.confirmationCode,
           disputeStatus: b.disputeStatus,
           disputeAmount: b.disputeAmount,
+          passkey: b.nicNumber,
         }
 
         setBooking(mappedBooking)
         setEditGuests(mappedBooking.guests || 2)
+        setEditRoomQuantity(mappedBooking.roomQuantity || 1)
         setEditCheckIn(mappedBooking.checkIn)
         setEditCheckOut(mappedBooking.checkOut)
       } catch (error) {
@@ -238,6 +242,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
     const changes = editCheckIn !== booking.checkIn || 
                     editCheckOut !== booking.checkOut || 
                     editGuests !== (booking.guests || 2) || 
+                    editRoomQuantity !== (booking.roomQuantity || 1) ||
                     (editRoomId && editRoomId !== booking.roomId);
 
     if (!changes) return { newPrice: booking.totalPrice, diffAmount: 0, hasChanges: false, newBasePrice: origBasePrice, newTaxes: origTaxes, origBasePrice, origTaxes }
@@ -250,8 +255,8 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
     const fallbackPricePerNight = origBasePrice / origNights;
     const pricePerNight = room?.pricePerNight || fallbackPricePerNight;
 
-    // Price is now calculated solely on Room Price * Nights (Ignoring Guests)
-    const newBasePriceMock = pricePerNight * newNights;
+    // Price is now calculated solely on Room Price * Nights * Room Quantity
+    const newBasePriceMock = pricePerNight * newNights * (editRoomQuantity || 1);
     const newTaxesMock = 0;
     
     const newTotalBeforeDiscount = newBasePriceMock;
@@ -268,7 +273,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
       pricePerNight,
       newNights
     }
-  }, [booking, editCheckIn, editCheckOut, editGuests, editRoomId, propertyDetail])
+  }, [booking, editCheckIn, editCheckOut, editGuests, editRoomId, editRoomQuantity, propertyDetail])
 
   useEffect(() => {
     if (errorMessage) {
@@ -318,10 +323,10 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           </h2>
           <p className="text-sm text-[#6f6254] max-w-md">{reasonText}</p>
           <Link
-            href={`/guest/booking/${booking.confirmationCode || booking.id}`}
+            href="/guest/booking"
             className="mt-2 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#9a3300] hover:bg-[#7a2800] text-white text-sm font-bold no-underline transition-colors"
           >
-            View Booking Details
+            Back to My Bookings
           </Link>
         </div>
       </div>
@@ -341,7 +346,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
   // If payment method is PAY_AT_PROPERTY, there is no cancellation fee
   const isPayAtProperty = booking?.paymentMethod === "property" || !booking?.paidInFull;
   const isFreeCancellation = isPayAtProperty || isWithinFreeWindow;
-  const cancellationFee = isFreeCancellation ? 0 : (booking?.totalPrice || 0) * 0.20;
+  const cancellationFee = isFreeCancellation ? 0 : (booking?.totalPrice || 0) * 0.10;
   const eligibleRefund = Math.max(0, (booking?.totalPrice || 0) - cancellationFee);
 
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -356,8 +361,9 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
 
       // Calculate the amount due client-side first to decide what to do.
       const amountDue = !booking.paidInFull ? newPrice : (diffAmount > 0 ? diffAmount : 0);
+      const requiresOnlinePayment = booking.paymentMethod !== "property" && amountDue > 0;
 
-      if (amountDue > 0) {
+      if (requiresOnlinePayment) {
         // Payment is required BEFORE modifying the booking.
         // Store the pending modification in sessionStorage so the payment
         // success handler can pick it up and commit the change.
@@ -369,6 +375,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           checkInDate: editCheckIn,
           checkOutDate: editCheckOut,
           guests: editGuests,
+          roomQuantity: editRoomQuantity,
         };
         localStorage.setItem("pendingBookingModification", JSON.stringify(pendingModification));
 
@@ -390,7 +397,8 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
         propertyId: Number(booking.propertyId),
         checkInDate: editCheckIn,
         checkOutDate: editCheckOut,
-        guests: editGuests
+        guests: editGuests,
+        roomQuantity: editRoomQuantity
       });
 
       // Re-fetch booking from backend
@@ -404,6 +412,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
         ...booking,
         roomId: String(updated.roomId),
         roomName: updated.roomName || booking.roomName,
+        roomQuantity: updated.roomQuantity || booking.roomQuantity,
         checkIn: updated.checkIn,
         checkOut: updated.checkOut,
         checkInFormatted: checkInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -496,7 +505,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           errorMessage ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none",
         ].join(" ")}
       >
-        <span className="text-[16px]">âš ï¸</span>
+        <span className="text-[16px]">⚠️</span>
         {errorMessage}
       </div>
 
@@ -529,6 +538,19 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
             </div>
           </div>
         </>
+      )}
+
+      {booking.status === "PENDING" && pageMode === "view" && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+          <AlertTriangle className="text-red-600 mt-0.5 shrink-0" size={24} />
+          <div className="flex-1">
+            <h4 className="text-base font-black text-red-900">Payment Pending</h4>
+            <p className="text-sm font-medium text-red-700 mt-1">Your booking was not created successfully because the payment was not completed. Please book again to complete your reservation.</p>
+          </div>
+          <Link href={`/guest/property/${encodeURIComponent(booking.propertyId)}`} className="whitespace-nowrap px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition-colors no-underline text-center">
+            Book Again
+          </Link>
+        </div>
       )}
 
       {(isUpcoming || (isCancelled && booking.disputeStatus)) && pageMode === "view" && (
@@ -675,13 +697,24 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                     </div>
                   </div>
                   
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Guests</label>
-                    <select value={editGuests} onChange={(e) => setEditGuests(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
-                      {Array.from({ length: propertyDetail?.roomTypes?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.maxGuests || 6 }, (_, i) => i + 1).map(num => (
-                        <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
-                      ))}
-                    </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">Guests</label>
+                      <select value={editGuests} onChange={(e) => setEditGuests(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
+                        {Array.from({ length: (propertyDetail?.roomTypes?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.maxGuests || 6) * editRoomQuantity }, (_, i) => i + 1).map(num => (
+                          <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-[#1d1d1d] uppercase tracking-wide">No of Rooms</label>
+                      <select value={editRoomQuantity} onChange={(e) => setEditRoomQuantity(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[#e8ddcf] bg-white text-sm font-medium focus:outline-none focus:border-[#9a3300]">
+                        {Array.from({ length: Math.max(1, (propertyDetail?.roomTypes?.find((r: any) => String(r.id) === String(editRoomId || booking.roomId))?.availableCount || 1) + (String(editRoomId || booking.roomId) === String(booking.roomId) ? booking.roomQuantity : 0)) }, (_, i) => i + 1).map(num => (
+                          <option key={num} value={num}>{num} {num === 1 ? 'Room' : 'Rooms'}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
@@ -724,13 +757,18 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                   <h4 className="text-sm font-bold text-[#1d1d1d] mb-3 uppercase tracking-wider flex items-center gap-2">
                     <Info size={16} className="text-[#828282]"/> Cancellation Policy
                   </h4>
+                  {propertyDetail?.cancellationPolicy && (
+                    <p className="text-sm text-[#4f4f4f] mb-4 whitespace-pre-wrap">
+                      {propertyDetail.cancellationPolicy}
+                    </p>
+                  )}
                   {isPayAtProperty ? (
                     <div className="flex flex-col gap-2">
                       <p className="text-sm font-medium text-[#1d1d1d]">
                         You chose to pay at the property. No cancellation fee applies.
                       </p>
                       <p className="text-sm text-emerald-600 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg w-fit border border-emerald-100">
-                        âœ“ Free to cancel.
+                        ✓ Free to cancel.
                       </p>
                     </div>
                   ) : isFreeCancellationProperty ? (
@@ -740,11 +778,11 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                       </p>
                       {isWithinFreeWindow ? (
                         <p className="text-sm text-emerald-600 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg w-fit border border-emerald-100">
-                          âœ“ You are within the free cancellation window. No fees apply.
+                          ✓ You are within the free cancellation window. No fees apply.
                         </p>
                       ) : (
                         <p className="text-sm text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg w-fit border border-red-100">
-                          âš ï¸ The free cancellation window has passed. A 20% cancellation fee applies.
+                          ⚠️ The free cancellation window has passed. A 10% cancellation fee applies.
                         </p>
                       )}
                     </div>
@@ -754,7 +792,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                         This property does not offer free cancellation.
                       </p>
                       <p className="text-sm text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg w-fit border border-red-100">
-                        âš ï¸ A 20% cancellation fee applies immediately upon booking.
+                        ⚠️ A 10% cancellation fee applies immediately upon booking.
                       </p>
                     </div>
                   )}
@@ -866,6 +904,23 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                   </span>
                 </div>
               </div>
+
+              {booking.paymentMethod === "property" && booking.passkey && (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#fdfaf6] border border-[#e8ddcf] flex items-center justify-center">
+                    <Key size={18} className="text-[#828282]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-[#828282] font-medium uppercase tracking-wider">Secret Passkey</span>
+                    <span className="text-sm font-bold font-mono tracking-widest text-[var(--brand-primary)]">
+                      {booking.passkey}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3">
               <span className={`text-[11px] font-black px-3 py-1 rounded-md uppercase tracking-widest ${booking.paidInFull ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                 {booking.paidInFull ? 'Paid' : 'Pending'}
               </span>
@@ -951,7 +1006,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                       <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                         {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Modify & Send Refund Request"}
                       </button>
-                      <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
+                      <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); setEditRoomQuantity(booking.roomQuantity || 1); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>
                   </div>
                 ) : diffAmount > 0 || !booking.paidInFull ? (
@@ -963,7 +1018,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                       <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                         {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Modification"}
                       </button>
-                      <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
+                      <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); setEditRoomQuantity(booking.roomQuantity || 1); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>
                   </div>
                 ) : (
@@ -973,7 +1028,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                       <button onClick={handleSaveChanges} disabled={loading} className="w-full py-3 rounded-xl bg-[#9a3300] text-white text-sm font-bold hover:bg-[#7a2800] transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                         {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Confirm Modification"}
                       </button>
-                      <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
+                      <button onClick={() => { setEditCheckIn(booking.checkIn); setEditCheckOut(booking.checkOut); setEditGuests(booking.guests || 2); setEditRoomId(booking.roomId); setEditRoomQuantity(booking.roomQuantity || 1); }} className="w-full py-3 rounded-xl border border-[#e8ddcf] text-[#4f4f4f] text-sm font-bold hover:bg-[#fdfaf6] transition-colors">Discard Changes</button>
                     </div>
                   </div>
                 )}
@@ -1009,7 +1064,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
               <div className="flex justify-between items-center">
                 <span className="text-[#828282] font-medium">Transaction Status:</span>
                 <span className={`font-bold ${booking.paidInFull ? "text-emerald-600" : "text-amber-600"}`}>
-                  {booking.paidInFull ? "âœ“ SUCCESSFUL" : "PENDING"}
+                  {booking.paidInFull ? "✓ SUCCESSFUL" : "PENDING"}
                 </span>
               </div>
             </div>

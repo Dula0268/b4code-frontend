@@ -106,7 +106,7 @@ export default function StaffBookingsClient() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [checkInModalOpen, setCheckInModalOpen] = useState(false);
   const [checkInBookingId, setCheckInBookingId] = useState<number | null>(null);
-  const [roomNumberInput, setRoomNumberInput] = useState("");
+  const [roomNumberInputs, setRoomNumberInputs] = useState<string[]>([]);
   const [processingCheckIn, setProcessingCheckIn] = useState(false);
   const [availableRooms, setAvailableRooms] = useState<AvailableRoomDto[]>([]);
   const [loadingAvailableRooms, setLoadingAvailableRooms] = useState(false);
@@ -132,12 +132,13 @@ export default function StaffBookingsClient() {
 
   const openCheckInModal = (id: number) => {
     setCheckInBookingId(id);
-    setRoomNumberInput("");
+    const booking = reservations.find((r) => r.id === id);
+    const quantity = booking?.roomQuantity || 1;
+    setRoomNumberInputs(Array(quantity).fill(""));
     setAvailableRooms([]);
     setAvailableRoomsError(false);
     setCheckInModalOpen(true);
 
-    const booking = reservations.find((r) => r.id === id);
     if (!booking?.roomId) {
       setAvailableRoomsError(true);
       return;
@@ -151,17 +152,30 @@ export default function StaffBookingsClient() {
   };
 
   const handleCheckInSubmit = async () => {
-    if (!user?.propertyId || !checkInBookingId || !roomNumberInput.trim()) {
-      toast.error("Please enter the room number you're assigning this guest");
+    if (!user?.propertyId || !checkInBookingId) return;
+    
+    // Check if any required room is not assigned
+    if (roomNumberInputs.some(r => !r.trim())) {
+      toast.error("Please select a room number for all requested rooms");
       return;
     }
+
+    // Check for duplicate assignments in the same transaction
+    const uniqueSelections = new Set(roomNumberInputs.filter(Boolean));
+    if (uniqueSelections.size !== roomNumberInputs.length) {
+      toast.error("You cannot assign the same room number multiple times");
+      return;
+    }
+
+    const finalRooms = roomNumberInputs.map(r => r.trim()).join(",");
+
     try {
       setProcessingCheckIn(true);
-      await checkIn(user.propertyId, checkInBookingId, roomNumberInput.trim());
-      toast.success(`Guest checked in to Room ${roomNumberInput.trim()}`);
+      await checkIn(user.propertyId, checkInBookingId, finalRooms);
+      toast.success(`Guest checked in to Room(s): ${finalRooms}`);
       setCheckInModalOpen(false);
       setCheckInBookingId(null);
-      setRoomNumberInput("");
+      setRoomNumberInputs([]);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to check in");
     } finally {
@@ -463,21 +477,39 @@ export default function StaffBookingsClient() {
                       </p>
                     </div>
                   ) : (
-                    <Select value={roomNumberInput} onValueChange={setRoomNumberInput}>
-                      <SelectTrigger className="w-full h-10 mt-2 rounded-xl bg-white border-[#F0EBE7] focus:ring-[#C05621]/30">
-                        <div className="flex items-center gap-2">
-                          <DoorOpen size={14} className="text-[#9E7B6A]" />
-                          <SelectValue placeholder="Select an available room" />
+                    <div className="flex flex-col gap-3 mt-2">
+                      {roomNumberInputs.map((val, index) => (
+                        <div key={index} className="flex flex-col gap-1.5">
+                          {roomNumberInputs.length > 1 && (
+                            <Label className="text-xs text-[#9E7B6A]">Room {index + 1}</Label>
+                          )}
+                          <Select 
+                            value={val} 
+                            onValueChange={(newVal) => {
+                              const newArr = [...roomNumberInputs];
+                              newArr[index] = newVal;
+                              setRoomNumberInputs(newArr);
+                            }}
+                          >
+                            <SelectTrigger className="w-full h-10 rounded-xl bg-white border-[#F0EBE7] focus:ring-[#C05621]/30">
+                              <div className="flex items-center gap-2">
+                                <DoorOpen size={14} className="text-[#9E7B6A]" />
+                                <SelectValue placeholder={`Select room ${index + 1}`} />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl border-[#F0EBE7] shadow-xl">
+                              {availableRooms
+                                .filter((room) => !roomNumberInputs.includes(room.doorNumber) || roomNumberInputs[index] === room.doorNumber)
+                                .map((room) => (
+                                <SelectItem key={room.id} value={room.doorNumber}>
+                                  Room {room.doorNumber}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-[#F0EBE7] shadow-xl">
-                        {availableRooms.map((room) => (
-                          <SelectItem key={room.id} value={room.doorNumber}>
-                            Room {room.doorNumber}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      ))}
+                    </div>
                   )}
                 </div>
                 <DialogFooter>
@@ -485,7 +517,7 @@ export default function StaffBookingsClient() {
                   <Button
                     onClick={handleCheckInSubmit}
                     className="bg-[#1A1A1A] hover:bg-[#C05621] text-white"
-                    disabled={processingCheckIn || !roomNumberInput.trim() || hasNoRoomsConfigured}
+                    disabled={processingCheckIn || roomNumberInputs.some(r => !r.trim()) || hasNoRoomsConfigured}
                   >
                     {processingCheckIn ? "Checking in..." : "Confirm Check In"}
                   </Button>
