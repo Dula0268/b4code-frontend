@@ -947,7 +947,7 @@ export default function PropertyClient({ property }: { property: any }) {
                         </div>
                         <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2">Verify Your Email</h2>
                         <p className="text-[14px] text-[#555] mb-6">
-                            We've sent a 6-digit verification code to <strong>{user?.email}</strong>. Please enter it below to confirm your booking.
+                            We&apos;ve sent a 6-digit verification code to <strong>{user?.email}</strong>. Please enter it below to confirm your booking.
                         </p>
                         
                         <div className="w-full flex flex-col gap-4 mb-6">
@@ -999,7 +999,7 @@ export default function PropertyClient({ property }: { property: any }) {
                             <AlertTriangle size={40} />
                         </div>
                         <h2 className="text-[28px] font-bold text-[#1d1d1d] mb-2">Booking Failed</h2>
-                        <p className="text-[15px] text-[#555] mb-8">{errorMsg || "We couldn't process your booking at this time. Please try again."}</p>
+                        <p className="text-[15px] text-[#555] mb-8">{errorMsg || "We couldn&apos;t process your booking at this time. Please try again."}</p>
 
                         <button
                             onClick={() => { setBookingStep("select"); setErrorMsg(""); }}
