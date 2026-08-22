@@ -37,7 +37,14 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
     return (
         <div className="flex flex-col gap-3 p-3 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white w-[240px] flex-shrink-0 snap-start">
             <div className="relative w-full h-[140px] flex-shrink-0 rounded-xl overflow-hidden bg-[#f3ede8]">
-                <Image src={room.imageSrc} alt={room.name} fill className="object-cover" sizes="240px" />
+                {room.imageSrc ? (
+                    <Image src={room.imageSrc} alt={room.name} fill className="object-cover" sizes="240px" />
+                ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-[#a0a0a0]">
+                        <BedDouble size={24} className="mb-2 opacity-50" />
+                        <span className="text-[10px] font-medium uppercase tracking-wider">No Image</span>
+                    </div>
+                )}
             </div>
 
             <div className="flex-1 flex flex-col justify-start gap-1">
