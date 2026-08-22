@@ -267,7 +267,7 @@ export default function StaffBookingsClient() {
         onSearch={setSearch}
       />
 
-      <main className="flex-1 h-full overflow-y-auto custom-scrollbar">
+      <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
         <div className="px-4 lg:px-6 py-4 lg:py-6 pt-[80px] lg:pt-[88px] max-w-6xl mx-auto w-full flex flex-col gap-5">
 
           <div className="flex items-center bg-[#F5F6F8] rounded-xl p-1 shadow-inner border border-[#E8E8E8] w-full overflow-x-auto">

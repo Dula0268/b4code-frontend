@@ -63,6 +63,11 @@ export function getLineUnitPrice(line: {
   return price;
 }
 
+/** Matches the backend's BigDecimal HALF_UP 2dp rounding on every money component. */
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
 type CartState = {
   lines: Record<string, CartLine>;
   serviceChargeRate: number;
@@ -154,14 +159,28 @@ export const useCartStore = create<CartState>()(
 
   clear: () => set({ lines: {} }),
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-ORDER ESTIMATE ONLY.
+  //
+  // These selectors exist to preview a cart that has no order behind it yet.
+  // They deliberately mirror GuestOrderService#applyPricing exactly — same
+  // rates (fetched from /properties/public/{id}/charges), same per-component
+  // 2dp rounding, same "total = subtotal + serviceCharge + tax - discount".
+  // The moment an order is created, the server's persisted breakdown is the
+  // only thing that may be displayed; do NOT use these to render a placed
+  // order, and do NOT change the formula here without changing applyPricing.
+  // ─────────────────────────────────────────────────────────────────────────
   subtotal: () =>
-    Object.values(get().lines).reduce((sum, l) => sum + getLineUnitPrice(l) * l.qty, 0),
+    round2(Object.values(get().lines).reduce((sum, l) => sum + getLineUnitPrice(l) * l.qty, 0)),
 
-  serviceCharge: () => Math.round(get().subtotal() * get().serviceChargeRate),
+  serviceCharge: () => round2(get().subtotal() * get().serviceChargeRate),
 
-  tax: () => 0, // Deprecated: Tax removed completely
+  // Tax is applied server-side at the property's configured rate. It was
+  // previously hardcoded to 0 here, which is exactly why the guest saw a
+  // smaller total than the one the server persisted and staff displayed.
+  tax: () => round2(get().subtotal() * get().taxRate),
 
-  total: () => get().subtotal() + get().serviceCharge(),
+  total: () => round2(get().subtotal() + get().serviceCharge() + get().tax()),
 
   itemCount: () => Object.values(get().lines).reduce((sum, l) => sum + l.qty, 0),
 

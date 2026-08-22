@@ -132,7 +132,7 @@ export default function StaffMenuList() {
   };
 
   return (
-    <div className="h-full overflow-y-auto flex flex-col custom-scrollbar">
+    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col custom-scrollbar">
       <StaffHeader
         title="Menu Management"
         subtitle="Manage menus, categories, and dining options for your guests."

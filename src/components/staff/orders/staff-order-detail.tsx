@@ -87,7 +87,10 @@ export default function StaffOrderDetail({ orderId }: { orderId: string }) {
     setNoteText("");
   };
 
-  const fmt = (n: number) => `LKR ${n.toLocaleString()}`;
+  // Match the guest checkout's formatLkr rounding (0dp) — the raw toLocaleString()
+  // this replaced showed fractional LKR amounts (e.g. "82.5") that guests never see,
+  // making the same persisted order look like it had a different price on each screen.
+  const fmt = (n: number) => `LKR ${n.toLocaleString("en-LK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
   if (!order) {
     return (
@@ -110,7 +113,7 @@ export default function StaffOrderDetail({ orderId }: { orderId: string }) {
   });
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#f8fafc]">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-[#f8fafc]">
       {/* Header */}
       <header className="flex-none bg-white border-b border-[var(--gray-5)] px-5 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -188,9 +191,21 @@ export default function StaffOrderDetail({ orderId }: { orderId: string }) {
                   <span className="text-xs font-medium text-[var(--black-2)]">{fmt(order.subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between w-[220px]">
-                  <span className="text-xs text-[var(--gray-3)]">Service Charge (10%)</span>
+                  <span className="text-xs text-[var(--gray-3)]">Service Charge</span>
                   <span className="text-xs font-medium text-[var(--black-2)]">{fmt(order.serviceCharge)}</span>
                 </div>
+                {order.tax > 0 && (
+                  <div className="flex items-center justify-between w-[220px]">
+                    <span className="text-xs text-[var(--gray-3)]">Tax</span>
+                    <span className="text-xs font-medium text-[var(--black-2)]">{fmt(order.tax)}</span>
+                  </div>
+                )}
+                {order.discount > 0 && (
+                  <div className="flex items-center justify-between w-[220px]">
+                    <span className="text-xs text-[var(--gray-3)]">Discount</span>
+                    <span className="text-xs font-medium text-[var(--black-2)]">-{fmt(order.discount)}</span>
+                  </div>
+                )}
                 <Separator className="w-[220px] my-0.5" />
                 <div className="flex items-center justify-between w-[220px]">
                   <span className="text-sm font-bold text-[var(--black-2)]">Total</span>

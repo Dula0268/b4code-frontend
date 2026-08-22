@@ -48,7 +48,7 @@ export default function StaffPage() {
         subtitle={`Operational Overview • ${today}`}
         searchPlaceholder="Search order #, room, or item..."
       />
-      <main className="mt-[64px] flex-1 overflow-hidden">
+      <main className="mt-[64px] flex-1 min-h-0 overflow-hidden">
         <StaffDashboard />
       </main>
     </>

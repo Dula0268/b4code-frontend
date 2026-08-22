@@ -2,6 +2,43 @@
   "StaffDashboard": {
     "title": "Staff Dashboard",
     "online": "Online",
-    "offline": "Offline"
+    "offline": "Offline",
+    "connection": {
+      "connecting": "Connecting",
+      "connectingDetail": "Checking connection to the server.",
+      "live": "Live",
+      "liveDetail": "Up to date as of {time}.",
+      "deviceOffline": "Offline",
+      "backendUnreachable": "Server unreachable",
+      "syncing": "Syncing {count}",
+      "syncingDetail": "Sending {count} queued update(s) to the server.",
+      "pending": "{count} pending",
+      "pendingDetail": "{count} change(s) will sync once you're back online.",
+      "pendingSuffix": "{count} change(s) waiting to sync.",
+      "cachedFrom": "Showing data cached at {time}.",
+      "noCachedData": "No cached data available yet.",
+      "syncFailed": "Sync failed",
+      "syncFailedDetail": "{count} update(s) could not be saved.",
+      "syncStalledDetail": "{count} update(s) are stuck. Retry to try again.",
+      "retry": "Retry"
+    }
+  },
+  "OrderCancellation": {
+    "title": "Order Cancelled",
+    "cancelledBy": "Cancelled by {actor}",
+    "actorGuest": "guest",
+    "actorStaff": "restaurant",
+    "cancelledByGuest": "Cancelled by guest",
+    "cancelledByStaff": "Cancelled by restaurant",
+    "cancelledUnknown": "Cancelled",
+    "descriptionGuest": "You cancelled this order.",
+    "descriptionStaff": "The kitchen was unable to fulfil this order.",
+    "descriptionUnknown": "This order was cancelled.",
+    "refundLabel": "Refund",
+    "refundRefunded": "Refunded {amount}",
+    "refundRefundedNoAmount": "Refunded",
+    "refundNotApplicable": "No payment was taken, so there is nothing to refund.",
+    "refundFailed": "The refund could not be completed. Please contact the property.",
+    "refundReference": "Reference {reference}"
   }
 }

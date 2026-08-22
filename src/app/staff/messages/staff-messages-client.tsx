@@ -438,7 +438,7 @@ export default function StaffMessagesClient() {
   const loadingConv = activeDomain === "booking" ? loadingBookingConv : loadingOrderConv;
 
   return (
-    <div className="bg-white rounded-2xl border border-[#eadfce] flex h-[calc(100vh-60px)] min-h-[600px] overflow-hidden shadow-sm">
+    <div className="bg-white rounded-2xl border border-[#eadfce] flex h-full min-h-[600px] overflow-hidden shadow-sm">
       {/* Left Sidebar - Conversations List */}
       <div className="w-1/3 border-r border-[#eadfce] flex flex-col bg-[#fafafa]">
         <div className="p-4 border-b border-[#eadfce] bg-white flex flex-col gap-3">

@@ -2,6 +2,43 @@
   "StaffDashboard": {
     "title": "Panel de Personal",
     "online": "En línea",
-    "offline": "Desconectado"
+    "offline": "Desconectado",
+    "connection": {
+      "connecting": "Conectando",
+      "connectingDetail": "Comprobando la conexión con el servidor.",
+      "live": "En vivo",
+      "liveDetail": "Actualizado a las {time}.",
+      "deviceOffline": "Sin conexión",
+      "backendUnreachable": "Servidor inaccesible",
+      "syncing": "Sincronizando {count}",
+      "syncingDetail": "Enviando {count} cambio(s) pendiente(s) al servidor.",
+      "pending": "{count} pendiente(s)",
+      "pendingDetail": "{count} cambio(s) se sincronizarán al volver la conexión.",
+      "pendingSuffix": "{count} cambio(s) en espera de sincronizar.",
+      "cachedFrom": "Mostrando datos guardados a las {time}.",
+      "noCachedData": "Aún no hay datos guardados.",
+      "syncFailed": "Error de sincronización",
+      "syncFailedDetail": "{count} cambio(s) no se pudieron guardar.",
+      "syncStalledDetail": "{count} cambio(s) están atascados. Reintenta para volver a intentarlo.",
+      "retry": "Reintentar"
+    }
+  },
+  "OrderCancellation": {
+    "title": "Pedido cancelado",
+    "cancelledBy": "Cancelado por {actor}",
+    "actorGuest": "el huésped",
+    "actorStaff": "el restaurante",
+    "cancelledByGuest": "Cancelado por el huésped",
+    "cancelledByStaff": "Cancelado por el restaurante",
+    "cancelledUnknown": "Cancelado",
+    "descriptionGuest": "Has cancelado este pedido.",
+    "descriptionStaff": "La cocina no pudo completar este pedido.",
+    "descriptionUnknown": "Este pedido fue cancelado.",
+    "refundLabel": "Reembolso",
+    "refundRefunded": "Reembolsado {amount}",
+    "refundRefundedNoAmount": "Reembolsado",
+    "refundNotApplicable": "No se realizó ningún cobro, por lo que no hay nada que reembolsar.",
+    "refundFailed": "No se pudo completar el reembolso. Póngase en contacto con el establecimiento.",
+    "refundReference": "Referencia {reference}"
   }
 }

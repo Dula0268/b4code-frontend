@@ -122,17 +122,44 @@ api.interceptors.response.use(
       }
     }
 
-    // Offline caching for mutation requests
-    if (typeof window !== 'undefined' && !navigator.onLine && error.config) {
+    // Offline queueing for mutation requests.
+    // Previously gated on `!navigator.onLine` alone, so a write that failed
+    // because the BACKEND was unreachable (device still online) was dropped on
+    // the floor instead of being queued. Any error with no HTTP response means
+    // the request never reached the server, which is exactly the case to queue.
+    // Replays carry an X-Idempotency-Key header (see offline-sync.store.ts), so
+    // this must not run for the replay itself or it would re-queue forever.
+    const noResponse = !error.response;
+    const isReplay = Boolean(
+      (originalRequest?.headers as Record<string, unknown> | undefined)?.['X-Idempotency-Key']
+    );
+    if (typeof window !== 'undefined' && noResponse && !isReplay && error.config) {
       const { method, url, data } = error.config;
       if (method && ['post', 'put', 'patch', 'delete'].includes(method.toLowerCase())) {
-        // Dynamic import to prevent circular dependency issues
-        const { useOfflineSyncStore } = await import('@/store/staff/offline-sync.store');
-        useOfflineSyncStore.getState().addAction({
-          url: url || '',
-          method: method.toUpperCase() as 'POST' | 'PUT' | 'PATCH' | 'DELETE',
-          payload: data ? JSON.parse(data) : undefined,
-        });
+        // Only JSON bodies can be replayed later; FormData/blobs cannot be
+        // serialised into the persisted queue, so those are left to fail.
+        let payload: unknown;
+        let replayable = true;
+        if (typeof data === 'string') {
+          try {
+            payload = JSON.parse(data);
+          } catch {
+            replayable = false;
+          }
+        } else if (data !== undefined && data !== null) {
+          replayable = typeof data === 'object' && data.constructor === Object;
+          if (replayable) payload = data;
+        }
+
+        if (replayable) {
+          // Dynamic import to prevent circular dependency issues
+          const { useOfflineSyncStore } = await import('@/store/staff/offline-sync.store');
+          useOfflineSyncStore.getState().addAction({
+            url: url || '',
+            method: method.toUpperCase() as 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+            payload,
+          });
+        }
       }
     }
 
