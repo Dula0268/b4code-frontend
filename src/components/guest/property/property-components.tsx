@@ -46,8 +46,12 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#828282]">
                     <span className="flex items-center gap-1"><Users size={11} /> {room.maxGuests}</span>
                     <span className="flex items-center gap-1"><BedDouble size={11} /> {room.bedType}</span>
-                    <span className="flex items-center gap-1 text-[var(--state-success)] font-medium w-full mt-0.5">
-                        <CheckCircle2 size={11} /> {availableCount} {availableCount === 1 ? 'room' : 'rooms'} available
+                    <span className={`flex items-center gap-1 font-medium w-full mt-0.5 ${availableCount > 0 ? 'text-[var(--state-success)]' : 'text-red-500'}`}>
+                        {availableCount > 0 ? (
+                            <><CheckCircle2 size={11} /> {availableCount} {availableCount === 1 ? 'room' : 'rooms'} available</>
+                        ) : (
+                            <><SquareDot size={11} /> Sold Out</>
+                        )}
                     </span>
                 </div>
             </div>
@@ -58,7 +62,14 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
                     <p className="text-[10px] text-[#828282]">per night</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    {selectedQuantity === 0 ? (
+                    {availableCount === 0 ? (
+                        <button
+                            disabled
+                            className="bg-[#f0f0f0] text-[#a0a0a0] px-4 py-1.5 rounded-lg text-[13px] font-semibold cursor-not-allowed"
+                        >
+                            Sold Out
+                        </button>
+                    ) : selectedQuantity === 0 ? (
                         <button
                             onClick={() => onQuantityChange?.(1)}
                             className="bg-[var(--brand-primary)] text-white px-4 py-1.5 rounded-lg text-[13px] font-semibold hover:bg-[var(--brand-primary)]/90 transition-colors"

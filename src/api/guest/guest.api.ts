@@ -147,4 +147,10 @@ export const guestApi = {
         { params: guestSessionId ? { guestSessionId } : undefined }
       )
       .then((r) => r.data),
+
+  sendGuestOTP: (guestEmail: string, guestName: string) =>
+    api.post("/guest/bookings/send-otp", { guestEmail, guestName }).then((r) => r.data),
+
+  verifyGuestOTP: (guestEmail: string, otp: string) =>
+    api.post("/guest/bookings/verify-otp", { guestEmail, otp }).then((r) => r.data),
 };

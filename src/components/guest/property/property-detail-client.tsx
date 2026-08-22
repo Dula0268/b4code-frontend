@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import api from "@/lib/axios"
+import { guestApi } from "@/api/guest/guest.api"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -51,11 +52,17 @@ export default function PropertyClient({ property }: { property: any }) {
     const [isApplyingPromo, setIsApplyingPromo] = useState(false)
     const [priceBreakdown, setPriceBreakdown] = useState<any>(null)
     const [paymentMethod, setPaymentMethod] = useState<"online" | "property">("online")
+    const [hasActivePayAtProperty, setHasActivePayAtProperty] = useState(false)
     const [nicNumber, setNicNumber] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [bookingRef, setBookingRef] = useState("")
     const [errorMsg, setErrorMsg] = useState("")
     const [successMsg, setSuccessMsg] = useState("")
+
+    // OTP Verification State
+    const [otpStep, setOtpStep] = useState<"none" | "sending" | "entering" | "verifying">("none")
+    const [otpCode, setOtpCode] = useState("")
+    const [otpError, setOtpError] = useState("")
 
     const { user } = useAuthStore()
     const searchParams = useSearchParams()
@@ -82,6 +89,30 @@ export default function PropertyClient({ property }: { property: any }) {
         setEditCheckOut(checkOutDate);
         setEditGuests(guestsFromSearch);
     }, [checkInDate, checkOutDate, guestsFromSearch]);
+
+    useEffect(() => {
+        const totalRooms = Object.values(selectedRooms).reduce((acc: number, curr: any) => acc + curr.quantity, 0);
+        if (totalRooms > 2 && paymentMethod === 'property') {
+            setPaymentMethod('online');
+        }
+    }, [selectedRooms, paymentMethod]);
+
+    useEffect(() => {
+        if (user?.email) {
+            guestApi.getGuestBookings(user.email)
+                .then((bookings: any[]) => {
+                    const hasActive = bookings.some((b: any) => 
+                        b.paymentMethod === 'PAY_AT_PROPERTY' && 
+                        (b.status === 'PENDING' || b.status === 'CONFIRMED')
+                    );
+                    setHasActivePayAtProperty(hasActive);
+                    if (hasActive && paymentMethod === 'property') {
+                        setPaymentMethod('online');
+                    }
+                })
+                .catch(e => console.error("Failed to fetch guest bookings for validation", e));
+        }
+    }, [user, paymentMethod]);
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -145,6 +176,69 @@ export default function PropertyClient({ property }: { property: any }) {
         };
         fetchBreakdown();
     }, [selectedRooms, appliedPromos, checkInDate, checkOutDate]);
+
+    const executeBooking = async () => {
+        setIsSubmitting(true);
+        try {
+            const roomId = Object.keys(selectedRooms)[0];
+            const roomData = selectedRooms[roomId];
+            if (!roomId) return;
+            
+            const payload = {
+                roomId: Number(roomId),
+                propertyId: Number(property.id),
+                roomQuantity: roomData.quantity,
+                checkIn: checkInDate,
+                checkOut: checkOutDate,
+                adults: guestsFromSearch,
+                guestName: user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Guest User",
+                guestEmail: user?.email || "guest@example.com",
+                nicNumber: null, // No longer used for custom passkey, backend will generate it
+                promoCodes: appliedPromos.length > 0 ? appliedPromos : null,
+                paymentMethod: paymentMethod === 'property' ? 'PAY_AT_PROPERTY' : 'ONLINE_CARD'
+            };
+            
+            const res = await api.post('/guest/bookings', payload);
+            
+            if (paymentMethod === 'online') {
+                const params = new URLSearchParams();
+                params.set("total", Number(priceBreakdown.totalAmount).toFixed(2));
+                params.set("confirmationCode", res.data.confirmationCode);
+                params.set("bookingId", String(res.data.id));
+                if (user?.profile) {
+                    params.set("firstName", user.profile.firstName);
+                    params.set("lastName", user.profile.lastName);
+                }
+                if (user?.email) {
+                    params.set("email", user.email);
+                }
+                router.push(`/payment?${params.toString()}`);
+                return;
+            }
+
+            router.push("/guest/booking");
+        } catch (error: any) {
+            const msg = error.response?.data?.message || "Failed to confirm booking. Please try again.";
+            setErrorMsg(msg);
+            setBookingStep("failed");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleVerifyOTP = async () => {
+        if (!otpCode || !user?.email) return;
+        setOtpStep("verifying");
+        setOtpError("");
+        try {
+            await guestApi.verifyGuestOTP(user.email, otpCode);
+            setOtpStep("none");
+            await executeBooking();
+        } catch (error: any) {
+            setOtpStep("entering");
+            setOtpError(error.response?.data?.message || "Invalid OTP. Please try again.");
+        }
+    };
 
     const handleApplyPromo = async () => {
         const code = promoCodeInput.trim().toUpperCase();
@@ -640,24 +734,40 @@ export default function PropertyClient({ property }: { property: any }) {
                                                         </div>
                                                     </label>
                                                     <div className="flex flex-col gap-2">
-                                                        <label className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'property' ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' : 'border-[#e8e8e8] hover:border-[#ccc]'}`}>
-                                                            <input type="radio" name="payment" checked={paymentMethod === 'property'} onChange={() => setPaymentMethod('property')} className="mt-1 cursor-pointer" />
+                                                        <label className={`flex items-start gap-3 p-4 border rounded-xl transition-colors ${
+                                                            hasActivePayAtProperty || (Object.values(selectedRooms).reduce((acc: number, curr: any) => acc + curr.quantity, 0) > 2) ? 'opacity-50 cursor-not-allowed bg-gray-50' : 
+                                                            paymentMethod === 'property' ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 cursor-pointer' : 'border-[#e8e8e8] hover:border-[#ccc] cursor-pointer'
+                                                        }`}>
+                                                            <input 
+                                                                type="radio" 
+                                                                name="payment" 
+                                                                checked={paymentMethod === 'property'} 
+                                                                onChange={() => {
+                                                                    const totalRooms = Object.values(selectedRooms).reduce((acc: number, curr: any) => acc + curr.quantity, 0);
+                                                                    if (!hasActivePayAtProperty && totalRooms <= 2) setPaymentMethod('property');
+                                                                }} 
+                                                                disabled={hasActivePayAtProperty || (Object.values(selectedRooms).reduce((acc: number, curr: any) => acc + curr.quantity, 0) > 2)}
+                                                                className={`mt-1 ${hasActivePayAtProperty || (Object.values(selectedRooms).reduce((acc: number, curr: any) => acc + curr.quantity, 0) > 2) ? 'cursor-not-allowed' : 'cursor-pointer'}`} 
+                                                            />
                                                             <div>
                                                                 <p className="font-semibold text-[#1d1d1d] text-[14px]">Pay at property</p>
-                                                                <p className="text-[12px] text-[#828282]">Your room is held, settle the bill on arrival.</p>
+                                                                <p className="text-[12px] text-[#828282]">
+                                                                    {hasActivePayAtProperty 
+                                                                        ? "You already have an active Pay at Property booking. Please complete it first."
+                                                                        : (Object.values(selectedRooms).reduce((acc: number, curr: any) => acc + curr.quantity, 0) > 2)
+                                                                        ? "Pay at Property is limited to 2 rooms. Please pay online."
+                                                                        : "Your room is held, settle the bill on arrival."}
+                                                                </p>
                                                             </div>
                                                         </label>
                                                         {paymentMethod === 'property' && (
                                                             <div className="px-4 py-3 bg-[#f8f8f8] rounded-xl border border-[#e8e8e8] animate-in fade-in slide-in-from-top-2">
-                                                                <label className="text-[13px] font-semibold text-[#1d1d1d] block mb-0.5">Secret Passkey <span className="text-[#e53935]">*</span></label>
-                                                                <p className="text-[11px] text-[#828282] mb-1.5">You can enter any number or text as your passkey. You will use this to verify your booking at the property.</p>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={nicNumber}
-                                                                    onChange={(e) => setNicNumber(e.target.value)}
-                                                                    placeholder="e.g. 12345, John123, or any custom passkey" 
-                                                                    className="w-full border border-[#d8d8d8] rounded-lg px-3 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)] bg-white"
-                                                                />
+                                                                <p className="text-[12px] text-[#555]">
+                                                                    For security, we will send a One-Time Password (OTP) to your email <strong>{user.email}</strong> to verify this booking.
+                                                                </p>
+                                                                <p className="text-[12px] text-[#555] mt-1">
+                                                                    Once verified, the system will automatically generate a secure passkey for you to present at check-in.
+                                                                </p>
                                                             </div>
                                                         )}
                                                     </div>
@@ -665,60 +775,30 @@ export default function PropertyClient({ property }: { property: any }) {
                                             </div>
 
                                             <button
-                                                disabled={isSubmitting || (paymentMethod === 'property' && !nicNumber.trim())}
+                                                disabled={isSubmitting || otpStep === "sending" || otpStep === "verifying"}
                                                 onClick={async () => {
-                                                    setIsSubmitting(true);
-                                                    try {
-                                                        const roomId = Object.keys(selectedRooms)[0];
-                                                        const roomData = selectedRooms[roomId];
-                                                        if (!roomId) return;
-                                                        
-                                                        const payload = {
-                                                            roomId: Number(roomId),
-                                                            propertyId: Number(property.id),
-                                                            roomQuantity: roomData.quantity,
-                                                            checkIn: checkInDate,
-                                                            checkOut: checkOutDate,
-                                                            adults: guestsFromSearch,
-                                                            guestName: user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Guest User",
-                                                            guestEmail: user?.email || "guest@example.com",
-                                                            nicNumber: nicNumber || null,
-                                                            promoCodes: appliedPromos.length > 0 ? appliedPromos : null,
-                                                            paymentMethod: paymentMethod === 'property' ? 'PAY_AT_PROPERTY' : 'ONLINE_CARD'
-                                                        };
-                                                        
-                                                        const res = await api.post('/guest/bookings', payload);
-                                                        
-                                                        if (paymentMethod === 'online') {
-                                                            const params = new URLSearchParams();
-                                                            // Use toFixed(2) to ensure a clean decimal string (avoids BigDecimal toString quirks)
-                                                            params.set("total", Number(priceBreakdown.totalAmount).toFixed(2));
-                                                            params.set("confirmationCode", res.data.confirmationCode);
-                                                            params.set("bookingId", String(res.data.id));
-                                                            if (user?.profile) {
-                                                                params.set("firstName", user.profile.firstName);
-                                                                params.set("lastName", user.profile.lastName);
-                                                            }
-                                                            if (user?.email) {
-                                                                params.set("email", user.email);
-                                                            }
-                                                            router.push(`/payment?${params.toString()}`);
-                                                            return;
+                                                    if (paymentMethod === 'property') {
+                                                        if (!user?.email) return;
+                                                        setOtpStep("sending");
+                                                        setOtpError("");
+                                                        try {
+                                                            await guestApi.sendGuestOTP(user.email, user.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Guest");
+                                                            setOtpStep("entering");
+                                                        } catch (error: any) {
+                                                            const msg = error.response?.data?.message || error.message || "Failed to send OTP";
+                                                            setOtpStep("none");
+                                                            setErrorMsg(msg);
+                                                            setBookingStep("failed");
                                                         }
-
-                                                        router.push("/guest/booking");
-                                                    } catch (error: any) {
-                                                        console.error("Booking failed:", error);
-                                                        const msg = error.response?.data?.message || "Failed to confirm booking. Please try again.";
-                                                        setErrorMsg(msg);
-                                                        setBookingStep("failed");
-                                                    } finally {
-                                                        setIsSubmitting(false);
+                                                        return;
                                                     }
+                                                    
+                                                    // Execute directly for online payment
+                                                    executeBooking();
                                                 }}
                                                 className="w-full bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 disabled:opacity-70 transition-colors cursor-pointer mt-2"
                                             >
-                                                {isSubmitting ? "Processing..." : "Confirm Booking"}
+                                                {isSubmitting || otpStep === "sending" ? "Processing..." : "Confirm Booking"}
                                             </button>
                                         </>
                                     ) : (
@@ -854,6 +934,59 @@ export default function PropertyClient({ property }: { property: any }) {
                         >
                             Go to My Bookings
                         </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* OTP Verification Modal */}
+            {(otpStep === "entering" || otpStep === "verifying") && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+                        <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-6">
+                            <ShieldCheck size={40} />
+                        </div>
+                        <h2 className="text-[24px] font-bold text-[#1d1d1d] mb-2">Verify Your Email</h2>
+                        <p className="text-[14px] text-[#555] mb-6">
+                            We've sent a 6-digit verification code to <strong>{user?.email}</strong>. Please enter it below to confirm your booking.
+                        </p>
+                        
+                        <div className="w-full flex flex-col gap-4 mb-6">
+                            <input
+                                type="text"
+                                maxLength={6}
+                                value={otpCode}
+                                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                                placeholder="------"
+                                className="w-full border border-[#d8d8d8] rounded-xl px-4 py-4 text-center text-[24px] tracking-[0.5em] font-mono font-bold focus:outline-none focus:border-[var(--brand-primary)] bg-[#f8f8f8]"
+                            />
+                            {otpError && <p className="text-[13px] text-red-500 font-medium">{otpError}</p>}
+                        </div>
+
+                        <div className="w-full flex gap-3">
+                            <button
+                                disabled={otpStep === "verifying"}
+                                onClick={() => {
+                                    setOtpStep("none");
+                                    setOtpCode("");
+                                    setOtpError("");
+                                }}
+                                className="flex-1 bg-[#f0f0f0] hover:bg-[#e0e0e0] text-[#1d1d1d] font-bold py-3.5 rounded-xl transition-colors cursor-pointer text-center text-[15px]"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                disabled={otpCode.length !== 6 || otpStep === "verifying"}
+                                onClick={handleVerifyOTP}
+                                className="flex-1 bg-[var(--brand-primary)] hover:bg-[#6d2200] text-white font-bold py-3.5 rounded-xl transition-colors cursor-pointer flex justify-center items-center gap-2 text-[15px] disabled:opacity-70"
+                            >
+                                {otpStep === "verifying" ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        Verifying...
+                                    </>
+                                ) : "Verify & Book"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

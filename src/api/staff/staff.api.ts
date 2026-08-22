@@ -63,6 +63,7 @@ export const staffApi = {
     const params = new URLSearchParams();
     if (search) params.append("search", search);
     if (status) params.append("status", status);
+    params.append("_t", Date.now().toString()); // Cache buster for real-time SSE updates
     
     const response = await api.get<OwnerReservationDto[]>(
       `/staff/properties/${propertyId}/reservations?${params.toString()}`

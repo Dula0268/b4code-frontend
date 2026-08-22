@@ -9,7 +9,7 @@ import {
   ChevronLeft, Calendar, User, MapPin, CheckCircle2,
   Clock, XCircle, Download, Star, RefreshCw, FileText,
   CreditCard, Wallet, Edit3, X, AlertTriangle, AlertCircle,
-  Check, ArrowRight, Info
+  Check, ArrowRight, Info, Key
 } from "lucide-react"
 import { guestApi } from "@/api/guest/guest.api"
 
@@ -43,6 +43,7 @@ export interface StoredBooking {
   cancelReason?: string
   disputeStatus?: string
   disputeAmount?: number
+  passkey?: string
 }
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Format Helpers
@@ -197,6 +198,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           confirmationCode: b.confirmationCode,
           disputeStatus: b.disputeStatus,
           disputeAmount: b.disputeAmount,
+          passkey: b.nicNumber,
         }
 
         setBooking(mappedBooking)
@@ -359,8 +361,9 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
 
       // Calculate the amount due client-side first to decide what to do.
       const amountDue = !booking.paidInFull ? newPrice : (diffAmount > 0 ? diffAmount : 0);
+      const requiresOnlinePayment = booking.paymentMethod !== "property" && amountDue > 0;
 
-      if (amountDue > 0) {
+      if (requiresOnlinePayment) {
         // Payment is required BEFORE modifying the booking.
         // Store the pending modification in sessionStorage so the payment
         // success handler can pick it up and commit the change.
@@ -535,6 +538,19 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
             </div>
           </div>
         </>
+      )}
+
+      {booking.status === "PENDING" && pageMode === "view" && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+          <AlertTriangle className="text-red-600 mt-0.5 shrink-0" size={24} />
+          <div className="flex-1">
+            <h4 className="text-base font-black text-red-900">Payment Pending</h4>
+            <p className="text-sm font-medium text-red-700 mt-1">Your booking was not created successfully because the payment was not completed. Please book again to complete your reservation.</p>
+          </div>
+          <Link href={`/guest/property/${encodeURIComponent(booking.propertyId)}`} className="whitespace-nowrap px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition-colors no-underline text-center">
+            Book Again
+          </Link>
+        </div>
       )}
 
       {(isUpcoming || (isCancelled && booking.disputeStatus)) && pageMode === "view" && (
@@ -888,6 +904,23 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
                   </span>
                 </div>
               </div>
+
+              {booking.paymentMethod === "property" && booking.passkey && (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#fdfaf6] border border-[#e8ddcf] flex items-center justify-center">
+                    <Key size={18} className="text-[#828282]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-[#828282] font-medium uppercase tracking-wider">Secret Passkey</span>
+                    <span className="text-sm font-bold font-mono tracking-widest text-[var(--brand-primary)]">
+                      {booking.passkey}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3">
               <span className={`text-[11px] font-black px-3 py-1 rounded-md uppercase tracking-widest ${booking.paidInFull ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                 {booking.paidInFull ? 'Paid' : 'Pending'}
               </span>
