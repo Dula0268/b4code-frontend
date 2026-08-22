@@ -169,7 +169,7 @@ export default function StaffAvailableItems() {
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
                       <span className="text-[10px] text-[var(--gray-3)]">{item.menuName}</span>
-                      <span className="text-[10px] font-medium text-[var(--brand-primary)]">LKR {item.price.toLocaleString()}</span>
+                      <span className="text-[10px] font-medium text-[var(--brand-primary)]">LKR {item.price.toLocaleString("en-LK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                       <span className="text-[10px] text-[var(--gray-4)]">
                         {item.availability.allDays ? "All days" : item.availability.days.join(", ")} &middot; {item.availability.startTime}–{item.availability.endTime}
                       </span>

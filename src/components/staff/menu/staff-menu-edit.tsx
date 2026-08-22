@@ -290,7 +290,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                   <p className="text-xs font-bold text-[var(--black-2)] leading-tight">{item.name}</p>
                   <p className="text-[10px] text-[var(--gray-3)] line-clamp-2">{item.description}</p>
                   <div className="mt-auto pt-2 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[var(--brand-primary)]">LKR {item.price.toLocaleString()}</span>
+                    <span className="text-xs font-bold text-[var(--brand-primary)]">LKR {item.price.toLocaleString("en-LK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                     <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-3)]">
                       {item.calories && (
                         <span className="flex items-center gap-0.5"><Flame size={10} />{item.calories} Cal</span>
@@ -342,7 +342,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                   <p className="text-[10px] text-[var(--gray-3)] truncate">{item.description}</p>
                 </div>
                 {statusBadge(item)}
-                <span className="text-xs font-bold text-[var(--brand-primary)] shrink-0">LKR {item.price.toLocaleString()}</span>
+                <span className="text-xs font-bold text-[var(--brand-primary)] shrink-0">LKR {item.price.toLocaleString("en-LK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 {item.calories && <span className="text-[10px] text-[var(--gray-3)] flex items-center gap-0.5 shrink-0"><Flame size={10} />{item.calories}</span>}
                 <div className="flex items-center gap-2 shrink-0">
                   <Switch
