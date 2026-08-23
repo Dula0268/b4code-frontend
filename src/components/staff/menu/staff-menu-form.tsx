@@ -51,17 +51,17 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
   return (
     <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
       {/* Header */}
-      <div className="flex-none flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <button onClick={() => router.push("/staff/menu")} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors">
+      <div className="flex-none flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button onClick={() => router.push("/staff/menu")} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors shrink-0">
             <ArrowLeft size={16} />
           </button>
-          <div>
-            <h1 className="text-sm font-bold text-[var(--black-2)] leading-tight">{isEdit ? "Edit Menu" : "Create New Menu"}</h1>
-            <p className="text-[10px] text-[var(--gray-3)]">{isEdit ? "Update menu details." : "Configure the details and add items for a new dining selection."}</p>
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold text-[var(--black-2)] leading-tight truncate">{isEdit ? "Edit Menu" : "Create New Menu"}</h1>
+            <p className="text-[10px] text-[var(--gray-3)] truncate">{isEdit ? "Update menu details." : "Configure the details and add items for a new dining selection."}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => router.push("/staff/menu")}>Cancel</Button>
           <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSave} disabled={isLoading}>
             <Save size={12} /> {isLoading ? "Saving..." : "Save Menu"}
@@ -78,9 +78,9 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
       )}
 
       {/* Body — 2-column */}
-      <div className="flex-1 flex gap-4 overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden min-h-0">
         {/* Left: Form Fields */}
-        <div className="flex-1 flex flex-col gap-3 overflow-y-auto">
+        <div className="flex-1 flex flex-col gap-3 lg:overflow-y-auto">
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4 flex flex-col gap-3">
             {/* Name */}
@@ -128,7 +128,7 @@ export default function StaffMenuForm({ menuId }: { menuId?: string }) {
         </div>
 
         {/* Right: Info Panel */}
-        <div className="w-[280px] shrink-0 flex flex-col gap-3">
+        <div className="w-full lg:w-[280px] lg:shrink-0 flex flex-col gap-3">
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-4 flex flex-col gap-2">
               <div className="w-10 h-10 rounded-full bg-[rgba(149,48,2,0.08)] flex items-center justify-center mb-1">

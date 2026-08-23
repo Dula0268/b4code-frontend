@@ -8,7 +8,7 @@ export default function AutoReplyPage() {
         title="Auto-Reply"
         subtitle="Set up automatic replies to common guest questions"
       />
-      <main className="mt-[64px] flex-1 overflow-y-auto">
+      <main className="mt-[64px] flex-1 min-h-0 overflow-y-auto">
         <div className="p-4 max-w-4xl mx-auto">
           <AutoReplyClient />
         </div>

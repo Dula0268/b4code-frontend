@@ -11,7 +11,6 @@ const generateUUID = () => {
 };
 
 import { useGuestSessionStore } from "./guest-session.store";
-import { useCartStore } from "./cart.store";
 
 /* ─── Types ─── */
 
@@ -22,6 +21,12 @@ export type OrderStatus =
   | "delivered"
   | "cancelled"
   | "payment-pending";
+
+/** Who cancelled an order. Mirrors the backend OrderActorType enum. */
+export type CancelledBy = "guest" | "staff";
+
+/** Refund outcome recorded on a cancelled order. Mirrors backend OrderRefundStatus. */
+export type RefundStatus = "refunded" | "not-applicable" | "failed";
 
 export type OrderLine = {
   item: MenuItem;
@@ -50,7 +55,52 @@ export type Order = {
   timeline: TimelineStep[];
   placedAt: string; // formatted date string
   rejectionReason?: string;
+  /** Set only when currentStatus === "cancelled"; undefined for legacy orders cancelled before this was recorded. */
+  cancelledBy?: CancelledBy;
+  refundStatus?: RefundStatus;
+  refundAmount?: number;
+  refundReference?: string;
 };
+
+/** Shape of the cancellation/refund fields the backend adds to every OrderResponse. */
+type BackendCancellationFields = {
+  cancelledBy?: string | null;
+  refundStatus?: string | null;
+  refundAmount?: number | null;
+  refundReference?: string | null;
+};
+
+function mapCancelledBy(value?: string | null): CancelledBy | undefined {
+  if (!value) return undefined;
+  const v = value.toUpperCase();
+  if (v === "GUEST") return "guest";
+  if (v === "STAFF") return "staff";
+  return undefined; // SYSTEM / unknown → UI falls back to a neutral "Cancelled"
+}
+
+function mapRefundStatus(value?: string | null): RefundStatus | undefined {
+  if (!value) return undefined;
+  switch (value.toUpperCase()) {
+    case "REFUNDED":
+      return "refunded";
+    case "NOT_APPLICABLE":
+      return "not-applicable";
+    case "FAILED":
+      return "failed";
+    default:
+      return undefined;
+  }
+}
+
+/** Picks the cancellation/refund fields off a backend order payload. */
+export function extractCancellationFields(bo: BackendCancellationFields) {
+  return {
+    cancelledBy: mapCancelledBy(bo.cancelledBy),
+    refundStatus: mapRefundStatus(bo.refundStatus),
+    refundAmount: bo.refundAmount ?? undefined,
+    refundReference: bo.refundReference ?? undefined,
+  };
+}
 
 type OrderState = {
   currentOrder: Order | null;
@@ -297,17 +347,22 @@ export const useOrderStore = create<OrderState>()(
       const backendOrder = response.data;
       const now = new Date();
       
-      // Map backend response to frontend Order type
+      // Map backend response to frontend Order type.
+      //
+      // Money comes exclusively from the server's persisted breakdown — never from
+      // `opts`, which is only the client's pre-order estimate. The server is the
+      // single source of truth, so whatever it computed is what the guest sees and
+      // what staff sees, by construction.
       const order: Order = {
         id: `#ORD-${backendOrder.id}`,
         location: opts.location || "",
         guestName: opts.guestName || "Guest",
         paymentMethod: opts.paymentMethod,
         lines: opts.lines,
-        subtotal: opts.subtotal,
-        serviceCharge: opts.serviceCharge,
-        tax: opts.tax,
-        total: opts.total,
+        subtotal: backendOrder.subtotalAmount ?? opts.subtotal,
+        serviceCharge: backendOrder.serviceChargeAmount ?? opts.serviceCharge,
+        tax: backendOrder.taxAmount ?? opts.tax,
+        total: backendOrder.totalAmount ?? opts.total,
         currentStatus: mapBackendStatus(backendOrder.status),
         timeline: [
           {
@@ -361,13 +416,9 @@ export const useOrderStore = create<OrderState>()(
       // Map backend orders to frontend Order type, excluding payment-pending ones
       const now = new Date();
       
-      // Tax is deprecated (always 0) — only service charge is applied on top of subtotal.
-      const { serviceChargeRate = 0.1 } = useCartStore.getState();
-      const combinedRate = 1 + serviceChargeRate;
-
       const mapped: Order[] = backendOrders
         .filter((bo: { status: string }) => bo.status !== 'PAYMENT_PENDING' && bo.status !== 'payment_pending')
-        .map((bo: { id: number; status: string; createdAt: string; location?: string; guestName?: string; totalAmount?: number; paymentMethod?: string; items?: Array<{ menuItem: { name: string; imageUrl?: string; priceLkr?: number }; quantity: number; priceAtOrder: number; note?: string }> }) => {
+        .map((bo: { id: number; status: string; createdAt: string; location?: string; guestName?: string; totalAmount?: number; subtotalAmount?: number; serviceChargeAmount?: number; taxAmount?: number; discountAmount?: number; paymentMethod?: string; items?: Array<{ menuItem: { name: string; imageUrl?: string; priceLkr?: number }; quantity: number; priceAtOrder: number; lineTotal?: number; note?: string }> }) => {
           const createdDate = bo.createdAt ? new Date(bo.createdAt) : now;
           const mappedStatus = mapBackendStatus(bo.status);
           const lines: OrderLine[] = (bo.items || []).map((it) => ({
@@ -381,9 +432,11 @@ export const useOrderStore = create<OrderState>()(
             } as MenuItem,
             qty: it.quantity,
           }));
-          const subtotal = (bo.totalAmount ?? 0) / combinedRate;
-          const serviceCharge = subtotal * serviceChargeRate;
-          const tax = 0; // Deprecated: tax is always 0
+          // Server-persisted breakdown only. The old code divided totalAmount by a
+          // client-side rate to guess the subtotal, which drifted from the real one.
+          const subtotal = bo.subtotalAmount ?? 0;
+          const serviceCharge = bo.serviceChargeAmount ?? 0;
+          const tax = bo.taxAmount ?? 0;
           return {
             id: `#ORD-${bo.id}`,
             location: bo.location || '',
@@ -432,6 +485,12 @@ export const useOrderStore = create<OrderState>()(
         return {
           currentOrder: {
             ...state.currentOrder,
+            // Re-adopt the server's persisted breakdown on every sync so a locally
+            // persisted (possibly stale) copy can never diverge from what staff see.
+            subtotal: backendOrder.subtotalAmount ?? state.currentOrder.subtotal,
+            serviceCharge: backendOrder.serviceChargeAmount ?? state.currentOrder.serviceCharge,
+            tax: backendOrder.taxAmount ?? state.currentOrder.tax,
+            total: backendOrder.totalAmount ?? state.currentOrder.total,
             currentStatus: mappedStatus,
             timeline: alreadyHasStatus
               ? state.currentOrder.timeline

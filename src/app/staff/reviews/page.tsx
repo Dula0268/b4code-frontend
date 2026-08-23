@@ -118,7 +118,7 @@ export default function ReviewManagementPage() {
         onSearch={(query) => setSearch(query)}
       />
       
-      <main className="flex-1 h-full overflow-y-auto flex flex-col custom-scrollbar">
+      <main className="flex-1 min-h-0 overflow-y-auto flex flex-col custom-scrollbar">
         <div className="flex flex-col flex-1 px-4 lg:px-6 py-4 lg:py-6 gap-4 lg:gap-6 pt-[80px] lg:pt-[88px] min-h-min pb-10">
           <div className="max-w-7xl mx-auto w-full flex flex-col gap-4 lg:gap-6 h-full">
         {/* Top Controls Box */}

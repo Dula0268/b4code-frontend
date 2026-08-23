@@ -40,8 +40,11 @@ export interface Order {
   guest?: string;
   items: OrderItem[];
   note?: string;
+  /** All money fields below are the server's persisted, authoritative values. */
   subtotal: number;
   serviceCharge: number;
+  tax: number;
+  discount: number;
   total: number;
   totalItems: number;
   status: OrderStatus;
@@ -70,20 +73,56 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 // ─── Initialize empty orders (populated from API) ─────────────────────────────
 let staffEventSource: EventSource | null = null;
 let activeAbortController: AbortController | null = null;
+let activeQueueAbortController: AbortController | null = null;
 
 
 // ─── State ─────────────────────────────────────────────────────────────────────
+export const ORDER_PAGE_SIZE = 12;
+
+/**
+ * Backend statuses that make up each frontend queue tab. `in-progress` covers two
+ * backend statuses, which is why the list endpoint takes a `statuses` list.
+ */
+const BACKEND_STATUSES_BY_TAB: Record<OrderStatus, string[]> = {
+  placed: ["PLACED"],
+  accepted: ["ACCEPTED"],
+  "in-progress": ["IN_PROGRESS", "READY"],
+  delivered: ["DELIVERED"],
+  cancelled: ["CANCELLED"],
+};
+
+/** One server-paginated page of the staff order queue (Spring `Page` contract). */
+export type OrderQueuePage = {
+  items: Order[];
+  status: OrderStatus;
+  page: number;
+  size: number;
+  totalPages: number;
+  totalElements: number;
+  loading: boolean;
+  error: string | null;
+};
+
 type StaffOrdersState = {
   orders: Order[];
   loading: boolean;
   error: string | null;
   toast: { type: "success" | "error"; message: string; detail: string } | null;
+  /** Paginated slice used by the staff orders queue page. */
+  queue: OrderQueuePage;
+  /** Total order count per frontend status tab, independent of the current page. */
+  statusCounts: Partial<Record<OrderStatus, number>>;
 };
 
 type StaffOrdersActions = {
   setLoading: (value: boolean) => void;
   setError: (message: string | null) => void;
   fetchOrders: (propertyId: number) => Promise<void>;
+  fetchOrderPage: (
+    propertyId: number,
+    options?: { page?: number; size?: number; status?: OrderStatus }
+  ) => Promise<void>;
+  fetchStatusCounts: (propertyId: number) => Promise<void>;
   acceptOrder: (orderId: string) => Promise<void>;
   rejectOrder: (orderId: string, reason?: string) => Promise<void>;
   advanceStatus: (orderId: string) => Promise<void>;
@@ -219,6 +258,10 @@ interface BackendOrderResponse {
   guestId: number;
   guestInstructions?: string;
   totalAmount: number;
+  subtotalAmount?: number;
+  serviceChargeAmount?: number;
+  taxAmount?: number;
+  discountAmount?: number;
   status: string;
   createdAt: string | number[];
   items?: BackendOrderItem[];
@@ -275,8 +318,13 @@ function convertBackendOrder(backendOrder: BackendOrderResponse): Order {
     guest: backendOrder.guestName || `Guest ${backendOrder.guestId}`,
     items,
     note: backendOrder.guestInstructions,
-    subtotal: backendOrder.totalAmount * 0.9,
-    serviceCharge: backendOrder.totalAmount * 0.1 * 0.1,
+    // Server-persisted breakdown only. This previously guessed subtotal as
+    // totalAmount * 0.9 and service charge as totalAmount * 0.01, which matched
+    // neither the real charges nor what the guest was shown.
+    subtotal: backendOrder.subtotalAmount ?? 0,
+    serviceCharge: backendOrder.serviceChargeAmount ?? 0,
+    tax: backendOrder.taxAmount ?? 0,
+    discount: backendOrder.discountAmount ?? 0,
     total: backendOrder.totalAmount,
     totalItems,
     status,
@@ -313,6 +361,17 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
     loading: false,
     error: null,
     toast: null,
+    queue: {
+      items: [],
+      status: "placed",
+      page: 0,
+      size: ORDER_PAGE_SIZE,
+      totalPages: 0,
+      totalElements: 0,
+      loading: false,
+      error: null,
+    },
+    statusCounts: {},
 
     setLoading: (value) => set({ loading: value }),
     setError: (message) => set({ error: message }),
@@ -364,6 +423,92 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         const errorMessage = extractApiErrorMessage(error, "Failed to fetch orders");
         console.error(`❌ Failed to fetch orders:`, error);
         set({ error: errorMessage, loading: false });
+      }
+    },
+
+    /**
+     * Fetches ONE page of orders for a single queue tab straight from the backend's
+     * existing `Page<OrderResponse>` endpoint (page / size / totalPages / totalElements).
+     * Deliberately kept separate from `orders`, which is the global cache the sidebar
+     * badge, dashboard and notification provider read from.
+     */
+    fetchOrderPage: async (propertyId, options = {}) => {
+      if (!propertyId || isNaN(propertyId)) {
+        set((state) => ({ queue: { ...state.queue, loading: false } }));
+        return;
+      }
+
+      const current = get().queue;
+      const status = options.status ?? current.status;
+      const size = options.size ?? current.size ?? ORDER_PAGE_SIZE;
+      const page = Math.max(options.page ?? current.page, 0);
+
+      if (activeQueueAbortController) {
+        activeQueueAbortController.abort();
+      }
+      const controller = new AbortController();
+      activeQueueAbortController = controller;
+
+      set((state) => ({
+        queue: { ...state.queue, status, page, size, loading: true, error: null },
+      }));
+
+      try {
+        const response = await api.get(`/staff/orders/property/${propertyId}`, {
+          params: { page, size, statuses: BACKEND_STATUSES_BY_TAB[status] },
+          paramsSerializer: { indexes: null },
+          signal: controller.signal,
+        });
+
+        if (activeQueueAbortController !== controller) return;
+
+        const raw = response.data;
+        const content: BackendOrderResponse[] = Array.isArray(raw) ? raw : (raw?.content ?? []);
+        const totalElements: number = Array.isArray(raw)
+          ? content.length
+          : (raw?.totalElements ?? content.length);
+        const totalPages: number = Array.isArray(raw)
+          ? 1
+          : (raw?.totalPages ?? (size > 0 ? Math.ceil(totalElements / size) : 1));
+
+        set((state) => ({
+          queue: {
+            ...state.queue,
+            items: content.map(convertBackendOrder),
+            status,
+            page,
+            size,
+            totalPages,
+            totalElements,
+            loading: false,
+            error: null,
+          },
+        }));
+      } catch (error: unknown) {
+        if (activeQueueAbortController !== controller || axios.isCancel(error)) return;
+        const errorMessage = extractApiErrorMessage(error, "Failed to fetch orders");
+        set((state) => ({ queue: { ...state.queue, loading: false, error: errorMessage } }));
+      }
+    },
+
+    /**
+     * Per-status totals so the queue tabs stay accurate while only one page of rows
+     * is loaded. Falls back silently to the cache-derived counts if unavailable.
+     */
+    fetchStatusCounts: async (propertyId) => {
+      if (!propertyId || isNaN(propertyId)) return;
+      try {
+        const response = await api.get(`/staff/orders/property/${propertyId}/status-counts`);
+        const raw = (response.data ?? {}) as Record<string, number>;
+        const counts: Partial<Record<OrderStatus, number>> = {};
+        for (const [backendStatus, count] of Object.entries(raw)) {
+          if (backendStatus === "PAYMENT_PENDING" || backendStatus === "payment_pending") continue;
+          const tab = mapBackendStatusToFrontend(backendStatus);
+          counts[tab] = (counts[tab] ?? 0) + Number(count || 0);
+        }
+        set({ statusCounts: counts });
+      } catch {
+        // Counts are a nicety - keep the cache-derived fallback rather than surfacing an error.
       }
     },
 
@@ -485,7 +630,11 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
 
     getOrder: (orderId) => get().orders.find((o) => o.id === orderId),
     getOrdersByStatus: (status) => get().orders.filter((o) => o.status === status),
-    getCountByStatus: (status) => get().orders.filter((o) => o.status === status).length,
+    getCountByStatus: (status) => {
+      const serverCount = get().statusCounts[status];
+      if (serverCount !== undefined) return serverCount;
+      return get().orders.filter((o) => o.status === status).length;
+    },
 
     setupSse: (propertyId) => {
       if (typeof window === "undefined") return;
@@ -576,7 +725,27 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         staffEventSource.close();
         staffEventSource = null;
       }
-      set({ orders: [], loading: false, error: null, toast: null });
+      if (activeQueueAbortController) {
+        activeQueueAbortController.abort();
+        activeQueueAbortController = null;
+      }
+      set({
+        orders: [],
+        loading: false,
+        error: null,
+        toast: null,
+        statusCounts: {},
+        queue: {
+          items: [],
+          status: "placed",
+          page: 0,
+          size: ORDER_PAGE_SIZE,
+          totalPages: 0,
+          totalElements: 0,
+          loading: false,
+          error: null,
+        },
+      });
     },
   }),
   {

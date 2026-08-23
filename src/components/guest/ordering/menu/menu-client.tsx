@@ -532,7 +532,12 @@ export default function MenuClient() {
 
           {/* cards grid */}
           <div className="mt-3 md:mt-4">
-             <ScrollArea className="h-[calc(100vh-180px)] md:h-[calc(100vh-220px)] pr-1 md:pr-4">
+             {/* h-auto on mobile: a fixed calc(100vh-...) height here made this nested scroll
+                 box extend past the viewport bottom, so its last row rendered underneath the
+                 fixed bottom tab bar (mobile only) instead of scrolling the page past it. Mobile
+                 relies on normal document scroll + the grid's own pb-24 for tab-bar clearance;
+                 desktop keeps the fixed-height scroll region for the sticky sidebar layout. */}
+             <ScrollArea className="h-auto md:h-[calc(100vh-220px)] pr-1 md:pr-4">
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-32 text-center bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm mt-4">
                   <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center shadow-inner border border-gray-100 mb-6">

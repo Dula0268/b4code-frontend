@@ -173,17 +173,17 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
       )}
 
       {/* Header */}
-      <div className="flex-none flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <button onClick={() => router.push("/staff/menu")} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors">
+      <div className="flex-none flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button onClick={() => router.push("/staff/menu")} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors shrink-0">
             <ArrowLeft size={16} />
           </button>
-          <div>
-            <h1 className="text-sm font-bold text-[var(--black-2)] leading-tight">{menu.name}</h1>
-            <p className="text-[10px] text-[var(--gray-3)]">{menu.description}</p>
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold text-[var(--black-2)] leading-tight truncate">{menu.name}</h1>
+            <p className="text-[10px] text-[var(--gray-3)] truncate">{menu.description}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Link href={`/staff/menu/${menuId}?edit=true`}>
             <Button variant="outline" size="sm" className="text-xs h-7 gap-1">
               <Pencil size={12} /> Edit Details
@@ -199,7 +199,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
 
       {/* Menu summary card */}
       <Card className="bg-white flex-none py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-        <CardContent className="px-4 py-2.5 flex items-center gap-6">
+        <CardContent className="px-4 py-2.5 flex items-center gap-4 sm:gap-6 flex-wrap">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[rgba(149,48,2,0.08)] flex items-center justify-center">
               <UtensilsCrossed size={14} className="text-[var(--brand-primary)]" />
@@ -230,8 +230,8 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
       </Card>
 
       {/* Filters */}
-      <div className="flex-none flex items-center gap-2">
-        <div className="relative flex-1 max-w-[240px]">
+      <div className="flex-none flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[140px] max-w-[240px]">
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-4)] z-10" />
           <Input
             value={search}
@@ -274,7 +274,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
             </Link>
           </div>
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredItems.map((item) => (
               <div key={item.id} className="bg-white border border border-[var(--gray-5)] rounded-[10px] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.05)] flex flex-col">
                 {/* Image display */}
@@ -290,7 +290,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                   <p className="text-xs font-bold text-[var(--black-2)] leading-tight">{item.name}</p>
                   <p className="text-[10px] text-[var(--gray-3)] line-clamp-2">{item.description}</p>
                   <div className="mt-auto pt-2 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[var(--brand-primary)]">LKR {item.price.toLocaleString()}</span>
+                    <span className="text-xs font-bold text-[var(--brand-primary)]">LKR {item.price.toLocaleString("en-LK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                     <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-3)]">
                       {item.calories && (
                         <span className="flex items-center gap-0.5"><Flame size={10} />{item.calories} Cal</span>
@@ -329,7 +329,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
         ) : (
           <div className="flex flex-col gap-2">
             {filteredItems.map((item) => (
-              <div key={item.id} className="bg-white border border border-[var(--gray-5)] rounded-[10px] px-3 py-2.5 flex items-center gap-3 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+              <div key={item.id} className="bg-white border border border-[var(--gray-5)] rounded-[10px] px-3 py-2.5 flex items-center gap-3 flex-wrap shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--gray-5)] to-[rgba(149,48,2,0.05)] flex items-center justify-center shrink-0 overflow-hidden">
                   {item.imageUrls && item.imageUrls.length > 0 ? (
                     <img src={item.imageUrls[0]} alt={item.name} className="w-full h-full object-cover" />
@@ -342,7 +342,7 @@ export default function StaffMenuEdit({ menuId }: { menuId: string }) {
                   <p className="text-[10px] text-[var(--gray-3)] truncate">{item.description}</p>
                 </div>
                 {statusBadge(item)}
-                <span className="text-xs font-bold text-[var(--brand-primary)] shrink-0">LKR {item.price.toLocaleString()}</span>
+                <span className="text-xs font-bold text-[var(--brand-primary)] shrink-0">LKR {item.price.toLocaleString("en-LK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 {item.calories && <span className="text-[10px] text-[var(--gray-3)] flex items-center gap-0.5 shrink-0"><Flame size={10} />{item.calories}</span>}
                 <div className="flex items-center gap-2 shrink-0">
                   <Switch

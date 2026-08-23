@@ -120,7 +120,7 @@ export default function AnalyticsPage() {
         subtitle="Performance Dashboard"
         searchPlaceholder="Search order #, room, or item..."
       />
-      <main className="mt-[64px] flex-1 p-4 lg:p-5 min-h-[calc(100vh-64px)] lg:h-[calc(100vh-64px)] overflow-y-auto lg:overflow-hidden bg-[#F5F6F8] flex flex-col custom-scrollbar">
+      <main className="mt-[64px] flex-1 min-h-0 p-4 lg:p-5 lg:h-[calc(100%-64px)] overflow-y-auto lg:overflow-hidden bg-[#F5F6F8] flex flex-col custom-scrollbar">
         <div className="max-w-7xl mx-auto w-full flex flex-col h-full">
         {/* ── Page Header ── */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end flex-shrink-0 mb-4 gap-3 sm:gap-0">

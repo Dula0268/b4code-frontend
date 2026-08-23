@@ -74,7 +74,7 @@ export default function StaffAvailableItems() {
       </div>
 
       {/* Stats bar */}
-      <div className="flex-none flex gap-3">
+      <div className="flex-none grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card className="bg-white flex-1 py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
           <CardContent className="px-4 py-2.5 flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[rgba(39,174,96,0.08)] flex items-center justify-center">
@@ -111,8 +111,8 @@ export default function StaffAvailableItems() {
       </div>
 
       {/* Filters */}
-      <div className="flex-none flex items-center gap-2.5">
-        <div className="flex-1 relative">
+      <div className="flex-none flex items-center gap-2.5 flex-wrap">
+        <div className="flex-1 min-w-[160px] relative">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-4)]" />
           <Input
             value={search}
@@ -122,7 +122,7 @@ export default function StaffAvailableItems() {
           />
         </div>
         <Select value={menuFilter} onValueChange={setMenuFilter}>
-          <SelectTrigger className="w-[160px] text-xs rounded-[8px] border-[var(--gray-5)]">
+          <SelectTrigger className="w-[calc(50%-5px)] sm:w-[160px] text-xs rounded-[8px] border-[var(--gray-5)]">
             <SelectValue placeholder="All Menus" />
           </SelectTrigger>
           <SelectContent>
@@ -133,7 +133,7 @@ export default function StaffAvailableItems() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as "all" | "available" | "unavailable")}>
-          <SelectTrigger className="w-[140px] text-xs rounded-[8px] border-[var(--gray-5)]">
+          <SelectTrigger className="w-[calc(50%-5px)] sm:w-[140px] text-xs rounded-[8px] border-[var(--gray-5)]">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -156,12 +156,12 @@ export default function StaffAvailableItems() {
             const live = isAvailableNow(item);
             return (
               <Card key={`${item.menuId}-${item.id}`} className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                <CardContent className="px-4 py-2.5 flex items-center gap-3">
+                <CardContent className="px-4 py-2.5 flex items-center gap-3 flex-wrap">
                   {/* Status dot */}
                   <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${live ? "bg-[var(--state-success)]" : item.status === "active" ? "bg-[var(--brand-secondary)]" : "bg-[var(--gray-4)]"}`} />
 
                   {/* Info */}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-[140px]">
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-bold text-[var(--black-2)] truncate">{item.name}</p>
                       <Badge variant="outline" className="text-[8px] border-0 bg-[rgba(149,48,2,0.06)] text-[var(--brand-primary)] px-1.5 py-0">{item.categoryName}</Badge>
@@ -169,7 +169,7 @@ export default function StaffAvailableItems() {
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
                       <span className="text-[10px] text-[var(--gray-3)]">{item.menuName}</span>
-                      <span className="text-[10px] font-medium text-[var(--brand-primary)]">LKR {item.price.toLocaleString()}</span>
+                      <span className="text-[10px] font-medium text-[var(--brand-primary)]">LKR {item.price.toLocaleString("en-LK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                       <span className="text-[10px] text-[var(--gray-4)]">
                         {item.availability.allDays ? "All days" : item.availability.days.join(", ")} &middot; {item.availability.startTime}–{item.availability.endTime}
                       </span>

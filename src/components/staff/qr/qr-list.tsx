@@ -103,7 +103,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       <StaffHeader
         title="QR Management"
         subtitle="Manage and track guest QR codes"
@@ -115,7 +115,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
           </Button>
         }
       />
-      <div className="flex flex-col flex-1 px-6 py-4 gap-4 mt-[64px] overflow-y-auto">
+      <div className="flex flex-col flex-1 min-h-0 px-6 py-4 gap-4 mt-[64px] overflow-y-auto">
         <div className="max-w-7xl mx-auto w-full flex flex-col gap-4 h-full">
       {/* Success banner */}
       {successMsg && (

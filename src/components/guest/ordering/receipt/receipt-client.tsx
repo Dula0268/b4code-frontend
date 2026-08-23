@@ -179,7 +179,7 @@ export default function ReceiptClient() {
       </div>
 
       {/* ── Action buttons ── */}
-      <div className="flex items-center gap-4 mt-6 w-full max-w-[480px]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-6 w-full max-w-[480px]">
         <Link
           href="/guest/order/confirmation"
           className="flex-1 flex items-center justify-center gap-2 bg-white/80 border border-gray-200/80 rounded-2xl px-6 py-4 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 text-gray-700 font-medium group"
@@ -191,7 +191,7 @@ export default function ReceiptClient() {
           title="Coming soon"
           className="flex-1 flex items-center justify-center gap-2 bg-gray-200 rounded-2xl px-6 py-4 cursor-not-allowed opacity-70"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-500">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-500 shrink-0">
             <path
               d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
               stroke="currentColor"
@@ -200,7 +200,7 @@ export default function ReceiptClient() {
               strokeLinejoin="round"
             />
           </svg>
-          <span className="text-base font-semibold text-gray-500">Download PDF (Coming soon)</span>
+          <span className="text-base font-semibold text-gray-500 text-center">Download PDF (Coming soon)</span>
         </button>
       </div>
 
