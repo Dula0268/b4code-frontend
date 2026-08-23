@@ -205,7 +205,9 @@ export default function LandingContent() {
           </p>
 
           <Suspense fallback={<div className="h-14 w-full max-w-[640px] rounded-xl bg-white/20 animate-pulse" />}>
-            <SearchBar />
+            <div className="hidden md:block w-full">
+              <SearchBar />
+            </div>
           </Suspense>
 
           <div className="flex items-center gap-3 sm:gap-6 mt-2 sm:mt-4 flex-wrap justify-center">

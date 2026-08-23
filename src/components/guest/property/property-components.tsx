@@ -35,7 +35,7 @@ export function RoomCard({ room, propertyId, selectedQuantity = 0, onQuantityCha
     const availableCount = room.availableCount ?? 1;
 
     return (
-        <div className="flex flex-col gap-3 p-3 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white w-[240px] flex-shrink-0 snap-start">
+        <div className="flex flex-col gap-3 p-3 border border-[#e8e8e8] rounded-2xl hover:border-[var(--brand-primary)]/30 hover:shadow-md transition-all bg-white w-[260px] sm:w-[240px] flex-shrink-0 snap-start">
             <div className="relative w-full h-[140px] flex-shrink-0 rounded-xl overflow-hidden bg-[#f3ede8]">
                 {room.imageSrc ? (
                     <Image src={room.imageSrc} alt={room.name} fill className="object-cover" sizes="240px" />

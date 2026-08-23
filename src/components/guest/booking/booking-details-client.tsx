@@ -554,24 +554,24 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
       )}
 
       {(isUpcoming || (isCancelled && booking.disputeStatus)) && pageMode === "view" && (
-        <div className="flex bg-white rounded-[20px] border border-[#e8ddcf] p-2 mb-6 gap-2 overflow-x-auto">
+        <div className="flex flex-col sm:flex-row bg-white rounded-[20px] border border-[#e8ddcf] p-2 mb-6 gap-2">
           {isUpcoming && (
             <>
               <button 
                 onClick={() => setActiveTab("modify")}
-                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "modify" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+                className={`whitespace-nowrap flex-1 py-3 px-4 sm:py-3.5 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition-colors w-full sm:w-auto ${activeTab === "modify" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
               >
                 Modify Booking
               </button>
               <button 
                 onClick={() => setActiveTab("cancel")}
-                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "cancel" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+                className={`whitespace-nowrap flex-1 py-3 px-4 sm:py-3.5 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition-colors w-full sm:w-auto ${activeTab === "cancel" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
               >
                 Cancel Booking
               </button>
               <button 
                 onClick={handleCompleteBooking}
-                className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors text-emerald-600 border border-emerald-200 hover:bg-emerald-50`}
+                className={`whitespace-nowrap flex-1 py-3 px-4 sm:py-3.5 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition-colors w-full sm:w-auto text-emerald-600 border border-emerald-200 hover:bg-emerald-50`}
               >
                 Complete Stay (Test)
               </button>
@@ -580,7 +580,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
           {booking.disputeStatus && pageMode === "view" && (
             <button 
               onClick={() => setActiveTab("refund" as any)}
-              className={`whitespace-nowrap flex-1 py-3.5 px-6 rounded-xl text-sm font-bold transition-colors ${activeTab === "refund" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
+              className={`whitespace-nowrap flex-1 py-3 px-4 sm:py-3.5 sm:px-6 rounded-xl text-xs sm:text-sm font-bold transition-colors w-full sm:w-auto ${activeTab === "refund" ? "bg-[#9a3300] text-white shadow-md" : "text-[#828282] hover:bg-[#fdfaf6]"}`}
             >
               Refund Status
             </button>

@@ -291,6 +291,7 @@ export default function PropertyClient({ property }: { property: any }) {
     const allImages = [property.imageSrc, ...filteredGallery]
 
     return (
+        <>
         <div className="min-h-screen bg-[#fafafa]">
             {/* Share toast */}
             <div
@@ -328,9 +329,9 @@ export default function PropertyClient({ property }: { property: any }) {
                 {successMsg}
             </div>
             
-            <div className="w-full max-w-[1440px] mx-auto px-6 pt-8 pb-20">
+            <div className="w-full max-w-[1440px] mx-auto px-6 pt-4 md:pt-8 pb-[100px] md:pb-20">
                 {/* Breadcrumb */}
-                <nav className="flex items-center gap-1.5 text-[13px] mb-5">
+                <nav className="hidden md:flex items-center gap-1.5 text-[13px] mb-5">
                     <Link href="/" aria-label="Home" className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors flex items-center"><Home size={15} /></Link>
                     <ChevronRight size={13} className="text-[#bbb]" />
                     <Link href="/guest/search" className="text-[#828282] hover:text-[var(--brand-primary)] transition-colors">Search</Link>
@@ -339,26 +340,40 @@ export default function PropertyClient({ property }: { property: any }) {
                 </nav>
 
                 {/* Title Row */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4 md:mb-6">
                     <div>
-                        <h1 className="text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">{property.title}</h1>
-                        <div className="flex items-center gap-1.5 text-[14px] text-[#555]"><MapPin size={15} className="text-[var(--brand-primary)]" /><span>{property.fullAddress}</span></div>
+                        <h1 className="text-[24px] md:text-[32px] font-bold text-[#1d1d1d] leading-tight mb-2">{property.title}</h1>
+                        <div className="flex items-center gap-1.5 text-[13px] md:text-[14px] text-[#555]"><MapPin size={15} className="text-[var(--brand-primary)]" /><span>{property.fullAddress}</span></div>
                     </div>
                 </div>
 
                 {/* Photo Gallery Grid */}
                 <div className="relative mb-8">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 grid-rows-2 gap-2 h-[300px] sm:h-[460px] rounded-2xl overflow-hidden">
+                    {/* Desktop/Tablet Grid */}
+                    <div className="hidden sm:grid grid-cols-4 grid-rows-2 gap-2 h-[460px] rounded-2xl overflow-hidden">
                         <div className="col-span-2 row-span-2 relative cursor-pointer group" onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }}>
                             <Image src={property.imageSrc} alt={property.title} fill className="object-cover group-hover:brightness-90 transition" priority sizes="(max-width: 768px) 100vw, 600px" />
                         </div>
                         {filteredGallery.slice(0, 4).map((img: string, i: number) => (
                             <div key={i} className="relative cursor-pointer group" onClick={() => { setActiveGalleryIdx(i + 1); setGalleryOpen(true) }}>
-                                <Image src={img} alt={`${property.title} photo ${i + 2}`} fill className="object-cover group-hover:brightness-90 transition" sizes="(max-width: 768px) 50vw, 300px" />
+                                <Image src={img} alt={`${property.title} photo ${i + 2}`} fill className="object-cover group-hover:brightness-90 transition" sizes="300px" />
                             </div>
                         ))}
                     </div>
-                    <button onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }} className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#e0e0e0] rounded-xl px-4 py-2 text-[13px] font-semibold text-[#1d1d1d] shadow-sm hover:bg-white transition-colors cursor-pointer"><Grid2X2 size={14} />Show all photos</button>
+
+                    {/* Mobile Swipeable Gallery (Edge to Edge) */}
+                    <div className="flex sm:hidden overflow-x-auto snap-x snap-mandatory h-[260px] -mx-6 px-0 gap-0 no-scrollbar relative">
+                        <div className="min-w-full relative snap-center overflow-hidden" onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }}>
+                            <Image src={property.imageSrc} alt={property.title} fill className="object-cover" priority sizes="100vw" />
+                        </div>
+                        {filteredGallery.map((img: string, i: number) => (
+                            <div key={i} className="min-w-full relative snap-center overflow-hidden" onClick={() => { setActiveGalleryIdx(i + 1); setGalleryOpen(true) }}>
+                                <Image src={img} alt={`${property.title} photo ${i + 2}`} fill className="object-cover" sizes="100vw" />
+                            </div>
+                        ))}
+                    </div>
+
+                    <button onClick={() => { setActiveGalleryIdx(0); setGalleryOpen(true) }} className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#e0e0e0] rounded-xl px-3 py-1.5 md:px-4 md:py-2 text-[12px] md:text-[13px] font-semibold text-[#1d1d1d] shadow-sm hover:bg-white transition-colors cursor-pointer"><Grid2X2 size={14} />Show all photos</button>
                 </div>
 
                 <div className="flex flex-col gap-8 lg:gap-12">
@@ -469,20 +484,20 @@ export default function PropertyClient({ property }: { property: any }) {
                         <h2 className="text-[24px] font-bold text-[#1d1d1d]">Book Your Stay</h2>
                         
                         {/* SECTION 1: Availability (Inline Search Bar) */}
-                        <div className="flex flex-col sm:flex-row items-center gap-2 bg-[#f8f8f8] p-1.5 rounded-2xl border border-[#e8e8e8]">
+                        <div className="flex flex-col sm:flex-row items-center gap-2 sm:bg-[#f8f8f8] sm:p-1.5 sm:rounded-2xl sm:border sm:border-[#e8e8e8] w-full">
                             {/* Date Picker */}
-                            <div className="relative w-full sm:w-auto">
+                            <div className="relative w-full">
                                 <div 
-                                    className="h-[42px] px-4 flex items-center gap-2 text-[14px] cursor-pointer bg-white rounded-xl border border-[#d8d8d8] hover:border-[#aaa] transition-colors"
+                                    className="h-[48px] px-4 flex items-center gap-3 text-[14px] cursor-pointer bg-[#f8f8f8] sm:bg-white rounded-xl border border-[#e8e8e8] sm:border-[#d8d8d8] hover:border-[#aaa] transition-colors w-full"
                                     onClick={() => setCalOpen(!calOpen)}
                                 >
-                                    <Calendar size={16} className="text-[#828282]" />
-                                    <span className="font-medium whitespace-nowrap text-[#1d1d1d]">
+                                    <Calendar size={18} className="text-[var(--brand-primary)]" />
+                                    <span className="font-semibold text-[#1d1d1d] whitespace-nowrap">
                                         {editCheckIn ? new Date(editCheckIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-in'} - {editCheckOut ? new Date(editCheckOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Check-out'}
                                     </span>
                                 </div>
                                 {calOpen && (
-                                    <div ref={calRef} className="absolute top-[48px] right-0 z-[100] bg-white border border-[#e0e0e0] rounded-2xl shadow-xl overflow-hidden p-2">
+                                    <div ref={calRef} className="absolute top-[54px] left-0 right-0 sm:right-auto z-[100] bg-white border border-[#e0e0e0] rounded-2xl shadow-xl overflow-hidden p-2">
                                         <CalendarPicker 
                                             checkIn={editCheckIn ? new Date(editCheckIn) : null} 
                                             checkOut={editCheckOut ? new Date(editCheckOut) : null} 
@@ -499,26 +514,26 @@ export default function PropertyClient({ property }: { property: any }) {
                             </div>
 
                             {/* Guest Selector */}
-                            <div className="h-[42px] px-3 flex items-center gap-3 bg-white rounded-xl border border-[#d8d8d8] text-[14px]">
-                                <div className="flex items-center gap-2 border-r border-[#e8e8e8] pr-2">
-                                    <User size={16} className="text-[#828282]" />
-                                    <span className="font-medium text-[#1d1d1d] hidden sm:inline">Guests</span>
+                            <div className="h-[48px] px-4 flex items-center justify-between w-full bg-[#f8f8f8] sm:bg-white rounded-xl border border-[#e8e8e8] sm:border-[#d8d8d8] text-[14px]">
+                                <div className="flex items-center gap-3">
+                                    <User size={18} className="text-[var(--brand-primary)]" />
+                                    <span className="font-semibold text-[#1d1d1d]">Guests</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-3">
                                     <button 
                                         disabled={editGuests <= 1}
                                         onClick={() => setEditGuests(g => Math.max(1, g - 1))}
-                                        className="w-6 h-6 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
+                                        className="w-7 h-7 rounded-full bg-white border border-[#d8d8d8] hover:bg-[#f0f0f0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
                                     >
-                                        <span className="text-sm leading-none mb-0.5">-</span>
+                                        <span className="text-lg leading-none mb-0.5">-</span>
                                     </button>
-                                    <span className="font-semibold text-[#1d1d1d] w-3 text-center">{editGuests}</span>
+                                    <span className="font-bold text-[#1d1d1d] w-4 text-center">{editGuests}</span>
                                     <button 
                                         disabled={editGuests >= 10}
                                         onClick={() => setEditGuests(g => Math.min(10, g + 1))}
-                                        className="w-6 h-6 rounded-full bg-[#f0f0f0] hover:bg-[#e0e0e0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer"
+                                        className="w-7 h-7 rounded-full bg-white border border-[#d8d8d8] hover:bg-[#f0f0f0] flex items-center justify-center disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
                                     >
-                                        <span className="text-sm leading-none mb-0.5">+</span>
+                                        <span className="text-lg leading-none mb-0.5">+</span>
                                     </button>
                                 </div>
                             </div>
@@ -526,7 +541,7 @@ export default function PropertyClient({ property }: { property: any }) {
                             {/* Apply Button */}
                             <button 
                                 onClick={handleApplyFilters}
-                                className="h-[42px] px-5 bg-[#1d1d1d] hover:bg-black text-white font-bold rounded-xl transition-colors whitespace-nowrap cursor-pointer"
+                                className="h-[48px] px-8 w-full sm:w-auto bg-[#1d1d1d] hover:bg-black text-white font-bold rounded-xl transition-colors whitespace-nowrap cursor-pointer shadow-md"
                             >
                                 Apply
                             </button>
@@ -651,22 +666,22 @@ export default function PropertyClient({ property }: { property: any }) {
                                     {/* Promo Code */}
                                     <div className="pt-5 border-t border-[#e8e8e8]">
                                         <h3 className="font-semibold text-[#1d1d1d] mb-2 text-[14px]">Promo Code</h3>
-                                        <div className="flex flex-col gap-1.5">
-                                            <div className="flex gap-2">
+                                        <div className="flex flex-col gap-2">
+                                            <div className={`flex border ${promoError ? 'border-red-400' : 'border-[#d8d8d8] focus-within:border-[var(--brand-primary)] focus-within:ring-1 focus-within:ring-[var(--brand-primary)]'} rounded-xl overflow-hidden transition-all bg-[#fdfdfd]`}>
                                                 <input 
                                                     type="text" 
                                                     value={promoCodeInput}
                                                     onChange={(e) => setPromoCodeInput(e.target.value)}
-                                                    placeholder="Enter code" 
-                                                    className={`flex-1 border ${promoError ? 'border-red-400' : 'border-[#e8e8e8]'} rounded-xl px-4 py-2 text-[14px] focus:outline-none focus:border-[var(--brand-primary)]`}
+                                                    placeholder="Enter promo code" 
+                                                    className="flex-1 min-w-0 w-full px-4 py-2.5 text-[14px] focus:outline-none bg-transparent font-medium"
                                                 />
                                                 <button 
                                                     onClick={handleApplyPromo}
                                                     disabled={!promoCodeInput.trim() || isApplyingPromo || appliedPromos.includes(promoCodeInput.trim().toUpperCase())}
-                                                    className="bg-[#f0f0f0] hover:bg-[#e0e0e0] text-[#1d1d1d] font-semibold px-4 py-2 rounded-xl text-[14px] transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center min-w-[70px]"
+                                                    className="bg-[#1d1d1d] hover:bg-black text-white font-bold px-6 py-2.5 text-[13px] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0 min-w-[80px]"
                                                 >
                                                     {isApplyingPromo ? (
-                                                        <div className="w-4 h-4 border-2 border-[#1d1d1d] border-t-transparent rounded-full animate-spin" />
+                                                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                                                     ) : (
                                                         "Apply"
                                                     )}
@@ -1012,5 +1027,8 @@ export default function PropertyClient({ property }: { property: any }) {
             )}
 
         </div>
+
+
+        </>
     )
 }

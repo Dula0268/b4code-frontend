@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import MobileBottomNav from "@/components/shared/layout/guest-shell/mobile-bottom-nav"
 import PropertyClient from "@/components/guest/property/property-detail-client"
 import { guestApi } from "@/api/guest/guest.api";
 
@@ -70,6 +71,7 @@ export default async function PropertyPage({ params, searchParams }: Props) {
                 </Suspense>
             </main>
             <GuestFooter variant="full" />
+            <MobileBottomNav />
         </div>
     )
 }
