@@ -142,30 +142,15 @@ function AddRoomContent() {
     }
 
     return (
-        <div className="flex flex-col h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* Top Bar */}
-            <header className="flex items-center justify-between py-3 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
-                <Logo width={120} height={36} />
-                <div className="flex items-center gap-3.5">
-                    <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                        <Bell size={18} color="#4f4f4f" />
-                    </a>
-                    <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                    </a>
-                </div>
-            </header>
-
-            {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto">
                 <div className="max-w-[820px] mx-auto py-6 px-6">
                     {/* Breadcrumb */}
                     <nav className="flex items-center gap-2 text-[11px] font-bold tracking-[0.8px] uppercase mb-6">
-                        <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
+                        <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Properties</a>
                         <span className="text-[#d0d0d0]">›</span>
-                        <a href={backUrl} className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Rooms</a>
+                        <a href={backUrl} className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Rooms</a>
                         <span className="text-[#d0d0d0]">›</span>
-                        <span className="text-[#953002]">Add New Room</span>
+                        <span className="text-[var(--brand-primary)]">Add New Room</span>
                     </nav>
 
                     {/* Form Card */}
@@ -184,7 +169,7 @@ function AddRoomContent() {
                                     value={roomName}
                                     onChange={(e) => setRoomName(e.target.value)}
                                     placeholder="e.g. Garden View Suite"
-                                    className="w-full py-2.5 px-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border placeholder:text-[#c0c0c0] focus:border-[#953002] transition-colors"
+                                    className="w-full py-2.5 px-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border placeholder:text-[#c0c0c0] focus:border-[var(--brand-primary)] transition-colors"
                                 />
                             </div>
                             <div>
@@ -193,7 +178,7 @@ function AddRoomContent() {
                                     <select
                                         value={roomType}
                                         onChange={(e) => setRoomType(e.target.value)}
-                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
                                         {ROOM_TYPES.map((t) => (
                                             <option key={t.value} value={t.value}>{t.label}</option>
@@ -212,7 +197,7 @@ function AddRoomContent() {
                                     <select
                                         value={bedType}
                                         onChange={(e) => setBedType(e.target.value)}
-                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
                                         {BED_TYPES.map((b) => (
                                             <option key={b.value} value={b.value}>{b.label}</option>
@@ -228,7 +213,7 @@ function AddRoomContent() {
                                     min="1"
                                     value={inventory}
                                     onChange={(e) => setInventory(e.target.value)}
-                                    className="w-full py-2.5 px-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                    className="w-full py-2.5 px-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[var(--brand-primary)] transition-colors"
                                 />
                             </div>
                             <div>
@@ -242,7 +227,7 @@ function AddRoomContent() {
                                         value={nightlyRate}
                                         onChange={(e) => setNightlyRate(e.target.value)}
                                         placeholder="0.00"
-                                        className="w-full py-2.5 pl-10 pr-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border placeholder:text-[#c0c0c0] focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pl-10 pr-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border placeholder:text-[#c0c0c0] focus:border-[var(--brand-primary)] transition-colors"
                                     />
                                 </div>
                             </div>
@@ -262,7 +247,7 @@ function AddRoomContent() {
                                         max="20"
                                         value={maxAdults}
                                         onChange={(e) => setMaxAdults(e.target.value)}
-                                        className="w-full py-2.5 pl-10 pr-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pl-10 pr-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[var(--brand-primary)] transition-colors"
                                     />
                                 </div>
                             </div>
@@ -278,7 +263,7 @@ function AddRoomContent() {
                                         max="10"
                                         value={maxChildren}
                                         onChange={(e) => setMaxChildren(e.target.value)}
-                                        className="w-full py-2.5 pl-10 pr-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pl-10 pr-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[var(--brand-primary)] transition-colors"
                                     />
                                 </div>
                             </div>
@@ -292,7 +277,7 @@ function AddRoomContent() {
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Describe the room features, view, and unique selling points..."
                                 rows={4}
-                                className="w-full py-3 px-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border resize-y leading-relaxed placeholder:text-[#c0c0c0] focus:border-[#953002] transition-colors"
+                                className="w-full py-3 px-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white box-border resize-y leading-relaxed placeholder:text-[#c0c0c0] focus:border-[var(--brand-primary)] transition-colors"
                             />
                         </div>
 
@@ -377,7 +362,7 @@ function AddRoomContent() {
                                         if (f) handleFileChange(f);
                                     }}
                                     className={`flex flex-col items-center justify-center py-10 px-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${
-                                        dragOver ? "border-[#953002] bg-[#fef5ef]" : "border-[#e0d8d0] bg-[#fef9f5] hover:border-[#d4a88c]"
+                                        dragOver ? "border-[var(--brand-primary)] bg-[#fef5ef]" : "border-[#e0d8d0] bg-[#fef9f5] hover:border-[#d4a88c]"
                                     }`}
                                 >
                                     <div className="w-12 h-12 rounded-full bg-[#fceede] flex items-center justify-center mb-3">
@@ -413,7 +398,7 @@ function AddRoomContent() {
                                 type="button"
                                 onClick={handleSave}
                                 disabled={saving || uploadingImage}
-                                className="flex items-center gap-2 py-2.5 px-7 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#a63602] transition-colors disabled:opacity-60"
+                                className="flex items-center gap-2 py-2.5 px-7 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#a63602] transition-colors disabled:opacity-60"
                             >
                                 {saving ? (
                                     <><Loader2 size={15} className="animate-spin" /> Saving…</>
@@ -425,7 +410,6 @@ function AddRoomContent() {
                     </div>
                 </div>
             </div>
-        </div>
     );
 }
 

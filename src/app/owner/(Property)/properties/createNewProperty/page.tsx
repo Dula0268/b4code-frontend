@@ -145,33 +145,11 @@ export default function CreateNewPropertyPage() {
     };
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ───── Sidebar (minimal) ───── */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
-
-            {/* ───── Main Content ───── */}
-            <main className="flex-1 flex flex-col px-10 min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-between items-center py-1.5">
-                    <div />
-                    <div className="flex items-center gap-3">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
-
+        <div className="flex-1 flex flex-col px-10 min-w-0 overflow-hidden">
                 <div className="flex items-center gap-1.5 text-[12px] mb-1">
-                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Add New property</span>
+                    <span className="text-[var(--brand-primary)] font-semibold">Add New property</span>
                 </div>
 
                 <h1 className="text-[22px] font-extrabold text-[#1d1d1d] m-0 mb-0.5">Add New Property</h1>
@@ -275,11 +253,11 @@ export default function CreateNewPropertyPage() {
                                 images.length >= 10
                                     ? "cursor-not-allowed border-[#e0e0e0] bg-[#f5f5f5]"
                                     : dragging
-                                    ? "cursor-copy border-[#953002] bg-[#fef5ef]"
-                                    : "cursor-pointer border-[#e0e0e0] bg-[#fefcfa] hover:border-[#953002] hover:bg-[#fef5ef]"
+                                    ? "cursor-copy border-[var(--brand-primary)] bg-[#fef5ef]"
+                                    : "cursor-pointer border-[#e0e0e0] bg-[#fefcfa] hover:border-[var(--brand-primary)] hover:bg-[#fef5ef]"
                             }`}
                         >
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${dragging ? "bg-[#953002]" : "bg-[#fef5ef]"}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${dragging ? "bg-[var(--brand-primary)]" : "bg-[#fef5ef]"}`}>
                                 <ImageIcon size={24} color={dragging ? "#fff" : "#953002"} />
                             </div>
                             <div className="font-semibold text-[13px] text-[#1d1d1d]">
@@ -330,7 +308,7 @@ export default function CreateNewPropertyPage() {
                                 {images.length < 10 && (
                                     <div
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="w-16 h-12 rounded-md border-2 border-dashed border-[#e0e0e0] flex items-center justify-center cursor-pointer bg-[#fafafa] hover:border-[#953002] hover:bg-[#fef5ef] transition-colors"
+                                        className="w-16 h-12 rounded-md border-2 border-dashed border-[#e0e0e0] flex items-center justify-center cursor-pointer bg-[#fafafa] hover:border-[var(--brand-primary)] hover:bg-[#fef5ef] transition-colors"
                                     >
                                         <Plus size={18} color="#b0b0b0" />
                                     </div>
@@ -413,7 +391,7 @@ export default function CreateNewPropertyPage() {
                                     setSaving(false);
                                 }
                             }}
-                            className={`flex items-center gap-2 py-2.5 px-7 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold transition-colors ${saving ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-[#b03a02]"}`}
+                            className={`flex items-center gap-2 py-2.5 px-7 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-semibold transition-colors ${saving ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-[var(--primary-hover)]"}`}
                         >
                             {saving && <Loader2 size={14} className="animate-spin" />}
                             {saving ? "Saving..." : "Save Property Listing"}
@@ -423,7 +401,6 @@ export default function CreateNewPropertyPage() {
                         </a>
                     </div>
                 </div>
-            </main>
         </div>
     );
 }

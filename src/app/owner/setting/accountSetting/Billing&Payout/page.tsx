@@ -3,19 +3,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Logo from "@/components/shared/branding/logo";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { ownerSettingsApi } from "@/api/owner/settings.api";
 import {
     Bell,
-    LayoutDashboard,
-    Building2,
-    BedDouble,
-    Calendar,
-    Tag,
-    BookOpen,
-    Settings,
-    ArrowLeft,
+        ArrowLeft,
     Landmark,
     Loader2
 } from "lucide-react";
@@ -79,50 +71,17 @@ export default function EditBankDetailsPage() {
         }
     };
 
-    const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
-        { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting", active: true },
-    ];
+
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Navigation Sidebar ── */}
-            <nav className="w-[170px] bg-white border-r border-[#e8e8e8] py-4 flex flex-col shrink-0">
-                <div className="flex items-center gap-1.5 px-3.5 pb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                    {navItems.map((item) => (
-                        <a
-                            key={item.label}
-                            href={item.href}
-                            className={`flex items-center gap-2.5 py-2.5 px-3.5 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-[3px] ${
-                                item.active
-                                    ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                    : "bg-transparent text-[#4f4f4f] font-medium border-transparent"
-                            }`}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </a>
-                    ))}
-                </div>
-            </nav>
-
-            {/* ── Main Content ── */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Top Header */}
                 <div className="flex justify-end items-center py-2 px-8 shrink-0">
                     <div className="flex items-center gap-3.5">
                         <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
                             <Bell size={18} color="#4f4f4f" />
                         </a>
-                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
+                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[var(--brand-primary)] hover:opacity-80 transition-opacity">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
                         </a>
                     </div>
@@ -140,7 +99,7 @@ export default function EditBankDetailsPage() {
                             <span className="text-[#b0b0b0] mx-1">/</span>
                             <a href="/owner/setting/billing&Payout" className="text-[12px] font-semibold text-[#828282] no-underline hover:text-[#4f4f4f]">Billing & Payouts</a>
                             <span className="text-[#b0b0b0] mx-1">/</span>
-                            <span className="text-[12px] font-semibold text-[#953002]">Edit Bank Details</span>
+                            <span className="text-[12px] font-semibold text-[var(--brand-primary)]">Edit Bank Details</span>
                         </div>
                     </div>
 
@@ -152,7 +111,7 @@ export default function EditBankDetailsPage() {
                         <div className="bg-white border border-[#e8e8e8] rounded-xl py-6 px-7 relative">
                             {loading && (
                                 <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-xl">
-                                    <Loader2 className="animate-spin text-[#953002]" size={32} />
+                                    <Loader2 className="animate-spin text-[var(--brand-primary)]" size={32} />
                                 </div>
                             )}
 
@@ -176,7 +135,7 @@ export default function EditBankDetailsPage() {
                                             type="text" 
                                             value={bankName} 
                                             onChange={(e) => setBankName(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                         />
                                     </div>
                                     <div className="flex flex-col">
@@ -184,7 +143,7 @@ export default function EditBankDetailsPage() {
                                         <select 
                                             value={accountType} 
                                             onChange={(e) => setAccountType(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[var(--brand-primary)] transition-colors"
                                         >
                                             <option value="Checking">Checking</option>
                                             <option value="Savings">Savings</option>
@@ -199,7 +158,7 @@ export default function EditBankDetailsPage() {
                                         type="text" 
                                         value={accountHolder} 
                                         onChange={(e) => setAccountHolder(e.target.value)} 
-                                        className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                        className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                     />
                                 </div>
 
@@ -210,7 +169,7 @@ export default function EditBankDetailsPage() {
                                             type="text" 
                                             value={routingNumber} 
                                             onChange={(e) => setRoutingNumber(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                         />
                                     </div>
                                     <div>
@@ -219,7 +178,7 @@ export default function EditBankDetailsPage() {
                                             type="text" 
                                             value={accountNumber} 
                                             onChange={(e) => setAccountNumber(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                         />
                                     </div>
                                 </div>
@@ -254,7 +213,7 @@ export default function EditBankDetailsPage() {
                                 className={`py-2.5 px-6 text-white border-none rounded-lg text-[13px] font-bold cursor-pointer transition-colors ${
                                     saving || !bankName || !accountHolder || !accountNumber || !routingNumber
                                         ? "bg-[#d0d0d0] pointer-events-none"
-                                        : "bg-[#953002] hover:bg-[#b03a02]"
+                                        : "bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)]"
                                 }`}
                             >
                                 {saving ? "Saving…" : "Save Changes"}
@@ -263,6 +222,5 @@ export default function EditBankDetailsPage() {
                     </div>
                 </div>
             </main>
-        </div>
     );
 }

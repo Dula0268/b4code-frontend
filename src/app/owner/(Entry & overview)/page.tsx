@@ -4,35 +4,18 @@
 import { useState, useEffect } from "react";
 import { dashboardApi } from "@/api/owner/dashboard.api";
 import { useAuthStore } from "@/store/auth/auth.store";
-import Logo from "@/components/shared/branding/logo";
 import {
     Search,
-    Bell,
-    LayoutDashboard,
-    Building2,
     DoorOpen,
-    CalendarCheck,
-    DollarSign,
-    ClipboardList,
-    Settings,
+    Bell,
+    Building2,
     ChevronLeft,
     ChevronRight,
     Loader2,
-    Users,
+    ClipboardList,
+    DollarSign,
 } from "lucide-react";
 
-/* ───────────────────── sidebar ───────────────────── */
-
-const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard",     active: true,  href: "/owner" },
-    { icon: Building2,       label: "Properties",    active: false, href: "/owner/properties" },
-    { icon: DoorOpen,        label: "Rooms",         active: false, href: "/owner/roomManagement" },
-    { icon: CalendarCheck,   label: "Availability",  active: false, href: "/owner/availability/weeklyCalendar" },
-    { icon: DollarSign,      label: "Rate",          active: false, href: "/owner/rate" },
-    { icon: ClipboardList,   label: "Reservations",  active: false, href: "/owner/reservation" },
-    { icon: Users,           label: "Staff Approvals", active: false, href: "/owner/staff" },
-    { icon: Settings,        label: "Settings",      active: false, href: "/owner/setting/propertySetting" },
-];
 
 /* ───────────────────── helpers ───────────────────── */
 
@@ -140,48 +123,7 @@ export default function OwnerDashboardPage() {
     ];
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden">
-            {/* ───── Sidebar ───── */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] flex flex-col py-3 shrink-0">
-                <div className="px-3.5 mb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <nav className="flex flex-col gap-0.5">
-                    {sidebarItems.map(({ icon: Icon, label, active, href }) => (
-                        <a key={label} href={href}
-                            className={`flex items-center gap-2.5 py-2 px-3.5 text-[13px] font-medium no-underline border-l-[3px] transition-all duration-150 ${
-                                active ? "text-[#953002] bg-[#fef5ef] border-[#953002] font-semibold" : "text-[#4f4f4f] border-transparent"
-                            }`}
-                        >
-                            <Icon size={18} className="shrink-0" />
-                            <span>{label}</span>
-                        </a>
-                    ))}
-                </nav>
-            </aside>
-
-            {/* ───── Main ───── */}
-            <main className="flex-1 px-6 pb-4 overflow-y-auto min-w-0">
-                {/* Top Bar */}
-                <div className="flex justify-between items-center py-2 gap-3">
-                    <div />
-                    <div className="flex items-center gap-3.5">
-                        <div className="flex items-center gap-2 bg-[#f5f5f5] rounded-lg py-1.5 px-3">
-                            <Search size={14} color="#b0b0b0" />
-                            <input
-                                type="text"
-                                placeholder="Search properties..."
-                                className="border-none bg-transparent outline-none text-[13px] text-[#1d1d1d] w-[160px]"
-                            />
-                        </div>
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={20} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-[34px] h-[34px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="User" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
+        <div className="w-full h-full flex-1 overflow-y-auto px-6 pt-4 pb-4">
 
                 {/* Error Banner */}
                 {error && (
@@ -191,12 +133,12 @@ export default function OwnerDashboardPage() {
                 )}
 
                 {/* ── Metric Cards ── */}
-                <div className="grid grid-cols-6 gap-3 mb-4">
+                <div className="w-full grid grid-cols-6 gap-3 mb-4">
                     {metrics.map(({ label, value, highlight }) => (
                         <div
                             key={label}
-                            className={`rounded-xl border px-4 py-3 flex flex-col gap-1 ${
-                                highlight ? "border-[#953002] bg-[#953002]" : "border-[#e0e0e0] bg-white"
+                            className={`rounded-2xl border px-4 py-3 flex flex-col gap-1 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300 ${
+                                highlight ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]" : "border-[#e0e0e0] bg-white"
                             }`}
                         >
                             <span className={`text-[9px] font-bold tracking-wider uppercase ${
@@ -218,7 +160,7 @@ export default function OwnerDashboardPage() {
                 </div>
 
                 {/* ── Middle: Calendar + Reservations ── */}
-                <div className="grid grid-cols-[minmax(280px,1fr)_minmax(400px,1.6fr)] gap-4 mb-4">
+                <div className="w-full grid grid-cols-[minmax(280px,1fr)_minmax(400px,1.6fr)] gap-4 mb-4">
 
                     {/* Calendar */}
                     <div>
@@ -233,12 +175,12 @@ export default function OwnerDashboardPage() {
                                 </button>
                             </div>
                         </div>
-                        <div className="bg-white border border-[#e0e0e0] rounded-xl p-4">
+                        <div className="bg-white border border-[#e0e0e0] rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                             <div className="flex justify-between items-center mb-3">
                                 <span className="text-[14px] font-bold text-[#1d1d1d]">
                                     {MONTH_NAMES[calMonth]} {calYear}
                                 </span>
-                                <a href="/owner/availability/weeklyCalendar" className="text-[12px] font-semibold text-[#953002] no-underline hover:underline">
+                                <a href="/owner/availability/weeklyCalendar" className="text-[12px] font-semibold text-[var(--brand-primary)] no-underline hover:underline">
                                     Full calendar →
                                 </a>
                             </div>
@@ -251,7 +193,7 @@ export default function OwnerDashboardPage() {
                                 {calDays.map((d, i) => (
                                     <div key={i} className={`text-center py-1.5 text-[12px] rounded-full font-medium ${
                                         !d.current        ? "text-[#d0d0d0]"
-                                        : d.day === todayDay ? "bg-[#953002] text-white font-bold"
+                                        : d.day === todayDay ? "bg-[var(--brand-primary)] text-white font-bold"
                                         : "text-[#1d1d1d]"
                                     }`}>
                                         {d.day}
@@ -261,13 +203,13 @@ export default function OwnerDashboardPage() {
                             <div className="mt-4 pt-3 border-t border-[#f0f0f0]">
                                 <div className="text-[10px] font-bold tracking-wider uppercase text-[#828282] mb-2">QUICK LINKS</div>
                                 <div className="flex flex-col gap-2">
-                                    <a href="/owner/properties" className="text-[12px] text-[#953002] no-underline hover:underline font-medium">
+                                    <a href="/owner/properties" className="text-[12px] text-[var(--brand-primary)] no-underline hover:underline font-medium">
                                         → Manage Properties
                                     </a>
-                                    <a href="/owner/availability/weeklyCalendar" className="text-[12px] text-[#953002] no-underline hover:underline font-medium">
+                                    <a href="/owner/availability/weeklyCalendar" className="text-[12px] text-[var(--brand-primary)] no-underline hover:underline font-medium">
                                         → Weekly Availability
                                     </a>
-                                    <a href="/owner/reservation" className="text-[12px] text-[#953002] no-underline hover:underline font-medium">
+                                    <a href="/owner/reservation" className="text-[12px] text-[var(--brand-primary)] no-underline hover:underline font-medium">
                                         → All Reservations
                                     </a>
                                 </div>
@@ -279,11 +221,11 @@ export default function OwnerDashboardPage() {
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <div className="text-[15px] font-bold text-[#1d1d1d]">Recent Reservations</div>
-                            <a href="/owner/reservation" className="bg-transparent border-none text-[13px] font-semibold text-[#953002] cursor-pointer no-underline hover:underline">
+                            <a href="/owner/reservation" className="bg-transparent border-none text-[13px] font-semibold text-[var(--brand-primary)] cursor-pointer no-underline hover:underline">
                                 View All
                             </a>
                         </div>
-                        <div className="bg-white border border-[#e0e0e0] rounded-xl overflow-hidden">
+                        <div className="bg-white border border-[#e0e0e0] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                             {loading ? (
                                 <div className="flex items-center justify-center py-12">
                                     <Loader2 size={22} color="#953002" className="animate-spin" />
@@ -340,7 +282,7 @@ export default function OwnerDashboardPage() {
                 {/* ── Bottom Stats ── */}
                 <div className="grid grid-cols-3 gap-4">
                     {/* Properties */}
-                    <div className="bg-white border border-[#e0e0e0] rounded-xl px-5 py-4 flex items-center gap-4">
+                    <div className="bg-white border border-[#e0e0e0] rounded-2xl px-5 py-4 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                         <div className="w-10 h-10 rounded-lg bg-[#fef5ef] flex items-center justify-center shrink-0">
                             <Building2 size={20} color="#953002" />
                         </div>
@@ -354,7 +296,7 @@ export default function OwnerDashboardPage() {
                     </div>
 
                     {/* Total Rooms */}
-                    <div className="bg-white border border-[#e0e0e0] rounded-xl px-5 py-4 flex items-center gap-4">
+                    <div className="bg-white border border-[#e0e0e0] rounded-2xl px-5 py-4 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                         <div className="w-10 h-10 rounded-lg bg-[#e8f5e9] flex items-center justify-center shrink-0">
                             <DoorOpen size={20} color="#2e7d32" />
                         </div>
@@ -368,7 +310,7 @@ export default function OwnerDashboardPage() {
                     </div>
 
                     {/* Revenue */}
-                    <div className="bg-white border border-[#e0e0e0] rounded-xl px-5 py-4 flex items-center gap-4">
+                    <div className="bg-white border border-[#e0e0e0] rounded-2xl px-5 py-4 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                         <div className="w-10 h-10 rounded-lg bg-[#fef5ef] flex items-center justify-center shrink-0">
                             <DollarSign size={20} color="#953002" />
                         </div>
@@ -376,12 +318,11 @@ export default function OwnerDashboardPage() {
                             <span className="text-[10px] font-bold tracking-wider uppercase text-[#828282] block">TOTAL REVENUE</span>
                             {loading
                                 ? <div className="h-5 w-16 rounded bg-[#e0e0e0] animate-pulse mt-1" />
-                                : <span className="text-[18px] font-extrabold text-[#953002]">{formatRevenue(data?.totalRevenue)}</span>
+                                : <span className="text-[18px] font-extrabold text-[var(--brand-primary)]">{formatRevenue(data?.totalRevenue)}</span>
                             }
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-    );
-}
+            </div>
+        );
+    }

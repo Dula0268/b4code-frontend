@@ -52,7 +52,7 @@ export default function OwnerSecurityPage() {
 
       <div className="bg-[#fdfaf8] border border-[#f3f4f6] rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-[#953002]/10 flex items-center justify-center text-[#953002]">
+          <div className="w-10 h-10 rounded-full bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--brand-primary)]">
             <Lock size={20} />
           </div>
           <div>
@@ -114,7 +114,7 @@ export default function OwnerSecurityPage() {
           <div className="pt-6 flex justify-end">
             <Button
               type="submit"
-              className="bg-[#953002] hover:bg-[#7a2702] text-white px-8 transition-colors h-11"
+              className="bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)] text-white px-8 transition-colors h-11"
               disabled={isSaving || !formData.currentPassword || !formData.newPassword || formData.newPassword !== formData.confirmPassword}
             >
               {isSaving ? "Updating..." : "Reset Password"}
@@ -140,7 +140,7 @@ export default function OwnerSecurityPage() {
             </p>
 
             <Button
-              className="w-full h-12 rounded-full bg-[#953002] hover:bg-[#7a2702] text-white font-medium text-[15px] transition-colors"
+              className="w-full h-12 rounded-full bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)] text-white font-medium text-[15px] transition-colors"
               onClick={() => {
                 setShowModal(false);
                 router.push("/auth/login");

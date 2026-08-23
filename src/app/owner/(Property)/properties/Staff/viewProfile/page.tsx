@@ -42,37 +42,16 @@ export default function ViewStaffProfilePage() {
     };
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
-
-            {/* ── Main ── */}
-            <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-between items-center py-1.5">
-                    <div />
-                    <div className="flex items-center gap-3">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <BellIcon size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
+        <div className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
 
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
-                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
                     <span className="text-[#828282] font-semibold">Property Name</span>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <a href="/owner/properties/Staff" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Staff</a>
+                    <a href="/owner/properties/Staff" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Staff</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">{staff.name}</span>
+                    <span className="text-[var(--brand-primary)] font-semibold">{staff.name}</span>
                 </div>
 
                 {/* Scrollable Content */}
@@ -170,35 +149,35 @@ export default function ViewStaffProfilePage() {
                                 
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.reservations ? "bg-[#953002] border-[#953002]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.reservations ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
                                             {staff.perms.reservations && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <div className={`text-[13px] font-medium ${staff.perms.reservations ? "text-[#1d1d1d]" : "text-[#b0b0b0]"}`}>Manage Reservations</div>
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.calendar ? "bg-[#953002] border-[#953002]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.calendar ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
                                             {staff.perms.calendar && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <div className={`text-[13px] font-medium ${staff.perms.calendar ? "text-[#1d1d1d]" : "text-[#b0b0b0]"}`}>View Availability Calendar</div>
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.messaging ? "bg-[#953002] border-[#953002]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.messaging ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
                                             {staff.perms.messaging && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <div className={`text-[13px] font-medium ${staff.perms.messaging ? "text-[#1d1d1d]" : "text-[#b0b0b0]"}`}>Guest Messaging</div>
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.pricing ? "bg-[#953002] border-[#953002]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.pricing ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
                                             {staff.perms.pricing && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <div className={`text-[13px] font-medium ${staff.perms.pricing ? "text-[#1d1d1d]" : "text-[#b0b0b0]"}`}>Manage Pricing</div>
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.settings ? "bg-[#953002] border-[#953002]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center ${staff.perms.settings ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#e0e0e0] bg-white opacity-50"}`}>
                                             {staff.perms.settings && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <div className={`text-[13px] font-medium ${staff.perms.settings ? "text-[#1d1d1d]" : "text-[#b0b0b0]"}`}>Property Settings</div>
@@ -206,7 +185,7 @@ export default function ViewStaffProfilePage() {
                                 </div>
                                 
                                 <div className="mt-5 pt-4 border-t border-[#f0f0f0] flex items-start gap-3 bg-[#fafafa] p-3 rounded-lg">
-                                    <Shield size={16} className="text-[#953002] shrink-0 mt-0.5" />
+                                    <Shield size={16} className="text-[var(--brand-primary)] shrink-0 mt-0.5" />
                                     <p className="text-[11px] text-[#4f4f4f] m-0">
                                         Staff permissions dictate their dashboard access. Profile editing is restricted to Owner roles.
                                     </p>
@@ -215,7 +194,6 @@ export default function ViewStaffProfilePage() {
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+            </div>
     );
 }

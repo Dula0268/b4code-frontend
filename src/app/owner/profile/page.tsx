@@ -140,7 +140,7 @@ export default function OwnerProfilePage() {
     <div className="p-6 sm:p-8 max-w-4xl">
       {/* Page Title Header */}
       <div className="mb-4 pb-3 border-b border-[#f3eee8]">
-        <div className="flex items-center gap-1.5 text-xs font-black text-[#953002] uppercase tracking-wider mb-0.5">
+        <div className="flex items-center gap-1.5 text-xs font-black text-[var(--brand-primary)] uppercase tracking-wider mb-0.5">
           <UserIcon size={13} />
           <span>Property Owner Credentials</span>
         </div>
@@ -237,7 +237,7 @@ export default function OwnerProfilePage() {
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between">
             <label className="text-[11px] font-extrabold text-[#44403c] uppercase tracking-wider">Government / Business Identity Document</label>
-            <span className="text-[10px] text-[#953002] font-semibold bg-[#953002]/5 px-2 py-0.5 rounded border border-[#953002]/10">
+            <span className="text-[10px] text-[var(--brand-primary)] font-semibold bg-[var(--brand-primary)]/5 px-2 py-0.5 rounded border border-[var(--brand-primary)]/10">
               Required for Host Verification
             </span>
           </div>
@@ -264,18 +264,18 @@ export default function OwnerProfilePage() {
                 onDrop={handleIdDrop}
                 className={`border-2 border-dashed rounded-xl flex flex-row items-center justify-center py-4 px-5 gap-3 cursor-pointer transition-all relative ${
                   isIdDragging 
-                    ? "border-[#953002] bg-[#953002]/5 ring-2 ring-[#953002]/10" 
-                    : "border-[#e5e7eb] bg-[#faf7f4] hover:bg-[#f3eee8] hover:border-[#953002]/40"
+                    ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 ring-2 ring-[#953002]/10" 
+                    : "border-[#e5e7eb] bg-[#faf7f4] hover:bg-[#f3eee8] hover:border-[var(--brand-primary)]/40"
                 }`}
               >
                 {isUploadingId ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-[#953002] border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-xs font-bold text-[#953002]">Uploading document...</p>
+                    <div className="w-5 h-5 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-xs font-bold text-[var(--brand-primary)]">Uploading document...</p>
                   </div>
                 ) : (
                   <>
-                    <div className="w-9 h-9 bg-white rounded-lg shadow-2xs border border-[#e5e7eb] flex items-center justify-center text-[#953002] shrink-0">
+                    <div className="w-9 h-9 bg-white rounded-lg shadow-2xs border border-[#e5e7eb] flex items-center justify-center text-[var(--brand-primary)] shrink-0">
                       <UploadCloud size={18} />
                     </div>
                     <div>

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/auth/auth.store";
+import { exportToCsv } from "@/lib/csv-export";
 import { propertiesApi } from "@/api/owner/properties.api";
 import { ratesApi } from "@/api/owner/rates.api";
 import Logo from "@/components/shared/branding/logo";
@@ -59,6 +60,19 @@ export default function DiscountPage() {
             .catch(() => {});
     }, [ownerId]);
 
+    const handleExportCsv = () => {
+        exportToCsv(
+            "discounts",
+            promotions.map((p) => ({
+                "Code": p.code ?? "",
+                "Discount": p.discount ?? "",
+                "Validity Period": p.periodDates ?? "",
+                "Usage": p.usageLimit ? `${p.usageCurrent}/${p.usageLimit}` : `${p.usageCurrent}`,
+                "Status": p.status ?? "",
+            }))
+        );
+    };
+
     const metrics = [
         { title: "ACTIVE CODES", value: String(promotions.filter((p) => p.status === "ACTIVE").length).padStart(2, "0"), icon: <TrendingUp size={20} color="#27ae60" />, iconBgClass: "bg-[#e8f8ef]" },
         { title: "TOTAL REDEMPTIONS", value: "—", icon: <Ticket size={20} color="#953002" />, iconBgClass: "bg-[#fef0e7]" },
@@ -66,40 +80,18 @@ export default function DiscountPage() {
     ];
 
     return (
-        <div className="flex flex-col h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Top Bar ── */}
-            <header className="flex items-center justify-between py-3 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
-                <Logo width={120} height={36} />
-                <div className="flex items-center gap-3.5">
-                    <a
-                        href="/owner/message"
-                        className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors"
-                    >
-                        <Bell size={18} color="#4f4f4f" />
-                    </a>
-                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
-                        <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
-                            alt="User"
-                            className="w-full h-full rounded-full"
-                        />
-                    </div>
-                </div>
-            </header>
-
-            {/* ── Scrollable Body ── */}
-            <div className="flex-1 overflow-y-auto px-8 py-5 font-sans">
+        <div className="flex-1 overflow-y-auto px-8 py-5 font-sans">
                 <div className="w-full pb-10">
                     {/* Breadcrumb */}
                     <nav className="flex items-center gap-2 text-[11px] font-bold tracking-[0.8px] uppercase mb-4">
                         <a
                             href="/owner/rate"
-                            className="text-[#828282] no-underline hover:text-[#953002] transition-colors"
+                            className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors"
                         >
                             Rate & Price
                         </a>
                         <span className="text-[#d0d0d0]">›</span>
-                        <span className="text-[#953002]">Discount Management</span>
+                        <span className="text-[var(--brand-primary)]">Discount Management</span>
                     </nav>
 
                     {/* Header Row */}
@@ -113,10 +105,14 @@ export default function DiscountPage() {
                             </p>
                         </div>
                         <div className="flex gap-3">
-                            <button className="flex items-center gap-2 py-2 px-4.5 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-xl text-[13px] font-bold cursor-pointer hover:bg-[#f5f5f5] transition-colors shadow-sm">
+                            <button
+                                onClick={handleExportCsv}
+                                disabled={promotions.length === 0}
+                                className="flex items-center gap-2 py-2 px-4.5 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-xl text-[13px] font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#f5f5f5] transition-colors shadow-sm"
+                            >
                                 <Download size={16} /> Export CSV
                             </button>
-                            <button className="flex items-center gap-2 py-2 px-5 bg-[#953002] text-white border-none rounded-xl text-[13px] font-bold cursor-pointer hover:bg-[#b03a02] transition-colors shadow-sm">
+                            <button className="flex items-center gap-2 py-2 px-5 bg-[var(--brand-primary)] text-white border-none rounded-xl text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors shadow-sm">
                                 <Plus size={16} /> Launch Campaign
                             </button>
                         </div>
@@ -143,7 +139,7 @@ export default function DiscountPage() {
                                         type="text"
                                         value={promoName}
                                         onChange={(e) => setPromoName(e.target.value)}
-                                        className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors"
                                         placeholder="e.g. SUMMER2024"
                                     />
                                 </div>
@@ -157,10 +153,10 @@ export default function DiscountPage() {
                                             type="text"
                                             value={percentage}
                                             onChange={(e) => setPercentage(e.target.value)}
-                                            className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                            className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors"
                                             placeholder="15"
                                         />
-                                        <span className="absolute right-4 top-1/2 mt-[-8px] text-[#953002] font-black text-[13px]">
+                                        <span className="absolute right-4 top-1/2 mt-[-8px] text-[var(--brand-primary)] font-black text-[13px]">
                                             %
                                         </span>
                                     </div>
@@ -175,7 +171,7 @@ export default function DiscountPage() {
                                             type="date"
                                             value={startDate}
                                             onChange={(e) => setStartDate(e.target.value)}
-                                            className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[13px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[#953002] cursor-pointer"
+                                            className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[13px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[var(--brand-primary)] cursor-pointer"
                                         />
                                     </div>
                                     <div>
@@ -186,7 +182,7 @@ export default function DiscountPage() {
                                             type="date"
                                             value={endDate}
                                             onChange={(e) => setEndDate(e.target.value)}
-                                            className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[13px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[#953002] cursor-pointer"
+                                            className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[13px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[var(--brand-primary)] cursor-pointer"
                                         />
                                     </div>
                                 </div>
@@ -199,13 +195,13 @@ export default function DiscountPage() {
                                         type="text"
                                         value={usageLimit}
                                         onChange={(e) => setUsageLimit(e.target.value)}
-                                        className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors"
                                         placeholder="100"
                                     />
                                 </div>
 
                                 <a href="/owner/rate" className="no-underline w-full block">
-                                    <button className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#953002] hover:bg-[#b03a02] text-white border-none rounded-xl text-[13px] font-extrabold cursor-pointer transition-colors shadow-md">
+                                    <button className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)] text-white border-none rounded-xl text-[13px] font-extrabold cursor-pointer transition-colors shadow-md">
                                         <CheckCircle2 size={16} /> Save Promotion
                                     </button>
                                 </a>
@@ -288,7 +284,7 @@ export default function DiscountPage() {
 
                                                 {/* Discount */}
                                                 <td className="py-3 px-3.5 font-bold">
-                                                    <span className="text-[14px] text-[#953002]">
+                                                    <span className="text-[14px] text-[var(--brand-primary)]">
                                                         {p.discount}%
                                                     </span>{" "}
                                                     <span className="text-[#b0b0b0] text-[10px] ml-0.5">
@@ -333,7 +329,7 @@ export default function DiscountPage() {
                                                             />
                                                         )}
                                                         {p.usageLimit === null && (
-                                                            <div className="h-full rounded-full w-full bg-[#953002]/15" />
+                                                            <div className="h-full rounded-full w-full bg-[var(--brand-primary)]/15" />
                                                         )}
                                                     </div>
                                                 </td>
@@ -354,7 +350,7 @@ export default function DiscountPage() {
                                                 {/* Actions */}
                                                 <td className="py-3 px-3.5 text-right w-[90px]">
                                                     <div className="flex items-center justify-end gap-1.5">
-                                                        <button className="bg-transparent border-none p-1.5 cursor-pointer text-[#828282] hover:bg-[#f5f5f5] hover:text-[#953002] rounded transition-colors">
+                                                        <button className="bg-transparent border-none p-1.5 cursor-pointer text-[#828282] hover:bg-[#f5f5f5] hover:text-[var(--brand-primary)] rounded transition-colors">
                                                             <Edit2 size={16} />
                                                         </button>
                                                         <button className="bg-transparent border-none p-1.5 cursor-pointer text-[#828282] hover:bg-[#f5f5f5] hover:text-[#e74c3c] rounded transition-colors">
@@ -403,6 +399,5 @@ export default function DiscountPage() {
 
                 </div>
             </div>
-        </div>
     );
 }

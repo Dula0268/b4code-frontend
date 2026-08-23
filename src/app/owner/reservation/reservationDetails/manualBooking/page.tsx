@@ -69,40 +69,18 @@ export default function ManualBookingPage() {
     const [specialRequests, setSpecialRequests] = useState("");
 
     return (
-        <div className="flex flex-col h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Top Bar ── */}
-            <header className="flex items-center justify-between py-3 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
-                <Logo width={120} height={36} />
-                <div className="flex items-center gap-3.5">
-                    <a
-                        href="/owner/message"
-                        className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors"
-                    >
-                        <Bell size={18} color="#4f4f4f" />
-                    </a>
-                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
-                        <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
-                            alt="User"
-                            className="w-full h-full rounded-full"
-                        />
-                    </div>
-                </div>
-            </header>
-
-            {/* ── Scrollable Body ── */}
-            <div className="flex-1 overflow-y-auto px-6 py-8 font-sans">
+        <div className="flex-1 overflow-y-auto px-6 py-8 font-sans">
                 <div className="max-w-[820px] mx-auto pb-10">
                     {/* Breadcrumb */}
                     <nav className="flex items-center gap-2 text-[11px] font-bold tracking-[0.8px] uppercase mb-6">
                         <a
                             href="/owner/reservation"
-                            className="text-[#828282] no-underline hover:text-[#953002] transition-colors"
+                            className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors"
                         >
                             Reservations
                         </a>
                         <span className="text-[#d0d0d0]">›</span>
-                        <span className="text-[#953002]">Manual Booking</span>
+                        <span className="text-[var(--brand-primary)]">Manual Booking</span>
                     </nav>
 
                     {/* Header Row */}
@@ -132,7 +110,7 @@ export default function ManualBookingPage() {
                                     value={firstName}
                                     onChange={(e) => setFirstName(e.target.value)}
                                     placeholder="e.g. John"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                             <div>
@@ -142,7 +120,7 @@ export default function ManualBookingPage() {
                                     value={lastName}
                                     onChange={(e) => setLastName(e.target.value)}
                                     placeholder="e.g. Doe"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                         </div>
@@ -155,7 +133,7 @@ export default function ManualBookingPage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="guest@example.com"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                             <div>
@@ -165,7 +143,7 @@ export default function ManualBookingPage() {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="+1 (555) 000-0000"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                         </div>
@@ -187,7 +165,7 @@ export default function ManualBookingPage() {
                                     type="date"
                                     value={checkIn}
                                     onChange={(e) => setCheckIn(e.target.value)}
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[#953002] transition-colors cursor-pointer"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors cursor-pointer"
                                 />
                             </div>
                             <div>
@@ -196,7 +174,7 @@ export default function ManualBookingPage() {
                                     type="date"
                                     value={checkOut}
                                     onChange={(e) => setCheckOut(e.target.value)}
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[#953002] transition-colors cursor-pointer"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors cursor-pointer"
                                 />
                             </div>
                         </div>
@@ -209,7 +187,7 @@ export default function ManualBookingPage() {
                                     min="1"
                                     value={adults}
                                     onChange={(e) => setAdults(e.target.value)}
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors"
                                 />
                             </div>
                             <div>
@@ -219,7 +197,7 @@ export default function ManualBookingPage() {
                                     min="0"
                                     value={children}
                                     onChange={(e) => setChildren(e.target.value)}
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors"
                                 />
                             </div>
                             <div>
@@ -228,7 +206,7 @@ export default function ManualBookingPage() {
                                     <select
                                         value={roomType}
                                         onChange={(e) => setRoomType(e.target.value)}
-                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
                                         {roomTypes.map((t) => (
                                             <option key={t} value={t}>
@@ -263,7 +241,7 @@ export default function ManualBookingPage() {
                                     value={totalAmount}
                                     onChange={(e) => setTotalAmount(e.target.value)}
                                     placeholder="0.00"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] font-bold text-[#953002] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0] placeholder:font-normal"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] font-bold text-[var(--brand-primary)] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0] placeholder:font-normal"
                                 />
                             </div>
                             <div>
@@ -273,7 +251,7 @@ export default function ManualBookingPage() {
                                     value={deposit}
                                     onChange={(e) => setDeposit(e.target.value)}
                                     placeholder="0.00"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                         </div>
@@ -285,7 +263,7 @@ export default function ManualBookingPage() {
                                     <select
                                         value={paymentStatus}
                                         onChange={(e) => setPaymentStatus(e.target.value)}
-                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
                                         {paymentStatuses.map((s) => (
                                             <option key={s} value={s}>
@@ -306,7 +284,7 @@ export default function ManualBookingPage() {
                                     <select
                                         value={paymentMethod}
                                         onChange={(e) => setPaymentMethod(e.target.value)}
-                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
                                         {paymentMethods.map((m) => (
                                             <option key={m} value={m}>
@@ -335,7 +313,7 @@ export default function ManualBookingPage() {
                             onChange={(e) => setSpecialRequests(e.target.value)}
                             rows={3}
                             placeholder="e.g. Needs a late check-in, allergic to peanuts..."
-                            className="w-full py-3 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors resize-y placeholder:text-[#c0c0c0]"
+                            className="w-full py-3 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors resize-y placeholder:text-[#c0c0c0]"
                         />
                     </div>
 
@@ -347,13 +325,12 @@ export default function ManualBookingPage() {
                             </button>
                         </a>
                         <a href="/owner/reservation" className="no-underline">
-                            <button className="flex items-center gap-2 py-3 px-10 bg-[#953002] text-white border-none rounded-xl text-[14px] font-extrabold cursor-pointer hover:bg-[#b03a02] transition-colors shadow-md">
+                            <button className="flex items-center gap-2 py-3 px-10 bg-[var(--brand-primary)] text-white border-none rounded-xl text-[14px] font-extrabold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors shadow-md">
                                 <CheckCircle2 size={18} /> Create Booking
                             </button>
                         </a>
                     </div>
                 </div>
             </div>
-        </div>
     );
 }

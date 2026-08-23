@@ -68,24 +68,7 @@ export default function BookingDetailsPage() {
     };
 
     return (
-        <div className="flex flex-col h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Top Bar ── */}
-            <header className="flex justify-between items-center py-2.5 px-8 bg-white border-b border-[#e8e8e8] flex-shrink-0">
-                <div className="flex items-center">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex items-center gap-3.5">
-                    <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                        <Bell size={18} color="#4f4f4f" />
-                    </a>
-                    <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                </div>
-            </header>
-
-            {/* ── Main Content ── */}
-            <div className="flex-1 py-5 px-12 pb-10 overflow-y-auto">
+        <div className="flex-1 py-5 px-12 pb-10 overflow-y-auto">
                 {/* Breadcrumb */}
                 <div className="text-[13px] mb-4 text-[#828282]">
                     <span className="cursor-pointer hover:underline">Calendar</span>
@@ -145,7 +128,7 @@ export default function BookingDetailsPage() {
                                     <Home size={14} color="#953002" />
                                     <span className="text-[10px] font-bold text-[#828282] tracking-widest">PROPERTY & ROOM</span>
                                 </div>
-                                <div className="text-[16px] font-extrabold text-[#953002] mb-1">{booking.property}</div>
+                                <div className="text-[16px] font-extrabold text-[var(--brand-primary)] mb-1">{booking.property}</div>
                                 <div className="text-[13px] text-[#4f4f4f] mb-1.5">{booking.room}</div>
                                 <div className="flex items-center gap-1 text-[12px] text-[#b0b0b0]">
                                     <MapPin size={12} color="#b0b0b0" />
@@ -182,7 +165,7 @@ export default function BookingDetailsPage() {
                                     <User size={18} color="#953002" />
                                     <span className="text-[16px] font-extrabold text-[#1d1d1d]">Guest Details</span>
                                 </div>
-                                <button className="bg-transparent border-none text-[#953002] text-[11px] font-bold cursor-pointer tracking-wider hover:underline">
+                                <button className="bg-transparent border-none text-[var(--brand-primary)] text-[11px] font-bold cursor-pointer tracking-wider hover:underline">
                                     VIEW FULL PROFILE
                                 </button>
                             </div>
@@ -245,7 +228,7 @@ export default function BookingDetailsPage() {
                     {/* Right Column */}
                     <div className="flex flex-col gap-3">
                         {/* Message Guest */}
-                        <button className="flex items-center justify-center gap-2 py-3.5 bg-[#953002] text-white border-none rounded-xl text-[14px] font-bold cursor-pointer w-full hover:bg-[#a63602] transition-colors">
+                        <button className="flex items-center justify-center gap-2 py-3.5 bg-[var(--brand-primary)] text-white border-none rounded-xl text-[14px] font-bold cursor-pointer w-full hover:bg-[#a63602] transition-colors">
                             <MessageSquare size={16} /> Message Guest
                         </button>
 
@@ -278,7 +261,7 @@ export default function BookingDetailsPage() {
                                     </div>
                                 </div>
                             ))}
-                            <button className="bg-transparent border-none text-[#953002] text-[11px] font-bold cursor-pointer tracking-wider mt-1 p-0 hover:underline">
+                            <button className="bg-transparent border-none text-[var(--brand-primary)] text-[11px] font-bold cursor-pointer tracking-wider mt-1 p-0 hover:underline">
                                 VIEW FULL HISTORY LOG
                             </button>
                         </div>
@@ -286,19 +269,18 @@ export default function BookingDetailsPage() {
                         {/* Support & Resources */}
                         <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-4.5">
                             <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-3.5">SUPPORT & RESOURCES</div>
-                            <div className="flex items-center gap-2.5 text-[13px] text-[#1d1d1d] font-medium mb-3 cursor-pointer hover:text-[#953002] transition-colors">
+                            <div className="flex items-center gap-2.5 text-[13px] text-[#1d1d1d] font-medium mb-3 cursor-pointer hover:text-[var(--brand-primary)] transition-colors">
                                 <FileText size={14} color="#828282" /> Rental Agreement
                             </div>
-                            <div className="flex items-center gap-2.5 text-[13px] text-[#1d1d1d] font-medium mb-3 cursor-pointer hover:text-[#953002] transition-colors">
+                            <div className="flex items-center gap-2.5 text-[13px] text-[#1d1d1d] font-medium mb-3 cursor-pointer hover:text-[var(--brand-primary)] transition-colors">
                                 <Shield size={14} color="#828282" /> Cancellation Policy
                             </div>
-                            <div className="flex items-center gap-2.5 text-[13px] text-[#1d1d1d] font-medium mb-3 cursor-pointer hover:text-[#953002] transition-colors">
+                            <div className="flex items-center gap-2.5 text-[13px] text-[#1d1d1d] font-medium mb-3 cursor-pointer hover:text-[var(--brand-primary)] transition-colors">
                                 <Headphones size={14} color="#828282" /> Contact Support
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
     );
 }

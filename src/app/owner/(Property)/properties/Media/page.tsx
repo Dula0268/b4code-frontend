@@ -112,34 +112,13 @@ function MediaContent() {
     }
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* Sidebar */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
-
-            {/* Main */}
-            <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-between items-center py-1.5">
-                    <div />
-                    <div className="flex items-center gap-3">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
+        <div className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
 
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
-                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">{property?.name ?? "Media"}</span>
+                    <span className="text-[var(--brand-primary)] font-semibold">{property?.name ?? "Media"}</span>
                 </div>
 
                 {loading && (
@@ -156,7 +135,7 @@ function MediaContent() {
                         {/* Property Header Card */}
                         <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
                             <div className="flex items-center gap-4 flex-1">
-                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002] bg-[#f0ebe5] flex items-center justify-center">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[var(--brand-primary)] bg-[#f0ebe5] flex items-center justify-center">
                                     {property.image ? (
                                         <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
                                     ) : (
@@ -204,7 +183,7 @@ function MediaContent() {
                                         }}
                                         className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${
                                             isActive
-                                                ? "text-[#953002] font-bold border-[#953002]"
+                                                ? "text-[var(--brand-primary)] font-bold border-[var(--brand-primary)]"
                                                 : "text-[#828282] font-medium border-transparent hover:text-[#4f4f4f]"
                                         }`}
                                     >
@@ -246,14 +225,14 @@ function MediaContent() {
                                         onClick={() => !uploading && fileInputRef.current?.click()}
                                         className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-8 cursor-pointer transition-colors mb-5 min-h-[160px] ${
                                             isDragging
-                                                ? "border-[#953002] bg-[#fef5ef]"
-                                                : "border-[#d0d0d0] bg-[#fafafa] hover:bg-[#f5f5f5] hover:border-[#953002]"
+                                                ? "border-[var(--brand-primary)] bg-[#fef5ef]"
+                                                : "border-[#d0d0d0] bg-[#fafafa] hover:bg-[#f5f5f5] hover:border-[var(--brand-primary)]"
                                         } ${uploading ? "opacity-60 cursor-not-allowed" : ""}`}
                                     >
                                         {uploading ? (
                                             <>
                                                 <Loader2 size={32} color="#953002" className="animate-spin mb-2" />
-                                                <span className="text-[13px] font-semibold text-[#953002]">Uploading…</span>
+                                                <span className="text-[13px] font-semibold text-[var(--brand-primary)]">Uploading…</span>
                                             </>
                                         ) : (
                                             <>
@@ -316,7 +295,7 @@ function MediaContent() {
                                         { title: "Format", body: "JPG, PNG, and WebP formats are supported." },
                                     ].map((tip) => (
                                         <div key={tip.title} className="flex items-start gap-2">
-                                            <div className="w-[6px] h-[6px] rounded-full mt-1.5 shrink-0 bg-[#953002]" />
+                                            <div className="w-[6px] h-[6px] rounded-full mt-1.5 shrink-0 bg-[var(--brand-primary)]" />
                                             <div>
                                                 <div className="text-[13px] font-semibold text-[#4f4f4f]">{tip.title}</div>
                                                 <div className="text-[11px] text-[#828282] mt-0.5 leading-snug">{tip.body}</div>
@@ -328,8 +307,7 @@ function MediaContent() {
                         </div>
                     </div>
                 )}
-            </main>
-        </div>
+            </div>
     );
 }
 
