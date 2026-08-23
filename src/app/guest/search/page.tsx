@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback, Suspense } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
-import { ChevronLeft, ChevronRight, Loader2, SearchX, WifiOff } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2, SearchX, WifiOff, Filter } from "lucide-react"
 
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import MobileBottomNav from "@/components/shared/layout/guest-shell/mobile-bottom-nav"
 import FiltersSidebar, { type FilterState } from "@/components/guest/search/filters-sidebar"
 import PropertyCard from "@/components/guest/search/property-card"
 import ResultsHeader from "@/components/guest/search/results-header"
@@ -176,6 +177,7 @@ function SearchResultsContent() {
     const [page, setPage] = useState(0)
     const [mapOpen, setMapOpen] = useState(false)
     const [hoveredId, setHoveredId] = useState<string | null>(null)
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
     const PAGE_SIZE = 10
 
@@ -294,7 +296,7 @@ function SearchResultsContent() {
     return (
         <div className="w-full pb-10 pt-[80px]">
             <div className="sticky top-[72px] z-[40] w-full flex justify-center pb-3 px-4 pointer-events-none">
-                <div className="pointer-events-auto">
+                <div className="pointer-events-auto hidden md:block">
                     <SearchBar />
                 </div>
             </div>
@@ -309,9 +311,20 @@ function SearchResultsContent() {
                             onClear={handleClearFilters}
                             filterOptions={filterOptions}
                             loading={filtersLoading}
+                            isMobileOpen={mobileFiltersOpen}
+                            onCloseMobile={() => setMobileFiltersOpen(false)}
                         />
                     </div>
                 </div>
+
+                {/* Mobile Floating Filter Button */}
+                <button
+                    onClick={() => setMobileFiltersOpen(true)}
+                    className="md:hidden fixed top-[125px] right-4 z-[40] bg-[var(--brand-secondary)] text-[#1d1d1d] px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 font-bold text-[13px] active:scale-95 transition-transform border border-[#d9a01c]"
+                >
+                    <Filter size={16} />
+                    Filters
+                </button>
 
                 {/* Results Area */}
                 <div className="flex-1 min-w-0">
@@ -390,6 +403,7 @@ export default function SearchPage() {
                 </Suspense>
             </main>
             <GuestFooter variant="full" />
+            <MobileBottomNav />
         </div>
     )
 }

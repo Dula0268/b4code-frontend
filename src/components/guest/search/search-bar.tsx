@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { MapPin, Calendar, Users, Search } from "lucide-react"
+import { MapPin, Calendar, Users, Search, X, Bed, User, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 
 import CalendarPicker from "@/components/shared/forms/calendar-picker"
@@ -46,6 +46,19 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const [guests, setGuests] = useState<GuestCounts>({ adults: Math.max(1, initGuests), rooms: Math.max(1, initRooms) })
   const [guestOpen, setGuestOpen] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
+
+  // Mobile Modal
+  const [mobileModalOpen, setMobileModalOpen] = useState(false)
+
+  // ── Open from URL param (Global FAB Search trigger) ──────────────────────
+  useEffect(() => {
+    if (searchParams.get("openMobileSearch") === "true") {
+      setMobileModalOpen(true);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("openMobileSearch");
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+  }, [searchParams, pathname, router]);
 
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
@@ -138,6 +151,9 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
     params.set("guests", String(Math.max(1, guestTotal)))
     params.set("rooms", String(Math.max(1, guests.rooms)))
     const url = `/guest/search?${params.toString()}`
+    
+    setMobileModalOpen(false) // Close mobile modal if open
+    
     // Replace history entry when already on search page to avoid stacking
     if (pathname.startsWith("/guest/search")) {
       router.replace(url)
@@ -149,19 +165,9 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   // ── Helpers ────────────────────────────────────────────────────────────
   const closeAll = () => { setLocationOpen(false); setCalOpen(false); setGuestOpen(false) }
 
-  return (
-    <div className="relative">
-      <div
-        role="search"
-        className={[
-          "bg-white flex flex-col md:flex-row rounded-3xl md:rounded-full border border-gray-200",
-        isCompact
-          ? "shadow-sm w-full max-w-[680px]"
-          : "shadow-2xl w-full max-w-[850px]",
-      ].join(" ")}
-      suppressHydrationWarning
-    >
-
+  // Shared Form Content
+  const SearchFormFields = (
+    <>
       {/* ── Location ─────────────────────────────────────────────────── */}
       <div ref={locationRef} className="relative flex-[2]">
         <div
@@ -189,6 +195,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       </div>
 
       <div className="hidden md:block w-[1px] bg-gray-200 flex-shrink-0" />
+      <div className="md:hidden h-[1px] bg-gray-200 w-[calc(100%-32px)] mx-auto flex-shrink-0" />
 
       {/* ── Dates ────────────────────────────────────────────────────── */}
       <div ref={calRef} className="relative flex-[1.5]">
@@ -203,10 +210,8 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
         </div>
 
         {calOpen && (
-          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl z-50
-                          shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]">
-
-
+          <div className="absolute top-full left-0 right-0 md:left-1/2 md:right-auto md:-translate-x-1/2 mt-2 bg-white rounded-xl z-50
+                          shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0] max-h-[70vh] overflow-auto">
             <CalendarPicker
               checkIn={checkIn}
               checkOut={checkOut}
@@ -230,6 +235,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       </div>
 
       <div className="hidden md:block w-[1px] bg-gray-200 flex-shrink-0" />
+      <div className="md:hidden h-[1px] bg-gray-200 w-[calc(100%-32px)] mx-auto flex-shrink-0" />
 
       {/* ── Guests ───────────────────────────────────────────────────── */}
       <div ref={guestRef} className="relative flex-1">
@@ -242,7 +248,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
         </div>
 
         {guestOpen && (
-          <div className="absolute top-full right-0 mt-2 bg-white rounded-xl z-50
+          <div className="absolute top-full left-0 right-0 md:left-auto md:right-0 mt-2 bg-white rounded-xl z-50
                           shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[#f0f0f0]">
             <GuestPicker value={guests} onChange={setGuests} />
           </div>
@@ -252,12 +258,138 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
       <button
         onClick={handleSearch}
         aria-label="Search"
-        className="bg-gradient-to-r from-[var(--brand-primary)] to-[#6d2200] hover:from-[#6d2200] hover:to-[#5a1c00] text-white px-8 h-[58px] flex items-center justify-center gap-2 font-bold text-[16px] transition-all duration-300 active:scale-95 flex-shrink-0 rounded-b-3xl rounded-t-none md:rounded-none md:rounded-r-full"
+        className="bg-gradient-to-r from-[var(--brand-primary)] to-[#6d2200] hover:from-[#6d2200] hover:to-[#5a1c00] text-white px-8 h-[58px] hidden md:flex items-center justify-center gap-2 font-bold text-[16px] transition-all duration-300 active:scale-95 flex-shrink-0 rounded-b-3xl rounded-t-none md:rounded-none md:rounded-r-full"
         suppressHydrationWarning
       >
         <span>Search</span>
       </button>
-    </div>
+    </>
+  )
+
+  return (
+    <div className="relative">
+      
+      {/* ── Mobile Pill Trigger ────────────────────────────────────────── */}
+      <button
+        onClick={() => setMobileModalOpen(true)}
+        className="md:hidden w-full bg-white border border-[#e8e8e8] shadow-sm rounded-full px-4 py-2.5 flex items-center gap-3 active:scale-95 transition-transform"
+      >
+        <Search size={18} className="text-[#1d1d1d] flex-shrink-0" strokeWidth={2.5} />
+        <div className="flex flex-1 min-w-0 overflow-hidden items-center">
+          <div className="text-[13px] truncate flex items-center gap-1.5">
+            <span className={destination ? "font-bold text-[#1d1d1d]" : "font-semibold text-[#1d1d1d]"}>
+              {destination || "Where?"}
+            </span>
+            <span className="text-[#828282] text-[10px]">●</span>
+            <span className={checkIn && checkOut ? "font-bold text-[#1d1d1d]" : "text-[#4f4f4f]"}>
+              {checkIn && checkOut 
+                ? `${checkIn.toLocaleDateString("en-US", { month: "short", day: "numeric" })}-${checkOut.toLocaleDateString("en-US", { month: "short", day: "numeric" })}` 
+                : "When?"}
+            </span>
+            <span className="text-[#828282] text-[10px]">●</span>
+            <span className={guestTotal > 1 ? "font-bold text-[#1d1d1d]" : "text-[#4f4f4f]"}>
+              {guestTotal > 1 ? `${guestTotal} guests` : "Who?"}
+            </span>
+          </div>
+        </div>
+      </button>
+
+      {/* ── Desktop Form ──────────────────────────────────────────────── */}
+      <div
+        role="search"
+        className={[
+          "bg-white hidden md:flex flex-row rounded-full border border-gray-200",
+          isCompact
+            ? "shadow-sm w-full max-w-[680px]"
+            : "shadow-2xl w-full max-w-[850px]",
+        ].join(" ")}
+        suppressHydrationWarning
+      >
+        {SearchFormFields}
+      </div>
+
+      {/* ── Mobile Dropdown / Modal ────────────────────────────────────── */}
+      {mobileModalOpen && (
+        <div className="md:hidden fixed inset-0 z-[100] flex flex-col">
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/40 animate-in fade-in duration-300" onClick={() => setMobileModalOpen(false)} />
+          
+          {/* Stacked Search Form Widget (Slides from top) */}
+          <div className="w-full bg-white shadow-2xl z-10 flex flex-col animate-in slide-in-from-top-full duration-300 pt-[env(safe-area-inset-top)]">
+            
+            {/* Close Button Header */}
+            <div className="flex justify-end p-2 border-b border-[#e8e8e8]">
+              <button onClick={() => setMobileModalOpen(false)} className="p-2 text-[#828282] active:bg-gray-100 rounded-full">
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Destination Row */}
+            <div className="flex items-center p-4 border-b border-[#e8e8e8] relative" onClick={() => { closeAll(); setLocationOpen(true) }}>
+              <MapPin className="text-[var(--brand-primary)] mr-4 flex-shrink-0" size={24} strokeWidth={2} />
+              <div className="flex flex-col flex-1 min-w-0">
+                 <span className="text-[12px] text-[#4f4f4f] mb-0.5">Where are you going?</span>
+                 <input
+                   value={destination}
+                   onChange={e => { setDestination(e.target.value); setLocationOpen(true) }}
+                   placeholder="Where are you going?"
+                   className="text-[15px] font-bold text-[#1d1d1d] bg-transparent border-none outline-none p-0 w-full placeholder:font-normal placeholder:text-[#828282]"
+                 />
+              </div>
+              {destination && (
+                <button className="p-2 -mr-2" onClick={(e) => { e.stopPropagation(); setDestination(""); }}>
+                  <X size={20} className="text-[var(--brand-primary)]" strokeWidth={2} />
+                </button>
+              )}
+              
+              {locationOpen && (
+                 <div className="absolute top-full left-0 right-0 z-50 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.15)] rounded-b-2xl border-t border-[#e8e8e8]" onClick={e => e.stopPropagation()}>
+                   <LocationPicker value={destination} onChange={setDestination} onSelect={loc => { setDestination(loc); setLocationOpen(false) }} open={locationOpen} />
+                 </div>
+              )}
+            </div>
+
+            {/* Dates Row */}
+            <div className="flex items-center p-4 border-b border-[#e8e8e8] relative" onClick={() => { closeAll(); setCalOpen(!calOpen) }}>
+              <Calendar className="text-[var(--brand-primary)] mr-4 flex-shrink-0" size={24} strokeWidth={2} />
+              <div className="flex flex-col flex-1 min-w-0">
+                 <span className="text-[12px] text-[#4f4f4f] mb-0.5">Select dates</span>
+                 <span className="text-[15px] font-bold text-[#1d1d1d] truncate">{dateLabel || "Check-in date — Check-out date"}</span>
+              </div>
+              
+              {calOpen && (
+                 <div className="absolute top-full left-0 right-0 z-50 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.15)] rounded-b-2xl border-t border-[#e8e8e8] max-h-[60vh] overflow-auto" onClick={e => e.stopPropagation()}>
+                   <CalendarPicker checkIn={checkIn} checkOut={checkOut} onChange={(ci, co) => { setCheckIn(ci); setCheckOut(co) }} onComplete={() => setCalOpen(false)} />
+                 </div>
+              )}
+            </div>
+
+            {/* Occupancy Row */}
+            <div className="flex items-center p-4 relative border-b border-[#e8e8e8]" onClick={() => { closeAll(); setGuestOpen(!guestOpen) }}>
+              <Users className="text-[var(--brand-primary)] mr-4 flex-shrink-0" size={24} strokeWidth={2} />
+              <div className="flex flex-col flex-1 min-w-0">
+                 <span className="text-[12px] text-[#4f4f4f] mb-0.5">Select occupancy</span>
+                 <span className="text-[15px] font-bold text-[#1d1d1d] truncate">{guestLabel}</span>
+              </div>
+              
+              {guestOpen && (
+                 <div className="absolute top-full left-0 right-0 z-50 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.15)] rounded-b-2xl border-t border-[#e8e8e8]" onClick={e => e.stopPropagation()}>
+                   <GuestPicker value={guests} onChange={setGuests} />
+                 </div>
+              )}
+            </div>
+
+            {/* Search Button */}
+            <button
+              onClick={handleSearch}
+              className="w-full bg-gradient-to-r from-[var(--brand-primary)] to-[#6d2200] hover:from-[#6d2200] hover:to-[#5a1c00] text-white font-bold py-4 text-[18px] transition-all duration-300"
+            >
+              Search
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

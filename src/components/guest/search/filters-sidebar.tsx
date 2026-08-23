@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronDown, ChevronUp, Map, Home, Building2, BedDouble, Hotel, Palmtree, TreePine, ShieldCheck, Coffee, Dog, Accessibility } from "lucide-react"
+import { ChevronDown, ChevronUp, Map, Home, Building2, BedDouble, Hotel, Palmtree, TreePine, ShieldCheck, Coffee, Dog, Accessibility, X } from "lucide-react"
 import type { FilterOptionsResponse, PropertyTypeOption, RatingOption, SortOption } from "@/api/guest/search.api"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -19,6 +19,8 @@ interface FiltersSidebarProps {
     onClear: () => void
     filterOptions: FilterOptionsResponse | null
     loading?: boolean
+    isMobileOpen?: boolean
+    onCloseMobile?: () => void
 }
 
 // ─── Icon Resolver ────────────────────────────────────────────────────────
@@ -226,18 +228,22 @@ function GuestRatingFilter({ selected, onChange }: { selected: string | null; on
 
 // ─── Main Orchestrator ────────────────────────────────────────────────────────
 export default function FiltersSidebar(props: FiltersSidebarProps) {
-    const { filters, onChange, onClear, filterOptions, loading } = props
+    const { filters, onChange, onClear, filterOptions, loading, isMobileOpen, onCloseMobile } = props
 
     if (loading || !filterOptions) return <FilterSkeleton />
 
     const { propertyTypes, priceRange } = filterOptions
 
-    return (
-        <aside className="w-full min-w-0 bg-white border border-[#e0e0e0] rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-4 sm:p-5">
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#f0f0f0]">
-                    <span className="text-[18px] sm:text-[19px] font-bold text-[#1d1d1d]">Filters</span>
-                </div>
+    const sidebarContent = (
+        <div className="p-4 sm:p-5 h-full overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#f0f0f0]">
+                <span className="text-[18px] sm:text-[19px] font-bold text-[#1d1d1d]">Filters</span>
+                {onCloseMobile && (
+                    <button onClick={onCloseMobile} className="md:hidden p-2 -mr-2 text-[#1d1d1d] hover:bg-gray-100 rounded-full transition-colors">
+                        <X size={20} />
+                    </button>
+                )}
+            </div>
 
                 <PriceRangeFilter
                     priceMin={filters.priceMin}
@@ -258,6 +264,27 @@ export default function FiltersSidebar(props: FiltersSidebarProps) {
                     </button>
                 </div>
             </div>
-        </aside>
+    )
+
+    return (
+        <>
+            {/* Desktop View */}
+            <aside className="hidden md:block w-full min-w-0 bg-white border border-[#e0e0e0] rounded-2xl shadow-sm overflow-hidden">
+                {sidebarContent}
+            </aside>
+
+            {/* Mobile Drawer Overlay */}
+            {isMobileOpen && (
+                <div className="md:hidden fixed inset-0 z-[100] bg-black/40 flex" onClick={onCloseMobile}>
+                    {/* Drawer Content */}
+                    <aside 
+                        className="w-[85%] max-w-[360px] h-full bg-white shadow-xl animate-slide-in-right flex flex-col"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {sidebarContent}
+                    </aside>
+                </div>
+            )}
+        </>
     )
 }
