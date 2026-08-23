@@ -1,5 +1,6 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import MobileBottomNav from "@/components/shared/layout/guest-shell/mobile-bottom-nav"
 import LandingContent from "@/components/landing/landing-content"
 
 export const metadata = {
@@ -15,6 +16,7 @@ export default function HomePage() {
         <LandingContent />
       </main>
       <GuestFooter variant="full" />
+      <MobileBottomNav />
     </>
   )
 }

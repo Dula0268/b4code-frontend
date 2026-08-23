@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { 
-  Calendar, ChevronRight, Lock, ShieldCheck
+  Calendar, ChevronRight, Lock, ShieldCheck, ListFilter, X
 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/store/auth/auth.store"
@@ -15,12 +15,14 @@ import { useGuestGuard } from "@/hooks/use-guest-guard"
 import AccessDenied from "@/components/shared/auth/access-denied"
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import MobileBottomNav from "@/components/shared/layout/guest-shell/mobile-bottom-nav"
 
 const TABS: ("UPCOMING" | "COMPLETED" | "CANCELLED")[] = ["UPCOMING", "COMPLETED", "CANCELLED"]
 
 function BookingsContent() {
   const { status, userRole } = useGuestGuard()
   const [activeTab, setActiveTab] = useState<"UPCOMING" | "COMPLETED" | "CANCELLED" | "PENDING">("UPCOMING")
+  const [mobileStatusOpen, setMobileStatusOpen] = useState(false)
   const [bookings, setBookings] = useState<BookingCardData[]>([])
   const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
@@ -178,13 +180,13 @@ function BookingsContent() {
       <div className="flex-1 max-w-[900px] w-full mx-auto px-6 pt-16 pb-20">
 
 
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-1 p-1 bg-white border border-[#e8ddcf] rounded-[18px] backdrop-blur-md mb-12 w-fit animate-in fade-in slide-in-from-left-4 duration-700 shadow-sm">
+        {/* Tab Navigation (Desktop) */}
+        <div className="hidden sm:inline-flex items-center gap-1 p-1 bg-white border border-[#e8ddcf] rounded-[18px] backdrop-blur-md mb-8 sm:mb-12 w-fit shadow-sm animate-in fade-in slide-in-from-left-4 duration-700">
           {TABS.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2.5 rounded-[14px] text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-[14px] text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${
                 activeTab === tab 
                   ? "bg-[#9a3300] text-white shadow-lg shadow-[#9a3300]/20" 
                   : "text-[#8b7d6d] hover:text-[#2b2218]"
@@ -195,8 +197,46 @@ function BookingsContent() {
           ))}
         </div>
 
+        {/* Mobile Floating Status Button & Dropdown */}
+        <div className="sm:hidden fixed top-[76px] right-4 z-[50]">
+            <button
+                onClick={() => setMobileStatusOpen(!mobileStatusOpen)}
+                className="bg-[#fbc02d] text-[#1d1d1d] px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 font-bold text-[13px] active:scale-95 transition-transform border border-[#d9a01c] ml-auto"
+            >
+                <ListFilter size={16} />
+                {activeTab}
+            </button>
+
+            {mobileStatusOpen && (
+                <>
+                    <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setMobileStatusOpen(false)} 
+                    />
+                    <div className="absolute top-[44px] right-0 z-50 bg-white rounded-2xl shadow-xl border border-[#e8e8e8] p-1.5 min-w-[160px] flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200">
+                        {TABS.map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => {
+                                    setActiveTab(tab)
+                                    setMobileStatusOpen(false)
+                                }}
+                                className={`w-full text-left px-4 py-2.5 rounded-xl font-bold text-[13px] transition-colors ${
+                                    activeTab === tab
+                                        ? "bg-[var(--brand-primary)] text-white"
+                                        : "bg-transparent text-[#1d1d1d] hover:bg-[#f8f8f8]"
+                                }`}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
+        </div>
+
         {/* Booking List */}
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+        <div className="flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center text-[#9f907f]">
               <div className="w-12 h-12 border-4 border-[#f0e4d5] border-t-[#9a3300] rounded-full animate-spin mb-4" />
@@ -236,8 +276,7 @@ function BookingsContent() {
         </div>
       </div>
       <GuestFooter />
-
-
+      <MobileBottomNav />
     </div>
   )
 }

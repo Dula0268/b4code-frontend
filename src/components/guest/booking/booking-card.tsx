@@ -109,7 +109,7 @@ function PaymentBadge({ paidInFull, method, status }: { paidInFull?: boolean, me
 // ─────────────────────────────────────────────────────────────────────────────
 // Button style constants
 // ─────────────────────────────────────────────────────────────────────────────
-const btnOutline = "inline-flex items-center gap-1.5 border border-[#e8ddcf] hover:border-[#9a3300] text-[#6f6254] hover:text-[#9a3300] text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer no-underline bg-white"
+const btnOutline = "flex flex-1 sm:flex-none justify-center items-center gap-1.5 border border-[#e8ddcf] hover:border-[#9a3300] text-[#6f6254] hover:text-[#9a3300] text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all cursor-pointer no-underline bg-white"
 const btnGhost   = "inline-flex items-center gap-1 text-[11px] font-bold text-[#8b7d6d] hover:text-[#9a3300] transition-colors cursor-pointer"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -200,11 +200,11 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
           </div>
 
           {/* Action row */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex flex-wrap items-center gap-2 flex-shrink-0 mt-3 sm:mt-0 w-full sm:w-auto">
             {isPending && booking.paymentMethod === "online" && (
               <Link
                 href={`/payment?total=${Number(booking.totalPrice).toFixed(2)}&confirmationCode=${booking.orderId}&bookingId=${booking.id}`}
-                className="flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors"
+                className="flex flex-1 sm:flex-none justify-center items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors"
               >
                 ⏳ Complete Payment
               </Link>

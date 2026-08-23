@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Search, Download, Loader2 } from "lucide-react";
 import { useAdminModerationStore } from "@/store/admin/moderation/admin-moderation.store";
 
-// ─── Action Badge ─────────────────────────────────────────────────────────────
+// ─── Action Badge (enum-based category) ─────────────────────────────────────
 function ActionBadge({ action }: { action: string }) {
   const cfg: Record<string, string> = {
     "Review Removed": "bg-red-50 text-red-600 border-red-200",
-    "Refund Issued": "bg-orange-50 text-orange-600 border-orange-200",
-    "Review Kept": "bg-green-50 text-green-600 border-green-200",
-    "Appeal Denied": "bg-yellow-50 text-yellow-700 border-yellow-200",
+    "Refund Issued":  "bg-orange-50 text-orange-600 border-orange-200",
+    "Review Kept":    "bg-green-50 text-green-600 border-green-200",
+    "Appeal Denied":  "bg-yellow-50 text-yellow-700 border-yellow-200",
   };
   const bgClass = cfg[action] || "bg-gray-50 text-gray-700 border-gray-200";
   return (
@@ -18,6 +18,28 @@ function ActionBadge({ action }: { action: string }) {
       className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${bgClass}`}
     >
       {action}
+    </span>
+  );
+}
+
+// ─── Outcome Badge (rich resolution label) ───────────────────────────────────
+function OutcomeBadge({ outcome }: { outcome: string }) {
+  const cfg: Record<string, string> = {
+    "Approved Refund":                  "bg-emerald-50 text-emerald-700 border-emerald-200",
+    "Denied Refund (Host Wins)":        "bg-red-50 text-red-600 border-red-200",
+    "Complaint Resolved (Guest Wins)":  "bg-teal-50 text-teal-700 border-teal-200",
+    "Complaint Dismissed":              "bg-slate-50 text-slate-600 border-slate-200",
+    "Review Removed":                   "bg-red-50 text-red-600 border-red-200",
+    "Refund Issued":                    "bg-orange-50 text-orange-600 border-orange-200",
+    "Review Kept":                      "bg-green-50 text-green-600 border-green-200",
+    "Appeal Denied":                    "bg-yellow-50 text-yellow-700 border-yellow-200",
+  };
+  const bgClass = cfg[outcome] || "bg-gray-50 text-gray-700 border-gray-200";
+  return (
+    <span
+      className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${bgClass}`}
+    >
+      {outcome || "—"}
     </span>
   );
 }
@@ -207,8 +229,8 @@ export default function HistoryTabPage() {
                       </div>
                     </td>
                     {/* Outcome */}
-                    <td className="px-5 py-3.5 text-[13px] text-[#6B7280]">
-                      {entry.outcome}
+                    <td className="px-5 py-3.5">
+                      <OutcomeBadge outcome={entry.outcome} />
                     </td>
                   </tr>
                 ))

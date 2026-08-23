@@ -22,7 +22,7 @@ export default function StaffMessagesPage() {
         subtitle={subtitle}
         searchPlaceholder="Search conversations..."
       />
-      <main className="mt-[64px] flex-1 overflow-hidden">
+      <main className="mt-[64px] flex-1 min-h-0 overflow-hidden">
         <StaffMessagesClient />
       </main>
     </>

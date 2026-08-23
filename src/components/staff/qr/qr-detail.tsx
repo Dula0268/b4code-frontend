@@ -59,14 +59,14 @@ export default function QrDetail({ qrId }: { qrId: string }) {
   return (
     <div className="h-full flex flex-col overflow-hidden px-5 py-3 gap-3">
       {/* Header */}
-      <div className="flex-none flex items-center justify-between">
+      <div className="flex-none flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
-          <button onClick={() => router.push("/staff/qr")} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors">
+          <button onClick={() => router.push("/staff/qr")} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors shrink-0">
             <ArrowLeft size={16} />
           </button>
           <h1 className="text-sm font-bold text-[var(--black-2)]">QR Detail</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={() => router.push(`/staff/qr/${qrId}/print`)}>
             <Printer size={12} /> Print QR
           </Button>
@@ -85,7 +85,7 @@ export default function QrDetail({ qrId }: { qrId: string }) {
       )}
 
       {/* Body — 2 column */}
-      <div className="flex-1 flex gap-5 min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-5 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* Left: QR Code */}
         <Card className="bg-white flex-1 py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
           <CardContent className="p-5 h-full flex flex-col items-center justify-center gap-3">
@@ -104,7 +104,7 @@ export default function QrDetail({ qrId }: { qrId: string }) {
         </Card>
 
         {/* Right: Details */}
-        <div className="w-[320px] shrink-0 flex flex-col gap-3 overflow-y-auto">
+        <div className="w-full lg:w-[320px] lg:shrink-0 flex flex-col gap-3 lg:overflow-y-auto">
           <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <CardContent className="p-5 flex flex-col gap-4">
               {/* Name */}

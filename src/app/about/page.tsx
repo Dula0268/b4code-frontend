@@ -1,5 +1,6 @@
 import GuestTopbar from "@/components/shared/layout/guest-shell/guest-topbar"
 import GuestFooter from "@/components/shared/layout/guest-shell/guest-footer"
+import MobileBottomNav from "@/components/shared/layout/guest-shell/mobile-bottom-nav"
 import AboutContent from "@/components/about/about-content"
 
 export const metadata = {
@@ -16,6 +17,7 @@ export default function AboutPage() {
         <AboutContent />
       </main>
       <GuestFooter variant="full" />
+      <MobileBottomNav />
     </>
   )
 }

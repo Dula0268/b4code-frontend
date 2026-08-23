@@ -34,15 +34,21 @@ export default function ConfirmationClient() {
       .then((r) => r.json())
       .then((backendOrder) => {
         if (backendOrder.status === 'PAYMENT_PENDING') {
-          // Payment confirmed by user on PayHere but webhook can't reach localhost
-          // Call simulate-payment to transition the order to PLACED
-          return fetch(`${apiBase}/orders/${numericOrderId}/simulate-payment`, {
-            method: 'POST',
-          }).then(() => {
-            setSimulated(true);
-            // Give SSE 600ms to propagate to staff store before syncing guest view
-            return new Promise<void>((resolve) => setTimeout(resolve, 600));
-          }).then(() => syncCurrentOrder());
+          if (process.env.NODE_ENV !== 'production') {
+            // Dev-only: the PayHere webhook can't reach a local machine, so simulate it.
+            // The backend itself also gates this endpoint to the "dev" profile.
+            return fetch(`${apiBase}/orders/${numericOrderId}/simulate-payment`, {
+              method: 'POST',
+            }).then(() => {
+              setSimulated(true);
+              // Give SSE 600ms to propagate to staff store before syncing guest view
+              return new Promise<void>((resolve) => setTimeout(resolve, 600));
+            }).then(() => syncCurrentOrder());
+          }
+          // Production: the real PayHere webhook confirms payment asynchronously, so give
+          // it a moment then re-sync rather than firing the dev-only simulate call (which
+          // the backend rejects with 404 outside the "dev" profile anyway).
+          return new Promise<void>((resolve) => setTimeout(resolve, 1500)).then(() => syncCurrentOrder());
         } else {
           // Already PLACED or beyond - just sync the store
           setSimulated(true);

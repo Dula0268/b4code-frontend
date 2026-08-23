@@ -81,15 +81,17 @@ export default function HelpClient() {
             <button
               disabled
               title="Coming soon — please contact the front desk directly"
-              className="w-full flex items-center justify-center gap-2 bg-gray-200 rounded-2xl px-6 py-4 cursor-not-allowed opacity-70"
+              className="w-full flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 bg-gray-200 rounded-2xl px-6 py-4 cursor-not-allowed opacity-70"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-500">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3.09 5.18 2 2 0 0 1 5.09 3h3a2 2 0 0 1 2 1.72c.13.81.37 1.61.7 2.36a2 2 0 0 1-.45 2.11L8.09 11.5a16 16 0 0 0 6.41 6.41l2.31-2.31a2 2 0 0 1 2.11-.45c.75.33 1.55.57 2.36.7A2 2 0 0 1 22 16.92Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="text-base font-semibold text-gray-500">
-                Quick Call to Staff
+              <span className="flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-500 shrink-0">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3.09 5.18 2 2 0 0 1 5.09 3h3a2 2 0 0 1 2 1.72c.13.81.37 1.61.7 2.36a2 2 0 0 1-.45 2.11L8.09 11.5a16 16 0 0 0 6.41 6.41l2.31-2.31a2 2 0 0 1 2.11-.45c.75.33 1.55.57 2.36.7A2 2 0 0 1 22 16.92Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-base font-semibold text-gray-500 whitespace-nowrap">
+                  Quick Call to Staff
+                </span>
               </span>
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wide ml-1">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wide sm:ml-1 whitespace-nowrap">
                 (Coming soon)
               </span>
             </button>

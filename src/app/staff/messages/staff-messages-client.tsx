@@ -12,6 +12,7 @@ import {
   BedDouble,
   Calendar,
   ChevronDown,
+  ChevronLeft,
   Hash,
   ClipboardList,
   MapPin,
@@ -32,6 +33,7 @@ interface BookingConversation {
   guestName: string;
   propertyName: string;
   roomName?: string;
+  roomNumber?: string;
   checkIn?: string;
   checkOut?: string;
   latestMessageContent: string;
@@ -196,6 +198,28 @@ export default function StaffMessagesClient() {
   const [loadingBookingMsg, setLoadingBookingMsg] = useState(false);
   const [showGuestDetails, setShowGuestDetails] = useState(false);
   const activeBookingIdRef = useRef<number | null>(null);
+
+  // ── Read State (Local Storage) ──
+  const [readTimestamps, setReadTimestamps] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const saved = localStorage.getItem("staffReadTimestamps");
+    if (saved) {
+      try {
+        setReadTimestamps(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  const markAsRead = (domain: "booking" | "order", id: number, timestamp: string) => {
+    setReadTimestamps((prev) => {
+      const key = `${domain}_${id}`;
+      if (prev[key] === timestamp) return prev;
+      const next = { ...prev, [key]: timestamp };
+      localStorage.setItem("staffReadTimestamps", JSON.stringify(next));
+      return next;
+    });
+  };
 
   // ── Order state ──
   const [orderConversations, setOrderConversations] = useState<OrderConversation[]>([]);
@@ -377,16 +401,49 @@ export default function StaffMessagesClient() {
     [orderConversations, activeOrderId]
   );
 
-  const bookingUnreadCount = bookingConversations.filter((c) => c.latestMessageSenderRole === "GUEST").length;
-  const orderUnreadCount = orderConversations.filter((c) => c.latestMessageSenderRole === "GUEST").length;
+  useEffect(() => {
+    if (activeBookingId && activeBookingConv) {
+      markAsRead("booking", activeBookingId, activeBookingConv.latestMessageAt);
+    }
+  }, [activeBookingId, activeBookingConv]);
+
+  useEffect(() => {
+    if (activeOrderId && activeOrderConv) {
+      markAsRead("order", activeOrderId, activeOrderConv.latestMessageAt);
+    }
+  }, [activeOrderId, activeOrderConv]);
+
+  const bookingUnreadCount = bookingConversations.filter((c) => {
+    const role = c.latestMessageSenderRole?.toUpperCase();
+    const isNew = role === "GUEST" || role === "AUTO_REPLY";
+    const hasRead = readTimestamps[`booking_${c.bookingId}`] === c.latestMessageAt;
+    return isNew && !hasRead;
+  }).length;
+  
+  const orderUnreadCount = orderConversations.filter((c) => {
+    const role = c.latestMessageSenderRole?.toUpperCase();
+    const isNew = role === "GUEST" || role === "AUTO_REPLY";
+    const hasRead = readTimestamps[`order_${c.orderId}`] === c.latestMessageAt;
+    return isNew && !hasRead;
+  }).length;
+
+  const sortedBookingConversations = useMemo(() => {
+    return [...bookingConversations].sort((a, b) => new Date(b.latestMessageAt).getTime() - new Date(a.latestMessageAt).getTime());
+  }, [bookingConversations]);
+
+  const sortedOrderConversations = useMemo(() => {
+    return [...orderConversations].sort((a, b) => new Date(b.latestMessageAt).getTime() - new Date(a.latestMessageAt).getTime());
+  }, [orderConversations]);
 
   const showBoth = canBooking && canOrders;
   const loadingConv = activeDomain === "booking" ? loadingBookingConv : loadingOrderConv;
 
+  const hasActiveThread = activeDomain === "booking" ? !!activeBookingId : !!activeOrderId;
+
   return (
-    <div className="bg-white rounded-2xl border border-[#eadfce] flex h-[calc(100vh-60px)] min-h-[600px] overflow-hidden shadow-sm">
+    <div className="bg-white rounded-2xl border border-[#eadfce] flex flex-col md:flex-row h-full min-h-[600px] overflow-hidden shadow-sm">
       {/* Left Sidebar - Conversations List */}
-      <div className="w-1/3 border-r border-[#eadfce] flex flex-col bg-[#fafafa]">
+      <div className={`w-full md:w-1/3 border-r border-[#eadfce] flex-col bg-[#fafafa] ${hasActiveThread ? "hidden md:flex" : "flex"}`}>
         <div className="p-4 border-b border-[#eadfce] bg-white flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-bold text-[#2d2116] flex items-center gap-2">
@@ -443,32 +500,39 @@ export default function StaffMessagesClient() {
           {loadingConv ? (
             <ConversationListSkeleton />
           ) : activeDomain === "booking" ? (
-            bookingConversations.length === 0 ? (
+            sortedBookingConversations.length === 0 ? (
               <EmptyPanel icon={Inbox} title="No conversations yet" subtitle="Guest messages about their stay will show up here." />
             ) : (
-              bookingConversations.map((conv) => {
-                const isUnreplied = conv.latestMessageSenderRole === "GUEST";
+              sortedBookingConversations.map((conv) => {
+                const role = conv.latestMessageSenderRole?.toUpperCase();
+                const isNew = role === "GUEST" || role === "AUTO_REPLY";
+                const hasRead = readTimestamps[`booking_${conv.bookingId}`] === conv.latestMessageAt;
+                const isUnreplied = isNew && !hasRead;
+                const isStaffSent = role === "STAFF";
+                const isAutoReply = role === "AUTO_REPLY";
                 const isActive = activeBookingId === conv.bookingId;
                 return (
                   <button
                     key={conv.bookingId}
                     onClick={() => setActiveBookingId(conv.bookingId)}
                     className={`w-full text-left p-2.5 border-b border-[#eadfce] transition-colors relative flex items-start gap-2.5 ${
-                      isActive ? "bg-white border-l-4 border-l-[#9a3300]" : isUnreplied ? "bg-orange-50/50 hover:bg-orange-50" : "hover:bg-white"
+                      isActive ? "bg-white border-l-4 border-l-[#9a3300]" : isUnreplied ? "bg-blue-50/60 hover:bg-blue-50 border-l-4 border-l-blue-500" : "hover:bg-white border-l-4 border-l-transparent"
                     }`}
                   >
                     <Avatar name={conv.guestName || "Guest"} />
                     <div className="min-w-0 flex-1">
                       <div className="flex justify-between items-start gap-2">
-                        <span className={`font-bold text-xs truncate flex items-center gap-1.5 ${isUnreplied ? "text-[#9a3300]" : "text-[#2d2116]"}`}>
+                        <span className={`font-bold text-xs truncate flex items-center gap-1.5 ${isUnreplied ? "text-blue-800" : "text-[#2d2116]"}`}>
                           {conv.guestName}
-                          {isUnreplied && <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>}
+                          {isUnreplied && <span className="h-2 w-2 rounded-full bg-blue-600 shrink-0"></span>}
                         </span>
-                        <span className={`text-[9px] shrink-0 ${isUnreplied ? "text-[#9a3300] font-medium" : "text-[#8b7d6d]"}`}>
+                        <span className={`text-[9px] shrink-0 ${isUnreplied ? "text-blue-600 font-bold" : "text-[#8b7d6d]"}`}>
                           {timeAgoOrDate(conv.latestMessageAt)}
                         </span>
                       </div>
-                      <p className={`text-[11px] truncate mt-0.5 ${isUnreplied ? "text-[#2d2116] font-medium" : "text-[#6f6254]"}`}>
+                      <p className={`text-[11px] truncate mt-0.5 ${isUnreplied ? "text-blue-900 font-semibold" : "text-[#6f6254]"}`}>
+                        {isStaffSent && <span className="font-semibold text-[#8b7d6d]">You: </span>}
+                        {isAutoReply && <span className="font-semibold text-blue-700">Auto: </span>}
                         {conv.latestMessageContent}
                       </p>
                     </div>
@@ -476,28 +540,33 @@ export default function StaffMessagesClient() {
                 );
               })
             )
-          ) : orderConversations.length === 0 ? (
+          ) : sortedOrderConversations.length === 0 ? (
             <EmptyPanel icon={ClipboardList} title="No order chats yet" subtitle="Guest messages about active orders will show up here." />
           ) : (
-            orderConversations.map((conv) => {
-              const isUnreplied = conv.latestMessageSenderRole === "GUEST";
+            sortedOrderConversations.map((conv) => {
+              const role = conv.latestMessageSenderRole?.toUpperCase();
+              const isNew = role === "GUEST" || role === "AUTO_REPLY";
+              const hasRead = readTimestamps[`order_${conv.orderId}`] === conv.latestMessageAt;
+              const isUnreplied = isNew && !hasRead;
+              const isStaffSent = role === "STAFF";
+              const isAutoReply = role === "AUTO_REPLY";
               const isActive = activeOrderId === conv.orderId;
               return (
                 <button
                   key={conv.orderId}
                   onClick={() => setActiveOrderId(conv.orderId)}
                   className={`w-full text-left p-2.5 border-b border-[#eadfce] transition-colors relative flex items-start gap-2.5 ${
-                    isActive ? "bg-white border-l-4 border-l-[#9a3300]" : isUnreplied ? "bg-orange-50/50 hover:bg-orange-50" : "hover:bg-white"
+                    isActive ? "bg-white border-l-4 border-l-[#9a3300]" : isUnreplied ? "bg-blue-50/60 hover:bg-blue-50 border-l-4 border-l-blue-500" : "hover:bg-white border-l-4 border-l-transparent"
                   }`}
                 >
                   <Avatar name={conv.guestName || "Guest"} />
                   <div className="min-w-0 flex-1">
                     <div className="flex justify-between items-start gap-2">
-                      <span className={`font-bold text-xs truncate flex items-center gap-1.5 ${isUnreplied ? "text-[#9a3300]" : "text-[#2d2116]"}`}>
+                      <span className={`font-bold text-xs truncate flex items-center gap-1.5 ${isUnreplied ? "text-blue-800" : "text-[#2d2116]"}`}>
                         {conv.guestName}
-                        {isUnreplied && <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>}
+                        {isUnreplied && <span className="h-2 w-2 rounded-full bg-blue-600 shrink-0"></span>}
                       </span>
-                      <span className={`text-[9px] shrink-0 ${isUnreplied ? "text-[#9a3300] font-medium" : "text-[#8b7d6d]"}`}>
+                      <span className={`text-[9px] shrink-0 ${isUnreplied ? "text-blue-600 font-bold" : "text-[#8b7d6d]"}`}>
                         {timeAgoOrDate(conv.latestMessageAt)}
                       </span>
                     </div>
@@ -508,7 +577,9 @@ export default function StaffMessagesClient() {
                       </span>
                       <OrderStatusBadge status={conv.orderStatus} />
                     </div>
-                    <p className={`text-[11px] truncate mt-0.5 ${isUnreplied ? "text-[#2d2116] font-medium" : "text-[#6f6254]"}`}>
+                    <p className={`text-[11px] truncate mt-0.5 ${isUnreplied ? "text-blue-900 font-semibold" : "text-[#6f6254]"}`}>
+                      {isStaffSent && <span className="font-semibold text-[#8b7d6d]">You: </span>}
+                      {isAutoReply && <span className="font-semibold text-blue-700">Auto: </span>}
                       {conv.latestMessageContent}
                     </p>
                   </div>
@@ -520,7 +591,7 @@ export default function StaffMessagesClient() {
       </div>
 
       {/* Right Panel - Chat View */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className={`flex-1 flex-col bg-white min-w-0 ${hasActiveThread ? "flex" : "hidden md:flex"}`}>
         {activeDomain === "booking" ? (
           !activeBookingId ? (
             <div className="flex-1 overflow-y-auto bg-[#fafafa] p-6">
@@ -535,20 +606,36 @@ export default function StaffMessagesClient() {
               {/* Chat Header — click the profile to reveal guest details */}
               {activeBookingConv && (
                 <div className="border-b border-[#eadfce]">
+                  <div className="w-full flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setActiveBookingId(null)}
+                      className="md:hidden shrink-0 p-3 pr-0 text-[#8b7d6d] hover:text-[#2d2116]"
+                      aria-label="Back to conversations"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
                   <button
                     onClick={() => setShowGuestDetails((v) => !v)}
-                    className="w-full p-3 flex items-center gap-3 hover:bg-[#fafafa] transition-colors text-left"
+                    className="w-full p-3 flex items-center gap-3 hover:bg-[#fafafa] transition-colors text-left min-w-0"
                   >
                     <Avatar name={activeBookingConv.guestName || "Guest"} size="md" />
                     <div className="min-w-0 flex-1">
                       <h3 className="font-bold text-sm text-[#2d2116] truncate">{activeBookingConv.guestName}</h3>
                       <p className="text-[11px] text-[#8b7d6d]">Tap for guest details</p>
                     </div>
+                    {activeBookingConv.roomNumber && (
+                      <div className="mr-2 text-right shrink-0">
+                        <p className="text-[10px] uppercase font-bold text-[#8b7d6d] tracking-wider mb-0.5">Room</p>
+                        <p className="font-black text-sm text-[#9a3300] leading-none bg-[#f4eee6] px-2 py-1 rounded">{activeBookingConv.roomNumber}</p>
+                      </div>
+                    )}
                     <ChevronDown
                       size={16}
                       className={`text-[#8b7d6d] shrink-0 transition-transform ${showGuestDetails ? "rotate-180" : ""}`}
                     />
                   </button>
+                  </div>
 
                   {showGuestDetails && (
                     <div className="px-4 pb-3 flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
@@ -645,9 +732,18 @@ export default function StaffMessagesClient() {
             {/* Chat Header — click to reveal order details */}
             {activeOrderConv && (
               <div className="border-b border-[#eadfce]">
+                <div className="w-full flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setActiveOrderId(null)}
+                    className="md:hidden shrink-0 p-3 pr-0 text-[#8b7d6d] hover:text-[#2d2116]"
+                    aria-label="Back to conversations"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
                 <button
                   onClick={() => setShowOrderDetails((v) => !v)}
-                  className="w-full p-3 flex items-center gap-3 hover:bg-[#fafafa] transition-colors text-left"
+                  className="w-full p-3 flex items-center gap-3 hover:bg-[#fafafa] transition-colors text-left min-w-0"
                 >
                   <Avatar name={activeOrderConv.guestName || "Guest"} size="md" />
                   <div className="min-w-0 flex-1">
@@ -662,6 +758,7 @@ export default function StaffMessagesClient() {
                     className={`text-[#8b7d6d] shrink-0 transition-transform ${showOrderDetails ? "rotate-180" : ""}`}
                   />
                 </button>
+                </div>
 
                 {showOrderDetails && (
                   <div className="px-4 pb-3 flex flex-col gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
