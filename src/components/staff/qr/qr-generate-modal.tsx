@@ -42,7 +42,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
   const [description, setDescription] = useState(existingQR?.description ?? "");
   const [isActive, setIsActive] = useState(existingQR?.status === "active" || !existingQR);
   const [nameError, setNameError] = useState(false);
-  const [rooms, setRooms] = useState<{id: number, roomType: string}[]>([]);
+  const [rooms, setRooms] = useState<{id: number, roomType: string, doorNumber: string}[]>([]);
 
   // Fetch rooms dynamically when property is selected
   useEffect(() => {
@@ -161,7 +161,7 @@ export default function QrCreateForm({ qrId, propertyId: propPropertyId }: { qrI
                     </SelectTrigger>
                     <SelectContent position="popper" className="bg-white border-[var(--gray-5)] z-[100]">
                       {rooms.map(r => (
-                        <SelectItem key={r.id} value={String(r.id)} className="text-xs">
+                        <SelectItem key={r.id} value={r.doorNumber} className="text-xs">
                           {r.roomType}
                         </SelectItem>
                       ))}
