@@ -23,4 +23,16 @@ export const ownerSettingsApi = {
     const suffix = propertyId ? `${base.includes('?') ? '&' : '?'}propertyId=${propertyId}` : '';
     return api.post(`${base}${suffix}`).then((r) => r.data);
   },
+
+  getRestrictions: (propertyId: number) =>
+    api.get(`/owner/settings/restrictions?propertyId=${propertyId}`).then((r) => r.data),
+
+  createRestriction: (data: object) =>
+    api.post(`/owner/settings/restrictions`, data).then((r) => r.data),
+
+  updateRestriction: (id: number, data: object) =>
+    api.put(`/owner/settings/restrictions/${id}`, data).then((r) => r.data),
+
+  deleteRestriction: (id: number) =>
+    api.delete(`/owner/settings/restrictions/${id}`).then((r) => r.data),
 };

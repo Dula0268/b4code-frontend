@@ -82,23 +82,35 @@ export default function RoomManagementPage() {
     const [maintenance, setMaintenance] = useState(0);
     const [vacant, setVacant] = useState(0);
 
+    const fetchRooms = async () => {
+        try {
+            const data = await roomsApi.listRooms(ownerId);
+            setRooms(data.rooms || []);
+            setTotalRooms(data.totalRooms || 0);
+            setOccupied(data.occupied || 0);
+            setMaintenance(data.maintenance || 0);
+            setVacant(data.vacant || 0);
+        } catch (error) {
+            console.error("Failed to fetch rooms:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchRooms = async () => {
-            try {
-                const data = await roomsApi.listRooms(ownerId);
-                setRooms(data.rooms || []);
-                setTotalRooms(data.totalRooms || 0);
-                setOccupied(data.occupied || 0);
-                setMaintenance(data.maintenance || 0);
-                setVacant(data.vacant || 0);
-            } catch (error) {
-                console.error("Failed to fetch rooms:", error);
-            }
-        };
         fetchRooms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ownerId]);
 
-    const filteredRooms = rooms.filter((room) => {
+    const handleDeleteRoom = async (id: number) => {
+        if (!confirm("Delete this room? This cannot be undone.")) return;
+        try {
+            await roomsApi.deleteRoom(id);
+            fetchRooms();
+        } catch {
+            alert("Failed to delete room.");
+        }
+    };
+
+    const allFilteredRooms = rooms.filter((room) => {
         const matchesTab =
             activeTab === "All Rooms" || room.status === activeTab.toUpperCase();
         const matchesSearch =
@@ -107,6 +119,11 @@ export default function RoomManagementPage() {
             room.roomType.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesTab && matchesSearch;
     });
+
+    const pageSize = 10;
+    const totalPages = Math.max(1, Math.ceil(allFilteredRooms.length / pageSize));
+    const safePage = Math.min(currentPage, totalPages);
+    const filteredRooms = allFilteredRooms.slice((safePage - 1) * pageSize, safePage * pageSize);
 
     return (
         <div className="w-full h-full flex-1 flex flex-col overflow-hidden">
@@ -341,6 +358,7 @@ export default function RoomManagementPage() {
                                                         <Pencil size={16} color="#828282" />
                                                     </button>
                                                     <button
+                                                        onClick={() => handleDeleteRoom(room.id)}
                                                         className="bg-transparent border-none cursor-pointer p-1.5 rounded-md hover:bg-[#fdecea] transition-colors"
                                                         title="Delete"
                                                     >
@@ -369,20 +387,24 @@ export default function RoomManagementPage() {
                         <div className="flex justify-between items-center py-3.5 px-5 border-t border-[#e8e8e8]">
                             <span className="text-[12px] text-[#828282]">
                                 Showing{" "}
-                                <span className="font-bold text-[#1d1d1d]">1</span> to{" "}
-                                <span className="font-bold text-[#1d1d1d]">4</span> of{" "}
-                                <span className="font-bold text-[#1d1d1d]">45</span> rooms
+                                <span className="font-bold text-[#1d1d1d]">{allFilteredRooms.length === 0 ? 0 : (safePage - 1) * pageSize + 1}</span> to{" "}
+                                <span className="font-bold text-[#1d1d1d]">{Math.min(safePage * pageSize, allFilteredRooms.length)}</span> of{" "}
+                                <span className="font-bold text-[#1d1d1d]">{allFilteredRooms.length}</span> rooms
                             </span>
                             <div className="flex items-center gap-1">
-                                <button className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors">
+                                <button
+                                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                    disabled={safePage === 1}
+                                    className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
                                     <ChevronLeft size={14} />
                                 </button>
-                                {[1, 2, 3].map((p) => (
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                                     <button
                                         key={p}
                                         onClick={() => setCurrentPage(p)}
                                         className={`w-7 h-7 flex items-center justify-center border-none cursor-pointer text-[12px] font-semibold rounded-md transition-colors ${
-                                            currentPage === p
+                                            safePage === p
                                                 ? "bg-[var(--brand-primary)] text-white"
                                                 : "bg-transparent text-[#4f4f4f] hover:bg-[#f5f5f5]"
                                         }`}
@@ -390,7 +412,11 @@ export default function RoomManagementPage() {
                                         {p}
                                     </button>
                                 ))}
-                                <button className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors">
+                                <button
+                                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                    disabled={safePage === totalPages}
+                                    className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
                                     <ChevronRight size={14} />
                                 </button>
                             </div>

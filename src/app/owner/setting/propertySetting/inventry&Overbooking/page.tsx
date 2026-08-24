@@ -41,17 +41,6 @@ export default function InventoryOverbookingPage() {
 
     return (
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-end items-center py-2 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[var(--brand-primary)] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
 
                 {/* Scrollable Body */}
                 <div className="flex-1 overflow-y-auto px-8 pb-10">
@@ -245,7 +234,6 @@ export default function InventoryOverbookingPage() {
                                     <div>
                                         <div className="text-[13px] font-bold text-[#1d1d1d]">Inventory Critical</div>
                                         <div className="text-[11px] text-[#828282]">Oct 24, 2023 - Only 1 unit remaining.</div>
-                                        <a href="#" className="text-[11px] text-[#4285F4] font-semibold no-underline mt-0.5 inline-block">View Date</a>
                                     </div>
                                 </div>
 
@@ -254,13 +242,9 @@ export default function InventoryOverbookingPage() {
                                     <div>
                                         <div className="text-[13px] font-bold text-[#1d1d1d]">Buffer Limit Reached</div>
                                         <div className="text-[11px] text-[#828282]">Nov 02, 2023 - Sales paused by buffer.</div>
-                                        <a href="#" className="text-[11px] text-[#4285F4] font-semibold no-underline mt-0.5 inline-block">Adjust Buffer</a>
                                     </div>
                                 </div>
 
-                                <div className="text-center mt-3">
-                                    <a href="#" className="text-[12px] text-[#4f4f4f] font-semibold no-underline">View All Notifications</a>
-                                </div>
                             </div>
                         </div>
                     </div>

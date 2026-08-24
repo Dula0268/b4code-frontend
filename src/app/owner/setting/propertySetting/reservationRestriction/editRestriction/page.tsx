@@ -1,10 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
+import { useAuthStore } from "@/store/auth/auth.store";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { ownerSettingsApi } from "@/api/owner/settings.api";
 import {
-    Bell,
     ArrowLeft,
     ChevronDown,
     ChevronLeft,
@@ -18,6 +21,17 @@ import {
     ExternalLink,
 } from "lucide-react";
 
+const RULE_TYPE_MAP: Record<string, string> = {
+    "Minimum Length of Stay": "MIN_STAY",
+    "Maximum Length of Stay": "MAX_STAY",
+    "Closed to Arrival": "CLOSED_TO_ARRIVAL",
+    "Closed to Departure": "CLOSED_TO_DEPARTURE",
+    "Advance Booking Required": "ADVANCE_NOTICE",
+};
+const REVERSE_TYPE_MAP: Record<string, string> = Object.fromEntries(
+    Object.entries(RULE_TYPE_MAP).map(([k, v]) => [v, k])
+);
+
 /* ───────────────────── component ───────────────────── */
 
 /**
@@ -26,14 +40,72 @@ import {
  * Form for editing an existing reservation restriction rule,
  * pre-populated with the current rule values for modification.
  */
-export default function EditRestrictionPage() {
+function EditRestrictionContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const restrictionId = searchParams.get("id");
+    const { user } = useAuthStore();
+    const ownerId = user?.userId ?? 1;
+
     const [ruleCategory, setRuleCategory] = useState("Minimum Length of Stay");
-    const [startDate, setStartDate] = useState("10/26/2023");
-    const [endDate, setEndDate] = useState("11/05/2023");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [minNights, setMinNights] = useState(3);
     const [maxNights, setMaxNights] = useState(14);
     const [advanceNotice, setAdvanceNotice] = useState("2");
     const [advanceUnit, setAdvanceUnit] = useState("Days");
+    const [propertyId, setPropertyId] = useState<number | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!restrictionId) {
+            setLoading(false);
+            return;
+        }
+        propertiesApi.listProperties(ownerId, 1, 100)
+            .then(async (list: any[]) => {
+                if (!list.length) return;
+                setPropertyId(list[0].id);
+                const data = await ownerSettingsApi.getRestrictions(list[0].id);
+                const found = (data || []).find((r: any) => String(r.id) === restrictionId);
+                if (found) {
+                    setRuleCategory(REVERSE_TYPE_MAP[found.type] || found.type || "Minimum Length of Stay");
+                    setStartDate(found.startDate || "");
+                    setEndDate(found.endDate || "");
+                }
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [restrictionId, ownerId]);
+
+    const handleUpdateRestriction = async () => {
+        if (!restrictionId) {
+            setSaveError("No restriction selected.");
+            return;
+        }
+        setSaving(true);
+        setSaveError(null);
+        try {
+            await ownerSettingsApi.updateRestriction(Number(restrictionId), {
+                propertyId,
+                name: ruleCategory,
+                type: RULE_TYPE_MAP[ruleCategory] || "OTHER",
+                startDate: startDate || null,
+                endDate: endDate || null,
+                reason: `Min: ${minNights}, Max: ${maxNights}${advanceNotice ? `, Advance: ${advanceNotice} ${advanceUnit}` : ""}`,
+                isActive: true,
+            });
+            router.push("/owner/setting/propertySetting/reservationRestriction");
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSaveError((err as any)?.response?.data?.message ?? "Failed to update restriction.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     /* Calendar mock – October 2023 with pre-selected range */
     const calDays = [
@@ -205,15 +277,20 @@ export default function EditRestrictionPage() {
                             </div>
 
                             {/* Bottom Actions */}
+                            {saveError && (
+                                <div className="text-[12px] text-[#c0392b] font-medium text-right">{saveError}</div>
+                            )}
                             <div className="flex justify-end gap-3 mt-1 pt-2">
                                 <a href="/owner/setting/propertySetting/reservationRestriction" className="no-underline">
                                     <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">Cancel</button>
                                 </a>
-                                <a href="/owner/setting/propertySetting/reservationRestriction" className="no-underline">
-                                    <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors">
-                                        Update Restriction
-                                    </button>
-                                </a>
+                                <button
+                                    onClick={handleUpdateRestriction}
+                                    disabled={saving || loading}
+                                    className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {saving ? "Updating…" : "Update Restriction"}
+                                </button>
                             </div>
                         </div>
 
@@ -250,9 +327,6 @@ export default function EditRestrictionPage() {
                                     </p>
                                 </div>
 
-                                <a href="#" className="inline-flex items-center gap-1 text-[12px] text-[#4285F4] font-semibold no-underline">
-                                    View Help Center Article <ExternalLink size={12} />
-                                </a>
                             </div>
 
                             {/* Promo Image */}
@@ -270,5 +344,17 @@ export default function EditRestrictionPage() {
                     </div>
                 </div>
         </div>
+    );
+}
+
+export default function EditRestrictionPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex-1 flex items-center justify-center min-h-[300px] text-[13px] text-[#828282]">
+                Loading…
+            </div>
+        }>
+            <EditRestrictionContent />
+        </Suspense>
     );
 }

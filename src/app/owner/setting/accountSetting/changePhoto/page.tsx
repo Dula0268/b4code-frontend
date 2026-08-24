@@ -2,9 +2,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { imageApi } from "@/api/image/image.api";
+import { userApi } from "@/api/user/user.api";
+import { useAuthStore } from "@/store/auth/auth.store";
 import {
-    Bell,
-        ArrowLeft,
+    ArrowLeft,
     UploadCloud,
     Trash2,
     Image as ImageIcon
@@ -19,16 +22,20 @@ import {
  * with image preview and upload progress feedback.
  */
 export default function ChangePhotoPage() {
-    const [preview, setPreview] = useState<string | null>("https://api.dicebear.com/7.x/avataaars/svg?seed=kasun");
+    const router = useRouter();
+    const { user } = useAuthStore();
+    const [preview, setPreview] = useState<string | null>(user?.profile?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=kasun");
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-
-
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
         const file = e.dataTransfer.files[0];
         if (file && file.type.startsWith("image/")) {
+            setSelectedFile(file);
             setPreview(URL.createObjectURL(file));
         }
     };
@@ -36,28 +43,37 @@ export default function ChangePhotoPage() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setSelectedFile(file);
             setPreview(URL.createObjectURL(file));
         }
     };
 
     const removePhoto = () => {
         setPreview(null);
+        setSelectedFile(null);
+    };
+
+    const handleSavePhoto = async () => {
+        setSaving(true);
+        setSaveError(null);
+        try {
+            let avatarUrl = user?.profile?.avatarUrl;
+            if (selectedFile) {
+                const uploaded = await imageApi.upload(selectedFile, "profiles");
+                avatarUrl = uploaded.url;
+            }
+            await userApi.updateProfile({ avatarUrl });
+            router.push("/owner/setting/accountSetting");
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSaveError((err as any)?.response?.data?.message ?? "Failed to save photo.");
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Header */}
-                <div className="flex justify-end items-center py-2 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[var(--brand-primary)]">
-                            <img src={preview || "https://api.dicebear.com/7.x/avataaars/svg?seed=owner"} alt="" className="w-full h-full rounded-full object-cover" />
-                        </div>
-                    </div>
-                </div>
-
                 {/* Scrollable Body */}
                 <div className="flex-1 overflow-y-auto px-8 pb-10">
                     {/* Breadcrumb */}
@@ -138,17 +154,22 @@ export default function ChangePhotoPage() {
                         </div>
 
                         {/* Bottom Actions */}
+                        {saveError && (
+                            <div className="text-[12px] text-[#c0392b] font-medium mt-3 text-center">{saveError}</div>
+                        )}
                         <div className="flex gap-3 pt-5 justify-center">
                             <a href="/owner/setting/accountSetting" className="no-underline">
                                 <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">
                                     Cancel
                                 </button>
                             </a>
-                            <a href="/owner/setting/accountSetting" className="no-underline">
-                                <button className="py-2.5 px-6 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors">
-                                    Save Photo
-                                </button>
-                            </a>
+                            <button
+                                onClick={handleSavePhoto}
+                                disabled={saving}
+                                className="py-2.5 px-6 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {saving ? "Saving…" : "Save Photo"}
+                            </button>
                         </div>
                     </div>
 

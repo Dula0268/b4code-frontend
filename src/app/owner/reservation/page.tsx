@@ -49,29 +49,41 @@ export default function ReservationPage() {
         cancellations: 0,
         totalBookingsThisMonth: 0
     });
+    const fetchReservations = async () => {
+        try {
+            const data = await reservationsApi.listReservations(ownerId, searchQuery);
+            setReservationsData(data.reservations || []);
+            setTotalItems(data.totalItems || 0);
+            setTotalPages(data.totalPages || 1);
+            setMetrics({
+                confirmed: data.confirmed || 0,
+                pending: data.pending || 0,
+                checkInsToday: data.checkInsToday || 0,
+                cancellations: data.cancellations || 0,
+                totalBookingsThisMonth: data.totalBookingsThisMonth || 0
+            });
+        } catch (error) {
+            console.error("Failed to fetch reservations:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchReservations = async () => {
-            try {
-                const data = await reservationsApi.listReservations(ownerId, searchQuery);
-                setReservationsData(data.reservations || []);
-                setTotalItems(data.totalItems || 0);
-                setTotalPages(data.totalPages || 1);
-                setMetrics({
-                    confirmed: data.confirmed || 0,
-                    pending: data.pending || 0,
-                    checkInsToday: data.checkInsToday || 0,
-                    cancellations: data.cancellations || 0,
-                    totalBookingsThisMonth: data.totalBookingsThisMonth || 0
-                });
-            } catch (error) {
-                console.error("Failed to fetch reservations:", error);
-            }
-        };
         const timeoutId = setTimeout(() => {
             fetchReservations();
         }, 300);
         return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPage, searchQuery, ownerId]);
+
+    const handleCancelReservation = async (id: number) => {
+        if (!confirm("Cancel this reservation?")) return;
+        try {
+            await reservationsApi.cancel(id);
+            fetchReservations();
+        } catch {
+            alert("Failed to cancel reservation.");
+        }
+    };
 
     const handleExportCsv = () => {
         exportToCsv(
@@ -241,14 +253,17 @@ export default function ReservationPage() {
                                         </td>
                                         <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle text-center">
                                             <div className="flex justify-center gap-1.5">
-                                                <button className="bg-transparent border-none cursor-pointer p-1 rounded"><Eye size={15} color="#828282" /></button>
-                                                {r.status === "CANCELLED" ? (
-                                                    <button className="bg-transparent border-none cursor-pointer p-1 rounded"><Trash2 size={15} color="#828282" /></button>
-                                                ) : (
-                                                    <button className="bg-transparent border-none cursor-pointer p-1 rounded"><XCircle size={15} color="#828282" /></button>
-                                                )}
-                                                {r.status === "PENDING" && (
-                                                    <button className="bg-transparent border-none cursor-pointer p-1 rounded"><MoreVertical size={15} color="#828282" /></button>
+                                                <a href={`/owner/reservation/reservationDetails?id=${r.id}`} className="bg-transparent border-none cursor-pointer p-1 rounded flex items-center">
+                                                    <Eye size={15} color="#828282" />
+                                                </a>
+                                                {r.status !== "CANCELLED" && (
+                                                    <button
+                                                        onClick={() => handleCancelReservation(r.id)}
+                                                        className="bg-transparent border-none cursor-pointer p-1 rounded"
+                                                        title="Cancel reservation"
+                                                    >
+                                                        <XCircle size={15} color="#828282" />
+                                                    </button>
                                                 )}
                                             </div>
                                         </td>

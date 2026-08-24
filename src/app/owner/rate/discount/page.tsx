@@ -40,13 +40,19 @@ export default function DiscountPage() {
     const [endDate, setEndDate] = useState("");
     const [usageLimit, setUsageLimit] = useState("");
     const [promotions, setPromotions] = useState<any[]>([]);
+    const [propertyId, setPropertyId] = useState<number | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
-    useEffect(() => {
+    const loadDiscounts = () => {
         propertiesApi.listProperties(ownerId, 1, 100)
             .then(async (list: any[]) => {
                 if (!list.length) return;
+                setPropertyId(list[0].id);
                 const overview = await ratesApi.getRateOverview(list[0].id);
                 const mapped = (overview?.discounts || []).map((d: any) => ({
+                    id: d.id,
                     code: d.name,
                     discount: d.percentage,
                     periodDates: d.description || "—",
@@ -58,7 +64,72 @@ export default function DiscountPage() {
                 setPromotions(mapped);
             })
             .catch(() => {});
+    };
+
+    useEffect(() => {
+        loadDiscounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ownerId]);
+
+    const resetForm = () => {
+        setEditingId(null);
+        setPromoName("");
+        setPercentage("");
+        setStartDate("");
+        setEndDate("");
+        setUsageLimit("");
+    };
+
+    const handleSavePromotion = async () => {
+        if (!propertyId || !promoName || !percentage) {
+            setSaveError("Please fill in the promo name and discount percentage.");
+            return;
+        }
+        setSaving(true);
+        setSaveError(null);
+        try {
+            const payload = {
+                propertyId,
+                name: promoName,
+                type: "PERCENTAGE",
+                percentage: Number(percentage),
+                startDate: startDate || null,
+                endDate: endDate || null,
+                isActive: true,
+            };
+            if (editingId) {
+                await ratesApi.updateDiscount(editingId, payload);
+            } else {
+                await ratesApi.createDiscount(payload);
+            }
+            resetForm();
+            loadDiscounts();
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSaveError((err as any)?.response?.data?.message ?? "Failed to save promotion.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleEditPromotion = (p: any) => {
+        setEditingId(p.id);
+        setPromoName(p.code);
+        setPercentage(String(parseFloat(p.discount) || ""));
+        setSaveError(null);
+    };
+
+    const handleDeletePromotion = async (id: number) => {
+        if (!confirm("Delete this promotion? This cannot be undone.")) return;
+        try {
+            await ratesApi.deleteDiscount(id);
+            loadDiscounts();
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            alert((err as any)?.response?.data?.message ?? "Failed to delete promotion.");
+        }
+    };
 
     const handleExportCsv = () => {
         exportToCsv(
@@ -200,11 +271,16 @@ export default function DiscountPage() {
                                     />
                                 </div>
 
-                                <a href="/owner/rate" className="no-underline w-full block">
-                                    <button className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)] text-white border-none rounded-xl text-[13px] font-extrabold cursor-pointer transition-colors shadow-md">
-                                        <CheckCircle2 size={16} /> Save Promotion
-                                    </button>
-                                </a>
+                                {saveError && (
+                                    <div className="text-[12px] text-[#c0392b] font-medium mb-2">{saveError}</div>
+                                )}
+                                <button
+                                    onClick={handleSavePromotion}
+                                    disabled={saving}
+                                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)] text-white border-none rounded-xl text-[13px] font-extrabold cursor-pointer transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <CheckCircle2 size={16} /> {saving ? "Saving…" : "Save Promotion"}
+                                </button>
                             </div>
                         </div>
 
@@ -350,10 +426,16 @@ export default function DiscountPage() {
                                                 {/* Actions */}
                                                 <td className="py-3 px-3.5 text-right w-[90px]">
                                                     <div className="flex items-center justify-end gap-1.5">
-                                                        <button className="bg-transparent border-none p-1.5 cursor-pointer text-[#828282] hover:bg-[#f5f5f5] hover:text-[var(--brand-primary)] rounded transition-colors">
+                                                        <button
+                                                            onClick={() => handleEditPromotion(p)}
+                                                            className="bg-transparent border-none p-1.5 cursor-pointer text-[#828282] hover:bg-[#f5f5f5] hover:text-[var(--brand-primary)] rounded transition-colors"
+                                                        >
                                                             <Edit2 size={16} />
                                                         </button>
-                                                        <button className="bg-transparent border-none p-1.5 cursor-pointer text-[#828282] hover:bg-[#f5f5f5] hover:text-[#e74c3c] rounded transition-colors">
+                                                        <button
+                                                            onClick={() => handleDeletePromotion(p.id)}
+                                                            className="bg-transparent border-none p-1.5 cursor-pointer text-[#828282] hover:bg-[#f5f5f5] hover:text-[#e74c3c] rounded transition-colors"
+                                                        >
                                                             <Trash2 size={16} />
                                                         </button>
                                                     </div>

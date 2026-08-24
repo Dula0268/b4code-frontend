@@ -5,8 +5,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
 import { propertiesApi } from "@/api/owner/properties.api";
+import { ownerApi } from "@/api/owner/owner.api";
 import { useAuthStore } from "@/store/auth/auth.store";
-import api from "@/lib/axios";
 import {
     Bell,
     ChevronRight,
@@ -44,12 +44,12 @@ function StaffContent() {
         }
         Promise.all([
             propertiesApi.getProperty(Number(propertyId), ownerId),
-            api.get("/owner/staff/pending"),
+            ownerApi.getPendingStaff(),
         ])
             .then(([prop, staffRes]) => {
                 setProperty(prop);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const all: any[] = Array.isArray(staffRes.data) ? staffRes.data : [];
+                const all: any[] = Array.isArray(staffRes) ? staffRes : [];
                 setPendingStaff(all);
             })
             .catch((err) => {
@@ -69,7 +69,11 @@ function StaffContent() {
     async function handleAction(id: number, action: "approve" | "reject") {
         setActionLoading((prev) => ({ ...prev, [id]: action }));
         try {
-            await api.patch(`/owner/staff/${id}/${action}`);
+            if (action === "approve") {
+                await ownerApi.approveStaff(id);
+            } else {
+                await ownerApi.rejectStaff(id);
+            }
             // Remove optimistically
             setPendingStaff((prev) => prev.filter((s) => s.id !== id));
         } catch (err: unknown) {

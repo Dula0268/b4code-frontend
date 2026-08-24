@@ -2,8 +2,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth/auth.store";
-import TimePicker, { type TimeValue, parseTime } from "@/components/owner/TimePicker";
+import { ownerSettingsApi } from "@/api/owner/settings.api";
+import TimePicker, { type TimeValue, parseTime, formatTime } from "@/components/owner/TimePicker";
 import {
     Bell,
     User,
@@ -47,6 +49,36 @@ export default function AccountSettingPage() {
     const [autoTax, setAutoTax] = useState(true);
     const [emailNotif, setEmailNotif] = useState(true);
     const [smsAlert, setSmsAlert] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const router = useRouter();
+
+    const handleSaveChanges = async () => {
+        if (!user?.userId) return;
+        setSaving(true);
+        setSaveError(null);
+        try {
+            await Promise.all([
+                ownerSettingsApi.updatePropertySettings(user.userId, {
+                    currency,
+                    timezone,
+                    checkInTime: formatTime(checkIn),
+                    checkOutTime: formatTime(checkOut),
+                    autoTax,
+                }),
+                ownerSettingsApi.updateNotifications(user.userId, {
+                    emailNotifications: emailNotif,
+                    smsAlerts: smsAlert,
+                }),
+            ]);
+            router.push("/owner");
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSaveError((err as any)?.response?.data?.message ?? "Failed to save settings.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const settingsTabs = [
         { label: "Account Settings", icon: <User size={16} />, active: true, href: "/owner/setting/accountSetting" },
@@ -58,17 +90,6 @@ export default function AccountSettingPage() {
 
     return (
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-end items-center py-2 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[var(--brand-primary)] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
 
                 {/* Scrollable Body */}
                 <div className="flex-1 overflow-y-auto px-8 pb-10">
@@ -261,15 +282,20 @@ export default function AccountSettingPage() {
                             </div>
 
                             {/* ─── Bottom Actions ─── */}
+                            {saveError && (
+                                <div className="text-[12px] text-[#c0392b] font-medium mb-2 text-right">{saveError}</div>
+                            )}
                             <div className="flex justify-end gap-3 mt-1 pt-4">
                                 <a href="/owner" className="no-underline">
                                     <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">Cancel</button>
                                 </a>
-                                <a href="/owner" className="no-underline">
-                                    <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors">
-                                        <Save size={14} /> Save Changes
-                                    </button>
-                                </a>
+                                <button
+                                    onClick={handleSaveChanges}
+                                    disabled={saving}
+                                    className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Save size={14} /> {saving ? "Saving…" : "Save Changes"}
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -1,9 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth/auth.store";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { ownerSettingsApi } from "@/api/owner/settings.api";
 import {
-    Bell,
         ArrowLeft,
     ChevronDown,
     ChevronLeft,
@@ -17,6 +20,14 @@ import {
     ExternalLink,
     Save,
 } from "lucide-react";
+
+const RULE_TYPE_MAP: Record<string, string> = {
+    "Minimum Length of Stay": "MIN_STAY",
+    "Maximum Length of Stay": "MAX_STAY",
+    "Closed to Arrival": "CLOSED_TO_ARRIVAL",
+    "Closed to Departure": "CLOSED_TO_DEPARTURE",
+    "Advance Booking Required": "ADVANCE_NOTICE",
+};
 
 /* ───────────────────── component ───────────────────── */
 
@@ -34,6 +45,44 @@ export default function CreateRestrictionPage() {
     const [maxNights, setMaxNights] = useState(30);
     const [advanceNotice, setAdvanceNotice] = useState("");
     const [advanceUnit, setAdvanceUnit] = useState("Days");
+    const [propertyId, setPropertyId] = useState<number | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const { user } = useAuthStore();
+    const router = useRouter();
+    const ownerId = user?.userId ?? 1;
+
+    useEffect(() => {
+        propertiesApi.listProperties(ownerId, 1, 100)
+            .then((list: any[]) => { if (list.length) setPropertyId(list[0].id); })
+            .catch(() => {});
+    }, [ownerId]);
+
+    const handleSaveRestriction = async () => {
+        if (!propertyId) {
+            setSaveError("No property found.");
+            return;
+        }
+        setSaving(true);
+        setSaveError(null);
+        try {
+            await ownerSettingsApi.createRestriction({
+                propertyId,
+                name: ruleCategory,
+                type: RULE_TYPE_MAP[ruleCategory] || "OTHER",
+                startDate: startDate || null,
+                endDate: endDate || null,
+                reason: `Min: ${minNights}, Max: ${maxNights}${advanceNotice ? `, Advance: ${advanceNotice} ${advanceUnit}` : ""}`,
+                isActive: true,
+            });
+            router.push("/owner/setting/propertySetting/reservationRestriction");
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSaveError((err as any)?.response?.data?.message ?? "Failed to save restriction.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
 
 
@@ -46,18 +95,6 @@ export default function CreateRestrictionPage() {
 
     return (
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-end items-center py-2 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[var(--brand-primary)] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
-
                 {/* Scrollable Body */}
                 <div className="flex-1 overflow-y-auto px-8 pb-10">
                     {/* Back Link */}
@@ -216,15 +253,20 @@ export default function CreateRestrictionPage() {
                             </div>
 
                             {/* Bottom Actions */}
+                            {saveError && (
+                                <div className="text-[12px] text-[#c0392b] font-medium text-center">{saveError}</div>
+                            )}
                             <div className="flex justify-center gap-3 mt-1 pt-2">
                                 <a href="/owner/setting/propertySetting/reservationRestriction" className="no-underline">
                                     <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">Cancel</button>
                                 </a>
-                                <a href="/owner/setting/propertySetting/reservationRestriction" className="no-underline">
-                                    <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors">
-                                        <Save size={14} /> Save Restriction
-                                    </button>
-                                </a>
+                                <button
+                                    onClick={handleSaveRestriction}
+                                    disabled={saving}
+                                    className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Save size={14} /> {saving ? "Saving…" : "Save Restriction"}
+                                </button>
                             </div>
                         </div>
 
@@ -261,9 +303,6 @@ export default function CreateRestrictionPage() {
                                     </p>
                                 </div>
 
-                                <a href="#" className="inline-flex items-center gap-1 text-[12px] text-[#4285F4] font-semibold no-underline">
-                                    View Help Center Article <ExternalLink size={12} />
-                                </a>
                             </div>
 
                             {/* Promo Image */}

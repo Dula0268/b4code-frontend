@@ -14,12 +14,13 @@ export default function OwnerHeader() {
           className="border-none bg-transparent outline-none text-[13px] text-[#1d1d1d] w-full placeholder:text-[#9ca3af]"
         />
       </div>
-      <a
-        href="/owner/message"
+      <button
+        type="button"
+        aria-label="Notifications"
         className="p-2 rounded-full flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
       >
         <Bell size={18} className="text-[#4f4f4f]" />
-      </a>
+      </button>
       <UserAvatarDropdown />
     </header>
   );

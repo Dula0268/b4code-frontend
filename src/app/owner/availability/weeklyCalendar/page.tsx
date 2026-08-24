@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { propertiesApi } from "@/api/owner/properties.api";
 import { availabilityApi } from "@/api/owner/availability.api";
+import { dashboardApi } from "@/api/owner/dashboard.api";
 import {
     ChevronLeft,
     ChevronRight,
@@ -68,6 +69,20 @@ export default function WeeklyCalendarPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [properties, setProperties] = useState<any[]>([]);
     const [mockBookings, setMockBookings] = useState<Record<string, BookingInfo>>({});
+    const [monthRevenue, setMonthRevenue] = useState<string | null>(null);
+
+    useEffect(() => {
+        dashboardApi.getDashboard(ownerId, baseDate.getFullYear(), baseDate.getMonth() + 1)
+            .then((data: any) => setMonthRevenue(data?.totalRevenue ?? null))
+            .catch(() => setMonthRevenue(null));
+    }, [ownerId, baseDate]);
+
+    const occupancyPercent = useMemo(() => {
+        const entries = Object.values(mockBookings);
+        if (entries.length === 0) return null;
+        const booked = entries.filter((b) => b.type === "booked").length;
+        return Math.round((booked / entries.length) * 100);
+    }, [mockBookings]);
 
     useEffect(() => {
         propertiesApi.listProperties(ownerId, 1, 20)
@@ -163,15 +178,15 @@ export default function WeeklyCalendarPage() {
                 {/* Quick Stats */}
                 <div className="text-[10px] font-bold text-[#828282] tracking-widest mt-7 mb-2.5">QUICK STATS</div>
                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3 px-3.5 mb-2">
-                    <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">OCCUPANCY (NOV)</div>
-                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">78%</div>
+                    <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">OCCUPANCY ({MONTH_NAMES[baseDate.getMonth()].slice(0, 3).toUpperCase()})</div>
+                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">{occupancyPercent === null ? "—" : `${occupancyPercent}%`}</div>
                     <div className="h-1 bg-[#e8e8e8] rounded mt-2 overflow-hidden">
-                        <div className="h-full bg-[var(--brand-primary)] rounded w-[78%]" />
+                        <div className="h-full bg-[var(--brand-primary)] rounded" style={{ width: `${occupancyPercent ?? 0}%` }} />
                     </div>
                 </div>
                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3 px-3.5 mb-2">
-                    <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">REVENUE (MTD)</div>
-                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">Rs 425,000</div>
+                    <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">REVENUE ({MONTH_NAMES[baseDate.getMonth()].slice(0, 3).toUpperCase()})</div>
+                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">{monthRevenue ? `Rs ${Number(monthRevenue).toLocaleString()}` : "—"}</div>
                 </div>
 
                 <button className="flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#b0b0b0] rounded-xl bg-transparent text-[#828282] text-[13px] font-semibold cursor-pointer mt-3 w-full">
