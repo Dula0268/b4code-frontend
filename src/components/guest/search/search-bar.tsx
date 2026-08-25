@@ -114,19 +114,6 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
   const guestTotal = guests.adults
   const guestLabel = !mounted ? "1 guest . 1 room" : `${guestTotal} guest${guestTotal !== 1 ? "s" : ""} . ${guests.rooms} room${guests.rooms !== 1 ? "s" : ""}`
 
-  // Keep search results in sync when guest count changes on compact search bar.
-  useEffect(() => {
-    if (!isCompact || !pathname.startsWith("/guest/search")) return
-    const currentGuests = Number(searchParams.get("guests") ?? 1)
-    const currentRooms = Number(searchParams.get("rooms") ?? 1)
-    if (currentGuests === guestTotal && currentRooms === guests.rooms) return
-
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("guests", String(Math.max(1, guestTotal)))
-    params.set("rooms", String(Math.max(1, guests.rooms)))
-    router.replace(`/guest/search?${params.toString()}`)
-  }, [guestTotal, isCompact, pathname, router, searchParams])
-
   // ── Search ─────────────────────────────────────────────────────────────
   const handleSearch = () => {
     if (!destination.trim() || !checkIn || !checkOut) {
