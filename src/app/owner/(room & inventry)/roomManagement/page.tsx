@@ -4,41 +4,22 @@
 import { useState, useEffect } from "react";
 import { roomsApi } from "@/api/owner/rooms.api";
 import { useAuthStore } from "@/store/auth/auth.store";
-import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
-    LayoutDashboard,
-    Building2,
-    BedDouble,
-    Calendar,
-    DollarSign,
-    BookOpen,
-    Settings,
     Eye,
     Pencil,
     Trash2,
     ChevronLeft,
     ChevronRight,
-    SlidersHorizontal,
     Plus,
     Search,
     BedSingle,
+    BedDouble,
     Users,
     Wrench,
     CheckCircle,
+    SlidersHorizontal,
 } from "lucide-react";
-
-/* ───────────────────── sidebar data ───────────────────── */
-
-const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard, href: "/owner" },
-    { label: "Properties", icon: Building2, href: "/owner/properties" },
-    { label: "Rooms", icon: BedDouble, href: "/owner/roomManagement", active: true },
-    { label: "Availability", icon: Calendar, href: "/owner/availability/weeklyCalendar" },
-    { label: "Rate", icon: DollarSign, href: "/owner/rate" },
-    { label: "Reservations", icon: BookOpen, href: "/owner/reservation" },
-    { label: "Settings", icon: Settings, href: "/owner/setting/propertySetting" },
-];
 
 /* ───────────────────── types ───────────────────── */
 
@@ -101,23 +82,35 @@ export default function RoomManagementPage() {
     const [maintenance, setMaintenance] = useState(0);
     const [vacant, setVacant] = useState(0);
 
+    const fetchRooms = async () => {
+        try {
+            const data = await roomsApi.listRooms(ownerId);
+            setRooms(data.rooms || []);
+            setTotalRooms(data.totalRooms || 0);
+            setOccupied(data.occupied || 0);
+            setMaintenance(data.maintenance || 0);
+            setVacant(data.vacant || 0);
+        } catch (error) {
+            console.error("Failed to fetch rooms:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchRooms = async () => {
-            try {
-                const data = await roomsApi.listRooms(ownerId);
-                setRooms(data.rooms || []);
-                setTotalRooms(data.totalRooms || 0);
-                setOccupied(data.occupied || 0);
-                setMaintenance(data.maintenance || 0);
-                setVacant(data.vacant || 0);
-            } catch (error) {
-                console.error("Failed to fetch rooms:", error);
-            }
-        };
         fetchRooms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ownerId]);
 
-    const filteredRooms = rooms.filter((room) => {
+    const handleDeleteRoom = async (id: number) => {
+        if (!confirm("Delete this room? This cannot be undone.")) return;
+        try {
+            await roomsApi.deleteRoom(id);
+            fetchRooms();
+        } catch {
+            alert("Failed to delete room.");
+        }
+    };
+
+    const allFilteredRooms = rooms.filter((room) => {
         const matchesTab =
             activeTab === "All Rooms" || room.status === activeTab.toUpperCase();
         const matchesSearch =
@@ -127,54 +120,16 @@ export default function RoomManagementPage() {
         return matchesTab && matchesSearch;
     });
 
-    return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Navigation Sidebar ── */}
-            <nav className="w-[170px] bg-white border-r border-[#e8e8e8] py-4 flex flex-col shrink-0">
-                <div className="px-3.5 pb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <a
-                                key={item.label}
-                                href={item.href}
-                                className={`flex items-center gap-2.5 py-2.5 px-3.5 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-[3px] ${
-                                    item.active
-                                        ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                        : "bg-transparent text-[#4f4f4f] font-medium border-transparent hover:bg-[#fafafa]"
-                                }`}
-                            >
-                                <Icon size={18} className="shrink-0" />
-                                <span>{item.label}</span>
-                            </a>
-                        );
-                    })}
-                </div>
-            </nav>
+    const pageSize = 10;
+    const totalPages = Math.max(1, Math.ceil(allFilteredRooms.length / pageSize));
+    const safePage = Math.min(currentPage, totalPages);
+    const filteredRooms = allFilteredRooms.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-            {/* ── Main Content ── */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-end items-center py-2.5 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
-                            <img
-                                src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
-                                alt="User"
-                                className="w-full h-full rounded-full"
-                            />
-                        </div>
-                    </div>
-                </div>
+    return (
+        <div className="w-full h-full flex-1 flex flex-col overflow-hidden">
 
                 {/* Scrollable Body */}
-                <div className="flex-1 overflow-y-auto px-8 pb-10">
+                <div className="w-full flex-1 overflow-y-auto px-8 pt-6 pb-10">
                     {/* Page Title */}
                     <div className="mb-5 flex justify-between items-center">
                         <div>
@@ -185,16 +140,16 @@ export default function RoomManagementPage() {
                                 Efficiently manage all units and occupancy status for Mountain View Resort
                             </p>
                         </div>
-                        <a href="/owner/roomManagement/addRoom" className="bg-[#953002] text-white px-4 py-2.5 rounded-lg font-bold text-[14px] flex items-center gap-2 hover:bg-[#7a2702] transition-colors no-underline">
+                        <a href="/owner/roomManagement/addRoom" className="bg-[var(--brand-primary)] text-white px-4 py-2.5 rounded-lg font-bold text-[14px] flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors no-underline">
                             <Plus size={18} />
                             Add New Room
                         </a>
                     </div>
 
                     {/* ── KPI Cards ── */}
-                    <div className="grid grid-cols-4 gap-4 mb-6">
+                    <div className="w-full grid grid-cols-4 gap-4 mb-6">
                         {/* Total Rooms */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5 flex items-start justify-between">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div>
                                 <div className="text-[10px] font-bold text-[#828282] tracking-[1px] mb-2 uppercase">
                                     Total Rooms
@@ -209,7 +164,7 @@ export default function RoomManagementPage() {
                         </div>
 
                         {/* Occupied */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5 flex items-start justify-between">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div>
                                 <div className="text-[10px] font-bold text-[#828282] tracking-[1px] mb-2 uppercase">
                                     Occupied
@@ -224,7 +179,7 @@ export default function RoomManagementPage() {
                         </div>
 
                         {/* Maintenance */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5 flex items-start justify-between">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div>
                                 <div className="text-[10px] font-bold text-[#828282] tracking-[1px] mb-2 uppercase">
                                     Maintenance
@@ -239,7 +194,7 @@ export default function RoomManagementPage() {
                         </div>
 
                         {/* Vacant */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5 flex items-start justify-between">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div>
                                 <div className="text-[10px] font-bold text-[#828282] tracking-[1px] mb-2 uppercase">
                                     Vacant
@@ -255,7 +210,7 @@ export default function RoomManagementPage() {
                     </div>
 
                     {/* ── Rooms Table Card ── */}
-                    <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden">
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
                         {/* Tabs & Filter Row */}
                         <div className="flex items-center justify-between px-5 pt-4 pb-0">
                             <div className="flex items-center gap-0">
@@ -268,7 +223,7 @@ export default function RoomManagementPage() {
                                         }}
                                         className={`py-2.5 px-4 text-[13px] font-semibold border-b-2 bg-transparent cursor-pointer transition-all duration-150 ${
                                             activeTab === tab
-                                                ? "text-[#953002] border-[#953002] font-bold"
+                                                ? "text-[var(--brand-primary)] border-[var(--brand-primary)] font-bold"
                                                 : "text-[#828282] border-transparent hover:text-[#4f4f4f]"
                                         }`}
                                     >
@@ -299,29 +254,29 @@ export default function RoomManagementPage() {
                         {/* Table */}
                         <table className="w-full border-collapse">
                             <thead>
-                                <tr>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-5 text-left border-b border-[#e8e8e8] uppercase">
+                                <tr className="bg-[#F6F8F7]">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-5 text-left uppercase">
                                         Room Name
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-left border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-left uppercase">
                                         Type
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-left border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-left uppercase">
                                         Occupancy
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-left border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-left uppercase">
                                         Base Price
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-center border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-center uppercase">
                                         Status
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-center border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-center uppercase">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredRooms.map((room) => {
+                                {filteredRooms.map((room, idx) => {
                                     const statusValue = ((room.status as string) || "AVAILABLE") as RoomStatus;
                                     const sConfig = statusConfig[statusValue] || statusConfig.AVAILABLE;
                                     const iconBg = statusValue === "OCCUPIED" ? "#fdecea" : statusValue === "MAINTENANCE" ? "#fff8e1" : "#e8f5e9";
@@ -331,7 +286,7 @@ export default function RoomManagementPage() {
                                     return (
                                         <tr
                                             key={room.id}
-                                            className="border-b border-[#f5f5f5] transition-colors hover:bg-[#fafafa]"
+                                            className={`border-t border-[#e0e0e0] transition-colors hover:bg-[#f5efec] ${idx % 2 === 0 ? "bg-white" : "bg-[#fafafa]"}`}
                                         >
                                             {/* Room Name */}
                                             <td className="py-4 px-5 align-middle">
@@ -403,6 +358,7 @@ export default function RoomManagementPage() {
                                                         <Pencil size={16} color="#828282" />
                                                     </button>
                                                     <button
+                                                        onClick={() => handleDeleteRoom(room.id)}
                                                         className="bg-transparent border-none cursor-pointer p-1.5 rounded-md hover:bg-[#fdecea] transition-colors"
                                                         title="Delete"
                                                     >
@@ -431,35 +387,42 @@ export default function RoomManagementPage() {
                         <div className="flex justify-between items-center py-3.5 px-5 border-t border-[#e8e8e8]">
                             <span className="text-[12px] text-[#828282]">
                                 Showing{" "}
-                                <span className="font-bold text-[#1d1d1d]">1</span> to{" "}
-                                <span className="font-bold text-[#1d1d1d]">4</span> of{" "}
-                                <span className="font-bold text-[#1d1d1d]">45</span> rooms
+                                <span className="font-bold text-[#1d1d1d]">{allFilteredRooms.length === 0 ? 0 : (safePage - 1) * pageSize + 1}</span> to{" "}
+                                <span className="font-bold text-[#1d1d1d]">{Math.min(safePage * pageSize, allFilteredRooms.length)}</span> of{" "}
+                                <span className="font-bold text-[#1d1d1d]">{allFilteredRooms.length}</span> rooms
                             </span>
                             <div className="flex items-center gap-1">
-                                <button className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors">
+                                <button
+                                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                    disabled={safePage === 1}
+                                    className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
                                     <ChevronLeft size={14} />
                                 </button>
-                                {[1, 2, 3].map((p) => (
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                                     <button
                                         key={p}
                                         onClick={() => setCurrentPage(p)}
                                         className={`w-7 h-7 flex items-center justify-center border-none cursor-pointer text-[12px] font-semibold rounded-md transition-colors ${
-                                            currentPage === p
-                                                ? "bg-[#953002] text-white"
+                                            safePage === p
+                                                ? "bg-[var(--brand-primary)] text-white"
                                                 : "bg-transparent text-[#4f4f4f] hover:bg-[#f5f5f5]"
                                         }`}
                                     >
                                         {p}
                                     </button>
                                 ))}
-                                <button className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors">
+                                <button
+                                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                    disabled={safePage === totalPages}
+                                    className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
                                     <ChevronRight size={14} />
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-    );
-}
+            </div>
+        );
+    }

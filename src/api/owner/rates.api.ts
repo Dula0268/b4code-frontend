@@ -33,4 +33,18 @@ export const ratesApi = {
   deleteDiscount: async (id: number) => {
     await api.delete(`/owner/rates/discounts/${id}`);
   },
+
+  getSeasonalPricing: async (propertyId: number) => {
+    const response = await api.get(`/owner/rates/seasonal?propertyId=${propertyId}`);
+    return response.data;
+  },
+
+  createSeasonalPricing: async (data: Record<string, unknown>) => {
+    const response = await api.post('/owner/rates/seasonal', data);
+    return response.data;
+  },
+
+  deleteSeasonalPricing: async (id: number) => {
+    await api.delete(`/owner/rates/seasonal/${id}`);
+  },
 };

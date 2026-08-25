@@ -1,18 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
-import Logo from "@/components/shared/branding/logo";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth/auth.store";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { ownerSettingsApi } from "@/api/owner/settings.api";
 import {
-    Bell,
-    LayoutDashboard,
-    Building2,
-    BedDouble,
-    Calendar,
-    Tag,
-    BookOpen,
-    Settings,
-    ArrowLeft,
+        ArrowLeft,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
@@ -25,6 +20,14 @@ import {
     ExternalLink,
     Save,
 } from "lucide-react";
+
+const RULE_TYPE_MAP: Record<string, string> = {
+    "Minimum Length of Stay": "MIN_STAY",
+    "Maximum Length of Stay": "MAX_STAY",
+    "Closed to Arrival": "CLOSED_TO_ARRIVAL",
+    "Closed to Departure": "CLOSED_TO_DEPARTURE",
+    "Advance Booking Required": "ADVANCE_NOTICE",
+};
 
 /* ───────────────────── component ───────────────────── */
 
@@ -42,16 +45,46 @@ export default function CreateRestrictionPage() {
     const [maxNights, setMaxNights] = useState(30);
     const [advanceNotice, setAdvanceNotice] = useState("");
     const [advanceUnit, setAdvanceUnit] = useState("Days");
+    const [propertyId, setPropertyId] = useState<number | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const { user } = useAuthStore();
+    const router = useRouter();
+    const ownerId = user?.userId ?? 1;
 
-    const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
-        { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting", active: true },
-    ];
+    useEffect(() => {
+        propertiesApi.listProperties(ownerId, 1, 100)
+            .then((list: any[]) => { if (list.length) setPropertyId(list[0].id); })
+            .catch(() => {});
+    }, [ownerId]);
+
+    const handleSaveRestriction = async () => {
+        if (!propertyId) {
+            setSaveError("No property found.");
+            return;
+        }
+        setSaving(true);
+        setSaveError(null);
+        try {
+            await ownerSettingsApi.createRestriction({
+                propertyId,
+                name: ruleCategory,
+                type: RULE_TYPE_MAP[ruleCategory] || "OTHER",
+                startDate: startDate || null,
+                endDate: endDate || null,
+                reason: `Min: ${minNights}, Max: ${maxNights}${advanceNotice ? `, Advance: ${advanceNotice} ${advanceUnit}` : ""}`,
+                isActive: true,
+            });
+            router.push("/owner/setting/propertySetting/reservationRestriction");
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSaveError((err as any)?.response?.data?.message ?? "Failed to save restriction.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+
 
     /* Calendar mock */
     const calDays = [
@@ -61,44 +94,7 @@ export default function CreateRestrictionPage() {
     ];
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Navigation Sidebar ── */}
-            <nav className="w-[170px] bg-white border-r border-[#e8e8e8] py-4 flex flex-col shrink-0">
-                <div className="flex items-center gap-1.5 px-3.5 pb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                    {navItems.map((item) => (
-                        <a
-                            key={item.label}
-                            href={item.href}
-                            className={`flex items-center gap-2.5 py-2.5 px-3.5 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-[3px] ${
-                                item.active
-                                    ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                    : "bg-transparent text-[#4f4f4f] font-medium border-transparent"
-                            }`}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </a>
-                    ))}
-                </div>
-            </nav>
-
-            {/* ── Main Content ── */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-end items-center py-2 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
-
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Scrollable Body */}
                 <div className="flex-1 overflow-y-auto px-8 pb-10">
                     {/* Back Link */}
@@ -257,15 +253,20 @@ export default function CreateRestrictionPage() {
                             </div>
 
                             {/* Bottom Actions */}
+                            {saveError && (
+                                <div className="text-[12px] text-[#c0392b] font-medium text-center">{saveError}</div>
+                            )}
                             <div className="flex justify-center gap-3 mt-1 pt-2">
                                 <a href="/owner/setting/propertySetting/reservationRestriction" className="no-underline">
                                     <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">Cancel</button>
                                 </a>
-                                <a href="/owner/setting/propertySetting/reservationRestriction" className="no-underline">
-                                    <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#b03a02] transition-colors">
-                                        <Save size={14} /> Save Restriction
-                                    </button>
-                                </a>
+                                <button
+                                    onClick={handleSaveRestriction}
+                                    disabled={saving}
+                                    className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Save size={14} /> {saving ? "Saving…" : "Save Restriction"}
+                                </button>
                             </div>
                         </div>
 
@@ -294,17 +295,14 @@ export default function CreateRestrictionPage() {
 
                                 <div className="bg-[#fef8f4] border border-[#fce8d8] rounded-xl p-3 px-3.5 mb-3.5">
                                     <div className="flex items-center gap-1.5 mb-1">
-                                        <span className="w-2 h-2 rounded-full bg-[#953002]" />
-                                        <span className="text-[11px] font-extrabold text-[#953002] tracking-[0.5px]">PRO TIP</span>
+                                        <span className="w-2 h-2 rounded-full bg-[var(--brand-primary)]" />
+                                        <span className="text-[11px] font-extrabold text-[var(--brand-primary)] tracking-[0.5px]">PRO TIP</span>
                                     </div>
                                     <p className="text-[11px] text-[#4f4f4f] leading-snug m-0">
                                         Last-minute gaps can be filled by removing &quot;Advance Notice&quot; restrictions 24 hours before the date.
                                     </p>
                                 </div>
 
-                                <a href="#" className="inline-flex items-center gap-1 text-[12px] text-[#4285F4] font-semibold no-underline">
-                                    View Help Center Article <ExternalLink size={12} />
-                                </a>
                             </div>
 
                             {/* Promo Image */}
@@ -322,6 +320,5 @@ export default function CreateRestrictionPage() {
                     </div>
                 </div>
             </main>
-        </div>
     );
 }

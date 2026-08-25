@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { propertiesApi } from "@/api/owner/properties.api";
 import { availabilityApi } from "@/api/owner/availability.api";
-import Logo from "@/components/shared/branding/logo";
+import { dashboardApi } from "@/api/owner/dashboard.api";
 import {
     ChevronLeft,
     ChevronRight,
@@ -16,11 +16,6 @@ import {
     X,
     Check,
     Calendar,
-    LayoutDashboard,
-    BedDouble,
-    DollarSign,
-    BookOpen,
-    Settings,
 } from "lucide-react";
 
 /* ───────────────────── helpers ───────────────────── */
@@ -74,6 +69,20 @@ export default function WeeklyCalendarPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [properties, setProperties] = useState<any[]>([]);
     const [mockBookings, setMockBookings] = useState<Record<string, BookingInfo>>({});
+    const [monthRevenue, setMonthRevenue] = useState<string | null>(null);
+
+    useEffect(() => {
+        dashboardApi.getDashboard(ownerId, baseDate.getFullYear(), baseDate.getMonth() + 1)
+            .then((data: any) => setMonthRevenue(data?.monthRevenue ?? null))
+            .catch(() => setMonthRevenue(null));
+    }, [ownerId, baseDate]);
+
+    const occupancyPercent = useMemo(() => {
+        const entries = Object.values(mockBookings);
+        if (entries.length === 0) return null;
+        const booked = entries.filter((b) => b.type === "booked").length;
+        return Math.round((booked / entries.length) * 100);
+    }, [mockBookings]);
 
     useEffect(() => {
         propertiesApi.listProperties(ownerId, 1, 20)
@@ -145,41 +154,8 @@ export default function WeeklyCalendarPage() {
         return <Mountain size={16} color={color} />;
     };
 
-    const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar", active: true },
-        { label: "Rate", icon: <DollarSign size={18} />, href: "/owner/rate" },
-        { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
-    ];
-
     return (
-        <div className="flex flex-row h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Navigation Sidebar ── */}
-            <nav className="w-[180px] bg-white border-r border-[#e8e8e8] py-4 flex flex-col shrink-0 min-h-0">
-                <div className="px-4 pb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex flex-col gap-0.5 overflow-y-auto">
-                    {navItems.map((item) => (
-                        <a
-                            key={item.label}
-                            href={item.href}
-                            className={`flex items-center gap-2.5 py-2.5 px-4 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-[3px] ${
-                                item.active
-                                    ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                    : "bg-transparent text-[#4f4f4f] font-medium border-transparent"
-                            }`}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </a>
-                    ))}
-                </div>
-            </nav>
-
+        <div className="flex flex-row flex-1 h-full bg-[#faf9f7] overflow-hidden font-sans">
             {/* ── Properties Sidebar ── */}
             <aside className="w-[220px] bg-white border-r border-[#e8e8e8] py-6 px-4 flex flex-col shrink-0 min-h-0 overflow-y-auto">
                 <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-2.5">PROPERTIES</div>
@@ -190,7 +166,7 @@ export default function WeeklyCalendarPage() {
                             key={p.id}
                             onClick={() => setActiveProperty(p.id)}
                             className={`flex items-center gap-2.5 w-full py-2.5 px-3.5 rounded-xl cursor-pointer mb-1.5 transition-all duration-150 text-left ${
-                                isActive ? "bg-white text-[#953002] border border-[#953002] shadow-sm" : "bg-white text-[#1d1d1d] border border-[#e8e8e8]"
+                                isActive ? "bg-white text-[var(--brand-primary)] border border-[var(--brand-primary)] shadow-sm" : "bg-white text-[#1d1d1d] border border-[#e8e8e8]"
                             }`}
                         >
                             {propertyIcon(p.icon, "#953002")}
@@ -202,15 +178,15 @@ export default function WeeklyCalendarPage() {
                 {/* Quick Stats */}
                 <div className="text-[10px] font-bold text-[#828282] tracking-widest mt-7 mb-2.5">QUICK STATS</div>
                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3 px-3.5 mb-2">
-                    <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">OCCUPANCY (NOV)</div>
-                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">78%</div>
+                    <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">OCCUPANCY ({MONTH_NAMES[baseDate.getMonth()].slice(0, 3).toUpperCase()})</div>
+                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">{occupancyPercent === null ? "—" : `${occupancyPercent}%`}</div>
                     <div className="h-1 bg-[#e8e8e8] rounded mt-2 overflow-hidden">
-                        <div className="h-full bg-[#953002] rounded w-[78%]" />
+                        <div className="h-full bg-[var(--brand-primary)] rounded" style={{ width: `${occupancyPercent ?? 0}%` }} />
                     </div>
                 </div>
                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3 px-3.5 mb-2">
-                    <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">REVENUE (MTD)</div>
-                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">Rs 425,000</div>
+                    <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">REVENUE ({MONTH_NAMES[baseDate.getMonth()].slice(0, 3).toUpperCase()})</div>
+                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">{monthRevenue ? `Rs ${Number(monthRevenue).toLocaleString()}` : "—"}</div>
                 </div>
 
                 <button className="flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#b0b0b0] rounded-xl bg-transparent text-[#828282] text-[13px] font-semibold cursor-pointer mt-3 w-full">
@@ -227,7 +203,7 @@ export default function WeeklyCalendarPage() {
                         <h2 className="text-[28px] font-extrabold text-[#1d1d1d] m-0 leading-tight">{monthYear}</h2>
                         <div className="flex bg-[#f0f0f0] rounded-lg p-1 gap-0.5">
                             <a href="/owner/availability/monthlyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-semibold text-[#828282] bg-transparent border-none cursor-pointer no-underline transition-all duration-150">Monthly</a>
-                            <a href="/owner/availability/weeklyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-bold text-white bg-[#953002] border-none cursor-pointer no-underline transition-all duration-150">Weekly</a>
+                            <a href="/owner/availability/weeklyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-bold text-white bg-[var(--brand-primary)] border-none cursor-pointer no-underline transition-all duration-150">Weekly</a>
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 mt-2.5">
@@ -236,7 +212,7 @@ export default function WeeklyCalendarPage() {
                         <button onClick={nextWeek} className="w-8 h-8 flex items-center justify-center border border-[#e0e0e0] rounded-lg bg-white cursor-pointer text-[#4f4f4f]"><ChevronRight size={18} /></button>
                         <div className="flex items-center gap-1.5 ml-4">
                             <span className="w-2 h-2 rounded-full bg-[#27ae60] inline-block ml-2" /> <span className="text-[10px] font-semibold text-[#828282] tracking-widest">AVAILABLE</span>
-                            <span className="w-2 h-2 rounded-full bg-[#953002] inline-block ml-2" /> <span className="text-[10px] font-semibold text-[#828282] tracking-widest">BOOKED</span>
+                            <span className="w-2 h-2 rounded-full bg-[var(--brand-primary)] inline-block ml-2" /> <span className="text-[10px] font-semibold text-[#828282] tracking-widest">BOOKED</span>
                             <span className="w-2 h-2 rounded-full bg-[#b0b0b0] inline-block ml-2" /> <span className="text-[10px] font-semibold text-[#828282] tracking-widest">BLOCKED</span>
                         </div>
                     </div>
@@ -254,27 +230,27 @@ export default function WeeklyCalendarPage() {
                             <div
                                 key={key}
                                 onClick={() => toggleDate(key)}
-                                className={`flex flex-col border-r border-[#e8e8e8] transition-all duration-150 min-w-0 min-h-0 cursor-pointer ${isSelected ? "border-[#953002] shadow-[0_0_0_2px_rgba(149,48,2,0.15)] z-10" : ""}`}
+                                className={`flex flex-col border-r border-[#e8e8e8] transition-all duration-150 min-w-0 min-h-0 cursor-pointer ${isSelected ? "border-[var(--brand-primary)] shadow-[0_0_0_2px_rgba(149,48,2,0.15)] z-10" : ""}`}
                             >
                                 {/* Day header */}
                                 <div className="py-2.5 text-center border-b border-[#e8e8e8] flex-shrink-0">
                                     <span className="text-[11px] font-bold text-[#828282] tracking-widest">{DAY_LABELS[i]}</span>
                                 </div>
-                                <div className={`text-[16px] font-bold px-3 py-2 flex items-center flex-shrink-0 ${isToday ? "bg-[#953002] text-white w-7 h-7 justify-center p-0 rounded-full mx-3 mt-2" : "text-[#1d1d1d]"}`}>
+                                <div className={`text-[16px] font-bold px-3 py-2 flex items-center flex-shrink-0 ${isToday ? "bg-[var(--brand-primary)] text-white w-7 h-7 justify-center p-0 rounded-full mx-3 mt-2" : "text-[#1d1d1d]"}`}>
                                     {date.getDate()}
                                 </div>
 
                                 {/* Cell body */}
                                 <div className="flex-1 px-2 pb-3 flex flex-col justify-end overflow-hidden">
                                     {booking?.type === "booked" && (
-                                        <div className="bg-[#953002] rounded-md px-2 py-4 flex flex-col items-center justify-center flex-1 min-h-[180px]">
+                                        <div className="bg-[var(--brand-primary)] rounded-md px-2 py-4 flex flex-col items-center justify-center flex-1 min-h-[180px]">
                                             <span className="text-[9px] font-bold text-[rgba(255,255,255,0.7)] tracking-widest">BOOKED</span>
                                             <span className="text-[12px] font-extrabold text-white mt-1 uppercase text-center">{booking.guest}</span>
                                         </div>
                                     )}
                                     {booking?.type === "available" && (
                                         <div className="flex flex-col items-center justify-end flex-1 pb-2">
-                                            <span className="text-[16px] sm:text-[18px] font-extrabold text-[#953002] whitespace-nowrap">Rs {booking.price}</span>
+                                            <span className="text-[16px] sm:text-[18px] font-extrabold text-[var(--brand-primary)] whitespace-nowrap">Rs {booking.price}</span>
                                             <span className="text-[9px] font-bold text-[#27ae60] tracking-wider mt-0.5">AVAILABLE</span>
                                         </div>
                                     )}
@@ -305,10 +281,10 @@ export default function WeeklyCalendarPage() {
 
                     {/* Selection */}
                     <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-2">SELECTION</div>
-                    <div className="flex items-center gap-2.5 bg-white border border-[#953002] shadow-sm rounded-xl py-2.5 px-3.5 mb-4.5">
+                    <div className="flex items-center gap-2.5 bg-white border border-[var(--brand-primary)] shadow-sm rounded-xl py-2.5 px-3.5 mb-4.5">
                         <Calendar size={16} color="#953002" />
                         <div>
-                            <div className="text-[13px] font-bold text-[#953002]">{selectionLabel}</div>
+                            <div className="text-[13px] font-bold text-[var(--brand-primary)]">{selectionLabel}</div>
                             <div className="text-[11px] font-medium text-[#c44103]">{selectedDates.length} nights selected</div>
                         </div>
                     </div>
@@ -316,7 +292,7 @@ export default function WeeklyCalendarPage() {
                     {/* New Status */}
                     <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-2">NEW STATUS</div>
                     {[
-                        { key: "available", label: "Available", borderColorClass: "border-[#953002]" },
+                        { key: "available", label: "Available", borderColorClass: "border-[var(--brand-primary)]" },
                         { key: "booked", label: "Booked (Manual)", borderColorClass: "border-[#b0b0b0]" },
                         { key: "blocked", label: "Blocked / OOO", borderColorClass: "border-[#b0b0b0]" },
                     ].map((opt) => {
@@ -326,11 +302,11 @@ export default function WeeklyCalendarPage() {
                                 key={opt.key}
                                 onClick={() => setNewStatus(opt.key)}
                                 className={`flex items-center gap-2.5 w-full py-2.5 px-3.5 rounded-xl cursor-pointer mb-1.5 text-left relative ${
-                                    sel ? "border-2 border-[#953002] bg-[#fef5ef]" : "border border-[#e0e0e0] bg-white"
+                                    sel ? "border-2 border-[var(--brand-primary)] bg-[#fef5ef]" : "border border-[#e0e0e0] bg-white"
                                 }`}
                             >
                                 <span className={`w-3.5 h-3.5 flex-shrink-0 rounded-full inline-flex items-center justify-center ${
-                                    sel ? "bg-[#953002]" : `border-2 ${opt.borderColorClass}`
+                                    sel ? "bg-[var(--brand-primary)]" : `border-2 ${opt.borderColorClass}`
                                 }`}>
                                     {sel && <Check size={10} color="#fff" strokeWidth={3} />}
                                 </span>
@@ -366,11 +342,11 @@ export default function WeeklyCalendarPage() {
                     />
 
                     {/* Apply */}
-                    <button className="w-full py-2.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer mt-4 hover:bg-[#a63602] transition-colors">Apply Changes</button>
+                    <button className="w-full py-2.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer mt-4 hover:bg-[#a63602] transition-colors">Apply Changes</button>
 
                     {/* Bulk Actions */}
                     <div className="text-[10px] font-bold text-[#828282] tracking-widest mt-4.5 mb-2">BULK ACTIONS</div>
-                    <button className="w-full text-left bg-transparent border-none text-[#953002] text-[12px] font-medium cursor-pointer underline p-0 mt-1">
+                    <button className="w-full text-left bg-transparent border-none text-[var(--brand-primary)] text-[12px] font-medium cursor-pointer underline p-0 mt-1">
                         Block all weekends in {MONTH_NAMES[weekDates[0].getMonth()].slice(0, 3)}
                     </button>
                 </aside>

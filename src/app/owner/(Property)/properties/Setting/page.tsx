@@ -8,7 +8,6 @@ import { propertiesApi } from "@/api/owner/properties.api";
 import { ownerSettingsApi } from "@/api/owner/settings.api";
 import { useAuthStore } from "@/store/auth/auth.store";
 import {
-    Bell,
     ChevronRight,
     MapPin,
     Bed,
@@ -23,7 +22,28 @@ import {
     AlertCircle,
     ToggleLeft,
     ToggleRight,
+    LayoutGrid,
+    DoorOpen,
+    CalendarCheck,
+    DollarSign,
+    ClipboardList,
+    Image as ImageIcon,
+    Users,
 } from "lucide-react";
+
+function propertyNavItems(id: string, active: string) {
+    const items = [
+        { label: "Overview", icon: <LayoutGrid size={16} />, href: `/owner/properties/propertyDetails?id=${id}` },
+        { label: "Rooms", icon: <DoorOpen size={16} />, href: `/owner/properties/propertyRoomInventry?id=${id}` },
+        { label: "Availability", icon: <CalendarCheck size={16} />, href: `/owner/properties/Availability?id=${id}` },
+        { label: "Rates", icon: <DollarSign size={16} />, href: `/owner/properties/Rate?id=${id}` },
+        { label: "Reservations", icon: <ClipboardList size={16} />, href: `/owner/properties/Reservation?id=${id}` },
+        { label: "Media", icon: <ImageIcon size={16} />, href: `/owner/properties/Media?id=${id}` },
+        { label: "Staff", icon: <Users size={16} />, href: `/owner/properties/Staff?id=${id}` },
+        { label: "Settings", icon: <SettingsIcon size={16} />, href: `/owner/properties/Setting?id=${id}` },
+    ];
+    return items.map((item) => ({ ...item, active: item.label === active }));
+}
 
 function SettingContent() {
     const searchParams = useSearchParams();
@@ -114,34 +134,13 @@ function SettingContent() {
     }
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* Sidebar */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
-
-            {/* Main */}
-            <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-between items-center py-1.5">
-                    <div />
-                    <div className="flex items-center gap-3">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
+        <div className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
 
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
-                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">{property?.name ?? "Settings"}</span>
+                    <span className="text-[var(--brand-primary)] font-semibold">{property?.name ?? "Settings"}</span>
                 </div>
 
                 {loading && (
@@ -158,7 +157,7 @@ function SettingContent() {
                         {/* Property Header Card */}
                         <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
                             <div className="flex items-center gap-4 flex-1">
-                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002] bg-[#f0ebe5] flex items-center justify-center">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[var(--brand-primary)] bg-[#f0ebe5] flex items-center justify-center">
                                     {property.image ? (
                                         <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
                                     ) : (
@@ -187,37 +186,28 @@ function SettingContent() {
                             </div>
                         </div>
 
-                        {/* Tabs */}
-                        <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
-                            {tabs.map((t) => {
-                                const isActive = t === "Settings";
-                                return (
-                                    <button
-                                        key={t}
-                                        onClick={() => {
-                                            if (t === "Overview") window.location.href = `/owner/properties/propertyDetails?id=${propertyId}`;
-                                            else if (t === "Rooms") window.location.href = `/owner/properties/propertyRoomInventry?id=${propertyId}`;
-                                            else if (t === "Availability") window.location.href = `/owner/properties/Availability?id=${propertyId}`;
-                                            else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${propertyId}`;
-                                            else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${propertyId}`;
-                                            else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
-                                            else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${propertyId}`;
-                                            else if (t === "Settings") return;
-                                        }}
-                                        className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${
-                                            isActive
-                                                ? "text-[#953002] font-bold border-[#953002]"
-                                                : "text-[#828282] font-medium border-transparent hover:text-[#4f4f4f]"
+                        {/* Nav + Content */}
+                        <div className="flex gap-5 items-start">
+                            {/* Vertical Nav */}
+                            <div className="w-[190px] shrink-0 flex flex-col gap-1">
+                                {propertyId && propertyNavItems(propertyId, "Settings").map((item) => (
+                                    <a
+                                        key={item.label}
+                                        href={item.href}
+                                        className={`flex items-center gap-2 py-2.5 px-3.5 border-none rounded-lg text-[12px] cursor-pointer text-left transition-all duration-150 no-underline ${
+                                            item.active
+                                                ? "bg-[var(--brand-primary)] text-white font-bold"
+                                                : "bg-transparent text-[#4f4f4f] font-medium hover:bg-[#f5f5f5]"
                                         }`}
                                     >
-                                        {t}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                                        {item.icon}
+                                        <span>{item.label}</span>
+                                    </a>
+                                ))}
+                            </div>
 
                         {/* Two-column layout */}
-                        <div className="grid grid-cols-[1fr_300px] gap-4 items-start">
+                        <div className="flex-1 grid grid-cols-[1fr_300px] gap-4 items-start min-w-0">
                             {/* Left column */}
                             <div className="flex flex-col gap-4">
 
@@ -284,18 +274,18 @@ function SettingContent() {
                                         onChange={(e) => setCancellationPolicy(e.target.value)}
                                         placeholder="Describe your cancellation policy, e.g. Full refund if cancelled 48 hours before check-in..."
                                         rows={5}
-                                        className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border outline-none focus:border-[#953002] resize-none leading-relaxed"
+                                        className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] bg-[#fafafa] box-border outline-none focus:border-[var(--brand-primary)] resize-none leading-relaxed"
                                     />
 
                                     <div className="mt-4 flex justify-end">
                                         <button
                                             onClick={handleSave}
                                             disabled={saving}
-                                            className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02] disabled:opacity-60 transition-colors"
+                                            className="flex items-center gap-1.5 py-2 px-5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[var(--primary-hover)] disabled:opacity-60 transition-colors"
                                         >
                                             {saving
                                                 ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
-                                                : <><Save size={14} /> Save Settings</>
+                                                : <><Save size={14} /> Save Changes</>
                                             }
                                         </button>
                                     </div>
@@ -316,7 +306,7 @@ function SettingContent() {
                                             <CreditCard size={28} color="#c0a898" className="mb-2" />
                                             <p className="text-[12px] text-[#828282]">No bank accounts added.</p>
                                             <a href="/owner/settings/billing" className="no-underline mt-2">
-                                                <button className="py-1.5 px-3.5 bg-[#953002] text-white border-none rounded-lg text-[11px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">
+                                                <button className="py-1.5 px-3.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[11px] font-semibold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors">
                                                     Add Bank Account
                                                 </button>
                                             </a>
@@ -347,7 +337,7 @@ function SettingContent() {
                                                 </div>
                                             ))}
                                             <a href="/owner/settings/billing" className="no-underline mt-1">
-                                                <button className="w-full py-2 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#fef5ef] transition-colors">
+                                                <button className="w-full py-2 bg-white text-[var(--brand-primary)] border border-[var(--brand-primary)] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#fef5ef] transition-colors">
                                                     Manage Payout Methods
                                                 </button>
                                             </a>
@@ -357,7 +347,7 @@ function SettingContent() {
 
                                 {/* Quick links */}
                                 <div className="bg-[#fffbf5] border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                    <div className="text-[13px] font-bold text-[#953002] mb-3">Quick Settings</div>
+                                    <div className="text-[13px] font-bold text-[var(--brand-primary)] mb-3">Quick Settings</div>
                                     <div className="flex flex-col gap-1.5">
                                         <a href={`/owner/properties/editPropertyDetails?id=${propertyId}`} className="no-underline">
                                             <button className="w-full text-left py-2 px-3 text-[12px] text-[#4f4f4f] font-medium bg-white border border-[#e8e8e8] rounded-lg hover:bg-[#f5f5f5] cursor-pointer transition-colors">
@@ -378,10 +368,10 @@ function SettingContent() {
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </div>
                 )}
-            </main>
-        </div>
+            </div>
     );
 }
 

@@ -7,8 +7,6 @@ import {
     Bell,
     LayoutDashboard,
     Building2,
-    BedDouble,
-    Calendar,
     Settings,
     Info,
     Monitor,
@@ -19,6 +17,9 @@ import {
     Save,
     Tag,
     BookOpen,
+    Users,
+    MessageSquare,
+    Star,
 } from "lucide-react";
 
 /* ───────────────────── component ───────────────────── */
@@ -35,62 +36,19 @@ export default function EditRatePage() {
     const [liveOnChannels, setLiveOnChannels] = useState(true);
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
+        { label: "Dashboard",  icon: <LayoutDashboard size={18} />, href: "/owner" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate", active: true },
-        { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
+        { label: "Staff",      icon: <Users size={18} />, href: "/owner/staff" },
+        { label: "Reviews",    icon: <Star size={18} />, href: "/owner/reviews" },
+        { label: "Messages",   icon: <MessageSquare size={18} />, href: "/owner/message" },
+        { label: "Settings",   icon: <Settings size={18} />, href: "/owner/setting/accountSetting" },
     ];
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Navigation Sidebar ── */}
-            <nav className="w-[160px] bg-white border-r border-[#e8e8e8] py-4 flex flex-col shrink-0">
-                <div className="px-3.5 pb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                    {navItems.map((item) => (
-                        <a
-                            key={item.label}
-                            href={item.href}
-                            className={`flex items-center gap-2.5 py-2.5 px-3.5 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-4 ${item.active
-                                ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                : "bg-transparent text-[#4f4f4f] font-medium border-transparent"
-                                }`}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </a>
-                    ))}
-                </div>
-            </nav>
-
-            {/* ── Main Content ── */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <header className="flex justify-between items-center py-2.5 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
-                    <div />
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <div className="flex items-center gap-2">
-                            <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                            <span className="text-[13px] font-semibold text-[#1d1d1d]">Admin User</span>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Scrollable body */}
-                <div className="flex-1 overflow-y-auto py-6 px-10 pb-10">
+        <div className="flex-1 overflow-y-auto py-6 px-10 pb-10">
                     {/* Breadcrumb */}
                     <div className="flex items-center gap-1.5 mb-3 text-[13px]">
-                        <a href="/owner/rate" className="text-[#953002] font-semibold no-underline">Rate</a>
+                        <a href="/owner/rate" className="text-[var(--brand-primary)] font-semibold no-underline">Rate</a>
                         <span className="text-[#b0b0b0]">›</span>
                         <span className="text-[#828282]">Edit Rate Plan</span>
                     </div>
@@ -256,7 +214,7 @@ export default function EditRatePage() {
                                 </div>
 
                                 <div className="bg-[#fef5ef] rounded-lg py-3 px-3.5 mt-2">
-                                    <p className="text-[12px] text-[#953002] italic m-0 leading-relaxed">
+                                    <p className="text-[12px] text-[var(--brand-primary)] italic m-0 leading-relaxed">
                                         &quot;Perfect for attracting early-season travelers while maintaining margin.&quot;
                                     </p>
                                 </div>
@@ -269,7 +227,7 @@ export default function EditRatePage() {
                                     <span className="text-[13px] text-[#4f4f4f]">Live on channels</span>
                                     <button
                                         onClick={() => setLiveOnChannels(!liveOnChannels)}
-                                        className={`w-11 h-6 rounded-full border-none cursor-pointer flex items-center px-[3px] transition-all duration-200 ${liveOnChannels ? "bg-[#953002] justify-end" : "bg-[#e0e0e0] justify-start"
+                                        className={`w-11 h-6 rounded-full border-none cursor-pointer flex items-center px-[3px] transition-all duration-200 ${liveOnChannels ? "bg-[var(--brand-primary)] justify-end" : "bg-[#e0e0e0] justify-start"
                                             }`}
                                     >
                                         <span className="w-4.5 h-4.5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]" />
@@ -286,13 +244,11 @@ export default function EditRatePage() {
                         </button>
                         <div className="flex gap-3">
                             <a href="/owner/rate" className="py-2.5 px-7 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer no-underline inline-flex items-center">Cancel</a>
-                            <button className="flex items-center gap-2 py-2.5 px-6 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer">
+                            <button className="flex items-center gap-2 py-2.5 px-6 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer">
                                 Update Rate Plan <Save size={14} />
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
     );
 }

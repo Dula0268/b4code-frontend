@@ -15,6 +15,7 @@ export const availabilityApi = {
 
   bulkUpdate: async (payload: {
     propertyId: number;
+    roomId?: number;
     dates: string[];
     newStatus: string;
     customPrice?: number;

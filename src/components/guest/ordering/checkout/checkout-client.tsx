@@ -104,10 +104,17 @@ export default function CheckoutClient() {
     }
 
     // Walk-in (table QR) requires phone
-    if (isTableQr && !walkInPhone) {
-      toast.error("Please provide your phone number.");
-      setIsProcessing(false);
-      return;
+    if (isTableQr) {
+      if (!walkInPhone) {
+        toast.error("Please provide your phone number.");
+        setIsProcessing(false);
+        return;
+      }
+      if (!/^\d{10}$/.test(walkInPhone)) {
+        toast.error("Please enter a valid 10-digit phone number.");
+        setIsProcessing(false);
+        return;
+      }
     }
 
     // Room and table guests now share the same two payment options.
@@ -531,9 +538,11 @@ export default function CheckoutClient() {
                     />
                     <input
                       type="text"
+                      inputMode="numeric"
+                      maxLength={10}
                       placeholder="Phone Number *"
                       value={walkInPhone}
-                      onChange={(e) => setWalkInPhone(e.target.value)}
+                      onChange={(e) => setWalkInPhone(e.target.value.replace(/\D/g, ""))}
                       className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-base font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
                       required
                     />

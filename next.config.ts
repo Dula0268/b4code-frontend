@@ -61,6 +61,25 @@ const apiRuntimeCaching = [
       matchOptions: { ignoreVary: true },
     },
   },
+  {
+    // Document (HTML) navigations under /staff get their own cache, separate
+    // from next-pwa's default same-origin "pages" cache (shared with guest/
+    // owner/auth routes, capped at 32 entries / 1 day). Without this, staff
+    // route navigations could be evicted by traffic to unrelated pages, and
+    // a cache miss with no `fallbacks.document` configured used to surface
+    // the browser's native "you are offline" interstitial instead of the app
+    // shell. NetworkFirst still means a normal online visit always gets the
+    // freshest HTML; this cache only matters once the network is unreachable.
+    urlPattern: /^https?:\/\/[^/]+\/staff(\/.*)?$/i,
+    handler: "NetworkFirst" as const,
+    method: "GET" as const,
+    options: {
+      cacheName: "primestay-staff-pages",
+      networkTimeoutSeconds: 10,
+      expiration: { maxEntries: 60, maxAgeSeconds: 7 * 24 * 60 * 60 },
+      cacheableResponse: { statuses: [200] },
+    },
+  },
 ];
 
 const withPWA = withPWAInit({
@@ -75,6 +94,15 @@ const withPWA = withPWAInit({
   // control the dashboard root "/staff" itself.
   scope: "/staff",
   extendDefaultRuntimeCaching: true,
+  // Served for any navigation that fails outright (no network AND no cache
+  // match — e.g. a route the staff member has never opened before, or one
+  // evicted from primestay-staff-pages). A page that HAS been visited before
+  // is served from that cache with its real last-known content; this is only
+  // the last-resort shell for the rest, so the browser's own offline error
+  // page never appears in place of the app.
+  fallbacks: {
+    document: "/staff/offline",
+  },
   workboxOptions: {
     runtimeCaching: apiRuntimeCaching,
   },

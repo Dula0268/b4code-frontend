@@ -1,10 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
+import { useAuthStore } from "@/store/auth/auth.store";
+import { propertiesApi } from "@/api/owner/properties.api";
+import { ownerSettingsApi } from "@/api/owner/settings.api";
 import {
-    Bell,
     ArrowLeft,
     ChevronDown,
     ChevronLeft,
@@ -18,6 +21,17 @@ import {
     ExternalLink,
 } from "lucide-react";
 
+const RULE_TYPE_MAP: Record<string, string> = {
+    "Minimum Length of Stay": "MIN_STAY",
+    "Maximum Length of Stay": "MAX_STAY",
+    "Closed to Arrival": "CLOSED_TO_ARRIVAL",
+    "Closed to Departure": "CLOSED_TO_DEPARTURE",
+    "Advance Booking Required": "ADVANCE_NOTICE",
+};
+const REVERSE_TYPE_MAP: Record<string, string> = Object.fromEntries(
+    Object.entries(RULE_TYPE_MAP).map(([k, v]) => [v, k])
+);
+
 /* ───────────────────── component ───────────────────── */
 
 /**
@@ -26,14 +40,72 @@ import {
  * Form for editing an existing reservation restriction rule,
  * pre-populated with the current rule values for modification.
  */
-export default function EditRestrictionPage() {
+function EditRestrictionContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const restrictionId = searchParams.get("id");
+    const { user } = useAuthStore();
+    const ownerId = user?.userId ?? 1;
+
     const [ruleCategory, setRuleCategory] = useState("Minimum Length of Stay");
-    const [startDate, setStartDate] = useState("10/26/2023");
-    const [endDate, setEndDate] = useState("11/05/2023");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [minNights, setMinNights] = useState(3);
     const [maxNights, setMaxNights] = useState(14);
     const [advanceNotice, setAdvanceNotice] = useState("2");
     const [advanceUnit, setAdvanceUnit] = useState("Days");
+    const [propertyId, setPropertyId] = useState<number | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!restrictionId) {
+            setLoading(false);
+            return;
+        }
+        propertiesApi.listProperties(ownerId, 1, 100)
+            .then(async (list: any[]) => {
+                if (!list.length) return;
+                setPropertyId(list[0].id);
+                const data = await ownerSettingsApi.getRestrictions(list[0].id);
+                const found = (data || []).find((r: any) => String(r.id) === restrictionId);
+                if (found) {
+                    setRuleCategory(REVERSE_TYPE_MAP[found.type] || found.type || "Minimum Length of Stay");
+                    setStartDate(found.startDate || "");
+                    setEndDate(found.endDate || "");
+                }
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [restrictionId, ownerId]);
+
+    const handleUpdateRestriction = async () => {
+        if (!restrictionId) {
+            setSaveError("No restriction selected.");
+            return;
+        }
+        setSaving(true);
+        setSaveError(null);
+        try {
+            await ownerSettingsApi.updateRestriction(Number(restrictionId), {
+                propertyId,
+                name: ruleCategory,
+                type: RULE_TYPE_MAP[ruleCategory] || "OTHER",
+                startDate: startDate || null,
+                endDate: endDate || null,
+                reason: `Min: ${minNights}, Max: ${maxNights}${advanceNotice ? `, Advance: ${advanceNotice} ${advanceUnit}` : ""}`,
+                isActive: true,
+            });
+            router.push("/owner/setting/propertySetting/reservationRestriction");
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSaveError((err as any)?.response?.data?.message ?? "Failed to update restriction.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     /* Calendar mock – October 2023 with pre-selected range */
     const calDays = [
@@ -44,28 +116,7 @@ export default function EditRestrictionPage() {
     ];
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 flex flex-col shrink-0">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
-
-            {/* ── Main Content ── */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-end items-center py-2 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
-
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Scrollable Body */}
                 <div className="flex-1 overflow-y-auto px-8 pb-10">
                     {/* Back Link */}
@@ -226,15 +277,20 @@ export default function EditRestrictionPage() {
                             </div>
 
                             {/* Bottom Actions */}
+                            {saveError && (
+                                <div className="text-[12px] text-[#c0392b] font-medium text-right">{saveError}</div>
+                            )}
                             <div className="flex justify-end gap-3 mt-1 pt-2">
                                 <a href="/owner/setting/propertySetting/reservationRestriction" className="no-underline">
                                     <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">Cancel</button>
                                 </a>
-                                <a href="/owner/setting/propertySetting/reservationRestriction" className="no-underline">
-                                    <button className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#b03a02] transition-colors">
-                                        Update Restriction
-                                    </button>
-                                </a>
+                                <button
+                                    onClick={handleUpdateRestriction}
+                                    disabled={saving || loading}
+                                    className="flex items-center gap-1.5 py-2.5 px-5.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {saving ? "Updating…" : "Update Restriction"}
+                                </button>
                             </div>
                         </div>
 
@@ -263,17 +319,14 @@ export default function EditRestrictionPage() {
 
                                 <div className="bg-[#fef8f4] border border-[#fce8d8] rounded-xl p-3 px-3.5 mb-3.5">
                                     <div className="flex items-center gap-1.5 mb-1">
-                                        <span className="w-2 h-2 rounded-full bg-[#953002]" />
-                                        <span className="text-[11px] font-extrabold text-[#953002] tracking-[0.5px]">PRO TIP</span>
+                                        <span className="w-2 h-2 rounded-full bg-[var(--brand-primary)]" />
+                                        <span className="text-[11px] font-extrabold text-[var(--brand-primary)] tracking-[0.5px]">PRO TIP</span>
                                     </div>
                                     <p className="text-[11px] text-[#4f4f4f] leading-snug m-0">
                                         Last-minute gaps can be filled by removing &quot;Advance Notice&quot; restrictions 24 hours before the date.
                                     </p>
                                 </div>
 
-                                <a href="#" className="inline-flex items-center gap-1 text-[12px] text-[#4285F4] font-semibold no-underline">
-                                    View Help Center Article <ExternalLink size={12} />
-                                </a>
                             </div>
 
                             {/* Promo Image */}
@@ -290,7 +343,18 @@ export default function EditRestrictionPage() {
                         </div>
                     </div>
                 </div>
-            </main>
         </div>
+    );
+}
+
+export default function EditRestrictionPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex-1 flex items-center justify-center min-h-[300px] text-[13px] text-[#828282]">
+                Loading…
+            </div>
+        }>
+            <EditRestrictionContent />
+        </Suspense>
     );
 }

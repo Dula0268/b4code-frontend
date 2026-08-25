@@ -1,8 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
+import { roomsApi } from "@/api/owner/rooms.api";
+import { reservationsApi } from "@/api/owner/reservations.api";
+import { useAuthStore } from "@/store/auth/auth.store";
 import {
     Bell,
     ChevronDown,
@@ -46,6 +50,26 @@ const paymentStatuses = [
  * Includes guest details, room selection, date picking, and payment processing.
  */
 export default function ManualBookingPage() {
+    const router = useRouter();
+    const { user } = useAuthStore();
+    const ownerId = user?.userId ?? 1;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [rooms, setRooms] = useState<any[]>([]);
+    const [selectedRoomId, setSelectedRoomId] = useState<string>("");
+    const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+
+    useEffect(() => {
+        roomsApi.listRooms(ownerId)
+            .then((data) => {
+                const list = data.rooms || [];
+                setRooms(list);
+                if (list.length > 0) setSelectedRoomId(String(list[0].id));
+            })
+            .catch(() => {});
+    }, [ownerId]);
+
     // Guest Details
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -57,7 +81,6 @@ export default function ManualBookingPage() {
     const [checkOut, setCheckOut] = useState("");
     const [adults, setAdults] = useState("2");
     const [children, setChildren] = useState("0");
-    const [roomType, setRoomType] = useState("King Suite");
 
     // Pricing & Payment
     const [totalAmount, setTotalAmount] = useState("");
@@ -68,41 +91,50 @@ export default function ManualBookingPage() {
     // Additional
     const [specialRequests, setSpecialRequests] = useState("");
 
-    return (
-        <div className="flex flex-col h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Top Bar ── */}
-            <header className="flex items-center justify-between py-3 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
-                <Logo width={120} height={36} />
-                <div className="flex items-center gap-3.5">
-                    <a
-                        href="/owner/message"
-                        className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors"
-                    >
-                        <Bell size={18} color="#4f4f4f" />
-                    </a>
-                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
-                        <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
-                            alt="User"
-                            className="w-full h-full rounded-full"
-                        />
-                    </div>
-                </div>
-            </header>
+    const handleCreateBooking = async () => {
+        const selectedRoom = rooms.find((r) => String(r.id) === selectedRoomId);
+        if (!selectedRoom || !checkIn || !checkOut || !firstName) {
+            setSubmitError("Please fill in guest name, check-in/out dates, and select a room.");
+            return;
+        }
+        setSubmitting(true);
+        setSubmitError(null);
+        try {
+            await reservationsApi.createManualBooking({
+                propertyId: selectedRoom.propertyId,
+                roomId: selectedRoom.id,
+                guestName: `${firstName} ${lastName}`.trim(),
+                guestEmail: email,
+                checkIn,
+                checkOut,
+                adults: Number(adults),
+                children: Number(children),
+                totalAmount: totalAmount ? Number(totalAmount) : 0,
+                paymentMethod,
+                notes: specialRequests,
+            });
+            router.push("/owner/reservation");
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSubmitError((err as any)?.response?.data?.message ?? "Failed to create booking. Please try again.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
-            {/* ── Scrollable Body ── */}
-            <div className="flex-1 overflow-y-auto px-6 py-8 font-sans">
+    return (
+        <div className="flex-1 overflow-y-auto px-6 py-8 font-sans">
                 <div className="max-w-[820px] mx-auto pb-10">
                     {/* Breadcrumb */}
                     <nav className="flex items-center gap-2 text-[11px] font-bold tracking-[0.8px] uppercase mb-6">
                         <a
                             href="/owner/reservation"
-                            className="text-[#828282] no-underline hover:text-[#953002] transition-colors"
+                            className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors"
                         >
                             Reservations
                         </a>
                         <span className="text-[#d0d0d0]">›</span>
-                        <span className="text-[#953002]">Manual Booking</span>
+                        <span className="text-[var(--brand-primary)]">Manual Booking</span>
                     </nav>
 
                     {/* Header Row */}
@@ -132,7 +164,7 @@ export default function ManualBookingPage() {
                                     value={firstName}
                                     onChange={(e) => setFirstName(e.target.value)}
                                     placeholder="e.g. John"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                             <div>
@@ -142,7 +174,7 @@ export default function ManualBookingPage() {
                                     value={lastName}
                                     onChange={(e) => setLastName(e.target.value)}
                                     placeholder="e.g. Doe"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                         </div>
@@ -155,7 +187,7 @@ export default function ManualBookingPage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="guest@example.com"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                             <div>
@@ -165,7 +197,7 @@ export default function ManualBookingPage() {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="+1 (555) 000-0000"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                         </div>
@@ -187,7 +219,7 @@ export default function ManualBookingPage() {
                                     type="date"
                                     value={checkIn}
                                     onChange={(e) => setCheckIn(e.target.value)}
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[#953002] transition-colors cursor-pointer"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors cursor-pointer"
                                 />
                             </div>
                             <div>
@@ -196,7 +228,7 @@ export default function ManualBookingPage() {
                                     type="date"
                                     value={checkOut}
                                     onChange={(e) => setCheckOut(e.target.value)}
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[#953002] transition-colors cursor-pointer"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#4f4f4f] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors cursor-pointer"
                                 />
                             </div>
                         </div>
@@ -209,7 +241,7 @@ export default function ManualBookingPage() {
                                     min="1"
                                     value={adults}
                                     onChange={(e) => setAdults(e.target.value)}
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors"
                                 />
                             </div>
                             <div>
@@ -219,20 +251,21 @@ export default function ManualBookingPage() {
                                     min="0"
                                     value={children}
                                     onChange={(e) => setChildren(e.target.value)}
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[13px] font-bold text-[#1d1d1d] mb-2">Assigned Room Type</label>
+                                <label className="block text-[13px] font-bold text-[#1d1d1d] mb-2">Assigned Room</label>
                                 <div className="relative">
                                     <select
-                                        value={roomType}
-                                        onChange={(e) => setRoomType(e.target.value)}
-                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[#953002] transition-colors"
+                                        value={selectedRoomId}
+                                        onChange={(e) => setSelectedRoomId(e.target.value)}
+                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
-                                        {roomTypes.map((t) => (
-                                            <option key={t} value={t}>
-                                                {t}
+                                        {rooms.length === 0 && <option value="">No rooms available</option>}
+                                        {rooms.map((r) => (
+                                            <option key={r.id} value={r.id}>
+                                                {r.name} — {r.roomType}
                                             </option>
                                         ))}
                                     </select>
@@ -263,7 +296,7 @@ export default function ManualBookingPage() {
                                     value={totalAmount}
                                     onChange={(e) => setTotalAmount(e.target.value)}
                                     placeholder="0.00"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] font-bold text-[#953002] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0] placeholder:font-normal"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] font-bold text-[var(--brand-primary)] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0] placeholder:font-normal"
                                 />
                             </div>
                             <div>
@@ -273,7 +306,7 @@ export default function ManualBookingPage() {
                                     value={deposit}
                                     onChange={(e) => setDeposit(e.target.value)}
                                     placeholder="0.00"
-                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors placeholder:text-[#c0c0c0]"
+                                    className="w-full py-2.5 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors placeholder:text-[#c0c0c0]"
                                 />
                             </div>
                         </div>
@@ -285,7 +318,7 @@ export default function ManualBookingPage() {
                                     <select
                                         value={paymentStatus}
                                         onChange={(e) => setPaymentStatus(e.target.value)}
-                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
                                         {paymentStatuses.map((s) => (
                                             <option key={s} value={s}>
@@ -306,7 +339,7 @@ export default function ManualBookingPage() {
                                     <select
                                         value={paymentMethod}
                                         onChange={(e) => setPaymentMethod(e.target.value)}
-                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2.5 pr-10 pl-3.5 border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans bg-white appearance-none cursor-pointer box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
                                         {paymentMethods.map((m) => (
                                             <option key={m} value={m}>
@@ -335,25 +368,31 @@ export default function ManualBookingPage() {
                             onChange={(e) => setSpecialRequests(e.target.value)}
                             rows={3}
                             placeholder="e.g. Needs a late check-in, allergic to peanuts..."
-                            className="w-full py-3 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors resize-y placeholder:text-[#c0c0c0]"
+                            className="w-full py-3 px-3.5 bg-white border border-[#e0e0e0] rounded-lg text-[14px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors resize-y placeholder:text-[#c0c0c0]"
                         />
                     </div>
 
                     {/* ── Action Buttons ── */}
+                    {submitError && (
+                        <div className="mb-3 px-4 py-2 rounded-lg bg-[#fdecea] border border-[#e74c3c] text-[12px] text-[#c0392b] font-medium">
+                            {submitError}
+                        </div>
+                    )}
                     <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-[0_-2px_20px_-5px_rgba(0,0,0,0.05)] border border-[#e8e8e8]">
                         <a href="/owner/reservation" className="no-underline">
                             <button className="flex items-center gap-2 py-3 px-6 bg-transparent text-[#4f4f4f] border border-[#e0e0e0] rounded-xl text-[14px] font-bold cursor-pointer hover:bg-[#f5f5f5] hover:text-[#1d1d1d] transition-colors">
                                 <X size={18} /> Cancel
                             </button>
                         </a>
-                        <a href="/owner/reservation" className="no-underline">
-                            <button className="flex items-center gap-2 py-3 px-10 bg-[#953002] text-white border-none rounded-xl text-[14px] font-extrabold cursor-pointer hover:bg-[#b03a02] transition-colors shadow-md">
-                                <CheckCircle2 size={18} /> Create Booking
-                            </button>
-                        </a>
+                        <button
+                            onClick={handleCreateBooking}
+                            disabled={submitting}
+                            className="flex items-center gap-2 py-3 px-10 bg-[var(--brand-primary)] text-white border-none rounded-xl text-[14px] font-extrabold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <CheckCircle2 size={18} /> {submitting ? "Creating…" : "Create Booking"}
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
     );
 }

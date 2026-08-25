@@ -4,15 +4,11 @@
 import { useState, useEffect } from "react";
 import { reservationsApi } from "@/api/owner/reservations.api";
 import { useAuthStore } from "@/store/auth/auth.store";
-import Logo from "@/components/shared/branding/logo";
+import { exportToCsv } from "@/lib/csv-export";
 import {
     Bell,
-    LayoutDashboard,
     Building2,
-    BedDouble,
     Calendar,
-    BookOpen,
-    Settings,
     Search,
     ChevronDown,
     ChevronLeft,
@@ -24,7 +20,6 @@ import {
     Download,
     Plus,
     SlidersHorizontal,
-    Tag,
 } from "lucide-react";
 
 /* ───────────────────── component ───────────────────── */
@@ -54,96 +49,81 @@ export default function ReservationPage() {
         cancellations: 0,
         totalBookingsThisMonth: 0
     });
+    const fetchReservations = async () => {
+        try {
+            const data = await reservationsApi.listReservations(ownerId, searchQuery);
+            setReservationsData(data.reservations || []);
+            setTotalItems(data.totalItems || 0);
+            setTotalPages(data.totalPages || 1);
+            setMetrics({
+                confirmed: data.confirmed || 0,
+                pending: data.pending || 0,
+                checkInsToday: data.checkInsToday || 0,
+                cancellations: data.cancellations || 0,
+                totalBookingsThisMonth: data.totalBookingsThisMonth || 0
+            });
+        } catch (error) {
+            console.error("Failed to fetch reservations:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchReservations = async () => {
-            try {
-                const data = await reservationsApi.listReservations(ownerId, searchQuery);
-                setReservationsData(data.reservations || []);
-                setTotalItems(data.totalItems || 0);
-                setTotalPages(data.totalPages || 1);
-                setMetrics({
-                    confirmed: data.confirmed || 0,
-                    pending: data.pending || 0,
-                    checkInsToday: data.checkInsToday || 0,
-                    cancellations: data.cancellations || 0,
-                    totalBookingsThisMonth: data.totalBookingsThisMonth || 0
-                });
-            } catch (error) {
-                console.error("Failed to fetch reservations:", error);
-            }
-        };
         const timeoutId = setTimeout(() => {
             fetchReservations();
         }, 300);
         return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPage, searchQuery, ownerId]);
 
-    const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
-        { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation", active: true },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
-    ];
+    const handleCancelReservation = async (id: number) => {
+        if (!confirm("Cancel this reservation?")) return;
+        try {
+            await reservationsApi.cancel(id);
+            fetchReservations();
+        } catch {
+            alert("Failed to cancel reservation.");
+        }
+    };
+
+    const handleExportCsv = () => {
+        exportToCsv(
+            "reservations",
+            reservationsData.map((r) => ({
+                "Guest Name": r.guestName ?? "",
+                "Property": r.propertyName ?? "",
+                "Room": r.roomName ?? "",
+                "Check In": r.checkIn ?? "",
+                "Check Out": r.checkOut ?? "",
+                "Payment Status": r.paymentStatus ?? "",
+                "Status": r.status ?? "",
+            }))
+        );
+    };
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Navigation Sidebar ── */}
-            <nav className="w-[170px] bg-white border-r border-[#e8e8e8] py-4 flex flex-col shrink-0">
-                <div className="px-4 pb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                    {navItems.map((item) => (
-                        <a
-                            key={item.label}
-                            href={item.href}
-                            className={`flex items-center gap-2.5 py-2.5 px-4 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-[3px] ${
-                                item.active
-                                    ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                    : "bg-transparent text-[#4f4f4f] font-medium border-transparent"
-                            }`}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </a>
-                    ))}
-                </div>
-            </nav>
-
-            {/* ── Main Content ── */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-end items-center py-2 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
+        <div className="w-full h-full flex-1 flex flex-col overflow-hidden">
 
                 {/* Scrollable body */}
-                <div className="flex-1 overflow-y-auto px-8 pb-10">
+                <div className="w-full flex-1 overflow-y-auto px-8 pt-6 pb-10">
                     {/* Page Header */}
                     <div className="flex justify-between items-start mb-4.5">
                         <div>
                             <h1 className="text-[28px] font-black text-[#1d1d1d] m-0 tracking-wide">RESERVATIONS</h1>
                             <div className="mt-1 text-[13px]">
-                                <span className="text-[#953002] font-extrabold text-[18px]">{metrics.totalBookingsThisMonth}</span>{" "}
+                                <span className="text-[var(--brand-primary)] font-extrabold text-[18px]">{metrics.totalBookingsThisMonth}</span>{" "}
                                 <span className="text-[#828282]">total bookings this month</span>
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <button className="flex items-center gap-1.5 py-2.5 px-5 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer">
+                            <button
+                                onClick={handleExportCsv}
+                                disabled={reservationsData.length === 0}
+                                className="flex items-center gap-1.5 py-2.5 px-5 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#f5f5f5] transition-colors"
+                            >
                                 <Download size={14} /> Export CSV
                             </button>
                             <a href="/owner/reservation/reservationDetails/manualBooking" className="no-underline">
-                                <button className="flex items-center gap-1.5 py-2.5 px-5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[#b03a02] transition-colors">
+                                <button className="flex items-center gap-1.5 py-2.5 px-5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors">
                                     <Plus size={14} /> Manual Booking
                                 </button>
                             </a>
@@ -151,27 +131,27 @@ export default function ReservationPage() {
                     </div>
 
                     {/* KPI Cards */}
-                    <div className="grid grid-cols-4 gap-3.5 mb-4.5">
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
+                    <div className="w-full grid grid-cols-4 gap-3.5 mb-4.5">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div className="text-[10px] font-bold text-[#828282] tracking-[0.8px] mb-1.5">CONFIRMED</div>
                             <div className="flex items-baseline justify-between">
                                 <span className="text-[32px] font-extrabold text-[#1d1d1d]">{metrics.confirmed}</span>
                             </div>
                         </div>
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div className="text-[10px] font-bold text-[#828282] tracking-[0.8px] mb-1.5">PENDING CONFIRMATION</div>
                             <div className="flex items-baseline justify-between">
                                 <span className="text-[32px] font-extrabold text-[#1d1d1d]">{metrics.pending}</span>
                                 <span className="text-[9px] font-bold text-[#828282] tracking-wide">NEEDS ATTENTION</span>
                             </div>
                         </div>
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div className="text-[10px] font-bold text-[#828282] tracking-[0.8px] mb-1.5">CHECK-INS TODAY</div>
                             <div className="flex items-baseline justify-between">
                                 <span className="text-[32px] font-extrabold text-[#1d1d1d]">{metrics.checkInsToday}</span>
                             </div>
                         </div>
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div className="text-[10px] font-bold text-[#828282] tracking-[0.8px] mb-1.5">CANCELLATIONS</div>
                             <div className="flex items-baseline justify-between">
                                 <span className="text-[32px] font-extrabold text-[#1d1d1d]">{metrics.cancellations}</span>
@@ -208,16 +188,16 @@ export default function ReservationPage() {
                     </div>
 
                     {/* Reservations Table */}
-                    <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden">
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
                         <table className="w-full border-collapse">
                             <thead>
-                                <tr>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-wide py-3.5 px-4 text-left border-b border-[#e8e8e8]">GUEST NAME</th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-wide py-3.5 px-4 text-left border-b border-[#e8e8e8]">PROPERTY / ROOM</th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-wide py-3.5 px-4 text-left border-b border-[#e8e8e8]">DATES</th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-wide py-3.5 px-4 text-center border-b border-[#e8e8e8]">PAYMENT</th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-wide py-3.5 px-4 text-center border-b border-[#e8e8e8]">STATUS</th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-wide py-3.5 px-4 text-center border-b border-[#e8e8e8]">ACTIONS</th>
+                                <tr className="bg-[#F6F8F7]">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-left uppercase">GUEST NAME</th>
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-left uppercase">PROPERTY / ROOM</th>
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-left uppercase">DATES</th>
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-center uppercase">PAYMENT</th>
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-center uppercase">STATUS</th>
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-center uppercase">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -227,11 +207,11 @@ export default function ReservationPage() {
                                     const paymentDotClass = r.paymentStatus === "Paid" ? "bg-[#27ae60]" : r.paymentStatus === "Partial" ? "bg-[#f2994a]" : "bg-[#eb5757]";
                                     const statusBgClass = r.status === "CONFIRMED" ? "bg-[#27ae60]" : r.status === "PENDING" ? "bg-[#f2994a]" : "bg-[#eb5757]";
                                     const initialsBgClass = "bg-[#e8d4c8]";
-                                    const initialsColorClass = "text-[#953002]";
+                                    const initialsColorClass = "text-[var(--brand-primary)]";
                                     const tierColorClass = "text-[#828282]";
 
                                     return (
-                                    <tr key={i} className="border-b border-[#f5f5f5] transition-colors hover:bg-[#fafafa]">
+                                    <tr key={i} className={`border-t border-[#e0e0e0] transition-colors hover:bg-[#f5efec] ${i % 2 === 0 ? "bg-white" : "bg-[#fafafa]"}`}>
                                         <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle">
                                             <div className="flex items-center gap-2.5">
                                                 <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 ${initialsBgClass} ${initialsColorClass}`}>
@@ -243,11 +223,11 @@ export default function ReservationPage() {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-3.5 px-4 text-[13px] color-[#4f4f4f] align-middle">
+                                        <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle">
                                             <div className="text-[13px] font-semibold text-[#1d1d1d]">{r.propertyName}</div>
                                             <div className="text-[11px] text-[#828282]">{r.roomName}</div>
                                         </td>
-                                        <td className="py-3.5 px-4 text-[13px] color-[#4f4f4f] align-middle">
+                                        <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle">
                                             <div className="flex items-center gap-1.5">
                                                 <div>
                                                     <div className={`text-[13px] font-bold text-[#1d1d1d]`}>{r.checkIn}</div>
@@ -267,20 +247,23 @@ export default function ReservationPage() {
                                             </span>
                                         </td>
                                         <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle text-center">
-                                            <span className={`text-[10px] font-bold text-white rounded px-3 py-1 tracking-wide ${statusBgClass}`}>
+                                            <span className={`text-[10px] font-bold text-white rounded-full px-3 py-1 tracking-wide inline-block ${statusBgClass}`}>
                                                 {r.status}
                                             </span>
                                         </td>
-                                        <td className="py-3.5 px-4 text-[13px] color-[#4f4f4f] align-middle text-center">
+                                        <td className="py-3.5 px-4 text-[13px] text-[#4f4f4f] align-middle text-center">
                                             <div className="flex justify-center gap-1.5">
-                                                <button className="bg-transparent border-none cursor-pointer p-1 rounded"><Eye size={15} color="#828282" /></button>
-                                                {r.status === "CANCELLED" ? (
-                                                    <button className="bg-transparent border-none cursor-pointer p-1 rounded"><Trash2 size={15} color="#828282" /></button>
-                                                ) : (
-                                                    <button className="bg-transparent border-none cursor-pointer p-1 rounded"><XCircle size={15} color="#828282" /></button>
-                                                )}
-                                                {r.status === "PENDING" && (
-                                                    <button className="bg-transparent border-none cursor-pointer p-1 rounded"><MoreVertical size={15} color="#828282" /></button>
+                                                <a href={`/owner/reservation/reservationDetails?id=${r.id}`} className="bg-transparent border-none cursor-pointer p-1 rounded flex items-center">
+                                                    <Eye size={15} color="#828282" />
+                                                </a>
+                                                {r.status !== "CANCELLED" && (
+                                                    <button
+                                                        onClick={() => handleCancelReservation(r.id)}
+                                                        className="bg-transparent border-none cursor-pointer p-1 rounded"
+                                                        title="Cancel reservation"
+                                                    >
+                                                        <XCircle size={15} color="#828282" />
+                                                    </button>
                                                 )}
                                             </div>
                                         </td>
@@ -292,7 +275,7 @@ export default function ReservationPage() {
 
                         {/* Pagination */}
                         <div className="flex justify-between items-center py-3.5 px-4 border-t border-[#e8e8e8]">
-                            <span className="text-[12px] text-[#953002]">Showing {Math.min((currentPage - 1) * 10 + 1, totalItems)} to {Math.min(currentPage * 10, totalItems)} of {totalItems} results</span>
+                            <span className="text-[12px] text-[var(--brand-primary)]">Showing {Math.min((currentPage - 1) * 10 + 1, totalItems)} to {Math.min(currentPage * 10, totalItems)} of {totalItems} results</span>
                             <div className="flex items-center gap-1">
                                 <button className="w-7 h-7 flex items-center justify-center bg-transparent border-none cursor-pointer text-[#4f4f4f] rounded-md"><ChevronLeft size={14} /></button>
                                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
@@ -311,7 +294,6 @@ export default function ReservationPage() {
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-    );
-}
+            </div>
+        );
+    }

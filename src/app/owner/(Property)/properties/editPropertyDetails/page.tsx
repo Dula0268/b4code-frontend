@@ -11,7 +11,6 @@ import TimePicker, { type TimeValue, parseTime, formatTime } from "@/components/
 import {
     Info,
     MapPin,
-    Bell,
     ChevronRight,
     Camera,
     CheckCircle2,
@@ -28,7 +27,31 @@ import {
     Plus,
     AlertCircle,
     Building2,
+    Bed,
+    Calendar,
+    Eye,
+    Edit,
+    LayoutGrid,
+    DoorOpen,
+    CalendarCheck,
+    ClipboardList,
+    Image as ImageIcon,
+    Users,
+    Settings,
 } from "lucide-react";
+
+function propertyNavItems(id: number) {
+    return [
+        { label: "Overview", icon: <LayoutGrid size={16} />, href: `/owner/properties/propertyDetails?id=${id}` },
+        { label: "Rooms", icon: <DoorOpen size={16} />, href: `/owner/properties/propertyRoomInventry?id=${id}` },
+        { label: "Availability", icon: <CalendarCheck size={16} />, href: `/owner/properties/Availability?id=${id}` },
+        { label: "Rates", icon: <DollarSign size={16} />, href: `/owner/properties/Rate?id=${id}` },
+        { label: "Reservations", icon: <ClipboardList size={16} />, href: `/owner/properties/Reservation?id=${id}` },
+        { label: "Media", icon: <ImageIcon size={16} />, href: `/owner/properties/Media?id=${id}` },
+        { label: "Staff", icon: <Users size={16} />, href: `/owner/properties/Staff?id=${id}` },
+        { label: "Settings", icon: <Settings size={16} />, href: `/owner/properties/Setting?id=${id}` },
+    ];
+}
 
 const AMENITY_LIST = [
     { key: "wifi",        label: "Wifi" },
@@ -74,6 +97,7 @@ function EditPropertyContent() {
         contactEmail: "",
         houseRules: "",
         propertyType: "",
+        cancellationPolicy: "",
     });
 
     const [checkIn,  setCheckIn]  = useState<TimeValue>({ hour: "2",  minute: "00", period: "PM" });
@@ -89,12 +113,21 @@ function EditPropertyContent() {
     const [dragging, setDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Header-card-only fields (not part of the editable form)
+    const [headerInfo, setHeaderInfo] = useState({ status: "", roomCount: 0, rate: "—" as string | number, image: "" });
+
     const update = (key: string, val: string) => setForm((p) => ({ ...p, [key]: val }));
     const toggleAmenity = (key: string) => setAmenities((p) => ({ ...p, [key]: !p[key] }));
 
     useEffect(() => {
         if (!propertyId) { setLoadError("No property ID."); setLoading(false); return; }
         propertiesApi.getProperty(Number(propertyId), ownerId).then((data) => {
+            setHeaderInfo({
+                status: data.status ?? "",
+                roomCount: data.roomCount ?? 0,
+                rate: data.rate ?? "—",
+                image: data.image ?? "",
+            });
             setForm({
                 name:          data.name          ?? "",
                 description:   data.description   ?? "",
@@ -105,6 +138,7 @@ function EditPropertyContent() {
                 contactEmail:  data.contactEmail  ?? "",
                 houseRules:    data.houseRules    ?? "",
                 propertyType:  data.propertyType  ?? "",
+                cancellationPolicy: data.cancellationPolicy ?? "",
             });
             if (data.checkIn)  setCheckIn(parseTime(data.checkIn));
             if (data.checkOut) setCheckOut(parseTime(data.checkOut));
@@ -182,8 +216,9 @@ function EditPropertyContent() {
                 checkOut:     formatTime(checkOut),
                 houseRules:   form.houseRules,
                 propertyType: form.propertyType,
+                cancellationPolicy: form.cancellationPolicy,
                 amenities:    selectedAmenities,
-                imageUrls:    allImageUrls,
+                imageUrl:     allImageUrls[0],
             });
             setSaveSuccess(true);
             setTimeout(() => {
@@ -201,39 +236,15 @@ function EditPropertyContent() {
     const detailsHref = propertyId ? `/owner/properties/propertyDetails?id=${propertyId}` : "/owner/properties";
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
-
-            {/* ── Main ── */}
-            <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-between items-center py-1.5">
-                    <div />
-                    <div className="flex items-center gap-3">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
+        <div className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
 
                 <div className="flex items-center gap-1.5 text-[12px] mb-0.5">
-                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <a href={detailsHref} className="text-[#828282] no-underline hover:text-[#953002] transition-colors">{form.name || "Property"}</a>
+                    <a href={detailsHref} className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">{form.name || "Property"}</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Edit Property</span>
+                    <span className="text-[var(--brand-primary)] font-semibold">Edit Property</span>
                 </div>
-
-                <h1 className="text-[22px] font-extrabold text-[#1d1d1d] m-0 mt-1">Edit Property Details</h1>
-                <p className="text-[12px] text-[#828282] m-0 mt-0.5 mb-2">Keep your property information accurate to attract the right guests.</p>
 
                 {/* Loading */}
                 {loading && (
@@ -248,7 +259,71 @@ function EditPropertyContent() {
                 {/* Scrollable Content */}
                 {!loading && !loadError && (
                     <div className="flex-1 overflow-y-auto pb-4 pr-1">
-                        <div className="grid grid-cols-[1fr_240px] gap-4 items-start">
+
+                        {/* ── Property Header Card ── */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[var(--brand-primary)] bg-[#f0ebe5] flex items-center justify-center">
+                                    {headerInfo.image ? (
+                                        <img src={headerInfo.image} alt={form.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Building2 size={28} color="#c0a898" />
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2.5">
+                                        <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">{form.name || "Edit Property"}</h2>
+                                        <span
+                                            className="text-[9px] font-bold text-white rounded w-max px-[7px] py-[2px] tracking-widest"
+                                            style={{
+                                                backgroundColor: headerInfo.status === "active" ? "#27ae60"
+                                                    : headerInfo.status === "inactive" ? "#828282"
+                                                    : headerInfo.status === "maintenance" ? "#e67e22"
+                                                    : "#b0b0b0",
+                                            }}
+                                        >
+                                            {headerInfo.status ? headerInfo.status.toUpperCase() : "PENDING"}
+                                        </span>
+                                    </div>
+                                    <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
+                                        <MapPin size={12} />
+                                        {[form.address, form.city, form.country].filter(Boolean).join(", ") || "—"}
+                                    </div>
+                                    <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
+                                        <span className="flex items-center gap-[3px]"><Bed size={12} /> {headerInfo.roomCount} Rooms</span>
+                                        <span className="flex items-center gap-[3px]"><Calendar size={12} /> {headerInfo.rate}/night</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-2.5">
+                                <a href={detailsHref} className="no-underline">
+                                    <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-gray-50">
+                                        <Eye size={14} /> View Details
+                                    </button>
+                                </a>
+                                <button className="flex items-center gap-1.5 py-2 px-5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[12px] font-semibold cursor-not-allowed opacity-70" disabled>
+                                    <Edit size={14} /> Editing
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* ── Nav + Content ── */}
+                        <div className="flex gap-5 items-start">
+                            {/* Vertical Nav */}
+                            <div className="w-[190px] shrink-0 flex flex-col gap-1">
+                                {propertyId && propertyNavItems(Number(propertyId)).map((item) => (
+                                    <a
+                                        key={item.label}
+                                        href={item.href}
+                                        className="flex items-center gap-2 py-2.5 px-3.5 border-none rounded-lg text-[12px] cursor-pointer text-left transition-all duration-150 no-underline bg-transparent text-[#4f4f4f] font-medium hover:bg-[#f5f5f5]"
+                                    >
+                                        {item.icon}
+                                        <span>{item.label}</span>
+                                    </a>
+                                ))}
+                            </div>
+
+                        <div className="flex-1 grid grid-cols-[1fr_240px] gap-4 items-start min-w-0">
                             {/* ── Left Column ── */}
                             <div className="flex flex-col gap-3">
 
@@ -259,24 +334,24 @@ function EditPropertyContent() {
                                         <span className="text-[15px] font-bold text-[#1d1d1d]">Basic Information</span>
                                     </div>
                                     <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Property Name</label>
-                                    <input type="text" value={form.name} onChange={(e) => update("name", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="Property name" />
+                                    <input type="text" value={form.name} onChange={(e) => update("name", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="Property name" />
                                     <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Description</label>
-                                    <textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={3} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border resize-y min-h-[70px] focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="Describe your property..." />
+                                    <textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={3} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border resize-y min-h-[70px] focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="Describe your property..." />
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Property Type</label>
-                                            <select value={form.propertyType} onChange={(e) => update("propertyType", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[#953002] bg-white text-[#1d1d1d] appearance-none">
+                                            <select value={form.propertyType} onChange={(e) => update("propertyType", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d] appearance-none">
                                                 <option value="">Select type</option>
                                                 {PROPERTY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Contact Phone</label>
-                                            <input type="text" value={form.contactPhone} onChange={(e) => update("contactPhone", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="+94 xxx xxx xxxx" />
+                                            <input type="text" value={form.contactPhone} onChange={(e) => update("contactPhone", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="+94 xxx xxx xxxx" />
                                         </div>
                                     </div>
                                     <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Contact Email</label>
-                                    <input type="email" value={form.contactEmail} onChange={(e) => update("contactEmail", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="contact@example.com" />
+                                    <input type="email" value={form.contactEmail} onChange={(e) => update("contactEmail", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="contact@example.com" />
                                 </div>
 
                                 {/* Location */}
@@ -286,15 +361,15 @@ function EditPropertyContent() {
                                         <span className="text-[15px] font-bold text-[#1d1d1d]">Location</span>
                                     </div>
                                     <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Street Address</label>
-                                    <input type="text" value={form.address} onChange={(e) => update("address", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="123 Main St" />
+                                    <input type="text" value={form.address} onChange={(e) => update("address", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="123 Main St" />
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">City</label>
-                                            <input type="text" value={form.city} onChange={(e) => update("city", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="City" />
+                                            <input type="text" value={form.city} onChange={(e) => update("city", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="City" />
                                         </div>
                                         <div>
                                             <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Country</label>
-                                            <input type="text" value={form.country} onChange={(e) => update("country", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="Country" />
+                                            <input type="text" value={form.country} onChange={(e) => update("country", e.target.value)} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="Country" />
                                         </div>
                                     </div>
                                 </div>
@@ -316,7 +391,10 @@ function EditPropertyContent() {
                                         </div>
                                     </div>
                                     <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">House Rules</label>
-                                    <textarea value={form.houseRules} onChange={(e) => update("houseRules", e.target.value)} rows={2} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border resize-y min-h-[50px] focus:border-[#953002] bg-white text-[#1d1d1d]" placeholder="No smoking, quiet hours after 10 PM..." />
+                                    <textarea value={form.houseRules} onChange={(e) => update("houseRules", e.target.value)} rows={2} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border resize-y min-h-[50px] focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="No smoking, quiet hours after 10 PM..." />
+
+                                    <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Cancellation Policy</label>
+                                    <textarea value={form.cancellationPolicy} onChange={(e) => update("cancellationPolicy", e.target.value)} rows={3} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border resize-y min-h-[60px] focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="Full refund if cancelled 48 hours before check-in..." />
                                 </div>
 
                                 {/* Amenities */}
@@ -334,7 +412,7 @@ function EditPropertyContent() {
                                                     type="button"
                                                     onClick={() => toggleAmenity(key)}
                                                     className={`flex items-center gap-1.5 py-1.5 px-2.5 border rounded-lg text-[12px] cursor-pointer font-medium ${
-                                                        checked ? "border-[#953002] bg-[#fef8f4] text-[#4f4f4f]" : "border-[#e0e0e0] bg-white text-[#4f4f4f]"
+                                                        checked ? "border-[var(--brand-primary)] bg-[#fef8f4] text-[#4f4f4f]" : "border-[#e0e0e0] bg-white text-[#4f4f4f]"
                                                     }`}
                                                 >
                                                     {checked ? <CheckCircle2 size={14} color="#953002" /> : <Circle size={14} color="#b0b0b0" />}
@@ -367,7 +445,7 @@ function EditPropertyContent() {
                                             <div key={url} className="relative group aspect-square rounded-lg overflow-hidden border border-[#e0e0e0]">
                                                 <img src={url} alt="" className="w-full h-full object-cover" />
                                                 {i === 0 && (
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-[#953002] text-white text-[8px] font-bold text-center py-0.5">
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-[var(--brand-primary)] text-white text-[8px] font-bold text-center py-0.5">
                                                         COVER
                                                     </div>
                                                 )}
@@ -420,7 +498,7 @@ function EditPropertyContent() {
                                                 onDragLeave={() => setDragging(false)}
                                                 onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files); }}
                                                 className={`aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${
-                                                    dragging ? "border-[#953002] bg-[#fef5ef]" : "border-[#d0d0d0] bg-[#fafafa] hover:border-[#953002] hover:bg-[#fef8f4]"
+                                                    dragging ? "border-[var(--brand-primary)] bg-[#fef5ef]" : "border-[#d0d0d0] bg-[#fafafa] hover:border-[var(--brand-primary)] hover:bg-[#fef8f4]"
                                                 }`}
                                             >
                                                 <Plus size={18} color="#b0b0b0" />
@@ -445,7 +523,7 @@ function EditPropertyContent() {
                                             onDragLeave={() => setDragging(false)}
                                             onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files?.length) processFiles(e.dataTransfer.files); }}
                                             className={`border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer py-6 transition-colors ${
-                                                dragging ? "border-[#953002] bg-[#fef5ef]" : "border-[#d0d0d0] bg-[#fafafa] hover:border-[#953002] hover:bg-[#fef8f4]"
+                                                dragging ? "border-[var(--brand-primary)] bg-[#fef5ef]" : "border-[#d0d0d0] bg-[#fafafa] hover:border-[var(--brand-primary)] hover:bg-[#fef8f4]"
                                             }`}
                                         >
                                             <Building2 size={26} color="#b0b0b0" />
@@ -457,7 +535,7 @@ function EditPropertyContent() {
                                     <button
                                         type="button"
                                         onClick={() => window.location.href = `/owner/properties/Media?id=${propertyId}`}
-                                        className="flex items-center gap-1 mt-2 bg-transparent border-none text-[#953002] text-[11px] font-semibold cursor-pointer hover:underline p-0"
+                                        className="flex items-center gap-1 mt-2 bg-transparent border-none text-[var(--brand-primary)] text-[11px] font-semibold cursor-pointer hover:underline p-0"
                                     >
                                         Manage All Photos in Media tab <ArrowRight size={12} />
                                     </button>
@@ -486,7 +564,7 @@ function EditPropertyContent() {
                                         type="button"
                                         disabled={saving}
                                         onClick={handleSave}
-                                        className={`flex items-center gap-2 py-2 px-6 bg-[#953002] text-white border-none rounded-lg text-[13px] font-semibold transition-colors ${saving ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-[#b03a02]"}`}
+                                        className={`flex items-center gap-2 py-2 px-6 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-semibold transition-colors ${saving ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-[var(--primary-hover)]"}`}
                                     >
                                         {saving && <Loader2 size={14} className="animate-spin" />}
                                         {saving ? "Saving..." : "Save Changes"}
@@ -537,14 +615,14 @@ function EditPropertyContent() {
                                     <p className="text-[12px] text-[#828282] m-0 mb-2 leading-relaxed">
                                         Need help optimizing your listing? Our support team is here for you.
                                     </p>
-                                    <button type="button" className="w-full py-2 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-bold cursor-pointer">Contact Support</button>
+                                    <button type="button" className="w-full py-2 bg-white text-[var(--brand-primary)] border border-[var(--brand-primary)] rounded-lg text-[12px] font-bold cursor-pointer">Contact Support</button>
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </div>
                 )}
-            </main>
-        </div>
+            </div>
     );
 }
 

@@ -34,37 +34,16 @@ export default function AddStaffPage() {
     });
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
-
-            {/* ── Main ── */}
-            <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-between items-center py-1.5">
-                    <div />
-                    <div className="flex items-center gap-3">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <BellIcon size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
+        <div className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
 
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
-                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
                     <span className="text-[#828282] font-semibold">Property Name</span>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <a href="/owner/properties/Staff" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Staff</a>
+                    <a href="/owner/properties/Staff" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Staff</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">Add New Staff</span>
+                    <span className="text-[var(--brand-primary)] font-semibold">Add New Staff</span>
                 </div>
 
                 {/* Scrollable Content */}
@@ -104,7 +83,7 @@ export default function AddStaffPage() {
                                             placeholder="e.g. John"
                                             value={firstName} 
                                             onChange={(e) => setFirstName(e.target.value)} 
-                                            className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                         />
                                     </div>
                                     <div className="flex flex-col">
@@ -114,7 +93,7 @@ export default function AddStaffPage() {
                                             placeholder="e.g. Doe"
                                             value={lastName} 
                                             onChange={(e) => setLastName(e.target.value)} 
-                                            className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                         />
                                     </div>
                                 </div>
@@ -126,7 +105,7 @@ export default function AddStaffPage() {
                                         placeholder="john.doe@example.com"
                                         value={email} 
                                         onChange={(e) => setEmail(e.target.value)} 
-                                        className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                        className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                     />
                                 </div>
 
@@ -137,12 +116,12 @@ export default function AddStaffPage() {
                                         placeholder="+1 (555) 000-0000"
                                         value={phone} 
                                         onChange={(e) => setPhone(e.target.value)} 
-                                        className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                        className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                     />
                                 </div>
 
                                 <div className="p-4 bg-[#fffbf5] border border-[#fde8df] rounded-lg">
-                                    <h4 className="text-[12px] font-bold text-[#953002] m-0 mb-1">Invitation Link</h4>
+                                    <h4 className="text-[12px] font-bold text-[var(--brand-primary)] m-0 mb-1">Invitation Link</h4>
                                     <p className="text-[11px] text-[#4f4f4f] m-0">An invitation email will be sent to this staff member with a link to set their password.</p>
                                 </div>
                             </div>
@@ -156,7 +135,7 @@ export default function AddStaffPage() {
                                     <select 
                                         value={role} 
                                         onChange={(e) => setRole(e.target.value)} 
-                                        className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
                                         <option value="Property Manager">Property Manager</option>
                                         <option value="Maintenance Supervisor">Maintenance Supervisor</option>
@@ -170,7 +149,7 @@ export default function AddStaffPage() {
                                     <select 
                                         value={status} 
                                         onChange={(e) => setStatus(e.target.value)} 
-                                        className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                        className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[var(--brand-primary)] transition-colors"
                                     >
                                         <option value="Active">Active</option>
                                         <option value="Inactive">Inactive</option>
@@ -181,7 +160,7 @@ export default function AddStaffPage() {
 
                                 <div className="space-y-3">
                                     <label className="flex items-start gap-2 cursor-pointer group">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.reservations ? "bg-[#953002] border-[#953002]" : "border-[#b0b0b0] bg-white group-hover:border-[#953002]"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.reservations ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#b0b0b0] bg-white group-hover:border-[var(--brand-primary)]"}`}>
                                             {perms.reservations && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={perms.reservations} onChange={(e) => setPerms({...perms, reservations: e.target.checked})} />
@@ -191,7 +170,7 @@ export default function AddStaffPage() {
                                     </label>
 
                                     <label className="flex items-start gap-2 cursor-pointer group">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.calendar ? "bg-[#953002] border-[#953002]" : "border-[#b0b0b0] bg-white group-hover:border-[#953002]"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.calendar ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#b0b0b0] bg-white group-hover:border-[var(--brand-primary)]"}`}>
                                             {perms.calendar && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={perms.calendar} onChange={(e) => setPerms({...perms, calendar: e.target.checked})} />
@@ -201,7 +180,7 @@ export default function AddStaffPage() {
                                     </label>
 
                                     <label className="flex items-start gap-2 cursor-pointer group">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.messaging ? "bg-[#953002] border-[#953002]" : "border-[#b0b0b0] bg-white group-hover:border-[#953002]"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.messaging ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#b0b0b0] bg-white group-hover:border-[var(--brand-primary)]"}`}>
                                             {perms.messaging && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={perms.messaging} onChange={(e) => setPerms({...perms, messaging: e.target.checked})} />
@@ -211,7 +190,7 @@ export default function AddStaffPage() {
                                     </label>
 
                                     <label className="flex items-start gap-2 cursor-pointer group">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.pricing ? "bg-[#953002] border-[#953002]" : "border-[#b0b0b0] bg-white group-hover:border-[#953002]"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.pricing ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#b0b0b0] bg-white group-hover:border-[var(--brand-primary)]"}`}>
                                             {perms.pricing && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={perms.pricing} onChange={(e) => setPerms({...perms, pricing: e.target.checked})} />
@@ -221,7 +200,7 @@ export default function AddStaffPage() {
                                     </label>
 
                                     <label className="flex items-start gap-2 cursor-pointer group">
-                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.settings ? "bg-[#953002] border-[#953002]" : "border-[#b0b0b0] bg-white group-hover:border-[#953002]"}`}>
+                                        <div className={`mt-0.5 w-[14px] h-[14px] rounded-[3px] border flex items-center justify-center transition-colors ${perms.settings ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "border-[#b0b0b0] bg-white group-hover:border-[var(--brand-primary)]"}`}>
                                             {perms.settings && <Check size={10} color="white" strokeWidth={3} />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={perms.settings} onChange={(e) => setPerms({...perms, settings: e.target.checked})} />
@@ -246,7 +225,7 @@ export default function AddStaffPage() {
                                     className={`py-2 px-6 text-white border-none rounded-lg text-[12px] font-bold cursor-pointer transition-colors ${
                                         !firstName || !lastName || !email
                                             ? "bg-[#d0d0d0] pointer-events-none"
-                                            : "bg-[#953002] hover:bg-[#b03a02]"
+                                            : "bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)]"
                                     }`}
                                 >
                                     Add Staff
@@ -255,7 +234,6 @@ export default function AddStaffPage() {
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+            </div>
     );
 }

@@ -9,7 +9,6 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import {
     Info,
     MapPin,
-    Bell,
     ChevronRight,
     ChevronDown,
     Star,
@@ -21,6 +20,14 @@ import {
     Edit,
     Building2,
     Loader2,
+    LayoutGrid,
+    DoorOpen,
+    CalendarCheck,
+    DollarSign,
+    ClipboardList,
+    Image as ImageIcon,
+    Users,
+    Settings,
 } from "lucide-react";
 
 function PropertyDetailsContent() {
@@ -48,7 +55,16 @@ function PropertyDetailsContent() {
             .finally(() => setLoading(false));
     }, [propertyId, ownerId]);
 
-    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+    const propertyNavItems = (id: number) => [
+        { label: "Overview", icon: <LayoutGrid size={16} />, href: null },
+        { label: "Rooms", icon: <DoorOpen size={16} />, href: `/owner/properties/propertyRoomInventry?id=${id}` },
+        { label: "Availability", icon: <CalendarCheck size={16} />, href: `/owner/properties/Availability?id=${id}` },
+        { label: "Rates", icon: <DollarSign size={16} />, href: `/owner/properties/Rate?id=${id}` },
+        { label: "Reservations", icon: <ClipboardList size={16} />, href: `/owner/properties/Reservation?id=${id}` },
+        { label: "Media", icon: <ImageIcon size={16} />, href: `/owner/properties/Media?id=${id}` },
+        { label: "Staff", icon: <Users size={16} />, href: `/owner/properties/Staff?id=${id}` },
+        { label: "Settings", icon: <Settings size={16} />, href: `/owner/properties/Setting?id=${id}` },
+    ];
 
     const statusLabel = property?.status === "active" ? "ACTIVE"
         : property?.status === "inactive" ? "INACTIVE"
@@ -61,33 +77,12 @@ function PropertyDetailsContent() {
         : "#b0b0b0";
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Sidebar ── */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
-
-            {/* ── Main ── */}
-            <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-between items-center py-1.5">
-                    <div />
-                    <div className="flex items-center gap-3">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
+        <div className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
 
                 <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
-                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Properties</a>
                     <ChevronRight size={14} color="#b0b0b0" />
-                    <span className="text-[#953002] font-semibold">{property?.name ?? "Property Details"}</span>
+                    <span className="text-[var(--brand-primary)] font-semibold">{property?.name ?? "Property Details"}</span>
                 </div>
 
                 {/* Loading / Error */}
@@ -107,7 +102,7 @@ function PropertyDetailsContent() {
                         {/* ── Property Header Card ── */}
                         <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
                             <div className="flex items-center gap-4 flex-1">
-                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[#953002] bg-[#f0ebe5] flex items-center justify-center">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[var(--brand-primary)] bg-[#f0ebe5] flex items-center justify-center">
                                     {property.image ? (
                                         <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
                                     ) : (
@@ -139,40 +134,46 @@ function PropertyDetailsContent() {
                                     <Eye size={14} /> View Live
                                 </button>
                                 <a href={`/owner/properties/editPropertyDetails?id=${property.id}`} className="no-underline">
-                                    <button className="flex items-center gap-1.5 py-2 px-5 bg-[#953002] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#b03a02]">
+                                    <button className="flex items-center gap-1.5 py-2 px-5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[var(--primary-hover)]">
                                         <Edit size={14} /> Edit Property
                                     </button>
                                 </a>
                             </div>
                         </div>
 
-                        {/* ── Tabs ── */}
-                        <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
-                            {tabs.map((t) => (
-                                <button
-                                    key={t}
-                                    onClick={() => {
-                                        if (t === "Overview") setActiveTab(t);
-                                        else if (t === "Rooms") window.location.href = `/owner/properties/propertyRoomInventry?id=${property.id}`;
-                                        else if (t === "Availability") window.location.href = `/owner/properties/Availability?id=${property.id}`;
-                                        else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${property.id}`;
-                                        else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${property.id}`;
-                                        else if (t === "Media") window.location.href = `/owner/properties/Media?id=${property.id}`;
-                                        else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${property.id}`;
-                                        else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${property.id}`;
-                                        else setActiveTab(t);
-                                    }}
-                                    className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative ${
-                                        activeTab === t ? "text-[#953002] font-bold border-b-2 border-[#953002]" : "text-[#828282] font-medium border-b-2 border-transparent hover:text-[#4f4f4f]"
-                                    }`}
-                                >
-                                    {t}
-                                </button>
-                            ))}
-                        </div>
+                        {/* ── Nav + Content ── */}
+                        <div className="flex gap-5 items-start mt-3">
+                            {/* Vertical Nav */}
+                            <div className="w-[190px] shrink-0 flex flex-col gap-1">
+                                {propertyNavItems(property.id).map((item) => (
+                                    item.href ? (
+                                        <a
+                                            key={item.label}
+                                            href={item.href}
+                                            className="flex items-center gap-2 py-2.5 px-3.5 border-none rounded-lg text-[12px] cursor-pointer text-left transition-all duration-150 no-underline bg-transparent text-[#4f4f4f] font-medium hover:bg-[#f5f5f5]"
+                                        >
+                                            {item.icon}
+                                            <span>{item.label}</span>
+                                        </a>
+                                    ) : (
+                                        <button
+                                            key={item.label}
+                                            onClick={() => setActiveTab(item.label)}
+                                            className={`flex items-center gap-2 py-2.5 px-3.5 border-none rounded-lg text-[12px] cursor-pointer text-left transition-all duration-150 ${
+                                                activeTab === item.label
+                                                    ? "bg-[var(--brand-primary)] text-white font-bold"
+                                                    : "bg-transparent text-[#4f4f4f] font-medium hover:bg-[#f5f5f5]"
+                                            }`}
+                                        >
+                                            {item.icon}
+                                            <span>{item.label}</span>
+                                        </button>
+                                    )
+                                ))}
+                            </div>
 
-                        {/* ── Two Column Layout ── */}
-                        <div className="grid grid-cols-[1fr_260px] gap-4 items-start">
+                            {/* ── Two Column Layout ── */}
+                            <div className="flex-1 grid grid-cols-[1fr_260px] gap-4 items-start min-w-0">
                             {/* Left Column */}
                             <div className="flex flex-col gap-3">
                                 {/* Core Details */}
@@ -206,7 +207,7 @@ function PropertyDetailsContent() {
                                             <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Amenities</label>
                                             <div className="flex flex-wrap gap-1.5">
                                                 {property.amenities.map((a: string) => (
-                                                    <span key={a} className="px-2.5 py-0.5 bg-[#fef5ef] text-[#953002] text-[11px] font-semibold rounded-full border border-[#f0cdb4]">
+                                                    <span key={a} className="px-2.5 py-0.5 bg-[#fef5ef] text-[var(--brand-primary)] text-[11px] font-semibold rounded-full border border-[#f0cdb4]">
                                                         {a}
                                                     </span>
                                                 ))}
@@ -251,10 +252,10 @@ function PropertyDetailsContent() {
                             <div className="flex flex-col gap-3">
                                 {/* Quick Stats */}
                                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                    <div className="text-[14px] font-bold text-[#953002] mb-2.5">Quick Stats</div>
+                                    <div className="text-[14px] font-bold text-[var(--brand-primary)] mb-2.5">Quick Stats</div>
                                     <div className="flex justify-between items-center py-2 border-b border-[#f5f5f5]">
                                         <span className="text-[13px] text-[#4f4f4f]">Rooms</span>
-                                        <span className="text-[14px] font-bold text-[#953002]">{property.roomCount ?? 0}</span>
+                                        <span className="text-[14px] font-bold text-[var(--brand-primary)]">{property.roomCount ?? 0}</span>
                                     </div>
                                     <div className="flex justify-between items-center py-2 border-b border-[#f5f5f5]">
                                         <span className="text-[13px] text-[#4f4f4f]">Avg. Rating</span>
@@ -270,7 +271,7 @@ function PropertyDetailsContent() {
 
                                 {/* Contact Info */}
                                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                    <div className="text-[14px] font-bold text-[#953002] mb-2.5">Contact Info</div>
+                                    <div className="text-[14px] font-bold text-[var(--brand-primary)] mb-2.5">Contact Info</div>
                                     <div className="flex items-center gap-2.5 mb-2.5">
                                         <div className="w-[34px] h-[34px] rounded-full bg-[#fef5ef] flex items-center justify-center">
                                             <User size={16} color="#953002" />
@@ -281,7 +282,7 @@ function PropertyDetailsContent() {
                                         </div>
                                     </div>
                                     {property.contactPhone && (
-                                        <button className="w-full flex items-center justify-center gap-1.5 py-2 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-semibold cursor-pointer">
+                                        <button className="w-full flex items-center justify-center gap-1.5 py-2 bg-white text-[var(--brand-primary)] border border-[var(--brand-primary)] rounded-lg text-[12px] font-semibold cursor-pointer">
                                             <Phone size={13} /> {property.contactPhone}
                                         </button>
                                     )}
@@ -290,16 +291,16 @@ function PropertyDetailsContent() {
                                 {/* House Rules */}
                                 {property.houseRules && (
                                     <div className="bg-white border border-[#e8e8e8] rounded-xl py-3.5 px-4">
-                                        <div className="text-[14px] font-bold text-[#953002] mb-2.5">House Rules</div>
+                                        <div className="text-[14px] font-bold text-[var(--brand-primary)] mb-2.5">House Rules</div>
                                         <p className="text-[12px] text-[#4f4f4f] leading-relaxed m-0">{property.houseRules}</p>
                                     </div>
                                 )}
                             </div>
+                            </div>
                         </div>
                     </div>
                 )}
-            </main>
-        </div>
+            </div>
     );
 }
 

@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { propertiesApi } from "@/api/owner/properties.api";
 import { availabilityApi } from "@/api/owner/availability.api";
-import Logo from "@/components/shared/branding/logo";
+import { dashboardApi } from "@/api/owner/dashboard.api";
 import {
     ChevronLeft,
     ChevronRight,
@@ -16,11 +16,6 @@ import {
     X,
     Check,
     Calendar,
-    LayoutDashboard,
-    BedDouble,
-    DollarSign,
-    BookOpen,
-    Settings,
 } from "lucide-react";
 
 /* ───────────────────── helpers ───────────────────── */
@@ -94,6 +89,13 @@ export default function MonthlyCalendarPage() {
     const ownerId = user?.userId ?? 1;
     const [properties, setProperties] = useState<any[]>([]);
     const [mockBookings, setMockBookings] = useState<Record<string, BookingInfo>>({});
+    const [monthRevenue, setMonthRevenue] = useState<string | null>(null);
+
+    useEffect(() => {
+        dashboardApi.getDashboard(ownerId, year, month + 1)
+            .then((data: any) => setMonthRevenue(data?.monthRevenue ?? null))
+            .catch(() => setMonthRevenue(null));
+    }, [ownerId, year, month]);
 
     useEffect(() => {
         propertiesApi.listProperties(ownerId, 1, 100).then((list: any[]) => {
@@ -120,6 +122,13 @@ export default function MonthlyCalendarPage() {
     }, [activeProperty, year, month]);
 
     const grid = useMemo(() => getMonthGrid(year, month), [year, month]);
+
+    const occupancyPercent = useMemo(() => {
+        const entries = Object.values(mockBookings);
+        if (entries.length === 0) return null;
+        const booked = entries.filter((b) => b.type === "booked").length;
+        return Math.round((booked / entries.length) * 100);
+    }, [mockBookings]);
     const monthLabel = `${MONTH_NAMES[month]} ${year}`;
 
     /* Navigation */
@@ -165,41 +174,8 @@ export default function MonthlyCalendarPage() {
         weeks.push(grid.slice(i, i + 7));
     }
 
-    const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/monthlyCalendar", active: true },
-        { label: "Rate", icon: <DollarSign size={18} />, href: "/owner/rate" },
-        { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
-    ];
-
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Navigation Sidebar ── */}
-            <nav className="w-[180px] bg-white border-r border-[#e8e8e8] py-4 flex flex-col shrink-0">
-                <div className="px-4 pb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                    {navItems.map((item) => (
-                        <a
-                            key={item.label}
-                            href={item.href}
-                            className={`flex items-center gap-2.5 py-2.5 px-4 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-[3px] ${
-                                item.active
-                                    ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                    : "bg-transparent text-[#4f4f4f] font-medium border-transparent"
-                            }`}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </a>
-                    ))}
-                </div>
-            </nav>
-
+        <div className="flex flex-1 h-full overflow-hidden font-sans bg-[#faf9f7]">
             {/* ── Properties Sidebar ── */}
             <aside className="w-[220px] bg-white border-r border-[#e8e8e8] py-6 px-4 flex flex-col shrink-0 overflow-y-auto">
                 <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-2.5">PROPERTIES</div>
@@ -210,7 +186,7 @@ export default function MonthlyCalendarPage() {
                             key={p.id}
                             onClick={() => setActiveProperty(p.id)}
                             className={`flex items-center gap-2.5 py-2.5 px-3.5 rounded-xl cursor-pointer mb-1.5 transition-all duration-150 text-left w-full ${
-                                isActive ? "bg-white text-[#953002] border border-[#953002] shadow-sm" : "bg-white text-[#1d1d1d] border border-[#e8e8e8]"
+                                isActive ? "bg-white text-[var(--brand-primary)] border border-[var(--brand-primary)] shadow-sm" : "bg-white text-[#1d1d1d] border border-[#e8e8e8]"
                             }`}
                         >
                             {propertyIcon(p.icon, "#953002")}
@@ -222,15 +198,15 @@ export default function MonthlyCalendarPage() {
                 {/* Quick Stats */}
                 <div className="text-[10px] font-bold text-[#828282] tracking-widest mt-7 mb-2.5">QUICK STATS</div>
                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3 px-3.5 mb-2">
-                    <div className="text-[11px] font-semibold text-[#828282] mb-0.5">Occupancy (Nov)</div>
-                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">78%</div>
+                    <div className="text-[11px] font-semibold text-[#828282] mb-0.5">Occupancy ({MONTH_NAMES[month].slice(0, 3)})</div>
+                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">{occupancyPercent === null ? "—" : `${occupancyPercent}%`}</div>
                     <div className="h-1 bg-[#e8e8e8] rounded flex mt-2 overflow-hidden">
-                        <div className="h-full bg-[#953002] rounded w-[78%]" />
+                        <div className="h-full bg-[var(--brand-primary)] rounded" style={{ width: `${occupancyPercent ?? 0}%` }} />
                     </div>
                 </div>
                 <div className="bg-white border border-[#e8e8e8] rounded-xl py-3 px-3.5 mb-2">
-                    <div className="text-[11px] font-semibold text-[#828282] mb-0.5">Revenue (MTD)</div>
-                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">Rs 425,000</div>
+                    <div className="text-[11px] font-semibold text-[#828282] mb-0.5">Revenue ({MONTH_NAMES[month].slice(0, 3)})</div>
+                    <div className="text-[22px] font-extrabold text-[#1d1d1d]">{monthRevenue ? `Rs ${Number(monthRevenue).toLocaleString()}` : "—"}</div>
                 </div>
 
                 <button className="flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#b0b0b0] rounded-xl bg-transparent text-[#828282] text-[13px] font-semibold cursor-pointer mt-3">
@@ -252,14 +228,14 @@ export default function MonthlyCalendarPage() {
                                 <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center border border-[#e0e0e0] rounded-lg bg-white cursor-pointer text-[#4f4f4f]"><ChevronRight size={18} /></button>
                             </div>
                             <div className="flex bg-[#f0f0f0] rounded-lg p-1 gap-0.5">
-                                <a href="/owner/availability/monthlyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-bold text-white bg-[#953002] border-none cursor-pointer no-underline transition-all duration-150">Monthly</a>
+                                <a href="/owner/availability/monthlyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-bold text-white bg-[var(--brand-primary)] border-none cursor-pointer no-underline transition-all duration-150">Monthly</a>
                                 <a href="/owner/availability/weeklyCalendar" className="py-1.5 px-4 rounded-md text-[12px] font-semibold text-[#828282] bg-transparent border-none cursor-pointer no-underline transition-all duration-150">Weekly</a>
                             </div>
                         </div>
                     </div>
                     <div className="flex items-center gap-1.5 mt-2">
                         <span className="w-2 h-2 rounded-full bg-[#27ae60] inline-block ml-2" /> <span className="text-[10px] font-semibold text-[#828282] tracking-wider">AVAILABLE</span>
-                        <span className="w-2 h-2 rounded-full bg-[#953002] inline-block ml-2" /> <span className="text-[10px] font-semibold text-[#828282] tracking-wider">BOOKED</span>
+                        <span className="w-2 h-2 rounded-full bg-[var(--brand-primary)] inline-block ml-2" /> <span className="text-[10px] font-semibold text-[#828282] tracking-wider">BOOKED</span>
                         <span className="w-2 h-2 rounded-full bg-[#b0b0b0] inline-block ml-2" /> <span className="text-[10px] font-semibold text-[#828282] tracking-wider">BLOCKED</span>
                     </div>
                 </div>
@@ -294,7 +270,7 @@ export default function MonthlyCalendarPage() {
                                         }`}
                                     >
                                         {/* Date number */}
-                                        <div className={`text-[13px] mb-1 leading-none ${dimmed ? "text-[#ccc]" : booking?.type === "booked" ? "text-[#953002] font-extrabold" : isToday ? "text-white font-extrabold" : "text-[#1d1d1d] font-bold"} ${isToday ? "bg-[#953002] rounded-full w-6 h-6 inline-flex items-center justify-center p-0" : ""}`}>
+                                        <div className={`text-[13px] mb-1 leading-none ${dimmed ? "text-[#ccc]" : booking?.type === "booked" ? "text-[var(--brand-primary)] font-extrabold" : isToday ? "text-white font-extrabold" : "text-[#1d1d1d] font-bold"} ${isToday ? "bg-[var(--brand-primary)] rounded-full w-6 h-6 inline-flex items-center justify-center p-0" : ""}`}>
                                             {cell.date.getDate()}
                                         </div>
 
@@ -302,7 +278,7 @@ export default function MonthlyCalendarPage() {
                                         {cell.currentMonth && booking && (
                                             <div className="flex-1 flex flex-col gap-1 items-start">
                                                 {booking.type === "booked" && (
-                                                    <div className="bg-[#953002] rounded w-full py-1 px-2.5 overflow-hidden">
+                                                    <div className="bg-[var(--brand-primary)] rounded w-full py-1 px-2.5 overflow-hidden">
                                                         <span className="text-[10px] font-bold text-white whitespace-nowrap tracking-wider">
                                                             {booking.guest === "Johnson" ? "BOOKED:" : ""} {booking.guest ? booking.guest.toUpperCase() : "BOOKED"}
                                                         </span>
@@ -350,17 +326,17 @@ export default function MonthlyCalendarPage() {
 
                     {/* Selection */}
                     <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-2">SELECTION</div>
-                    <div className="flex items-center gap-2.5 bg-white border border-[#953002] shadow-sm rounded-xl py-2.5 px-3.5 mb-4.5">
+                    <div className="flex items-center gap-2.5 bg-white border border-[var(--brand-primary)] shadow-sm rounded-xl py-2.5 px-3.5 mb-4.5">
                         <Calendar size={16} color="#953002" />
                         <div>
-                            <div className="text-[13px] font-bold text-[#953002]">{selectionLabel}</div>
+                            <div className="text-[13px] font-bold text-[var(--brand-primary)]">{selectionLabel}</div>
                         </div>
                     </div>
 
                     {/* New Status */}
                     <div className="text-[10px] font-bold text-[#828282] tracking-widest mb-2">NEW STATUS</div>
                     {[
-                        { key: "available", label: "Available", borderColorClass: "border-[#953002]" },
+                        { key: "available", label: "Available", borderColorClass: "border-[var(--brand-primary)]" },
                         { key: "booked", label: "Booked (Manual)", borderColorClass: "border-[#b0b0b0]" },
                         { key: "blocked", label: "Blocked / OOO", borderColorClass: "border-[#b0b0b0]" },
                     ].map((opt) => {
@@ -370,11 +346,11 @@ export default function MonthlyCalendarPage() {
                                 key={opt.key}
                                 onClick={() => setNewStatus(opt.key)}
                                 className={`flex items-center gap-2.5 w-full py-2.5 px-3.5 rounded-xl cursor-pointer mb-1.5 text-left relative ${
-                                    sel ? "border-2 border-[#953002] bg-[#fef5ef]" : "border border-[#e0e0e0] bg-white"
+                                    sel ? "border-2 border-[var(--brand-primary)] bg-[#fef5ef]" : "border border-[#e0e0e0] bg-white"
                                 }`}
                             >
                                 <span className={`w-3.5 h-3.5 flex-shrink-0 rounded-full inline-flex items-center justify-center ${
-                                    sel ? "bg-[#953002]" : `border-2 ${opt.borderColorClass}`
+                                    sel ? "bg-[var(--brand-primary)]" : `border-2 ${opt.borderColorClass}`
                                 }`}>
                                     {sel && <Check size={10} color="#fff" strokeWidth={3} />}
                                 </span>
@@ -410,11 +386,11 @@ export default function MonthlyCalendarPage() {
                     />
 
                     {/* Apply */}
-                    <button className="w-full py-2.5 bg-[#953002] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer mt-4 hover:bg-[#a63602] transition-colors">Apply Changes</button>
+                    <button className="w-full py-2.5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[13px] font-bold cursor-pointer mt-4 hover:bg-[#a63602] transition-colors">Apply Changes</button>
 
                     {/* Bulk Actions */}
                     <div className="text-[10px] font-bold text-[#828282] tracking-widest mt-4.5 mb-2">BULK ACTIONS</div>
-                    <button className="w-full text-left bg-transparent border-none text-[#953002] text-[12px] font-medium cursor-pointer underline p-0">
+                    <button className="w-full text-left bg-transparent border-none text-[var(--brand-primary)] text-[12px] font-medium cursor-pointer underline p-0">
                         Block all weekends in {MONTH_NAMES[month].slice(0, 3)}
                     </button>
                 </aside>

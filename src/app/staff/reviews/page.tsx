@@ -20,9 +20,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuthStore } from "@/store/auth/auth.store";
 import api from "@/lib/axios";
 
+/**
+ * Which review roles can see. Mirrors the backend's staffRole gate
+ * (StaffReviewController#assertKitchenReviewAccess / assertPropertyReviewAccess):
+ * OWNER/ADMIN platform roles bypass entirely; STAFF accounts are scoped by
+ * their staffRole, with "Staff Admin" granted both.
+ */
+function reviewAccess(user: { role?: string; staffRole?: string } | null) {
+  if (!user) return { canViewItem: false, canViewBooking: false };
+  if (user.role !== "staff") return { canViewItem: true, canViewBooking: true };
+  const staffRole = user.staffRole;
+  return {
+    canViewItem: staffRole === "Kitchen Staff" || staffRole === "Staff Admin",
+    canViewBooking: staffRole === "Property Staff" || staffRole === "Staff Admin",
+  };
+}
+
 export default function ReviewManagementPage() {
   const { user } = useAuthStore();
   const propertyId = user?.propertyId || 1;
+
+  const { canViewItem, canViewBooking } = reviewAccess(user);
+  const [reviewType, setReviewType] = useState<"item" | "booking">(canViewItem ? "item" : "booking");
+  // If access resolves after mount (e.g. user loads async) and the current
+  // selection isn't actually visible to this role, fall back to whichever is.
+  useEffect(() => {
+    if (reviewType === "item" && !canViewItem && canViewBooking) setReviewType("booking");
+    else if (reviewType === "booking" && !canViewBooking && canViewItem) setReviewType("item");
+  }, [canViewItem, canViewBooking, reviewType]);
+
+  const reviewsEndpoint = reviewType === "item" ? "/staff/reviews" : "/staff/reviews/booking";
+  const flagEndpoint = (id: number | string) =>
+    reviewType === "item" ? `/staff/reviews/${id}/flag` : `/staff/reviews/booking/${id}/flag`;
 
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +66,7 @@ export default function ReviewManagementPage() {
   const fetchReviews = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get(`/staff/reviews?propertyId=${propertyId}`);
+      const res = await api.get(`${reviewsEndpoint}?propertyId=${propertyId}`);
       setReviews(res.data);
     } catch (err) {
       console.error("Failed to fetch reviews", err);
@@ -49,7 +78,8 @@ export default function ReviewManagementPage() {
 
   useEffect(() => {
     fetchReviews();
-  }, [propertyId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId, reviewType]);
 
   const searchFiltered = reviews.filter((r) => {
     return r.guest_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -74,7 +104,7 @@ export default function ReviewManagementPage() {
     }
 
     try {
-      await api.post(`/staff/reviews/${selectedReview.id}/flag`, {
+      await api.post(flagEndpoint(selectedReview.id), {
         propertyId,
         flagType,
         flagReason,
@@ -109,11 +139,24 @@ export default function ReviewManagementPage() {
     );
   };
 
+  if (!canViewItem && !canViewBooking) {
+    return (
+      <>
+        <StaffHeader title="Review Management" subtitle="Monitor and moderate guest reviews" searchPlaceholder="Search reviews..." />
+        <main className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center gap-3 pt-[80px] text-center px-6">
+          <ShieldAlert size={28} className="text-[#9E7B6A]" />
+          <p className="text-[15px] font-bold text-[#1A1A1A]">Review management isn&apos;t available for your staff role</p>
+          <p className="text-[13px] text-[#9E7B6A] max-w-sm">Ask a Staff Admin if you believe this is a mistake.</p>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
-      <StaffHeader 
-        title="Review Management" 
-        subtitle="Monitor and moderate guest reviews" 
+      <StaffHeader
+        title="Review Management"
+        subtitle="Monitor and moderate guest reviews"
         searchPlaceholder="Search reviews..."
         onSearch={(query) => setSearch(query)}
       />
@@ -129,13 +172,33 @@ export default function ReviewManagementPage() {
                 <Star size={20} className="text-[#C05621]" />
               </div>
               <div>
-                <h2 className="text-[16px] lg:text-[18px] font-extrabold text-[#1A1A1A] m-0 leading-tight">Guest Item Reviews</h2>
+                <h2 className="text-[16px] lg:text-[18px] font-extrabold text-[#1A1A1A] m-0 leading-tight">
+                  {reviewType === "item" ? "Guest Item Reviews" : "Booking Reviews"}
+                </h2>
                 <p className="text-[11px] lg:text-[13px] font-semibold text-[#9E7B6A] opacity-80 m-0 leading-tight hidden lg:block">Flag inappropriate content for admin moderation</p>
                 <p className="text-[11px] lg:text-[13px] font-semibold text-[#9E7B6A] opacity-80 m-0 leading-tight lg:hidden">Flag inappropriate content</p>
               </div>
             </div>
 
             <div className="hidden lg:block h-10 border-l border-[#F0EBE7]"></div>
+
+            {/* Item vs booking reviews — only shown to roles with access to both (Staff Admin, or OWNER/ADMIN) */}
+            {canViewItem && canViewBooking && (
+              <div className="flex items-center bg-[#F5F6F8] rounded-xl p-1 shadow-inner border border-[#E8E8E8]">
+                <button
+                  onClick={() => { setReviewType("item"); setActiveTab("all"); }}
+                  className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all ${reviewType === "item" ? "bg-white text-[#1A1A1A] shadow-sm" : "text-[#9E7B6A] hover:text-[#1A1A1A]"}`}
+                >
+                  Item Reviews
+                </button>
+                <button
+                  onClick={() => { setReviewType("booking"); setActiveTab("all"); }}
+                  className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all ${reviewType === "booking" ? "bg-white text-[#1A1A1A] shadow-sm" : "text-[#9E7B6A] hover:text-[#1A1A1A]"}`}
+                >
+                  Booking Reviews
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center bg-[#F5F6F8] rounded-xl p-1 shadow-inner border border-[#E8E8E8] w-full lg:w-auto mt-2 lg:mt-0">
@@ -166,7 +229,7 @@ export default function ReviewManagementPage() {
           
           <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 border-b border-[#F0EBE7] flex-shrink-0">
             <div className="col-span-3 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">Guest & Date</div>
-            <div className="col-span-2 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">Item</div>
+            <div className="col-span-2 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">{reviewType === "item" ? "Item" : "Property"}</div>
             <div className="col-span-2 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">Rating</div>
             <div className="col-span-4 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">Comment</div>
             <div className="col-span-1 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase text-center">Action</div>
@@ -213,7 +276,7 @@ export default function ReviewManagementPage() {
 
                     <div className="lg:col-span-2 flex items-center">
                       <span className="text-[13px] font-semibold text-[#1A1A1A] bg-[#FFF8F0] px-3 py-1 rounded-lg inline-block">
-                        {review.menu_item_name}
+                        {reviewType === "item" ? review.menu_item_name : "Stay Review"}
                       </span>
                     </div>
 
