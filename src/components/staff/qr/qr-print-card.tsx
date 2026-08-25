@@ -37,9 +37,9 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
 
   if (!qr) {
     return (
-      <div className="h-full flex items-center justify-center text-sm text-[var(--gray-3)]">
+      <div className="h-full flex items-center justify-center text-sm text-[#9E7B6A]">
         QR context not found.{" "}
-        <button className="ml-1 text-[var(--brand-primary)] underline" onClick={() => router.push("/staff/qr")}>Back to list</button>
+        <button className="ml-1 text-[#C05621] underline" onClick={() => router.push("/staff/qr")}>Back to list</button>
       </div>
     );
   }
@@ -54,17 +54,17 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
       {/* Header */}
       <div className="flex-none flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
-          <button onClick={() => router.push(`/staff/qr/${qrId}`)} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[var(--gray-2)] transition-colors shrink-0">
+          <button onClick={() => router.push(`/staff/qr/${qrId}`)} className="p-1 hover:bg-[rgba(0,0,0,0.04)] rounded-lg text-[#8A7568] transition-colors shrink-0">
             <ArrowLeft size={16} />
           </button>
           <div className="min-w-0">
-            <h1 className="text-sm font-bold text-[var(--black-2)] leading-tight truncate">Print QR — {qr.name}</h1>
-            <p className="text-[10px] text-[var(--gray-3)] truncate">Customize and download your QR card for printing.</p>
+            <h1 className="text-sm font-bold text-[#1A1A1A] leading-tight truncate">Print QR — {qr.name}</h1>
+            <p className="text-[10px] text-[#9E7B6A] truncate">Customize and download your QR card for printing.</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => router.push("/staff/qr")}>Back to List</Button>
-          <Button size="sm" className="bg-[var(--brand-primary)] text-white text-xs h-7 gap-1" onClick={handleSaveAndPrint}>
+          <Button size="sm" className="bg-[#C05621] text-white text-xs h-7 gap-1" onClick={handleSaveAndPrint}>
             <Printer size={12} /> Save & Print
           </Button>
         </div>
@@ -74,23 +74,23 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
       <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* Left: Customization */}
         <div className="flex-1 lg:overflow-y-auto">
-          <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+          <Card className="bg-white/70 backdrop-blur-xl py-0 gap-0 border border-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <CardContent className="p-5 flex flex-col gap-5">
-              <h2 className="text-xs font-bold text-[var(--black-2)]">Customization</h2>
+              <h2 className="text-xs font-bold text-[#1A1A1A]">Customization</h2>
 
               {/* Instruction text */}
               <div>
-                <Label className="text-[10px] font-bold text-[var(--black-2)] uppercase">Instruction Text</Label>
-                <Input value={instruction} onChange={(e) => setInstruction(e.target.value)} placeholder="e.g. Scan to Order Food" className="mt-1 text-xs rounded-[8px] border-[var(--gray-5)]" />
-                <p className="text-[10px] text-[var(--gray-4)] mt-0.5">This appears below the QR code on the printed card.</p>
+                <Label className="text-[10px] font-bold text-[#1A1A1A] uppercase">Instruction Text</Label>
+                <Input value={instruction} onChange={(e) => setInstruction(e.target.value)} placeholder="e.g. Scan to Order Food" className="mt-1 text-xs rounded-xl border-[#F0EBE7]" />
+                <p className="text-[10px] text-[#D4C4B5] mt-0.5">This appears below the QR code on the printed card.</p>
               </div>
 
               {/* Show room/table number */}
               <div className="flex items-start gap-2.5">
                 <Checkbox id="show-room" checked={showRoom} onCheckedChange={(v) => setShowRoom(!!v)} className="mt-0.5" />
                 <div>
-                  <Label htmlFor="show-room" className="text-xs font-medium text-[var(--black-2)] cursor-pointer">Show Room / Table Number</Label>
-                  <p className="text-[10px] text-[var(--gray-3)]">Display the context name prominently on the card.</p>
+                  <Label htmlFor="show-room" className="text-xs font-medium text-[#1A1A1A] cursor-pointer">Show Room / Table Number</Label>
+                  <p className="text-[10px] text-[#9E7B6A]">Display the context name prominently on the card.</p>
                 </div>
               </div>
 
@@ -98,8 +98,8 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
               <div className="flex items-start gap-2.5">
                 <Checkbox id="show-logo" checked={showLogo} onCheckedChange={(v) => setShowLogo(!!v)} className="mt-0.5" />
                 <div>
-                  <Label htmlFor="show-logo" className="text-xs font-medium text-[var(--black-2)] cursor-pointer">Show Hotel / Brand Logo</Label>
-                  <p className="text-[10px] text-[var(--gray-3)]">Include the property&apos;s branding at the top of the card.</p>
+                  <Label htmlFor="show-logo" className="text-xs font-medium text-[#1A1A1A] cursor-pointer">Show Hotel / Brand Logo</Label>
+                  <p className="text-[10px] text-[#9E7B6A]">Include the property&apos;s branding at the top of the card.</p>
                 </div>
               </div>
             </CardContent>
@@ -108,16 +108,16 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
 
         {/* Right: Live Preview */}
         <div className="w-full lg:w-[300px] lg:shrink-0">
-          <Card className="bg-white py-0 gap-0 border border-[var(--gray-5)] rounded-[10px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] h-full">
+          <Card className="bg-white/70 backdrop-blur-xl py-0 gap-0 border border-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-full">
             <CardContent className="p-5 h-full flex flex-col">
-              <h2 className="text-xs font-bold text-[var(--black-2)] mb-3">Live Preview</h2>
+              <h2 className="text-xs font-bold text-[#1A1A1A] mb-3">Live Preview</h2>
 
               {/* Print card preview */}
               <div className="flex-1 flex items-center justify-center">
-                <div className="w-[220px] bg-white border border-[var(--gray-5)] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+                <div className="w-[220px] bg-white border border-[#F0EBE7] rounded-[12px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
                   {/* Brand header */}
                   {showLogo && (
-                    <div className="bg-[var(--brand-primary)] px-4 py-3 flex items-center gap-2">
+                    <div className="bg-[#C05621] px-4 py-3 flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                         <span className="text-[8px] font-bold text-white">{propertyName ? propertyName[0].toUpperCase() : "H"}</span>
                       </div>
@@ -128,16 +128,16 @@ export default function QrPrintCard({ qrId }: { qrId: string }) {
                   {/* QR section */}
                   <div className="px-4 py-5 flex flex-col items-center gap-2.5">
                     {showRoom && (
-                      <p className="text-xs font-bold text-[var(--black-2)]">{qr.name}</p>
+                      <p className="text-xs font-bold text-[#1A1A1A]">{qr.name}</p>
                     )}
-                    <div className="w-[140px] h-[140px] bg-white border border-[var(--gray-5)] rounded-[8px] flex items-center justify-center overflow-hidden p-2">
+                    <div className="w-[140px] h-[140px] bg-white border border-[#F0EBE7] rounded-xl flex items-center justify-center overflow-hidden p-2">
                       {qr.qrImageUrl ? (
                         <img src={qr.qrImageUrl} alt={`QR Code for ${qr.name}`} className="w-full h-full object-contain" />
                       ) : (
-                        <QrCode size={64} className="text-[var(--gray-2)]" />
+                        <QrCode size={64} className="text-[#8A7568]" />
                       )}
                     </div>
-                    <p className="text-[10px] text-[var(--gray-3)] text-center">{instruction}</p>
+                    <p className="text-[10px] text-[#9E7B6A] text-center">{instruction}</p>
                   </div>
                 </div>
               </div>
