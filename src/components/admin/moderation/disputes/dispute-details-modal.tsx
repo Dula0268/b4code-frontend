@@ -26,9 +26,17 @@ export default function DisputeDetailsModal({
   if (!dispute) return null;
 
   const handleResolve = async (approved: boolean) => {
-    await resolveDispute(dispute.id, approved ? "Resolved in Guest Favor" : "Resolved in Host Favor", approved);
+    // Build a rich resolution string that matches the backend's outcome labelling
+    let resolutionText: string;
+    if (isComplaint) {
+      resolutionText = approved ? "Complaint Resolved (Guest Wins)" : "Complaint Dismissed";
+    } else {
+      resolutionText = approved ? "Approved Refund" : "Denied Refund (Host Wins)";
+    }
+
+    await resolveDispute(dispute.id, resolutionText, approved);
     setDisputeResolved({
-      amount: approved ? dispute.amount : "LKR 0.00",
+      amount: approved && !isComplaint ? dispute.amount : "LKR 0.00",
       bookingId: dispute.bookingId || "#BK-UNKNOWN",
       caseId: dispute.disputeId,
       time: new Date().toLocaleTimeString(),

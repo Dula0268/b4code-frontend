@@ -41,3 +41,4 @@ public/swe-worker-*.js
 public/sw.js.map
 public/workbox-*.js.map
 public/swe-worker-*.js.map
+public/fallback-*.js

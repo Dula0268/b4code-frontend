@@ -60,6 +60,7 @@ export default function CheckoutClient() {
   const finalGuestName = isRoomQr ? (roomStatus?.guestName || "") : walkInName;
 
   const serviceChargeRate = useCartStore((s) => s.serviceChargeRate);
+  const taxRate = useCartStore((s) => s.taxRate);
 
   const linesMap = useCartStore((s) => s.lines);
   const setQty = useCartStore((s) => s.setQty);
@@ -76,6 +77,7 @@ export default function CheckoutClient() {
     return s.subtotal();
   });
   const serviceCharge = useCartStore((s) => { const _lines = s.lines; return s.serviceCharge(); });
+  const tax = useCartStore((s) => { const _lines = s.lines; return s.tax(); });
   const total = useCartStore((s) => { const _lines = s.lines; return s.total(); });
 
   const [kitchenInstructions, setKitchenInstructions] = React.useState("");
@@ -102,10 +104,17 @@ export default function CheckoutClient() {
     }
 
     // Walk-in (table QR) requires phone
-    if (isTableQr && !walkInPhone) {
-      toast.error("Please provide your phone number.");
-      setIsProcessing(false);
-      return;
+    if (isTableQr) {
+      if (!walkInPhone) {
+        toast.error("Please provide your phone number.");
+        setIsProcessing(false);
+        return;
+      }
+      if (!/^\d{10}$/.test(walkInPhone)) {
+        toast.error("Please enter a valid 10-digit phone number.");
+        setIsProcessing(false);
+        return;
+      }
     }
 
     // Room and table guests now share the same two payment options.
@@ -124,7 +133,7 @@ export default function CheckoutClient() {
       })),
       subtotal,
       serviceCharge,
-      tax: 0,
+      tax,
       total,
       location,
       guestName: finalGuestName,
@@ -141,8 +150,13 @@ export default function CheckoutClient() {
       // If guest chose online payment, redirect through PayHere before confirmation
       if (resolvedPaymentMethod === "online") {
         try {
+          // Charge exactly what the server persisted on the order, not the local
+          // cart estimate — otherwise the guest could be charged a different amount
+          // than the order they (and staff) are looking at.
+          const amountDue =
+            useOrderStore.getState().currentOrder?.total ?? total;
           const response = await paymentApi.initiatePayment({
-            amount: total,
+            amount: amountDue,
             currency: "LKR",
             paymentMethod: "VISA",
             firstName: finalGuestName.split(" ")[0] || "Guest",
@@ -190,7 +204,11 @@ export default function CheckoutClient() {
   };
 
   return (
-    <div className="max-w-[1680px] mx-auto px-4 md:px-6 py-6 pb-24 md:pb-12">
+    // The ordering shell (`src/app/guest/order/layout.tsx` -> OrderingShell) already
+    // supplies the horizontal gutter and the max width, so this wrapper must not add
+    // a second one — doing so squeezed the mobile content area and pushed the order
+    // rows past the viewport edge.
+    <div className="w-full min-w-0 py-6 pb-24 md:pb-12">
       {/* ─── Breadcrumbs + Subtitle ─── */}
       <div className="space-y-1.5 mb-8">
         <nav className="flex items-center gap-2 text-sm font-medium">
@@ -229,15 +247,15 @@ export default function CheckoutClient() {
       </div>
 
       {/* ─── Two-column layout ─── */}
-      <div className="flex flex-col md:flex-row gap-6 lg:gap-8 items-start">
+      <div className="flex flex-col xl:flex-row gap-6 lg:gap-8 items-start">
         {/* ════════════════════ LEFT: Order + Instructions ════════════════════ */}
-        <div className="w-full md:w-[700px] lg:w-[820px] xl:w-[900px] md:shrink-0 space-y-6">
+        <div className="flex-1 min-w-0 w-full space-y-6">
           {/* ── Your Order card ── */}
           <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden relative">
             <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none" />
             
             {/* Header */}
-            <div className="flex items-center justify-between px-6 md:px-8 py-6 border-b border-gray-100/80 relative z-10">
+            <div className="flex items-center justify-between px-4 sm:px-6 md:px-8 py-5 md:py-6 border-b border-gray-100/80 relative z-10 gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-900 shadow-sm">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -270,10 +288,10 @@ export default function CheckoutClient() {
                 return (
                 <div
                   key={lineKey}
-                  className="flex gap-4 md:gap-6 items-center px-6 md:px-8 py-5 bg-white/50 hover:bg-white/80 transition-colors duration-300 group"
+                  className="flex gap-3 sm:gap-4 md:gap-6 items-center px-4 sm:px-6 md:px-8 py-5 bg-white/50 hover:bg-white/80 transition-colors duration-300 group"
                 >
                   {/* Thumbnail 96×96 */}
-                  <div className="relative shrink-0 w-24 h-24 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
+                  <div className="relative shrink-0 w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
                     {item.imageUrl ? (
                       <Image
                         src={item.imageUrl}
@@ -288,22 +306,22 @@ export default function CheckoutClient() {
                   {/* Details */}
                   <div className="flex-1 min-w-0 space-y-2 py-1">
                     {/* Title + price row */}
-                    <div className="flex items-start justify-between gap-4">
-                      <h3 className="text-lg font-bold text-gray-900 leading-tight group-hover:text-[var(--brand-primary)] transition-colors">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-tight min-w-0 truncate group-hover:text-[var(--brand-primary)] transition-colors">
                         {item.title}
                       </h3>
-                      <span className="text-lg font-bold text-gray-900 shrink-0">
+                      <span className="text-base sm:text-lg font-bold text-gray-900 shrink-0">
                         {formatLkr(unitPrice)}
                       </span>
                     </div>
 
                     {/* Notes/description */}
-                    <p className="text-sm text-gray-500 font-medium truncate pr-8">
+                    <p className="text-sm text-gray-500 font-medium truncate">
                       {item.description}
                     </p>
 
                     {/* Qty control + Remove */}
-                    <div className="flex items-center gap-4 pt-2">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-x-4 pt-2">
                       {/* Qty pill */}
                       <div className="flex items-center bg-white border border-gray-100 rounded-full group-hover:border-[var(--brand-primary)]/20 transition-colors shadow-sm p-1">
                         <button
@@ -314,7 +332,7 @@ export default function CheckoutClient() {
                             <path d="M3 7h8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                           </svg>
                         </button>
-                        <span className="w-8 text-center text-sm font-bold text-gray-900">
+                        <span className="w-6 sm:w-8 text-center text-sm font-bold text-gray-900">
                           {qty}
                         </span>
                         <button
@@ -362,7 +380,7 @@ export default function CheckoutClient() {
           {/* ── Kitchen Instructions card ── */}
           <div
             id="kitchen-instructions"
-            className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] p-6 md:p-8 space-y-5 scroll-mt-24 transition-all focus-within:shadow-[0_12px_40px_rgba(0,0,0,0.06)]"
+            className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] p-5 sm:p-6 md:p-8 space-y-5 scroll-mt-24 transition-all focus-within:shadow-[0_12px_40px_rgba(0,0,0,0.06)]"
           >
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100/50 flex items-center justify-center text-[var(--brand-primary)] shadow-sm">
@@ -405,13 +423,13 @@ export default function CheckoutClient() {
         </div>
 
         {/* ════════════════════ RIGHT: Payment & Actions ════════════════════ */}
-        <div className="w-full md:flex-1 md:min-w-[380px] md:max-w-[460px] space-y-6 md:sticky md:top-[88px]">
+        <div className="w-full xl:w-[420px] shrink-0 space-y-6 xl:sticky xl:top-[88px] xl:max-h-[calc(100vh-104px)] xl:overflow-y-auto">
           {/* ── Payment Details card ── */}
           <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] overflow-hidden relative">
             <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[var(--brand-primary)]/5 to-transparent pointer-events-none" />
 
             {/* Top section: summary + payment methods */}
-            <div className="p-6 md:p-8 border-b border-gray-100/80 space-y-8 relative z-10">
+            <div className="p-5 sm:p-6 md:p-8 border-b border-gray-100/80 space-y-8 relative z-10">
               {/* Heading */}
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100/50 flex items-center justify-center text-blue-600 shadow-sm">
@@ -441,6 +459,16 @@ export default function CheckoutClient() {
                     {formatLkr(serviceCharge)}
                   </span>
                 </div>
+                {tax > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-500">
+                      Tax ({Math.round(taxRate * 100)}%)
+                    </span>
+                    <span className="text-base font-bold text-gray-900">
+                      {formatLkr(tax)}
+                    </span>
+                  </div>
+                )}
                 <div className="border-t border-dashed border-gray-200 pt-4 mt-2" />
                 <div className="flex items-end justify-between">
                   <span className="text-lg font-bold text-gray-900">Total</span>
@@ -510,9 +538,11 @@ export default function CheckoutClient() {
                     />
                     <input
                       type="text"
+                      inputMode="numeric"
+                      maxLength={10}
                       placeholder="Phone Number *"
                       value={walkInPhone}
-                      onChange={(e) => setWalkInPhone(e.target.value)}
+                      onChange={(e) => setWalkInPhone(e.target.value.replace(/\D/g, ""))}
                       className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-base font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)] transition-all shadow-sm"
                       required
                     />

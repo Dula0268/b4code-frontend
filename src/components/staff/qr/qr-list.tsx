@@ -18,13 +18,13 @@ const TAB_ICONS: Record<QRTab, React.ReactNode> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  Table: "bg-[rgba(149,48,2,0.08)] text-[var(--brand-primary)]",
-  Room: "bg-[rgba(39,174,96,0.08)] text-[var(--state-success)]",
+  Table: "bg-[rgba(192,86,33,0.08)] text-[#C05621]",
+  Room: "bg-[rgba(45,125,92,0.08)] text-[#2D7D5C]",
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  Table: <UtensilsCrossed size={16} className="text-[var(--brand-primary)]" />,
-  Room: <Home size={16} className="text-[var(--state-success)]" />,
+  Table: <UtensilsCrossed size={16} className="text-[#C05621]" />,
+  Room: <Home size={16} className="text-[#2D7D5C]" />,
 };
 
 const PER_PAGE = 5;
@@ -103,7 +103,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       <StaffHeader
         title="QR Management"
         subtitle="Manage and track guest QR codes"
@@ -115,20 +115,20 @@ export default function QrList({ propertyId }: { propertyId: number }) {
           </Button>
         }
       />
-      <div className="flex flex-col flex-1 px-6 py-4 gap-4 mt-[64px] overflow-y-auto">
+      <div className="flex flex-col flex-1 min-h-0 px-6 py-4 gap-4 mt-[64px] overflow-y-auto">
         <div className="max-w-7xl mx-auto w-full flex flex-col gap-4 h-full">
       {/* Success banner */}
       {successMsg && (
-        <div className="flex-none flex items-center gap-2 bg-[rgba(39,174,96,0.08)] border border-[rgba(39,174,96,0.2)] rounded-xl px-4 py-2 text-sm">
-          <CheckCircle size={16} className="text-[var(--state-success)]" />
-          <span className="text-[var(--black-2)] font-medium flex-1">{successMsg}</span>
+        <div className="flex-none flex items-center gap-2 bg-[rgba(45,125,92,0.08)] border border-[rgba(45,125,92,0.2)] rounded-xl px-4 py-2 text-sm">
+          <CheckCircle size={16} className="text-[#2D7D5C]" />
+          <span className="text-[#1A1A1A] font-medium flex-1">{successMsg}</span>
           <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setSuccess(null)}><X size={14} /></Button>
         </div>
       )}
 
       {/* Error / Info banner */}
       {error && (
-        <div className={`flex-none flex items-center gap-2 rounded-[10px] px-4 py-2 text-sm border ${
+        <div className={`flex-none flex items-center gap-2 rounded-2xl px-4 py-2 text-sm border ${
           error.includes("offline") || error.includes("Connection")
             ? "bg-[#FFF8F0] border-[#F0EBE7] text-[#C05621]"
             : "bg-[rgba(220,53,69,0.08)] border-[rgba(220,53,69,0.2)] text-red-500"
@@ -185,48 +185,48 @@ export default function QrList({ propertyId }: { propertyId: number }) {
             <div className="flex-1 overflow-x-auto custom-scrollbar flex flex-col">
               <div className="min-w-[600px] flex-1 flex flex-col">
                 {/* Table header */}
-                <div className="flex-none grid grid-cols-[1fr_120px_100px_140px] gap-4 px-4 py-2 border-b border-[var(--gray-5)] bg-white/50">
-                  <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider">Context Name</span>
-                  <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider">Type</span>
-                  <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider">Status</span>
-                  <span className="text-[10px] font-bold text-[var(--gray-3)] uppercase tracking-wider text-right">Actions</span>
+                <div className="flex-none grid grid-cols-[1fr_120px_100px_140px] gap-4 px-4 py-2 border-b border-[#F0EBE7] bg-white/50">
+                  <span className="text-[10px] font-bold text-[#9E7B6A] uppercase tracking-wider">Context Name</span>
+                  <span className="text-[10px] font-bold text-[#9E7B6A] uppercase tracking-wider">Type</span>
+                  <span className="text-[10px] font-bold text-[#9E7B6A] uppercase tracking-wider">Status</span>
+                  <span className="text-[10px] font-bold text-[#9E7B6A] uppercase tracking-wider text-right">Actions</span>
                 </div>
 
                 {/* Rows */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                   {paged.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
-                      <p className="text-xs text-[var(--gray-3)]">No QR contexts found.</p>
+                      <p className="text-xs text-[#9E7B6A]">No QR contexts found.</p>
                     </div>
                   ) : (
                     paged.map((qr) => (
-                      <div key={qr.id} className="grid grid-cols-[1fr_120px_100px_140px] gap-4 items-center px-4 py-3 border-b border-[var(--gray-5)] last:border-b-0 hover:bg-[rgba(0,0,0,0.01)] transition-colors">
+                      <div key={qr.id} className="grid grid-cols-[1fr_120px_100px_140px] gap-4 items-center px-4 py-3 border-b border-[#F0EBE7] last:border-b-0 hover:bg-[rgba(0,0,0,0.01)] transition-colors">
                         {/* Name */}
                         <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                          <div className="w-8 h-8 rounded-lg bg-[rgba(149,48,2,0.06)] flex items-center justify-center shrink-0">
-                            {TYPE_ICONS[qr.type] || <QrCode size={16} className="text-[var(--brand-primary)]" />}
+                          <div className="w-8 h-8 rounded-lg bg-[rgba(192,86,33,0.06)] flex items-center justify-center shrink-0">
+                            {TYPE_ICONS[qr.type] || <QrCode size={16} className="text-[#C05621]" />}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-[var(--black-2)] truncate">{qr.name}</p>
-                            <p className="text-[10px] text-[var(--gray-3)] truncate">{qr.location}</p>
+                            <p className="text-xs font-bold text-[#1A1A1A] truncate">{qr.name}</p>
+                            <p className="text-[10px] text-[#9E7B6A] truncate">{qr.location}</p>
                           </div>
                         </div>
                         {/* Type */}
-                        <Badge variant="outline" className={`text-[9px] font-bold border-0 w-fit ${TYPE_COLORS[qr.type] ?? "bg-[rgba(0,0,0,0.04)] text-[var(--gray-2)]"}`}>
+                        <Badge variant="outline" className={`text-[9px] font-bold border-0 w-fit ${TYPE_COLORS[qr.type] ?? "bg-[rgba(0,0,0,0.04)] text-[#8A7568]"}`}>
                           {qr.type}
                         </Badge>
                         {/* Status */}
                         <Badge variant="outline" className={`text-[9px] font-bold border-0 w-fit ${
-                          qr.status === "active" ? "bg-[rgba(39,174,96,0.08)] text-[var(--state-success)]" : "bg-[rgba(130,130,130,0.08)] text-[var(--gray-3)]"
+                          qr.status === "active" ? "bg-[rgba(45,125,92,0.08)] text-[#2D7D5C]" : "bg-[rgba(130,130,130,0.08)] text-[#9E7B6A]"
                         }`}>
                           {qr.status === "active" ? "Active" : "Inactive"}
                         </Badge>
                         {/* Actions */}
                         <div className="flex items-center gap-1 justify-end">
-                          <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-[var(--gray-3)]">
+                          <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-[#9E7B6A]">
                             <Link href={`/staff/qr/${qr.id}`}><QrCode size={13} /></Link>
                           </Button>
-                          <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-[var(--gray-3)]">
+                          <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-[#9E7B6A]">
                             <Link href={`/staff/qr/${qr.id}/edit`}><Pencil size={13} /></Link>
                           </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" onClick={() => handleDeleteQR(qr.id)} disabled={loading}>
@@ -236,7 +236,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
                             checked={qr.status === "active"}
                             onCheckedChange={() => handleToggleStatus(qr.id)}
                             disabled={loading}
-                            className="data-[state=checked]:bg-[var(--state-success)] data-[state=unchecked]:bg-[var(--gray-4)] ml-1"
+                            className="data-[state=checked]:bg-[#2D7D5C] data-[state=unchecked]:bg-[#D4C4B5] ml-1"
                           />
                         </div>
                       </div>
@@ -248,9 +248,9 @@ export default function QrList({ propertyId }: { propertyId: number }) {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex-none flex items-center justify-between px-4 py-2 border-t border-[var(--gray-5)] bg-white/50">
-                <p className="text-[10px] text-[var(--gray-3)] hidden sm:block">
-                  Showing <span className="font-bold text-[var(--black-2)]">{page * PER_PAGE + 1}</span> to <span className="font-bold text-[var(--black-2)]">{Math.min((page + 1) * PER_PAGE, filtered.length)}</span> of <span className="font-bold text-[var(--black-2)]">{filtered.length}</span> results
+              <div className="flex-none flex items-center justify-between px-4 py-2 border-t border-[#F0EBE7] bg-white/50">
+                <p className="text-[10px] text-[#9E7B6A] hidden sm:block">
+                  Showing <span className="font-bold text-[#1A1A1A]">{page * PER_PAGE + 1}</span> to <span className="font-bold text-[#1A1A1A]">{Math.min((page + 1) * PER_PAGE, filtered.length)}</span> of <span className="font-bold text-[#1A1A1A]">{filtered.length}</span> results
                 </p>
                 <div className="flex items-center gap-1 w-full sm:w-auto justify-between sm:justify-end">
                   <Button variant="outline" size="icon" className="h-6 w-6" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft size={12} /></Button>
@@ -260,7 +260,7 @@ export default function QrList({ propertyId }: { propertyId: number }) {
                         key={i}
                         variant={page === i ? "default" : "outline"}
                         size="icon"
-                        className={`h-6 w-6 text-[10px] ${page === i ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary)]/90" : ""}`}
+                        className={`h-6 w-6 text-[10px] ${page === i ? "bg-[#C05621] text-white hover:bg-[#C05621]/90" : ""}`}
                         onClick={() => setPage(i)}
                       >
                         {i + 1}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -15,6 +15,8 @@ import {
   Eye,
   Play,
   User,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   useStaffOrdersStore,
@@ -171,7 +173,7 @@ function OrderCard({
       <div className="bg-white/40 border-t border-[#F0EBE7]/50 px-5 py-4 flex flex-col gap-3.5 z-10">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold tracking-widest text-[#9E7B6A] uppercase">{order.totalItems} items</span>
-          <span className="text-[17px] font-extrabold text-[#1A1A1A] tracking-tight">LKR {order.total.toLocaleString()}</span>
+          <span className="text-[17px] font-extrabold text-[#1A1A1A] tracking-tight">LKR {order.total.toLocaleString("en-LK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
         </div>
         {renderActions()}
       </div>
@@ -272,31 +274,61 @@ export default function StaffOrderQueue() {
   const [searchQuery, setSearchQuery] = useState("");
   const [rejectingOrder, setRejectingOrder] = useState<string | null>(null);
 
-  const orders = useStaffOrdersStore((s) => s.orders);
   const toast = useStaffOrdersStore((s) => s.toast);
-  const fetchOrders = useStaffOrdersStore((s) => s.fetchOrders);
+  const queue = useStaffOrdersStore((s) => s.queue);
+  const orders = useStaffOrdersStore((s) => s.orders);
+  const fetchOrderPage = useStaffOrdersStore((s) => s.fetchOrderPage);
+  const fetchStatusCounts = useStaffOrdersStore((s) => s.fetchStatusCounts);
   const acceptOrder = useStaffOrdersStore((s) => s.acceptOrder);
   const rejectOrder = useStaffOrdersStore((s) => s.rejectOrder);
   const advanceStatus = useStaffOrdersStore((s) => s.advanceStatus);
   const clearToast = useStaffOrdersStore((s) => s.clearToast);
   const getCountByStatus = useStaffOrdersStore((s) => s.getCountByStatus);
-  const setupSse = useStaffOrdersStore((s) => s.setupSse);
-  const stopSse = useStaffOrdersStore((s) => s.stopSse);
 
   const { user } = useAuthStore();
 
-  // Orders and SSE are now fetched and managed globally via StaffGlobalOrdersProvider
+  // SSE + the unpaginated `orders` cache (sidebar badge/notifications) are handled
+  // globally via StaffGlobalOrdersProvider. The queue tab itself loads its own
+  // server-paginated page so it never has to render an unbounded list.
+  const propertyId = Number(
+    user?.propertyId || (typeof window !== "undefined" ? localStorage.getItem("selected_property_id") : "1") || "1"
+  );
 
-  const filteredOrders = orders.filter(
+  useEffect(() => {
+    fetchOrderPage(propertyId, { status: activeTab, page: 0 });
+    fetchStatusCounts(propertyId);
+  }, [propertyId, activeTab, fetchOrderPage, fetchStatusCounts]);
+
+  // The `orders` cache above is kept live by StaffGlobalOrdersProvider's SSE
+  // connection (plus its 15s poll fallback), but this tab renders from the
+  // separate, server-paginated `queue` slice, which only refetches on tab/
+  // property change. Re-run the current page's fetch whenever `orders`
+  // changes so a new or updated order shows up here without a manual
+  // refresh. Skip the very first run — the effect above already fetched.
+  const skipInitialOrdersSync = useRef(true);
+  useEffect(() => {
+    if (skipInitialOrdersSync.current) {
+      skipInitialOrdersSync.current = false;
+      return;
+    }
+    fetchOrderPage(propertyId, { status: activeTab, page: queue.page });
+    fetchStatusCounts(propertyId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders]);
+
+  const goToPage = (page: number) => {
+    fetchOrderPage(propertyId, { status: activeTab, page });
+  };
+
+  const filteredOrders = queue.items.filter(
     (o) =>
-      o.status === activeTab &&
-      (searchQuery === "" ||
-        o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.table.toLowerCase().includes(searchQuery.toLowerCase()))
+      searchQuery === "" ||
+      o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.table.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       <StaffHeader
         title="Orders Queue"
         subtitle="Manage incoming kitchen orders in real-time"
@@ -342,7 +374,7 @@ export default function StaffOrderQueue() {
       </div>
 
       {/* Orders Grid */}
-      <div className="flex-1 px-4 sm:px-5 py-5 overflow-y-auto">
+      <div className="flex-1 min-h-0 px-4 sm:px-5 py-5 overflow-y-auto">
         <div className="max-w-7xl mx-auto w-full h-full">
         {filteredOrders.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
@@ -350,9 +382,9 @@ export default function StaffOrderQueue() {
               <OrderCard
                 key={order.id}
                 order={order}
-                onAccept={() => acceptOrder(order.id)}
+                onAccept={() => acceptOrder(order.id).then(() => goToPage(queue.page))}
                 onReject={() => setRejectingOrder(order.id)}
-                onAdvance={() => advanceStatus(order.id)}
+                onAdvance={() => advanceStatus(order.id).then(() => goToPage(queue.page))}
                 onViewDetail={() => router.push(`/staff/orders/${order.id.replace("#", "")}`)}
               />
             ))}
@@ -367,6 +399,32 @@ export default function StaffOrderQueue() {
             </p>
           </div>
         )}
+
+        {queue.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              disabled={queue.page <= 0 || queue.loading}
+              onClick={() => goToPage(queue.page - 1)}
+            >
+              <ChevronLeft size={14} /> Prev
+            </Button>
+            <span className="text-xs font-semibold text-[#78716c]">
+              Page {queue.page + 1} of {queue.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              disabled={queue.page >= queue.totalPages - 1 || queue.loading}
+              onClick={() => goToPage(queue.page + 1)}
+            >
+              Next <ChevronRight size={14} />
+            </Button>
+          </div>
+        )}
         </div>
       </div>
 
@@ -376,7 +434,7 @@ export default function StaffOrderQueue() {
           orderId={rejectingOrder}
           onClose={() => setRejectingOrder(null)}
           onConfirm={(reason) => {
-            rejectOrder(rejectingOrder, reason);
+            rejectOrder(rejectingOrder, reason).then(() => goToPage(queue.page));
             setRejectingOrder(null);
           }}
         />

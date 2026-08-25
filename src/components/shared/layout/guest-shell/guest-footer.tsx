@@ -61,8 +61,8 @@ export default function GuestFooter({ variant = "compact" }: GuestFooterProps) {
 
   return (
     <footer className="bg-white text-[var(--brand-primary)] border-t border-[var(--brand-primary)]/20">
-      <div className="max-w-[1440px] mx-auto px-[30px] pt-16 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.5fr] gap-10 mb-12">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-[30px] pt-10 sm:pt-16 pb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1.5fr] gap-8 sm:gap-10 mb-10 sm:mb-12">
 
           <div>
             <div className="mb-4">
