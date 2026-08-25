@@ -8,8 +8,8 @@ import { useRBACStore } from "@/store/auth/rbac.store";
 import type { Permission } from "@/api/admin/settings.api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Role = "Admin" | "Owner" | "Kitchen Staff" | "Property Staff" | "Staff Admin" | "Guest";
-const roles: Role[] = ["Admin", "Owner", "Kitchen Staff", "Property Staff", "Staff Admin", "Guest"];
+type Role = "Owner" | "Kitchen Staff" | "Property Staff" | "Staff Admin";
+const roles: Role[] = ["Owner", "Kitchen Staff", "Property Staff", "Staff Admin"];
 
 // ─── Inlined PermissionToggle ─────────────────────────────────────────────────
 function PermissionToggle({
@@ -96,7 +96,7 @@ function PermissionSection({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function SettingsPage() {
-  const [activeRole, setActiveRole] = useState<Role>("Admin");
+  const [activeRole, setActiveRole] = useState<Role>("Owner");
   const [search, setSearch] = useState("");
   const [saved, setSaved] = useState(false);
 
