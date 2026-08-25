@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -276,6 +276,7 @@ export default function StaffOrderQueue() {
 
   const toast = useStaffOrdersStore((s) => s.toast);
   const queue = useStaffOrdersStore((s) => s.queue);
+  const orders = useStaffOrdersStore((s) => s.orders);
   const fetchOrderPage = useStaffOrdersStore((s) => s.fetchOrderPage);
   const fetchStatusCounts = useStaffOrdersStore((s) => s.fetchStatusCounts);
   const acceptOrder = useStaffOrdersStore((s) => s.acceptOrder);
@@ -297,6 +298,23 @@ export default function StaffOrderQueue() {
     fetchOrderPage(propertyId, { status: activeTab, page: 0 });
     fetchStatusCounts(propertyId);
   }, [propertyId, activeTab, fetchOrderPage, fetchStatusCounts]);
+
+  // The `orders` cache above is kept live by StaffGlobalOrdersProvider's SSE
+  // connection (plus its 15s poll fallback), but this tab renders from the
+  // separate, server-paginated `queue` slice, which only refetches on tab/
+  // property change. Re-run the current page's fetch whenever `orders`
+  // changes so a new or updated order shows up here without a manual
+  // refresh. Skip the very first run — the effect above already fetched.
+  const skipInitialOrdersSync = useRef(true);
+  useEffect(() => {
+    if (skipInitialOrdersSync.current) {
+      skipInitialOrdersSync.current = false;
+      return;
+    }
+    fetchOrderPage(propertyId, { status: activeTab, page: queue.page });
+    fetchStatusCounts(propertyId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders]);
 
   const goToPage = (page: number) => {
     fetchOrderPage(propertyId, { status: activeTab, page });
