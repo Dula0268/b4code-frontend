@@ -44,12 +44,11 @@ export default function NotificationPreferencesPage() {
         setSaving(true);
         try {
             await ownerSettingsApi.updateNotifications(ownerId, {
-                emailNotifications: emailChannel,
-                smsAlerts: smsChannel,
-                pushNotifications: pushChannel,
-                bookingConfirmations: newBookings,
-                monthlyReports: dailyReports,
-                maintenanceAlerts: maintenance,
+                emailBooking: emailChannel && newBookings,
+                emailCancellation: emailChannel && cancellations,
+                emailReview: emailChannel && guestMessages,
+                smsBooking: smsChannel && newBookings,
+                smsCancellation: smsChannel && cancellations,
             });
             router.push("/owner");
         } catch {

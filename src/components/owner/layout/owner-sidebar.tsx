@@ -7,27 +7,17 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Building2,
-  DoorOpen,
-  CalendarCheck,
-  DollarSign,
-  ClipboardList,
   Users,
   Settings,
-  LogOut,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/store/auth/auth.store";
 
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/owner", icon: LayoutDashboard, permKey: null },
   { label: "Properties", href: "/owner/properties", icon: Building2, permKey: null },
-  { label: "Rooms", href: "/owner/roomManagement", icon: DoorOpen, permKey: null },
-  { label: "Availability", href: "/owner/availability/weeklyCalendar", icon: CalendarCheck, permKey: null },
-  { label: "Rate", href: "/owner/rate", icon: DollarSign, permKey: null },
-  { label: "Reservations", href: "/owner/reservation", icon: ClipboardList, permKey: null },
   { label: "Staff Approvals", href: "/owner/staff", icon: Users, permKey: null },
-  { label: "Settings", href: "/owner/setting/propertySetting", icon: Settings, permKey: null },
+  { label: "Settings", href: "/owner/setting/accountSetting", icon: Settings, permKey: null },
 ];
 
 export function NavItem({ item, isActive }: {
@@ -124,27 +114,6 @@ export default function OwnerSidebar() {
         </ul>
       </nav>
 
-      {/* Bottom Info & Logout */}
-      <div className="mt-8 md:mt-auto px-3 flex flex-col gap-4">
-        <div className="bg-[rgba(149,48,2,0.05)] rounded-lg p-3 border border-[rgba(149,48,2,0.1)] text-center">
-          <p className="text-xs text-[rgba(149,48,2,0.7)] font-semibold leading-relaxed">
-            🏢 Partner Account
-          </p>
-          <p className="text-[11px] text-[#78716c] mt-1">
-            Manage your properties efficiently
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          className="w-full justify-center gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold transition-all rounded-xl h-10 text-xs"
-          onClick={() => {
-            window.dispatchEvent(new CustomEvent('trigger-owner-logout'));
-          }}
-        >
-          <LogOut size={15} />
-          Sign Out
-        </Button>
-      </div>
     </aside>
   );
 }

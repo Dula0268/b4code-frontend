@@ -34,6 +34,8 @@ export default function PropertiesPage() {
     const [propertyData, setPropertyData] = useState<any[]>([]);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
+    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     const fetchProperties = async () => {
         try {
@@ -64,6 +66,21 @@ export default function PropertiesPage() {
             );
         } catch (error) {
             console.error("Failed to toggle status:", error);
+        }
+    };
+
+    const handleDeleteProperty = async (id: number) => {
+        if (!confirm("Delete this property? This cannot be undone.")) return;
+        setDeletingId(id);
+        setOpenMenuId(null);
+        try {
+            await propertiesApi.deleteProperty(id, ownerId);
+            setPropertyData((prev) => prev.filter((p) => p.id !== id));
+        } catch (error) {
+            console.error("Failed to delete property:", error);
+            alert("Failed to delete property. Please try again.");
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -211,9 +228,29 @@ export default function PropertiesPage() {
                                                 <a href={`/owner/properties/propertyDetails?id=${p.id}`} className="no-underline">
                                                     <button className="py-1.5 px-4 bg-white border border-[#e0e0e0] rounded-lg text-[13px] font-medium text-[#4f4f4f] cursor-pointer hover:bg-gray-50">View Details</button>
                                                 </a>
-                                                <button className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center hover:bg-gray-100" aria-label="More">
-                                                    <MoreVertical size={16} color="#828282" />
-                                                </button>
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)}
+                                                        className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center justify-center hover:bg-gray-100"
+                                                        aria-label="More"
+                                                    >
+                                                        <MoreVertical size={16} color="#828282" />
+                                                    </button>
+                                                    {openMenuId === p.id && (
+                                                        <>
+                                                            <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
+                                                            <div className="absolute right-0 top-full mt-1 bg-white border border-[#e0e0e0] rounded-lg shadow-lg z-20 min-w-[140px] overflow-hidden">
+                                                                <button
+                                                                    onClick={() => handleDeleteProperty(p.id)}
+                                                                    disabled={deletingId === p.id}
+                                                                    className="w-full text-left py-2 px-3.5 bg-transparent border-none text-[13px] text-[#c0392b] font-medium cursor-pointer hover:bg-[#fdecea] disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                >
+                                                                    {deletingId === p.id ? "Deleting..." : "Delete Property"}
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>

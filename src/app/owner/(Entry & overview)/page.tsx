@@ -200,20 +200,6 @@ export default function OwnerDashboardPage() {
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-4 pt-3 border-t border-[#f0f0f0]">
-                                <div className="text-[10px] font-bold tracking-wider uppercase text-[#828282] mb-2">QUICK LINKS</div>
-                                <div className="flex flex-col gap-2">
-                                    <a href="/owner/properties" className="text-[12px] text-[var(--brand-primary)] no-underline hover:underline font-medium">
-                                        → Manage Properties
-                                    </a>
-                                    <a href="/owner/availability/weeklyCalendar" className="text-[12px] text-[var(--brand-primary)] no-underline hover:underline font-medium">
-                                        → Weekly Availability
-                                    </a>
-                                    <a href="/owner/reservation" className="text-[12px] text-[var(--brand-primary)] no-underline hover:underline font-medium">
-                                        → All Reservations
-                                    </a>
-                                </div>
-                            </div>
                         </div>
                     </div>
 

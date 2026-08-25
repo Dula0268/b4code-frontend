@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth/auth.store";
-import { ownerSettingsApi } from "@/api/owner/settings.api";
+import { propertiesApi } from "@/api/owner/properties.api";
 import TimePicker, { type TimeValue, parseTime, formatTime } from "@/components/owner/TimePicker";
 import {
     Bell,
@@ -50,15 +50,19 @@ export default function PropertySettingPage() {
         setSaving(true);
         setSaveError(null);
         try {
-            await ownerSettingsApi.updatePropertySettings(user.userId, {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { properties } = await propertiesApi.listProperties(user.userId, 1, 1) as { properties: any[] };
+            const firstPropertyId = properties?.[0]?.id;
+            if (!firstPropertyId) {
+                setSaveError("No property found to apply these settings to. Add a property first.");
+                return;
+            }
+            await propertiesApi.updateProperty(firstPropertyId, user.userId, {
                 currency,
-                timezone,
-                language,
-                checkInTime: formatTime(checkInTime),
-                checkOutTime: formatTime(checkOutTime),
+                checkIn: formatTime(checkInTime),
+                checkOut: formatTime(checkOutTime),
                 vatId,
                 taxRate: Number(taxRate),
-                autoTax,
             });
             router.push("/owner");
         } catch (err: unknown) {

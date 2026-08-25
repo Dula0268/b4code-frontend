@@ -93,7 +93,7 @@ export default function MonthlyCalendarPage() {
 
     useEffect(() => {
         dashboardApi.getDashboard(ownerId, year, month + 1)
-            .then((data: any) => setMonthRevenue(data?.totalRevenue ?? null))
+            .then((data: any) => setMonthRevenue(data?.monthRevenue ?? null))
             .catch(() => setMonthRevenue(null));
     }, [ownerId, year, month]);
 

@@ -9,7 +9,6 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import {
     Info,
     MapPin,
-    Bell,
     ChevronRight,
     ChevronDown,
     Star,
@@ -21,6 +20,14 @@ import {
     Edit,
     Building2,
     Loader2,
+    LayoutGrid,
+    DoorOpen,
+    CalendarCheck,
+    DollarSign,
+    ClipboardList,
+    Image as ImageIcon,
+    Users,
+    Settings,
 } from "lucide-react";
 
 function PropertyDetailsContent() {
@@ -48,7 +55,16 @@ function PropertyDetailsContent() {
             .finally(() => setLoading(false));
     }, [propertyId, ownerId]);
 
-    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+    const propertyNavItems = (id: number) => [
+        { label: "Overview", icon: <LayoutGrid size={16} />, href: null },
+        { label: "Rooms", icon: <DoorOpen size={16} />, href: `/owner/properties/propertyRoomInventry?id=${id}` },
+        { label: "Availability", icon: <CalendarCheck size={16} />, href: `/owner/properties/Availability?id=${id}` },
+        { label: "Rates", icon: <DollarSign size={16} />, href: `/owner/properties/Rate?id=${id}` },
+        { label: "Reservations", icon: <ClipboardList size={16} />, href: `/owner/properties/Reservation?id=${id}` },
+        { label: "Media", icon: <ImageIcon size={16} />, href: `/owner/properties/Media?id=${id}` },
+        { label: "Staff", icon: <Users size={16} />, href: `/owner/properties/Staff?id=${id}` },
+        { label: "Settings", icon: <Settings size={16} />, href: `/owner/properties/Setting?id=${id}` },
+    ];
 
     const statusLabel = property?.status === "active" ? "ACTIVE"
         : property?.status === "inactive" ? "INACTIVE"
@@ -125,33 +141,39 @@ function PropertyDetailsContent() {
                             </div>
                         </div>
 
-                        {/* ── Tabs ── */}
-                        <div className="flex border-b border-[#e8e8e8] mb-3 mt-2">
-                            {tabs.map((t) => (
-                                <button
-                                    key={t}
-                                    onClick={() => {
-                                        if (t === "Overview") setActiveTab(t);
-                                        else if (t === "Rooms") window.location.href = `/owner/properties/propertyRoomInventry?id=${property.id}`;
-                                        else if (t === "Availability") window.location.href = `/owner/properties/Availability?id=${property.id}`;
-                                        else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${property.id}`;
-                                        else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${property.id}`;
-                                        else if (t === "Media") window.location.href = `/owner/properties/Media?id=${property.id}`;
-                                        else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${property.id}`;
-                                        else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${property.id}`;
-                                        else setActiveTab(t);
-                                    }}
-                                    className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative ${
-                                        activeTab === t ? "text-[var(--brand-primary)] font-bold border-b-2 border-[var(--brand-primary)]" : "text-[#828282] font-medium border-b-2 border-transparent hover:text-[#4f4f4f]"
-                                    }`}
-                                >
-                                    {t}
-                                </button>
-                            ))}
-                        </div>
+                        {/* ── Nav + Content ── */}
+                        <div className="flex gap-5 items-start mt-3">
+                            {/* Vertical Nav */}
+                            <div className="w-[190px] shrink-0 flex flex-col gap-1">
+                                {propertyNavItems(property.id).map((item) => (
+                                    item.href ? (
+                                        <a
+                                            key={item.label}
+                                            href={item.href}
+                                            className="flex items-center gap-2 py-2.5 px-3.5 border-none rounded-lg text-[12px] cursor-pointer text-left transition-all duration-150 no-underline bg-transparent text-[#4f4f4f] font-medium hover:bg-[#f5f5f5]"
+                                        >
+                                            {item.icon}
+                                            <span>{item.label}</span>
+                                        </a>
+                                    ) : (
+                                        <button
+                                            key={item.label}
+                                            onClick={() => setActiveTab(item.label)}
+                                            className={`flex items-center gap-2 py-2.5 px-3.5 border-none rounded-lg text-[12px] cursor-pointer text-left transition-all duration-150 ${
+                                                activeTab === item.label
+                                                    ? "bg-[var(--brand-primary)] text-white font-bold"
+                                                    : "bg-transparent text-[#4f4f4f] font-medium hover:bg-[#f5f5f5]"
+                                            }`}
+                                        >
+                                            {item.icon}
+                                            <span>{item.label}</span>
+                                        </button>
+                                    )
+                                ))}
+                            </div>
 
-                        {/* ── Two Column Layout ── */}
-                        <div className="grid grid-cols-[1fr_260px] gap-4 items-start">
+                            {/* ── Two Column Layout ── */}
+                            <div className="flex-1 grid grid-cols-[1fr_260px] gap-4 items-start min-w-0">
                             {/* Left Column */}
                             <div className="flex flex-col gap-3">
                                 {/* Core Details */}
@@ -273,6 +295,7 @@ function PropertyDetailsContent() {
                                         <p className="text-[12px] text-[#4f4f4f] leading-relaxed m-0">{property.houseRules}</p>
                                     </div>
                                 )}
+                            </div>
                             </div>
                         </div>
                     </div>

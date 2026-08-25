@@ -11,7 +11,6 @@ import TimePicker, { type TimeValue, parseTime, formatTime } from "@/components/
 import {
     Info,
     MapPin,
-    Bell,
     ChevronRight,
     Camera,
     CheckCircle2,
@@ -28,7 +27,31 @@ import {
     Plus,
     AlertCircle,
     Building2,
+    Bed,
+    Calendar,
+    Eye,
+    Edit,
+    LayoutGrid,
+    DoorOpen,
+    CalendarCheck,
+    ClipboardList,
+    Image as ImageIcon,
+    Users,
+    Settings,
 } from "lucide-react";
+
+function propertyNavItems(id: number) {
+    return [
+        { label: "Overview", icon: <LayoutGrid size={16} />, href: `/owner/properties/propertyDetails?id=${id}` },
+        { label: "Rooms", icon: <DoorOpen size={16} />, href: `/owner/properties/propertyRoomInventry?id=${id}` },
+        { label: "Availability", icon: <CalendarCheck size={16} />, href: `/owner/properties/Availability?id=${id}` },
+        { label: "Rates", icon: <DollarSign size={16} />, href: `/owner/properties/Rate?id=${id}` },
+        { label: "Reservations", icon: <ClipboardList size={16} />, href: `/owner/properties/Reservation?id=${id}` },
+        { label: "Media", icon: <ImageIcon size={16} />, href: `/owner/properties/Media?id=${id}` },
+        { label: "Staff", icon: <Users size={16} />, href: `/owner/properties/Staff?id=${id}` },
+        { label: "Settings", icon: <Settings size={16} />, href: `/owner/properties/Setting?id=${id}` },
+    ];
+}
 
 const AMENITY_LIST = [
     { key: "wifi",        label: "Wifi" },
@@ -74,6 +97,7 @@ function EditPropertyContent() {
         contactEmail: "",
         houseRules: "",
         propertyType: "",
+        cancellationPolicy: "",
     });
 
     const [checkIn,  setCheckIn]  = useState<TimeValue>({ hour: "2",  minute: "00", period: "PM" });
@@ -89,12 +113,21 @@ function EditPropertyContent() {
     const [dragging, setDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Header-card-only fields (not part of the editable form)
+    const [headerInfo, setHeaderInfo] = useState({ status: "", roomCount: 0, rate: "—" as string | number, image: "" });
+
     const update = (key: string, val: string) => setForm((p) => ({ ...p, [key]: val }));
     const toggleAmenity = (key: string) => setAmenities((p) => ({ ...p, [key]: !p[key] }));
 
     useEffect(() => {
         if (!propertyId) { setLoadError("No property ID."); setLoading(false); return; }
         propertiesApi.getProperty(Number(propertyId), ownerId).then((data) => {
+            setHeaderInfo({
+                status: data.status ?? "",
+                roomCount: data.roomCount ?? 0,
+                rate: data.rate ?? "—",
+                image: data.image ?? "",
+            });
             setForm({
                 name:          data.name          ?? "",
                 description:   data.description   ?? "",
@@ -105,6 +138,7 @@ function EditPropertyContent() {
                 contactEmail:  data.contactEmail  ?? "",
                 houseRules:    data.houseRules    ?? "",
                 propertyType:  data.propertyType  ?? "",
+                cancellationPolicy: data.cancellationPolicy ?? "",
             });
             if (data.checkIn)  setCheckIn(parseTime(data.checkIn));
             if (data.checkOut) setCheckOut(parseTime(data.checkOut));
@@ -182,8 +216,9 @@ function EditPropertyContent() {
                 checkOut:     formatTime(checkOut),
                 houseRules:   form.houseRules,
                 propertyType: form.propertyType,
+                cancellationPolicy: form.cancellationPolicy,
                 amenities:    selectedAmenities,
-                imageUrls:    allImageUrls,
+                imageUrl:     allImageUrls[0],
             });
             setSaveSuccess(true);
             setTimeout(() => {
@@ -211,9 +246,6 @@ function EditPropertyContent() {
                     <span className="text-[var(--brand-primary)] font-semibold">Edit Property</span>
                 </div>
 
-                <h1 className="text-[22px] font-extrabold text-[#1d1d1d] m-0 mt-1">Edit Property Details</h1>
-                <p className="text-[12px] text-[#828282] m-0 mt-0.5 mb-2">Keep your property information accurate to attract the right guests.</p>
-
                 {/* Loading */}
                 {loading && (
                     <div className="flex-1 flex items-center justify-center">
@@ -227,7 +259,71 @@ function EditPropertyContent() {
                 {/* Scrollable Content */}
                 {!loading && !loadError && (
                     <div className="flex-1 overflow-y-auto pb-4 pr-1">
-                        <div className="grid grid-cols-[1fr_240px] gap-4 items-start">
+
+                        {/* ── Property Header Card ── */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[var(--brand-primary)] bg-[#f0ebe5] flex items-center justify-center">
+                                    {headerInfo.image ? (
+                                        <img src={headerInfo.image} alt={form.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Building2 size={28} color="#c0a898" />
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2.5">
+                                        <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">{form.name || "Edit Property"}</h2>
+                                        <span
+                                            className="text-[9px] font-bold text-white rounded w-max px-[7px] py-[2px] tracking-widest"
+                                            style={{
+                                                backgroundColor: headerInfo.status === "active" ? "#27ae60"
+                                                    : headerInfo.status === "inactive" ? "#828282"
+                                                    : headerInfo.status === "maintenance" ? "#e67e22"
+                                                    : "#b0b0b0",
+                                            }}
+                                        >
+                                            {headerInfo.status ? headerInfo.status.toUpperCase() : "PENDING"}
+                                        </span>
+                                    </div>
+                                    <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
+                                        <MapPin size={12} />
+                                        {[form.address, form.city, form.country].filter(Boolean).join(", ") || "—"}
+                                    </div>
+                                    <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
+                                        <span className="flex items-center gap-[3px]"><Bed size={12} /> {headerInfo.roomCount} Rooms</span>
+                                        <span className="flex items-center gap-[3px]"><Calendar size={12} /> {headerInfo.rate}/night</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-2.5">
+                                <a href={detailsHref} className="no-underline">
+                                    <button className="flex items-center gap-1.5 py-2 px-4 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-gray-50">
+                                        <Eye size={14} /> View Details
+                                    </button>
+                                </a>
+                                <button className="flex items-center gap-1.5 py-2 px-5 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[12px] font-semibold cursor-not-allowed opacity-70" disabled>
+                                    <Edit size={14} /> Editing
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* ── Nav + Content ── */}
+                        <div className="flex gap-5 items-start">
+                            {/* Vertical Nav */}
+                            <div className="w-[190px] shrink-0 flex flex-col gap-1">
+                                {propertyId && propertyNavItems(Number(propertyId)).map((item) => (
+                                    <a
+                                        key={item.label}
+                                        href={item.href}
+                                        className="flex items-center gap-2 py-2.5 px-3.5 border-none rounded-lg text-[12px] cursor-pointer text-left transition-all duration-150 no-underline bg-transparent text-[#4f4f4f] font-medium hover:bg-[#f5f5f5]"
+                                    >
+                                        {item.icon}
+                                        <span>{item.label}</span>
+                                    </a>
+                                ))}
+                            </div>
+
+                        <div className="flex-1 grid grid-cols-[1fr_240px] gap-4 items-start min-w-0">
                             {/* ── Left Column ── */}
                             <div className="flex flex-col gap-3">
 
@@ -296,6 +392,9 @@ function EditPropertyContent() {
                                     </div>
                                     <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">House Rules</label>
                                     <textarea value={form.houseRules} onChange={(e) => update("houseRules", e.target.value)} rows={2} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border resize-y min-h-[50px] focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="No smoking, quiet hours after 10 PM..." />
+
+                                    <label className="block text-[12px] font-semibold text-[#4f4f4f] mb-1 mt-2">Cancellation Policy</label>
+                                    <textarea value={form.cancellationPolicy} onChange={(e) => update("cancellationPolicy", e.target.value)} rows={3} className="w-full py-2 px-3 border border-[#e0e0e0] rounded-lg text-[13px] outline-none box-border resize-y min-h-[60px] focus:border-[var(--brand-primary)] bg-white text-[#1d1d1d]" placeholder="Full refund if cancelled 48 hours before check-in..." />
                                 </div>
 
                                 {/* Amenities */}
@@ -519,6 +618,7 @@ function EditPropertyContent() {
                                     <button type="button" className="w-full py-2 bg-white text-[var(--brand-primary)] border border-[var(--brand-primary)] rounded-lg text-[12px] font-bold cursor-pointer">Contact Support</button>
                                 </div>
                             </div>
+                        </div>
                         </div>
                     </div>
                 )}

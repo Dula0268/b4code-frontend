@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { ownerSettingsApi } from "@/api/owner/settings.api";
+import { propertiesApi } from "@/api/owner/properties.api";
 import TimePicker, { type TimeValue, parseTime, formatTime } from "@/components/owner/TimePicker";
 import {
     Bell,
@@ -58,19 +59,27 @@ export default function AccountSettingPage() {
         setSaving(true);
         setSaveError(null);
         try {
-            await Promise.all([
-                ownerSettingsApi.updatePropertySettings(user.userId, {
-                    currency,
-                    timezone,
-                    checkInTime: formatTime(checkIn),
-                    checkOutTime: formatTime(checkOut),
-                    autoTax,
-                }),
+            const tasks: Promise<unknown>[] = [
                 ownerSettingsApi.updateNotifications(user.userId, {
-                    emailNotifications: emailNotif,
-                    smsAlerts: smsAlert,
+                    emailBooking: emailNotif,
+                    emailCancellation: emailNotif,
+                    smsBooking: smsAlert,
+                    smsCancellation: smsAlert,
                 }),
-            ]);
+            ];
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { properties } = await propertiesApi.listProperties(user.userId, 1, 1) as { properties: any[] };
+            const firstPropertyId = properties?.[0]?.id;
+            if (firstPropertyId) {
+                tasks.push(propertiesApi.updateProperty(firstPropertyId, user.userId, {
+                    currency: currency.split(" ")[0],
+                    checkIn: formatTime(checkIn),
+                    checkOut: formatTime(checkOut),
+                }));
+            }
+
+            await Promise.all(tasks);
             router.push("/owner");
         } catch (err: unknown) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

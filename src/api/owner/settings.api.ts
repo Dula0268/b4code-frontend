@@ -15,8 +15,8 @@ export const ownerSettingsApi = {
   updateNotifications: (ownerId: number, data: object) =>
     api.put(withOwnerId(`/owner/settings/notifications`, ownerId), data).then((r) => r.data),
 
-  updatePropertySettings: (ownerId: number, data: object) =>
-    api.put(withOwnerId(`/owner/settings/property`, ownerId), data).then((r) => r.data),
+  updatePropertySettings: (propertyId: number, data: object) =>
+    api.put(`/owner/settings/property?propertyId=${propertyId}`, data).then((r) => r.data),
 
   requestPayout: (ownerId?: number, propertyId?: number) => {
     const base = withOwnerId(`/owner/settings/billing/payout-request`, ownerId);

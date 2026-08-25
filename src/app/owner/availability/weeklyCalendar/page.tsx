@@ -73,7 +73,7 @@ export default function WeeklyCalendarPage() {
 
     useEffect(() => {
         dashboardApi.getDashboard(ownerId, baseDate.getFullYear(), baseDate.getMonth() + 1)
-            .then((data: any) => setMonthRevenue(data?.totalRevenue ?? null))
+            .then((data: any) => setMonthRevenue(data?.monthRevenue ?? null))
             .catch(() => setMonthRevenue(null));
     }, [ownerId, baseDate]);
 

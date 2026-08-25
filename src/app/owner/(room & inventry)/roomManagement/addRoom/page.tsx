@@ -109,7 +109,7 @@ function AddRoomContent() {
                 propertyId: Number(propertyId),
                 name: roomName.trim(),
                 description: description.trim() || null,
-                roomType,
+                roomCategory: roomType,
                 bedType,
                 maxOccupancy: parseInt(maxAdults) || 2,
                 maxChildren: parseInt(maxChildren) || 0,
