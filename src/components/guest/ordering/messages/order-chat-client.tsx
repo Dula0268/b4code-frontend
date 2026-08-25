@@ -74,33 +74,38 @@ export default function OrderChatClient() {
 
   const numericOrderId = order?.id?.replace("#ORD-", "");
 
-  useEffect(() => {
+  // Merges any messages missed while the socket was down (initial load,
+  // post-reconnect catch-up, and the poll fallback below all share this).
+  const syncMessages = (opts?: { showLoading?: boolean }) => {
     if (!numericOrderId) {
       setLoading(false);
       return;
     }
-    let cancelled = false;
-    setLoading(true);
-    guestApi
+    if (opts?.showLoading) setLoading(true);
+    return guestApi
       .getOrderMessages(numericOrderId, guestSessionId || undefined)
       .then((data) => {
-        if (!cancelled) {
-          setMessages(data || []);
-          setError(null);
-        }
+        setMessages((prev) => {
+          const byId = new Map(prev.map((m) => [m.id, m]));
+          for (const m of data || []) byId.set(m.id, m);
+          return Array.from(byId.values()).sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        });
+        setError(null);
       })
       .catch((err) => {
-        if (!cancelled) {
-          console.error("Failed to load order messages", err);
-          setError("Couldn't load your conversation. Please try again.");
-        }
+        console.error("Failed to load order messages", err);
+        if (opts?.showLoading) setError("Couldn't load your conversation. Please try again.");
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (opts?.showLoading) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+  };
+
+  useEffect(() => {
+    syncMessages({ showLoading: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numericOrderId, guestSessionId]);
 
   useEffect(() => {
@@ -110,6 +115,11 @@ export default function OrderChatClient() {
       brokerURL: getWsBrokerUrl(),
       reconnectDelay: 5000,
       onConnect: () => {
+        // Re-sync on every (re)connect, not just the first one — a dropped
+        // connection (backgrounded tab, brief network blip) would otherwise
+        // silently lose any staff reply sent while the socket was down,
+        // since the subscription below only sees NEW broadcasts.
+        syncMessages();
         client.subscribe(`/topic/order/${numericOrderId}`, (message) => {
           if (!message.body) return;
           try {
@@ -134,9 +144,16 @@ export default function OrderChatClient() {
     });
 
     client.activate();
+
+    // Poll fallback in case the socket is silently stuck (open but not
+    // actually delivering) rather than cleanly disconnected/reconnecting.
+    const interval = setInterval(() => syncMessages(), 20000);
+
     return () => {
       client.deactivate();
+      clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numericOrderId]);
 
   useEffect(() => {
