@@ -50,6 +50,7 @@ interface RoomDraft {
     maxChildren: string;
     pricePerNight: string;
     inventory: string;
+    imageUrl: string | null;
 }
 
 interface DiscountDraft {
@@ -205,17 +206,35 @@ export default function CreateNewPropertyPage() {
     // Room entry form (one room at a time) — filled in, then "Add Room" confirms it into roomDrafts
     const emptyRoomEntry = (): RoomDraft => ({
         id: uid(), name: "", roomType: "STANDARD_ROOM", bedType: "KING",
-        maxOccupancy: "2", maxChildren: "0", pricePerNight: "", inventory: "1",
+        maxOccupancy: "2", maxChildren: "0", pricePerNight: "", inventory: "1", imageUrl: null,
     });
     const [roomEntry, setRoomEntry] = useState<RoomDraft>(emptyRoomEntry());
     const [roomEntryError, setRoomEntryError] = useState<string | null>(null);
+    const [roomImagePreview, setRoomImagePreview] = useState<string | null>(null);
+    const [roomImageUploading, setRoomImageUploading] = useState(false);
     const updateRoomEntry = (key: keyof RoomDraft, val: string) => setRoomEntry((prev) => ({ ...prev, [key]: val }));
+    const handleRoomImageChange = async (file: File) => {
+        if (!file.type.startsWith("image/")) { setRoomEntryError("Only image files are accepted."); return; }
+        if (file.size > 10 * 1024 * 1024) { setRoomEntryError("File size must be under 10 MB."); return; }
+        setRoomEntryError(null);
+        setRoomImagePreview(URL.createObjectURL(file));
+        setRoomImageUploading(true);
+        try {
+            const result = await imageApi.upload(file, "rooms");
+            setRoomEntry((prev) => ({ ...prev, imageUrl: result.url }));
+        } catch {
+            setRoomEntryError("Photo upload failed. You can still add the room without a photo.");
+        } finally {
+            setRoomImageUploading(false);
+        }
+    };
     const confirmAddRoom = () => {
         if (!roomEntry.name.trim()) { setRoomEntryError("Room name is required."); return; }
         if (!roomEntry.pricePerNight || isNaN(parseFloat(roomEntry.pricePerNight))) { setRoomEntryError("Enter a valid price per night."); return; }
         setRoomEntryError(null);
         setRoomDrafts((prev) => [...prev, roomEntry]);
         setRoomEntry(emptyRoomEntry());
+        setRoomImagePreview(null);
     };
     const removeRoomDraft = (id: string) => setRoomDrafts((prev) => prev.filter((r) => r.id !== id));
 
@@ -294,6 +313,7 @@ export default function CreateNewPropertyPage() {
                     pricePerNight: parseFloat(r.pricePerNight),
                     inventory: parseInt(r.inventory) || 1,
                     status: "AVAILABLE",
+                    imageUrl: r.imageUrl ?? undefined,
                 });
                 if (created?.id) roomIdMap[r.id] = created.id;
             }
@@ -515,6 +535,39 @@ export default function CreateNewPropertyPage() {
                                         <input type="number" min="0" placeholder="0.00" value={roomEntry.pricePerNight} onChange={(e) => updateRoomEntry("pricePerNight", e.target.value)} className={inputCls} />
                                     </div>
                                 </div>
+                                <label className="block text-[11px] font-semibold text-[#4f4f4f] mb-1 mt-3">Room Photo</label>
+                                <div className="flex items-center gap-3">
+                                    <label className="relative w-20 h-20 shrink-0 rounded-lg border border-dashed border-[#d0c5b8] bg-[#faf9f7] flex items-center justify-center cursor-pointer overflow-hidden">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleRoomImageChange(f); e.target.value = ""; }}
+                                        />
+                                        {roomImagePreview ? (
+                                            <img src={roomImagePreview} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <ImageIcon size={20} color="#b0a596" />
+                                        )}
+                                        {roomImageUploading && (
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                                <Loader2 size={16} color="#fff" className="animate-spin" />
+                                            </div>
+                                        )}
+                                    </label>
+                                    <div className="text-[12px] text-[#828282]">
+                                        {roomImageUploading ? "Uploading..." : roomEntry.imageUrl ? "Photo attached" : "Optional — click to upload a photo for this room."}
+                                        {roomEntry.imageUrl && !roomImageUploading && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setRoomEntry((prev) => ({ ...prev, imageUrl: null })); setRoomImagePreview(null); }}
+                                                className="block mt-1 bg-transparent border-none p-0 text-[#c0392b] font-semibold cursor-pointer underline text-[12px]"
+                                            >
+                                                Remove photo
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                                 {roomEntryError && (
                                     <div className="text-[12px] text-[#c0392b] font-medium mt-2">{roomEntryError}</div>
                                 )}
@@ -533,9 +586,18 @@ export default function CreateNewPropertyPage() {
                                 )}
                                 {roomDrafts.map((r) => (
                                     <div key={r.id} className="flex items-center justify-between border border-[#e8e8e8] rounded-lg p-3 mb-2">
-                                        <div>
-                                            <div className="text-[13px] font-bold text-[#1d1d1d]">{r.name}</div>
-                                            <div className="text-[11px] text-[#828282]">{r.roomType.replace(/_/g, " ")} · {r.bedType.replace(/_/g, " ")} bed · Sleeps {r.maxOccupancy} · {r.pricePerNight}/night</div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-11 h-11 shrink-0 rounded-lg overflow-hidden bg-[#faf9f7] border border-[#e8e8e8] flex items-center justify-center">
+                                                {r.imageUrl ? (
+                                                    <img src={r.imageUrl} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <ImageIcon size={16} color="#c0a898" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="text-[13px] font-bold text-[#1d1d1d]">{r.name}</div>
+                                                <div className="text-[11px] text-[#828282]">{r.roomType.replace(/_/g, " ")} · {r.bedType.replace(/_/g, " ")} bed · Sleeps {r.maxOccupancy} · {r.pricePerNight}/night</div>
+                                            </div>
                                         </div>
                                         <button onClick={() => removeRoomDraft(r.id)} className="shrink-0 bg-transparent border-none cursor-pointer p-1.5 text-[#e74c3c] hover:bg-[#fdecea] rounded"><Trash2 size={16} /></button>
                                     </div>
