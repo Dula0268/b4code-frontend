@@ -50,7 +50,7 @@ export default function UserAvatarDropdown() {
     const role = user?.role?.toLowerCase();
     switch (role) {
       case "admin": return "/admin/profile";
-      case "owner": return "/owner/profile";
+      case "owner": return "/owner/setting/accountSetting";
       case "staff": return "/staff/profile";
       case "guest": return "/guest/profile";
       default: return "/auth/login";

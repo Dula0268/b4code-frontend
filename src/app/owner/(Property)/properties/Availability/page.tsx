@@ -1,14 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import OwnerSidebar from "@/components/owner/OwnerSidebar";
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Logo from "@/components/shared/branding/logo";
 import { propertiesApi } from "@/api/owner/properties.api";
 import { availabilityApi } from "@/api/owner/availability.api";
 import { useAuthStore } from "@/store/auth/auth.store";
 import {
-    Bell,
     ChevronRight,
     ChevronLeft,
     MapPin,
@@ -16,52 +15,53 @@ import {
     Calendar,
     Loader2,
     Building2,
-    X,
+    CalendarDays,
+    LayoutGrid,
+    DoorOpen,
+    CalendarCheck,
+    DollarSign,
+    ClipboardList,
+    Image as ImageIcon,
+    Users,
+    Settings,
     Check,
 } from "lucide-react";
 
-/* ── helpers ── */
 const DAY_LABELS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-const DAY_LABELS_SHORT = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTH_NAMES = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December",
 ];
 
-function getWeekDates(baseDate: Date) {
-    const d = new Date(baseDate);
-    const day = d.getDay();
-    const sun = new Date(d);
-    sun.setDate(d.getDate() - day);
-    return Array.from({ length: 7 }, (_, i) => {
-        const dt = new Date(sun);
-        dt.setDate(sun.getDate() + i);
-        return dt;
-    });
+function getMonthGrid(year: number, month: number) {
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    const cells: { date: Date; currentMonth: boolean }[] = [];
+    for (let i = firstDay - 1; i >= 0; i--) cells.push({ date: new Date(year, month - 1, prevMonthDays - i), currentMonth: false });
+    for (let i = 1; i <= daysInMonth; i++) cells.push({ date: new Date(year, month, i), currentMonth: true });
+    const remaining = 7 - (cells.length % 7);
+    if (remaining < 7) for (let i = 1; i <= remaining; i++) cells.push({ date: new Date(year, month + 1, i), currentMonth: false });
+    return cells;
 }
 
-function fmt(date: Date) {
+function fmtDateKey(date: Date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function fmtShort(date: Date) {
-    return `${MONTH_NAMES[date.getMonth()].slice(0, 3)} ${date.getDate()}`;
+function propertyNavItems(id: string, active: string) {
+    const items = [
+        { label: "Overview", icon: <LayoutGrid size={16} />, href: `/owner/properties/propertyDetails?id=${id}` },
+        { label: "Rooms", icon: <DoorOpen size={16} />, href: `/owner/properties/propertyRoomInventry?id=${id}` },
+        { label: "Availability", icon: <CalendarCheck size={16} />, href: `/owner/properties/Availability?id=${id}` },
+        { label: "Rates", icon: <DollarSign size={16} />, href: `/owner/properties/Rate?id=${id}` },
+        { label: "Reservations", icon: <ClipboardList size={16} />, href: `/owner/properties/Reservation?id=${id}` },
+        { label: "Media", icon: <ImageIcon size={16} />, href: `/owner/properties/Media?id=${id}` },
+        { label: "Staff", icon: <Users size={16} />, href: `/owner/properties/Staff?id=${id}` },
+        { label: "Settings", icon: <Settings size={16} />, href: `/owner/properties/Setting?id=${id}` },
+    ];
+    return items.map((item) => ({ ...item, active: item.label === active }));
 }
-
-/** Returns grid of dates for a full month view (6 rows × 7 cols, padded with nulls) */
-function getMonthGrid(year: number, month: number): (Date | null)[] {
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
-    const startPad = first.getDay(); // day-of-week of 1st
-    const grid: (Date | null)[] = [];
-    for (let i = 0; i < startPad; i++) grid.push(null);
-    for (let d = 1; d <= last.getDate(); d++) grid.push(new Date(year, month, d));
-    while (grid.length % 7 !== 0) grid.push(null);
-    return grid;
-}
-
-type DayBooking = { type: string; price?: string; guest?: string; };
-type CalendarView = "weekly" | "monthly";
 
 function AvailabilityContent() {
     const searchParams = useSearchParams();
@@ -71,97 +71,68 @@ function AvailabilityContent() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [property, setProperty] = useState<any>(null);
-    const [loadingProperty, setLoadingProperty] = useState(true);
-    const [propertyError, setPropertyError] = useState<string | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [calendarData, setCalendarData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Calendar state
-    const [calendarView, setCalendarView] = useState<CalendarView>("weekly");
-    const [baseDate, setBaseDate] = useState(new Date());
-    const [bookings, setBookings] = useState<Record<string, DayBooking>>({});
-    const [calendarLoading, setCalendarLoading] = useState(false);
-
-    // Selection / update panel
+    // Monthly calendar (per-property)
+    const now = new Date();
+    const [monthYear, setMonthYear] = useState(now.getFullYear());
+    const [monthMonth, setMonthMonth] = useState(now.getMonth());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [monthData, setMonthData] = useState<any[]>([]);
+    const [monthLoading, setMonthLoading] = useState(false);
+    const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
     const [selectedDates, setSelectedDates] = useState<string[]>([]);
-    const [showPanel, setShowPanel] = useState(false);
-    const [newStatus, setNewStatus] = useState("available");
+    const [newStatus, setNewStatus] = useState("AVAILABLE");
     const [customPrice, setCustomPrice] = useState("");
     const [notes, setNotes] = useState("");
-
-    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Settings"];
+    const [applying, setApplying] = useState(false);
+    const [applyError, setApplyError] = useState<string | null>(null);
+    const [calendarView, setCalendarView] = useState<"weekly" | "monthly">("weekly");
 
     useEffect(() => {
         if (!propertyId) {
-            setPropertyError("No property ID provided.");
-            setLoadingProperty(false);
+            setError("No property ID provided.");
+            setLoading(false);
             return;
         }
-        propertiesApi.getProperty(Number(propertyId), ownerId)
-            .then((prop) => setProperty(prop))
-            .catch((err) => setPropertyError(err?.response?.data?.message ?? err?.message ?? "Failed to load property."))
-            .finally(() => setLoadingProperty(false));
+        Promise.all([
+            propertiesApi.getProperty(Number(propertyId), ownerId),
+            availabilityApi.getWeeklyCalendar(Number(propertyId)),
+        ])
+            .then(([prop, calData]) => {
+                setProperty(prop);
+                setCalendarData(Array.isArray(calData) ? calData : []);
+            })
+            .catch((err) => {
+                setError(err?.response?.data?.message ?? err?.message ?? "Failed to load availability data.");
+            })
+            .finally(() => setLoading(false));
     }, [propertyId, ownerId]);
 
-    useEffect(() => {
+    const fetchMonthData = () => {
         if (!propertyId) return;
-        setCalendarLoading(true);
-        availabilityApi.getWeeklyCalendar(Number(propertyId), fmt(baseDate))
-            .then((data) => {
-                const map: Record<string, DayBooking> = {};
+        setMonthLoading(true);
+        availabilityApi.getMonthlyCalendar(Number(propertyId), monthYear, monthMonth + 1)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .then((data: any) => {
+                const list = Array.isArray(data) ? data : [];
+                setMonthData(list);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (data?.days || []).forEach((day: any) => {
-                    const key = typeof day.date === "string" ? day.date : fmt(new Date(day.date));
-                    const status = (day.status || "").toUpperCase();
-                    if (status === "BOOKED") map[key] = { type: "booked", guest: day.guestName || "" };
-                    else if (status === "BLOCKED") map[key] = { type: "blocked" };
-                    else map[key] = { type: "available", price: day.price ? String(day.price) : "" };
-                });
-                setBookings(map);
+                setSelectedRoomId((prev) => prev ?? (list[0] as any)?.roomId ?? null);
             })
-            .catch(() => setBookings({}))
-            .finally(() => setCalendarLoading(false));
-    }, [propertyId, baseDate]);
-
-    // Weekly derived
-    const weekDates = useMemo(() => getWeekDates(baseDate), [baseDate]);
-
-    // Monthly derived
-    const monthYear_monthly = `${MONTH_NAMES[baseDate.getMonth()]} ${baseDate.getFullYear()}`;
-    const monthGrid = useMemo(() => getMonthGrid(baseDate.getFullYear(), baseDate.getMonth()), [baseDate]);
-
-    // Weekly header title
-    const monthYear_weekly = `${MONTH_NAMES[weekDates[0].getMonth()]} ${weekDates[0].getFullYear()}`;
-
-    // Navigation
-    const prev = () => {
-        if (calendarView === "weekly") {
-            setBaseDate((d) => { const n = new Date(d); n.setDate(n.getDate() - 7); return n; });
-        } else {
-            setBaseDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
-        }
-    };
-    const next = () => {
-        if (calendarView === "weekly") {
-            setBaseDate((d) => { const n = new Date(d); n.setDate(n.getDate() + 7); return n; });
-        } else {
-            setBaseDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
-        }
-    };
-    const goToday = () => setBaseDate(new Date());
-
-    const toggleDate = (key: string) => {
-        setSelectedDates((prev) =>
-            prev.includes(key) ? prev.filter((d) => d !== key) : [...prev, key]
-        );
-        setShowPanel(true);
+            .catch(() => setMonthData([]))
+            .finally(() => setMonthLoading(false));
     };
 
-    const selectionLabel = useMemo(() => {
-        if (selectedDates.length === 0) return "";
-        const sorted = [...selectedDates].sort();
-        const first = new Date(sorted[0] + "T00:00:00");
-        const last = new Date(sorted[sorted.length - 1] + "T00:00:00");
-        return `${fmtShort(first)} – ${fmtShort(last)}`;
-    }, [selectedDates]);
+    useEffect(() => {
+        fetchMonthData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [propertyId, monthYear, monthMonth]);
+
+    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
 
     const statusColor = property?.status === "active" ? "#27ae60"
         : property?.status === "inactive" ? "#828282"
@@ -169,369 +140,397 @@ function AvailabilityContent() {
         : "#b0b0b0";
     const statusLabel = property?.status?.toUpperCase() ?? "PENDING";
 
-    const todayKey = fmt(new Date());
+    // Build unique dates and rooms from calendar data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dates = Array.from(new Set(calendarData.map((d: any) => d.date))).sort();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const roomNames = Array.from(new Set(calendarData.map((d: any) => d.roomName)));
+
+    // Map: roomName + date -> entry
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cellMap: Record<string, any> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    calendarData.forEach((d: any) => {
+        cellMap[`${d.roomName}__${d.date}`] = d;
+    });
+
+    // Monthly calendar — rooms + day-status map for the currently selected room
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const monthRooms = Array.from(
+        new Map(monthData.map((d: any) => [d.roomId, { id: d.roomId, name: d.roomName }])).values()
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const monthCellMap: Record<string, any> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    monthData.forEach((d: any) => {
+        if (d.roomId === selectedRoomId) monthCellMap[d.date] = d;
+    });
+    const monthGrid = getMonthGrid(monthYear, monthMonth);
+    const monthWeeks: typeof monthGrid[] = [];
+    for (let i = 0; i < monthGrid.length; i += 7) monthWeeks.push(monthGrid.slice(i, i + 7));
+
+    const toggleDateSelection = (key: string) => {
+        setSelectedDates((prev) => (prev.includes(key) ? prev.filter((d) => d !== key) : [...prev, key]));
+        setApplyError(null);
+    };
+
+    const prevMonth = () => {
+        if (monthMonth === 0) { setMonthMonth(11); setMonthYear((y) => y - 1); }
+        else setMonthMonth((m) => m - 1);
+        setSelectedDates([]);
+    };
+    const nextMonth = () => {
+        if (monthMonth === 11) { setMonthMonth(0); setMonthYear((y) => y + 1); }
+        else setMonthMonth((m) => m + 1);
+        setSelectedDates([]);
+    };
+
+    async function handleApplyChanges() {
+        if (!propertyId || !selectedRoomId || selectedDates.length === 0) return;
+        setApplying(true);
+        setApplyError(null);
+        try {
+            await availabilityApi.bulkUpdate({
+                propertyId: Number(propertyId),
+                roomId: selectedRoomId,
+                dates: selectedDates,
+                newStatus,
+                customPrice: customPrice ? Number(customPrice) : undefined,
+                notes: notes || undefined,
+            });
+            setSelectedDates([]);
+            setCustomPrice("");
+            setNotes("");
+            fetchMonthData();
+        } catch (err: unknown) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setApplyError((err as any)?.response?.data?.message ?? "Failed to update availability.");
+        } finally {
+            setApplying(false);
+        }
+    }
+
+    function formatDate(dateStr: string) {
+        try {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" });
+        } catch {
+            return dateStr;
+        }
+    }
+
+    function statusPill(status: string, customPrice?: number | null) {
+        let bg = "#f3f4f6", color = "#6b7280", label = status;
+        if (status === "AVAILABLE") { bg = "#dcfce7"; color = "#15803d"; label = "Available"; }
+        else if (status === "BOOKED") { bg = "#fde8e8"; color = "#b91c1c"; label = "Booked"; }
+        else if (status === "BLOCKED") { bg = "#fff7ed"; color = "#c2410c"; label = "Blocked"; }
+        else if (status === "MAINTENANCE") { bg = "#f3f4f6"; color = "#6b7280"; label = "Maintenance"; }
+
+        return (
+            <div className="flex flex-col items-center gap-0.5">
+                <span
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+                    style={{ backgroundColor: bg, color }}
+                >
+                    {label}
+                </span>
+                {customPrice != null && (
+                    <span className="text-[9px] text-[var(--brand-primary)] font-semibold">Rs.{customPrice}</span>
+                )}
+            </div>
+        );
+    }
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            <OwnerSidebar />
+        <div className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
 
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-end items-center py-2 px-6 bg-white border-b border-[#e8e8e8] shrink-0">
-                    <div className="flex items-center gap-3">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-[30px] h-[30px] rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
+                {/* Breadcrumb */}
+                <div className="flex items-center gap-1.5 text-[12px] mb-1.5">
+                    <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[var(--brand-primary)] transition-colors">Properties</a>
+                    <ChevronRight size={14} color="#b0b0b0" />
+                    <span className="text-[var(--brand-primary)] font-semibold">{property?.name ?? "Availability"}</span>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 flex flex-col overflow-hidden px-6 pt-2 pb-3">
-                    {/* Breadcrumb */}
-                    <div className="flex items-center gap-1.5 text-[12px] mb-2 shrink-0">
-                        <a href="/owner/properties" className="text-[#828282] no-underline hover:text-[#953002] transition-colors">Properties</a>
-                        <ChevronRight size={13} color="#b0b0b0" />
-                        <span className="text-[#953002] font-semibold">{property?.name ?? "Availability"}</span>
+                {loading && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 size={28} color="#953002" className="animate-spin" />
                     </div>
+                )}
+                {error && !loading && (
+                    <div className="flex-1 flex items-center justify-center text-[13px] text-[#e74c3c]">{error}</div>
+                )}
 
-                    {loadingProperty && (
-                        <div className="flex-1 flex items-center justify-center">
-                            <Loader2 size={28} color="#953002" className="animate-spin" />
-                        </div>
-                    )}
-                    {propertyError && !loadingProperty && (
-                        <div className="flex-1 flex items-center justify-center text-[13px] text-[#e74c3c]">{propertyError}</div>
-                    )}
-
-                    {!loadingProperty && !propertyError && property && (
-                        <div className="flex-1 flex flex-col overflow-hidden">
-                            {/* Property Header Card */}
-                            <div className="bg-white border border-[#e8e8e8] rounded-[12px] py-2.5 px-4 flex items-center mb-0 shrink-0">
-                                <div className="w-[56px] h-[44px] rounded-lg overflow-hidden shrink-0 border border-[#e8e8e8] bg-[#f0ebe5] flex items-center justify-center mr-3">
+                {!loading && !error && property && (
+                    <div className="flex-1 overflow-y-auto pb-4 pr-1">
+                        {/* Property Header Card */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-[14px] py-3.5 px-5 flex items-center justify-between mb-0">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="w-[80px] h-[64px] rounded-lg overflow-hidden shrink-0 border-2 border-[var(--brand-primary)] bg-[#f0ebe5] flex items-center justify-center">
                                     {property.image ? (
                                         <img src={property.image} alt={property.name} className="w-full h-full object-cover" />
                                     ) : (
-                                        <Building2 size={20} color="#c0a898" />
+                                        <Building2 size={28} color="#c0a898" />
                                     )}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-[15px] font-extrabold m-0 text-[#1d1d1d] truncate">{property.name}</h2>
-                                        <span className="text-[9px] font-bold text-white rounded px-[6px] py-[2px] tracking-widest shrink-0" style={{ backgroundColor: statusColor }}>{statusLabel}</span>
-                                    </div>
-                                    <div className="text-[11px] text-[#828282] flex items-center gap-3 mt-0.5">
-                                        <span className="flex items-center gap-1"><MapPin size={11} />{[property.address, property.city, property.country].filter(Boolean).join(", ")}</span>
-                                        <span className="flex items-center gap-1"><Bed size={11} />{property.roomCount ?? 0} Rooms</span>
-                                        <span className="flex items-center gap-1"><Calendar size={11} />{property.rate ?? "—"}/night</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Tabs */}
-                            <div className="flex border-b border-[#e8e8e8] mb-2 mt-1.5 shrink-0">
-                                {tabs.map((t) => {
-                                    const isActive = t === "Availability";
-                                    return (
-                                        <button
-                                            key={t}
-                                            onClick={() => {
-                                                if (t === "Overview") window.location.href = `/owner/properties/propertyDetails?id=${propertyId}`;
-                                                else if (t === "Rooms") window.location.href = `/owner/properties/propertyRoomInventry?id=${propertyId}`;
-                                                else if (t === "Availability") return;
-                                                else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${propertyId}`;
-                                                else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${propertyId}`;
-                                                else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
-                                                else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${propertyId}`;
-                                            }}
-                                            className={`bg-transparent py-2 px-3.5 text-[12px] cursor-pointer transition-all duration-150 border-b-2 whitespace-nowrap ${
-                                                isActive
-                                                    ? "text-[#953002] font-bold border-[#953002]"
-                                                    : "text-[#828282] font-medium border-transparent hover:text-[#4f4f4f]"
-                                            }`}
+                                <div>
+                                    <div className="flex items-center gap-2.5">
+                                        <h2 className="text-[20px] font-extrabold m-0 text-[#1d1d1d]">{property.name}</h2>
+                                        <span
+                                            className="text-[9px] font-bold text-white rounded w-max px-[7px] py-[2px] tracking-widest"
+                                            style={{ backgroundColor: statusColor }}
                                         >
-                                            {t}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Calendar Area */}
-                            <div className="flex-1 flex gap-3 overflow-hidden min-h-0">
-                                {/* Calendar Panel */}
-                                <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-
-                                    {/* Calendar Toolbar */}
-                                    <div className="flex items-center justify-between mb-2 shrink-0">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={prev} className="w-7 h-7 flex items-center justify-center border border-[#e0e0e0] rounded-lg bg-white cursor-pointer hover:bg-[#f5f5f5]">
-                                                <ChevronLeft size={16} />
-                                            </button>
-                                            <button onClick={goToday} className="h-7 px-3 border border-[#e0e0e0] rounded-lg bg-white text-[11px] font-bold text-[#1d1d1d] cursor-pointer tracking-wider hover:bg-[#f5f5f5]">
-                                                TODAY
-                                            </button>
-                                            <button onClick={next} className="w-7 h-7 flex items-center justify-center border border-[#e0e0e0] rounded-lg bg-white cursor-pointer hover:bg-[#f5f5f5]">
-                                                <ChevronRight size={16} />
-                                            </button>
-                                            <span className="text-[18px] font-extrabold text-[#1d1d1d] ml-1">
-                                                {calendarView === "weekly" ? monthYear_weekly : monthYear_monthly}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            {/* Legend */}
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-2 h-2 rounded-full bg-[#27ae60] inline-block" />
-                                                <span className="text-[10px] font-semibold text-[#828282]">AVAILABLE</span>
-                                                <span className="w-2 h-2 rounded-full bg-[#953002] inline-block ml-1" />
-                                                <span className="text-[10px] font-semibold text-[#828282]">BOOKED</span>
-                                                <span className="w-2 h-2 rounded-full bg-[#b0b0b0] inline-block ml-1" />
-                                                <span className="text-[10px] font-semibold text-[#828282]">BLOCKED</span>
-                                            </div>
-                                            {/* Weekly / Monthly toggle */}
-                                            <div className="flex bg-[#f0f0f0] rounded-lg p-0.5">
-                                                <button
-                                                    onClick={() => setCalendarView("weekly")}
-                                                    className={`py-1 px-3.5 rounded-md text-[12px] font-semibold cursor-pointer border-none transition-all duration-150 ${
-                                                        calendarView === "weekly"
-                                                            ? "bg-[#953002] text-white shadow-sm"
-                                                            : "bg-transparent text-[#4f4f4f] hover:bg-white"
-                                                    }`}
-                                                >
-                                                    Weekly
-                                                </button>
-                                                <button
-                                                    onClick={() => setCalendarView("monthly")}
-                                                    className={`py-1 px-3.5 rounded-md text-[12px] font-semibold cursor-pointer border-none transition-all duration-150 ${
-                                                        calendarView === "monthly"
-                                                            ? "bg-[#953002] text-white shadow-sm"
-                                                            : "bg-transparent text-[#4f4f4f] hover:bg-white"
-                                                    }`}
-                                                >
-                                                    Monthly
-                                                </button>
-                                            </div>
-                                        </div>
+                                            {statusLabel}
+                                        </span>
                                     </div>
-
-                                    {/* Calendar Grid */}
-                                    {calendarLoading ? (
-                                        <div className="flex-1 flex items-center justify-center">
-                                            <Loader2 size={24} color="#953002" className="animate-spin" />
-                                        </div>
-                                    ) : calendarView === "weekly" ? (
-                                        /* ── Weekly View ── */
-                                        <div className="flex-1 border border-[#e8e8e8] rounded-xl overflow-hidden bg-white min-h-0 flex flex-col">
-                                            {/* Day header row */}
-                                            <div className="grid grid-cols-7 border-b border-[#e8e8e8] shrink-0">
-                                                {weekDates.map((date, i) => {
-                                                    const isToday = fmt(date) === todayKey;
-                                                    return (
-                                                        <div key={i} className="text-center py-2 border-r border-[#e8e8e8] last:border-r-0">
-                                                            <div className="text-[10px] font-bold text-[#828282] tracking-widest">{DAY_LABELS[i]}</div>
-                                                            <div className={`text-[15px] font-extrabold mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-full ${
-                                                                isToday ? "bg-[#953002] text-white" : "text-[#1d1d1d]"
-                                                            }`}>
-                                                                {date.getDate()}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                            {/* Booking cells row */}
-                                            <div className="grid grid-cols-7 flex-1 min-h-0">
-                                                {weekDates.map((date) => {
-                                                    const key = fmt(date);
-                                                    const booking = bookings[key];
-                                                    const isSelected = selectedDates.includes(key);
-                                                    return (
-                                                        <div
-                                                            key={key}
-                                                            onClick={() => toggleDate(key)}
-                                                            className={`border-r border-[#e8e8e8] last:border-r-0 cursor-pointer flex flex-col p-2 transition-all duration-100 hover:bg-[#faf8f6] ${
-                                                                isSelected ? "ring-2 ring-inset ring-[#953002] bg-[#fef5ef]" : ""
-                                                            }`}
-                                                        >
-                                                            {booking?.type === "booked" && (
-                                                                <div className="flex-1 bg-[#953002] rounded-lg flex flex-col items-center justify-center gap-1 p-2">
-                                                                    <span className="text-[9px] font-bold text-[rgba(255,255,255,0.7)] tracking-widest">BOOKED</span>
-                                                                    <span className="text-[11px] font-extrabold text-white text-center leading-tight">{booking.guest}</span>
-                                                                </div>
-                                                            )}
-                                                            {booking?.type === "available" && (
-                                                                <div className="flex-1 flex flex-col items-center justify-center gap-1">
-                                                                    {booking.price && (
-                                                                        <span className="text-[13px] font-extrabold text-[#953002]">Rs {booking.price}</span>
-                                                                    )}
-                                                                    <span className="text-[9px] font-bold text-[#27ae60] tracking-wider">AVAILABLE</span>
-                                                                </div>
-                                                            )}
-                                                            {booking?.type === "blocked" && (
-                                                                <div
-                                                                    className="flex-1 rounded-lg flex items-center justify-center"
-                                                                    style={{ background: "repeating-linear-gradient(45deg,#f5f5f5,#f5f5f5 4px,#eee 4px,#eee 8px)" }}
-                                                                >
-                                                                    <span className="text-[9px] font-bold text-[#b0b0b0] tracking-widest">BLOCKED</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        /* ── Monthly View ── */
-                                        <div className="flex-1 border border-[#e8e8e8] rounded-xl overflow-hidden bg-white min-h-0 flex flex-col">
-                                            {/* Day-of-week header */}
-                                            <div className="grid grid-cols-7 border-b border-[#e8e8e8] shrink-0">
-                                                {DAY_LABELS_SHORT.map((d) => (
-                                                    <div key={d} className="text-center py-2 text-[10px] font-bold text-[#828282] tracking-widest border-r border-[#e8e8e8] last:border-r-0">
-                                                        {d}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            {/* Month grid */}
-                                            <div
-                                                className="flex-1 grid grid-cols-7 min-h-0"
-                                                style={{ gridTemplateRows: `repeat(${monthGrid.length / 7}, 1fr)` }}
-                                            >
-                                                {monthGrid.map((date, idx) => {
-                                                    if (!date) {
-                                                        return (
-                                                            <div key={`empty-${idx}`} className="border-r border-b border-[#f0f0f0] last:border-r-0 bg-[#fafafa]" />
-                                                        );
-                                                    }
-                                                    const key = fmt(date);
-                                                    const booking = bookings[key];
-                                                    const isSelected = selectedDates.includes(key);
-                                                    const isToday = key === todayKey;
-                                                    const isCurrentMonth = date.getMonth() === baseDate.getMonth();
-
-                                                    let dotColor = "";
-                                                    if (booking?.type === "booked") dotColor = "#953002";
-                                                    else if (booking?.type === "available") dotColor = "#27ae60";
-                                                    else if (booking?.type === "blocked") dotColor = "#b0b0b0";
-
-                                                    return (
-                                                        <div
-                                                            key={key}
-                                                            onClick={() => toggleDate(key)}
-                                                            className={`border-r border-b border-[#f0f0f0] last:border-r-0 cursor-pointer flex flex-col p-1.5 transition-all duration-100 hover:bg-[#faf8f6] ${
-                                                                isSelected ? "bg-[#fef5ef] ring-2 ring-inset ring-[#953002]" : ""
-                                                            } ${!isCurrentMonth ? "opacity-30" : ""}`}
-                                                        >
-                                                            <div className={`text-[12px] font-bold self-start leading-none inline-flex items-center justify-center w-6 h-6 rounded-full ${
-                                                                isToday ? "bg-[#953002] text-white" : "text-[#1d1d1d]"
-                                                            }`}>
-                                                                {date.getDate()}
-                                                            </div>
-                                                            {booking?.type === "booked" && (
-                                                                <div className="mt-1 flex-1 bg-[#953002] rounded text-[9px] font-bold text-white flex items-center justify-center px-1 min-h-[18px]">
-                                                                    {booking.guest ? booking.guest.split(" ")[0] : "BOOKED"}
-                                                                </div>
-                                                            )}
-                                                            {booking?.type === "available" && booking.price && (
-                                                                <div className="mt-1 flex-1 bg-[#e8f5e9] rounded text-[9px] font-bold text-[#27ae60] flex items-center justify-center px-1 min-h-[18px]">
-                                                                    Rs {booking.price}
-                                                                </div>
-                                                            )}
-                                                            {booking?.type === "blocked" && (
-                                                                <div
-                                                                    className="mt-1 flex-1 rounded min-h-[18px]"
-                                                                    style={{ background: "repeating-linear-gradient(45deg,#f0f0f0,#f0f0f0 2px,#e8e8e8 2px,#e8e8e8 4px)" }}
-                                                                />
-                                                            )}
-                                                            {dotColor && !booking && (
-                                                                <span className="w-1.5 h-1.5 rounded-full mt-auto self-center" style={{ backgroundColor: dotColor }} />
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div className="text-[12px] text-[#828282] mt-0.5 flex items-center gap-1">
+                                        <MapPin size={12} />
+                                        {[property.address, property.city, property.country].filter(Boolean).join(", ")}
+                                    </div>
+                                    <div className="text-[12px] text-[#4f4f4f] mt-1 flex items-center gap-3">
+                                        <span className="flex items-center gap-[3px]"><Bed size={12} /> {property.roomCount ?? 0} Rooms</span>
+                                        <span className="flex items-center gap-[3px]"><Calendar size={12} /> {property.rate ?? "—"}/night</span>
+                                    </div>
                                 </div>
-
-                                {/* Update Panel */}
-                                {showPanel && (
-                                    <aside className="w-[220px] bg-white border border-[#e8e8e8] rounded-xl py-4 px-3.5 shrink-0 overflow-y-auto flex flex-col">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <span className="text-[14px] font-extrabold text-[#1d1d1d]">Update Status</span>
-                                            <button onClick={() => { setShowPanel(false); setSelectedDates([]); }} className="bg-transparent border-none cursor-pointer p-1 rounded hover:bg-[#f5f5f5]">
-                                                <X size={14} color="#828282" />
-                                            </button>
-                                        </div>
-
-                                        <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">SELECTION</div>
-                                        <div className="flex items-center gap-2 bg-[#fef5ef] border border-[#953002] rounded-lg py-2 px-2.5 mb-3">
-                                            <Calendar size={12} color="#953002" />
-                                            <div>
-                                                <div className="text-[11px] font-bold text-[#953002]">{selectionLabel || "—"}</div>
-                                                <div className="text-[10px] text-[#c44103]">{selectedDates.length} night{selectedDates.length !== 1 ? "s" : ""}</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">NEW STATUS</div>
-                                        {[
-                                            { key: "available", label: "Available" },
-                                            { key: "booked", label: "Booked (Manual)" },
-                                            { key: "blocked", label: "Blocked / OOO" },
-                                        ].map((opt) => {
-                                            const sel = newStatus === opt.key;
-                                            return (
-                                                <button
-                                                    key={opt.key}
-                                                    onClick={() => setNewStatus(opt.key)}
-                                                    className={`flex items-center gap-2 w-full py-2 px-2.5 rounded-lg cursor-pointer mb-1.5 text-left ${
-                                                        sel ? "border-2 border-[#953002] bg-[#fef5ef]" : "border border-[#e0e0e0] bg-white"
-                                                    }`}
-                                                >
-                                                    <span className={`w-3 h-3 shrink-0 rounded-full inline-flex items-center justify-center ${sel ? "bg-[#953002]" : "border-2 border-[#c0c0c0]"}`}>
-                                                        {sel && <Check size={7} color="#fff" strokeWidth={3} />}
-                                                    </span>
-                                                    <span className={`text-[11px] ${sel ? "font-bold text-[#1d1d1d]" : "font-medium text-[#4f4f4f]"}`}>{opt.label}</span>
-                                                </button>
-                                            );
-                                        })}
-
-                                        <div className="text-[9px] font-bold text-[#828282] tracking-widest mt-3 mb-1">CUSTOM PRICING</div>
-                                        <div className="flex items-center gap-1.5 border border-[#e0e0e0] rounded-lg py-1.5 px-2.5 bg-white mb-3">
-                                            <span className="text-[#828282] font-semibold text-[12px]">Rs</span>
-                                            <input
-                                                type="text"
-                                                value={customPrice}
-                                                onChange={(e) => setCustomPrice(e.target.value)}
-                                                placeholder="0"
-                                                className="border-none outline-none text-[12px] font-semibold text-[#1d1d1d] w-full bg-transparent"
-                                            />
-                                        </div>
-
-                                        <div className="text-[9px] font-bold text-[#828282] tracking-widest mb-1">NOTES</div>
-                                        <textarea
-                                            value={notes}
-                                            onChange={(e) => setNotes(e.target.value)}
-                                            placeholder="Reason or guest details..."
-                                            className="w-full min-h-[60px] border border-[#e0e0e0] rounded-lg p-2 text-[11px] text-[#1d1d1d] resize-none outline-none box-border font-sans mb-3"
-                                        />
-
-                                        <button className="w-full py-2 bg-[#953002] text-white border-none rounded-lg text-[12px] font-bold cursor-pointer hover:bg-[#a63602] transition-colors mb-2">
-                                            Apply Changes
-                                        </button>
-
-                                        <div className="text-[9px] font-bold text-[#828282] tracking-widest mt-1 mb-1">BULK ACTIONS</div>
-                                        <button className="w-full text-left bg-transparent border-none text-[#953002] text-[11px] font-medium cursor-pointer underline p-0">
-                                            Block all weekends in {MONTH_NAMES[baseDate.getMonth()].slice(0, 3)}
-                                        </button>
-                                    </aside>
-                                )}
                             </div>
                         </div>
-                    )}
-                </div>
-            </main>
-        </div>
+
+                        {/* Nav + Content */}
+                        <div className="flex gap-5 items-start">
+                            {/* Vertical Nav */}
+                            <div className="w-[190px] shrink-0 flex flex-col gap-1">
+                                {propertyId && propertyNavItems(propertyId, "Availability").map((item) => (
+                                    <a
+                                        key={item.label}
+                                        href={item.href}
+                                        className={`flex items-center gap-2 py-2.5 px-3.5 border-none rounded-lg text-[12px] cursor-pointer text-left transition-all duration-150 no-underline ${
+                                            item.active
+                                                ? "bg-[var(--brand-primary)] text-white font-bold"
+                                                : "bg-transparent text-[#4f4f4f] font-medium hover:bg-[#f5f5f5]"
+                                        }`}
+                                    >
+                                        {item.icon}
+                                        <span>{item.label}</span>
+                                    </a>
+                                ))}
+                            </div>
+
+                        <div className="flex-1 min-w-0">
+                        {/* Calendar Grid */}
+                        <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden">
+                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#f0f0f0] flex-wrap gap-2">
+                                <div className="flex items-center gap-2">
+                                    <CalendarDays size={16} color="#953002" />
+                                    <span className="text-[15px] font-bold text-[#1d1d1d]">
+                                        {calendarView === "weekly" ? "Weekly Availability Calendar" : `${MONTH_NAMES[monthMonth]} ${monthYear}`}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {calendarView === "monthly" && monthRooms.length > 0 && (
+                                        <>
+                                            <select
+                                                value={selectedRoomId ?? ""}
+                                                onChange={(e) => { setSelectedRoomId(Number(e.target.value)); setSelectedDates([]); }}
+                                                className="py-1.5 px-2.5 border border-[#e0e0e0] rounded-lg text-[12px] text-[#1d1d1d] outline-none bg-white"
+                                            >
+                                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                                {monthRooms.map((r: any) => (
+                                                    <option key={r.id} value={r.id}>{r.name}</option>
+                                                ))}
+                                            </select>
+                                            <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center border border-[#e0e0e0] rounded-lg bg-white cursor-pointer text-[#4f4f4f]"><ChevronLeft size={16} /></button>
+                                            <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center border border-[#e0e0e0] rounded-lg bg-white cursor-pointer text-[#4f4f4f]"><ChevronRight size={16} /></button>
+                                        </>
+                                    )}
+                                    {/* Weekly / Monthly slider toggle */}
+                                    <div className="flex bg-[#f0f0f0] rounded-lg p-0.5 gap-0.5">
+                                        <button
+                                            onClick={() => setCalendarView("weekly")}
+                                            className={`py-1.5 px-3.5 rounded-md text-[11px] font-bold border-none cursor-pointer transition-all duration-150 ${
+                                                calendarView === "weekly" ? "bg-[var(--brand-primary)] text-white" : "bg-transparent text-[#828282]"
+                                            }`}
+                                        >
+                                            Weekly
+                                        </button>
+                                        <button
+                                            onClick={() => setCalendarView("monthly")}
+                                            className={`py-1.5 px-3.5 rounded-md text-[11px] font-bold border-none cursor-pointer transition-all duration-150 ${
+                                                calendarView === "monthly" ? "bg-[var(--brand-primary)] text-white" : "bg-transparent text-[#828282]"
+                                            }`}
+                                        >
+                                            Monthly
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {calendarView === "weekly" && (calendarData.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-16 text-center">
+                                    <CalendarDays size={40} color="#c0a898" className="mb-3" />
+                                    <p className="text-[14px] text-[#828282]">No availability data configured yet.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse min-w-[700px]">
+                                        <thead>
+                                            <tr className="bg-[#faf9f7]">
+                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider min-w-[140px]">Room</th>
+                                                {dates.map((d) => (
+                                                    <th key={d} className="text-center px-3 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">
+                                                        {formatDate(d)}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {roomNames.map((roomName, idx) => (
+                                                <tr
+                                                    key={roomName}
+                                                    className={`border-t border-[#f5f5f5] ${idx % 2 === 0 ? "bg-white" : "bg-[#fdf9f7]"}`}
+                                                >
+                                                    <td className="px-4 py-3 text-[13px] font-semibold text-[#1d1d1d]">{roomName}</td>
+                                                    {dates.map((d) => {
+                                                        const cell = cellMap[`${roomName}__${d}`];
+                                                        return (
+                                                            <td key={d} className="px-2 py-3 text-center">
+                                                                {cell ? statusPill(cell.status, cell.customPrice) : (
+                                                                    <span className="text-[10px] text-[#b0b0b0]">—</span>
+                                                                )}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ))}
+
+                            {/* Legend */}
+                            {calendarView === "weekly" && calendarData.length > 0 && (
+                                <div className="flex items-center gap-4 px-5 py-3 border-t border-[#f0f0f0] bg-[#faf9f7]">
+                                    <span className="text-[11px] text-[#828282] font-semibold">Legend:</span>
+                                    {[
+                                        { label: "Available", bg: "#dcfce7", color: "#15803d" },
+                                        { label: "Booked", bg: "#fde8e8", color: "#b91c1c" },
+                                        { label: "Blocked", bg: "#fff7ed", color: "#c2410c" },
+                                        { label: "Maintenance", bg: "#f3f4f6", color: "#6b7280" },
+                                    ].map((l) => (
+                                        <span
+                                            key={l.label}
+                                            className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                                            style={{ backgroundColor: l.bg, color: l.color }}
+                                        >
+                                            {l.label}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Monthly Calendar (per-property, click dates to update) */}
+                            {calendarView === "monthly" && (monthLoading ? (
+                                <div className="flex items-center justify-center py-16">
+                                    <Loader2 size={24} color="#953002" className="animate-spin" />
+                                </div>
+                            ) : monthRooms.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-16 text-center">
+                                    <CalendarDays size={40} color="#c0a898" className="mb-3" />
+                                    <p className="text-[14px] text-[#828282]">No rooms yet — add rooms to this property to manage a monthly calendar.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-7 border-b border-[#e8e8e8]">
+                                        {DAY_LABELS.map((d) => (
+                                            <div key={d} className="py-2 text-center text-[10px] font-bold text-[#828282] tracking-widest">{d}</div>
+                                        ))}
+                                    </div>
+                                    {monthWeeks.map((week, wi) => (
+                                        <div key={wi} className="grid grid-cols-7 border-b border-[#e8e8e8] last:border-b-0">
+                                            {week.map((cell) => {
+                                                const key = fmtDateKey(cell.date);
+                                                const entry = monthCellMap[key];
+                                                const isSelected = selectedDates.includes(key);
+                                                const isToday = fmtDateKey(new Date()) === key;
+                                                return (
+                                                    <div
+                                                        key={key}
+                                                        onClick={() => cell.currentMonth && entry?.status !== "BOOKED" && toggleDateSelection(key)}
+                                                        className={`min-h-[64px] p-1.5 border-r border-[#f0f0f0] last:border-r-0 flex flex-col gap-1 ${
+                                                            !cell.currentMonth ? "bg-[#fafafa]" : entry?.status === "BOOKED" ? "cursor-not-allowed" : "cursor-pointer hover:bg-[#faf5f0]"
+                                                        } ${isSelected ? "bg-[#fef5ef] shadow-[inset_0_0_0_2px_#953002]" : ""}`}
+                                                    >
+                                                        <span className={`text-[11px] leading-none ${!cell.currentMonth ? "text-[#ccc]" : isToday ? "font-extrabold text-[var(--brand-primary)]" : "text-[#1d1d1d] font-semibold"}`}>
+                                                            {cell.date.getDate()}
+                                                        </span>
+                                                        {cell.currentMonth && entry && (
+                                                            <span
+                                                                className="text-[9px] font-bold px-1.5 py-0.5 rounded-full self-start whitespace-nowrap"
+                                                                style={{
+                                                                    backgroundColor: entry.status === "AVAILABLE" ? "#dcfce7" : entry.status === "BOOKED" ? "#fde8e8" : entry.status === "BLOCKED" ? "#fff7ed" : "#f3f4f6",
+                                                                    color: entry.status === "AVAILABLE" ? "#15803d" : entry.status === "BOOKED" ? "#b91c1c" : entry.status === "BLOCKED" ? "#c2410c" : "#6b7280",
+                                                                }}
+                                                            >
+                                                                {entry.status === "AVAILABLE" ? "Available" : entry.status === "BOOKED" ? "Booked" : entry.status === "BLOCKED" ? "Blocked" : "Maint."}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ))}
+
+                                    {/* Update panel — appears once dates are selected */}
+                                    {selectedDates.length > 0 && (
+                                        <div className="p-4 border-t border-[#f0f0f0] bg-[#faf9f7]">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className="text-[12px] font-bold text-[#1d1d1d]">{selectedDates.length} date{selectedDates.length > 1 ? "s" : ""} selected</span>
+                                                <button onClick={() => setSelectedDates([])} className="text-[11px] text-[#828282] underline bg-transparent border-none cursor-pointer">Clear</button>
+                                            </div>
+                                            <div className="flex flex-wrap items-end gap-3">
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-[#828282] tracking-widest mb-1">STATUS</label>
+                                                    <div className="flex gap-1.5">
+                                                        {["AVAILABLE", "BLOCKED", "MAINTENANCE"].map((s) => (
+                                                            <button
+                                                                key={s}
+                                                                onClick={() => setNewStatus(s)}
+                                                                className={`flex items-center gap-1 py-1.5 px-2.5 rounded-lg text-[11px] font-semibold cursor-pointer border ${
+                                                                    newStatus === s ? "border-[var(--brand-primary)] bg-[#fef5ef] text-[var(--brand-primary)]" : "border-[#e0e0e0] bg-white text-[#4f4f4f]"
+                                                                }`}
+                                                            >
+                                                                {newStatus === s && <Check size={12} />}
+                                                                {s === "AVAILABLE" ? "Available" : s === "BLOCKED" ? "Blocked" : "Maintenance"}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-[#828282] tracking-widest mb-1">CUSTOM PRICE</label>
+                                                    <input type="number" value={customPrice} onChange={(e) => setCustomPrice(e.target.value)} placeholder="Optional" className="w-[110px] py-1.5 px-2.5 border border-[#e0e0e0] rounded-lg text-[12px] outline-none" />
+                                                </div>
+                                                <div className="flex-1 min-w-[160px]">
+                                                    <label className="block text-[10px] font-bold text-[#828282] tracking-widest mb-1">NOTES</label>
+                                                    <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional reason" className="w-full py-1.5 px-2.5 border border-[#e0e0e0] rounded-lg text-[12px] outline-none" />
+                                                </div>
+                                                <button
+                                                    onClick={handleApplyChanges}
+                                                    disabled={applying}
+                                                    className="flex items-center gap-1.5 py-2 px-4 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[var(--primary-hover)] disabled:opacity-60"
+                                                >
+                                                    {applying && <Loader2 size={13} className="animate-spin" />}
+                                                    {applying ? "Applying..." : "Apply Changes"}
+                                                </button>
+                                            </div>
+                                            {applyError && <p className="text-[11px] text-[#c0392b] mt-2">{applyError}</p>}
+                                        </div>
+                                    )}
+                                </>
+                            ))}
+                        </div>
+                        </div>
+                        </div>
+                    </div>
+                )}
+            </div>
     );
 }
 

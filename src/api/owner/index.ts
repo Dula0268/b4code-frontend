@@ -6,4 +6,3 @@ export * from './availability.api';
 export * from './rates.api';
 export * from './reservations.api';
 export * from './settings.api';
-export * from './message.api';

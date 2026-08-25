@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import OwnerSidebar from "@/components/owner/OwnerSidebar";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { reservationsApi } from "@/api/owner/reservations.api";
+import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
     ArrowLeft,
@@ -31,10 +31,10 @@ function buildTimeline(status: string): any[] {
     const isCheckedOut = status === "CHECKED_OUT";
     const isConfirmed = status !== "PENDING";
     return [
-        { label: "Booking Created", time: "—", icon: "created", bgClass: "bg-[#953002]", iconColor: "#fff", active: true },
+        { label: "Booking Created", time: "—", icon: "created", bgClass: "bg-[var(--brand-primary)]", iconColor: "#fff", active: true },
         { label: "Payment Confirmed", time: "—", icon: "payment", bgClass: isConfirmed ? "bg-[#27ae60]" : "bg-transparent", borderClass: isConfirmed ? "" : "border-2 border-[#b0b0b0]", iconColor: isConfirmed ? "#fff" : "#b0b0b0", active: isConfirmed },
-        { label: "Check-in", time: "—", icon: "checkin", bgClass: isCheckedIn ? "bg-[#953002]" : "bg-transparent", borderClass: isCheckedIn ? "" : "border-2 border-[#b0b0b0]", iconColor: isCheckedIn ? "#fff" : "#b0b0b0", active: isCheckedIn },
-        { label: "Check-out", time: "—", icon: "checkout", bgClass: isCheckedOut ? "bg-[#953002]" : "bg-transparent", borderClass: isCheckedOut ? "" : "border-2 border-[#b0b0b0]", iconColor: isCheckedOut ? "#fff" : "#b0b0b0", active: isCheckedOut },
+        { label: "Check-in", time: "—", icon: "checkin", bgClass: isCheckedIn ? "bg-[var(--brand-primary)]" : "bg-transparent", borderClass: isCheckedIn ? "" : "border-2 border-[#b0b0b0]", iconColor: isCheckedIn ? "#fff" : "#b0b0b0", active: isCheckedIn },
+        { label: "Check-out", time: "—", icon: "checkout", bgClass: isCheckedOut ? "bg-[var(--brand-primary)]" : "bg-transparent", borderClass: isCheckedOut ? "" : "border-2 border-[#b0b0b0]", iconColor: isCheckedOut ? "#fff" : "#b0b0b0", active: isCheckedOut },
     ];
 }
 
@@ -92,7 +92,7 @@ function ReservationDetailsContent() {
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
-                <div className="animate-spin h-8 w-8 border-4 border-[#953002] border-t-transparent rounded-full" />
+                <div className="animate-spin h-8 w-8 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full" />
             </div>
         );
     }
@@ -106,33 +106,16 @@ function ReservationDetailsContent() {
     }
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            <OwnerSidebar />
-
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* ── Top Bar ── */}
-                <div className="flex justify-end items-center py-2 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
-
-            {/* ── Scrollable Body ── */}
-            <div className="flex-1 py-6 px-12 pb-10 overflow-y-auto">
+        <div className="flex-1 py-6 px-12 pb-10 overflow-y-auto">
                 {/* Back Link */}
-                <a href="/owner/reservation" className="inline-flex items-center gap-1.5 text-[13px] color-[#953002] no-underline font-semibold mb-4 text-[#953002]">
+                <a href="/owner/reservation" className="inline-flex items-center gap-1.5 text-[13px] no-underline font-semibold mb-4 text-[var(--brand-primary)]">
                     <ArrowLeft size={14} /> Back to Reservations
                 </a>
 
                 {/* Header Row */}
                 <div className="flex justify-between items-start mb-6">
                     <div>
-                        <div className="text-[11px] font-bold text-[#953002] tracking-[1.2px] mb-1">RESERVATION ID</div>
+                        <div className="text-[11px] font-bold text-[var(--brand-primary)] tracking-[1.2px] mb-1">RESERVATION ID</div>
                         <h1 className="text-[32px] font-black text-[#1d1d1d] m-0">{reservation.id}</h1>
                     </div>
                     <span className="inline-flex items-center gap-1.5 py-1.5 px-4 bg-[#f0faf4] border border-[#c8e6d0] rounded-full text-[13px] font-bold text-[#1d1d1d]">
@@ -164,7 +147,7 @@ function ReservationDetailsContent() {
                             <span className="text-[13px] color-[#4f4f4f] font-medium text-[#4f4f4f]">{reservation.guest.phone}</span>
                         </div>
 
-                        <button className="flex items-center justify-center gap-2 w-full py-3 bg-[#953002] text-white border-none rounded-lg text-[14px] font-bold cursor-pointer mt-4">
+                        <button className="flex items-center justify-center gap-2 w-full py-3 bg-[var(--brand-primary)] text-white border-none rounded-lg text-[14px] font-bold cursor-pointer mt-4">
                             <MessageSquare size={16} /> Message
                         </button>
                         <button className="flex items-center justify-center gap-2 w-full py-3 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[14px] font-bold cursor-pointer mt-2">
@@ -204,7 +187,7 @@ function ReservationDetailsContent() {
                                             {item.label}
                                         </div>
                                         <div className={`text-[11px] mt-0.5 ${
-                                            item.active ? "text-[#953002]" : "text-[#b0b0b0]"
+                                            item.active ? "text-[var(--brand-primary)]" : "text-[#b0b0b0]"
                                         }`}>
                                             {item.time}
                                         </div>
@@ -224,15 +207,15 @@ function ReservationDetailsContent() {
                             <h3 className="text-[16px] font-extrabold text-[#1d1d1d] m-0">Property & Room</h3>
                         </div>
 
-                        <div className="text-[10px] font-bold text-[#953002] tracking-wide uppercase">PROPERTY NAME</div>
+                        <div className="text-[10px] font-bold text-[var(--brand-primary)] tracking-wide uppercase">PROPERTY NAME</div>
                         <div className="text-[16px] font-extrabold text-[#1d1d1d] mt-1">{reservation.property}</div>
 
-                        <div className="text-[10px] font-bold text-[#953002] tracking-wide uppercase mt-3.5">ROOM TYPE</div>
+                        <div className="text-[10px] font-bold text-[var(--brand-primary)] tracking-wide uppercase mt-3.5">ROOM TYPE</div>
                         <div className="text-[16px] font-extrabold text-[#1d1d1d] mt-1">{reservation.roomType}</div>
 
                         <div className="flex items-center gap-2 mt-4">
                             <Users size={14} color="#953002" />
-                            <span className="text-[13px] color-[#953002] font-medium text-[#953002]">{reservation.guests}</span>
+                            <span className="text-[13px] font-medium text-[var(--brand-primary)]">{reservation.guests}</span>
                         </div>
                     </div>
 
@@ -246,20 +229,20 @@ function ReservationDetailsContent() {
                         <div className="flex items-center justify-center gap-6">
                             {/* Check-in */}
                             <div className="text-center">
-                                <div className="text-[10px] font-bold text-[#953002] tracking-wide uppercase">CHECK-IN</div>
+                                <div className="text-[10px] font-bold text-[var(--brand-primary)] tracking-wide uppercase">CHECK-IN</div>
                                 <div className="text-[22px] font-black text-[#1d1d1d] mt-1">{reservation.checkIn.date}</div>
                                 <div className="text-[13px] font-medium text-[#828282] mt-0.5">{reservation.checkIn.year}</div>
                             </div>
 
                             {/* Nights Badge */}
-                            <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-[#953002]">
+                            <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-[var(--brand-primary)]">
                                 <span className="text-[10px] font-extrabold text-white tracking-wide">{reservation.nights}</span>
                                 <span className="text-[8px] font-bold text-[#ffd9b3] tracking-wide">NIGHTS</span>
                             </div>
 
                             {/* Check-out */}
                             <div className="text-center">
-                                <div className="text-[10px] font-bold text-[#953002] tracking-wide uppercase">CHECK-OUT</div>
+                                <div className="text-[10px] font-bold text-[var(--brand-primary)] tracking-wide uppercase">CHECK-OUT</div>
                                 <div className="text-[22px] font-black text-[#1d1d1d] mt-1">{reservation.checkOut.date}</div>
                                 <div className="text-[13px] font-medium text-[#828282] mt-0.5">{reservation.checkOut.year}</div>
                             </div>
@@ -280,15 +263,15 @@ function ReservationDetailsContent() {
 
                     <div className="grid grid-cols-3 gap-5 mb-4">
                         <div>
-                            <div className="text-[10px] font-bold text-[#953002] tracking-wide uppercase">TOTAL AMOUNT</div>
+                            <div className="text-[10px] font-bold text-[var(--brand-primary)] tracking-wide uppercase">TOTAL AMOUNT</div>
                             <div className="text-[22px] font-black text-[#1d1d1d] mt-1">{reservation.totalAmount}</div>
                         </div>
                         <div>
-                            <div className="text-[10px] font-bold text-[#953002] tracking-wide uppercase">PAID AMOUNT</div>
+                            <div className="text-[10px] font-bold text-[var(--brand-primary)] tracking-wide uppercase">PAID AMOUNT</div>
                             <div className="text-[22px] font-black text-[#27ae60] mt-1">{reservation.paidAmount}</div>
                         </div>
                         <div>
-                            <div className="text-[10px] font-bold text-[#953002] tracking-wide uppercase">PAYMENT METHOD</div>
+                            <div className="text-[10px] font-bold text-[var(--brand-primary)] tracking-wide uppercase">PAYMENT METHOD</div>
                             <div className="flex items-center gap-1.5 mt-1">
                                 <CreditCard size={14} color="#953002" />
                                 <span className="text-[14px] font-semibold text-[#1d1d1d]">{reservation.paymentMethod}</span>
@@ -301,13 +284,11 @@ function ReservationDetailsContent() {
                         <div className="h-full w-full bg-[#27ae60] rounded-[3px]" />
                     </div>
 
-                    <div className="text-[12px] color-[#27ae60] font-medium mt-2 text-[#27ae60]">
+                    <div className="text-[12px] font-medium mt-2 text-[#27ae60]">
                         Fully paid on {reservation.paymentDate}
                     </div>
                 </div>
             </div>
-            </div>
-        </div>
     );
 }
 
@@ -315,7 +296,7 @@ export default function ReservationDetailsPage() {
     return (
         <Suspense fallback={
             <div className="flex h-screen items-center justify-center bg-[#faf9f7]">
-                <div className="animate-spin h-8 w-8 border-4 border-[#953002] border-t-transparent rounded-full" />
+                <div className="animate-spin h-8 w-8 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full" />
             </div>
         }>
             <ReservationDetailsContent />

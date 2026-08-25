@@ -3,41 +3,23 @@
 
 import { useState, useEffect } from "react";
 import { roomsApi } from "@/api/owner/rooms.api";
-import Logo from "@/components/shared/branding/logo";
+import { useAuthStore } from "@/store/auth/auth.store";
 import {
     Bell,
-    LayoutDashboard,
-    Building2,
-    BedDouble,
-    DollarSign,
-    BookOpen,
-    Settings,
     Eye,
     Pencil,
     Trash2,
     ChevronLeft,
     ChevronRight,
-    SlidersHorizontal,
     Plus,
     Search,
     BedSingle,
+    BedDouble,
     Users,
     Wrench,
     CheckCircle,
-    Star,
-    MessageSquare,
+    SlidersHorizontal,
 } from "lucide-react";
-
-/* ───────────────────── sidebar data ───────────────────── */
-
-const navItems = [
-    { label: "Dashboard",  icon: LayoutDashboard, href: "/owner" },
-    { label: "Properties", icon: Building2,        href: "/owner/properties" },
-    { label: "Staff",      icon: Users,            href: "/owner/staff" },
-    { label: "Reviews",    icon: Star,             href: "/owner/reviews" },
-    { label: "Messages",   icon: MessageSquare,    href: "/owner/message" },
-    { label: "Settings",   icon: Settings,         href: "/owner/setting/accountSetting" },
-];
 
 /* ───────────────────── types ───────────────────── */
 
@@ -87,10 +69,11 @@ function OccupancyIcon({ count }: { count: number }) {
  * occupancy stats, pricing, amenities, and quick-action controls.
  */
 export default function RoomManagementPage() {
+    const { user } = useAuthStore();
+    const ownerId = user?.userId ?? 1;
     const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("All Rooms");
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [rooms, setRooms] = useState<any[]>([]);
@@ -98,82 +81,55 @@ export default function RoomManagementPage() {
     const [occupied, setOccupied] = useState(0);
     const [maintenance, setMaintenance] = useState(0);
     const [vacant, setVacant] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
-    const PAGE_SIZE = 10;
+
+    const fetchRooms = async () => {
+        try {
+            const data = await roomsApi.listRooms(ownerId);
+            setRooms(data.rooms || []);
+            setTotalRooms(data.totalRooms || 0);
+            setOccupied(data.occupied || 0);
+            setMaintenance(data.maintenance || 0);
+            setVacant(data.vacant || 0);
+        } catch (error) {
+            console.error("Failed to fetch rooms:", error);
+        }
+    };
 
     useEffect(() => {
-        const t = setTimeout(() => setDebouncedSearch(searchQuery), 400);
-        return () => clearTimeout(t);
-    }, [searchQuery]);
+        fetchRooms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ownerId]);
 
-    useEffect(() => {
-        const statusParam =
-            activeTab === "Available" ? "AVAILABLE" :
-            activeTab === "Occupied"  ? "OCCUPIED"  :
-            activeTab === "Maintenance" ? "MAINTENANCE" : undefined;
+    const handleDeleteRoom = async (id: number) => {
+        if (!confirm("Delete this room? This cannot be undone.")) return;
+        try {
+            await roomsApi.deleteRoom(id);
+            fetchRooms();
+        } catch {
+            alert("Failed to delete room.");
+        }
+    };
 
-        roomsApi.listRooms(statusParam, debouncedSearch || undefined, currentPage, PAGE_SIZE)
-            .then((data) => {
-                setRooms(data.rooms || []);
-                setTotalRooms(data.totalRooms || 0);
-                setOccupied(data.occupied || 0);
-                setMaintenance(data.maintenance || 0);
-                setVacant(data.vacant || 0);
-                setTotalPages(data.totalPages || 1);
-                setTotalItems(data.totalItems || 0);
-            })
-            .catch((error) => console.error("Failed to fetch rooms:", error));
-    }, [activeTab, currentPage, debouncedSearch]);
+    const allFilteredRooms = rooms.filter((room) => {
+        const matchesTab =
+            activeTab === "All Rooms" || room.status === activeTab.toUpperCase();
+        const matchesSearch =
+            searchQuery === "" ||
+            room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            room.roomType.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesTab && matchesSearch;
+    });
+
+    const pageSize = 10;
+    const totalPages = Math.max(1, Math.ceil(allFilteredRooms.length / pageSize));
+    const safePage = Math.min(currentPage, totalPages);
+    const filteredRooms = allFilteredRooms.slice((safePage - 1) * pageSize, safePage * pageSize);
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Navigation Sidebar ── */}
-            <nav className="w-[170px] bg-white border-r border-[#e8e8e8] py-4 flex flex-col shrink-0">
-                <div className="px-3.5 pb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <a
-                                key={item.label}
-                                href={item.href}
-                                className={`flex items-center gap-2.5 py-2.5 px-3.5 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-[3px] ${
-                                    item.active
-                                        ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                        : "bg-transparent text-[#4f4f4f] font-medium border-transparent hover:bg-[#fafafa]"
-                                }`}
-                            >
-                                <Icon size={18} className="shrink-0" />
-                                <span>{item.label}</span>
-                            </a>
-                        );
-                    })}
-                </div>
-            </nav>
-
-            {/* ── Main Content ── */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Bar */}
-                <div className="flex justify-end items-center py-2.5 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
-                            <img
-                                src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
-                                alt="User"
-                                className="w-full h-full rounded-full"
-                            />
-                        </div>
-                    </div>
-                </div>
+        <div className="w-full h-full flex-1 flex flex-col overflow-hidden">
 
                 {/* Scrollable Body */}
-                <div className="flex-1 overflow-y-auto px-8 pb-10">
+                <div className="w-full flex-1 overflow-y-auto px-8 pt-6 pb-10">
                     {/* Page Title */}
                     <div className="mb-5 flex justify-between items-center">
                         <div>
@@ -184,16 +140,16 @@ export default function RoomManagementPage() {
                                 Efficiently manage all units and occupancy status for Mountain View Resort
                             </p>
                         </div>
-                        <a href="/owner/roomManagement/addRoom" className="bg-[#953002] text-white px-4 py-2.5 rounded-lg font-bold text-[14px] flex items-center gap-2 hover:bg-[#7a2702] transition-colors no-underline">
+                        <a href="/owner/roomManagement/addRoom" className="bg-[var(--brand-primary)] text-white px-4 py-2.5 rounded-lg font-bold text-[14px] flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors no-underline">
                             <Plus size={18} />
                             Add New Room
                         </a>
                     </div>
 
                     {/* ── KPI Cards ── */}
-                    <div className="grid grid-cols-4 gap-4 mb-6">
+                    <div className="w-full grid grid-cols-4 gap-4 mb-6">
                         {/* Total Rooms */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5 flex items-start justify-between">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div>
                                 <div className="text-[10px] font-bold text-[#828282] tracking-[1px] mb-2 uppercase">
                                     Total Rooms
@@ -208,7 +164,7 @@ export default function RoomManagementPage() {
                         </div>
 
                         {/* Occupied */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5 flex items-start justify-between">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div>
                                 <div className="text-[10px] font-bold text-[#828282] tracking-[1px] mb-2 uppercase">
                                     Occupied
@@ -223,7 +179,7 @@ export default function RoomManagementPage() {
                         </div>
 
                         {/* Maintenance */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5 flex items-start justify-between">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div>
                                 <div className="text-[10px] font-bold text-[#828282] tracking-[1px] mb-2 uppercase">
                                     Maintenance
@@ -238,7 +194,7 @@ export default function RoomManagementPage() {
                         </div>
 
                         {/* Vacant */}
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5 flex items-start justify-between">
+                        <div className="bg-white border border-[#e8e8e8] rounded-2xl py-4 px-5 flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300">
                             <div>
                                 <div className="text-[10px] font-bold text-[#828282] tracking-[1px] mb-2 uppercase">
                                     Vacant
@@ -254,7 +210,7 @@ export default function RoomManagementPage() {
                     </div>
 
                     {/* ── Rooms Table Card ── */}
-                    <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden">
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
                         {/* Tabs & Filter Row */}
                         <div className="flex items-center justify-between px-5 pt-4 pb-0">
                             <div className="flex items-center gap-0">
@@ -267,7 +223,7 @@ export default function RoomManagementPage() {
                                         }}
                                         className={`py-2.5 px-4 text-[13px] font-semibold border-b-2 bg-transparent cursor-pointer transition-all duration-150 ${
                                             activeTab === tab
-                                                ? "text-[#953002] border-[#953002] font-bold"
+                                                ? "text-[var(--brand-primary)] border-[var(--brand-primary)] font-bold"
                                                 : "text-[#828282] border-transparent hover:text-[#4f4f4f]"
                                         }`}
                                     >
@@ -282,7 +238,7 @@ export default function RoomManagementPage() {
                                         type="text"
                                         placeholder="Search rooms..."
                                         value={searchQuery}
-                                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
                                         className="text-[13px] text-[#4f4f4f] bg-transparent border-none outline-none w-36"
                                     />
                                 </div>
@@ -298,29 +254,29 @@ export default function RoomManagementPage() {
                         {/* Table */}
                         <table className="w-full border-collapse">
                             <thead>
-                                <tr>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-5 text-left border-b border-[#e8e8e8] uppercase">
+                                <tr className="bg-[#F6F8F7]">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-5 text-left uppercase">
                                         Room Name
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-left border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-left uppercase">
                                         Type
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-left border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-left uppercase">
                                         Occupancy
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-left border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-left uppercase">
                                         Base Price
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-center border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-center uppercase">
                                         Status
                                     </th>
-                                    <th className="text-[10px] font-bold text-[#828282] tracking-[0.8px] py-3.5 px-4 text-center border-b border-[#e8e8e8] uppercase">
+                                    <th className="text-[11.5px] font-bold text-[#828282] tracking-[0.06em] py-2.5 px-4 text-center uppercase">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {rooms.map((room) => {
+                                {filteredRooms.map((room, idx) => {
                                     const statusValue = ((room.status as string) || "AVAILABLE") as RoomStatus;
                                     const sConfig = statusConfig[statusValue] || statusConfig.AVAILABLE;
                                     const iconBg = statusValue === "OCCUPIED" ? "#fdecea" : statusValue === "MAINTENANCE" ? "#fff8e1" : "#e8f5e9";
@@ -330,7 +286,7 @@ export default function RoomManagementPage() {
                                     return (
                                         <tr
                                             key={room.id}
-                                            className="border-b border-[#f5f5f5] transition-colors hover:bg-[#fafafa]"
+                                            className={`border-t border-[#e0e0e0] transition-colors hover:bg-[#f5efec] ${idx % 2 === 0 ? "bg-white" : "bg-[#fafafa]"}`}
                                         >
                                             {/* Room Name */}
                                             <td className="py-4 px-5 align-middle">
@@ -402,6 +358,7 @@ export default function RoomManagementPage() {
                                                         <Pencil size={16} color="#828282" />
                                                     </button>
                                                     <button
+                                                        onClick={() => handleDeleteRoom(room.id)}
                                                         className="bg-transparent border-none cursor-pointer p-1.5 rounded-md hover:bg-[#fdecea] transition-colors"
                                                         title="Delete"
                                                     >
@@ -413,7 +370,7 @@ export default function RoomManagementPage() {
                                     );
                                 })}
 
-                                {rooms.length === 0 && (
+                                {filteredRooms.length === 0 && (
                                     <tr>
                                         <td
                                             colSpan={6}
@@ -430,49 +387,34 @@ export default function RoomManagementPage() {
                         <div className="flex justify-between items-center py-3.5 px-5 border-t border-[#e8e8e8]">
                             <span className="text-[12px] text-[#828282]">
                                 Showing{" "}
-                                <span className="font-bold text-[#1d1d1d]">
-                                    {totalItems === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
-                                </span>{" "}to{" "}
-                                <span className="font-bold text-[#1d1d1d]">
-                                    {Math.min(currentPage * PAGE_SIZE, totalItems)}
-                                </span>{" "}of{" "}
-                                <span className="font-bold text-[#1d1d1d]">{totalItems}</span> rooms
+                                <span className="font-bold text-[#1d1d1d]">{allFilteredRooms.length === 0 ? 0 : (safePage - 1) * pageSize + 1}</span> to{" "}
+                                <span className="font-bold text-[#1d1d1d]">{Math.min(safePage * pageSize, allFilteredRooms.length)}</span> of{" "}
+                                <span className="font-bold text-[#1d1d1d]">{allFilteredRooms.length}</span> rooms
                             </span>
                             <div className="flex items-center gap-1">
                                 <button
-                                    disabled={currentPage <= 1}
                                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                    disabled={safePage === 1}
                                     className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <ChevronLeft size={14} />
                                 </button>
-                                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                                    .reduce<(number | "…")[]>((acc, p, idx, arr) => {
-                                        if (idx > 0 && typeof arr[idx - 1] === "number" && (p as number) - (arr[idx - 1] as number) > 1) acc.push("…");
-                                        acc.push(p);
-                                        return acc;
-                                    }, [])
-                                    .map((p, idx) =>
-                                        p === "…" ? (
-                                            <span key={`ellipsis-${idx}`} className="w-7 text-center text-[12px] text-[#828282]">…</span>
-                                        ) : (
-                                            <button
-                                                key={p}
-                                                onClick={() => setCurrentPage(p as number)}
-                                                className={`w-7 h-7 flex items-center justify-center border-none cursor-pointer text-[12px] font-semibold rounded-md transition-colors ${
-                                                    currentPage === p
-                                                        ? "bg-[#953002] text-white"
-                                                        : "bg-transparent text-[#4f4f4f] hover:bg-[#f5f5f5]"
-                                                }`}
-                                            >
-                                                {p}
-                                            </button>
-                                        )
-                                    )}
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                                    <button
+                                        key={p}
+                                        onClick={() => setCurrentPage(p)}
+                                        className={`w-7 h-7 flex items-center justify-center border-none cursor-pointer text-[12px] font-semibold rounded-md transition-colors ${
+                                            safePage === p
+                                                ? "bg-[var(--brand-primary)] text-white"
+                                                : "bg-transparent text-[#4f4f4f] hover:bg-[#f5f5f5]"
+                                        }`}
+                                    >
+                                        {p}
+                                    </button>
+                                ))}
                                 <button
-                                    disabled={currentPage >= totalPages}
                                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                    disabled={safePage === totalPages}
                                     className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <ChevronRight size={14} />
@@ -481,7 +423,6 @@ export default function RoomManagementPage() {
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-    );
-}
+            </div>
+        );
+    }

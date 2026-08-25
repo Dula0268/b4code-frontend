@@ -3,21 +3,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Logo from "@/components/shared/branding/logo";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { ownerSettingsApi } from "@/api/owner/settings.api";
 import {
     Bell,
-    LayoutDashboard,
-    Building2,
-    Tag,
-    BookOpen,
-    Settings,
-    ArrowLeft,
-    Landmark,
-    Users,
-    Star,
-    MessageSquare,
+        ArrowLeft,
+    Landmark
 } from "lucide-react";
 
 /**
@@ -29,104 +20,41 @@ import {
 export default function AddNewBankAccountPage() {
     const router = useRouter();
     const { user } = useAuthStore();
-    const ownerId = user?.userId ?? 1;
-    const [selectedBank, setSelectedBank] = useState("");
-    const [customBankName, setCustomBankName] = useState("");
+    const ownerId = user?.userId;
+    const [bankName, setBankName] = useState("");
     const [accountHolder, setAccountHolder] = useState("");
     const [accountNumber, setAccountNumber] = useState("");
-    const [branchCode, setBranchCode] = useState("");
-    const [accountType, setAccountType] = useState("Savings");
+    const [routingNumber, setRoutingNumber] = useState("");
+    const [accountType, setAccountType] = useState("Checking");
     const [isPrimary, setIsPrimary] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const SRI_LANKAN_BANKS = [
-        { name: "Bank of Ceylon (BOC)", value: "Bank of Ceylon" },
-        { name: "People's Bank", value: "People's Bank" },
-        { name: "Commercial Bank of Ceylon", value: "Commercial Bank of Ceylon" },
-        { name: "Hatton National Bank (HNB)", value: "Hatton National Bank" },
-        { name: "Sampath Bank", value: "Sampath Bank" },
-        { name: "Seylan Bank", value: "Seylan Bank" },
-        { name: "Nations Trust Bank (NTB)", value: "Nations Trust Bank" },
-        { name: "DFCC Bank", value: "DFCC Bank" },
-        { name: "National Development Bank (NDB)", value: "National Development Bank" },
-        { name: "Union Bank of Colombo", value: "Union Bank of Colombo" },
-        { name: "Pan Asia Bank", value: "Pan Asia Bank" },
-        { name: "Cargills Bank", value: "Cargills Bank" },
-        { name: "Amana Bank", value: "Amana Bank" },
-        { name: "SDB bank (Sanasa Development Bank)", value: "Sanasa Development Bank" },
-        { name: "National Savings Bank (NSB)", value: "National Savings Bank" },
-        { name: "Other Bank...", value: "Other" }
-    ];
-
     const handleSubmit = async () => {
-        const finalBankName = selectedBank === "Other" ? customBankName : selectedBank;
-        if (!finalBankName || !accountHolder || !accountNumber || !branchCode) return;
+        if (!bankName || !accountHolder || !accountNumber || !routingNumber) return;
         setSaving(true);
         setSaveError(null);
         try {
             await ownerSettingsApi.addBankAccount(ownerId, {
-                bankName: finalBankName,
+                bankName,
                 accountHolder: accountHolder,
                 accountNumber,
-                branchCode,
+                branchCode: routingNumber,
                 isPrimary,
             });
-            router.push("/owner/setting/accountSetting");
+            router.push("/owner/setting/billing&Payout");
         } catch (err: any) {
-            setSaveError(err?.response?.data?.message ?? "Failed to add bank account.");
+            const message = err?.response?.data?.message || err?.message || "Failed to add bank account.";
+            setSaveError(message);
         } finally {
             setSaving(false);
         }
     };
 
-    const navItems = [
-        { label: "Dashboard",  icon: <LayoutDashboard size={18} />, href: "/owner" },
-        { label: "Properties", icon: <Building2 size={18} />,       href: "/owner/properties" },
-        { label: "Staff",      icon: <Users size={18} />,           href: "/owner/staff" },
-        { label: "Reviews",    icon: <Star size={18} />,            href: "/owner/reviews" },
-        { label: "Messages",   icon: <MessageSquare size={18} />,   href: "/owner/message" },
-        { label: "Settings",   icon: <Settings size={18} />,        href: "/owner/setting/accountSetting", active: true },
-    ];
+
 
     return (
-        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Navigation Sidebar ── */}
-            <nav className="w-[170px] bg-white border-r border-[#e8e8e8] py-4 flex flex-col shrink-0">
-                <div className="flex items-center gap-1.5 px-3.5 pb-5">
-                    <Logo width={120} height={36} />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                    {navItems.map((item) => (
-                        <a
-                            key={item.label}
-                            href={item.href}
-                            className={`flex items-center gap-2.5 py-2.5 px-3.5 text-[13px] no-underline transition-all duration-150 cursor-pointer border-l-[3px] ${
-                                item.active
-                                    ? "bg-[rgba(149,48,2,0.08)] text-[#953002] font-bold border-[#953002]"
-                                    : "bg-transparent text-[#4f4f4f] font-medium border-transparent"
-                            }`}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </a>
-                    ))}
-                </div>
-            </nav>
-
-            {/* ── Main Content ── */}
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Top Header */}
-                <div className="flex justify-end items-center py-2 px-8 shrink-0">
-                    <div className="flex items-center gap-3.5">
-                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a href="/owner/profile" className="block w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002] hover:opacity-80 transition-opacity">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="" className="w-full h-full rounded-full" />
-                        </a>
-                    </div>
-                </div>
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
                 {/* Scrollable Body */}
                 <div className="flex-1 overflow-y-auto px-8 pb-10">
@@ -140,7 +68,7 @@ export default function AddNewBankAccountPage() {
                             <span className="text-[#b0b0b0] mx-1">/</span>
                             <a href="/owner/setting/accountSetting" className="text-[12px] font-semibold text-[#828282] no-underline hover:text-[#4f4f4f]">Account Settings</a>
                             <span className="text-[#b0b0b0] mx-1">/</span>
-                            <span className="text-[12px] font-semibold text-[#953002]">Add Bank Account</span>
+                            <span className="text-[12px] font-semibold text-[var(--brand-primary)]">Add Bank Account</span>
                         </div>
                     </div>
 
@@ -154,42 +82,27 @@ export default function AddNewBankAccountPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col">
                                         <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Bank Name</label>
-                                        <select 
-                                            value={selectedBank} 
-                                            onChange={(e) => setSelectedBank(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
-                                        >
-                                            <option value="">Select Bank</option>
-                                            {SRI_LANKAN_BANKS.map((b) => (
-                                                <option key={b.value} value={b.value}>{b.name}</option>
-                                            ))}
-                                        </select>
+                                        <input 
+                                            type="text" 
+                                            placeholder="e.g. Bank of America"
+                                            value={bankName} 
+                                            onChange={(e) => setBankName(e.target.value)} 
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
+                                        />
                                     </div>
                                     <div className="flex flex-col">
                                         <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Type</label>
                                         <select 
                                             value={accountType} 
                                             onChange={(e) => setAccountType(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[var(--brand-primary)] transition-colors"
                                         >
+                                            <option value="Checking">Checking</option>
                                             <option value="Savings">Savings</option>
-                                            <option value="Current">Current</option>
+                                            <option value="Business Checking">Business Checking</option>
                                         </select>
                                     </div>
                                 </div>
-
-                                {selectedBank === "Other" && (
-                                    <div>
-                                        <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Specify Bank Name</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="Enter your bank's name"
-                                            value={customBankName} 
-                                            onChange={(e) => setCustomBankName(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
-                                        />
-                                    </div>
-                                )}
 
                                 <div>
                                     <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Holder Name</label>
@@ -198,22 +111,19 @@ export default function AddNewBankAccountPage() {
                                         placeholder="Name on the account"
                                         value={accountHolder} 
                                         onChange={(e) => setAccountHolder(e.target.value)} 
-                                        className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                        className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col">
-                                        <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Branch Code</label>
+                                        <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Routing Number</label>
                                         <input 
                                             type="text" 
-                                            placeholder="3-digit branch code"
-                                            value={branchCode} 
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/\D/g, "");
-                                                if (val.length <= 3) setBranchCode(val);
-                                            }} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            placeholder="9-digit routing number"
+                                            value={routingNumber} 
+                                            onChange={(e) => setRoutingNumber(e.target.value)} 
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                         />
                                     </div>
                                     <div className="flex flex-col">
@@ -223,7 +133,7 @@ export default function AddNewBankAccountPage() {
                                             placeholder="Account number"
                                             value={accountNumber} 
                                             onChange={(e) => setAccountNumber(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[var(--brand-primary)] transition-colors" 
                                         />
                                     </div>
                                 </div>
@@ -254,23 +164,11 @@ export default function AddNewBankAccountPage() {
                             </a>
                             <button
                                 onClick={handleSubmit}
-                                disabled={
-                                    saving || 
-                                    !selectedBank || 
-                                    (selectedBank === "Other" && !customBankName) || 
-                                    !accountHolder || 
-                                    !accountNumber || 
-                                    !branchCode
-                                }
+                                disabled={saving || !bankName || !accountHolder || !accountNumber || !routingNumber}
                                 className={`py-2.5 px-6 text-white border-none rounded-lg text-[13px] font-bold cursor-pointer transition-colors ${
-                                    saving || 
-                                    !selectedBank || 
-                                    (selectedBank === "Other" && !customBankName) || 
-                                    !accountHolder || 
-                                    !accountNumber || 
-                                    !branchCode
+                                    saving || !bankName || !accountHolder || !accountNumber || !routingNumber
                                         ? "bg-[#d0d0d0] pointer-events-none"
-                                        : "bg-[#953002] hover:bg-[#b03a02]"
+                                        : "bg-[var(--brand-primary)] hover:bg-[var(--primary-hover)]"
                                 }`}
                             >
                                 {saving ? "Adding…" : "Add Account"}
@@ -279,6 +177,5 @@ export default function AddNewBankAccountPage() {
                     </div>
                 </div>
             </main>
-        </div>
     );
 }
