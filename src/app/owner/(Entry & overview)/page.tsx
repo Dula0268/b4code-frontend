@@ -115,10 +115,10 @@ export default function OwnerDashboardPage() {
     /* metric cards — only real API values, no fake fallbacks */
     const metrics = [
         { label: "TOTAL PROPERTIES", value: loading ? null : String(data?.totalProperties  ?? 0), highlight: false },
-        { label: "TOTAL ROOMS",      value: loading ? null : String(data?.totalRooms       ?? 0), highlight: false },
+        { label: "TOTAL ROOMS",      value: loading ? null : String(data?.totalRoomTypes       ?? 0), highlight: false },
         { label: "ACTIVE RESV.",     value: loading ? null : String(data?.activeBookings   ?? 0), highlight: false },
         { label: "TOTAL BOOKINGS",   value: loading ? null : String(data?.totalBookings    ?? 0), highlight: false },
-        { label: "TODAY CHECK-INS",  value: loading ? null : "—",                                 highlight: false },
+        { label: "TODAY CHECK-INS",  value: loading ? null : String(data?.todayCheckIns   ?? 0), highlight: false },
         { label: "TOTAL REVENUE",    value: loading ? null : formatRevenue(data?.totalRevenue),   highlight: true  },
     ];
 
@@ -180,9 +180,6 @@ export default function OwnerDashboardPage() {
                                 <span className="text-[14px] font-bold text-[#1d1d1d]">
                                     {MONTH_NAMES[calMonth]} {calYear}
                                 </span>
-                                <a href="/owner/availability/weeklyCalendar" className="text-[12px] font-semibold text-[var(--brand-primary)] no-underline hover:underline">
-                                    Full calendar →
-                                </a>
                             </div>
                             <div className="grid grid-cols-7 gap-1 mb-1">
                                 {["SU","MO","TU","WE","TH","FR","SA"].map(d => (
@@ -290,7 +287,7 @@ export default function OwnerDashboardPage() {
                             <span className="text-[10px] font-bold tracking-wider uppercase text-[#828282] block">TOTAL ROOMS</span>
                             {loading
                                 ? <div className="h-5 w-8 rounded bg-[#e0e0e0] animate-pulse mt-1" />
-                                : <span className="text-[18px] font-extrabold text-[#2e7d32]">{data?.totalRooms ?? 0}</span>
+                                : <span className="text-[18px] font-extrabold text-[#2e7d32]">{data?.totalRoomTypes ?? 0}</span>
                             }
                         </div>
                     </div>
