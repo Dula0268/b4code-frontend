@@ -26,10 +26,10 @@ import api from "@/lib/axios";
  * OWNER/ADMIN platform roles bypass entirely; STAFF accounts are scoped by
  * their staffRole, with "Staff Admin" granted both.
  */
-function reviewAccess(user: { role?: string; staffRole?: string } | null) {
+function reviewAccess(user: { role?: string; profile?: { staffRole?: string } } | null) {
   if (!user) return { canViewItem: false, canViewBooking: false };
   if (user.role !== "staff") return { canViewItem: true, canViewBooking: true };
-  const staffRole = user.staffRole;
+  const staffRole = user.profile?.staffRole;
   return {
     canViewItem: staffRole === "Kitchen Staff" || staffRole === "Staff Admin",
     canViewBooking: staffRole === "Property Staff" || staffRole === "Staff Admin",
