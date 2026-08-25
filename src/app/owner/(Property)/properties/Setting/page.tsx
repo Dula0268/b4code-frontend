@@ -1,11 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import OwnerSidebar from "@/components/owner/OwnerSidebar";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Logo from "@/components/shared/branding/logo";
 import { propertiesApi } from "@/api/owner/properties.api";
-import { ownerSettingsApi } from "@/api/owner/settings.api";
 import { useAuthStore } from "@/store/auth/auth.store";
 import {
     Bell,
@@ -17,7 +16,6 @@ import {
     Building2,
     Settings as SettingsIcon,
     Shield,
-    CreditCard,
     Save,
     CheckCircle2,
     AlertCircle,
@@ -33,8 +31,6 @@ function SettingContent() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [property, setProperty] = useState<any>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [bankAccounts, setBankAccounts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -52,17 +48,11 @@ function SettingContent() {
             setLoading(false);
             return;
         }
-        Promise.all([
-            propertiesApi.getProperty(Number(propertyId), ownerId),
-            ownerSettingsApi.getBankAccounts(ownerId),
-        ])
-            .then(([prop, billing]) => {
+        propertiesApi.getProperty(Number(propertyId), ownerId)
+            .then((prop) => {
                 setProperty(prop);
                 setIsActive(prop?.status === "active");
                 setCancellationPolicy(prop?.cancellationPolicy ?? "");
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const accounts: any[] = billing?.bankAccounts ?? billing ?? [];
-                setBankAccounts(Array.isArray(accounts) ? accounts : []);
             })
             .catch((err) => {
                 setError(err?.response?.data?.message ?? err?.message ?? "Failed to load settings.");
@@ -70,7 +60,7 @@ function SettingContent() {
             .finally(() => setLoading(false));
     }, [propertyId, ownerId]);
 
-    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Settings"];
 
     const statusColor = property?.status === "active" ? "#27ae60"
         : property?.status === "inactive" ? "#828282"
@@ -116,11 +106,8 @@ function SettingContent() {
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
             {/* Sidebar */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
+
+            <OwnerSidebar />
 
             {/* Main */}
             <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
@@ -201,7 +188,6 @@ function SettingContent() {
                                             else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${propertyId}`;
                                             else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${propertyId}`;
                                             else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
-                                            else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${propertyId}`;
                                             else if (t === "Settings") return;
                                         }}
                                         className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${
@@ -304,57 +290,6 @@ function SettingContent() {
 
                             {/* Right column */}
                             <div className="flex flex-col gap-4">
-                                {/* Billing */}
-                                <div className="bg-white border border-[#e8e8e8] rounded-xl py-4 px-5">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <CreditCard size={16} color="#953002" />
-                                        <span className="text-[14px] font-bold text-[#1d1d1d]">Billing & Payouts</span>
-                                    </div>
-
-                                    {bankAccounts.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-6 text-center border border-dashed border-[#e0e0e0] rounded-xl bg-[#faf9f7]">
-                                            <CreditCard size={28} color="#c0a898" className="mb-2" />
-                                            <p className="text-[12px] text-[#828282]">No bank accounts added.</p>
-                                            <a href="/owner/settings/billing" className="no-underline mt-2">
-                                                <button className="py-1.5 px-3.5 bg-[#953002] text-white border-none rounded-lg text-[11px] font-semibold cursor-pointer hover:bg-[#b03a02] transition-colors">
-                                                    Add Bank Account
-                                                </button>
-                                            </a>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col gap-2">
-                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                            {bankAccounts.map((account: any, idx: number) => (
-                                                <div key={idx} className="flex items-center gap-3 p-3 border border-[#e8e8e8] rounded-lg bg-[#faf9f7]">
-                                                    <div className="w-9 h-9 rounded-lg bg-[#fef5ef] flex items-center justify-center shrink-0">
-                                                        <CreditCard size={16} color="#953002" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="text-[13px] font-semibold text-[#1d1d1d] truncate">
-                                                            {account.bankName ?? account.accountName ?? "Bank Account"}
-                                                        </div>
-                                                        <div className="text-[11px] text-[#828282]">
-                                                            {account.accountNumber
-                                                                ? `****${String(account.accountNumber).slice(-4)}`
-                                                                : account.accountType ?? "—"}
-                                                        </div>
-                                                    </div>
-                                                    {account.isPrimary && (
-                                                        <span className="text-[10px] font-bold text-[#15803d] bg-[#dcfce7] px-2 py-0.5 rounded-full shrink-0">
-                                                            Primary
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            ))}
-                                            <a href="/owner/settings/billing" className="no-underline mt-1">
-                                                <button className="w-full py-2 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#fef5ef] transition-colors">
-                                                    Manage Payout Methods
-                                                </button>
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-
                                 {/* Quick links */}
                                 <div className="bg-[#fffbf5] border border-[#e8e8e8] rounded-xl py-4 px-5">
                                     <div className="text-[13px] font-bold text-[#953002] mb-3">Quick Settings</div>

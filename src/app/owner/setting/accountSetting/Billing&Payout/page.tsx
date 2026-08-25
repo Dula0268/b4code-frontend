@@ -4,89 +4,109 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/shared/branding/logo";
-import { useAuthStore } from "@/store/auth/auth.store";
 import { ownerSettingsApi } from "@/api/owner/settings.api";
 import {
     Bell,
     LayoutDashboard,
     Building2,
-    BedDouble,
-    Calendar,
     Tag,
     BookOpen,
     Settings,
     ArrowLeft,
     Landmark,
-    Loader2
+    Loader2,
+    Users,
+    Star,
+    MessageSquare,
 } from "lucide-react";
 
-/**
- * EditBankDetailsPage Component
- *
- * Form for editing existing bank account details used for
- * payout processing, including account number and routing info.
- */
+const SRI_LANKAN_BANKS = [
+    { name: "Bank of Ceylon (BOC)", value: "Bank of Ceylon" },
+    { name: "People's Bank", value: "People's Bank" },
+    { name: "Commercial Bank of Ceylon", value: "Commercial Bank of Ceylon" },
+    { name: "Hatton National Bank (HNB)", value: "Hatton National Bank" },
+    { name: "Sampath Bank", value: "Sampath Bank" },
+    { name: "Seylan Bank", value: "Seylan Bank" },
+    { name: "Nations Trust Bank (NTB)", value: "Nations Trust Bank" },
+    { name: "DFCC Bank", value: "DFCC Bank" },
+    { name: "National Development Bank (NDB)", value: "National Development Bank" },
+    { name: "Union Bank of Colombo", value: "Union Bank of Colombo" },
+    { name: "Pan Asia Bank", value: "Pan Asia Bank" },
+    { name: "Cargills Bank", value: "Cargills Bank" },
+    { name: "Amana Bank", value: "Amana Bank" },
+    { name: "SDB bank (Sanasa Development Bank)", value: "Sanasa Development Bank" },
+    { name: "National Savings Bank (NSB)", value: "National Savings Bank" },
+    { name: "Other Bank...", value: "Other" }
+];
+
 export default function EditBankDetailsPage() {
     const router = useRouter();
-    const { user } = useAuthStore();
-    const ownerId = user?.userId;
-
-    const [bankName, setBankName] = useState("");
+    const [selectedBank, setSelectedBank] = useState("");
+    const [customBankName, setCustomBankName] = useState("");
     const [accountHolder, setAccountHolder] = useState("");
     const [accountNumber, setAccountNumber] = useState("");
-    const [routingNumber, setRoutingNumber] = useState("");
-    const [accountType, setAccountType] = useState("Checking");
-    const [isPrimary, setIsPrimary] = useState(true);
+    const [branchCode, setBranchCode] = useState("");
+    const [accountType, setAccountType] = useState("Savings");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
     useEffect(() => {
-        setLoading(true);
-        ownerSettingsApi.getBankAccounts(ownerId)
-            .then((data: any[]) => {
-                if (data && data.length > 0) {
-                    const primary = data.find((a) => a.isPrimary) ?? data[0];
-                    setBankName(primary.bankName || "");
-                    setAccountHolder(primary.accountHolder || "");
-                    setAccountNumber(primary.accountNumber || "");
-                    setRoutingNumber(primary.branchCode || "");
-                    setIsPrimary(primary.isPrimary ?? true);
+        ownerSettingsApi.getOwnerBankDetails()
+            .then((data) => {
+                const bName = data.bankName ?? "";
+                const isPredefined = SRI_LANKAN_BANKS.some((b) => b.value === bName && b.value !== "Other");
+                if (isPredefined) {
+                    setSelectedBank(bName);
+                    setCustomBankName("");
+                } else if (bName !== "") {
+                    setSelectedBank("Other");
+                    setCustomBankName(bName);
+                } else {
+                    setSelectedBank("");
+                    setCustomBankName("");
                 }
+                setAccountHolder(data.accountHolderName ?? "");
+                setAccountNumber(data.accountNumber ?? "");
+                setBranchCode(data.branchCode ?? "");
+                setAccountType(data.accountType ?? "Savings");
             })
             .catch(() => {})
             .finally(() => setLoading(false));
-    }, [ownerId]);
+    }, []);
 
-    const handleSave = async () => {
-        if (!bankName || !accountHolder || !accountNumber || !routingNumber) return;
+    const handleSubmit = async () => {
+        const finalBankName = selectedBank === "Other" ? customBankName : selectedBank;
+        if (!finalBankName || !accountHolder || !accountNumber || !branchCode) return;
         setSaving(true);
         setSaveError(null);
+        setSaveSuccess(false);
         try {
-            await ownerSettingsApi.addBankAccount(ownerId, {
-                bankName,
-                accountHolder,
+            await ownerSettingsApi.saveOwnerBankDetails({
+                bankName: finalBankName,
+                accountHolderName: accountHolder,
                 accountNumber,
-                branchCode: routingNumber,
-                isPrimary,
+                branchCode,
+                accountType,
             });
-            router.push("/owner/setting/billing&Payout");
-        } catch (err: any) {
-            const message = err?.response?.data?.message || err?.message || "Failed to save bank account.";
-            setSaveError(message);
+            setSaveSuccess(true);
+            setTimeout(() => router.push("/owner/setting/accountSetting"), 1000);
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            setSaveError(e?.response?.data?.message ?? "Failed to save bank details.");
         } finally {
             setSaving(false);
         }
     };
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
-        { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting", active: true },
+        { label: "Dashboard",  icon: <LayoutDashboard size={18} />, href: "/owner" },
+        { label: "Properties", icon: <Building2 size={18} />,       href: "/owner/properties" },
+        { label: "Staff",      icon: <Users size={18} />,           href: "/owner/staff" },
+        { label: "Reviews",    icon: <Star size={18} />,            href: "/owner/reviews" },
+        { label: "Messages",   icon: <MessageSquare size={18} />,   href: "/owner/message" },
+        { label: "Settings",   icon: <Settings size={18} />,        href: "/owner/setting/accountSetting", active: true },
     ];
 
     return (
@@ -132,13 +152,13 @@ export default function EditBankDetailsPage() {
                 <div className="flex-1 overflow-y-auto px-8 pb-10">
                     {/* Breadcrumb */}
                     <div className="flex items-center mb-1 gap-2">
-                        <a href="/owner/setting/billing&Payout" className="flex items-center justify-center w-6 h-6 rounded-full bg-white border border-[#e0e0e0] cursor-pointer hover:bg-[#f5f5f5] text-[#4f4f4f] transition-all duration-150">
+                        <a href="/owner/setting/accountSetting" className="flex items-center justify-center w-6 h-6 rounded-full bg-white border border-[#e0e0e0] cursor-pointer hover:bg-[#f5f5f5] text-[#4f4f4f] transition-all duration-150">
                             <ArrowLeft size={12} />
                         </a>
                         <div className="flex items-center">
                             <a href="/owner/setting/accountSetting" className="text-[12px] font-semibold text-[#828282] no-underline hover:text-[#4f4f4f]">Settings</a>
                             <span className="text-[#b0b0b0] mx-1">/</span>
-                            <a href="/owner/setting/billing&Payout" className="text-[12px] font-semibold text-[#828282] no-underline hover:text-[#4f4f4f]">Billing & Payouts</a>
+                            <a href="/owner/setting/accountSetting" className="text-[12px] font-semibold text-[#828282] no-underline hover:text-[#4f4f4f]">Account Settings</a>
                             <span className="text-[#b0b0b0] mx-1">/</span>
                             <span className="text-[12px] font-semibold text-[#953002]">Edit Bank Details</span>
                         </div>
@@ -147,120 +167,142 @@ export default function EditBankDetailsPage() {
                     <h1 className="text-[26px] font-black text-[#1d1d1d] m-0 mb-1 mt-3">Edit Bank Details</h1>
                     <p className="text-[13px] text-[#828282] m-0 mb-6">Update your payout account information securely.</p>
 
-                    {/* Centered Form */}
-                    <div className="max-w-[500px] mx-auto mt-8">
-                        <div className="bg-white border border-[#e8e8e8] rounded-xl py-6 px-7 relative">
-                            {loading && (
-                                <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-xl">
-                                    <Loader2 className="animate-spin text-[#953002]" size={32} />
-                                </div>
-                            )}
-
-                            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#f5f5f5]">
-                                <div className="w-10 h-10 rounded-lg bg-[#fef5ef] flex items-center justify-center">
-                                    <Landmark size={20} color="#953002" />
-                                </div>
-                                <div>
-                                    <div className="text-[14px] font-bold text-[#1d1d1d]">Current Payout Method</div>
-                                    <div className="text-[12px] text-[#828282]">
-                                        {bankName ? `${bankName} **** ${accountNumber.slice(-4)}` : "No Payout Method Configured"}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col gap-5">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="flex flex-col">
-                                        <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Bank Name</label>
-                                        <input 
-                                            type="text" 
-                                            value={bankName} 
-                                            onChange={(e) => setBankName(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
-                                        />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Type</label>
-                                        <select 
-                                            value={accountType} 
-                                            onChange={(e) => setAccountType(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
-                                        >
-                                            <option value="Checking">Checking</option>
-                                            <option value="Savings">Savings</option>
-                                            <option value="Business Checking">Business Checking</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Holder Name</label>
-                                    <input 
-                                        type="text" 
-                                        value={accountHolder} 
-                                        onChange={(e) => setAccountHolder(e.target.value)} 
-                                        className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Routing Number</label>
-                                        <input 
-                                            type="text" 
-                                            value={routingNumber} 
-                                            onChange={(e) => setRoutingNumber(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Number</label>
-                                        <input 
-                                            type="text" 
-                                            value={accountNumber} 
-                                            onChange={(e) => setAccountNumber(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Set as primary payout */}
-                                <div className="flex items-center gap-2 mt-2">
-                                    <input 
-                                        type="checkbox" 
-                                        id="primary-payout" 
-                                        checked={isPrimary} 
-                                        onChange={(e) => setIsPrimary(e.target.checked)}
-                                        className="w-4 h-4 cursor-pointer accent-[#953002]"
-                                    />
-                                    <label htmlFor="primary-payout" className="text-[12px] font-medium text-[#4f4f4f] cursor-pointer">
-                                        Use as primary payout method
-                                    </label>
-                                </div>
-                            </div>
+                    {loading ? (
+                        <div className="flex items-center justify-center h-40">
+                            <Loader2 size={24} className="animate-spin text-[#953002]" />
                         </div>
+                    ) : (
+                        <div className="max-w-[500px] mx-auto mt-8">
+                            <div className="bg-white border border-[#e8e8e8] rounded-xl py-6 px-7">
+                                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#f5f5f5]">
+                                    <div className="w-10 h-10 rounded-lg bg-[#fef5ef] flex items-center justify-center">
+                                        <Landmark size={20} color="#953002" />
+                                    </div>
+                                    <div>
+                                        <div className="text-[14px] font-bold text-[#1d1d1d]">Current Payout Method</div>
+                                        <div className="text-[12px] text-[#828282]">
+                                            {selectedBank ? `${selectedBank === "Other" ? customBankName : selectedBank}${accountNumber ? ` **** ${accountNumber.slice(-4)}` : ""}` : "No bank account set"}
+                                        </div>
+                                    </div>
+                                </div>
 
-                        {/* Bottom Actions */}
-                        {saveError && <div className="text-[12px] text-[#eb5757] pt-3">{saveError}</div>}
-                        <div className="flex gap-3 pt-5">
-                            <a href="/owner/setting/billing&Payout" className="no-underline">
-                                <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-[#1d1d1d] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">
-                                    Cancel
+                                <div className="flex flex-col gap-5">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col">
+                                            <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Bank Name</label>
+                                            <select 
+                                                value={selectedBank} 
+                                                onChange={(e) => setSelectedBank(e.target.value)} 
+                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                            >
+                                                <option value="">Select Bank</option>
+                                                {SRI_LANKAN_BANKS.map((b) => (
+                                                    <option key={b.value} value={b.value}>{b.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Type</label>
+                                            <select 
+                                                value={accountType} 
+                                                onChange={(e) => setAccountType(e.target.value)} 
+                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                            >
+                                                <option value="Savings">Savings</option>
+                                                <option value="Current">Current</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {selectedBank === "Other" && (
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Specify Bank Name</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Enter your bank's name"
+                                                value={customBankName} 
+                                                onChange={(e) => setCustomBankName(e.target.value)} 
+                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Holder Name</label>
+                                        <input
+                                            type="text"
+                                            value={accountHolder}
+                                            placeholder="Name on the account"
+                                            onChange={(e) => setAccountHolder(e.target.value)}
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col">
+                                            <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Branch Code</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="3-digit branch code"
+                                                value={branchCode} 
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, "");
+                                                    if (val.length <= 3) setBranchCode(val);
+                                                }} 
+                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                            />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Number</label>
+                                            <input
+                                                type="text"
+                                                value={accountNumber}
+                                                placeholder="Account number"
+                                                onChange={(e) => setAccountNumber(e.target.value)}
+                                                className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {saveError && <div className="text-[12px] text-[#eb5757] pt-3">{saveError}</div>}
+                            {saveSuccess && <div className="text-[12px] text-[#27ae60] pt-3">Bank details saved successfully.</div>}
+
+                            {/* Bottom Actions */}
+                            <div className="flex gap-3 pt-5">
+                                <a href="/owner/setting/accountSetting" className="no-underline">
+                                    <button className="py-2.5 px-6 bg-white text-[#1d1d1d] border border-[#e0e0e0] rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-[#f5f5f5] transition-colors">
+                                        Cancel
+                                    </button>
+                                </a>
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={
+                                        saving || 
+                                        !selectedBank || 
+                                        (selectedBank === "Other" && !customBankName) || 
+                                        !accountHolder || 
+                                        !accountNumber ||
+                                        !branchCode
+                                    }
+                                    className={`py-2.5 px-6 text-white border-none rounded-lg text-[13px] font-bold cursor-pointer transition-colors flex items-center gap-2 ${
+                                        saving || 
+                                        !selectedBank || 
+                                        (selectedBank === "Other" && !customBankName) || 
+                                        !accountHolder || 
+                                        !accountNumber ||
+                                        !branchCode
+                                            ? "bg-[#d0d0d0] pointer-events-none"
+                                            : "bg-[#953002] hover:bg-[#b03a02]"
+                                    }`}
+                                >
+                                    {saving && <Loader2 size={14} className="animate-spin" />}
+                                    {saving ? "Saving…" : "Save Changes"}
                                 </button>
-                            </a>
-                            <button
-                                onClick={handleSave}
-                                disabled={saving || !bankName || !accountHolder || !accountNumber || !routingNumber}
-                                className={`py-2.5 px-6 text-white border-none rounded-lg text-[13px] font-bold cursor-pointer transition-colors ${
-                                    saving || !bankName || !accountHolder || !accountNumber || !routingNumber
-                                        ? "bg-[#d0d0d0] pointer-events-none"
-                                        : "bg-[#953002] hover:bg-[#b03a02]"
-                                }`}
-                            >
-                                {saving ? "Saving…" : "Save Changes"}
-                            </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </main>
         </div>

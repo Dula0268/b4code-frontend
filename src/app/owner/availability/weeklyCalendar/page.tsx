@@ -17,10 +17,12 @@ import {
     Check,
     Calendar,
     LayoutDashboard,
-    BedDouble,
     DollarSign,
     BookOpen,
     Settings,
+    Star,
+    Users,
+    MessageSquare,
 } from "lucide-react";
 
 /* ───────────────────── helpers ───────────────────── */
@@ -146,13 +148,12 @@ export default function WeeklyCalendarPage() {
     };
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
+        { label: "Dashboard",  icon: <LayoutDashboard size={18} />, href: "/owner" },
         { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar", active: true },
-        { label: "Rate", icon: <DollarSign size={18} />, href: "/owner/rate" },
-        { label: "Reservations", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/propertySetting" },
+        { label: "Staff",      icon: <Users size={18} />, href: "/owner/staff" },
+        { label: "Reviews",    icon: <Star size={18} />, href: "/owner/reviews" },
+        { label: "Messages",   icon: <MessageSquare size={18} />, href: "/owner/message" },
+        { label: "Settings",   icon: <Settings size={18} />, href: "/owner/setting/accountSetting" },
     ];
 
     return (

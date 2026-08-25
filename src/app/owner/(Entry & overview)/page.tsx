@@ -11,27 +11,26 @@ import {
     LayoutDashboard,
     Building2,
     DoorOpen,
-    CalendarCheck,
     DollarSign,
     ClipboardList,
     Settings,
     ChevronLeft,
     ChevronRight,
     Loader2,
+    Star,
     Users,
+    MessageSquare,
 } from "lucide-react";
 
 /* ───────────────────── sidebar ───────────────────── */
 
 const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard",     active: true,  href: "/owner" },
-    { icon: Building2,       label: "Properties",    active: false, href: "/owner/properties" },
-    { icon: DoorOpen,        label: "Rooms",         active: false, href: "/owner/roomManagement" },
-    { icon: CalendarCheck,   label: "Availability",  active: false, href: "/owner/availability/weeklyCalendar" },
-    { icon: DollarSign,      label: "Rate",          active: false, href: "/owner/rate" },
-    { icon: ClipboardList,   label: "Reservations",  active: false, href: "/owner/reservation" },
-    { icon: Users,           label: "Staff Approvals", active: false, href: "/owner/staff" },
-    { icon: Settings,        label: "Settings",      active: false, href: "/owner/setting/propertySetting" },
+    { icon: LayoutDashboard, label: "Dashboard", active: true, href: "/owner" },
+    { icon: Building2, label: "Properties", active: false, href: "/owner/properties" },
+    { icon: Users, label: "Staff", active: false, href: "/owner/staff" },
+    { icon: Star, label: "Reviews", active: false, href: "/owner/reviews" },
+    { icon: MessageSquare, label: "Messages", active: false, href: "/owner/message" },
+    { icon: Settings, label: "Settings", active: false, href: "/owner/setting/accountSetting" },
 ];
 
 /* ───────────────────── helpers ───────────────────── */
@@ -135,7 +134,7 @@ export default function OwnerDashboardPage() {
         { label: "TOTAL ROOMS",      value: loading ? null : String(data?.totalRooms       ?? 0), highlight: false },
         { label: "ACTIVE RESV.",     value: loading ? null : String(data?.activeBookings   ?? 0), highlight: false },
         { label: "TOTAL BOOKINGS",   value: loading ? null : String(data?.totalBookings    ?? 0), highlight: false },
-        { label: "TODAY CHECK-INS",  value: loading ? null : "—",                                 highlight: false },
+        { label: "TODAY CHECK-INS",  value: loading ? null : String(data?.todayCheckIns ?? 0),      highlight: false },
         { label: "TOTAL REVENUE",    value: loading ? null : formatRevenue(data?.totalRevenue),   highlight: true  },
     ];
 

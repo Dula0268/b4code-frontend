@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import OwnerSidebar from "@/components/owner/OwnerSidebar";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Logo from "@/components/shared/branding/logo";
 import { propertiesApi } from "@/api/owner/properties.api";
 import { roomsApi } from "@/api/owner/rooms.api";
 import { useAuthStore } from "@/store/auth/auth.store";
@@ -16,6 +16,7 @@ import {
     Loader2,
     Plus,
     Building2,
+    DoorOpen,
 } from "lucide-react";
 
 function RoomsContent() {
@@ -28,6 +29,8 @@ function RoomsContent() {
     const [property, setProperty] = useState<any>(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [rooms, setRooms] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [physicalRooms, setPhysicalRooms] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -39,22 +42,24 @@ function RoomsContent() {
         }
         Promise.all([
             propertiesApi.getProperty(Number(propertyId), ownerId),
-            roomsApi.listRooms(ownerId),
+            roomsApi.listRooms(undefined, undefined, 1, 1000),
+            roomsApi.getPhysicalRoomsByProperty(Number(propertyId)).catch(() => []),
         ])
-            .then(([prop, roomData]) => {
+            .then(([prop, roomData, units]) => {
                 setProperty(prop);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const all: any[] = roomData?.rooms ?? [];
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 setRooms(all.filter((r: any) => r.propertyId === Number(propertyId)));
+                setPhysicalRooms(Array.isArray(units) ? units : []);
             })
             .catch((err) => {
                 setError(err?.response?.data?.message ?? err?.message ?? "Failed to load data.");
             })
             .finally(() => setLoading(false));
-    }, [propertyId, ownerId]);
+    }, [propertyId, ownerId]); // ownerId used for getProperty only
 
-    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Staff", "Settings"];
+    const tabs = ["Overview", "Rooms", "Availability", "Rates", "Reservations", "Media", "Settings"];
 
     const statusColor = property?.status === "active" ? "#27ae60"
         : property?.status === "inactive" ? "#828282"
@@ -83,11 +88,8 @@ function RoomsContent() {
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
             {/* Sidebar */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 shrink-0 flex flex-col">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
+
+            <OwnerSidebar />
 
             {/* Main */}
             <main className="flex-1 flex flex-col px-9 min-w-0 overflow-hidden">
@@ -168,7 +170,6 @@ function RoomsContent() {
                                             else if (t === "Rates") window.location.href = `/owner/properties/Rate?id=${propertyId}`;
                                             else if (t === "Reservations") window.location.href = `/owner/properties/Reservation?id=${propertyId}`;
                                             else if (t === "Media") window.location.href = `/owner/properties/Media?id=${propertyId}`;
-                                            else if (t === "Staff") window.location.href = `/owner/properties/Staff?id=${propertyId}`;
                                             else if (t === "Settings") window.location.href = `/owner/properties/Setting?id=${propertyId}`;
                                         }}
                                         className={`bg-transparent py-2.5 px-4 text-[13px] cursor-pointer transition-all duration-150 relative border-b-2 ${
@@ -227,7 +228,6 @@ function RoomsContent() {
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Room Name</th>
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Type</th>
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Occupancy</th>
-                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Rate</th>
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Status</th>
                                                 <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Actions</th>
                                             </tr>
@@ -257,9 +257,6 @@ function RoomsContent() {
                                                         <td className="px-5 py-3.5 text-[13px] text-[#4f4f4f]">
                                                             {room.maxOccupancy} Adults{room.maxChildren ? ` + ${room.maxChildren} Children` : ""}
                                                         </td>
-                                                        <td className="px-5 py-3.5 text-[13px] font-semibold text-[#953002]">
-                                                            Rs. {room.baseRate}/night
-                                                        </td>
                                                         <td className="px-5 py-3.5">
                                                             <span
                                                                 className="text-[11px] font-bold px-2.5 py-1 rounded-full"
@@ -269,7 +266,7 @@ function RoomsContent() {
                                                             </span>
                                                         </td>
                                                         <td className="px-5 py-3.5">
-                                                            <a href={`/owner/roomManagement?roomId=${room.id}`} className="no-underline">
+                                                            <a href={`/owner/properties/roomDetails?roomId=${room.id}&propertyId=${propertyId}`} className="no-underline">
                                                                 <button className="py-1.5 px-3.5 bg-white text-[#953002] border border-[#953002] rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-[#fef5ef] transition-colors">
                                                                     View
                                                                 </button>
@@ -283,6 +280,56 @@ function RoomsContent() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Physical Room Units */}
+                        {physicalRooms.length > 0 && (
+                            <div className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden mt-4">
+                                <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#f0f0f0]">
+                                    <DoorOpen size={16} color="#953002" />
+                                    <span className="text-[15px] font-bold text-[#1d1d1d]">Physical Units</span>
+                                    <span className="ml-1 text-[11px] font-bold text-[#828282] bg-[#f5f5f5] px-2 py-0.5 rounded-full">{physicalRooms.length} units</span>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="bg-[#faf9f7]">
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Door / Unit</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Room Type</th>
+                                                <th className="text-left px-5 py-3 text-[11px] font-bold text-[#828282] uppercase tracking-wider">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                            {physicalRooms.map((unit: any, idx: number) => {
+                                                const unitStatus = unit.status ?? "CLEAN";
+                                                const statusStyle =
+                                                    unitStatus === "CLEAN"        ? { bg: "#dcfce7", color: "#15803d", label: "Clean" } :
+                                                    unitStatus === "DIRTY"        ? { bg: "#fff7ed", color: "#c2410c", label: "Dirty" } :
+                                                    unitStatus === "OUT_OF_ORDER" ? { bg: "#fef2f2", color: "#b91c1c", label: "Out of Order" } :
+                                                                                    { bg: "#f5f5f5", color: "#6b7280", label: unitStatus };
+                                                return (
+                                                    <tr
+                                                        key={unit.id}
+                                                        className={`border-t border-[#f5f5f5] ${idx % 2 === 0 ? "bg-white" : "bg-[#fdf9f7]"}`}
+                                                    >
+                                                        <td className="px-5 py-3 text-[13px] font-semibold text-[#1d1d1d]">{unit.doorNumber ?? "—"}</td>
+                                                        <td className="px-5 py-3 text-[13px] text-[#4f4f4f]">{unit.roomName ?? "—"}</td>
+                                                        <td className="px-5 py-3">
+                                                            <span
+                                                                className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                                                                style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}
+                                                            >
+                                                                {statusStyle.label}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </main>

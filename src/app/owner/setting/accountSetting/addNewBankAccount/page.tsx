@@ -10,13 +10,14 @@ import {
     Bell,
     LayoutDashboard,
     Building2,
-    BedDouble,
-    Calendar,
     Tag,
     BookOpen,
     Settings,
     ArrowLeft,
-    Landmark
+    Landmark,
+    Users,
+    Star,
+    MessageSquare,
 } from "lucide-react";
 
 /**
@@ -28,45 +29,64 @@ import {
 export default function AddNewBankAccountPage() {
     const router = useRouter();
     const { user } = useAuthStore();
-    const ownerId = user?.userId;
-    const [bankName, setBankName] = useState("");
+    const ownerId = user?.userId ?? 1;
+    const [selectedBank, setSelectedBank] = useState("");
+    const [customBankName, setCustomBankName] = useState("");
     const [accountHolder, setAccountHolder] = useState("");
     const [accountNumber, setAccountNumber] = useState("");
-    const [routingNumber, setRoutingNumber] = useState("");
-    const [accountType, setAccountType] = useState("Checking");
+    const [branchCode, setBranchCode] = useState("");
+    const [accountType, setAccountType] = useState("Savings");
     const [isPrimary, setIsPrimary] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
 
+    const SRI_LANKAN_BANKS = [
+        { name: "Bank of Ceylon (BOC)", value: "Bank of Ceylon" },
+        { name: "People's Bank", value: "People's Bank" },
+        { name: "Commercial Bank of Ceylon", value: "Commercial Bank of Ceylon" },
+        { name: "Hatton National Bank (HNB)", value: "Hatton National Bank" },
+        { name: "Sampath Bank", value: "Sampath Bank" },
+        { name: "Seylan Bank", value: "Seylan Bank" },
+        { name: "Nations Trust Bank (NTB)", value: "Nations Trust Bank" },
+        { name: "DFCC Bank", value: "DFCC Bank" },
+        { name: "National Development Bank (NDB)", value: "National Development Bank" },
+        { name: "Union Bank of Colombo", value: "Union Bank of Colombo" },
+        { name: "Pan Asia Bank", value: "Pan Asia Bank" },
+        { name: "Cargills Bank", value: "Cargills Bank" },
+        { name: "Amana Bank", value: "Amana Bank" },
+        { name: "SDB bank (Sanasa Development Bank)", value: "Sanasa Development Bank" },
+        { name: "National Savings Bank (NSB)", value: "National Savings Bank" },
+        { name: "Other Bank...", value: "Other" }
+    ];
+
     const handleSubmit = async () => {
-        if (!bankName || !accountHolder || !accountNumber || !routingNumber) return;
+        const finalBankName = selectedBank === "Other" ? customBankName : selectedBank;
+        if (!finalBankName || !accountHolder || !accountNumber || !branchCode) return;
         setSaving(true);
         setSaveError(null);
         try {
             await ownerSettingsApi.addBankAccount(ownerId, {
-                bankName,
+                bankName: finalBankName,
                 accountHolder: accountHolder,
                 accountNumber,
-                branchCode: routingNumber,
+                branchCode,
                 isPrimary,
             });
-            router.push("/owner/setting/billing&Payout");
+            router.push("/owner/setting/accountSetting");
         } catch (err: any) {
-            const message = err?.response?.data?.message || err?.message || "Failed to add bank account.";
-            setSaveError(message);
+            setSaveError(err?.response?.data?.message ?? "Failed to add bank account.");
         } finally {
             setSaving(false);
         }
     };
 
     const navItems = [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, href: "/owner" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Rooms", icon: <BedDouble size={18} />, href: "/owner/roomManagement" },
-        { label: "Availability", icon: <Calendar size={18} />, href: "/owner/availability/weeklyCalendar" },
-        { label: "Rate", icon: <Tag size={18} />, href: "/owner/rate" },
-        { label: "Reservation", icon: <BookOpen size={18} />, href: "/owner/reservation" },
-        { label: "Settings", icon: <Settings size={18} />, href: "/owner/setting/accountSetting", active: true },
+        { label: "Dashboard",  icon: <LayoutDashboard size={18} />, href: "/owner" },
+        { label: "Properties", icon: <Building2 size={18} />,       href: "/owner/properties" },
+        { label: "Staff",      icon: <Users size={18} />,           href: "/owner/staff" },
+        { label: "Reviews",    icon: <Star size={18} />,            href: "/owner/reviews" },
+        { label: "Messages",   icon: <MessageSquare size={18} />,   href: "/owner/message" },
+        { label: "Settings",   icon: <Settings size={18} />,        href: "/owner/setting/accountSetting", active: true },
     ];
 
     return (
@@ -134,13 +154,16 @@ export default function AddNewBankAccountPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col">
                                         <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Bank Name</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="e.g. Bank of America"
-                                            value={bankName} 
-                                            onChange={(e) => setBankName(e.target.value)} 
-                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
-                                        />
+                                        <select 
+                                            value={selectedBank} 
+                                            onChange={(e) => setSelectedBank(e.target.value)} 
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
+                                        >
+                                            <option value="">Select Bank</option>
+                                            {SRI_LANKAN_BANKS.map((b) => (
+                                                <option key={b.value} value={b.value}>{b.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="flex flex-col">
                                         <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Type</label>
@@ -149,12 +172,24 @@ export default function AddNewBankAccountPage() {
                                             onChange={(e) => setAccountType(e.target.value)} 
                                             className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans bg-white box-border focus:border-[#953002] transition-colors"
                                         >
-                                            <option value="Checking">Checking</option>
                                             <option value="Savings">Savings</option>
-                                            <option value="Business Checking">Business Checking</option>
+                                            <option value="Current">Current</option>
                                         </select>
                                     </div>
                                 </div>
+
+                                {selectedBank === "Other" && (
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Specify Bank Name</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="Enter your bank's name"
+                                            value={customBankName} 
+                                            onChange={(e) => setCustomBankName(e.target.value)} 
+                                            className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
+                                        />
+                                    </div>
+                                )}
 
                                 <div>
                                     <label className="block text-[11px] font-bold text-[#4f4f4f] mb-1.5">Account Holder Name</label>
@@ -169,12 +204,15 @@ export default function AddNewBankAccountPage() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col">
-                                        <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Routing Number</label>
+                                        <label className="text-[11px] font-bold text-[#4f4f4f] mb-1.5">Branch Code</label>
                                         <input 
                                             type="text" 
-                                            placeholder="9-digit routing number"
-                                            value={routingNumber} 
-                                            onChange={(e) => setRoutingNumber(e.target.value)} 
+                                            placeholder="3-digit branch code"
+                                            value={branchCode} 
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, "");
+                                                if (val.length <= 3) setBranchCode(val);
+                                            }} 
                                             className="w-full py-2.5 px-3 border border-[#e0e0e0] rounded-lg text-[13px] text-[#1d1d1d] outline-none font-sans box-border focus:border-[#953002] transition-colors" 
                                         />
                                     </div>
@@ -216,9 +254,21 @@ export default function AddNewBankAccountPage() {
                             </a>
                             <button
                                 onClick={handleSubmit}
-                                disabled={saving || !bankName || !accountHolder || !accountNumber || !routingNumber}
+                                disabled={
+                                    saving || 
+                                    !selectedBank || 
+                                    (selectedBank === "Other" && !customBankName) || 
+                                    !accountHolder || 
+                                    !accountNumber || 
+                                    !branchCode
+                                }
                                 className={`py-2.5 px-6 text-white border-none rounded-lg text-[13px] font-bold cursor-pointer transition-colors ${
-                                    saving || !bankName || !accountHolder || !accountNumber || !routingNumber
+                                    saving || 
+                                    !selectedBank || 
+                                    (selectedBank === "Other" && !customBankName) || 
+                                    !accountHolder || 
+                                    !accountNumber || 
+                                    !branchCode
                                         ? "bg-[#d0d0d0] pointer-events-none"
                                         : "bg-[#953002] hover:bg-[#b03a02]"
                                 }`}

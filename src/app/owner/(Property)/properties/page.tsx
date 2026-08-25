@@ -15,12 +15,12 @@ import {
     LayoutDashboard,
     Building2,
     DoorOpen,
-    CalendarCheck,
     DollarSign,
     ClipboardList,
     Settings,
     ChevronRight,
     Users,
+    MessageSquare,
 } from "lucide-react";
 
 /* ───────────────────── data ───────────────────── */
@@ -28,11 +28,9 @@ import {
 const sidebarItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/owner", active: false },
     { icon: Building2, label: "Properties", href: "/owner/properties", active: true },
-    { icon: DoorOpen, label: "Rooms", href: "/owner/roomManagement", active: false },
-    { icon: CalendarCheck, label: "Availability", href: "/owner/availability/weeklyCalendar", active: false },
-    { icon: DollarSign, label: "Rate", href: "/owner/rate", active: false },
-    { icon: ClipboardList, label: "Reservations", href: "/owner/reservation", active: false },
-    { icon: Users, label: "Staff Approvals", href: "/owner/staff", active: false },
+    { icon: Users, label: "Staff", href: "/owner/staff", active: false },
+    { icon: Star, label: "Reviews", href: "/owner/reviews", active: false },
+    { icon: MessageSquare, label: "Messages", href: "/owner/message", active: false },
     { icon: Settings, label: "Settings", href: "/owner/setting/accountSetting", active: false },
 ];
 

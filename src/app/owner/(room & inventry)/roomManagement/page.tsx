@@ -3,14 +3,12 @@
 
 import { useState, useEffect } from "react";
 import { roomsApi } from "@/api/owner/rooms.api";
-import { useAuthStore } from "@/store/auth/auth.store";
 import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
     LayoutDashboard,
     Building2,
     BedDouble,
-    Calendar,
     DollarSign,
     BookOpen,
     Settings,
@@ -26,18 +24,19 @@ import {
     Users,
     Wrench,
     CheckCircle,
+    Star,
+    MessageSquare,
 } from "lucide-react";
 
 /* ───────────────────── sidebar data ───────────────────── */
 
 const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard, href: "/owner" },
-    { label: "Properties", icon: Building2, href: "/owner/properties" },
-    { label: "Rooms", icon: BedDouble, href: "/owner/roomManagement", active: true },
-    { label: "Availability", icon: Calendar, href: "/owner/availability/weeklyCalendar" },
-    { label: "Rate", icon: DollarSign, href: "/owner/rate" },
-    { label: "Reservations", icon: BookOpen, href: "/owner/reservation" },
-    { label: "Settings", icon: Settings, href: "/owner/setting/propertySetting" },
+    { label: "Dashboard",  icon: LayoutDashboard, href: "/owner" },
+    { label: "Properties", icon: Building2,        href: "/owner/properties" },
+    { label: "Staff",      icon: Users,            href: "/owner/staff" },
+    { label: "Reviews",    icon: Star,             href: "/owner/reviews" },
+    { label: "Messages",   icon: MessageSquare,    href: "/owner/message" },
+    { label: "Settings",   icon: Settings,         href: "/owner/setting/accountSetting" },
 ];
 
 /* ───────────────────── types ───────────────────── */
@@ -88,11 +87,10 @@ function OccupancyIcon({ count }: { count: number }) {
  * occupancy stats, pricing, amenities, and quick-action controls.
  */
 export default function RoomManagementPage() {
-    const { user } = useAuthStore();
-    const ownerId = user?.userId ?? 1;
     const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("All Rooms");
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [rooms, setRooms] = useState<any[]>([]);
@@ -100,32 +98,33 @@ export default function RoomManagementPage() {
     const [occupied, setOccupied] = useState(0);
     const [maintenance, setMaintenance] = useState(0);
     const [vacant, setVacant] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const PAGE_SIZE = 10;
 
     useEffect(() => {
-        const fetchRooms = async () => {
-            try {
-                const data = await roomsApi.listRooms(ownerId);
+        const t = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+        return () => clearTimeout(t);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        const statusParam =
+            activeTab === "Available" ? "AVAILABLE" :
+            activeTab === "Occupied"  ? "OCCUPIED"  :
+            activeTab === "Maintenance" ? "MAINTENANCE" : undefined;
+
+        roomsApi.listRooms(statusParam, debouncedSearch || undefined, currentPage, PAGE_SIZE)
+            .then((data) => {
                 setRooms(data.rooms || []);
                 setTotalRooms(data.totalRooms || 0);
                 setOccupied(data.occupied || 0);
                 setMaintenance(data.maintenance || 0);
                 setVacant(data.vacant || 0);
-            } catch (error) {
-                console.error("Failed to fetch rooms:", error);
-            }
-        };
-        fetchRooms();
-    }, [ownerId]);
-
-    const filteredRooms = rooms.filter((room) => {
-        const matchesTab =
-            activeTab === "All Rooms" || room.status === activeTab.toUpperCase();
-        const matchesSearch =
-            searchQuery === "" ||
-            room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            room.roomType.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesTab && matchesSearch;
-    });
+                setTotalPages(data.totalPages || 1);
+                setTotalItems(data.totalItems || 0);
+            })
+            .catch((error) => console.error("Failed to fetch rooms:", error));
+    }, [activeTab, currentPage, debouncedSearch]);
 
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
@@ -283,7 +282,7 @@ export default function RoomManagementPage() {
                                         type="text"
                                         placeholder="Search rooms..."
                                         value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                                         className="text-[13px] text-[#4f4f4f] bg-transparent border-none outline-none w-36"
                                     />
                                 </div>
@@ -321,7 +320,7 @@ export default function RoomManagementPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredRooms.map((room) => {
+                                {rooms.map((room) => {
                                     const statusValue = ((room.status as string) || "AVAILABLE") as RoomStatus;
                                     const sConfig = statusConfig[statusValue] || statusConfig.AVAILABLE;
                                     const iconBg = statusValue === "OCCUPIED" ? "#fdecea" : statusValue === "MAINTENANCE" ? "#fff8e1" : "#e8f5e9";
@@ -414,7 +413,7 @@ export default function RoomManagementPage() {
                                     );
                                 })}
 
-                                {filteredRooms.length === 0 && (
+                                {rooms.length === 0 && (
                                     <tr>
                                         <td
                                             colSpan={6}
@@ -431,28 +430,51 @@ export default function RoomManagementPage() {
                         <div className="flex justify-between items-center py-3.5 px-5 border-t border-[#e8e8e8]">
                             <span className="text-[12px] text-[#828282]">
                                 Showing{" "}
-                                <span className="font-bold text-[#1d1d1d]">1</span> to{" "}
-                                <span className="font-bold text-[#1d1d1d]">4</span> of{" "}
-                                <span className="font-bold text-[#1d1d1d]">45</span> rooms
+                                <span className="font-bold text-[#1d1d1d]">
+                                    {totalItems === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
+                                </span>{" "}to{" "}
+                                <span className="font-bold text-[#1d1d1d]">
+                                    {Math.min(currentPage * PAGE_SIZE, totalItems)}
+                                </span>{" "}of{" "}
+                                <span className="font-bold text-[#1d1d1d]">{totalItems}</span> rooms
                             </span>
                             <div className="flex items-center gap-1">
-                                <button className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors">
+                                <button
+                                    disabled={currentPage <= 1}
+                                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                    className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
                                     <ChevronLeft size={14} />
                                 </button>
-                                {[1, 2, 3].map((p) => (
-                                    <button
-                                        key={p}
-                                        onClick={() => setCurrentPage(p)}
-                                        className={`w-7 h-7 flex items-center justify-center border-none cursor-pointer text-[12px] font-semibold rounded-md transition-colors ${
-                                            currentPage === p
-                                                ? "bg-[#953002] text-white"
-                                                : "bg-transparent text-[#4f4f4f] hover:bg-[#f5f5f5]"
-                                        }`}
-                                    >
-                                        {p}
-                                    </button>
-                                ))}
-                                <button className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                    .reduce<(number | "…")[]>((acc, p, idx, arr) => {
+                                        if (idx > 0 && typeof arr[idx - 1] === "number" && (p as number) - (arr[idx - 1] as number) > 1) acc.push("…");
+                                        acc.push(p);
+                                        return acc;
+                                    }, [])
+                                    .map((p, idx) =>
+                                        p === "…" ? (
+                                            <span key={`ellipsis-${idx}`} className="w-7 text-center text-[12px] text-[#828282]">…</span>
+                                        ) : (
+                                            <button
+                                                key={p}
+                                                onClick={() => setCurrentPage(p as number)}
+                                                className={`w-7 h-7 flex items-center justify-center border-none cursor-pointer text-[12px] font-semibold rounded-md transition-colors ${
+                                                    currentPage === p
+                                                        ? "bg-[#953002] text-white"
+                                                        : "bg-transparent text-[#4f4f4f] hover:bg-[#f5f5f5]"
+                                                }`}
+                                            >
+                                                {p}
+                                            </button>
+                                        )
+                                    )}
+                                <button
+                                    disabled={currentPage >= totalPages}
+                                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                    className="w-7 h-7 flex items-center justify-center bg-transparent border border-[#e0e0e0] rounded-md cursor-pointer text-[#828282] hover:bg-[#f5f5f5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
                                     <ChevronRight size={14} />
                                 </button>
                             </div>

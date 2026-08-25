@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import OwnerSidebar from "@/components/owner/OwnerSidebar";
 import { useState } from "react";
-import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
     ArrowLeft,
@@ -46,11 +46,8 @@ export default function EditRestrictionPage() {
     return (
         <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
             {/* ── Sidebar ── */}
-            <aside className="w-[160px] bg-white border-r border-[#e0e0e0] py-3 flex flex-col shrink-0">
-                <div className="px-3.5">
-                    <Logo width={120} height={36} />
-                </div>
-            </aside>
+
+            <OwnerSidebar />
 
             {/* ── Main Content ── */}
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden">

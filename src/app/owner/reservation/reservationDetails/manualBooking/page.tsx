@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import OwnerSidebar from "@/components/owner/OwnerSidebar";
 import { useState } from "react";
-import Logo from "@/components/shared/branding/logo";
 import {
     Bell,
     ChevronDown,
@@ -69,26 +69,21 @@ export default function ManualBookingPage() {
     const [specialRequests, setSpecialRequests] = useState("");
 
     return (
-        <div className="flex flex-col h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
-            {/* ── Top Bar ── */}
-            <header className="flex items-center justify-between py-3 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
-                <Logo width={120} height={36} />
-                <div className="flex items-center gap-3.5">
-                    <a
-                        href="/owner/message"
-                        className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors"
-                    >
-                        <Bell size={18} color="#4f4f4f" />
-                    </a>
-                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
-                        <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
-                            alt="User"
-                            className="w-full h-full rounded-full"
-                        />
+        <div className="flex h-screen w-screen fixed top-0 left-0 bg-[#faf9f7] overflow-hidden font-sans">
+            <OwnerSidebar />
+
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {/* ── Top Bar ── */}
+                <div className="flex justify-end items-center py-2 px-8 bg-white border-b border-[#e8e8e8] shrink-0">
+                    <div className="flex items-center gap-3.5">
+                        <a href="/owner/message" className="bg-transparent border-none cursor-pointer p-1 rounded-md flex items-center no-underline hover:bg-[#f5f5f5] transition-colors">
+                            <Bell size={18} color="#4f4f4f" />
+                        </a>
+                        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#953002]">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner" alt="User" className="w-full h-full rounded-full" />
+                        </div>
                     </div>
                 </div>
-            </header>
 
             {/* ── Scrollable Body ── */}
             <div className="flex-1 overflow-y-auto px-6 py-8 font-sans">
@@ -353,6 +348,7 @@ export default function ManualBookingPage() {
                         </a>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );
