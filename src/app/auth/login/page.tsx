@@ -36,7 +36,6 @@ function LoginPageContent() {
     const rolePaths: Record<string, string> = {
       guest: "/guest/booking",
       staff: "/staff",
-      owner: "/owner",
       admin: "/admin",
     };
     router.replace(rolePaths[user.role.toLowerCase()] ?? "/");
@@ -214,7 +213,6 @@ function LoginPageContent() {
                         // Determine role: prefer explicit ?role= param, then fall back to redirect path
                         const detectedRole =
                           roleParam === "staff" || redirectParam?.includes("/staff") ? "staff"
-                          : roleParam === "owner" || redirectParam?.includes("/owner") ? "owner"
                           : redirectParam ? "guest"
                           : roleParam ?? null;
 

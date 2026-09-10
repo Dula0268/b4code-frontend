@@ -15,7 +15,7 @@ import { propertiesApi } from "@/api/properties/properties.api";
 import { authApi } from "@/api/auth/auth.api";
 import { formatApiError } from "@/lib/error-formatter";
 
-type Role = "guest" | "owner" | "staff";
+type Role = "guest" | "staff";
 
 export default function RegisterPage() {
     return (
@@ -40,7 +40,7 @@ function RegisterForm() {
     // Initialize role from query params
     useEffect(() => {
         const roleParam = searchParams.get("role") as Role;
-        if (roleParam && ["guest", "owner", "staff"].includes(roleParam)) {
+        if (roleParam && ["guest", "staff"].includes(roleParam)) {
             setRole(roleParam);
         }
     }, [searchParams]);
@@ -53,10 +53,6 @@ function RegisterForm() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-    // Owner Fields
-    const [propertyName, setPropertyName] = useState("");
-    const [propertyAddress, setPropertyAddress] = useState("");
-    const [nationalId, setNationalId] = useState("");
 
     // Staff Fields
     const [staffRole, setStaffRole] = useState("");
@@ -124,12 +120,6 @@ function RegisterForm() {
             return;
         }
 
-        if (role === "owner") {
-            if (nationalId.length !== 10 && nationalId.length !== 12) {
-                setLocalError("National ID must be exactly 10 or 12 characters long.");
-                return;
-            }
-        }
 
         if (role === "staff") {
             if (!selectedPropertyId) {
@@ -393,62 +383,6 @@ function RegisterForm() {
                                         </div>
                                         <span className={clsx("text-[11px] font-bold w-12 text-right", strength.color.replace("bg-", "text-").replace("500", "600"))}>{strength.label}</span>
                                     </div>
-
-                                    {/* Extra Owner Fields */}
-                                    {role === "owner" && (
-                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            <div className="space-y-1.5">
-                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">Property Name</Label>
-                                                <div className="relative">
-                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                        <Input
-                                                            type="text"
-                                                            placeholder="Sunset Villa"
-                                                            value={propertyName}
-                                                            onChange={(e) => setPropertyName(e.target.value)}
-                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                            required={role === "owner"}
-                                                        />
-                                                        <Home className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-1.5">
-                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">Property Address</Label>
-                                                <div className="relative">
-                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                        <Input
-                                                            type="text"
-                                                            placeholder="street address, city, province."
-                                                            value={propertyAddress}
-                                                            onChange={(e) => setPropertyAddress(e.target.value)}
-                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                            required={role === "owner"}
-                                                        />
-                                                        <MapPin className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-1.5">
-                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">National ID / Business Registration No.</Label>
-                                                <div className="relative">
-                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                        <Input
-                                                            type="text"
-                                                            placeholder="Enter your official identification number"
-                                                            value={nationalId}
-                                                            onChange={(e) => setNationalId(e.target.value)}
-                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                            required={role === "owner"}
-                                                        />
-                                                        <Building2 className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     {/* Extra Staff Fields */}
                                     {role === "staff" && (

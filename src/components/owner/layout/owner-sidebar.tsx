@@ -6,23 +6,31 @@ import Logo from "@/components/shared/branding/logo";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  Building2,
-  Users,
+  Building,
+  CalendarCheck,
+  MessageCircle,
   Settings,
+  Star,
+  Users
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/store/auth/auth.store";
 
 export const NAV_ITEMS = [
-  { label: "Dashboard", href: "/owner", icon: LayoutDashboard, permKey: null },
-  { label: "Properties", href: "/owner/properties", icon: Building2, permKey: null },
-  { label: "Staff Approvals", href: "/owner/staff", icon: Users, permKey: null },
-  { label: "Settings", href: "/owner/setting/accountSetting", icon: Settings, permKey: null },
+  { label: "Dashboard", href: "/owner", icon: LayoutDashboard },
+  { label: "My Properties", href: "/owner/properties", icon: Building },
+  { label: "Bookings", href: "/owner/bookings", icon: CalendarCheck },
+  { label: "Guest Messages", href: "/owner/messages", icon: MessageCircle },
+  { label: "Staff", href: "/owner/staff", icon: Users },
+  { label: "Reviews", href: "/owner/reviews", icon: Star },
+  { label: "Settings", href: "/owner/settings", icon: Settings },
 ];
 
-export function NavItem({ item, isActive }: {
+export function NavItem({ item, isActive, badge, onClick }: {
   item: typeof NAV_ITEMS[0];
   isActive: boolean;
+  badge?: number | null;
+  onClick?: () => void;
 }) {
   const Icon = item.icon;
 
@@ -30,6 +38,7 @@ export function NavItem({ item, isActive }: {
     <li>
       <Link
         href={item.href}
+        onClick={onClick}
         className={`flex items-center gap-3 px-[14px] py-[10px] rounded-[10px] no-underline text-sm transition-colors ${isActive
           ? "font-semibold text-[var(--brand-primary)] bg-[rgba(149,48,2,0.08)]"
           : "font-normal text-[var(--black-1)] bg-transparent hover:bg-[rgba(109,34,0,0.1)] hover:text-[var(--primary-hover)]"
@@ -41,6 +50,11 @@ export function NavItem({ item, isActive }: {
             }`}
         />
         <span className="flex-1">{item.label}</span>
+        {badge ? (
+          <div className="bg-red-500 text-white rounded-full text-[11px] font-bold min-w-[20px] h-[20px] px-1.5 flex items-center justify-center ml-auto">
+            {badge}
+          </div>
+        ) : null}
       </Link>
     </li>
   );
@@ -51,44 +65,30 @@ export default function OwnerSidebar() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
-  const [propertyName, setPropertyName] = useState<string>("");
 
   useEffect(() => {
     setMounted(true);
-    const pid = sessionStorage.getItem("selected_property_id") || user?.propertyId;
-    if (pid) {
-      import("@/api/properties/properties.api").then(({ propertiesApi }) => {
-        propertiesApi.getPublicList().then((list) => {
-          const prop = list.find((p) => p.id === Number(pid));
-          if (prop) setPropertyName(prop.name);
-        }).catch(console.error);
-      });
-    }
-  }, [user?.propertyId]);
+  }, []);
 
   const fullName = user?.profile?.firstName
     ? `${user.profile.firstName} ${user.profile.lastName || ""}`.trim()
     : user?.email?.split("@")[0] || "Property Owner";
-  const names = fullName.split(" ");
-  const initials = names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
 
   if (!mounted) {
-    return <aside className="w-full h-full bg-[var(--white)] flex flex-col" />;
+    return <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] hidden lg:block fixed top-0 left-0 bottom-0 z-50" />;
   }
 
   return (
-    <aside className="w-full h-full bg-[var(--white)] flex flex-col py-6">
+    <aside className="w-[260px] h-screen bg-[var(--white)] border-r border-[var(--gray-5)] hidden lg:flex flex-col py-6 fixed top-0 left-0 bottom-0 z-50">
       {/* Logo + Role Label */}
       <div className="px-5 pb-6">
         <Logo href="/owner" variant="default" width={140} height={48} />
         <div className="mt-5 flex flex-col justify-center items-center text-center px-3 py-2.5 rounded-lg bg-[rgba(149,48,2,0.04)] border border-[rgba(149,48,2,0.12)] shadow-sm">
-          {propertyName && (
-            <span className="text-[12px] uppercase font-bold text-[var(--brand-primary)] whitespace-normal break-words leading-tight mb-1">
-              {propertyName}
-            </span>
-          )}
+          <span className="text-[12px] uppercase font-bold text-[var(--brand-primary)] whitespace-normal break-words leading-tight mb-1">
+            {fullName}
+          </span>
           <span className="text-[12px] uppercase tracking-widest font-semibold text-[rgba(149,48,2,0.7)] leading-none">
-            Property Owner
+            Owner
           </span>
         </div>
       </div>
@@ -101,8 +101,8 @@ export default function OwnerSidebar() {
           {NAV_ITEMS.map((item) => {
             const isActive =
               pathname === item.href ||
-              (item.href !== "/owner" && pathname.startsWith(item.href));
-
+              (item.href !== "/owner" && pathname.startsWith(item.href + "/"));
+            
             return (
               <NavItem
                 key={item.href}
@@ -113,7 +113,6 @@ export default function OwnerSidebar() {
           })}
         </ul>
       </nav>
-
     </aside>
   );
 }
