@@ -11,7 +11,8 @@ import {
   MessageCircle,
   Settings,
   Star,
-  Users
+  Users,
+  DollarSign,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/store/auth/auth.store";
@@ -20,6 +21,7 @@ export const NAV_ITEMS = [
   { label: "Dashboard", href: "/owner", icon: LayoutDashboard },
   { label: "My Properties", href: "/owner/properties", icon: Building },
   { label: "Bookings", href: "/owner/bookings", icon: CalendarCheck },
+  { label: "Rates & Pricing", href: "/owner/rate", icon: DollarSign },
   { label: "Guest Messages", href: "/owner/messages", icon: MessageCircle },
   { label: "Staff", href: "/owner/staff", icon: Users },
   { label: "Reviews", href: "/owner/reviews", icon: Star },
