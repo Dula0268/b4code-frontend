@@ -6,7 +6,7 @@ declare global {
       onCompleted?: (orderId: string) => void;
       onDismissed?: () => void;
       onError?: (error: string) => void;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       startPayment: (payment: Record<string, any>) => void;
     };
   }
@@ -75,7 +75,7 @@ export async function startPayHerePopup({
     }
 
     const params = new URLSearchParams(payHereParams);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const paymentObj: Record<string, any> = {};
 
     params.forEach((value, key) => {

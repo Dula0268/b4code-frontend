@@ -78,7 +78,7 @@ export default function ReviewManagementPage() {
 
   useEffect(() => {
     fetchReviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [propertyId, reviewType]);
 
   const searchFiltered = reviews.filter((r) => {
