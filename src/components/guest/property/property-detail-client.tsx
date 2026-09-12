@@ -77,6 +77,13 @@ export default function PropertyClient({ property }: { property: any }) {
     })();
     const guestsFromSearch = Number(searchParams.get("guests")) || 1;
 
+    // Local state for instant, optimistic date updating
+    const [currentProperty, setCurrentProperty] = useState(property);
+    const [activeCheckIn, setActiveCheckIn] = useState<string>(checkInDate);
+    const [activeCheckOut, setActiveCheckOut] = useState<string>(checkOutDate);
+    const [activeGuests, setActiveGuests] = useState<number>(guestsFromSearch);
+    const [isUpdatingDates, setIsUpdatingDates] = useState(false);
+
     // Trip Edit States
     const calRef = React.useRef<HTMLDivElement>(null);
     const [calOpen, setCalOpen] = useState(false);
@@ -85,6 +92,13 @@ export default function PropertyClient({ property }: { property: any }) {
     const [editGuests, setEditGuests] = useState<number>(guestsFromSearch);
 
     useEffect(() => {
+        setCurrentProperty(property);
+    }, [property]);
+
+    useEffect(() => {
+        setActiveCheckIn(checkInDate);
+        setActiveCheckOut(checkOutDate);
+        setActiveGuests(guestsFromSearch);
         setEditCheckIn(checkInDate);
         setEditCheckOut(checkOutDate);
         setEditGuests(guestsFromSearch);
@@ -122,13 +136,49 @@ export default function PropertyClient({ property }: { property: any }) {
         return () => document.removeEventListener("mousedown", handler);
     }, []);
 
-    const handleApplyFilters = () => {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("checkIn", editCheckIn);
-        params.set("checkOut", editCheckOut);
-        params.set("guests", editGuests.toString());
-        router.replace(`?${params.toString()}`);
+    const handleApplyFilters = async () => {
+        let finalCheckIn = editCheckIn;
+        let finalCheckOut = editCheckOut;
+
+        // Ensure valid checkIn
+        if (!finalCheckIn) {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
+            finalCheckIn = d.toISOString().split('T')[0];
+            setEditCheckIn(finalCheckIn);
+        }
+
+        // Ensure valid checkOut (must be at least 1 night after checkIn)
+        if (!finalCheckOut || finalCheckOut <= finalCheckIn) {
+            const inDate = new Date(finalCheckIn);
+            inDate.setDate(inDate.getDate() + 1);
+            finalCheckOut = inDate.toISOString().split('T')[0];
+            setEditCheckOut(finalCheckOut);
+        }
+
+        setIsUpdatingDates(true);
         setSelectedRooms({});
+        setPriceBreakdown(null);
+        setActiveCheckIn(finalCheckIn);
+        setActiveCheckOut(finalCheckOut);
+        setActiveGuests(editGuests);
+
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("checkIn", finalCheckIn);
+        params.set("checkOut", finalCheckOut);
+        params.set("guests", editGuests.toString());
+        router.replace(`?${params.toString()}`, { scroll: false });
+
+        try {
+            const updated = await guestApi.getPropertyDetail(property.id, finalCheckIn, finalCheckOut);
+            if (updated) {
+                setCurrentProperty(updated);
+            }
+        } catch (e) {
+            console.error("Failed to update property details for dates", e);
+        } finally {
+            setIsUpdatingDates(false);
+        }
     };
 
     useEffect(() => {
@@ -157,7 +207,7 @@ export default function PropertyClient({ property }: { property: any }) {
             
             try {
                 const qty = selectedRooms[roomId].quantity;
-                let url = `/guest/bookings/price-preview?roomId=${roomId}&checkIn=${checkInDate}&checkOut=${checkOutDate}&roomQuantity=${qty}`;
+                let url = `/guest/bookings/price-preview?roomId=${roomId}&checkIn=${activeCheckIn}&checkOut=${activeCheckOut}&roomQuantity=${qty}`;
                 if (appliedPromos.length > 0) {
                     url += `&promoCodes=${appliedPromos.join(",")}`;
                 }
@@ -165,6 +215,17 @@ export default function PropertyClient({ property }: { property: any }) {
                 const res = await api.get(url);
                 setPriceBreakdown(res.data);
                 setPromoError("");
+                if (res.data?.pricePerNight) {
+                    const dynamicRate = Number(res.data.pricePerNight);
+                    setSelectedRooms(prev => {
+                        const current = prev[roomId];
+                        if (!current || current.price === dynamicRate) return prev;
+                        return {
+                            ...prev,
+                            [roomId]: { ...current, price: dynamicRate }
+                        };
+                    });
+                }
             } catch (error: any) {
                 if (appliedPromos.length > 0) {
                     setPromoError(error.response?.data?.message || "Invalid promo code");
@@ -175,7 +236,7 @@ export default function PropertyClient({ property }: { property: any }) {
             }
         };
         fetchBreakdown();
-    }, [selectedRooms, appliedPromos, checkInDate, checkOutDate]);
+    }, [selectedRooms, appliedPromos, activeCheckIn, activeCheckOut]);
 
     const executeBooking = async () => {
         setIsSubmitting(true);
@@ -188,9 +249,9 @@ export default function PropertyClient({ property }: { property: any }) {
                 roomId: Number(roomId),
                 propertyId: Number(property.id),
                 roomQuantity: roomData.quantity,
-                checkIn: checkInDate,
-                checkOut: checkOutDate,
-                adults: guestsFromSearch,
+                checkIn: activeCheckIn,
+                checkOut: activeCheckOut,
+                adults: activeGuests,
                 guestName: user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : "Guest User",
                 guestEmail: user?.email || "guest@example.com",
                 nicNumber: null, // No longer used for custom passkey, backend will generate it
@@ -541,9 +602,17 @@ export default function PropertyClient({ property }: { property: any }) {
                             {/* Apply Button */}
                             <button 
                                 onClick={handleApplyFilters}
-                                className="h-[48px] px-8 w-full sm:w-auto bg-[#1d1d1d] hover:bg-black text-white font-bold rounded-xl transition-colors whitespace-nowrap cursor-pointer shadow-md"
+                                disabled={isUpdatingDates}
+                                className="h-[48px] px-8 w-full sm:w-auto bg-[#1d1d1d] hover:bg-black text-white font-bold rounded-xl transition-colors whitespace-nowrap cursor-pointer shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
                             >
-                                Apply
+                                {isUpdatingDates ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        <span>Updating...</span>
+                                    </>
+                                ) : (
+                                    "Apply"
+                                )}
                             </button>
                         </div>
                     </div>
@@ -556,7 +625,7 @@ export default function PropertyClient({ property }: { property: any }) {
                             {/* Inserted Room Types */}
                             <div>
                                 {(() => {
-                                    const displayedRooms = (property.roomTypes || []).filter((room: any) => room.maxGuests >= guestsFromSearch);
+                                    const displayedRooms = (currentProperty.roomTypes || []).filter((room: any) => room.maxGuests >= activeGuests);
                                     if (displayedRooms.length === 0) {
                                         return (
                                             <div className="p-8 bg-[#fff5f5] border border-[#ffe0e0] rounded-2xl text-[#d32f2f] flex flex-col items-center justify-center text-center">
@@ -628,13 +697,13 @@ export default function PropertyClient({ property }: { property: any }) {
                                         <div className="flex justify-between border-b border-[#e8e8e8] pb-3">
                                             <span className="text-[#555] font-medium text-[14px]">Dates</span>
                                             <span className="font-semibold text-[#1d1d1d] text-[14px] text-right">
-                                                {new Date(checkInDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(checkOutDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                {new Date(activeCheckIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(activeCheckOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                             </span>
                                         </div>
 
                                         <div className="flex justify-between border-b border-[#e8e8e8] pb-3">
                                             <span className="text-[#555] font-medium text-[14px]">Guests</span>
-                                            <span className="font-semibold text-[#1d1d1d] text-[14px] text-right">{guestsFromSearch} Guest{guestsFromSearch > 1 ? 's' : ''}</span>
+                                            <span className="font-semibold text-[#1d1d1d] text-[14px] text-right">{activeGuests} Guest{activeGuests > 1 ? 's' : ''}</span>
                                         </div>
                                     </div>
 
@@ -651,15 +720,18 @@ export default function PropertyClient({ property }: { property: any }) {
                                             <div className="flex justify-between items-center text-[14px]">
                                                 <span className="text-[#555]">Duration</span>
                                                 <span className="font-semibold text-[#1d1d1d]">
-                                                    {Math.max(1, Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 3600 * 24)))} Night{Math.max(1, Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 3600 * 24))) > 1 ? 's' : ''}
+                                                    {Math.max(1, Math.ceil((new Date(activeCheckOut).getTime() - new Date(activeCheckIn).getTime()) / (1000 * 3600 * 24)))} Night{Math.max(1, Math.ceil((new Date(activeCheckOut).getTime() - new Date(activeCheckIn).getTime()) / (1000 * 3600 * 24))) > 1 ? 's' : ''}
                                                 </span>
                                             </div>
-                                            {Object.values(selectedRooms).map((r, idx) => (
-                                                <div key={idx} className="flex justify-between items-center text-[14px]">
-                                                    <span className="text-[#555]">Price per night ({r.name})</span>
-                                                    <span className="font-semibold text-[#1d1d1d]">LKR {r.price.toLocaleString()}</span>
-                                                </div>
-                                            ))}
+                                            {Object.values(selectedRooms).map((r, idx) => {
+                                                const displayPrice = priceBreakdown?.pricePerNight ? Number(priceBreakdown.pricePerNight) : r.price;
+                                                return (
+                                                    <div key={idx} className="flex justify-between items-center text-[14px]">
+                                                        <span className="text-[#555]">Price per night ({r.name})</span>
+                                                        <span className="font-semibold text-[#1d1d1d]">LKR {displayPrice.toLocaleString()}</span>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
