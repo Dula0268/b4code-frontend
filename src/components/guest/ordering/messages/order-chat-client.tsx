@@ -105,7 +105,7 @@ export default function OrderChatClient() {
 
   useEffect(() => {
     syncMessages({ showLoading: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [numericOrderId, guestSessionId]);
 
   useEffect(() => {
@@ -153,7 +153,7 @@ export default function OrderChatClient() {
       client.deactivate();
       clearInterval(interval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [numericOrderId]);
 
   useEffect(() => {

@@ -313,7 +313,7 @@ export default function StaffOrderQueue() {
     }
     fetchOrderPage(propertyId, { status: activeTab, page: queue.page });
     fetchStatusCounts(propertyId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [orders]);
 
   const goToPage = (page: number) => {
