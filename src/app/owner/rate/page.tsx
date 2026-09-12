@@ -15,7 +15,8 @@ import SeasonalPricingModal from "@/components/owner/rates/seasonal-pricing-moda
 import SeasonalPricingTab from "@/components/owner/rates/seasonal-pricing-tab";
 import RatePlansTab from "@/components/owner/rates/rate-plans-tab";
 import PromotionsTab from "@/components/owner/rates/promotions-tab";
-import { Calendar, Sparkles, Tag, Building2, AlertCircle, TicketPercent } from "lucide-react";
+import RestrictionsTab from "@/components/owner/rates/restrictions-tab";
+import { Calendar, Sparkles, Tag, Building2, AlertCircle, TicketPercent, ShieldAlert } from "lucide-react";
 
 export default function OwnerRatesPage() {
   const { status, userRole } = useOwnerGuard();
@@ -150,6 +151,13 @@ export default function OwnerRatesPage() {
               <TicketPercent className="w-3.5 h-3.5" />
               Promo Codes & Discounts
             </TabsTrigger>
+            <TabsTrigger
+              value="restrictions"
+              className="rounded-xl text-xs font-bold px-4 py-2.5 data-[state=active]:bg-[#953002] data-[state=active]:text-white transition-all gap-2"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              Restrictions & Overbooking
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab 1: Rates Calendar */}
@@ -170,6 +178,11 @@ export default function OwnerRatesPage() {
           {/* Tab 4: Promo Codes & Discounts */}
           <TabsContent value="promotions" className="mt-0 outline-none">
             <PromotionsTab propertyName={selectedPropertyName} />
+          </TabsContent>
+
+          {/* Tab 5: Restrictions & Overbooking */}
+          <TabsContent value="restrictions" className="mt-0 outline-none">
+            <RestrictionsTab propertyName={selectedPropertyName} />
           </TabsContent>
         </Tabs>
 
