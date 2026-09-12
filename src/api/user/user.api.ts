@@ -13,4 +13,7 @@ export const userApi = {
   }) => api.put("/users/profile", updates).then((r) => r.data),
 
   getCurrentUser: () => api.get("/users/me").then((r) => r.data),
+
+  updatePreferences: (preferences: any) => 
+    api.patch("/users/me/preferences", { notificationPreferences: JSON.stringify(preferences) }).then((r) => r.data),
 };
