@@ -211,7 +211,7 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
             )}
             {isUpcoming && (
               <>
-                <Link href={`/guest/booking/${booking.orderId}/message`} className={btnOutline}>
+                <Link href={`/guest/booking/${booking.orderId}/message?tab=owner`} className={btnOutline}>
                   <MessageSquare size={12} /> Message
                 </Link>
                 <Link href={`/guest/booking/${booking.orderId}/modify`} className={btnOutline}>
@@ -225,6 +225,9 @@ export default function BookingCard({ booking }: { booking: BookingCardData }) {
             
             {isCompleted ? (
               <>
+                <Link href={`/guest/booking/${booking.orderId}/message?tab=owner`} className={btnOutline}>
+                  <MessageSquare size={12} /> Message
+                </Link>
                 <Link href={`/guest/booking/${booking.orderId}/review`} className={btnOutline}>
                   <Star size={12} /> Leave Review
                 </Link>
