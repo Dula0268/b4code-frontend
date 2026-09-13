@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
+  alertBanner?: React.ReactNode;
 }
 
 const STEP_TITLES = [
@@ -17,7 +18,7 @@ const STEP_TITLES = [
   "Media Upload"
 ];
 
-export default function OnboardingLayout({ children }: OnboardingLayoutProps) {
+export default function OnboardingLayout({ children, alertBanner }: OnboardingLayoutProps) {
   const { currentStep, totalSteps, prevStep } = useOnboardingStore();
   const router = useRouter();
 
@@ -36,6 +37,8 @@ export default function OnboardingLayout({ children }: OnboardingLayoutProps) {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Properties
         </Button>
+
+        {alertBanner}
 
         {/* Stepper */}
         <div className="mb-10">

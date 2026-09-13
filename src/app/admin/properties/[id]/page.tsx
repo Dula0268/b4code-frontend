@@ -23,9 +23,15 @@ import {
   Navigation,
   Download,
   X,
+  CalendarDays,
+  Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import AdminPageLayout from "@/components/admin/admin-page-layout";
 import PaymentModel from "@/components/admin/properties/payment-model";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useAdminPropertiesStore } from "@/store/admin/properties/properties.store";
 
 // ─── Document Card ────────────────────────────────────────────────────────────
@@ -216,14 +222,23 @@ export default function PropertyDetailsPage() {
   } = useAdminPropertiesStore();
 
   const [successState, setSuccessState] = useState<"APPROVED" | "REJECTED" | "UNDER_REVIEW" | null>(null);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
   
-  // Mocking multiple files for the gallery demonstration
-  const mockFiles = [
-    { type: 'image', url: selectedProperty?.mainImageUrl || "/evidence-photo.png", name: "property-photo-1.jpg" },
-    { type: 'image', url: "/evidence-photo.png", name: "property-photo-2.jpg" },
-    { type: 'pdf', url: "#", name: "business-registration.pdf" },
-  ];
-  const imageFiles = mockFiles.filter(f => f.type === 'image');
+  // Construct image files from property data
+  const mainImage = selectedProperty?.mainImageUrl;
+  const galleryImages = selectedProperty?.images || [];
+  
+  const allImageUrls = Array.from(new Set([mainImage, ...galleryImages].filter(Boolean))) as string[];
+  const imageFiles = allImageUrls.length > 0 
+    ? allImageUrls.map((url, i) => ({
+        type: 'image',
+        url: url,
+        name: i === 0 ? 'cover-photo.jpg' : `gallery-image-${i}.jpg`
+      }))
+    : [{ type: 'image', url: "/evidence-photo.png", name: "placeholder.png" }];
+    
+  const mockFiles = [...imageFiles];
 
   const [viewingImageIndex, setViewingImageIndex] = useState<number | null>(null);
 
@@ -265,9 +280,15 @@ export default function PropertyDetailsPage() {
   };
 
   const handleReject = async () => {
+    if (!rejectReason.trim()) {
+      alert("Please provide a rejection reason.");
+      return;
+    }
     try {
-      await rejectProperty(selectedProperty.id.toString(), "Rejected by Admin");
+      await rejectProperty(selectedProperty.id.toString(), rejectReason.trim());
       setSuccessState("REJECTED");
+      setIsRejectDialogOpen(false);
+      setRejectReason("");
     } catch (e: unknown) {
       alert(getErrorMessage(e) || "Failed to reject property.");
     }
@@ -379,6 +400,45 @@ export default function PropertyDetailsPage() {
               </p>
             </div>
 
+            {/* Property Features & Rules */}
+            <div className="bg-white border border-[#E8DDD8] rounded-xl p-5 mb-5">
+              {/* Amenities */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3 text-[#1A1A1A]">
+                  <Sparkles size={18} className="text-[#C05621]" />
+                  <h3 className="text-[16px] font-bold m-0">Amenities</h3>
+                </div>
+                {selectedProperty.amenities && selectedProperty.amenities.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProperty.amenities.map((amenity, idx) => (
+                      <span key={idx} className="px-3 py-1.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[13px] font-medium text-[#4B5563]">
+                        {amenity}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[14px] text-[#6B7280] m-0">No amenities provided.</p>
+                )}
+              </div>
+
+              {/* House Rules */}
+              <div>
+                <div className="flex items-center gap-2 mb-3 text-[#1A1A1A]">
+                  <ShieldCheck size={18} className="text-[#C05621]" />
+                  <h3 className="text-[16px] font-bold m-0">Custom House Rules</h3>
+                </div>
+                {selectedProperty.houseRules ? (
+                  <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-4">
+                    <p className="text-[14px] text-[#92400E] leading-relaxed m-0 whitespace-pre-wrap">
+                      {selectedProperty.houseRules}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-[14px] text-[#6B7280] m-0">No custom house rules provided.</p>
+                )}
+              </div>
+            </div>
+
             {/* Detail Cards Grid */}
             <div className="grid grid-cols-2 gap-3 mb-8">
               <DetailCard icon={MapPin} title="Address">
@@ -427,11 +487,11 @@ export default function PropertyDetailsPage() {
 
             <div className="flex flex-col gap-4">
               <DocumentCard
-                image={selectedProperty.mainImageUrl || ""}
-                label="Property Documents"
+                image={imageFiles[0]?.url || ""}
+                label={`Property Gallery (${imageFiles.length} Images)`}
                 type="MULTIPLE"
                 updated="Submitted with application"
-                size="Contains Images & PDFs"
+                size="High Res Images"
                 onView={() => setViewingImageIndex(0)}
                 onDownload={handleDownloadAll}
               />
@@ -461,7 +521,7 @@ export default function PropertyDetailsPage() {
           <div className="flex items-center gap-3">
             {(isPending || isUnderReview) && (
               <button
-                onClick={handleReject}
+                onClick={() => setIsRejectDialogOpen(true)}
                 disabled={actionLoading}
                 className="px-5 py-2.5 bg-white border border-[#E8DDD8] text-[#1A1A1A] text-[14px] font-semibold rounded-lg hover:border-[#DC2626] hover:text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-50 transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
               >
@@ -542,6 +602,53 @@ export default function PropertyDetailsPage() {
           </div>
         </div>
       )}
+
+      {/* ── Reject Reason Dialog ── */}
+      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <DialogContent className="sm:max-w-[420px] bg-white rounded-3xl border-none p-0 shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="px-7 pt-7 pb-4">
+            <DialogTitle className="text-[22px] font-extrabold text-[#C05621] m-0 leading-tight">
+              Reject Property
+            </DialogTitle>
+            <DialogDescription className="text-[14px] text-[#6B7280] mt-2 leading-relaxed">
+              Please provide a reason for rejecting this property. The owner will see this feedback and can use it to fix the issues before resubmitting.
+            </DialogDescription>
+          </div>
+
+          {/* Body */}
+          <div className="px-7 pb-2">
+            <label className="text-[13px] font-bold text-[#1A1A1A] mb-2 block uppercase tracking-wide">
+              Rejection Reason
+            </label>
+            <Textarea 
+              placeholder="e.g., Photos are blurry, address is incomplete..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="min-h-[130px] rounded-2xl border-2 border-[#FCA5A5] focus-visible:ring-0 focus-visible:border-[#EF4444] text-[14px] resize-none text-[#1A1A1A] placeholder:text-[#D1D5DB] transition-colors bg-white"
+            />
+          </div>
+
+          {/* Footer */}
+          <div className="px-7 py-5 flex items-center gap-3 border-t border-[#F3F4F6]">
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsRejectDialogOpen(false); setRejectReason(""); }}
+              className="flex-1 rounded-2xl h-11 border-[#E8DDD8] font-bold text-[#1A1A1A] hover:bg-slate-50 text-[14px]"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleReject} 
+              disabled={!rejectReason.trim() || actionLoading}
+              className="flex-1 rounded-2xl h-11 bg-gradient-to-r from-[#EF4444] to-[#DC2626] hover:from-[#DC2626] hover:to-[#B91C1C] text-white font-bold text-[14px] shadow-md shadow-red-200 disabled:opacity-50 transition-all"
+            >
+              {actionLoading ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+              Reject
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
         </>
       )}
     </AdminPageLayout>
