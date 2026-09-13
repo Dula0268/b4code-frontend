@@ -126,13 +126,14 @@ function BookingsContent() {
               if (rawPending) {
                 try {
                   const pending = JSON.parse(rawPending);
-                  await guestApi.modifyBooking(pending.bookingId, {
-                    roomId: pending.roomId,
-                    propertyId: pending.propertyId,
-                    checkInDate: pending.checkInDate,
-                    checkOutDate: pending.checkOutDate,
-                    guests: pending.guests,
-                  });
+                    await guestApi.modifyBooking(pending.bookingId, {
+                      roomId: pending.roomId,
+                      propertyId: pending.propertyId,
+                      checkInDate: pending.checkInDate,
+                      checkOutDate: pending.checkOutDate,
+                      guests: pending.guests,
+                      roomQuantity: pending.roomQuantity || 1,
+                    });
                 } catch (modErr) {
                   console.error("Failed to commit pending modification after payment:", modErr);
                 } finally {

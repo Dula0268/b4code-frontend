@@ -23,6 +23,8 @@ export interface BulkPriceUpdateRequest {
 export interface RatePlan {
   id?: number;
   propertyId: number;
+  roomTypeId?: number | null;
+  roomTypeName?: string | null;
   name: string;
   type: string;
   basePrice: number;
@@ -35,6 +37,8 @@ export interface RatePlan {
 export interface Discount {
   id?: number;
   propertyId: number;
+  roomTypeId?: number | null;
+  roomTypeName?: string | null;
   name: string;
   type: string;
   percentage: number;
@@ -49,6 +53,12 @@ export interface RateOverview {
   propertyId: number;
   ratePlans: RatePlan[];
   discounts: Discount[];
+  rooms?: Array<{
+    id: number;
+    name: string;
+    baseRate?: string;
+    roomCategory?: string;
+  }>;
 }
 
 export interface SeasonalRule {

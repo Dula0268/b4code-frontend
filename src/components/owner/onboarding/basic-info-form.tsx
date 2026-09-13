@@ -18,8 +18,8 @@ const formSchema = z.object({
   propertyType: z.string().min(1, "Property type is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   address: z.string().min(5, "Full address is required"),
-  latitude: z.number().default(0),
-  longitude: z.number().default(0),
+  latitude: z.number(),
+  longitude: z.number(),
 });
 
 export default function BasicInfoForm() {
