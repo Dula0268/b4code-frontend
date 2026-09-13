@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -21,10 +21,28 @@ import ModifyBookingModal from "./ModifyBookingModal";
 import ReservationDetailsSheet from "./ReservationDetailsSheet";
 
 export default function ReservationsTable() {
-  const { reservations, updateReservationStatus } = useOwnerBookingStore();
+  const { reservations, updateReservationStatus, activeFilter, selectedPropertyId } = useOwnerBookingStore();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [selectedResForEdit, setSelectedResForEdit] = useState<Reservation | null>(null);
   const [selectedResForDetails, setSelectedResForDetails] = useState<string | null>(null);
+
+  const filteredReservations = useMemo(() => {
+    return reservations.filter(r => {
+      // Filter by property
+      if (selectedPropertyId !== 'ALL' && r.propertyId !== selectedPropertyId) return false;
+      
+      // Filter by Quick Filters
+      if (activeFilter === 'ALL') return true;
+      if (activeFilter === 'PENDING') return r.status === 'PENDING';
+      if (activeFilter === 'CANCELED') return r.status === 'CANCELED' || r.status === 'NO_SHOW';
+      
+      const today = new Date().toISOString().split('T')[0];
+      if (activeFilter === 'ARRIVING') return r.checkIn && r.checkIn.startsWith(today);
+      if (activeFilter === 'DEPARTING') return r.checkOut && r.checkOut.startsWith(today);
+      
+      return true;
+    });
+  }, [reservations, activeFilter, selectedPropertyId]);
 
   const columns: ColumnDef<Reservation>[] = [
     {
@@ -107,7 +125,7 @@ export default function ReservationsTable() {
   ];
 
   const table = useReactTable({
-    data: reservations,
+    data: filteredReservations,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
