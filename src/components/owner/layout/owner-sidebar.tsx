@@ -22,7 +22,7 @@ export const NAV_ITEMS = [
   { label: "My Properties", href: "/owner/properties", icon: Building },
   { label: "Bookings", href: "/owner/bookings", icon: CalendarCheck },
   { label: "Rates & Pricing", href: "/owner/rate", icon: DollarSign },
-  { label: "Guest Messages", href: "/owner/messages", icon: MessageCircle },
+  { label: "Messages", href: "/owner/messages", icon: MessageCircle },
   { label: "Staff", href: "/owner/staff", icon: Users },
   { label: "Reviews", href: "/owner/reviews", icon: Star },
   { label: "Settings", href: "/owner/settings", icon: Settings },

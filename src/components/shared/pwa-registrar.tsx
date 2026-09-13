@@ -19,6 +19,8 @@ export default function PwaRegistrar() {
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
+    if (process.env.NODE_ENV === "development") return;
+
     // Register directly. The previous version deferred registration to the
     // window "load" event, but this effect runs after hydration -- by which
     // point "load" has already fired -- so the listener never ran and no

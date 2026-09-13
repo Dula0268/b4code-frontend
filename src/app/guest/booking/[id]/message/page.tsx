@@ -10,9 +10,9 @@ export default async function GuestMessagePage(props: { params: Promise<{ id: st
   const bookingId = params.id;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafafa]">
+    <div className="h-screen flex flex-col bg-[#fafafa] overflow-hidden">
       <GuestTopbar />
-      <main className="flex-1 pt-24 px-4 sm:px-6 pb-6 flex flex-col">
+      <main className="flex-1 pt-24 px-4 sm:px-6 pb-6 flex flex-col min-h-0 overflow-hidden">
         <Link
           href="/guest/booking"
           className="inline-flex items-center gap-2 text-sm font-bold mb-4 no-underline text-[#828282] hover:text-[#1d1d1d] transition-colors"
