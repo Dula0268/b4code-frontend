@@ -47,13 +47,13 @@ export const staffApi = {
     api.post(`/staff/order-messages/order/${orderId}`, { content }).then((r) => r.data),
 
   // Auto-Reply Rules
-  getAutoReplyRules: (propertyId: number | string) =>
-    api.get(`/staff/properties/${propertyId}/auto-reply-rules`).then((r) => r.data),
+  getAutoReplyRules: (propertyId: number | string, role?: string) =>
+    api.get(`/staff/properties/${propertyId}/auto-reply-rules${role ? `?role=${role}` : ''}`).then((r) => r.data),
     
-  createAutoReplyRule: (propertyId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean }) =>
+  createAutoReplyRule: (propertyId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean; targetRole?: string }) =>
     api.post(`/staff/properties/${propertyId}/auto-reply-rules`, payload).then((r) => r.data),
     
-  updateAutoReplyRule: (propertyId: number | string, ruleId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean }) =>
+  updateAutoReplyRule: (propertyId: number | string, ruleId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean; targetRole?: string }) =>
     api.put(`/staff/properties/${propertyId}/auto-reply-rules/${ruleId}`, payload).then((r) => r.data),
     
   deleteAutoReplyRule: (propertyId: number | string, ruleId: number | string) =>

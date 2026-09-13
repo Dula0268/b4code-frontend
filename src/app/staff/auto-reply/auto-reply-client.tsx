@@ -5,7 +5,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import { staffApi } from "@/api/staff/staff.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Edit2, Save, X, Power } from "lucide-react";
+import { Plus, Trash2, Edit2, Save, X, Power, Bot } from "lucide-react";
 import { Switch } from "@/components/ui/switch"; // Assuming standard UI switch component exists, if not I will use a simple checkbox/toggle
 
 interface AutoReplyRule {
@@ -15,10 +15,12 @@ interface AutoReplyRule {
   isActive: boolean;
 }
 
-export default function AutoReplyClient() {
+export default function AutoReplyClient({ propertyId: propsPropertyId }: { propertyId?: number } = {}) {
   const user = useAuthStore((state) => state.user);
   const [rules, setRules] = useState<AutoReplyRule[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const activePropertyId = propsPropertyId || user?.propertyId;
   
   // State for new/editing rule
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -27,9 +29,9 @@ export default function AutoReplyClient() {
   const [isCreating, setIsCreating] = useState(false);
 
   const fetchRules = async () => {
-    if (!user?.propertyId) return;
+    if (!activePropertyId || !user?.role) return;
     try {
-      const data = await staffApi.getAutoReplyRules(user.propertyId);
+      const data = await staffApi.getAutoReplyRules(activePropertyId, user.role);
       setRules(data);
     } catch (error) {
       console.error("Failed to load rules", error);
@@ -39,25 +41,26 @@ export default function AutoReplyClient() {
   };
 
   useEffect(() => {
-    if (user?.propertyId) {
+    if (activePropertyId) {
       fetchRules();
     }
-  }, [user?.propertyId]);
+  }, [activePropertyId]);
 
   const handleSave = async () => {
-    if (!user?.propertyId || !keyword.trim() || !replyMessage.trim()) return;
+    if (!activePropertyId || !keyword.trim() || !replyMessage.trim() || !user?.role) return;
 
     try {
       const payload = {
         keyword: keyword,
         replyMessage,
-        isActive: true
+        isActive: true,
+        targetRole: user.role.toUpperCase()
       };
 
       if (editingId) {
-        await staffApi.updateAutoReplyRule(user.propertyId, editingId, payload);
+        await staffApi.updateAutoReplyRule(activePropertyId, editingId, payload);
       } else {
-        await staffApi.createAutoReplyRule(user.propertyId, payload);
+        await staffApi.createAutoReplyRule(activePropertyId, payload);
       }
 
       setKeyword("");
@@ -71,7 +74,7 @@ export default function AutoReplyClient() {
   };
 
   const handleToggle = async (rule: AutoReplyRule) => {
-    if (!user?.propertyId) return;
+    if (!activePropertyId || !user?.role) return;
     
     // Optimistic UI update
     setRules(prev => prev.map(r => r.id === rule.id ? { ...r, isActive: !r.isActive } : r));
@@ -80,10 +83,11 @@ export default function AutoReplyClient() {
       const payload = {
         keyword: rule.keyword,
         replyMessage: rule.replyMessage,
-        isActive: !rule.isActive
+        isActive: !rule.isActive,
+        targetRole: user.role
       };
 
-      await staffApi.updateAutoReplyRule(user.propertyId, rule.id, payload);
+      await staffApi.updateAutoReplyRule(activePropertyId, rule.id, payload);
       // fetchRules() happens in background or we can just rely on optimistic update
     } catch (error) {
       console.error("Failed to toggle rule", error);
@@ -93,11 +97,11 @@ export default function AutoReplyClient() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!user?.propertyId) return;
+    if (!activePropertyId) return;
     
     if (confirm("Are you sure you want to delete this auto-reply rule?")) {
       try {
-        await staffApi.deleteAutoReplyRule(user.propertyId, id);
+        await staffApi.deleteAutoReplyRule(activePropertyId, id);
         fetchRules();
       } catch (error) {
         console.error("Failed to delete rule", error);
@@ -122,25 +126,19 @@ export default function AutoReplyClient() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="bg-white rounded-2xl border border-[#eadfce] p-6 shadow-sm">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-[#2d2116]">Active Rules</h2>
-        {!isCreating && !editingId && (
-          <Button 
-            onClick={() => setIsCreating(true)}
-            className="bg-[#9a3300] hover:bg-[#7a2800] text-white"
-          >
-            <Plus size={16} className="mr-2" /> Add Rule
-          </Button>
-        )}
-      </div>
-
-      {(isCreating || editingId) && (
-        <div className="bg-[#fafafa] p-4 rounded-xl border border-[#eadfce] mb-6">
-          <h3 className="font-bold text-[#2d2116] mb-4">
-            {editingId ? "Edit Rule" : "New Rule"}
-          </h3>
-          <div className="space-y-4">
+    <div className="grid lg:grid-cols-2 gap-8 items-start">
+      {/* Left side: Form */}
+      <div className="bg-white rounded-2xl border border-[#eadfce] p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-10 w-10 rounded-full bg-[#9a3300]/10 flex items-center justify-center text-[#9a3300]">
+            <Bot size={20} />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-[#2d2116]">{editingId ? "Edit Rule" : "New Rule"}</h2>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[#6f6254] mb-1">Keyword</label>
               <Input
@@ -160,23 +158,30 @@ export default function AutoReplyClient() {
                 className="w-full min-h-[100px] p-3 rounded-xl border border-[#eadfce] focus:outline-none focus:ring-2 focus:ring-[#9a3300]"
               />
             </div>
-            <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={cancelEdit}>
-                <X size={16} className="mr-2" /> Cancel
-              </Button>
+            <div className="flex gap-2 justify-start pt-4">
               <Button 
                 onClick={handleSave}
                 disabled={!keyword.trim() || !replyMessage.trim()}
                 className="bg-[#9a3300] hover:bg-[#7a2800] text-white"
               >
-                <Save size={16} className="mr-2" /> Save Rule
+                <Save size={16} className="mr-2" /> {editingId ? "Save Changes" : "Save Rule"}
               </Button>
+              {editingId && (
+                <Button variant="outline" onClick={cancelEdit}>
+                  <X size={16} className="mr-2" /> Cancel
+                </Button>
+              )}
             </div>
           </div>
-        </div>
-      )}
+      </div>
 
-      <div className="space-y-4">
+      {/* Right side: List */}
+      <div className="bg-[#fafafa] border border-[#eadfce] rounded-2xl p-6 hidden lg:block">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-semibold text-lg text-[#9a3300]">Active Rules</h3>
+        </div>
+        
+        <div className="space-y-4">
         {rules.length === 0 && !isCreating && (
           <div className="text-center p-8 text-[#8b7d6d] border border-dashed border-[#eadfce] rounded-xl">
             No auto-reply rules configured yet.
@@ -184,41 +189,39 @@ export default function AutoReplyClient() {
         )}
         
         {rules.map((rule) => (
-          <div key={rule.id} className="flex items-start justify-between p-4 border border-[#eadfce] rounded-xl hover:bg-[#fafafa] transition-colors">
+          <div key={rule.id} className="bg-white p-5 rounded-xl border border-[#2d2116] shadow-sm flex items-center justify-between">
             <div className="flex-1 mr-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="bg-[#f4eee6] text-[#9a3300] px-2 py-1 rounded-md text-xs font-bold uppercase">
-                  Keyword: {rule.keyword}
-                </span>
-                {!rule.isActive && (
-                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">Inactive</span>
-                )}
-              </div>
-              <p className="text-[#2d2116] text-sm whitespace-pre-wrap">{rule.replyMessage}</p>
+              <h4 className="text-2xl font-medium text-[#001b3a]">{rule.keyword}</h4>
+              <p className="text-xs text-slate-500 mt-1">Trigger: On Keyword Match</p>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 pr-2 border-r border-[#eadfce] mr-2">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${rule.isActive ? "bg-green-500" : "bg-slate-300"}`} />
+                <span className="text-xs text-slate-600 mr-2">{rule.isActive ? "Active" : "Paused"}</span>
                 <Switch 
                   checked={rule.isActive}
                   onCheckedChange={() => handleToggle(rule)}
                   className="data-[state=checked]:bg-[#9a3300] data-[state=unchecked]:bg-[#d4c9bc]"
                 />
               </div>
-              <button 
-                onClick={() => startEdit(rule)}
-                className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-              >
-                <Edit2 size={18} />
-              </button>
-              <button 
-                onClick={() => handleDelete(rule.id)}
-                className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="flex items-center gap-1 border-l border-slate-200 pl-4">
+                <button 
+                  onClick={() => startEdit(rule)}
+                  className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                >
+                  <Edit2 size={16} />
+                </button>
+                <button 
+                  onClick={() => handleDelete(rule.id)}
+                  className="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );
