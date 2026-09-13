@@ -15,6 +15,9 @@ export interface PropertyDto {
   createdAt?: string;
   status: string;
   mainImageUrl?: string;
+  images?: string[];
+  amenities?: string[];
+  houseRules?: string;
 }
 
 export interface PropertyPageDto {
