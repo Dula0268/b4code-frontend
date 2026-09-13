@@ -27,7 +27,7 @@ export default function RoomBuilderForm() {
   const { formData, updateFormData, nextStep, prevStep } = useOnboardingStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       rooms: formData.rooms.length > 0 ? formData.rooms : [
         {
