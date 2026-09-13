@@ -8,12 +8,7 @@ export default function StaffMessagesPage() {
   const user = useAuthStore((state) => state.user);
   const staffRole = user?.profile?.staffRole || "Staff Admin";
 
-  const subtitle =
-    staffRole === "Kitchen Staff"
-      ? "Communicate with guests about their orders"
-      : staffRole === "Property Staff"
-      ? "Communicate directly with guests about their stay"
-      : "Communicate with guests about their stay and their orders";
+  const subtitle = "Communicate with guests and the property owner, and manage automated replies.";
 
   return (
     <>

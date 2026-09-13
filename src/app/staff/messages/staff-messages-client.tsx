@@ -18,12 +18,17 @@ import {
   MapPin,
   Receipt,
   Inbox,
+  MessageCircle,
+  Users,
+  Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Client } from "@stomp/stompjs";
 import { useStaffBookingsStore } from "@/store/staff/bookings/staff-bookings.store";
 import AutoReplyClient from "../auto-reply/auto-reply-client";
+import MessageTemplateForm from "@/components/owner/messages/MessageTemplateForm";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -185,6 +190,7 @@ export default function StaffMessagesClient() {
   const canBooking = staffRole !== "Kitchen Staff";
   const canOrders = staffRole !== "Property Staff";
 
+  const [activeTab, setActiveTab] = useState("guest");
   const [activeDomain, setActiveDomain] = useState<Domain>(canBooking ? "booking" : "order");
 
   const setUnreadMessagesCount = useStaffBookingsStore((state) => state.setUnreadMessagesCount);
@@ -441,28 +447,30 @@ export default function StaffMessagesClient() {
   const hasActiveThread = activeDomain === "booking" ? !!activeBookingId : !!activeOrderId;
 
   return (
-    <div className="bg-white rounded-2xl border border-[#eadfce] flex flex-col md:flex-row h-full min-h-[600px] overflow-hidden shadow-sm">
+    <div className="p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
+        <div className="flex items-center justify-between mb-4 shrink-0">
+          <TabsList className="bg-slate-200/50 p-1">
+            <TabsTrigger value="guest" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <MessageCircle className="h-4 w-4" />
+              Guest
+            </TabsTrigger>
+            <TabsTrigger value="owner" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Users className="h-4 w-4" />
+              Owner
+            </TabsTrigger>
+            <TabsTrigger value="automations" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Bot className="h-4 w-4" />
+              Automations
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="guest" className="m-0 border-none p-0 outline-none flex-1 flex flex-col min-h-0">
+          <div className="bg-white rounded-2xl border border-[#eadfce] flex flex-col md:flex-row h-full overflow-hidden shadow-sm flex-1">
       {/* Left Sidebar - Conversations List */}
       <div className={`w-full md:w-1/3 border-r border-[#eadfce] flex-col bg-[#fafafa] ${hasActiveThread ? "hidden md:flex" : "flex"}`}>
         <div className="p-4 border-b border-[#eadfce] bg-white flex flex-col gap-3">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold text-[#2d2116] flex items-center gap-2">
-              <MessageSquare size={18} /> Conversations
-            </h2>
-            {activeDomain === "booking" && canBooking && (
-              <Button
-                onClick={() => setActiveBookingId(null)}
-                variant={!activeBookingId ? "default" : "outline"}
-                size="sm"
-                className={`h-8 text-xs ${
-                  !activeBookingId ? "bg-[#9a3300] hover:bg-[#7a2800] text-white" : "border-[#eadfce] text-[#6f6254] hover:bg-[#f4eee6]"
-                }`}
-              >
-                <Settings size={14} className="mr-1" />
-                Auto-Reply
-              </Button>
-            )}
-          </div>
 
           {showBoth && (
             <div className="flex gap-1 bg-[#f4eee6] rounded-xl p-1">
@@ -472,7 +480,7 @@ export default function StaffMessagesClient() {
                   activeDomain === "booking" ? "bg-white text-[#9a3300] shadow-sm" : "text-[#8b7d6d] hover:text-[#2d2116]"
                 }`}
               >
-                Guest Stay
+                Rooms
                 {bookingUnreadCount > 0 && (
                   <span className="min-w-[16px] h-4 px-1 rounded-full bg-[#9a3300] text-white text-[9px] font-bold flex items-center justify-center">
                     {bookingUnreadCount}
@@ -591,16 +599,10 @@ export default function StaffMessagesClient() {
       </div>
 
       {/* Right Panel - Chat View */}
-      <div className={`flex-1 flex-col bg-white min-w-0 ${hasActiveThread ? "flex" : "hidden md:flex"}`}>
+      <div className={`flex-1 flex-col bg-white min-w-0 min-h-0 ${hasActiveThread ? "flex" : "hidden md:flex"}`}>
         {activeDomain === "booking" ? (
           !activeBookingId ? (
-            <div className="flex-1 overflow-y-auto bg-[#fafafa] p-6">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-[#2d2116]">Auto-Reply Configuration</h2>
-                <p className="text-[#8b7d6d] mt-1">Set up automatic replies to common guest questions using keywords.</p>
-              </div>
-              <AutoReplyClient />
-            </div>
+            <EmptyPanel icon={MessageSquare} title="No conversation selected" subtitle="Select a guest to start messaging" />
           ) : (
             <>
               {/* Chat Header — click the profile to reveal guest details */}
@@ -844,5 +846,23 @@ export default function StaffMessagesClient() {
         )}
       </div>
     </div>
+  </TabsContent>
+
+  <TabsContent value="owner" className="m-0 border-none p-0 outline-none flex-1">
+    <div className="bg-white rounded-xl border shadow-sm p-8 text-center text-slate-500">
+      <h3 className="text-xl font-semibold text-slate-800 mb-2">Owner Messages</h3>
+      <p>View messages between staff and the property owner here. (Coming soon)</p>
+    </div>
+  </TabsContent>
+
+  <TabsContent value="automations" className="m-0 border-none p-0 outline-none flex-1">
+    <div className="mb-6">
+      <h2 className="text-2xl font-bold text-[#2d2116]">Auto-Reply Configuration</h2>
+      <p className="text-[#8b7d6d] mt-1">Set up automatic replies to common guest questions using keywords.</p>
+    </div>
+    <AutoReplyClient />
+  </TabsContent>
+</Tabs>
+</div>
   );
 }
