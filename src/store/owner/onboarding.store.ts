@@ -2,11 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface OnboardingData {
+  id?: number | null;
+  rejectionReason?: string | null;
+  originalStatus?: string | null;
+
   // Step 1: Basic Information
   propertyName: string;
   propertyType: string;
   description: string;
   address: string;
+  city: string;
+  country: string;
   latitude: number;
   longitude: number;
 
@@ -42,10 +48,15 @@ interface OnboardingState {
 }
 
 const initialFormData: OnboardingData = {
+  id: null,
+  rejectionReason: null,
+  originalStatus: null,
   propertyName: '',
   propertyType: '',
   description: '',
   address: '',
+  city: '',
+  country: 'Sri Lanka',
   latitude: 0,
   longitude: 0,
   rooms: [],

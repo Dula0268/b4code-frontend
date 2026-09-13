@@ -73,36 +73,37 @@ export default function PoliciesForm() {
                         const isChecked = field.value?.includes(amenity.id);
                         const Icon = amenity.icon;
                         return (
-                          <FormItem
-                            key={amenity.id}
-                            className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
-                              isChecked 
-                                ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 shadow-sm' 
-                                : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
-                            }`}
-                          >
-                            <FormControl>
-                              <Checkbox
-                                className="sr-only"
-                                checked={isChecked}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...field.value, amenity.id])
-                                    : field.onChange(
-                                        field.value?.filter((value) => value !== amenity.id)
-                                      )
-                                }}
-                              />
-                            </FormControl>
-                            <Icon className={`w-8 h-8 mb-3 transition-colors duration-200 ${isChecked ? 'text-[var(--brand-primary)]' : 'text-slate-400'}`} />
-                            <FormLabel className={`font-medium text-sm text-center cursor-pointer transition-colors duration-200 ${isChecked ? 'text-[var(--brand-primary)]' : 'text-slate-600'}`}>
-                              {amenity.label}
+                          <FormItem key={amenity.id}>
+                            <FormLabel
+                              className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer ${
+                                isChecked 
+                                  ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 shadow-sm' 
+                                  : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
+                              }`}
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  className="sr-only"
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), amenity.id])
+                                      : field.onChange(
+                                          (field.value || []).filter((value) => value !== amenity.id)
+                                        )
+                                  }}
+                                />
+                              </FormControl>
+                              <Icon className={`w-8 h-8 mb-3 transition-colors duration-200 ${isChecked ? 'text-[var(--brand-primary)]' : 'text-slate-400'}`} />
+                              <span className={`font-medium text-sm text-center transition-colors duration-200 ${isChecked ? 'text-[var(--brand-primary)]' : 'text-slate-600'}`}>
+                                {amenity.label}
+                              </span>
+                              {isChecked && (
+                                <div className="absolute top-2 right-2 text-[var(--brand-primary)] animate-in zoom-in duration-200">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                </div>
+                              )}
                             </FormLabel>
-                            {isChecked && (
-                              <div className="absolute top-2 right-2 text-[var(--brand-primary)] animate-in zoom-in duration-200">
-                                <CheckCircle2 className="w-4 h-4" />
-                              </div>
-                            )}
                           </FormItem>
                         )
                       }}

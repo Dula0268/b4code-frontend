@@ -540,7 +540,7 @@ export default function BookingDetailsClient({ id, initialTab = "modify", pageMo
         </>
       )}
 
-      {booking.status === "PENDING" && pageMode === "view" && (
+      {(booking.status as string) === "PENDING" && pageMode === "view" && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
           <AlertTriangle className="text-red-600 mt-0.5 shrink-0" size={24} />
           <div className="flex-1">

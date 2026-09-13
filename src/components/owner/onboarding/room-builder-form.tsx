@@ -14,8 +14,8 @@ import { v4 as uuidv4 } from "uuid";
 const roomSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Room name is required"),
-  baseCapacity: z.coerce.number().min(1, "Minimum 1 person"),
-  maxCapacity: z.coerce.number().min(1, "Minimum 1 person"),
+  baseCapacity: z.number().min(1, "Minimum 1 person"),
+  maxCapacity: z.number().min(1, "Minimum 1 person"),
   bedConfiguration: z.string().min(1, "Bed configuration is required"),
 });
 
@@ -27,7 +27,7 @@ export default function RoomBuilderForm() {
   const { formData, updateFormData, nextStep, prevStep } = useOnboardingStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       rooms: formData.rooms.length > 0 ? formData.rooms : [
         {
@@ -114,6 +114,7 @@ export default function RoomBuilderForm() {
                           min={1} 
                           className="h-11 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-all rounded-xl"
                           {...field} 
+                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -136,6 +137,7 @@ export default function RoomBuilderForm() {
                           min={1} 
                           className="h-11 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-all rounded-xl"
                           {...field} 
+                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                         />
                       </FormControl>
                       <FormMessage />

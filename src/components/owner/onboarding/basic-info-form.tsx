@@ -18,6 +18,8 @@ const formSchema = z.object({
   propertyType: z.string().min(1, "Property type is required"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   address: z.string().min(5, "Full address is required"),
+  city: z.string().min(2, "City is required"),
+  country: z.string().default("Sri Lanka"),
   latitude: z.number().default(0),
   longitude: z.number().default(0),
 });
@@ -26,12 +28,14 @@ export default function BasicInfoForm() {
   const { formData, updateFormData, nextStep } = useOnboardingStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       propertyName: formData.propertyName,
       propertyType: formData.propertyType,
       description: formData.description,
       address: formData.address,
+      city: formData.city || "",
+      country: formData.country || "Sri Lanka",
       latitude: formData.latitude,
       longitude: formData.longitude,
     },
@@ -136,6 +140,50 @@ export default function BasicInfoForm() {
             </FormItem>
           )}
         />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2 text-slate-700 font-medium">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  City
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g. Colombo, Kandy..." 
+                    className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-all rounded-xl"
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2 text-slate-700 font-medium">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  Country
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    className="h-12 bg-slate-50/50 border-slate-200 text-slate-500 rounded-xl cursor-not-allowed bg-slate-100"
+                    readOnly
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="flex justify-end pt-6 mt-8 border-t border-slate-100">
           <Button 

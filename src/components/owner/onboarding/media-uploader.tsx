@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,42 +8,67 @@ import { useOnboardingStore } from "@/store/owner/onboarding.store";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
-import { UploadCloud, X, Star, ImagePlus } from "lucide-react";
+import { UploadCloud, X, Star, ImagePlus, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ownerPropertyApi } from "@/api/owner/property.api";
+import { formatApiError } from "@/lib/error-formatter";
+import api from "@/lib/axios";
 
 const formSchema = z.object({
   coverPhoto: z.string().min(1, "Cover photo is required"),
   images: z.array(z.string()).min(1, "At least one image is required"),
 });
 
+// Track both the local blob preview URL and the original File object
+interface ImageEntry {
+  preview: string; // blob: URL or existing cloud URL for display
+  file?: File;      // original File for upload (optional if already uploaded)
+  cloudUrl?: string; // set after upload
+}
+
 export default function MediaUploader() {
-  const { formData, updateFormData, prevStep } = useOnboardingStore();
+  const { formData, updateFormData, prevStep, resetOnboarding } = useOnboardingStore();
   const router = useRouter();
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [imageEntries, setImageEntries] = useState<ImageEntry[]>(() => {
+    return formData.images.map(url => ({ preview: url }));
+  });
+  const [coverIndex, setCoverIndex] = useState<number>(() => {
+    if (formData.coverPhoto && formData.images.length > 0) {
+      const idx = formData.images.indexOf(formData.coverPhoto);
+      return idx >= 0 ? idx : 0;
+    }
+    return 0;
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       coverPhoto: formData.coverPhoto || "",
       images: formData.images,
     },
   });
 
-  const { setValue, watch } = form;
-  const images = watch("images");
-  const coverPhoto = watch("coverPhoto");
-
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newImages = acceptedFiles.map(file => URL.createObjectURL(file));
-    
-    const updatedImages = [...images, ...newImages];
-    setValue("images", updatedImages, { shouldValidate: true });
-    
-    if (!coverPhoto && updatedImages.length > 0) {
-      setValue("coverPhoto", updatedImages[0], { shouldValidate: true });
-    }
-  }, [images, coverPhoto, setValue]);
+    const newEntries: ImageEntry[] = acceptedFiles.map(file => ({
+      preview: URL.createObjectURL(file),
+      file,
+    }));
+    setImageEntries(prev => {
+      const updated = [...prev, ...newEntries];
+      // Update form values with previews for validation
+      const previews = updated.map(e => e.preview);
+      form.setValue("images", previews, { shouldValidate: true });
+      if (!form.getValues("coverPhoto") && updated.length > 0) {
+        form.setValue("coverPhoto", updated[0].preview, { shouldValidate: true });
+        setCoverIndex(0);
+      }
+      return updated;
+    });
+  }, [form]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -54,29 +79,87 @@ export default function MediaUploader() {
   });
 
   const removeImage = (index: number) => {
-    const imgToRemove = images[index];
-    const newImages = images.filter((_, i) => i !== index);
-    setValue("images", newImages, { shouldValidate: true });
-    
-    if (coverPhoto === imgToRemove) {
-      setValue("coverPhoto", newImages.length > 0 ? newImages[0] : "", { shouldValidate: true });
+    setImageEntries(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      const previews = updated.map(e => e.preview);
+      form.setValue("images", previews, { shouldValidate: true });
+      // Adjust cover index
+      if (coverIndex >= updated.length) {
+        const newCoverIdx = updated.length > 0 ? 0 : -1;
+        setCoverIndex(newCoverIdx);
+        form.setValue("coverPhoto", updated[0]?.preview || "", { shouldValidate: true });
+      }
+      return updated;
+    });
+  };
+
+  const selectCover = (index: number) => {
+    setCoverIndex(index);
+    form.setValue("coverPhoto", imageEntries[index].preview, { shouldValidate: true });
+  };
+
+  /** Upload a single File to backend → Cloudinary, returns the secure URL */
+  const uploadFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "properties");
+    const res = await api.post<{ url: string }>("/images/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data.url;
+  };
+
+  const onSubmit = async () => {
+    if (imageEntries.length === 0) {
+      toast.error("Please add at least one photo.");
+      return;
     }
-  };
 
-  const setCoverPhoto = (imgUrl: string) => {
-    setValue("coverPhoto", imgUrl, { shouldValidate: true });
-  };
+    setIsUploading(true);
+    setUploadProgress(0);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    updateFormData(values);
     try {
+      // Upload all images to Cloudinary
+      const uploaded: string[] = [];
+      for (let i = 0; i < imageEntries.length; i++) {
+        if (imageEntries[i].file) {
+          const url = await uploadFile(imageEntries[i].file!);
+          uploaded.push(url);
+        } else {
+          uploaded.push(imageEntries[i].preview); // Already a cloud URL
+        }
+        setUploadProgress(Math.round(((i + 1) / imageEntries.length) * 100));
+      }
+
+      const coverUrl = uploaded[coverIndex] ?? uploaded[0];
+      const values = { coverPhoto: coverUrl, images: uploaded };
+      updateFormData(values);
+
       const finalData = { ...formData, ...values };
-      await ownerPropertyApi.createProperty(finalData);
-      console.log("Successfully created property:", finalData);
+      
+      if (formData.id) {
+        await ownerPropertyApi.updateProperty(formData.id, finalData);
+        
+        if (formData.originalStatus === 'REJECTED') {
+          // We are editing an existing rejected property
+          await ownerPropertyApi.resubmitProperty(formData.id);
+          toast.success("Property resubmitted for review! Admin will verify the changes.");
+        } else {
+          toast.success("Property updated successfully!");
+        }
+      } else {
+        // Creating a new property
+        await ownerPropertyApi.createProperty(finalData);
+        toast.success("Property submitted for review! You will be notified once approved.");
+      }
+      
+      resetOnboarding();
       router.push("/owner/properties");
     } catch (error) {
-      console.error("Failed to submit property:", error);
-      alert("Failed to submit property. Please try again.");
+      toast.error(formatApiError(error));
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -127,21 +210,22 @@ export default function MediaUploader() {
           />
         </div>
 
-        {images.length > 0 && (
+        {imageEntries.length > 0 && (
           <div className="mt-10 animate-in fade-in duration-500">
-            <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Uploaded Photos ({images.length})</h3>
+            <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Uploaded Photos ({imageEntries.length})</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-              {images.map((img, index) => {
-                const isCover = coverPhoto === img;
+              {imageEntries.map((entry, index) => {
+                const isCover = coverIndex === index;
                 return (
                   <div key={index} className={`relative group rounded-2xl overflow-hidden aspect-square transition-all duration-300 ${
                     isCover ? 'ring-4 ring-[var(--brand-primary)] ring-offset-2' : 'border border-slate-200 hover:shadow-lg hover:shadow-slate-200/50'
                   }`}>
                     <Image 
-                      src={img} 
+                      src={entry.preview} 
                       alt={`Upload ${index + 1}`} 
                       fill 
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      unoptimized
                     />
                     
                     {/* Overlay */}
@@ -169,7 +253,7 @@ export default function MediaUploader() {
                       {!isCover && (
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); setCoverPhoto(img); }}
+                          onClick={(e) => { e.stopPropagation(); selectCover(index); }}
                           className="w-full bg-white/90 hover:bg-white text-slate-900 text-sm font-semibold py-2.5 rounded-xl transition-colors backdrop-blur-sm shadow-sm"
                         >
                           Make Cover
@@ -177,7 +261,7 @@ export default function MediaUploader() {
                       )}
                     </div>
 
-                    {/* Permanent Cover Badge if not hovered (optional, but nice) */}
+                    {/* Permanent Cover Badge */}
                     {isCover && (
                       <div className="absolute top-3 left-3 bg-[var(--brand-primary)] text-white p-2 rounded-full shadow-md group-hover:opacity-0 transition-opacity duration-300">
                         <Star size={14} className="fill-white" />
@@ -187,11 +271,22 @@ export default function MediaUploader() {
                 )
               })}
             </div>
-            {form.formState.errors.coverPhoto && (
-              <p className="text-sm font-medium text-red-500 mt-4 bg-red-50 p-3 rounded-lg border border-red-100">
-                {form.formState.errors.coverPhoto.message}
-              </p>
-            )}
+          </div>
+        )}
+
+        {/* Upload progress bar */}
+        {isUploading && (
+          <div className="mt-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Loader2 size={16} className="animate-spin text-[var(--brand-primary)]" />
+              <span className="text-sm font-medium text-slate-600">Uploading photos... {uploadProgress}%</span>
+            </div>
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[var(--brand-primary)] rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
           </div>
         )}
 
@@ -205,15 +300,22 @@ export default function MediaUploader() {
               updateFormData(form.getValues());
               prevStep();
             }}
+            disabled={isUploading}
           >
             Previous
           </Button>
           <Button 
             type="submit" 
             size="lg"
-            className="bg-[var(--brand-primary)] hover:opacity-90 text-white font-medium rounded-xl px-8 shadow-lg shadow-[var(--brand-primary)]/20 transition-all duration-200 hover:-translate-y-0.5 text-lg"
+            disabled={isUploading || imageEntries.length === 0}
+            className="bg-[var(--brand-primary)] hover:opacity-90 text-white font-medium rounded-xl px-8 shadow-lg shadow-[var(--brand-primary)]/20 transition-all duration-200 hover:-translate-y-0.5 text-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
-            Complete Setup
+            {isUploading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 size={18} className="animate-spin" />
+                Uploading...
+              </span>
+            ) : "Complete Setup"}
           </Button>
         </div>
       </form>
