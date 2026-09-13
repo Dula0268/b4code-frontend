@@ -40,7 +40,6 @@ interface OwnerMessageState {
   disconnect: () => void;
   setActiveConversation: (id: string) => void;
   setSelectedPropertyId: (id: number | 'ALL') => void;
-  
   fetchPropertiesAndConversations: () => Promise<void>;
   fetchMessages: (bookingId: string) => Promise<void>;
   sendMessage: (bookingId: string, text: string) => Promise<void>;

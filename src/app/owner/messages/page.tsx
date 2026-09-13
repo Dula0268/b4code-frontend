@@ -5,23 +5,40 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOwnerMessageStore } from "@/store/owner/message.store";
 import OwnerInbox from "@/components/owner/messages/OwnerInbox";
 import AutoReplyClient from "@/app/staff/auto-reply/auto-reply-client";
-import { MessageCircle, Bot, Users } from "lucide-react";
-import { useAuthStore } from "@/store/auth/auth.store";
+import { MessageCircle, Bot, Users, Loader2 } from "lucide-react";
+import { useRBACStore } from "@/store/auth/rbac.store";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function MessagesPage() {
   const { disconnect, fetchPropertiesAndConversations, selectedPropertyId, properties } = useOwnerMessageStore();
+  const { permissionsData, fetchMyPermissions, loading: rbacLoading } = useRBACStore();
   const [activeTab, setActiveTab] = useState("inbox");
   const activePropertyForAutomation = selectedPropertyId === "ALL" ? null : (selectedPropertyId as number);
 
-  // In a real app, this value would come from the backend or an admin settings store
-  const isMessagingEnabledByAdmin = true;
+  // Fetch permissions
+  useEffect(() => {
+    fetchMyPermissions("Owner");
+  }, [fetchMyPermissions]);
+
+  const ownerPerms = permissionsData["Owner"]?.permissions;
+  const isMessagingEnabledByAdmin = ownerPerms?.user?.find(p => p.key === "guest_messages")?.enabled ?? false;
 
   useEffect(() => {
-    fetchPropertiesAndConversations();
+    if (isMessagingEnabledByAdmin) {
+      fetchPropertiesAndConversations();
+    }
     return () => {
       disconnect();
     };
-  }, [disconnect, fetchPropertiesAndConversations]);
+  }, [disconnect, fetchPropertiesAndConversations, isMessagingEnabledByAdmin]);
+
+  if (rbacLoading && !ownerPerms) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--brand-primary)]" />
+      </div>
+    );
+  }
 
   if (!isMessagingEnabledByAdmin) {
     return (
@@ -43,7 +60,22 @@ export default function MessagesPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
-        <div className="flex items-center justify-between mb-4 shrink-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 shrink-0 gap-4">
+          <Select 
+            value={selectedPropertyId.toString()} 
+            onValueChange={(val) => useOwnerMessageStore.getState().setSelectedPropertyId(val === 'ALL' ? 'ALL' : parseInt(val, 10))}
+          >
+            <SelectTrigger className="w-full sm:w-[250px] bg-white">
+              <SelectValue placeholder="All Properties" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Properties</SelectItem>
+              {properties.map(p => (
+                <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <TabsList className="bg-slate-200/50 p-1">
             <TabsTrigger value="inbox" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <MessageCircle className="h-4 w-4" />

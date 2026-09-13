@@ -42,7 +42,11 @@ export default function OwnerInbox() {
   const [searchQuery, setSearchQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  const activeConversation = conversations.find(c => c.id === activeConversationId);
+  const filteredConversations = conversations
+    .filter(c => selectedPropertyId === "ALL" || c.propertyId === selectedPropertyId)
+    .filter(c => c.guestName.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const activeConversation = filteredConversations.find(c => c.id === activeConversationId);
   const activeReservation = activeConversation ? reservations.find(r => r.id === activeConversation.reservationId) : null;
 
   // Auto-scroll to bottom of messages
@@ -64,29 +68,6 @@ export default function OwnerInbox() {
       {/* Left Pane: Conversation List */}
       <div className="w-full md:w-1/3 border-r border-[#eadfce] flex flex-col bg-[#fafafa] flex-shrink-0">
         <div className="p-4 border-b border-[#eadfce] bg-white flex flex-col gap-3">
-          
-          <div className="flex gap-1 bg-[#f4eee6] rounded-xl p-1 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setSelectedPropertyId("ALL")}
-              className={`whitespace-nowrap px-3 flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg transition-colors ${
-                selectedPropertyId === "ALL" ? "bg-white text-[#9a3300] shadow-sm" : "text-[#8b7d6d] hover:text-[#2d2116]"
-              }`}
-            >
-              All
-            </button>
-            {properties.map(p => (
-              <button
-                key={p.id}
-                onClick={() => setSelectedPropertyId(p.id)}
-                className={`whitespace-nowrap px-3 flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg transition-colors ${
-                  selectedPropertyId === p.id ? "bg-white text-[#9a3300] shadow-sm" : "text-[#8b7d6d] hover:text-[#2d2116]"
-                }`}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8b7d6d]" />
             <Input 
@@ -99,10 +80,7 @@ export default function OwnerInbox() {
         </div>
         <ScrollArea className="flex-1">
           <div className="flex flex-col p-2.5 gap-1">
-            {conversations
-              .filter(c => selectedPropertyId === "ALL" || c.propertyId === selectedPropertyId)
-              .filter(c => c.guestName.toLowerCase().includes(searchQuery.toLowerCase()))
-              .map((conv) => {
+            {filteredConversations.map((conv) => {
                 const isNew = conv.unreadCount > 0;
                 const isActive = activeConversationId === conv.id;
                 
