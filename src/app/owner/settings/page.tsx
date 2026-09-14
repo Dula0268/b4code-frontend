@@ -1,7 +1,7 @@
 "use client";
 
 import OwnerHeader from "@/components/owner/layout/owner-header";
-import NotificationSettingsPanel from "@/components/owner/settings/notification-settings-panel";
+
 
 export default function SettingsPage() {
   return (
@@ -14,7 +14,7 @@ export default function SettingsPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Settings</h2>
         
         <div className="space-y-6">
-          <NotificationSettingsPanel />
+          <p className="text-zinc-500">No settings available yet.</p>
         </div>
       </div>
     </div>
