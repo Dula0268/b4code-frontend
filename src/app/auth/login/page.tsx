@@ -35,6 +35,7 @@ function LoginPageContent() {
     if (isRestoring || !isAuthenticated || !user) return;
     const rolePaths: Record<string, string> = {
       guest: "/guest/booking",
+      owner: "/owner",
       staff: "/staff",
       admin: "/admin",
     };

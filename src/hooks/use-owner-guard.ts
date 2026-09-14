@@ -26,7 +26,7 @@ export function useOwnerGuard() {
       router.replace(`/auth/login?redirect=${redirect}`);
       return;
     }
-  }, [mounted, isRestoring, isAuthenticated, router]);
+  }, [mounted, isRestoring, isAuthenticated, user, router]);
 
   let status: GuardStatus = "loading";
   
@@ -43,6 +43,8 @@ export function useOwnerGuard() {
   return { 
     status,
     ready: status === "ready",
-    userRole: user?.role?.toLowerCase()
+    userRole: user?.role?.toLowerCase(),
+    isVerified: !!user?.profile?.nationalIdUrl,
+    nationalIdUrl: user?.profile?.nationalIdUrl
   };
 }
