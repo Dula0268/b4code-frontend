@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/auth/auth.store";
 import { format } from "date-fns";
 import { Client } from "@stomp/stompjs";
 import { getWsBrokerUrl } from "@/lib/ws";
+import { StaffQuickReplyDto } from "@/api/owner/owner-message.api";
 
 export interface InternalMessageDto {
   id: number;
@@ -32,14 +33,21 @@ function Avatar({ name }: { name: string }) {
 
 export default function StaffOwnerInbox() {
   const [messages, setMessages] = useState<InternalMessageDto[]>([]);
+  const [quickReplies, setQuickReplies] = useState<StaffQuickReplyDto[]>([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuthStore();
   
   useEffect(() => {
-    staffApi.getStaffOwnerMessages()
-      .then(setMessages)
+    Promise.all([
+      staffApi.getStaffOwnerMessages(),
+      staffApi.getStaffQuickReplies()
+    ])
+      .then(([msgs, replies]) => {
+        setMessages(msgs);
+        setQuickReplies(replies);
+      })
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, []);
@@ -77,19 +85,23 @@ export default function StaffOwnerInbox() {
     };
   }, [user?.userId]);
 
-  const handleSend = async () => {
-    if (inputText.trim()) {
+  const handleSend = async (text: string) => {
+    if (text.trim()) {
       try {
-        const newMsg = await staffApi.sendStaffOwnerMessage(inputText);
+        const newMsg = await staffApi.sendStaffOwnerMessage(text);
         setMessages((prev) => {
           if (prev.some((m) => m.id === newMsg.id)) return prev;
           return [...prev, newMsg];
         });
-        setInputText("");
       } catch (err) {
         console.error("Failed to send message", err);
       }
     }
+  };
+
+  const handleSendClick = () => {
+    handleSend(inputText);
+    setInputText("");
   };
 
   return (
@@ -154,6 +166,21 @@ export default function StaffOwnerInbox() {
 
         {/* Input Area */}
         <div className="p-4 bg-white border-t border-[#eadfce] shrink-0">
+          {/* Quick Replies */}
+          {quickReplies.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-3 mb-1 custom-scrollbar hide-scrollbar-arrows no-scrollbar">
+              {quickReplies.map((reply) => (
+                <button
+                  key={reply.id}
+                  onClick={() => handleSend(reply.name)}
+                  className="whitespace-nowrap px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-full border border-slate-200 transition-colors shadow-sm font-medium"
+                >
+                  {reply.name}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Input
               value={inputText}
@@ -163,12 +190,12 @@ export default function StaffOwnerInbox() {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  handleSend();
+                  handleSendClick();
                 }
               }}
             />
             <Button 
-              onClick={handleSend} 
+              onClick={handleSendClick} 
               disabled={!inputText.trim()}
               className={`h-11 w-11 rounded-full text-white shadow-sm flex items-center justify-center transition-colors shrink-0 p-0 ${
                 inputText.trim() ? "bg-[#9a3300] hover:bg-[#7a2800]" : "bg-[#d7ae9b]"

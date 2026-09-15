@@ -43,6 +43,9 @@ export const staffApi = {
   sendStaffOwnerMessage: (content: string) =>
     api.post(`/staff/internal-messages/owner`, { content }).then((r) => r.data),
 
+  getStaffQuickReplies: () =>
+    api.get(`/staff/internal-messages/owner/quick-replies`).then((r) => r.data),
+
   // Order Messages (Kitchen Staff / Staff Admin)
   getOrderConversations: (propertyId: number | string) =>
     api.get(`/staff/order-messages/property/${propertyId}/conversations`).then((r) => r.data),

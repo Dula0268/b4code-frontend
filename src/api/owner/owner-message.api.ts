@@ -46,6 +46,15 @@ export interface InternalMessageDto {
   read: boolean;
 }
 
+export interface StaffQuickReplyDto {
+  id: number;
+  propertyId: number;
+  name: string;
+  message: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export const ownerMessageApi = {
   getConversations: async (propertyId: number): Promise<OwnerConversationDto[]> => {
     const response = await api.get(`/owner/messages/property/${propertyId}/conversations`);
@@ -81,5 +90,24 @@ export const ownerMessageApi = {
   sendStaffMessage: async (staffId: number, propertyId: number, content: string): Promise<InternalMessageDto> => {
     const response = await api.post(`/owner/internal-messages/staff/${staffId}`, { content }, { params: { propertyId } });
     return response.data;
+  },
+
+  getStaffQuickReplies: async (propertyId: number): Promise<StaffQuickReplyDto[]> => {
+    const response = await api.get(`/owner/properties/${propertyId}/staff-quick-replies`);
+    return response.data;
+  },
+
+  createStaffQuickReply: async (propertyId: number, data: { name: string; message: string; isActive: boolean }): Promise<StaffQuickReplyDto> => {
+    const response = await api.post(`/owner/properties/${propertyId}/staff-quick-replies`, data);
+    return response.data;
+  },
+
+  updateStaffQuickReply: async (propertyId: number, replyId: number, data: { name: string; message: string; isActive: boolean }): Promise<StaffQuickReplyDto> => {
+    const response = await api.put(`/owner/properties/${propertyId}/staff-quick-replies/${replyId}`, data);
+    return response.data;
+  },
+
+  deleteStaffQuickReply: async (propertyId: number, replyId: number): Promise<void> => {
+    await api.delete(`/owner/properties/${propertyId}/staff-quick-replies/${replyId}`);
   },
 };

@@ -6,6 +6,7 @@ import { useOwnerMessageStore } from "@/store/owner/message.store";
 import OwnerInbox from "@/components/owner/messages/OwnerInbox";
 import OwnerStaffInbox from "@/components/owner/messages/OwnerStaffInbox";
 import AutoReplyClient from "@/app/staff/auto-reply/auto-reply-client";
+import StaffQuickReplyClient from "@/components/owner/messages/StaffQuickReplyClient";
 import { MessageCircle, Bot, Users, Loader2 } from "lucide-react";
 import { useRBACStore } from "@/store/auth/rbac.store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +15,7 @@ export default function MessagesPage() {
   const { disconnect, fetchPropertiesAndConversations, selectedPropertyId, properties } = useOwnerMessageStore();
   const { permissionsData, fetchMyPermissions, loading: rbacLoading } = useRBACStore();
   const [activeTab, setActiveTab] = useState("inbox");
+  const [automationSubTab, setAutomationSubTab] = useState("guest");
   const activePropertyForAutomation = selectedPropertyId === "ALL" ? null : (selectedPropertyId as number);
 
   // Fetch permissions
@@ -99,7 +101,26 @@ export default function MessagesPage() {
         
         <TabsContent value="automations" className="m-0 border-none p-0 outline-none">
           {activePropertyForAutomation ? (
-            <AutoReplyClient propertyId={activePropertyForAutomation} />
+            <div className="flex flex-col h-full">
+              <Tabs value={automationSubTab} onValueChange={setAutomationSubTab} className="w-full">
+                <TabsList className="bg-slate-200/50 p-1 mb-4">
+                  <TabsTrigger value="guest" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                    Guest Auto-Replies
+                  </TabsTrigger>
+                  <TabsTrigger value="staff" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                    Staff Quick Replies
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="guest" className="m-0 border-none p-0 outline-none">
+                  <AutoReplyClient propertyId={activePropertyForAutomation} />
+                </TabsContent>
+                
+                <TabsContent value="staff" className="m-0 border-none p-0 outline-none">
+                  <StaffQuickReplyClient propertyId={activePropertyForAutomation} />
+                </TabsContent>
+              </Tabs>
+            </div>
           ) : (
             <div className="bg-white rounded-xl border shadow-sm p-8 text-center text-slate-500">
               <Bot size={48} className="mx-auto mb-4 opacity-20" />
