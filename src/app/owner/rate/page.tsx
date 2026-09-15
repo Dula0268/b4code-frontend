@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOwnerPricingStore } from "@/store/owner/owner-pricing.store";
 import { ownerPricingApi } from "@/api/owner/pricing.api";
 import { useAuthStore } from "@/store/auth/auth.store";
-import RatesCalendar from "@/components/owner/rates/rates-calendar";
 import BulkEditPriceModal from "@/components/owner/rates/bulk-edit-price-modal";
 import SeasonalPricingModal from "@/components/owner/rates/seasonal-pricing-modal";
 import SeasonalPricingTab from "@/components/owner/rates/seasonal-pricing-tab";
@@ -24,7 +23,7 @@ export default function OwnerRatesPage() {
   const { propertyId, setPropertyId, error } = useOwnerPricingStore();
 
   const [properties, setProperties] = useState<Array<{ id: number; name: string }>>([]);
-  const [activeTab, setActiveTab] = useState("calendar");
+  const [activeTab, setActiveTab] = useState("seasonal");
 
   useEffect(() => {
     // Load ONLY the authenticated owner's properties
@@ -124,13 +123,6 @@ export default function OwnerRatesPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
           <TabsList className="bg-white border border-[#E8EAED] p-1.5 rounded-2xl shadow-2xs inline-flex h-auto gap-1">
             <TabsTrigger
-              value="calendar"
-              className="rounded-xl text-xs font-bold px-4 py-2.5 data-[state=active]:bg-[#953002] data-[state=active]:text-white transition-all gap-2"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              Pricing Calendar
-            </TabsTrigger>
-            <TabsTrigger
               value="seasonal"
               className="rounded-xl text-xs font-bold px-4 py-2.5 data-[state=active]:bg-[#953002] data-[state=active]:text-white transition-all gap-2"
             >
@@ -156,14 +148,9 @@ export default function OwnerRatesPage() {
               className="rounded-xl text-xs font-bold px-4 py-2.5 data-[state=active]:bg-[#953002] data-[state=active]:text-white transition-all gap-2"
             >
               <ShieldAlert className="w-3.5 h-3.5" />
-              Restrictions & Overbooking
+              Restrictions
             </TabsTrigger>
           </TabsList>
-
-          {/* Tab 1: Rates Calendar */}
-          <TabsContent value="calendar" className="mt-0 outline-none">
-            <RatesCalendar />
-          </TabsContent>
 
           {/* Tab 2: Seasonal Pricing */}
           <TabsContent value="seasonal" className="mt-0 outline-none">
@@ -180,7 +167,7 @@ export default function OwnerRatesPage() {
             <PromotionsTab propertyName={selectedPropertyName} />
           </TabsContent>
 
-          {/* Tab 5: Restrictions & Overbooking */}
+          {/* Tab 5: Restrictions */}
           <TabsContent value="restrictions" className="mt-0 outline-none">
             <RestrictionsTab propertyName={selectedPropertyName} />
           </TabsContent>
