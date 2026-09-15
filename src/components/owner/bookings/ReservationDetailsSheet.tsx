@@ -4,6 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Reservation, useOwnerBookingStore } from "@/store/owner/booking.store";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { CalendarIcon, UserIcon, BedIcon, CreditCardIcon } from "lucide-react";
 import { format } from "date-fns";
 
@@ -60,6 +61,25 @@ export default function ReservationDetailsSheet({ reservationId, isOpen, onClose
                 <p className="text-sm text-slate-600">{reservation.roomType}</p>
               </div>
             </div>
+
+            {(reservation.status === 'PENDING' || reservation.status === 'CONFIRMED') && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Allow Late Arrival</p>
+                    <p className="text-xs text-slate-500">Keep this booking active if the guest misses check-in day.</p>
+                  </div>
+                  <Switch 
+                    checked={reservation.lateArrivalAllowed} 
+                    onCheckedChange={(checked) => {
+                      const store = useOwnerBookingStore.getState();
+                      store.toggleLateArrival(reservation.id, checked);
+                    }} 
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </SheetContent>

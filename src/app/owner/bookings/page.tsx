@@ -5,15 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOwnerBookingStore, FilterType } from "@/store/owner/booking.store";
 import ReservationsTable from "@/components/owner/bookings/ReservationsTable";
 import BookingCalendar from "@/components/owner/bookings/BookingCalendar";
-import { List, Calendar as CalendarIcon, Download, Filter } from "lucide-react";
+import { List, Calendar as CalendarIcon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ownerReservationApi } from "@/api/owner/owner-reservation.api";
 
 export default function BookingsPage() {
-  const { connect, disconnect, fetchReservations, isLoading, properties, selectedPropertyId, setSelectedPropertyId, activeFilter, setActiveFilter, reservations } = useOwnerBookingStore();
+  const { connect, disconnect, fetchReservations, isLoading, properties, selectedPropertyId, setSelectedPropertyId, activeFilter, reservations } = useOwnerBookingStore();
   const [activeTab, setActiveTab] = useState("list");
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
@@ -83,31 +82,7 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      {/* Quick Filters Row */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 no-scrollbar">
-        <Filter className="h-4 w-4 text-slate-400 mr-2 shrink-0" />
-        <Badge 
-          variant={activeFilter === 'UPCOMING' ? 'default' : 'outline'} 
-          className={`cursor-pointer shrink-0 ${activeFilter === 'UPCOMING' ? 'bg-orange-500 hover:bg-orange-600 text-white border-transparent' : 'bg-white hover:bg-slate-50 text-slate-600'}`}
-          onClick={() => setActiveFilter('UPCOMING')}
-        >
-          Upcoming
-        </Badge>
-        <Badge 
-          variant={activeFilter === 'COMPLETED' ? 'default' : 'outline'} 
-          className={`cursor-pointer shrink-0 ${activeFilter === 'COMPLETED' ? 'bg-green-600 hover:bg-green-700 text-white border-transparent' : 'bg-white hover:bg-slate-50 text-slate-600'}`}
-          onClick={() => setActiveFilter('COMPLETED')}
-        >
-          Completed
-        </Badge>
-        <Badge 
-          variant={activeFilter === 'CANCELED' ? 'default' : 'outline'} 
-          className={`cursor-pointer shrink-0 ${activeFilter === 'CANCELED' ? 'bg-red-500 hover:bg-red-600 text-white border-transparent' : 'bg-white hover:bg-slate-50 text-slate-600'}`}
-          onClick={() => setActiveFilter('CANCELED')}
-        >
-          Canceled
-        </Badge>
-      </div>
+
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex items-center justify-between mb-4">
