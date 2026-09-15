@@ -6,7 +6,7 @@ import { ownerPricingApi } from '@/api/owner/pricing.api';
 
 export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'CANCELED' | 'NO_SHOW';
 
-export type FilterType = 'ALL' | 'ARRIVING' | 'DEPARTING' | 'PENDING' | 'CANCELED';
+export type FilterType = 'ALL' | 'UPCOMING' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELED';
 
 export interface PropertyOpt {
   id: number;
@@ -16,6 +16,7 @@ export interface PropertyOpt {
 // Convert DTO to internal Reservation type for easier mapping in UI
 export interface Reservation {
   id: string; // The DTO uses number, but existing UI might use string ID
+  confirmationCode: string;
   guestName: string;
   checkIn: string;
   checkOut: string;
@@ -24,6 +25,7 @@ export interface Reservation {
   payout: number;
   propertyId: number;
   propertyName: string;
+  lateArrivalAllowed: boolean;
 }
 
 interface OwnerBookingState {
@@ -41,11 +43,13 @@ interface OwnerBookingState {
   setSelectedPropertyId: (id: number | 'ALL') => void;
   setActiveFilter: (filter: FilterType) => void;
   updateReservationStatus: (id: string, status: ReservationStatus) => Promise<void>;
+  toggleLateArrival: (id: string, allowed: boolean) => Promise<void>;
   modifyReservation: (id: string, updates: Partial<Reservation>) => void; // Keep as local state for now until modify API is added
 }
 
 const mapDtoToReservation = (dto: OwnerReservationDto): Reservation => ({
   id: dto.id.toString(),
+  confirmationCode: dto.confirmationCode,
   guestName: dto.guestName || 'Guest',
   checkIn: dto.checkIn,
   checkOut: dto.checkOut,
@@ -54,6 +58,7 @@ const mapDtoToReservation = (dto: OwnerReservationDto): Reservation => ({
   payout: parseFloat(dto.totalAmount) || 0,
   propertyId: dto.propertyId,
   propertyName: dto.propertyName,
+  lateArrivalAllowed: dto.lateArrivalAllowed || false,
 });
 
 export const useOwnerBookingStore = create<OwnerBookingState>((set, get) => ({
@@ -146,6 +151,21 @@ export const useOwnerBookingStore = create<OwnerBookingState>((set, get) => ({
     } catch (err: any) {
       console.error('Failed to update status', err);
       // Revert or show error UI if necessary
+    }
+  },
+
+  toggleLateArrival: async (id, allowed) => {
+    try {
+      const numId = parseInt(id, 10);
+      const updatedDto = await ownerReservationApi.toggleLateArrival(numId, allowed);
+      if (updatedDto) {
+        const updatedRes = mapDtoToReservation(updatedDto);
+        set((state) => ({
+          reservations: state.reservations.map(r => r.id === id ? updatedRes : r)
+        }));
+      }
+    } catch (err: any) {
+      console.error('Failed to toggle late arrival', err);
     }
   },
 

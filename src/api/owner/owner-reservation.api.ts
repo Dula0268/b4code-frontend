@@ -19,6 +19,7 @@ export interface OwnerReservationDto {
   status: string;
   paymentMethod: string;
   isPaid: boolean;
+  lateArrivalAllowed: boolean;
   totalAmount: string;
   taxAmount: string;
   discountAmount: string;
@@ -55,4 +56,17 @@ export const ownerReservationApi = {
     const response = await api.patch(`/owner/reservations/${id}/cancel`);
     return response.data;
   },
+
+  toggleLateArrival: async (id: number, allowed: boolean): Promise<OwnerReservationDto> => {
+    const response = await api.patch(`/owner/reservations/${id}/late-arrival?allowed=${allowed}`);
+    return response.data;
+  },
+
+  exportReservationsPdf: async (search?: string, status?: string): Promise<Blob> => {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (status) params.append('status', status);
+    const response = await api.get(`/owner/reservations/export/pdf?${params.toString()}`, { responseType: 'blob' });
+    return response.data;
+  }
 };

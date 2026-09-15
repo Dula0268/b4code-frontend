@@ -36,6 +36,16 @@ export const staffApi = {
   sendMessage: (bookingId: number | string, content: string) =>
     api.post(`/staff/messages/booking/${bookingId}`, { content }).then((r) => r.data),
 
+  // Internal Messages (Staff to Owner)
+  getStaffOwnerMessages: () =>
+    api.get(`/staff/internal-messages/owner`).then((r) => r.data),
+
+  sendStaffOwnerMessage: (content: string) =>
+    api.post(`/staff/internal-messages/owner`, { content }).then((r) => r.data),
+
+  getStaffQuickReplies: () =>
+    api.get(`/staff/internal-messages/owner/quick-replies`).then((r) => r.data),
+
   // Order Messages (Kitchen Staff / Staff Admin)
   getOrderConversations: (propertyId: number | string) =>
     api.get(`/staff/order-messages/property/${propertyId}/conversations`).then((r) => r.data),

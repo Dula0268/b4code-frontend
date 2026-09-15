@@ -4,6 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Reservation, useOwnerBookingStore } from "@/store/owner/booking.store";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { CalendarIcon, UserIcon, BedIcon, CreditCardIcon } from "lucide-react";
 import { format } from "date-fns";
 
@@ -21,7 +22,7 @@ export default function ReservationDetailsSheet({ reservationId, isOpen, onClose
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[400px] sm:w-[540px]">
+      <SheetContent className="w-[400px] sm:w-[540px] bg-white">
         <SheetHeader>
           <SheetTitle>Reservation Details</SheetTitle>
           <SheetDescription>
@@ -61,13 +62,24 @@ export default function ReservationDetailsSheet({ reservationId, isOpen, onClose
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <CreditCardIcon className="w-5 h-5 text-slate-500" />
-              <div>
-                <p className="text-sm font-medium">Payout</p>
-                <p className="text-sm text-slate-600">${reservation.payout.toFixed(2)}</p>
-              </div>
-            </div>
+            {(reservation.status === 'PENDING' || reservation.status === 'CONFIRMED') && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Allow Late Arrival</p>
+                    <p className="text-xs text-slate-500">Keep this booking active if the guest misses check-in day.</p>
+                  </div>
+                  <Switch 
+                    checked={reservation.lateArrivalAllowed} 
+                    onCheckedChange={(checked) => {
+                      const store = useOwnerBookingStore.getState();
+                      store.toggleLateArrival(reservation.id, checked);
+                    }} 
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </SheetContent>
