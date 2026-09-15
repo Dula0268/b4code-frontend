@@ -55,4 +55,12 @@ export const ownerReservationApi = {
     const response = await api.patch(`/owner/reservations/${id}/cancel`);
     return response.data;
   },
+
+  exportReservationsPdf: async (search?: string, status?: string): Promise<Blob> => {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (status) params.append('status', status);
+    const response = await api.get(`/owner/reservations/export/pdf?${params.toString()}`, { responseType: 'blob' });
+    return response.data;
+  }
 };

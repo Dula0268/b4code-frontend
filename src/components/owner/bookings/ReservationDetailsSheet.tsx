@@ -21,7 +21,7 @@ export default function ReservationDetailsSheet({ reservationId, isOpen, onClose
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[400px] sm:w-[540px]">
+      <SheetContent className="w-[400px] sm:w-[540px] bg-white">
         <SheetHeader>
           <SheetTitle>Reservation Details</SheetTitle>
           <SheetDescription>
@@ -58,14 +58,6 @@ export default function ReservationDetailsSheet({ reservationId, isOpen, onClose
               <div>
                 <p className="text-sm font-medium">Room Type</p>
                 <p className="text-sm text-slate-600">{reservation.roomType}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <CreditCardIcon className="w-5 h-5 text-slate-500" />
-              <div>
-                <p className="text-sm font-medium">Payout</p>
-                <p className="text-sm text-slate-600">${reservation.payout.toFixed(2)}</p>
               </div>
             </div>
           </div>

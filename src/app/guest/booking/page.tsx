@@ -259,7 +259,7 @@ function BookingsContent() {
             </div>
           ) : (
             bookings
-              .filter(b => activeTab === "UPCOMING" ? (b.status === "UPCOMING" || b.status === "PENDING") : b.status === activeTab)
+              .filter(b => activeTab === "UPCOMING" ? (b.status === "UPCOMING") : b.status === activeTab)
               .map(booking => <BookingCard key={booking.id} booking={booking} />)
           )}
         </div>

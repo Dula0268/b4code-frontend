@@ -18,27 +18,20 @@ import { format } from "date-fns";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, CheckCircle, XCircle } from "lucide-react";
 import ModifyBookingModal from "./ModifyBookingModal";
-import ReservationDetailsSheet from "./ReservationDetailsSheet";
 
 export default function ReservationsTable() {
   const { reservations, updateReservationStatus, activeFilter, selectedPropertyId } = useOwnerBookingStore();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [selectedResForEdit, setSelectedResForEdit] = useState<Reservation | null>(null);
-  const [selectedResForDetails, setSelectedResForDetails] = useState<string | null>(null);
 
   const filteredReservations = useMemo(() => {
     return reservations.filter(r => {
       // Filter by property
       if (selectedPropertyId !== 'ALL' && r.propertyId !== selectedPropertyId) return false;
       
-      // Filter by Quick Filters
-      if (activeFilter === 'ALL') return true;
-      if (activeFilter === 'PENDING') return r.status === 'PENDING';
-      if (activeFilter === 'CANCELED') return r.status === 'CANCELED' || r.status === 'NO_SHOW';
-      
-      const today = new Date().toISOString().split('T')[0];
-      if (activeFilter === 'ARRIVING') return r.checkIn && r.checkIn.startsWith(today);
-      if (activeFilter === 'DEPARTING') return r.checkOut && r.checkOut.startsWith(today);
+      if (activeFilter === 'UPCOMING') return r.status === 'PENDING' || r.status === 'CONFIRMED' || r.status === 'CHECKED_IN';
+      if (activeFilter === 'COMPLETED') return r.status === 'COMPLETED';
+      if (activeFilter === 'CANCELED') return r.status === 'CANCELED' || r.status === 'CANCELLED' || r.status === 'NO_SHOW';
       
       return true;
     });
@@ -77,51 +70,8 @@ export default function ReservationsTable() {
         return <Badge variant={variant}>{status}</Badge>;
       },
     },
-    {
-      accessorKey: "payout",
-      header: () => <div className="text-right">Payout</div>,
-      cell: ({ row }) => {
-        const amount = parseFloat(row.getValue("payout"));
-        const formatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(amount);
-        return <div className="text-right font-medium">{formatted}</div>;
-      },
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const reservation = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setSelectedResForDetails(reservation.id)}>
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedResForEdit(reservation)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Modify Dates
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateReservationStatus(reservation.id, "CHECKED_IN")}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Mark as Checked-in
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateReservationStatus(reservation.id, "NO_SHOW")} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                <XCircle className="mr-2 h-4 w-4" />
-                Mark as No-Show
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
+
+
   ];
 
   const table = useReactTable({
@@ -165,11 +115,6 @@ export default function ReservationsTable() {
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   className="hover:bg-slate-50/80 cursor-pointer"
-                  onClick={(e) => {
-                    // Prevent row click if clicking action menu
-                    if ((e.target as HTMLElement).closest('.h-8')) return;
-                    setSelectedResForDetails(row.original.id);
-                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -211,11 +156,6 @@ export default function ReservationsTable() {
         isOpen={!!selectedResForEdit} 
         onClose={() => setSelectedResForEdit(null)} 
         reservation={selectedResForEdit} 
-      />
-      <ReservationDetailsSheet 
-        isOpen={!!selectedResForDetails}
-        onClose={() => setSelectedResForDetails(null)}
-        reservationId={selectedResForDetails}
       />
     </div>
   );

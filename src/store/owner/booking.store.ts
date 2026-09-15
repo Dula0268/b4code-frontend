@@ -6,7 +6,7 @@ import { ownerPricingApi } from '@/api/owner/pricing.api';
 
 export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'CANCELED' | 'NO_SHOW';
 
-export type FilterType = 'ALL' | 'ARRIVING' | 'DEPARTING' | 'PENDING' | 'CANCELED';
+export type FilterType = 'UPCOMING' | 'COMPLETED' | 'CANCELED';
 
 export interface PropertyOpt {
   id: number;
@@ -60,7 +60,7 @@ export const useOwnerBookingStore = create<OwnerBookingState>((set, get) => ({
   reservations: [],
   properties: [],
   selectedPropertyId: 'ALL',
-  activeFilter: 'ALL',
+  activeFilter: 'UPCOMING',
   isLoading: false,
   error: null,
   stompClient: null,

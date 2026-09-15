@@ -18,63 +18,93 @@ import StaffHeader from "@/components/staff/layout/staff-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { User } from "lucide-react";
 
-type TabKey = "upcoming" | "inhouse" | "completed" | "noshows";
+type TabKey = "upcoming" | "completed" | "canceled";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "upcoming", label: "Upcoming" },
-  { key: "inhouse", label: "In-House" },
   { key: "completed", label: "Completed" },
-  { key: "noshows", label: "No Shows" },
+  { key: "canceled", label: "Canceled" },
 ];
 
-function BookingCard({ booking, actionButton }: { booking: OwnerReservationDto; actionButton?: React.ReactNode }) {
+function BookingCard({ booking, actionButton, activeTab }: { booking: OwnerReservationDto; actionButton?: React.ReactNode; activeTab: TabKey }) {
+  const isCheckInToday = booking.checkIn ? format(new Date(booking.checkIn), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") : false;
+
   return (
-    <Card className="bg-white/80 backdrop-blur-xl border border-white py-0 gap-0 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)] hover:-translate-y-1 transition-all duration-500 rounded-2xl flex flex-col group relative">
+    <div className={`bg-white/80 backdrop-blur-xl border shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-0.5 transition-all duration-500 rounded-2xl p-4 sm:px-6 flex flex-col md:flex-row md:items-center gap-4 group relative overflow-hidden ${isCheckInToday && activeTab === 'upcoming' ? 'border-blue-200 hover:shadow-[0_8px_30px_rgba(59,130,246,0.12)]' : 'border-white hover:shadow-[0_8px_30px_rgb(192,86,33,0.08)]'}`}>
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#C05621] opacity-[0.03] blur-3xl rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
       
-      {/* Card Header */}
-      <div className="bg-white/40 border-b border-[#F0EBE7]/50 px-5 py-4 flex items-center justify-between z-10">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-extrabold text-[#1A1A1A]">{booking.confirmationCode}</span>
+      {/* Col 1: Guest & Reference */}
+      <div className="flex flex-col gap-1.5 flex-1 min-w-[220px] z-10 shrink-0">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1.5 text-sm font-extrabold text-[#1A1A1A]">
+            <User size={14} className="text-[#C05621]" />
+            <span className="truncate">{booking.guestName}</span>
+            {isCheckInToday && activeTab === 'upcoming' && (
+              <span className="ml-1 text-[9px] uppercase tracking-wider font-bold text-white bg-blue-500 px-2 py-0.5 rounded-full shadow-sm">
+                Arriving Today
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#9E7B6A]">
-            <Clock size={12} />
-            <span>{format(new Date(booking.checkIn), "MMM dd")}</span>
-            <span>-</span>
-            <span>{format(new Date(booking.checkOut), "MMM dd")}</span>
-          </div>
+          <span className="text-[11px] text-[#9E7B6A] ml-[20px] truncate">{booking.guestEmail}</span>
         </div>
-        <span className="bg-[#FFF8F0] text-[#C05621] text-[11px] font-bold px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
-          {booking.status}
-        </span>
+        <div className="flex items-center gap-2 ml-[20px] mt-0.5">
+          <span className="text-[10px] font-bold text-[#C05621] bg-[#FFF8F0] px-2 py-0.5 rounded-md border border-[#F0EBE7]">Ref: {booking.confirmationCode}</span>
+        </div>
       </div>
 
-      {/* Card Body */}
-      <CardContent className="px-5 py-4 flex flex-col gap-3 flex-1 z-10">
-        <div className="flex items-center justify-between bg-white/50 p-2.5 rounded-xl border border-white shadow-sm">
-          <div className="flex items-center gap-2">
-            <BedDouble size={16} className="text-[#9E7B6A]" />
-            <span className="text-xs font-bold text-[#1A1A1A]">
-              {booking.roomName}
-              {booking.roomNumber && <span className="text-[#C05621]"> · Room {booking.roomNumber}</span>}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-[#C05621]">
-            <User size={14} />
-            <span>{booking.guestName}</span>
+      {/* Col 2: Room Details */}
+      <div className="flex-1 flex flex-col justify-center z-10 bg-white/50 p-3 rounded-xl border border-white shadow-sm sm:bg-transparent sm:border-none sm:shadow-none sm:p-0">
+        <div className="flex items-start gap-2">
+          <BedDouble size={16} className="text-[#9E7B6A] mt-0.5" />
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-[#1A1A1A] truncate">{booking.roomName}</span>
+            {booking.roomNumber ? (
+              <span className="text-[11px] text-[#C05621] font-semibold mt-0.5">Room {booking.roomNumber}</span>
+            ) : (
+              <span className="text-[10px] text-[#9E7B6A] font-medium mt-0.5 italic">Not Assigned</span>
+            )}
           </div>
         </div>
-        
-        <p className="text-xs text-[#9E7B6A]">{booking.guestEmail}</p>
+      </div>
 
-        {actionButton && (
-          <div className="pt-2 flex flex-col">
-            {actionButton}
+      {/* Actions */}
+      <div className="flex flex-row items-center gap-3 z-10 shrink-0 md:justify-end mt-2 md:mt-0 min-w-[180px]">
+        {!actionButton && (
+          <div className="flex flex-col items-end mr-1">
+            {activeTab === "completed" && (
+              <>
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#9E7B6A]">Completed On</span>
+                <span className="text-xs font-bold text-[#1A1A1A]">{format(new Date(booking.checkOut), "MMM dd, yyyy")}</span>
+              </>
+            )}
+            {activeTab === "canceled" && (
+              <>
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#9E7B6A]">Canceled On</span>
+                <span className="text-xs font-bold text-[#1A1A1A]">{format(new Date(booking.createdAt || booking.checkIn), "MMM dd, yyyy")}</span>
+              </>
+            )}
+            {activeTab === "upcoming" && (
+              <>
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#9E7B6A]">Start Date</span>
+                <span className="text-xs font-bold text-[#1A1A1A]">{format(new Date(booking.checkIn), "MMM dd, yyyy")}</span>
+              </>
+            )}
           </div>
         )}
-      </CardContent>
-    </Card>
+        
+        {actionButton && (
+          <div className="flex flex-row items-center gap-4">
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] font-black uppercase tracking-wider text-[#9E7B6A]">Start Date</span>
+              <span className="text-xs font-bold text-[#1A1A1A]">{format(new Date(booking.checkIn), "MMM dd, yyyy")}</span>
+            </div>
+            <div className="flex-shrink-0">
+              {actionButton}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -83,6 +113,18 @@ function EmptyState({ icon: Icon, message }: { icon: React.ComponentType<{ size?
     <div className="text-center py-12 bg-white/70 rounded-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-[#9E7B6A]">
       <Icon size={40} className="mx-auto text-[#C05621] opacity-40 mb-3" />
       <p className="text-sm font-bold text-[#1A1A1A]">{message}</p>
+    </div>
+  );
+}
+
+function ListHeader() {
+  return (
+    <div className="hidden md:flex items-center gap-4 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-[#9E7B6A] border-b border-[#E8E8E8]/70 mx-2 mb-1">
+      <div className="flex-1 min-w-[220px] shrink-0">Guest & Booking Ref</div>
+      <div className="flex-1 shrink-0">Room Assignment</div>
+      <div className="shrink-0 flex items-center justify-end min-w-[180px]">
+        Action
+      </div>
     </div>
   );
 }
@@ -231,31 +273,21 @@ export default function StaffBookingsClient() {
     );
   }, [reservations, search]);
 
-  const today = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
+  const todayStr = useMemo(() => {
+    return format(new Date(), "yyyy-MM-dd");
   }, []);
 
-  const upcomingAll = useMemo(() => searched.filter((r) => r.status === "CONFIRMED"), [searched]);
-  const noShows = useMemo(
-    () =>
-      upcomingAll.filter((r) => {
-        const checkInDate = new Date(r.checkIn);
-        checkInDate.setHours(0, 0, 0, 0);
-        return r.paymentMethod === "PAY_AT_PROPERTY" && checkInDate < today && !r.isPaid;
-      }),
-    [upcomingAll, today]
-  );
-  const upcoming = useMemo(() => upcomingAll.filter((r) => !noShows.includes(r)), [upcomingAll, noShows]);
-  const inHouse = useMemo(() => searched.filter((r) => r.status === "CHECKED_IN"), [searched]);
+  const upcoming = useMemo(() => searched.filter((r) => {
+    const isUpcomingStatus = r.status === "CONFIRMED" || r.status === "PENDING" || r.status === "CHECKED_IN";
+    return isUpcomingStatus && (r.checkOut && r.checkOut >= todayStr);
+  }), [searched, todayStr]);
   const completed = useMemo(() => searched.filter((r) => r.status === "COMPLETED"), [searched]);
+  const canceled = useMemo(() => searched.filter((r) => r.status === "CANCELLED"), [searched]);
 
   const counts: Record<TabKey, number> = {
     upcoming: upcoming.length,
-    inhouse: inHouse.length,
     completed: completed.length,
-    noshows: noShows.length,
+    canceled: canceled.length,
   };
 
   return (
@@ -273,17 +305,17 @@ export default function StaffBookingsClient() {
           <div className="flex items-center bg-[#F5F6F8] rounded-xl p-1 shadow-inner border border-[#E8E8E8] w-full overflow-x-auto">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.key;
-              const isNoShows = tab.key === "noshows";
+              const isCanceled = tab.key === "canceled";
               return (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={`flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all text-center whitespace-nowrap flex items-center justify-center gap-1.5 ${
                     isActive
-                      ? isNoShows
+                      ? isCanceled
                         ? "bg-white text-[#EB5757] shadow-sm"
                         : "bg-white text-[#1A1A1A] shadow-sm"
-                      : isNoShows
+                      : isCanceled
                       ? "text-[#EB5757]/70 hover:text-[#EB5757]"
                       : "text-[#9E7B6A] hover:text-[#1A1A1A]"
                   }`}
@@ -293,7 +325,7 @@ export default function StaffBookingsClient() {
                     <span
                       className={`text-[10px] font-bold rounded-full px-1.5 py-0 ${
                         isActive
-                          ? isNoShows
+                          ? isCanceled
                             ? "bg-[#EB5757] text-white"
                             : "bg-[#C05621] text-white"
                           : "bg-[#E8E8E8] text-[#6B7280]"
@@ -319,14 +351,26 @@ export default function StaffBookingsClient() {
                 (upcoming.length === 0 ? (
                   <EmptyState icon={Clock} message="No upcoming bookings found" />
                 ) : (
-                  upcoming.map((booking) => (
+                  <>
+                    <ListHeader />
+                    {upcoming.map((booking) => (
                     <BookingCard
                       key={booking.id}
                       booking={booking}
+                      activeTab={activeTab}
                       actionButton={
-                        booking.paymentMethod === "PAY_AT_PROPERTY" && !booking.isPaid ? (
+                        !booking.isPaid ? (
                           <Button onClick={() => openPaymentModal(booking.id)} className="bg-[#EB5757] hover:bg-[#D94F4F] text-white">
                             Confirm Payment
+                          </Button>
+                        ) : booking.status === "CHECKED_IN" ? (
+                          <Button
+                            onClick={() => handleCheckOut(booking.id)}
+                            variant="outline"
+                            className="border-[#EB5757]/30 text-[#EB5757] hover:bg-[#FFF6F6] hover:border-[#EB5757]/50"
+                          >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Check Out
                           </Button>
                         ) : (
                           <Button onClick={() => openCheckInModal(booking.id)} className="bg-[#1A1A1A] hover:bg-[#C05621] text-white">
@@ -337,52 +381,27 @@ export default function StaffBookingsClient() {
                       }
                     />
                   ))
-                ))}
-
-              {activeTab === "inhouse" &&
-                (inHouse.length === 0 ? (
-                  <EmptyState icon={CalendarCheck} message="No guests currently in-house" />
-                ) : (
-                  inHouse.map((booking) => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      actionButton={
-                        <Button
-                          onClick={() => handleCheckOut(booking.id)}
-                          variant="outline"
-                          className="border-[#EB5757]/30 text-[#EB5757] hover:bg-[#FFF6F6] hover:border-[#EB5757]/50"
-                        >
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Check Out
-                        </Button>
-                      }
-                    />
-                  ))
+                }</>
                 ))}
 
               {activeTab === "completed" &&
                 (completed.length === 0 ? (
                   <EmptyState icon={CheckCircle2} message="No completed bookings found" />
                 ) : (
-                  completed.map((booking) => <BookingCard key={booking.id} booking={booking} />)
+                  <>
+                    <ListHeader />
+                    {completed.map((booking) => <BookingCard key={booking.id} booking={booking} activeTab={activeTab} />)}
+                  </>
                 ))}
 
-              {activeTab === "noshows" &&
-                (noShows.length === 0 ? (
-                  <EmptyState icon={Clock} message="No missed bookings found" />
+              {activeTab === "canceled" &&
+                (canceled.length === 0 ? (
+                  <EmptyState icon={AlertTriangle} message="No canceled bookings found" />
                 ) : (
-                  noShows.map((booking) => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      actionButton={
-                        <div className="text-[#EB5757] text-xs font-bold px-3 py-1.5 bg-[#FFF6F6] rounded-lg">
-                          Missed Check-in
-                        </div>
-                      }
-                    />
-                  ))
+                  <>
+                    <ListHeader />
+                    {canceled.map((booking) => <BookingCard key={booking.id} booking={booking} activeTab={activeTab} />)}
+                  </>
                 ))}
             </div>
           )}
