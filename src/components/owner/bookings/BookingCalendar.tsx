@@ -90,7 +90,7 @@ export default function BookingCalendar() {
       const end = new Date(co.getFullYear(), co.getMonth(), co.getDate());
       
       // Add this reservation to every date it spans (stay nights)
-      let current = new Date(start);
+      const current = new Date(start);
       if (start.getTime() === end.getTime()) {
         const dateStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
         if (!map.has(dateStr)) map.set(dateStr, []);
