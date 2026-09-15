@@ -30,10 +30,13 @@ export const authApi = {
   forgotPassword: (email: string) =>
     api.post("/auth/forgot-password", { email }).then((r) => r.data),
 
-  resetPassword: (token: string, newPassword: string) =>
+  resetPassword: (token: string, newPassword: string): Promise<string> =>
     api.post("/auth/reset-password", { token, newPassword }).then((r) => r.data),
 
-  verifyEmail: (email: string, otp: string) =>
+  acceptInvite: (data: { token: string; password: string; firstName: string; lastName: string; phone: string; propertyName?: string; propertyAddress?: string; nationalId?: string }): Promise<any> =>
+    api.post("/auth/accept-invite", data).then((r) => r.data),
+
+  verifyEmail: (email: string, otp: string): Promise<string> =>
     api.post("/auth/verify-email", { email, otp }).then((r) => r.data),
 
   resendOtp: (email: string) =>
