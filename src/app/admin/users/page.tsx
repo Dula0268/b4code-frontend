@@ -16,6 +16,7 @@ import {
   Ban,
   ShieldCheck,
   Send,
+  AlertCircle,
 } from "lucide-react";
 import AdminPageLayout from "@/components/admin/admin-page-layout";
 import { UsersApi } from "@/api/admin/users.api";
@@ -196,9 +197,8 @@ function InviteUserDrawer({
 }) {
   const [form, setForm] = useState({
     email: "",
-    role: "STAFF",
+    role: "OWNER",
   });
-  const roles = ["OWNER", "STAFF", "ADMIN", "GUEST"];
 
   return (
     <>
@@ -213,7 +213,7 @@ function InviteUserDrawer({
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <h2 className="text-[18px] font-extrabold text-[var(--black-2)] m-0 flex items-center gap-2">
             <Send size={18} className="text-[var(--brand-primary)]" />
-            Invite New User
+            Invite Property Owner
           </h2>
           <button
             onClick={onClose}
@@ -225,7 +225,7 @@ function InviteUserDrawer({
 
         <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
           <p className="text-sm text-[var(--gray-3)] m-0 leading-relaxed">
-            Send an invitation link to a new user. They will be able to set their own name, password, and personal details securely.
+            Send an invitation link to a new Property Owner. They will be prompted to fill out their full business and personal details securely.
           </p>
 
           <div>
@@ -234,36 +234,13 @@ function InviteUserDrawer({
             </label>
             <input
               type="email"
-              placeholder="user@example.com"
+              placeholder="owner@hotel.com"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="w-full px-4 py-[10px] rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] outline-none box-border focus:border-[var(--brand-primary)] transition-colors"
             />
           </div>
 
-          <div>
-            <label className="block text-[13px] font-semibold text-[var(--gray-2)] mb-1">
-              Assign Role
-            </label>
-            <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full px-4 py-[10px] rounded-lg border border-[var(--gray-5)] text-[13px] text-[var(--black-2)] outline-none bg-white focus:border-[var(--brand-primary)] transition-colors cursor-pointer appearance-none"
-              style={{
-                backgroundImage:
-                  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 12px center",
-                paddingRight: "36px",
-              }}
-            >
-              {roles.map((r) => (
-                <option key={r} value={r}>
-                  {r.charAt(0) + r.slice(1).toLowerCase()}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         <div className="border-t border-gray-100 px-6 py-5 flex gap-3 bg-gray-50/50">
@@ -352,6 +329,115 @@ function DeleteModal({
   );
 }
 
+// ─── Status Confirm Modal ───────────────────────────────────────────────────
+function StatusConfirmModal({
+  user,
+  onConfirm,
+  onClose,
+  loading,
+}: {
+  user: User;
+  onConfirm: () => void;
+  onClose: () => void;
+  loading: boolean;
+}) {
+  const isSuspending = user.status === "ACTIVE";
+  
+  return (
+    <div
+      className="fixed inset-0 z-[998] bg-black/45 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl px-8 py-9 w-[420px] shadow-[0_12px_40px_rgba(0,0,0,0.18)] relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center mb-5 ${isSuspending ? 'bg-orange-100' : 'bg-green-100'}`}>
+          {isSuspending ? (
+            <Ban size={22} className="text-orange-600" />
+          ) : (
+            <ShieldCheck size={22} className="text-green-600" />
+          )}
+        </div>
+
+        <h2 className="m-0 mb-2 text-xl font-bold text-[var(--black-2)]">
+          {isSuspending ? "Suspend Account?" : "Activate Account?"}
+        </h2>
+
+        <p className="m-0 mb-7 text-sm text-[var(--gray-3)] leading-relaxed">
+          {isSuspending 
+            ? "This user will immediately lose access to the platform and will not be able to log in."
+            : "This user will regain access to the platform and can log in again."}
+          <br />
+          <strong className="text-[var(--black-2)] mt-1 inline-block">{user.email}</strong>
+        </p>
+
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-[10px] border border-[var(--gray-5)] bg-white text-sm font-semibold text-[var(--gray-2)] cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className={`px-5 py-2.5 rounded-[10px] text-white text-sm font-bold cursor-pointer transition-colors flex items-center gap-2 ${
+              isSuspending ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'
+            } disabled:opacity-60`}
+          >
+            {loading && <Loader2 size={14} className="animate-spin" />}
+            {isSuspending ? "Suspend Account" : "Activate Account"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Invite Error Modal ─────────────────────────────────────────────────────
+function InviteErrorModal({
+  error,
+  onClose,
+}: {
+  error: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[999] bg-black/45 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl px-8 py-9 w-[420px] shadow-[0_12px_40px_rgba(0,0,0,0.18)] relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-[52px] h-[52px] rounded-full bg-red-100 flex items-center justify-center mb-5">
+          <AlertCircle size={22} className="text-red-600" />
+        </div>
+
+        <h2 className="m-0 mb-2 text-xl font-bold text-[var(--black-2)]">
+          Cannot Invite User
+        </h2>
+
+        <p className="m-0 mb-7 text-sm text-[var(--gray-3)] leading-relaxed">
+          {error}
+        </p>
+
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 rounded-[10px] bg-[var(--brand-primary)] text-white text-sm font-bold cursor-pointer hover:bg-[var(--primary-hover)] transition-colors"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────
 
 export default function UsersManagementPage() {
@@ -380,6 +466,8 @@ export default function UsersManagementPage() {
   const [showInviteDrawer, setShowInviteDrawer] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [statusTarget, setStatusTarget] = useState<User | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   const PAGE_SIZE = 6;
   const roles = ["All", "OWNER", "STAFF", "ADMIN", "GUEST"];
@@ -411,9 +499,15 @@ export default function UsersManagementPage() {
     );
   }
 
-  async function handleStatusToggle(user: User) {
-    const next: UserStatus = user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-    await updateUserStatus(user.id, next);
+  function handleStatusToggle(user: User) {
+    setStatusTarget(user);
+  }
+
+  async function confirmStatusToggle() {
+    if (!statusTarget) return;
+    const next: UserStatus = statusTarget.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    await updateUserStatus(statusTarget.id, next);
+    setStatusTarget(null);
   }
 
   async function handleDelete() {
@@ -437,7 +531,7 @@ export default function UsersManagementPage() {
     } catch (err: any) {
       // Extract backend error message if available
       const errorMessage = err.response?.data?.message || err.message || "Failed to send invite";
-      alert(errorMessage);
+      setInviteError(errorMessage);
     } finally {
       setInviting(false);
     }
@@ -717,12 +811,30 @@ export default function UsersManagementPage() {
         />
       )}
 
+      {/* ── Invite Error Modal ── */}
+      {inviteError && (
+        <InviteErrorModal
+          error={inviteError}
+          onClose={() => setInviteError(null)}
+        />
+      )}
+
       {/* ── Delete Confirm Modal ── */}
       {deleteTarget && (
         <DeleteModal
           user={deleteTarget}
           onConfirm={handleDelete}
           onClose={() => setDeleteTarget(null)}
+          loading={actionLoading}
+        />
+      )}
+
+      {/* ── Status Confirm Modal ── */}
+      {statusTarget && (
+        <StatusConfirmModal
+          user={statusTarget}
+          onConfirm={confirmStatusToggle}
+          onClose={() => setStatusTarget(null)}
           loading={actionLoading}
         />
       )}
