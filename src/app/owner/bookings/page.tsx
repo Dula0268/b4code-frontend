@@ -5,18 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOwnerBookingStore, FilterType } from "@/store/owner/booking.store";
 import ReservationsTable from "@/components/owner/bookings/ReservationsTable";
 import BookingCalendar from "@/components/owner/bookings/BookingCalendar";
-import { List, Calendar as CalendarIcon, Download } from "lucide-react";
+import { List, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ownerReservationApi } from "@/api/owner/owner-reservation.api";
 
 export default function BookingsPage() {
   const { connect, disconnect, fetchReservations, isLoading, properties, selectedPropertyId, setSelectedPropertyId, activeFilter, reservations } = useOwnerBookingStore();
   const [activeTab, setActiveTab] = useState("list");
-  const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
-  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   useEffect(() => {
     fetchReservations();
@@ -27,30 +22,6 @@ export default function BookingsPage() {
   }, [connect, disconnect, fetchReservations]);
 
   const activeReservationsCount = reservations.filter(r => r.status === 'CONFIRMED' || r.status === 'PENDING').length;
-
-  const handleExportPDF = async () => {
-    if (reservations.length === 0) return;
-    
-    setIsExportingPdf(true);
-
-    try {
-      // Use activeFilter if it's not 'ALL'
-      const statusParam = activeFilter !== 'ALL' ? activeFilter : undefined;
-      const searchParam = undefined; // assuming no search bar implemented here yet
-      
-      const blob = await ownerReservationApi.exportReservationsPdf(searchParam, statusParam);
-      // Create a Blob URL with correct type so the browser knows to render it as PDF
-      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(pdfBlob);
-      
-      setPdfPreviewUrl(url);
-      setIsPdfPreviewOpen(true);
-    } catch (error) {
-      console.error("Failed to export PDF:", error);
-    } finally {
-      setIsExportingPdf(false);
-    }
-  };
 
   return (
     <div className="p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -74,11 +45,6 @@ export default function BookingsPage() {
               ))}
             </SelectContent>
           </Select>
-
-          <Button variant="outline" className="bg-white hidden sm:flex" onClick={handleExportPDF} disabled={isExportingPdf}>
-            <Download className="mr-2 h-4 w-4" />
-            {isExportingPdf ? "Loading..." : "Export PDF"}
-          </Button>
         </div>
       </div>
 
@@ -118,48 +84,6 @@ export default function BookingsPage() {
           )}
         </TabsContent>
       </Tabs>
-
-      <Dialog open={isPdfPreviewOpen} onOpenChange={(open) => {
-        if (!open && pdfPreviewUrl) {
-          window.URL.revokeObjectURL(pdfPreviewUrl);
-          setPdfPreviewUrl(null);
-        }
-        setIsPdfPreviewOpen(open);
-      }}>
-        <DialogContent className="!max-w-full !w-full !h-full border-none p-6 flex flex-col bg-white shadow-none top-0 left-0 translate-x-0 translate-y-0 m-0 !rounded-none duration-200">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">PDF Preview</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 w-full bg-slate-100 rounded-md overflow-hidden flex items-center justify-center">
-            {pdfPreviewUrl ? (
-              <iframe 
-                src={pdfPreviewUrl} 
-                className="w-full h-full border-none bg-white"
-                title="PDF Preview"
-              />
-            ) : (
-              <div className="text-slate-500">Loading preview...</div>
-            )}
-          </div>
-          <DialogFooter className="mt-4">
-            <Button variant="outline" size="lg" onClick={() => setIsPdfPreviewOpen(false)}>Cancel</Button>
-            <Button size="lg" onClick={() => {
-              if (pdfPreviewUrl) {
-                const a = document.createElement('a');
-                a.href = pdfPreviewUrl;
-                a.download = `Reservations-${new Date().toISOString().split('T')[0]}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setIsPdfPreviewOpen(false);
-              }
-            }}>
-              <Download className="mr-2 h-5 w-5" />
-              Download PDF
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
