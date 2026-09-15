@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import OwnerHeader from "@/components/owner/layout/owner-header";
-
+import NotificationSettingsPanel from "@/components/owner/settings/notification-panel";
+import BillingSettingsPanel from "@/components/owner/settings/billing-settings-panel";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useOwnerGuard } from "@/hooks/use-owner-guard";
 import { imageApi } from "@/api/image/image.api";
@@ -25,11 +26,12 @@ import {
   Trash2,
   Loader2,
   Building2,
-  FileText
+  FileText,
+  Banknote
 } from "lucide-react";
 import clsx from "clsx";
 
-type SettingsTab = "profile" | "verification" | "security";
+type SettingsTab = "profile" | "verification" | "security" | "billing" | "notifications";
 
 export default function SettingsPage() {
   return (
@@ -335,7 +337,33 @@ function SettingsContent() {
             Login & Security
           </button>
 
+          <button
+            type="button"
+            onClick={() => setActiveTab("billing")}
+            className={clsx(
+              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+              activeTab === "billing"
+                ? "bg-[#953002] text-white shadow-xs"
+                : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
+            )}
+          >
+            <Banknote size={15} />
+            Billing & Payouts
+          </button>
 
+          <button
+            type="button"
+            onClick={() => setActiveTab("notifications")}
+            className={clsx(
+              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+              activeTab === "notifications"
+                ? "bg-[#953002] text-white shadow-xs"
+                : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
+            )}
+          >
+            <Bell size={15} />
+            Notifications
+          </button>
         </div>
 
         {/* ────────────────────────────────────────────────────────── */}
@@ -355,7 +383,6 @@ function SettingsContent() {
               <div className="relative group">
                 <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#953002]/20 bg-[#faf7f5] shadow-xs flex items-center justify-center">
                   {profileForm.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img 
                       src={profileForm.avatarUrl} 
                       alt="Owner Avatar" 
@@ -719,7 +746,23 @@ function SettingsContent() {
           </div>
         )}
 
+        {/* ────────────────────────────────────────────────────────── */}
+        {/* TAB 4: NOTIFICATIONS */}
+        {/* ────────────────────────────────────────────────────────── */}
+        {activeTab === "notifications" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both delay-100">
+            <NotificationSettingsPanel />
+          </div>
+        )}
 
+        {/* ────────────────────────────────────────────────────────── */}
+        {/* TAB 5: BILLING & PAYOUTS */}
+        {/* ────────────────────────────────────────────────────────── */}
+        {activeTab === "billing" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both delay-100">
+            <BillingSettingsPanel />
+          </div>
+        )}
 
       </main>
     </div>

@@ -19,7 +19,8 @@ export interface OnboardingData {
   // Step 2: Rooms & Layout
   rooms: {
     id: string;
-    name: string;
+    roomType: string;
+    price: number;
     baseCapacity: number;
     maxCapacity: number;
     bedConfiguration: string;

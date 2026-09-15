@@ -71,6 +71,10 @@ export interface OwnerProperty {
   /** Populated after backend adds rejectionReason field */
   rejectionReason?: string;
   submittedAt?: string;
+
+  grossRevenue?: number;
+  platformCommission?: number;
+  availableBalance?: number;
 }
 
 export interface OwnerPropertyPage {

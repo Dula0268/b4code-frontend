@@ -13,7 +13,8 @@ import { v4 as uuidv4 } from "uuid";
 
 const roomSchema = z.object({
   id: z.string(),
-  name: z.string().min(1, "Room name is required"),
+  roomType: z.string().min(1, "Room type is required"),
+  price: z.number().min(0, "Price must be positive"),
   baseCapacity: z.number().min(1, "Minimum 1 person"),
   maxCapacity: z.number().min(1, "Minimum 1 person"),
   bedConfiguration: z.string().min(1, "Bed configuration is required"),
@@ -29,10 +30,15 @@ export default function RoomBuilderForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
-      rooms: formData.rooms.length > 0 ? formData.rooms : [
+      rooms: formData.rooms.length > 0 ? formData.rooms.map((r: any) => ({
+        ...r,
+        roomType: r.roomType || "",
+        price: r.price || 100,
+      })) : [
         {
           id: uuidv4(),
-          name: "",
+          roomType: "",
+          price: 100,
           baseCapacity: 2,
           maxCapacity: 2,
           bedConfiguration: "1 Double Bed"
@@ -83,15 +89,49 @@ export default function RoomBuilderForm() {
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name={`rooms.${index}.name`}
+                  name={`rooms.${index}.roomType`}
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel className="text-slate-700 font-medium">Room Name</FormLabel>
+                    <FormItem className="md:col-span-1">
+                      <FormLabel className="text-slate-700 font-medium">Room Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-11 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-all rounded-xl">
+                            <SelectValue placeholder="Select room type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                          <SelectItem value="STANDARD_ROOM" className="rounded-lg cursor-pointer">Standard Room</SelectItem>
+                          <SelectItem value="DELUXE_ROOM" className="rounded-lg cursor-pointer">Deluxe Room</SelectItem>
+                          <SelectItem value="SUPERIOR_ROOM" className="rounded-lg cursor-pointer">Superior Room</SelectItem>
+                          <SelectItem value="EXECUTIVE_ROOM" className="rounded-lg cursor-pointer">Executive Room</SelectItem>
+                          <SelectItem value="TWIN_ROOM" className="rounded-lg cursor-pointer">Twin Room</SelectItem>
+                          <SelectItem value="FAMILY_ROOM" className="rounded-lg cursor-pointer">Family Room</SelectItem>
+                          <SelectItem value="STUDIO_ROOM" className="rounded-lg cursor-pointer">Studio Room</SelectItem>
+                          <SelectItem value="SUITE" className="rounded-lg cursor-pointer">Suite</SelectItem>
+                          <SelectItem value="PRESIDENTIAL_SUITE" className="rounded-lg cursor-pointer">Presidential Suite</SelectItem>
+                          <SelectItem value="VILLA" className="rounded-lg cursor-pointer">Villa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name={`rooms.${index}.price`}
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel className="text-slate-700 font-medium">Price per Night (LKR)</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="e.g. Deluxe Ocean View Suite" 
+                          type="number" 
+                          min={0}
+                          step={0.01}
+                          placeholder="0.00" 
                           className="h-11 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-all rounded-xl"
                           {...field} 
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -177,7 +217,7 @@ export default function RoomBuilderForm() {
           type="button"
           variant="outline"
           className="w-full border-dashed border-2 border-slate-200 h-20 rounded-2xl text-slate-500 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/5 transition-all duration-300 flex items-center justify-center font-medium text-lg group"
-          onClick={() => append({ id: uuidv4(), name: "", baseCapacity: 2, maxCapacity: 2, bedConfiguration: "1 Double Bed" })}
+          onClick={() => append({ id: uuidv4(), roomType: "", price: 100, baseCapacity: 2, maxCapacity: 2, bedConfiguration: "1 Double Bed" })}
         >
           <div className="bg-slate-100 p-2 rounded-full mr-3 group-hover:bg-[var(--brand-primary)]/10 transition-colors">
             <Plus className="w-5 h-5" />

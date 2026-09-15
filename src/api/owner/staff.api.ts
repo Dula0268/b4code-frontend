@@ -14,15 +14,15 @@ export interface PendingStaffMember {
 
 export const ownerStaffApi = {
   getPendingStaff: async (): Promise<PendingStaffMember[]> => {
-    const res = await api.get<PendingStaffMember[]>("/api/owner/staff/pending");
+    const res = await api.get<PendingStaffMember[]>("/owner/staff/pending");
     return res.data;
   },
 
   approveStaff: async (id: number): Promise<void> => {
-    await api.put(`/api/owner/staff/${id}/approve`);
+    await api.put(`/owner/staff/${id}/approve`);
   },
 
   rejectStaff: async (id: number): Promise<void> => {
-    await api.put(`/api/owner/staff/${id}/reject`);
+    await api.put(`/owner/staff/${id}/reject`);
   },
 };

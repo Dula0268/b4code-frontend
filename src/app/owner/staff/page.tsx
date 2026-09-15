@@ -149,7 +149,7 @@ export default function OwnerStaffPage() {
             </div>
             <div>
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Role Assignment</p>
-              <p className="text-xs font-semibold text-neutral-700 mt-0.5">Reception, Manager & Support</p>
+              <p className="text-xs font-semibold text-neutral-700 mt-0.5">Staff Admin, Kitchen Staff & Property Staff</p>
             </div>
           </div>
         </div>

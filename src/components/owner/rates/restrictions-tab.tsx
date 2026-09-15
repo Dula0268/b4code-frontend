@@ -5,7 +5,6 @@ import { useOwnerPricingStore } from "@/store/owner/owner-pricing.store";
 import { restrictionsApi, ReservationRestriction, RoomInventoryLock, IcalSyncChannel } from "@/api/owner/restrictions.api";
 import { ownerPricingApi } from "@/api/owner/pricing.api";
 import RestrictionBuilderModal from "./restriction-builder-modal";
-import IcalSyncModal from "./ical-sync-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -44,7 +43,6 @@ export default function RestrictionsTab({ propertyName }: RestrictionsTabProps) 
 
   // Modals
   const [isRestrictionModalOpen, setIsRestrictionModalOpen] = useState(false);
-  const [isIcalModalOpen, setIsIcalModalOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!propertyId) return;
@@ -141,13 +139,13 @@ export default function RestrictionsTab({ propertyName }: RestrictionsTabProps) 
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/90 text-xs font-semibold backdrop-blur-md">
               <ShieldAlert className="w-3.5 h-3.5 text-amber-300" />
-              Overbooking Guard & Calendar Synchronization
+              Restrictions
             </div>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Restrictions & Overbooking Prevention
+              Restrictions
             </h2>
             <p className="text-xs sm:text-sm text-white/80 max-w-2xl leading-relaxed">
-              Enforce minimum stay rules, block arrival/departure dates, lock inventory to physical doors, and auto-sync calendars with Airbnb and Booking.com.
+              Enforce minimum stay rules and block arrival/departure dates.
             </p>
           </div>
 
@@ -158,14 +156,6 @@ export default function RestrictionsTab({ propertyName }: RestrictionsTabProps) 
             >
               <Plus className="w-4 h-4 mr-1.5" />
               Add Restriction Rule
-            </Button>
-            <Button
-              onClick={() => setIsIcalModalOpen(true)}
-              variant="outline"
-              className="rounded-2xl text-xs font-bold bg-white/10 border-white/20 text-white hover:bg-white/20 h-10 px-4"
-            >
-              <CalendarSync className="w-4 h-4 mr-1.5 text-amber-300" />
-              iCal Sync (Airbnb / Booking.com)
             </Button>
           </div>
         </div>
@@ -179,7 +169,7 @@ export default function RestrictionsTab({ propertyName }: RestrictionsTabProps) 
       )}
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-gray-500 text-xs font-bold">
             <span>Active Restrictions</span>
@@ -191,136 +181,6 @@ export default function RestrictionsTab({ propertyName }: RestrictionsTabProps) 
             <div className="text-2xl font-black text-gray-900">{activeRulesCount}</div>
             <div className="text-[11px] text-gray-500 mt-0.5">Stay length & CTA/CTD rules</div>
           </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-gray-500 text-xs font-bold">
-            <span>Physical Room Locks</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <Lock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-gray-900">
-              {lockedRoomsCount} / {inventoryLocks.length}
-            </div>
-            <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">1:1 Physical Door Protection</div>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-gray-500 text-xs font-bold">
-            <span>Connected iCal Feeds</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
-              <CalendarSync className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-gray-900">{icalFeeds.length}</div>
-            <div className="text-[11px] text-gray-500 mt-0.5">Airbnb, Booking.com, VRBO</div>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-gray-500 text-xs font-bold">
-            <span>Double Booking Risk</span>
-            <div className="w-8 h-8 rounded-xl bg-green-50 text-green-700 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-sm font-black text-green-700 uppercase tracking-wide">Protected</div>
-            <div className="text-[11px] text-gray-500 mt-0.5">Physical door lock active</div>
-          </div>
-        </div>
-      </div>
-
-      {/* SECTION 1: Physical Room Inventory & Overbooking Lock */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
-              <DoorOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-gray-900">
-                Physical Room Inventory & Overbooking Locks
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Each room inventory unit is bound to an actual physical door number to prevent overbooking beyond real capacity.
-              </p>
-            </div>
-          </div>
-          <Button
-            onClick={loadData}
-            variant="ghost"
-            size="sm"
-            className="rounded-xl text-xs font-semibold text-gray-600 hover:text-gray-900 self-start sm:self-auto"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? "animate-spin" : ""}`} /> Refresh
-          </Button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
-                <th className="py-3.5 px-6">Room Type</th>
-                <th className="py-3.5 px-6">Configured Inventory</th>
-                <th className="py-3.5 px-6">Physical Door Numbers</th>
-                <th className="py-3.5 px-6">Active Bookings</th>
-                <th className="py-3.5 px-6">Available to Book</th>
-                <th className="py-3.5 px-6 text-right">Lock Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {inventoryLocks.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">
-                    No room types found for this property.
-                  </td>
-                </tr>
-              ) : (
-                inventoryLocks.map((lock) => (
-                  <tr key={lock.roomTypeId} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="py-4 px-6 font-bold text-gray-900">
-                      {lock.roomTypeName}
-                    </td>
-                    <td className="py-4 px-6 font-semibold text-gray-700">
-                      {lock.configuredInventory} {lock.configuredInventory === 1 ? "room" : "rooms"}
-                    </td>
-                    <td className="py-4 px-6">
-                      {lock.doorNumbers && lock.doorNumbers.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {lock.doorNumbers.map((d, i) => (
-                            <span
-                              key={i}
-                              className="inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 text-gray-700 font-mono text-[11px] font-semibold border border-gray-200"
-                            >
-                              Door #{d}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 italic">No door numbers mapped</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-6 font-semibold text-amber-700">
-                      {lock.activeBookingsCount} occupied
-                    </td>
-                    <td className="py-4 px-6 font-bold text-emerald-700">
-                      {lock.availableCount} available
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold px-2.5 py-1 inline-flex items-center gap-1">
-                        <Lock className="w-3 h-3" /> Hard Cap Enforced
-                      </Badge>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
         </div>
       </div>
 
@@ -439,130 +299,10 @@ export default function RestrictionsTab({ propertyName }: RestrictionsTabProps) 
         </div>
       </div>
 
-      {/* SECTION 3: Connected iCal Synchronization Feeds */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center">
-              <CalendarSync className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-gray-900">
-                Connected iCal Calendar Feeds ({icalFeeds.length})
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Two-way calendar syncing with Airbnb, Booking.com, VRBO, and Google Calendar
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setIsIcalModalOpen(true)}
-              size="sm"
-              className="rounded-xl text-xs font-bold bg-[#953002] hover:bg-[#7a2702] text-white shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" /> Connect Channel
-            </Button>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
-                <th className="py-3.5 px-6">Channel</th>
-                <th className="py-3.5 px-6">Assigned Room</th>
-                <th className="py-3.5 px-6">Sync Status</th>
-                <th className="py-3.5 px-6">Events Imported</th>
-                <th className="py-3.5 px-6">Last Synchronized</th>
-                <th className="py-3.5 px-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {icalFeeds.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-gray-400">
-                    <CalendarSync className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    No external calendar channels connected. Click &quot;Connect Channel&quot; to import your Airbnb or Booking.com iCal calendar.
-                  </td>
-                </tr>
-              ) : (
-                icalFeeds.map((feed) => (
-                  <tr key={feed.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="py-4 px-6 font-bold text-gray-900 flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-xl bg-blue-50 text-blue-700 font-black text-xs flex items-center justify-center">
-                        {feed.channelName.charAt(0)}
-                      </span>
-                      {feed.channelName}
-                    </td>
-                    <td className="py-4 px-6 text-gray-700 font-semibold">
-                      {feed.roomTypeName || "Entire Property"}
-                    </td>
-                    <td className="py-4 px-6">
-                      {feed.syncStatus === "SUCCESS" && (
-                        <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200 text-[10px] font-bold">
-                          Active &bull; Synced
-                        </Badge>
-                      )}
-                      {feed.syncStatus === "PENDING" && (
-                        <Badge className="bg-amber-50 text-amber-800 border-amber-200 text-[10px] font-bold">
-                          Pending Sync
-                        </Badge>
-                      )}
-                      {feed.syncStatus === "FAILED" && (
-                        <Badge className="bg-red-50 text-red-800 border-red-200 text-[10px] font-bold">
-                          Sync Error
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="py-4 px-6 text-gray-700 font-bold">
-                      {feed.eventsImported} booked blocks
-                    </td>
-                    <td className="py-4 px-6 text-gray-500 text-[11px]">
-                      {feed.lastSyncAt ? new Date(feed.lastSyncAt).toLocaleString() : "Never"}
-                    </td>
-                    <td className="py-4 px-6 text-right space-x-1">
-                      <Button
-                        onClick={() => handleSyncFeedNow(feed.id)}
-                        disabled={syncingFeedId === feed.id}
-                        variant="outline"
-                        size="sm"
-                        className="rounded-xl text-[11px] font-bold text-gray-700 hover:text-gray-900 border-gray-200"
-                      >
-                        <RefreshCw
-                          className={`w-3 h-3 mr-1 ${syncingFeedId === feed.id ? "animate-spin" : ""}`}
-                        />
-                        Sync Now
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteFeed(feed.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {/* Modals */}
       <RestrictionBuilderModal
         isOpen={isRestrictionModalOpen}
         onClose={() => setIsRestrictionModalOpen(false)}
-        propertyId={propertyId!}
-        rooms={rooms}
-        onSuccess={loadData}
-      />
-
-      <IcalSyncModal
-        isOpen={isIcalModalOpen}
-        onClose={() => setIsIcalModalOpen(false)}
         propertyId={propertyId!}
         rooms={rooms}
         onSuccess={loadData}

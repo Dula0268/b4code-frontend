@@ -8,6 +8,9 @@ import {
   X,
   CheckCircle2,
   ArrowLeft,
+  Ban,
+  ShieldCheck,
+  Loader2,
 } from "lucide-react";
 import AdminPageLayout from "@/components/admin/admin-page-layout";
 import UserProfileHeader from "@/components/admin/users/user-profile-header";
@@ -127,6 +130,73 @@ function ResetPasswordModal({
   );
 }
 
+// ─── Status Confirm Modal ───────────────────────────────────────────────────
+function StatusConfirmModal({
+  email,
+  isSuspending,
+  onClose,
+  onConfirm,
+  loading,
+}: {
+  email: string;
+  isSuspending: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[998] bg-black/45 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl px-8 py-9 w-[420px] shadow-[0_12px_40px_rgba(0,0,0,0.18)] relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center mb-5 ${isSuspending ? 'bg-orange-100' : 'bg-green-100'}`}>
+          {isSuspending ? (
+            <Ban size={22} className="text-orange-600" />
+          ) : (
+            <ShieldCheck size={22} className="text-green-600" />
+          )}
+        </div>
+
+        <h2 className="m-0 mb-2 text-xl font-bold text-[var(--black-2)]">
+          {isSuspending ? "Suspend Account?" : "Activate Account?"}
+        </h2>
+
+        <p className="m-0 mb-7 text-sm text-[var(--gray-3)] leading-relaxed">
+          {isSuspending 
+            ? "This user will immediately lose access to the platform and will not be able to log in."
+            : "This user will regain access to the platform and can log in again."}
+          <br />
+          <strong className="text-[var(--black-2)] mt-1 inline-block">{email}</strong>
+        </p>
+
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-[10px] border border-[var(--gray-5)] bg-white text-sm font-semibold text-[var(--gray-2)] cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className={`px-5 py-2.5 rounded-[10px] text-white text-sm font-bold cursor-pointer transition-colors flex items-center gap-2 ${
+              isSuspending ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'
+            } disabled:opacity-60`}
+          >
+            {loading && <Loader2 size={14} className="animate-spin" />}
+            {isSuspending ? "Suspend Account" : "Activate Account"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────
 export default function UserDetailPage() {
   const params = useParams();
@@ -138,13 +208,15 @@ export default function UserDetailPage() {
   const [currentRole, setCurrentRole] = useState<string>("Staff");
   const [toast, setToast] = useState<string | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
 
   useEffect(() => {
     async function fetchUser() {
       try {
-        const id = parseInt(params.id as string);
-        if (isNaN(id)) return;
+        const id = Number(params.id);
+        if (!id) return;
 
         const [u, logs] = await Promise.all([
           UsersApi.getById(id),
@@ -215,12 +287,15 @@ export default function UserDetailPage() {
     fetchUser();
   }, [params.id]);
 
+  const handleSuspendToggle = () => {
+    setShowStatusModal(true);
+  };
 
-
-  const handleSuspendToggle = async () => {
+  const handleSuspendConfirm = async () => {
     const next = !suspended;
     try {
       if (!user) return;
+      setActionLoading(true);
 
       const newStatus = next ? "SUSPENDED" : "ACTIVE";
       await UsersApi.updateStatus(
@@ -245,9 +320,12 @@ export default function UserDetailPage() {
           ? "User Suspended Successfully"
           : "Account Reactivated Successfully",
       );
+      setShowStatusModal(false);
     } catch (err) {
       console.error("Failed to update user status:", err);
       setToast("Failed to update user status");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -295,12 +373,22 @@ export default function UserDetailPage() {
         />
       )}
 
+      {showStatusModal && (
+        <StatusConfirmModal
+          email={user.email}
+          isSuspending={!suspended}
+          onClose={() => setShowStatusModal(false)}
+          onConfirm={handleSuspendConfirm}
+          loading={actionLoading}
+        />
+      )}
+
       <AdminPageLayout>
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-1.5 text-sm">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1 text-(--gray-3)"
+              className="flex items-center gap-1 text-[var(--gray-3)] cursor-pointer hover:text-[var(--black-2)] transition-colors bg-transparent border-none p-0"
             >
               <ArrowLeft size={14} />
               User Management
