@@ -50,8 +50,7 @@ export default function EditPropertyPage() {
         .catch(() => toast.error("Failed to load property data"))
         .finally(() => setLoading(false));
     }
-      // Disabling eslint rules below to intentionally only fetch on mount/id change
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [id]);
 
   if (!mounted || loading) {
