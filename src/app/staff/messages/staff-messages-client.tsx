@@ -29,6 +29,7 @@ import { Client } from "@stomp/stompjs";
 import { useStaffBookingsStore } from "@/store/staff/bookings/staff-bookings.store";
 import AutoReplyClient from "../auto-reply/auto-reply-client";
 import MessageTemplateForm from "@/components/owner/messages/MessageTemplateForm";
+import StaffOwnerInbox from "@/components/staff/messages/StaffOwnerInbox";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -848,11 +849,8 @@ export default function StaffMessagesClient() {
     </div>
   </TabsContent>
 
-  <TabsContent value="owner" className="m-0 border-none p-0 outline-none flex-1">
-    <div className="bg-white rounded-xl border shadow-sm p-8 text-center text-slate-500">
-      <h3 className="text-xl font-semibold text-slate-800 mb-2">Owner Messages</h3>
-      <p>View messages between staff and the property owner here. (Coming soon)</p>
-    </div>
+  <TabsContent value="owner" className="m-0 border-none p-0 outline-none flex-1 flex flex-col min-h-0">
+    <StaffOwnerInbox />
   </TabsContent>
 
   <TabsContent value="automations" className="m-0 border-none p-0 outline-none flex-1">

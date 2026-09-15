@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOwnerMessageStore } from "@/store/owner/message.store";
 import OwnerInbox from "@/components/owner/messages/OwnerInbox";
+import OwnerStaffInbox from "@/components/owner/messages/OwnerStaffInbox";
 import AutoReplyClient from "@/app/staff/auto-reply/auto-reply-client";
 import { MessageCircle, Bot, Users, Loader2 } from "lucide-react";
 import { useRBACStore } from "@/store/auth/rbac.store";
@@ -108,11 +109,8 @@ export default function MessagesPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="staff-messages" className="m-0 border-none p-0 outline-none flex-1">
-          <div className="bg-white rounded-xl border shadow-sm p-8 text-center text-slate-500">
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">Staff Messages</h3>
-            <p>View messages between your staff and guests here. (Coming soon)</p>
-          </div>
+        <TabsContent value="staff-messages" className="m-0 border-none p-0 outline-none flex-1 flex flex-col min-h-0">
+          <OwnerStaffInbox propertyId={selectedPropertyId} />
         </TabsContent>
       </Tabs>
     </div>
