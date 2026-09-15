@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import OwnerHeader from "@/components/owner/layout/owner-header";
-import NotificationSettingsPanel from "@/components/owner/settings/notification-settings-panel";
+
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useOwnerGuard } from "@/hooks/use-owner-guard";
 import { imageApi } from "@/api/image/image.api";
@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 
-type SettingsTab = "profile" | "verification" | "security" | "notifications";
+type SettingsTab = "profile" | "verification" | "security";
 
 export default function SettingsPage() {
   return (
@@ -335,19 +335,7 @@ function SettingsContent() {
             Login & Security
           </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab("notifications")}
-            className={clsx(
-              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
-              activeTab === "notifications"
-                ? "bg-[#953002] text-white shadow-xs"
-                : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
-            )}
-          >
-            <Bell size={15} />
-            Notifications
-          </button>
+
         </div>
 
         {/* ────────────────────────────────────────────────────────── */}
@@ -731,14 +719,7 @@ function SettingsContent() {
           </div>
         )}
 
-        {/* ────────────────────────────────────────────────────────── */}
-        {/* TAB 4: NOTIFICATIONS */}
-        {/* ────────────────────────────────────────────────────────── */}
-        {activeTab === "notifications" && (
-          <div className="space-y-6">
-            <NotificationSettingsPanel />
-          </div>
-        )}
+
 
       </main>
     </div>
