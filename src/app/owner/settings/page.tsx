@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import OwnerHeader from "@/components/owner/layout/owner-header";
-import NotificationSettingsPanel from "@/components/owner/settings/notification-settings-panel";
+import NotificationSettingsPanel from "@/components/owner/settings/notification-panel";
 import BillingSettingsPanel from "@/components/owner/settings/billing-settings-panel";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { useOwnerGuard } from "@/hooks/use-owner-guard";
