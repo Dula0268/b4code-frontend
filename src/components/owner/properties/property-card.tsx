@@ -71,11 +71,6 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             />
           </div>
         )}
-        {property.rate && property.rate !== "—" && (
-          <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[12px] font-bold px-3 py-1 rounded-full">
-            {property.rate}<span className="font-normal text-[10px] opacity-80">/night</span>
-          </div>
-        )}
       </div>
 
       {/* Info */}
