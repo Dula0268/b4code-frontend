@@ -30,6 +30,7 @@ export default function BulkEditPriceModal() {
   const [fixedPrice, setFixedPrice] = useState<string>("");
   const [percentAdj, setPercentAdj] = useState<string>("10");
   const [notes, setNotes] = useState<string>("");
+  const [availableRoomsOverride, setAvailableRoomsOverride] = useState<string>("");
 
   if (!isBulkModalOpen) return null;
 
@@ -40,7 +41,8 @@ export default function BulkEditPriceModal() {
       } else {
         const val = parseFloat(fixedPrice);
         if (isNaN(val) || val <= 0) return;
-        await bulkUpdatePrices(val, "AVAILABLE", notes || "Bulk Rate Update");
+        const roomsOverride = availableRoomsOverride ? parseInt(availableRoomsOverride, 10) : undefined;
+        await bulkUpdatePrices(val, "AVAILABLE", notes || "Bulk Rate Update", roomsOverride);
       }
     } catch {
       // Error handled in store
@@ -135,6 +137,24 @@ export default function BulkEditPriceModal() {
               </div>
               <p className="text-[11px] text-gray-400 mt-1">
                 This custom rate will override standard pricing for all selected days.
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-gray-700">
+                Rooms Available to Book
+              </Label>
+              <Input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g. 5"
+                value={availableRoomsOverride}
+                onChange={(e) => setAvailableRoomsOverride(e.target.value)}
+                className="mt-1 h-10 text-sm rounded-xl border-gray-200 focus:border-[#953002] focus:ring-[#953002]"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">
+                Leave blank to use your standard room count.
               </p>
             </div>
 

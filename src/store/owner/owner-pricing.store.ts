@@ -45,7 +45,8 @@ interface OwnerPricingState {
   bulkUpdatePrices: (
     customPrice: number | null,
     status?: "AVAILABLE" | "BLOCKED",
-    notes?: string
+    notes?: string,
+    availableRoomsOverride?: number | null
   ) => Promise<void>;
   applyBlackoutDates: (dates: string[], notes?: string) => Promise<void>;
   clearPriceOverrides: (dates: string[]) => Promise<void>;
@@ -211,7 +212,8 @@ export const useOwnerPricingStore = create<OwnerPricingState>((set, get) => ({
   bulkUpdatePrices: async (
     customPrice: number | null,
     status: "AVAILABLE" | "BLOCKED" = "AVAILABLE",
-    notes?: string
+    notes?: string,
+    availableRoomsOverride?: number | null
   ) => {
     const { propertyId, selectedRoomId, selectedDates } = get();
     if (!propertyId || selectedDates.length === 0) return;
@@ -225,6 +227,7 @@ export const useOwnerPricingStore = create<OwnerPricingState>((set, get) => ({
         newStatus: status,
         customPrice: customPrice,
         notes: notes || undefined,
+        availableRoomsOverride: availableRoomsOverride !== undefined ? availableRoomsOverride : undefined,
       });
       set({ isBulkModalOpen: false, selectedDates: [], actionLoading: false });
       await get().fetchCalendar();

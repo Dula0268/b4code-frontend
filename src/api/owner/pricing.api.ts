@@ -9,6 +9,8 @@ export interface AvailabilityDay {
   customPrice?: string | null;
   notes?: string | null;
   availabilityId?: number | null;
+  availableRoomsOverride?: number | null;
+  baseInventory?: number;
 }
 
 export interface BulkPriceUpdateRequest {
@@ -18,6 +20,7 @@ export interface BulkPriceUpdateRequest {
   newStatus?: string;
   customPrice?: number | null;
   notes?: string;
+  availableRoomsOverride?: number | null;
 }
 
 export interface RatePlan {

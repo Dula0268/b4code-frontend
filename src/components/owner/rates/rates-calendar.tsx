@@ -284,6 +284,18 @@ export default function RatesCalendar() {
               displayPrice = "LKR 10,000";
             }
 
+            // Calculate available rooms
+            let availableRoomsDisplay: string | null = null;
+            if (recordsForDay.length > 0 && !isBlackout) {
+              const firstRecord = recordsForDay[0];
+              const roomsCount = firstRecord.availableRoomsOverride !== undefined && firstRecord.availableRoomsOverride !== null
+                ? firstRecord.availableRoomsOverride
+                : firstRecord.baseInventory;
+              if (roomsCount !== undefined) {
+                availableRoomsDisplay = `${roomsCount} Available`;
+              }
+            }
+
             // Cell color scheme
             let cellBg = "bg-white hover:bg-gray-50/80 border-gray-200";
             let priceColor = "text-emerald-700 bg-emerald-50 border-emerald-200";
@@ -336,10 +348,17 @@ export default function RatesCalendar() {
                       <span>Blocked</span>
                     </div>
                   ) : (
-                    <div
-                      className={`inline-block px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs ${priceColor}`}
-                    >
-                      {displayPrice}
+                    <div className="flex flex-col items-center gap-1">
+                      <div
+                        className={`inline-block px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs ${priceColor}`}
+                      >
+                        {displayPrice}
+                      </div>
+                      {availableRoomsDisplay && (
+                        <span className="text-[10px] font-medium text-gray-500">
+                          {availableRoomsDisplay}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
