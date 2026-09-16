@@ -227,7 +227,7 @@ export const useOwnerPricingStore = create<OwnerPricingState>((set, get) => ({
         newStatus: status,
         customPrice: customPrice,
         notes: notes || undefined,
-        availableRoomsOverride: availableRoomsOverride !== undefined ? availableRoomsOverride : undefined,
+        availableRoomsOverride,
       });
       set({ isBulkModalOpen: false, selectedDates: [], actionLoading: false });
       await get().fetchCalendar();

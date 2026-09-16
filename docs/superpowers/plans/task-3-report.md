@@ -24,3 +24,5 @@
    - Fixed missing validation for invalid inputs in `BulkEditPriceModal`. Ensured users cannot input negative values by asserting parsed numbers are >= 0 and not `NaN`.
    - Updated clearing override semantics in `BulkEditPriceModal`. Passed explicit `null` to the payload instead of relying on `undefined`, which guarantees that the backend clears overrides via PATCH semantics rather than silently dropping the field during JSON serialization.
    - Enhanced modal to display local error state for invalid input conditions rather than silently failing to submit.
+   - **Resolved Modal State Leakage**: Added a `useEffect` hook in `BulkEditPriceModal` to reset internal state variables (like `fixedPrice`, `percentAdj`, `notes`, `availableRoomsOverride`, and `error`) whenever the modal opens, preventing stale data from lingering across separate sessions.
+   - **Simplified Redundant Ternary Logic**: Simplified the `availableRoomsOverride` logic in the API payload in `owner-pricing.store.ts` by removing a redundant ternary operator that had both branches yielding the same value.

@@ -1,0 +1,727 @@
+﻿f9396c9 Fix room-type-sheet input bugs
+b84bc71 feat: owner room management API and UI scaffolding
+
+
+--- STATS ---
+
+ .../plans/2026-09-16-owner-room-availability.md    | 127 ++++++++++++
+ docs/superpowers/plans/progress.md                 | Bin 0 -> 114 bytes
+ docs/superpowers/plans/task-1-brief.md             |  24 +++
+ docs/superpowers/plans/task-1-report.md            |  19 ++
+ docs/superpowers/plans/task-1-review.txt           | Bin 0 -> 11552 bytes
+ docs/superpowers/plans/task-2-brief.md             |  35 ++++
+ docs/superpowers/plans/task-2-report.md            |  38 ++++
+ src/api/owner/room.api.ts                          |  22 ++
+ src/app/owner/properties/[id]/page.tsx             |  53 ++++-
+ .../owner/properties/room-type-sheet.tsx           | 222 +++++++++++++++++++++
+ 10 files changed, 532 insertions(+), 8 deletions(-)
+
+
+--- DIFF ---
+
+diff --git a/docs/superpowers/plans/2026-09-16-owner-room-availability.md b/docs/superpowers/plans/2026-09-16-owner-room-availability.md
+new file mode 100644
+index 0000000..ae2e0bb
+--- /dev/null
++++ b/docs/superpowers/plans/2026-09-16-owner-room-availability.md
+@@ -0,0 +1,127 @@
++# Owner Room Management & Availability Implementation Plan
++
++> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
++
++**Goal:** Implement full CRUD for Room Types in the Owner Portal with an intuitive UI, and upgrade the Availability Calendar to support setting daily room inventory overrides.
++
++**Architecture:** 
++- Frontend: Add a slide-out sheet (`RoomTypeSheet`) on the Property Details page to create/edit rooms, matching the modern UI style of the Rates page.
++- Backend: Update the `Availability` entity to support `availableRoomsOverride` to allow owners to explicitly set how many rooms are available on specific dates, bridging the gap between base inventory and daily fluctuations.
++
++**Tech Stack:** Next.js (React), Tailwind CSS, Lucide React, Spring Boot, Hibernate/JPA.
++
++## Global Constraints
++- Use common, jargon-free words (e.g., "Number of Rooms" instead of "Inventory", "Block Dates" instead of "Blackout").
++- UI must match the clean, modern aesthetic of the `OwnerRatesPage` (e.g., `#953002` primary color, rounded-2xl/3xl, Lucide icons).
++- Ensure backward compatibility with existing data (if `availableRoomsOverride` is null, fall back to calculating from base inventory).
++
++---
++
++### Task 1: Backend Availability Model Update
++
++**Files:**
++- Modify: `b4code-backend/src/main/java/com/b4code/backend/models/Availability.java`
++- Modify: `b4code-backend/src/main/java/com/b4code/backend/dto/owner/BulkPriceUpdateRequest.java`
++- Modify: `b4code-backend/src/main/java/com/b4code/backend/service/impl/OwnerPricingServiceImpl.java`
++- Modify: `b4code-backend/src/main/java/com/b4code/backend/dto/owner/AvailabilityDayDto.java` (or wherever `AvailabilityDay` is mapped for `getMonthlyCalendar`)
++
++**Interfaces:**
++- Consumes: Existing DB Schema
++- Produces: Updated `/owner/availability/bulk-update` accepting `availableRoomsOverride` and updated `/owner/availability/monthly` returning `availableRoomsOverride` and `baseInventory`.
++
++- [ ] **Step 1: Update the Availability entity**
++Add `private Integer availableRoomsOverride;` to `Availability.java` with a new column `available_rooms_override`.
++
++- [ ] **Step 2: Update DTOs**
++Add `private Integer availableRoomsOverride;` to `BulkPriceUpdateRequest.java`.
++Ensure `AvailabilityDayDto` (or the equivalent response DTO for the calendar) exposes `availableRoomsOverride` and the room's `baseInventory`.
++
++- [ ] **Step 3: Update OwnerPricingServiceImpl bulkUpdate logic**
++In the `bulkUpdateAvailability` method, map the `availableRoomsOverride` from the request to the `Availability` entity and save it.
++
++- [ ] **Step 4: Commit**
++Commit the backend changes.
++
++---
++
++### Task 2: Frontend Room API & UI Scaffolding
++
++**Files:**
++- Modify: `b4code-frontend/src/api/owner/room.api.ts`
++- Create: `b4code-frontend/src/components/owner/properties/room-type-sheet.tsx`
++- Modify: `b4code-frontend/src/app/owner/properties/[id]/page.tsx`
++
++**Interfaces:**
++- Consumes: Backend `/api/owner/rooms` endpoints (POST, PUT, DELETE).
++- Produces: Reusable Room Management UI component.
++
++- [ ] **Step 1: Expand room.api.ts**
++Add `createRoom`, `updateRoom`, and `deleteRoom` functions matching the backend `OwnerRoomTypeController` endpoints.
++
++- [ ] **Step 2: Create `room-type-sheet.tsx`**
++Build a `Sheet` (from `components/ui/sheet`) that contains a form for creating/editing a room type.
++Include fields with simple labels:
++- Room Name ("What do you call this room?")
++- Description
++- Room Category (Dropdown: Standard, Deluxe, Suite, etc.)
++- Base Price ("Standard nightly rate")
++- Number of Rooms ("How many of these rooms do you have?", mapping to `inventory`)
++- Capacity (Adults, Children)
++- Bed Configuration
++
++- [ ] **Step 3: Integrate Sheet into Property Page**
++In `src/app/owner/properties/[id]/page.tsx`, add an "Add Room Type" button at the top of the Rooms section.
++Add an "Edit" button to each existing room card.
++Wire these buttons to open the `RoomTypeSheet`.
++
++- [ ] **Step 4: Commit**
++Commit the frontend room management changes.
++
++---
++
++### Task 3: Upgrade the Availability Calendar UI
++
++**Files:**
++- Modify: `b4code-frontend/src/api/owner/pricing.api.ts`
++- Modify: `b4code-frontend/src/components/owner/rates/bulk-edit-price-modal.tsx`
++- Modify: `b4code-frontend/src/components/owner/rates/rates-calendar.tsx`
++
++**Interfaces:**
++- Consumes: Updated `/owner/availability/bulk-update` from Task 1.
++- Produces: Enhanced Bulk Edit Modal and Calendar cells displaying available rooms.
++
++- [ ] **Step 1: Update Pricing API Interfaces**
++Add `availableRoomsOverride?: number | null` to `AvailabilityDay` and `BulkPriceUpdateRequest` in `pricing.api.ts`. Add `baseInventory?: number` to `AvailabilityDay`.
++
++- [ ] **Step 2: Update Bulk Edit Price Modal**
++Add a new number input to the modal: "Rooms Available to Book". 
++Help text: "Leave blank to use your standard room count."
++Wire this input to send `availableRoomsOverride` in the `bulkUpdateAvailability` payload.
++
++- [ ] **Step 3: Update Rates Calendar View**
++In `rates-calendar.tsx`, render the remaining available rooms on each day cell (e.g., "2 Left").
++Use `availableRoomsOverride` if present, otherwise fallback to `baseInventory`. (Note: To be perfectly accurate, it should subtract active bookings, but for now, showing the configured limit is a massive improvement).
++
++- [ ] **Step 4: Commit**
++Commit the frontend calendar enhancements.
++
++---
++
++### Task 4: Fix Onboarding Inventory Field
++
++**Files:**
++- Modify: `b4code-frontend/src/components/owner/onboarding/room-builder-form.tsx`
++
++**Interfaces:**
++- Consumes: Onboarding form schema.
++- Produces: Updated schema capturing base inventory.
++
++- [ ] **Step 1: Add Inventory to Form Schema**
++In `room-builder-form.tsx`, add `inventory: z.number().min(1, "Minimum 1 room")` to `roomSchema`. Default it to `1`.
++
++- [ ] **Step 2: Add Inventory Input UI**
++Add a number input field labeled "Number of Rooms (How many do you have?)" inside the room card loop. 
++Map it to the `inventory` property of the form.
++
++- [ ] **Step 3: Commit**
++Commit the onboarding fix.
+diff --git a/docs/superpowers/plans/progress.md b/docs/superpowers/plans/progress.md
+new file mode 100644
+index 0000000..df1f57e
+Binary files /dev/null and b/docs/superpowers/plans/progress.md differ
+diff --git a/docs/superpowers/plans/task-1-brief.md b/docs/superpowers/plans/task-1-brief.md
+new file mode 100644
+index 0000000..779ca64
+--- /dev/null
++++ b/docs/superpowers/plans/task-1-brief.md
+@@ -0,0 +1,24 @@
++### Task 1: Backend Availability Model Update
++
++**Files:**
++- Modify: `b4code-backend/src/main/java/com/b4code/backend/models/Availability.java`
++- Modify: `b4code-backend/src/main/java/com/b4code/backend/dto/owner/BulkPriceUpdateRequest.java`
++- Modify: `b4code-backend/src/main/java/com/b4code/backend/service/impl/OwnerPricingServiceImpl.java`
++- Modify: `b4code-backend/src/main/java/com/b4code/backend/dto/owner/AvailabilityDayDto.java` (or wherever `AvailabilityDay` is mapped for `getMonthlyCalendar`)
++
++**Interfaces:**
++- Consumes: Existing DB Schema
++- Produces: Updated `/owner/availability/bulk-update` accepting `availableRoomsOverride` and updated `/owner/availability/monthly` returning `availableRoomsOverride` and `baseInventory`.
++
++- [ ] **Step 1: Update the Availability entity**
++Add `private Integer availableRoomsOverride;` to `Availability.java` with a new column `available_rooms_override`.
++
++- [ ] **Step 2: Update DTOs**
++Add `private Integer availableRoomsOverride;` to `BulkPriceUpdateRequest.java`.
++Ensure `AvailabilityDayDto` (or the equivalent response DTO for the calendar) exposes `availableRoomsOverride` and the room's `baseInventory`. (Usually `baseInventory` comes from `RoomType.inventory`).
++
++- [ ] **Step 3: Update OwnerPricingServiceImpl bulkUpdate logic**
++In the `bulkUpdateAvailability` method, map the `availableRoomsOverride` from the request to the `Availability` entity and save it.
++
++- [ ] **Step 4: Commit**
++Commit the backend changes.
+diff --git a/docs/superpowers/plans/task-1-report.md b/docs/superpowers/plans/task-1-report.md
+new file mode 100644
+index 0000000..47a9677
+--- /dev/null
++++ b/docs/superpowers/plans/task-1-report.md
+@@ -0,0 +1,19 @@
++# Task 1 Report: Backend Availability Model Update
++
++## Changes Implemented
++
++1. **Availability Entity**:
++   - Added `availableRoomsOverride` field (Integer) to `Availability.java` mapped to the column `available_rooms_override`.
++
++2. **DTO Updates**:
++   - Added `availableRoomsOverride` to `AvailabilityBulkUpdateRequest.java`.
++   - Added `availableRoomsOverride` and `baseInventory` to `AvailabilityDayDto.java`.
++
++3. **OwnerAvailabilityServiceImpl Updates**:
++   - Updated `bulkUpdate` method to map the `availableRoomsOverride` from the request and save it to the `Availability` entity if it is provided.
++   - Updated `buildDtos` method to return both the `availableRoomsOverride` from the `Availability` entity and the `baseInventory` from the corresponding `RoomType`.
++
++## Status
++- Compilation completed successfully.
++- Tests executed successfully.
++- Changes have been committed to the repository.
+diff --git a/docs/superpowers/plans/task-1-review.txt b/docs/superpowers/plans/task-1-review.txt
+new file mode 100644
+index 0000000..2af4a70
+Binary files /dev/null and b/docs/superpowers/plans/task-1-review.txt differ
+diff --git a/docs/superpowers/plans/task-2-brief.md b/docs/superpowers/plans/task-2-brief.md
+new file mode 100644
+index 0000000..b65e803
+--- /dev/null
++++ b/docs/superpowers/plans/task-2-brief.md
+@@ -0,0 +1,35 @@
++### Task 2: Frontend Room API & UI Scaffolding
++
++**Files:**
++- Modify: `b4code-frontend/src/api/owner/room.api.ts`
++- Create: `b4code-frontend/src/components/owner/properties/room-type-sheet.tsx`
++- Modify: `b4code-frontend/src/app/owner/properties/[id]/page.tsx`
++
++**Interfaces:**
++- Consumes: Backend `/api/owner/rooms` endpoints (POST, PUT, DELETE).
++- Produces: Reusable Room Management UI component.
++
++- [ ] **Step 1: Expand room.api.ts**
++Add `createRoom`, `updateRoom`, and `deleteRoom` functions matching the backend `OwnerRoomTypeController` endpoints. 
++- `createRoom(data: OwnerRoomTypeRequest): Promise<OwnerRoomType>`
++- `updateRoom(id: number, data: OwnerRoomTypeRequest): Promise<OwnerRoomType>`
++- `deleteRoom(id: number): Promise<void>`
++
++- [ ] **Step 2: Create `room-type-sheet.tsx`**
++Build a `Sheet` (from `components/ui/sheet`) that contains a form for creating/editing a room type.
++Include fields with simple labels:
++- Room Name ("What do you call this room?")
++- Description
++- Room Category (Dropdown: Standard, Deluxe, Suite, etc.)
++- Base Price ("Standard nightly rate")
++- Number of Rooms ("How many of these rooms do you have?", mapping to `inventory`)
++- Capacity (Adults, Children)
++- Bed Configuration
++
++- [ ] **Step 3: Integrate Sheet into Property Page**
++In `src/app/owner/properties/[id]/page.tsx`, add an "Add Room Type" button at the top of the Rooms section.
++Add an "Edit" button to each existing room card.
++Wire these buttons to open the `RoomTypeSheet` and pass the propertyId/roomType data. When submitting the form, call the respective API and refresh the data. (Use `mutate` or refresh state if it uses SWR/React Query/Zustand, or simple `router.refresh()`/fetch).
++
++- [ ] **Step 4: Commit**
++Commit the frontend room management changes.
+diff --git a/docs/superpowers/plans/task-2-report.md b/docs/superpowers/plans/task-2-report.md
+new file mode 100644
+index 0000000..82ef34f
+--- /dev/null
++++ b/docs/superpowers/plans/task-2-report.md
+@@ -0,0 +1,38 @@
++# Task 2: Frontend Room API & UI Scaffolding Report
++
++## Work Completed
++
++### 1. Expanded `room.api.ts`
++- Added the `OwnerRoomTypeRequest` interface.
++- Added `createRoom(data)`, `updateRoom(id, data)`, and `deleteRoom(id)` functions to `ownerRoomApi` which integrate with the `OwnerRoomTypeController` backend endpoints.
++
++### 2. Created `room-type-sheet.tsx`
++- Created `b4code-frontend/src/components/owner/properties/room-type-sheet.tsx`.
++- Implemented a `Sheet` containing a form for creating/editing a room type.
++- Fields mapped:
++  - Room Name
++  - Description
++  - Room Category
++  - Base Price
++  - Number of Rooms (inventory)
++  - Capacity (Max Adults, Max Children)
++  - Bed Configuration (comma-separated string to array conversion)
++
++### 3. Integrated Sheet into Property Page
++- Modified `b4code-frontend/src/app/owner/properties/[id]/page.tsx`.
++- Added an "Add Room Type" button and "Edit" buttons on existing room cards.
++- Wired these buttons up to toggle the `RoomTypeSheet` state with the appropriate context (`propertyId`, `roomType`).
++- Wired the `onSuccess` callback to `fetchDashboardData` so the page data refetches immediately after the room is created or updated.
++
++## Testing
++- Verified successful compilation (TypeScript build).
++- Verified linting passes.
++
++## Fixes Implemented
++- **Bed Configuration Bug Fix**: Replaced direct binding to `formData.bedConfigurations` (which wiped out trailing commas due to array parsing on every keystroke) with a local string state (`bedInput`). This string maintains user input (like commas) while updating `formData.bedConfigurations` properly on every keystroke.
++- **Number Input Bug Fix**: Modified empty number fields (`basePrice`, `inventory`, `maxAdults`, `maxChildren`) to use string initialization (`"" as unknown as number`) instead of `0`. The `onChange` handler checks for empty string to prevent number input fields from erasing explicitly inputted `0` values.
++
++## Next Steps
++- Implement room-specific image uploads or gallery if required.
++- Add delete room functionality to the UI.
++- Thorough end-to-end testing with the backend server.
+diff --git a/src/api/owner/room.api.ts b/src/api/owner/room.api.ts
+index bd3182b..dc7be09 100644
+--- a/src/api/owner/room.api.ts
++++ b/src/api/owner/room.api.ts
+@@ -18,20 +18,42 @@ export interface OwnerRoomType {
+ }
+ 
+ export interface OwnerRoomTypeListResponse {
+   roomTypes: OwnerRoomType[];
+   totalCount: number;
+   occupiedCount: number;
+   maintenanceCount: number;
+   vacantCount: number;
+ }
+ 
++export interface OwnerRoomTypeRequest {
++  propertyId: number;
++  name: string;
++  roomCategory: string;
++  basePrice: number;
++  maxAdults: number;
++  maxChildren: number;
++  description?: string;
++  inventory: number;
++  amenities: string[];
++  bedConfigurations: string[];
++}
++
+ export const ownerRoomApi = {
+   listRooms: (propertyId?: number): Promise<OwnerRoomTypeListResponse> =>
+     api
+       .get("/owner/rooms", {
+         params: {
+           ...(propertyId ? { propertyId } : {}),
+         },
+       })
+       .then((res) => res.data),
++
++  createRoom: (data: OwnerRoomTypeRequest): Promise<OwnerRoomType> =>
++    api.post("/owner/rooms", data).then((res) => res.data),
++
++  updateRoom: (id: number, data: OwnerRoomTypeRequest): Promise<OwnerRoomType> =>
++    api.put(`/owner/rooms/${id}`, data).then((res) => res.data),
++
++  deleteRoom: (id: number): Promise<void> =>
++    api.delete(`/owner/rooms/${id}`).then((res) => res.data),
+ };
+diff --git a/src/app/owner/properties/[id]/page.tsx b/src/app/owner/properties/[id]/page.tsx
+index 2db668a..1b49c53 100644
+--- a/src/app/owner/properties/[id]/page.tsx
++++ b/src/app/owner/properties/[id]/page.tsx
+@@ -1,38 +1,42 @@
+ "use client";
+ 
+ import { useEffect, useState, useCallback } from "react";
+ import { useParams, useRouter } from "next/navigation";
+ import Image from "next/image";
+ import { ownerPropertyApi } from "@/api/owner/property.api";
+ import { ownerRoomApi, OwnerRoomType } from "@/api/owner/room.api";
+ import { ownerSettingsApi, BankAccountDto } from "@/api/owner/settings.api";
+ import { ownerPayoutsApi } from "@/api/owner/payouts.api";
+ import { OwnerProperty } from "@/models/owner";
+-import { Loader2, Edit, MapPin, Building2, BedDouble, Users, HandCoins, RefreshCcw, AlertCircle } from "lucide-react";
++import { Loader2, Edit, MapPin, Building2, BedDouble, Users, HandCoins, RefreshCcw, AlertCircle, Plus } from "lucide-react";
+ import { toast } from "sonner";
+ import PropertyStatusBadge from "@/components/owner/properties/property-status-badge";
++import RoomTypeSheet from "@/components/owner/properties/room-type-sheet";
+ import { Button } from "@/components/ui/button";
+ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+ import { AxiosError } from "axios";
+ 
+ export default function PropertyDetailsDashboard() {
+   const { id } = useParams() as { id: string };
+   const router = useRouter();
+   
+   const [property, setProperty] = useState<OwnerProperty | null>(null);
+   const [rooms, setRooms] = useState<OwnerRoomType[]>([]);
+   const [bankAccounts, setBankAccounts] = useState<BankAccountDto[]>([]);
+   const [selectedAccount, setSelectedAccount] = useState<string>("");
+   
+   const [loading, setLoading] = useState(true);
+   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
++  
++  const [isRoomSheetOpen, setIsRoomSheetOpen] = useState(false);
++  const [selectedRoom, setSelectedRoom] = useState<OwnerRoomType | null>(null);
+ 
+   const fetchDashboardData = useCallback(async () => {
+     if (!id || id === "new") return;
+     setLoading(true);
+     try {
+       const propId = Number(id);
+       const [propData, roomData, bankData] = await Promise.all([
+         ownerPropertyApi.getProperty(propId),
+         ownerRoomApi.listRooms(propId),
+         ownerSettingsApi.getBankAccounts(),
+@@ -164,47 +168,72 @@ export default function PropertyDetailsDashboard() {
+               </span>
+             )}
+           </div>
+         </div>
+       </div>
+ 
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         {/* Rooms Section */}
+         <div className="lg:col-span-2 flex flex-col gap-5">
+           <div className="flex items-center justify-between">
+-            <h2 className="text-[20px] font-bold text-[#1A1A1A]">Rooms & Layout</h2>
+-            <span className="bg-[#953002]/10 text-[#953002] px-3 py-1 rounded-full text-[13px] font-bold">
+-              {rooms.length} Room Type{rooms.length !== 1 ? 's' : ''}
+-            </span>
++            <div className="flex items-center gap-4">
++              <h2 className="text-[20px] font-bold text-[#1A1A1A]">Rooms & Layout</h2>
++              <span className="bg-[#953002]/10 text-[#953002] px-3 py-1 rounded-full text-[13px] font-bold">
++                {rooms.length} Room Type{rooms.length !== 1 ? 's' : ''}
++              </span>
++            </div>
++            <Button 
++              onClick={() => {
++                setSelectedRoom(null);
++                setIsRoomSheetOpen(true);
++              }}
++              variant="outline" 
++              className="rounded-xl border-[#E8DDD8] text-[#1A1A1A] font-semibold flex items-center gap-2 hover:bg-[#FDF8F6] hover:text-[#953002] transition-colors duration-200"
++            >
++              <Plus size={16} /> Add Room Type
++            </Button>
+           </div>
+           
+           {rooms.length === 0 ? (
+             <div className="bg-white border border-[#E8DDD8] rounded-2xl p-8 text-center">
+               <p className="text-[#6B7280] text-sm">No rooms added yet.</p>
+             </div>
+           ) : (
+             <div className="flex flex-col gap-4">
+               {rooms.map((room) => (
+                 <div key={room.id} className="bg-white border border-[#E8DDD8] rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#D9C4B8] transition-all duration-300">
+                   <div className="flex items-start justify-between mb-4">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#FDF8F6] border border-[#F0EBE7] flex items-center justify-center text-[#C05621] shadow-sm">
+                          <BedDouble size={20} />
+                        </div>
+                        <div>
+                          <h3 className="text-[16px] font-bold text-[#1A1A1A]">{room.name}</h3>
+                          <p className="text-[13px] text-[#9E7B6A]">{room.roomCategory || 'Standard Room'}</p>
+                        </div>
+                     </div>
+-                    <div className="text-right">
+-                       <p className="text-[12px] font-bold text-[#9E7B6A] uppercase tracking-wider">Price per Night</p>
+-                       <p className="text-[18px] font-extrabold text-[#1A1A1A]">LKR {room.basePrice?.toLocaleString() || 0}</p>
++                    <div className="text-right flex flex-col items-end gap-2">
++                       <div>
++                         <p className="text-[12px] font-bold text-[#9E7B6A] uppercase tracking-wider">Price per Night</p>
++                         <p className="text-[18px] font-extrabold text-[#1A1A1A]">LKR {room.basePrice?.toLocaleString() || 0}</p>
++                       </div>
++                       <Button 
++                         variant="ghost" 
++                         size="sm"
++                         onClick={() => {
++                           setSelectedRoom(room);
++                           setIsRoomSheetOpen(true);
++                         }}
++                         className="text-[#953002] hover:bg-[#FDF8F6] hover:text-[#C05621] -mr-3"
++                       >
++                         <Edit size={14} className="mr-1.5" /> Edit
++                       </Button>
+                     </div>
+                   </div>
+                   
+                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-[#F0EBE7]">
+                     <div>
+                        <p className="text-[11px] font-medium text-[#9E7B6A] uppercase tracking-wider mb-1 flex items-center gap-1.5"><Users size={12}/> Base Capacity</p>
+                        <p className="text-[14px] font-semibold text-[#1A1A1A]">{room.maxAdults || 2}</p>
+                     </div>
+                     <div>
+                        <p className="text-[11px] font-medium text-[#9E7B6A] uppercase tracking-wider mb-1 flex items-center gap-1.5"><Users size={12}/> Max Capacity</p>
+@@ -277,13 +306,21 @@ export default function PropertyDetailsDashboard() {
+                     <>
+                       <HandCoins size={20} className="mr-2" />
+                       Request Payout
+                     </>
+                   )}
+                 </Button>
+               </div>
+            </div>
+         </div>
+       </div>
++
++      <RoomTypeSheet 
++        isOpen={isRoomSheetOpen}
++        onOpenChange={setIsRoomSheetOpen}
++        propertyId={property.id}
++        roomType={selectedRoom}
++        onSuccess={fetchDashboardData}
++      />
+     </div>
+   );
+ }
+diff --git a/src/components/owner/properties/room-type-sheet.tsx b/src/components/owner/properties/room-type-sheet.tsx
+new file mode 100644
+index 0000000..1105d7b
+--- /dev/null
++++ b/src/components/owner/properties/room-type-sheet.tsx
+@@ -0,0 +1,222 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Label } from "@/components/ui/label";
++import { Textarea } from "@/components/ui/textarea";
++import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
++import { OwnerRoomType, OwnerRoomTypeRequest, ownerRoomApi } from "@/api/owner/room.api";
++import { toast } from "sonner";
++import { Loader2 } from "lucide-react";
++
++interface RoomTypeSheetProps {
++  isOpen: boolean;
++  onOpenChange: (open: boolean) => void;
++  propertyId: number;
++  roomType?: OwnerRoomType | null;
++  onSuccess: () => void;
++}
++
++const CATEGORIES = ["Standard", "Deluxe", "Suite", "Family", "Studio", "Apartment"];
++
++export default function RoomTypeSheet({ isOpen, onOpenChange, propertyId, roomType, onSuccess }: RoomTypeSheetProps) {
++  const [loading, setLoading] = useState(false);
++  const [bedInput, setBedInput] = useState("");
++  const [formData, setFormData] = useState<OwnerRoomTypeRequest>({
++    propertyId: propertyId,
++    name: "",
++    description: "",
++    roomCategory: "",
++    basePrice: "" as unknown as number,
++    inventory: 1,
++    maxAdults: 2,
++    maxChildren: 0,
++    amenities: [],
++    bedConfigurations: [],
++  });
++
++  useEffect(() => {
++    if (roomType && isOpen) {
++      setFormData({
++        propertyId,
++        name: roomType.name || "",
++        description: roomType.description || "",
++        roomCategory: roomType.roomCategory || "",
++        basePrice: roomType.basePrice ?? 0,
++        inventory: roomType.inventory || 1,
++        maxAdults: roomType.maxAdults || 2,
++        maxChildren: roomType.maxChildren ?? 0,
++        amenities: roomType.amenities || [],
++        bedConfigurations: roomType.bedConfigurations || [],
++      });
++      setBedInput((roomType.bedConfigurations || []).join(", "));
++    } else if (!roomType && isOpen) {
++      setFormData({
++        propertyId,
++        name: "",
++        description: "",
++        roomCategory: "",
++        basePrice: "" as unknown as number,
++        inventory: 1,
++        maxAdults: 2,
++        maxChildren: "" as unknown as number,
++        amenities: [],
++        bedConfigurations: [],
++      });
++      setBedInput("");
++    }
++  }, [roomType, propertyId, isOpen]);
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setLoading(true);
++    try {
++      if (roomType) {
++        await ownerRoomApi.updateRoom(roomType.id, formData);
++        toast.success("Room type updated successfully");
++      } else {
++        await ownerRoomApi.createRoom(formData);
++        toast.success("Room type created successfully");
++      }
++      onSuccess();
++      onOpenChange(false);
++    } catch (error) {
++      toast.error("Failed to save room type");
++      console.error(error);
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <Sheet open={isOpen} onOpenChange={onOpenChange}>
++      <SheetContent className="overflow-y-auto w-full md:max-w-lg bg-white">
++        <SheetHeader>
++          <SheetTitle>{roomType ? "Edit Room Type" : "Add Room Type"}</SheetTitle>
++          <SheetDescription>
++            {roomType ? "Modify the details of your room type." : "Create a new room type for your property."}
++          </SheetDescription>
++        </SheetHeader>
++        
++        <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-6 pb-6">
++          <div className="flex flex-col gap-2">
++            <Label htmlFor="name">What do you call this room?</Label>
++            <Input 
++              id="name" 
++              value={formData.name}
++              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
++              required
++              placeholder="e.g. Deluxe Ocean View"
++            />
++          </div>
++
++          <div className="flex flex-col gap-2">
++            <Label htmlFor="description">Description</Label>
++            <Textarea 
++              id="description" 
++              value={formData.description}
++              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
++              placeholder="Describe the room..."
++              rows={3}
++            />
++          </div>
++
++          <div className="flex flex-col gap-2">
++            <Label htmlFor="category">Room Category</Label>
++            <Select 
++              value={formData.roomCategory} 
++              onValueChange={(val) => setFormData({ ...formData, roomCategory: val })}
++              required
++            >
++              <SelectTrigger id="category" className="bg-white">
++                <SelectValue placeholder="Select a category" />
++              </SelectTrigger>
++              <SelectContent>
++                {CATEGORIES.map(cat => (
++                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
++                ))}
++              </SelectContent>
++            </Select>
++          </div>
++
++          <div className="flex flex-col gap-2">
++            <Label htmlFor="basePrice">Standard nightly rate</Label>
++            <Input 
++              id="basePrice" 
++              type="number" 
++              min="0"
++              value={formData.basePrice}
++              onChange={(e) => setFormData({ ...formData, basePrice: e.target.value === "" ? "" as unknown as number : Number(e.target.value) })}
++              required
++            />
++          </div>
++
++          <div className="flex flex-col gap-2">
++            <Label htmlFor="inventory">How many of these rooms do you have?</Label>
++            <Input 
++              id="inventory" 
++              type="number" 
++              min="1"
++              value={formData.inventory}
++              onChange={(e) => setFormData({ ...formData, inventory: e.target.value === "" ? "" as unknown as number : Number(e.target.value) })}
++              required
++            />
++          </div>
++
++          <div className="grid grid-cols-2 gap-4">
++            <div className="flex flex-col gap-2">
++              <Label htmlFor="maxAdults">Max Adults</Label>
++              <Input 
++                id="maxAdults" 
++                type="number" 
++                min="1"
++                value={formData.maxAdults}
++                onChange={(e) => setFormData({ ...formData, maxAdults: e.target.value === "" ? "" as unknown as number : Number(e.target.value) })}
++                required
++              />
++            </div>
++            <div className="flex flex-col gap-2">
++              <Label htmlFor="maxChildren">Max Children</Label>
++              <Input 
++                id="maxChildren" 
++                type="number" 
++                min="0"
++                value={formData.maxChildren}
++                onChange={(e) => setFormData({ ...formData, maxChildren: e.target.value === "" ? "" as unknown as number : Number(e.target.value) })}
++                required
++              />
++            </div>
++          </div>
++
++          <div className="flex flex-col gap-2">
++            <Label htmlFor="bedConfigurations">Bed Configuration (comma separated)</Label>
++            <Input 
++              id="bedConfigurations" 
++              value={bedInput}
++              onChange={(e) => {
++                setBedInput(e.target.value);
++                setFormData({ 
++                  ...formData, 
++                  bedConfigurations: e.target.value.split(",").map(s => s.trim()).filter(Boolean) 
++                });
++              }}
++              placeholder="e.g. 1 King Bed, 1 Sofa Bed"
++            />
++          </div>
++
++          <SheetFooter className="mt-4 pt-4 border-t border-[#F0EBE7]">
++            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
++              Cancel
++            </Button>
++            <Button type="submit" disabled={loading} className="bg-[#953002] hover:bg-[#C05621] text-white">
++              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
++              Save Room Type
++            </Button>
++          </SheetFooter>
++        </form>
++      </SheetContent>
++    </Sheet>
++  );
++}

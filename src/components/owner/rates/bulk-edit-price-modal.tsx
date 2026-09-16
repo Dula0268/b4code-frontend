@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,18 @@ export default function BulkEditPriceModal() {
   const [notes, setNotes] = useState<string>("");
   const [availableRoomsOverride, setAvailableRoomsOverride] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isBulkModalOpen) {
+      setMode("PRICE");
+      setPriceType("FIXED");
+      setFixedPrice("");
+      setPercentAdj("10");
+      setNotes("");
+      setAvailableRoomsOverride("");
+      setError(null);
+    }
+  }, [isBulkModalOpen]);
 
   if (!isBulkModalOpen) return null;
 
