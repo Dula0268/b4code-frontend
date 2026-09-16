@@ -26,6 +26,19 @@ export interface OwnerRoomTypeListResponse {
   vacantCount: number;
 }
 
+export interface OwnerRoomTypeRequest {
+  propertyId: number;
+  name: string;
+  roomCategory: string;
+  basePrice: number;
+  maxAdults: number;
+  maxChildren: number;
+  description?: string;
+  inventory: number;
+  amenities: string[];
+  bedConfigurations: string[];
+}
+
 export const ownerRoomApi = {
   listRooms: (propertyId?: number): Promise<OwnerRoomTypeListResponse> =>
     api
