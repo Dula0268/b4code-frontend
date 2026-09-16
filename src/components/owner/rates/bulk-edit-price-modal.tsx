@@ -31,17 +31,29 @@ export default function BulkEditPriceModal() {
   const [percentAdj, setPercentAdj] = useState<string>("10");
   const [notes, setNotes] = useState<string>("");
   const [availableRoomsOverride, setAvailableRoomsOverride] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
 
   if (!isBulkModalOpen) return null;
 
   const handleApply = async () => {
+    setError(null);
     try {
       if (mode === "BLACKOUT") {
         await bulkUpdatePrices(null, "BLOCKED", notes || "Owner Blackout");
       } else {
         const val = parseFloat(fixedPrice);
-        if (isNaN(val) || val <= 0) return;
-        const roomsOverride = availableRoomsOverride ? parseInt(availableRoomsOverride, 10) : undefined;
+        if (isNaN(val) || val <= 0) {
+          setError("Please enter a valid price (greater than 0).");
+          return;
+        }
+        let roomsOverride = null;
+        if (availableRoomsOverride) {
+          roomsOverride = parseInt(availableRoomsOverride, 10);
+          if (isNaN(roomsOverride) || roomsOverride < 0) {
+            setError("Please enter a valid number for rooms available.");
+            return;
+          }
+        }
         await bulkUpdatePrices(val, "AVAILABLE", notes || "Bulk Rate Update", roomsOverride);
       }
     } catch {
@@ -197,6 +209,13 @@ export default function BulkEditPriceModal() {
                 className="mt-1 h-9 text-xs rounded-xl border-gray-200 bg-white"
               />
             </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
+            {error}
           </div>
         )}
 
