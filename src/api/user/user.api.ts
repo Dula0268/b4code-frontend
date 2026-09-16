@@ -13,4 +13,6 @@ export const userApi = {
   }) => api.put("/users/profile", updates).then((r) => r.data),
 
   getCurrentUser: () => api.get("/users/me").then((r) => r.data),
+
+
 };

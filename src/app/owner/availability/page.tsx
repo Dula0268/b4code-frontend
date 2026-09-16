@@ -1,0 +1,119 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import OwnerHeader from "@/components/owner/layout/owner-header";
+import { useOwnerGuard } from "@/hooks/use-owner-guard";
+import AccessDenied from "@/components/shared/auth/access-denied";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useOwnerPricingStore } from "@/store/owner/owner-pricing.store";
+import { ownerPricingApi } from "@/api/owner/pricing.api";
+import { useAuthStore } from "@/store/auth/auth.store";
+import AvailabilityCalendar from "@/components/owner/availability/availability-calendar";
+import BulkEditAvailabilityModal from "@/components/owner/availability/bulk-edit-availability-modal";
+import { Building2, AlertCircle } from "lucide-react";
+
+export default function OwnerAvailabilityPage() {
+  const { status, userRole } = useOwnerGuard();
+  const { user } = useAuthStore();
+  const { propertyId, setPropertyId, error } = useOwnerPricingStore();
+
+  const [properties, setProperties] = useState<Array<{ id: number; name: string }>>([]);
+
+  useEffect(() => {
+    // Load ONLY the authenticated owner's properties
+    ownerPricingApi
+      .getOwnerProperties()
+      .then((list) => {
+        setProperties(list);
+        if (list.length > 0) {
+          const storedPid = sessionStorage.getItem("selected_property_id");
+          const numericStoredPid = storedPid ? Number(storedPid) : null;
+          // Verify that the storedPid actually belongs to this owner
+          const exists = list.some((p) => p.id === numericStoredPid);
+          const activePid = exists && numericStoredPid ? numericStoredPid : list[0].id;
+          setPropertyId(activePid);
+          sessionStorage.setItem("selected_property_id", String(activePid));
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load owner properties list:", err);
+      });
+  }, [setPropertyId]);
+
+  if (status === "loading") {
+    return (
+      <div className="flex-1 flex flex-col p-6 gap-6 bg-[#F8F9FA] mt-[64px]">
+        <Skeleton className="h-16 w-full rounded-2xl bg-white" />
+        <Skeleton className="h-[600px] w-full rounded-3xl bg-white" />
+      </div>
+    );
+  }
+
+  if (status === "unauthorized") {
+    return <AccessDenied userRole={userRole} requiredRole="Owner" />;
+  }
+
+  return (
+    <>
+      <OwnerHeader
+        title="Availability Calendar"
+        subtitle="Manage daily room availability and blackout dates"
+        actions={
+          <div className="flex items-center gap-2 bg-[#F5F6F8] border border-[#E8EAED] rounded-full px-3 py-1 text-xs">
+            <Building2 className="w-3.5 h-3.5 text-[#953002]" />
+            <select
+              value={propertyId || ""}
+              onChange={(e) => {
+                const newId = Number(e.target.value);
+                setPropertyId(newId);
+                sessionStorage.setItem("selected_property_id", String(newId));
+              }}
+              aria-label="Select target property"
+              className="bg-transparent font-bold text-gray-800 outline-none cursor-pointer text-xs"
+            >
+              {properties.length === 0 ? (
+                <option value="">No Properties</option>
+              ) : (
+                properties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+        }
+      />
+
+      <main className="mt-[64px] flex-1 p-4 lg:p-8 flex flex-col gap-6 max-w-7xl mx-auto w-full">
+        {/* Error Alert if any */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Empty State if owner has no properties */}
+        {properties.length === 0 && (
+          <div className="bg-amber-50/60 border border-amber-200 text-amber-900 p-8 rounded-3xl text-sm flex flex-col items-center justify-center text-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-gray-900">No Properties Found</h3>
+              <p className="text-xs text-gray-600 mt-1 max-w-md">
+                You do not have any properties registered under your owner account yet. Once you create a property listing, its availability calendar will appear here.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {properties.length > 0 && <AvailabilityCalendar />}
+
+        {/* Modals */}
+        <BulkEditAvailabilityModal />
+      </main>
+    </>
+  );
+}

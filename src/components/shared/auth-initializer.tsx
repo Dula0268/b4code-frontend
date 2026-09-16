@@ -14,6 +14,12 @@ export default function AuthInitializer() {
 
     const initAuth = async () => {
       try {
+        // Purge obsolete legacy mock keys from localStorage
+        localStorage.removeItem("authEmail");
+        localStorage.removeItem("authRole");
+        localStorage.removeItem("authUserId");
+        localStorage.removeItem("MOCK_USERS_DB");
+
         const token = getToken();
         if (token) {
           const storedUserStr = localStorage.getItem("auth_user");

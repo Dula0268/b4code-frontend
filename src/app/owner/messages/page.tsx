@@ -1,0 +1,163 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useOwnerMessageStore } from "@/store/owner/message.store";
+import OwnerInbox from "@/components/owner/messages/OwnerInbox";
+import OwnerStaffInbox from "@/components/owner/messages/OwnerStaffInbox";
+import AutoReplyClient from "@/app/staff/auto-reply/auto-reply-client";
+import StaffQuickReplyClient from "@/components/owner/messages/StaffQuickReplyClient";
+import { MessageCircle, Bot, Users } from "lucide-react";
+import OwnerHeader from "@/components/owner/layout/owner-header";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRBACStore } from "@/store/auth/rbac.store";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+export default function MessagesPage() {
+  const { disconnect, fetchPropertiesAndConversations, selectedPropertyId, properties } = useOwnerMessageStore();
+  const { permissionsData, fetchMyPermissions, loading: rbacLoading } = useRBACStore();
+  const [activeTab, setActiveTab] = useState("inbox");
+  const [automationSubTab, setAutomationSubTab] = useState("guest");
+  const activePropertyForAutomation = selectedPropertyId === "ALL" ? null : (selectedPropertyId as number);
+
+  // Fetch permissions
+  useEffect(() => {
+    fetchMyPermissions("Owner");
+  }, [fetchMyPermissions]);
+
+  const ownerPerms = permissionsData["Owner"]?.permissions;
+  const isMessagingEnabledByAdmin = ownerPerms?.user?.find(p => p.key === "guest_messages")?.enabled ?? false;
+
+  useEffect(() => {
+    if (isMessagingEnabledByAdmin) {
+      fetchPropertiesAndConversations();
+    }
+    return () => {
+      disconnect();
+    };
+  }, [disconnect, fetchPropertiesAndConversations, isMessagingEnabledByAdmin]);
+
+  if (rbacLoading && !ownerPerms) {
+    return (
+      <>
+        <OwnerHeader
+          title="Messages"
+          subtitle="Communicate with your guests"
+        />
+        <main className="mt-[64px] flex items-center justify-center h-[60vh]">
+          <div className="flex flex-col gap-4 w-full max-w-2xl px-6">
+            <Skeleton className="h-14 w-full rounded-xl" />
+            <Skeleton className="h-10 w-64 rounded-xl" />
+            <Skeleton className="h-[400px] w-full rounded-xl" />
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (!isMessagingEnabledByAdmin) {
+    return (
+      <>
+        <OwnerHeader
+          title="Messages"
+          subtitle="Communicate with your guests"
+        />
+        <main className="mt-[64px] flex flex-col items-center justify-center h-full p-8 text-slate-500">
+          <MessageCircle size={48} className="mb-4 opacity-20" />
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">Messaging is Disabled</h2>
+          <p>Please contact the administrator to enable the guest messaging feature for your properties.</p>
+        </main>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <OwnerHeader
+        title="Messages"
+        subtitle="Communicate with your guests"
+      />
+      <main className="mt-[64px] p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Messages</h1>
+            <p className="text-slate-500 mt-1">Communicate with guests and staff, and manage automated replies.</p>
+          </div>
+        </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 shrink-0 gap-4">
+          <Select 
+            value={selectedPropertyId.toString()} 
+            onValueChange={(val) => useOwnerMessageStore.getState().setSelectedPropertyId(val === 'ALL' ? 'ALL' : parseInt(val, 10))}
+          >
+            <SelectTrigger className="w-full sm:w-[250px] bg-white">
+              <SelectValue placeholder="All Properties" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Properties</SelectItem>
+              {properties.map(p => (
+                <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <TabsList className="bg-slate-200/50 p-1">
+            <TabsTrigger value="inbox" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <MessageCircle className="h-4 w-4" />
+              Guest
+            </TabsTrigger>
+            <TabsTrigger value="staff-messages" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Users className="h-4 w-4" />
+              Staff
+            </TabsTrigger>
+            <TabsTrigger value="automations" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Bot className="h-4 w-4" />
+              Automations
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="inbox" className="m-0 border-none p-0 outline-none flex-1 flex flex-col min-h-0">
+          <OwnerInbox />
+        </TabsContent>
+        
+        <TabsContent value="automations" className="m-0 border-none p-0 outline-none">
+          {activePropertyForAutomation ? (
+            <div className="flex flex-col h-full">
+              <Tabs value={automationSubTab} onValueChange={setAutomationSubTab} className="w-full">
+                <TabsList className="bg-slate-200/50 p-1 mb-4">
+                  <TabsTrigger value="guest" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                    Guest Auto-Replies
+                  </TabsTrigger>
+                  <TabsTrigger value="staff" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                    Staff Quick Replies
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="guest" className="m-0 border-none p-0 outline-none">
+                  <AutoReplyClient propertyId={activePropertyForAutomation} />
+                </TabsContent>
+                
+                <TabsContent value="staff" className="m-0 border-none p-0 outline-none">
+                  <StaffQuickReplyClient propertyId={activePropertyForAutomation} />
+                </TabsContent>
+              </Tabs>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border shadow-sm p-8 text-center text-slate-500">
+              <Bot size={48} className="mx-auto mb-4 opacity-20" />
+              <h3 className="text-xl font-semibold text-slate-800 mb-2">Select a Property</h3>
+              <p>Please select a property from the inbox to configure its automations.</p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="staff-messages" className="m-0 border-none p-0 outline-none flex-1 flex flex-col min-h-0">
+          <OwnerStaffInbox propertyId={selectedPropertyId} />
+        </TabsContent>
+      </Tabs>
+      </main>
+    </>
+  );
+}

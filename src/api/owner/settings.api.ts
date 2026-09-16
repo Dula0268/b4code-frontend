@@ -1,38 +1,32 @@
 import api from "@/lib/axios";
 
-const withOwnerId = (path: string, ownerId?: number) => {
-  if (!ownerId) return path;
-  return `${path}?ownerId=${ownerId}`;
-};
+export interface BankAccountDto {
+  id: number;
+  ownerId: number;
+  bankName: string;
+  accountHolder: string;
+  accountNumber: string;
+  branchCode: string;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
+export interface BankAccountRequest {
+  bankName: string;
+  accountHolder: string;
+  accountNumber: string;
+  branchCode: string;
+  isPrimary: boolean;
+}
 
 export const ownerSettingsApi = {
-  getBankAccounts: (ownerId?: number) =>
-    api.get(withOwnerId(`/owner/settings/billing`, ownerId)).then((r) => r.data),
-
-  addBankAccount: (ownerId: number | undefined, data: object) =>
-    api.post(withOwnerId(`/owner/settings/billing/bank-account`, ownerId), data).then((r) => r.data),
-
-  updateNotifications: (ownerId: number, data: object) =>
-    api.put(withOwnerId(`/owner/settings/notifications`, ownerId), data).then((r) => r.data),
-
-  updatePropertySettings: (propertyId: number, data: object) =>
-    api.put(`/owner/settings/property?propertyId=${propertyId}`, data).then((r) => r.data),
-
-  requestPayout: (ownerId?: number, propertyId?: number) => {
-    const base = withOwnerId(`/owner/settings/billing/payout-request`, ownerId);
-    const suffix = propertyId ? `${base.includes('?') ? '&' : '?'}propertyId=${propertyId}` : '';
-    return api.post(`${base}${suffix}`).then((r) => r.data);
+  getBankAccounts: async (): Promise<BankAccountDto[]> => {
+    const res = await api.get<BankAccountDto[]>("/owner/settings/billing");
+    return res.data;
   },
 
-  getRestrictions: (propertyId: number) =>
-    api.get(`/owner/settings/restrictions?propertyId=${propertyId}`).then((r) => r.data),
-
-  createRestriction: (data: object) =>
-    api.post(`/owner/settings/restrictions`, data).then((r) => r.data),
-
-  updateRestriction: (id: number, data: object) =>
-    api.put(`/owner/settings/restrictions/${id}`, data).then((r) => r.data),
-
-  deleteRestriction: (id: number) =>
-    api.delete(`/owner/settings/restrictions/${id}`).then((r) => r.data),
+  addBankAccount: async (request: BankAccountRequest): Promise<BankAccountDto> => {
+    const res = await api.post<BankAccountDto>("/owner/settings/billing/bank-account", request);
+    return res.data;
+  },
 };

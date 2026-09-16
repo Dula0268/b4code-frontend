@@ -36,6 +36,16 @@ export const staffApi = {
   sendMessage: (bookingId: number | string, content: string) =>
     api.post(`/staff/messages/booking/${bookingId}`, { content }).then((r) => r.data),
 
+  // Internal Messages (Staff to Owner)
+  getStaffOwnerMessages: () =>
+    api.get(`/staff/internal-messages/owner`).then((r) => r.data),
+
+  sendStaffOwnerMessage: (content: string) =>
+    api.post(`/staff/internal-messages/owner`, { content }).then((r) => r.data),
+
+  getStaffQuickReplies: () =>
+    api.get(`/staff/internal-messages/owner/quick-replies`).then((r) => r.data),
+
   // Order Messages (Kitchen Staff / Staff Admin)
   getOrderConversations: (propertyId: number | string) =>
     api.get(`/staff/order-messages/property/${propertyId}/conversations`).then((r) => r.data),
@@ -47,13 +57,13 @@ export const staffApi = {
     api.post(`/staff/order-messages/order/${orderId}`, { content }).then((r) => r.data),
 
   // Auto-Reply Rules
-  getAutoReplyRules: (propertyId: number | string) =>
-    api.get(`/staff/properties/${propertyId}/auto-reply-rules`).then((r) => r.data),
+  getAutoReplyRules: (propertyId: number | string, role?: string) =>
+    api.get(`/staff/properties/${propertyId}/auto-reply-rules${role ? `?role=${role}` : ''}`).then((r) => r.data),
     
-  createAutoReplyRule: (propertyId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean }) =>
+  createAutoReplyRule: (propertyId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean; targetRole?: string }) =>
     api.post(`/staff/properties/${propertyId}/auto-reply-rules`, payload).then((r) => r.data),
     
-  updateAutoReplyRule: (propertyId: number | string, ruleId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean }) =>
+  updateAutoReplyRule: (propertyId: number | string, ruleId: number | string, payload: { keyword: string; replyMessage: string; isActive: boolean; targetRole?: string }) =>
     api.put(`/staff/properties/${propertyId}/auto-reply-rules/${ruleId}`, payload).then((r) => r.data),
     
   deleteAutoReplyRule: (propertyId: number | string, ruleId: number | string) =>

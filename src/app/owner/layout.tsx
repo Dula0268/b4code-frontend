@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import PwaRegistrar from "@/components/shared/pwa-registrar";
 import OwnerPageLayout from "@/components/owner/layout/owner-page-layout";
 
 export const metadata: Metadata = {
-  title: "Primestay Owner Dashboard",
+  title: "Primestay Owner Portal",
   description: "Progressive Web Application for Primestay Property Owners",
   manifest: "/manifest.json",
   appleWebApp: {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#C05621",
+  themeColor: "#953002",
 };
 
 export default async function OwnerLayout({
@@ -22,8 +23,11 @@ export default async function OwnerLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <OwnerPageLayout>
-      {children}
-    </OwnerPageLayout>
+    <>
+      <PwaRegistrar />
+      <OwnerPageLayout>
+        {children}
+      </OwnerPageLayout>
+    </>
   );
 }

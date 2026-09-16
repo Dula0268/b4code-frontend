@@ -63,6 +63,9 @@ function OrderCard({
   onViewDetail: () => void;
 }) {
   const badge = STATUS_BADGE[order.status];
+  // For auto-cancelled orders we override the badge to make it visually distinct
+  // from a staff-initiated rejection.
+  const isAutoCancelled = order.autoCancelled === true;
 
   const renderActions = () => {
     switch (order.status) {
@@ -126,7 +129,11 @@ function OrderCard({
         </div>
         <span className={`${badge.bg} ${badge.text} text-[11px] font-bold px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-sm`}>
           {badge.dot && <span className={`w-2 h-2 rounded-full ${badge.dot}`} />}
-          {badge.label}
+          {isAutoCancelled ? (
+            <>⏰ Expired (no action taken)</>
+          ) : (
+            badge.label
+          )}
         </span>
       </div>
 
@@ -284,6 +291,7 @@ export default function StaffOrderQueue() {
   const advanceStatus = useStaffOrdersStore((s) => s.advanceStatus);
   const clearToast = useStaffOrdersStore((s) => s.clearToast);
   const getCountByStatus = useStaffOrdersStore((s) => s.getCountByStatus);
+  const autoExpireStaleOrders = useStaffOrdersStore((s) => s.autoExpireStaleOrders);
 
   const { user } = useAuthStore();
 
@@ -297,6 +305,8 @@ export default function StaffOrderQueue() {
   useEffect(() => {
     fetchOrderPage(propertyId, { status: activeTab, page: 0 });
     fetchStatusCounts(propertyId);
+    // Auto-cancel any placed orders older than 24 hours on every page load.
+    autoExpireStaleOrders();
   }, [propertyId, activeTab, fetchOrderPage, fetchStatusCounts]);
 
   // The `orders` cache above is kept live by StaffGlobalOrdersProvider's SSE
@@ -313,7 +323,7 @@ export default function StaffOrderQueue() {
     }
     fetchOrderPage(propertyId, { status: activeTab, page: queue.page });
     fetchStatusCounts(propertyId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [orders]);
 
   const goToPage = (page: number) => {

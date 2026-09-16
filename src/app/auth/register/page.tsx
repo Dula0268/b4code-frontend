@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { Mail, Lock, CheckCircle2, Phone, User, Home, MapPin, Building2, Briefcase, Building, RefreshCw } from "lucide-react";
+import { Mail, Lock, CheckCircle2, Phone, User, Home, MapPin, Building2, Briefcase, Building, RefreshCw, ShieldCheck, UploadCloud, Loader2 } from "lucide-react";
 import clsx from "clsx";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth/auth.store";
 import { propertiesApi } from "@/api/properties/properties.api";
 import { authApi } from "@/api/auth/auth.api";
+import { imageApi } from "@/api/image/image.api";
+import { validateUploadFile } from "@/lib/file-validator";
 import { formatApiError } from "@/lib/error-formatter";
 
 type Role = "guest" | "owner" | "staff";
@@ -53,15 +55,16 @@ function RegisterForm() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-    // Owner Fields
-    const [propertyName, setPropertyName] = useState("");
-    const [propertyAddress, setPropertyAddress] = useState("");
-    const [nationalId, setNationalId] = useState("");
 
     // Staff Fields
     const [staffRole, setStaffRole] = useState("");
     const [selectedPropertyId, setSelectedPropertyId] = useState<number | "">("");
     const [properties, setProperties] = useState<Array<{ id: number; name: string }>>([]);
+
+    // Owner Fields
+    const [ownerIdUrl, setOwnerIdUrl] = useState("");
+    const [isUploadingId, setIsUploadingId] = useState(false);
+    const [idUploadError, setIdUploadError] = useState<string | null>(null);
 
     const [localError, setLocalError] = useState<string | null>(null);
     const [showOtpInput, setShowOtpInput] = useState(false);
@@ -124,12 +127,6 @@ function RegisterForm() {
             return;
         }
 
-        if (role === "owner") {
-            if (nationalId.length !== 10 && nationalId.length !== 12) {
-                setLocalError("National ID must be exactly 10 or 12 characters long.");
-                return;
-            }
-        }
 
         if (role === "staff") {
             if (!selectedPropertyId) {
@@ -140,6 +137,11 @@ function RegisterForm() {
                 setLocalError("Please select a staff role.");
                 return;
             }
+        }
+
+        if (role === "owner" && !ownerIdUrl) {
+            setLocalError("Please upload your National ID (NIC) or Business Registration document to complete owner registration.");
+            return;
         }
 
         try {
@@ -155,7 +157,8 @@ function RegisterForm() {
                 lastName,
                 phone,
                 role === "staff" ? Number(selectedPropertyId) : undefined,
-                role === "staff" ? staffRole : undefined
+                role === "staff" ? staffRole : undefined,
+                role === "owner" ? (ownerIdUrl || undefined) : undefined
             );
             // Instead of showing success modal immediately, switch to OTP input
             setShowOtpInput(true);
@@ -259,16 +262,24 @@ function RegisterForm() {
                     <div className="bg-[#fcfaf9] px-6 py-8 sm:px-10 md:px-12 md:py-10 flex flex-col items-center">
                         <div className="w-full max-w-[420px]">
 
-                            <div className="text-center mb-8">
+                            <div className="text-center mb-6">
                                 <h2 className="text-[28px] font-extrabold text-[#953002] md:text-[32px] leading-tight">
-                                    Create your account
+                                    {role === "owner"
+                                        ? "Register as Owner"
+                                        : role === "staff"
+                                            ? "Staff Registration"
+                                            : "Create your account"}
                                 </h2>
                                 <p className="mt-2 text-[14px] text-[#953002]/80 font-medium">
-                                    Join our hospitality community today.
+                                    {role === "owner"
+                                        ? "Join our exclusive network of property owners."
+                                        : role === "staff"
+                                            ? "Register to access your property management dashboard."
+                                            : "Join our hospitality community today."}
                                 </p>
                             </div>
 
-                            {/* ROLE DISPLAY (HIDDEN TOGGLE) */}
+                            {/* OTP Status Display */}
                             {showOtpInput && (
                                 <div className="mb-6">
                                     <div className="flex items-center justify-between mb-2">
@@ -287,6 +298,13 @@ function RegisterForm() {
                             {!showOtpInput ? (
 
                                 <form onSubmit={handleRegister} className="space-y-4">
+                                    {role === "owner" && (
+                                        <div className="bg-[#fff7ed] border border-[#ffedd5] rounded-xl p-3 text-[12px] text-[#9a3412] flex items-center gap-2">
+                                            <Building2 className="w-4 h-4 shrink-0 text-[#ea580c]" />
+                                            <span>You are registering as a <strong>Property Owner</strong>. You can list properties, set rates, and manage reservations.</span>
+                                        </div>
+                                    )}
+
                                     {/* Common Fields */}
                                     <div className="space-y-1.5">
                                         <Label className="pl-1 text-[13px] font-bold text-[#282828]">Full Name</Label>
@@ -394,62 +412,6 @@ function RegisterForm() {
                                         <span className={clsx("text-[11px] font-bold w-12 text-right", strength.color.replace("bg-", "text-").replace("500", "600"))}>{strength.label}</span>
                                     </div>
 
-                                    {/* Extra Owner Fields */}
-                                    {role === "owner" && (
-                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            <div className="space-y-1.5">
-                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">Property Name</Label>
-                                                <div className="relative">
-                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                        <Input
-                                                            type="text"
-                                                            placeholder="Sunset Villa"
-                                                            value={propertyName}
-                                                            onChange={(e) => setPropertyName(e.target.value)}
-                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                            required={role === "owner"}
-                                                        />
-                                                        <Home className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-1.5">
-                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">Property Address</Label>
-                                                <div className="relative">
-                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                        <Input
-                                                            type="text"
-                                                            placeholder="street address, city, province."
-                                                            value={propertyAddress}
-                                                            onChange={(e) => setPropertyAddress(e.target.value)}
-                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                            required={role === "owner"}
-                                                        />
-                                                        <MapPin className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-1.5">
-                                                <Label className="pl-1 text-[13px] font-bold text-[#282828]">National ID / Business Registration No.</Label>
-                                                <div className="relative">
-                                                    <div className="bg-[#f0e8e4] rounded-full w-full flex items-center">
-                                                        <Input
-                                                            type="text"
-                                                            placeholder="Enter your official identification number"
-                                                            value={nationalId}
-                                                            onChange={(e) => setNationalId(e.target.value)}
-                                                            className="h-[48px] w-full rounded-full bg-transparent pl-[42px] pr-[16px] text-[14px] placeholder:text-neutral-400 border-0 focus-visible:ring-1 focus-visible:ring-[#953002]/30"
-                                                            required={role === "owner"}
-                                                        />
-                                                        <Building2 className="absolute left-4 h-4 w-4 text-[#953002]/70 pointer-events-none" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
                                     {/* Extra Staff Fields */}
                                     {role === "staff" && (
                                         <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -500,6 +462,99 @@ function RegisterForm() {
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {/* Owner Identity Verification (Compulsory at Signup) */}
+                                    {role === "owner" && (
+                                        <div className="space-y-2 p-3.5 rounded-2xl bg-[#fbf6f3] border border-[#f0ded5] animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <ShieldCheck className="h-4 w-4 text-[#953002]" />
+                                                        <Label className="text-[13px] font-bold text-[#282828]">National ID / Business Document</Label>
+                                                        <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">Required *</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-neutral-500 mt-0.5">
+                                                        Please upload your NIC or Business Certificate to verify and activate your owner account.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {ownerIdUrl ? (
+                                                <div className="flex items-center justify-between p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                                                        <span className="text-[12px] font-semibold text-emerald-800 truncate">Document uploaded & verified</span>
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setOwnerIdUrl("")}
+                                                        className="h-7 text-[11px] text-red-600 hover:text-red-700 hover:bg-red-50 px-2 font-bold"
+                                                    >
+                                                        Remove
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="relative">
+                                                    <input
+                                                        type="file"
+                                                        id="owner-id-doc-register"
+                                                        accept="image/*,application/pdf"
+                                                        disabled={isUploadingId}
+                                                        className="sr-only"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (!file) return;
+                                                            setIdUploadError(null);
+                                                            const validation = validateUploadFile(file, {
+                                                                maxSizeMB: 8,
+                                                                allowedTypes: ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"],
+                                                            });
+                                                            if (!validation.valid) {
+                                                                setIdUploadError(validation.error || "Invalid document file");
+                                                                return;
+                                                            }
+                                                            setIsUploadingId(true);
+                                                            try {
+                                                                const result = await imageApi.upload(file, "identity");
+                                                                if (result && result.url) {
+                                                                    setOwnerIdUrl(result.url);
+                                                                }
+                                                            } catch (err) {
+                                                                console.error("Failed to upload identity document:", err);
+                                                                setIdUploadError("Failed to upload document. Please try again.");
+                                                            } finally {
+                                                                setIsUploadingId(false);
+                                                            }
+                                                        }}
+                                                    />
+                                                    <label
+                                                        htmlFor="owner-id-doc-register"
+                                                        className={clsx(
+                                                            "flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-[#953002]/40 bg-white/80 hover:bg-white text-center cursor-pointer transition-all hover:border-[#953002]",
+                                                            isUploadingId && "opacity-50 pointer-events-none"
+                                                        )}
+                                                    >
+                                                        {isUploadingId ? (
+                                                            <>
+                                                                <Loader2 className="h-4 w-4 animate-spin text-[#953002]" />
+                                                                <span className="text-[12px] font-bold text-neutral-600">Uploading verification doc…</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <UploadCloud className="h-4 w-4 text-[#953002]" />
+                                                                <span className="text-[12px] font-bold text-[#953002]">Click to upload NIC or Business PDF</span>
+                                                            </>
+                                                        )}
+                                                    </label>
+                                                    {idUploadError && (
+                                                        <p className="text-[11px] text-red-600 font-medium mt-1">{idUploadError}</p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 

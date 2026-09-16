@@ -1,807 +1,243 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
-import { reviewsApi } from "@/api/owner/reviews.api";
-import { propertiesApi } from "@/api/owner/properties.api";
-import { useAuthStore } from "@/store/auth/auth.store";
-import Logo from "@/components/shared/branding/logo";
-import {
-    Bell,
-    LayoutDashboard,
-    Building2,
-    Tag,
-    BookOpen,
-    Users,
-    Star,
-    Settings,
-    ChevronDown,
-    ChevronLeft,
-    ChevronRight,
-    MessageSquare,
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import OwnerHeader from "@/components/owner/layout/owner-header";
+import { Star, CheckCircle2, Building2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ownerPricingApi } from "@/api/owner/pricing.api";
+import api from "@/lib/axios";
+import { toast } from "sonner";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+type ReviewType = "booking" | "item";
 
-interface ReviewResponse {
-    id: number;
-    bookingId: number;
-    propertyId: number;
-    guestId: number;
-    overallRating: number;
-    cleanlinessRating: number;
-    comfortRating: number;
-    serviceRating: number;
-    diningRating: number;
-    locationRating: number;
-    valueRating: number;
-    comment: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    photoUrls: any;
-    createdAt: string;
-}
+export default function OwnerReviewsPage() {
+  const [reviewType, setReviewType] = useState<ReviewType>("booking");
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-interface PropertyOption {
-    id: number;
-    name: string;
-}
+  const [properties, setProperties] = useState<Array<{ id: number; name: string }>>([]);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function avg(values: number[]): number {
-    if (!values.length) return 0;
-    return values.reduce((a, b) => a + b, 0) / values.length;
-}
-
-function formatDate(dateStr: string): string {
-    if (!dateStr) return "—";
-    try {
-        return new Date(dateStr).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-        });
-    } catch {
-        return dateStr;
-    }
-}
-
-function parsePhotoUrls(raw: unknown): string[] {
-    if (!raw) return [];
-    if (Array.isArray(raw)) return raw.filter(Boolean);
-    if (typeof raw === "string") {
-        return raw
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-    }
-    return [];
-}
-
-function StarRow({ rating, size = 16 }: { rating: number; size?: number }) {
-    return (
-        <span style={{ display: "inline-flex", gap: 2 }}>
-            {[1, 2, 3, 4, 5].map((n) => (
-                <Star
-                    key={n}
-                    size={size}
-                    color="#ffb401"
-                    fill={n <= Math.round(rating) ? "#ffb401" : "none"}
-                />
-            ))}
-        </span>
-    );
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
-export default function ReviewsPage() {
-    const { user } = useAuthStore();
-    const ownerId = user?.userId ?? 1;
-
-    // State
-    const [properties, setProperties] = useState<PropertyOption[]>([]);
-    const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
-    const [reviews, setReviews] = useState<ReviewResponse[]>([]);
-    const [currentPage, setCurrentPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalReviews, setTotalReviews] = useState(0);
-    const [summaryStats, setSummaryStats] = useState({
-        averageRating: 0,
-        avgCleanliness: 0,
-        avgComfort: 0,
-        avgService: 0,
-    });
-    const [loading, setLoading] = useState(true);
-    const [propertyDropdownOpen, setPropertyDropdownOpen] = useState(false);
-
-    const navItems = [
-        { label: "Dashboard",  icon: <LayoutDashboard size={18} />, href: "/owner" },
-        { label: "Properties", icon: <Building2 size={18} />, href: "/owner/properties" },
-        { label: "Staff",      icon: <Users size={18} />, href: "/owner/staff" },
-        { label: "Reviews",    icon: <Star size={18} />, href: "/owner/reviews", active: true },
-        { label: "Messages",   icon: <MessageSquare size={18} />, href: "/owner/message" },
-        { label: "Settings",   icon: <Settings size={18} />, href: "/owner/setting/accountSetting" },
-    ];
-
-    // Fetch properties list for filter dropdown
-    useEffect(() => {
-        propertiesApi
-            .listProperties(ownerId, 1, 100)
-            .then((data) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const list: PropertyOption[] = (data.content ?? data.properties ?? data ?? []).map((p: any) => ({
-                    id: p.id,
-                    name: p.name,
-                }));
-                setProperties(list);
-            })
-            .catch(() => setProperties([]));
-    }, [ownerId]);
-
-    // Fetch reviews whenever page or property selection changes
-    useEffect(() => {
-        setLoading(true);
-        if (selectedPropertyId === null) {
-            // All properties
-            reviewsApi
-                .getAllReviews(currentPage, 10)
-                .then((data) => {
-                    const content: ReviewResponse[] = data.content ?? [];
-                    setReviews(content);
-                    setTotalPages(data.totalPages ?? 1);
-                    setTotalReviews(data.totalElements ?? content.length);
-
-                    // Compute our own summary stats from the returned page
-                    setSummaryStats({
-                        averageRating: avg(content.map((r) => r.overallRating)),
-                        avgCleanliness: avg(content.map((r) => r.cleanlinessRating)),
-                        avgComfort: avg(content.map((r) => r.comfortRating)),
-                        avgService: avg(content.map((r) => r.serviceRating)),
-                    });
-                })
-                .catch(() => {
-                    setReviews([]);
-                    setTotalPages(1);
-                    setTotalReviews(0);
-                })
-                .finally(() => setLoading(false));
-        } else {
-            // Specific property — use summary endpoint
-            reviewsApi
-                .getPropertyReviews(selectedPropertyId, currentPage, 10)
-                .then((data) => {
-                    const content: ReviewResponse[] = data.recentReviews ?? data.content ?? [];
-                    setReviews(content);
-                    setTotalPages(data.totalPages ?? 1);
-                    setTotalReviews(data.totalReviews ?? content.length);
-                    setSummaryStats({
-                        averageRating: data.averageRating ?? 0,
-                        avgCleanliness: data.avgCleanliness ?? 0,
-                        avgComfort: data.avgComfort ?? 0,
-                        avgService: data.avgService ?? 0,
-                    });
-                })
-                .catch(() => {
-                    setReviews([]);
-                    setTotalPages(1);
-                    setTotalReviews(0);
-                })
-                .finally(() => setLoading(false));
+  // Load owner properties on mount
+  useEffect(() => {
+    ownerPricingApi
+      .getOwnerProperties()
+      .then((list) => {
+        setProperties(list);
+        if (list.length > 0) {
+          setSelectedPropertyId(list[0].id);
         }
-    }, [selectedPropertyId, currentPage]);
+      })
+      .catch((err) => {
+        console.error("Failed to load properties:", err);
+        toast.error("Failed to load your properties.");
+      });
+  }, []);
 
-    const selectedPropertyName =
-        selectedPropertyId === null
-            ? "All Properties"
-            : properties.find((p) => p.id === selectedPropertyId)?.name ?? "Property";
+  // Fetch reviews whenever property or type changes
+  useEffect(() => {
+    if (selectedPropertyId === null) return;
 
-    const pageStart = currentPage * 10 + 1;
-    const pageEnd = Math.min((currentPage + 1) * 10, totalReviews);
+    const endpoint =
+      reviewType === "booking"
+        ? `/staff/reviews/booking?propertyId=${selectedPropertyId}`
+        : `/staff/reviews?propertyId=${selectedPropertyId}`;
 
+    setIsLoading(true);
+    api
+      .get(endpoint)
+      .then((res) => {
+        setReviews(res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch reviews:", err);
+        toast.error("Failed to load reviews.");
+        setReviews([]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [selectedPropertyId, reviewType]);
+
+  const filteredReviews = reviews.filter((r) => {
+    const q = search.toLowerCase();
     return (
-        <div
-            style={{
-                display: "flex",
-                height: "100vh",
-                width: "100vw",
-                position: "fixed",
-                top: 0,
-                left: 0,
-                background: "#faf9f7",
-                overflow: "hidden",
-                fontFamily: "sans-serif",
-            }}
-        >
-            {/* ── Sidebar ── */}
-            <nav
-                style={{
-                    width: 170,
-                    background: "#fff",
-                    borderRight: "1px solid #e8e8e8",
-                    padding: "16px 0",
-                    display: "flex",
-                    flexDirection: "column",
-                    flexShrink: 0,
-                }}
-            >
-                <div style={{ padding: "0 16px 20px" }}>
-                    <Logo width={120} height={36} />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    {navItems.map((item) => (
-                        <a
-                            key={item.label}
-                            href={item.href}
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 10,
-                                padding: "10px 16px",
-                                fontSize: 13,
-                                textDecoration: "none",
-                                transition: "all 0.15s",
-                                cursor: "pointer",
-                                borderLeft: item.active ? "3px solid #953002" : "3px solid transparent",
-                                background: item.active ? "rgba(149,48,2,0.08)" : "transparent",
-                                color: item.active ? "#953002" : "#4f4f4f",
-                                fontWeight: item.active ? 700 : 500,
-                            }}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </a>
-                    ))}
-                </div>
-            </nav>
-
-            {/* ── Main Content ── */}
-            <main
-                style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    minWidth: 0,
-                    overflow: "hidden",
-                }}
-            >
-                {/* Top Bar */}
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        alignItems: "center",
-                        padding: "8px 32px",
-                        flexShrink: 0,
-                    }}
-                >
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                        <a
-                            href="/owner/message"
-                            style={{
-                                background: "transparent",
-                                border: "none",
-                                cursor: "pointer",
-                                padding: 4,
-                                borderRadius: 6,
-                                display: "flex",
-                                alignItems: "center",
-                                textDecoration: "none",
-                            }}
-                        >
-                            <Bell size={18} color="#4f4f4f" />
-                        </a>
-                        <a
-                            href="/owner/profile"
-                            style={{
-                                display: "block",
-                                width: 32,
-                                height: 32,
-                                borderRadius: "50%",
-                                overflow: "hidden",
-                                border: "2px solid #953002",
-                            }}
-                        >
-                            <img
-                                src="https://api.dicebear.com/7.x/avataaars/svg?seed=owner"
-                                alt=""
-                                style={{ width: "100%", height: "100%", borderRadius: "50%" }}
-                            />
-                        </a>
-                    </div>
-                </div>
-
-                {/* Scrollable body */}
-                <div style={{ flex: 1, overflowY: "auto", padding: "0 32px 40px" }}>
-                    {/* Page Header */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-                        <div>
-                            <h1
-                                style={{
-                                    fontSize: 28,
-                                    fontWeight: 900,
-                                    color: "#1d1d1d",
-                                    margin: 0,
-                                    letterSpacing: 1,
-                                }}
-                            >
-                                REVIEWS
-                            </h1>
-                            <div style={{ marginTop: 4, fontSize: 13 }}>
-                                <span style={{ color: "#953002", fontWeight: 800, fontSize: 18 }}>{totalReviews}</span>{" "}
-                                <span style={{ color: "#828282" }}>total reviews</span>
-                            </div>
-                        </div>
-
-                        {/* Property Filter Dropdown */}
-                        <div style={{ position: "relative" }}>
-                            <button
-                                onClick={() => setPropertyDropdownOpen((v) => !v)}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                    padding: "8px 14px",
-                                    background: "#fff",
-                                    border: "1px solid #e0e0e0",
-                                    borderRadius: 8,
-                                    fontSize: 13,
-                                    fontWeight: 600,
-                                    color: "#1d1d1d",
-                                    cursor: "pointer",
-                                    minWidth: 180,
-                                    justifyContent: "space-between",
-                                }}
-                            >
-                                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                    <Building2 size={14} color="#953002" />
-                                    {selectedPropertyName}
-                                </span>
-                                <ChevronDown size={14} color="#828282" />
-                            </button>
-                            {propertyDropdownOpen && (
-                                <div
-                                    style={{
-                                        position: "absolute",
-                                        top: "calc(100% + 4px)",
-                                        right: 0,
-                                        background: "#fff",
-                                        border: "1px solid #e0e0e0",
-                                        borderRadius: 8,
-                                        boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-                                        zIndex: 100,
-                                        minWidth: 200,
-                                        overflow: "hidden",
-                                    }}
-                                >
-                                    <button
-                                        onClick={() => {
-                                            setSelectedPropertyId(null);
-                                            setCurrentPage(0);
-                                            setPropertyDropdownOpen(false);
-                                        }}
-                                        style={{
-                                            display: "block",
-                                            width: "100%",
-                                            textAlign: "left",
-                                            padding: "9px 14px",
-                                            background: selectedPropertyId === null ? "rgba(149,48,2,0.06)" : "transparent",
-                                            border: "none",
-                                            fontSize: 13,
-                                            fontWeight: selectedPropertyId === null ? 700 : 500,
-                                            color: selectedPropertyId === null ? "#953002" : "#1d1d1d",
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        All Properties
-                                    </button>
-                                    {properties.map((p) => (
-                                        <button
-                                            key={p.id}
-                                            onClick={() => {
-                                                setSelectedPropertyId(p.id);
-                                                setCurrentPage(0);
-                                                setPropertyDropdownOpen(false);
-                                            }}
-                                            style={{
-                                                display: "block",
-                                                width: "100%",
-                                                textAlign: "left",
-                                                padding: "9px 14px",
-                                                background: selectedPropertyId === p.id ? "rgba(149,48,2,0.06)" : "transparent",
-                                                border: "none",
-                                                borderTop: "1px solid #f5f5f5",
-                                                fontSize: 13,
-                                                fontWeight: selectedPropertyId === p.id ? 700 : 500,
-                                                color: selectedPropertyId === p.id ? "#953002" : "#1d1d1d",
-                                                cursor: "pointer",
-                                            }}
-                                        >
-                                            {p.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* KPI Cards */}
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(5, 1fr)",
-                            gap: 14,
-                            marginBottom: 18,
-                        }}
-                    >
-                        {/* Total Reviews */}
-                        <div
-                            style={{
-                                background: "#fff",
-                                border: "1px solid #e8e8e8",
-                                borderRadius: 14,
-                                padding: "16px 20px",
-                                gridColumn: "span 1",
-                            }}
-                        >
-                            <div style={{ fontSize: 10, fontWeight: 700, color: "#828282", letterSpacing: 0.8, marginBottom: 6 }}>
-                                TOTAL REVIEWS
-                            </div>
-                            <div style={{ fontSize: 32, fontWeight: 800, color: "#1d1d1d" }}>{totalReviews}</div>
-                            <div style={{ fontSize: 11, color: "#828282", marginTop: 2 }}>across all guests</div>
-                        </div>
-
-                        {/* Average Rating */}
-                        <div
-                            style={{
-                                background: "#fff",
-                                border: "1px solid #e8e8e8",
-                                borderRadius: 14,
-                                padding: "16px 20px",
-                            }}
-                        >
-                            <div style={{ fontSize: 10, fontWeight: 700, color: "#828282", letterSpacing: 0.8, marginBottom: 6 }}>
-                                AVG. RATING
-                            </div>
-                            <div style={{ fontSize: 32, fontWeight: 800, color: "#953002" }}>
-                                {summaryStats.averageRating > 0 ? summaryStats.averageRating.toFixed(1) : "—"}
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                                <StarRow rating={summaryStats.averageRating} size={12} />
-                            </div>
-                        </div>
-
-                        {/* Cleanliness */}
-                        <div
-                            style={{
-                                background: "#fff",
-                                border: "1px solid #e8e8e8",
-                                borderRadius: 14,
-                                padding: "16px 20px",
-                            }}
-                        >
-                            <div style={{ fontSize: 10, fontWeight: 700, color: "#828282", letterSpacing: 0.8, marginBottom: 6 }}>
-                                CLEANLINESS
-                            </div>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: "#1d1d1d" }}>
-                                {summaryStats.avgCleanliness > 0 ? summaryStats.avgCleanliness.toFixed(1) : "—"}
-                            </div>
-                            <div style={{ fontSize: 10, color: "#828282", marginTop: 2 }}>avg score</div>
-                        </div>
-
-                        {/* Comfort */}
-                        <div
-                            style={{
-                                background: "#fff",
-                                border: "1px solid #e8e8e8",
-                                borderRadius: 14,
-                                padding: "16px 20px",
-                            }}
-                        >
-                            <div style={{ fontSize: 10, fontWeight: 700, color: "#828282", letterSpacing: 0.8, marginBottom: 6 }}>
-                                COMFORT
-                            </div>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: "#1d1d1d" }}>
-                                {summaryStats.avgComfort > 0 ? summaryStats.avgComfort.toFixed(1) : "—"}
-                            </div>
-                            <div style={{ fontSize: 10, color: "#828282", marginTop: 2 }}>avg score</div>
-                        </div>
-
-                        {/* Service */}
-                        <div
-                            style={{
-                                background: "#fff",
-                                border: "1px solid #e8e8e8",
-                                borderRadius: 14,
-                                padding: "16px 20px",
-                            }}
-                        >
-                            <div style={{ fontSize: 10, fontWeight: 700, color: "#828282", letterSpacing: 0.8, marginBottom: 6 }}>
-                                SERVICE
-                            </div>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: "#1d1d1d" }}>
-                                {summaryStats.avgService > 0 ? summaryStats.avgService.toFixed(1) : "—"}
-                            </div>
-                            <div style={{ fontSize: 10, color: "#828282", marginTop: 2 }}>avg score</div>
-                        </div>
-                    </div>
-
-                    {/* Loading State */}
-                    {loading && (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                padding: "60px 0",
-                                color: "#828282",
-                                fontSize: 14,
-                            }}
-                        >
-                            Loading reviews...
-                        </div>
-                    )}
-
-                    {/* Empty State */}
-                    {!loading && reviews.length === 0 && (
-                        <div
-                            style={{
-                                background: "#fff",
-                                border: "1px solid #e8e8e8",
-                                borderRadius: 14,
-                                padding: "60px 0",
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                gap: 12,
-                            }}
-                        >
-                            <MessageSquare size={40} color="#e0e0e0" />
-                            <div style={{ fontSize: 16, fontWeight: 700, color: "#1d1d1d" }}>No reviews yet</div>
-                            <div style={{ fontSize: 13, color: "#828282" }}>
-                                {selectedPropertyId
-                                    ? "This property has no reviews yet."
-                                    : "You haven't received any guest reviews yet."}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Reviews List */}
-                    {!loading && reviews.length > 0 && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                            {reviews.map((review) => {
-                                const initials = `G${review.guestId ?? "?"}`;
-                                const photos = parsePhotoUrls(review.photoUrls);
-
-                                return (
-                                    <div
-                                        key={review.id}
-                                        style={{
-                                            background: "#fff",
-                                            border: "1px solid #e8e8e8",
-                                            borderRadius: 14,
-                                            padding: "20px 22px",
-                                        }}
-                                    >
-                                        {/* Review Header */}
-                                        <div
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "flex-start",
-                                                justifyContent: "space-between",
-                                                marginBottom: 12,
-                                            }}
-                                        >
-                                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                                {/* Avatar */}
-                                                <div
-                                                    style={{
-                                                        width: 44,
-                                                        height: 44,
-                                                        borderRadius: "50%",
-                                                        background: "#953002",
-                                                        color: "#fff",
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        fontWeight: 700,
-                                                        fontSize: 14,
-                                                        flexShrink: 0,
-                                                    }}
-                                                >
-                                                    {initials.slice(0, 2).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontSize: 14, fontWeight: 700, color: "#1d1d1d" }}>
-                                                        Guest #{review.guestId}
-                                                    </div>
-                                                    <div style={{ fontSize: 11, color: "#b0b0b0", marginTop: 2 }}>
-                                                        Booking #{review.bookingId}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div style={{ textAlign: "right" }}>
-                                                <StarRow rating={review.overallRating} size={15} />
-                                                <div style={{ fontSize: 11, color: "#828282", marginTop: 3 }}>
-                                                    {formatDate(review.createdAt)}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Sub-ratings Row */}
-                                        <div
-                                            style={{
-                                                display: "flex",
-                                                gap: 16,
-                                                flexWrap: "wrap",
-                                                marginBottom: 12,
-                                                padding: "8px 12px",
-                                                background: "#faf9f7",
-                                                borderRadius: 8,
-                                            }}
-                                        >
-                                            {[
-                                                { label: "Cleanliness", val: review.cleanlinessRating },
-                                                { label: "Comfort", val: review.comfortRating },
-                                                { label: "Service", val: review.serviceRating },
-                                                { label: "Value", val: review.valueRating },
-                                                { label: "Dining", val: review.diningRating },
-                                                { label: "Location", val: review.locationRating },
-                                            ].map(({ label, val }) =>
-                                                val != null ? (
-                                                    <div
-                                                        key={label}
-                                                        style={{
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            gap: 5,
-                                                        }}
-                                                    >
-                                                        <span
-                                                            style={{
-                                                                fontSize: 11,
-                                                                color: "#828282",
-                                                                fontWeight: 600,
-                                                            }}
-                                                        >
-                                                            {label}
-                                                        </span>
-                                                        <span
-                                                            style={{
-                                                                fontSize: 11,
-                                                                fontWeight: 800,
-                                                                color: "#953002",
-                                                            }}
-                                                        >
-                                                            {Number(val).toFixed(1)}
-                                                        </span>
-                                                    </div>
-                                                ) : null
-                                            )}
-                                        </div>
-
-                                        {/* Comment */}
-                                        {review.comment && (
-                                            <p
-                                                style={{
-                                                    fontSize: 13,
-                                                    color: "#4f4f4f",
-                                                    lineHeight: 1.6,
-                                                    margin: "0 0 12px",
-                                                }}
-                                            >
-                                                {review.comment}
-                                            </p>
-                                        )}
-
-                                        {/* Photos */}
-                                        {photos.length > 0 && (
-                                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                                {photos.map((url, idx) => (
-                                                    <img
-                                                        key={idx}
-                                                        src={url}
-                                                        alt={`Review photo ${idx + 1}`}
-                                                        style={{
-                                                            width: 80,
-                                                            height: 60,
-                                                            objectFit: "cover",
-                                                            borderRadius: 6,
-                                                            border: "1px solid #e8e8e8",
-                                                        }}
-                                                    />
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {/* Pagination */}
-                    {!loading && totalPages > 1 && (
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginTop: 18,
-                                padding: "12px 16px",
-                                background: "#fff",
-                                border: "1px solid #e8e8e8",
-                                borderRadius: 12,
-                            }}
-                        >
-                            <span style={{ fontSize: 12, color: "#953002" }}>
-                                Showing {pageStart} to {pageEnd} of {totalReviews} reviews
-                            </span>
-                            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                <button
-                                    onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                                    disabled={currentPage === 0}
-                                    style={{
-                                        width: 28,
-                                        height: 28,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        background: "transparent",
-                                        border: "none",
-                                        cursor: currentPage === 0 ? "not-allowed" : "pointer",
-                                        color: currentPage === 0 ? "#c0c0c0" : "#4f4f4f",
-                                        borderRadius: 6,
-                                    }}
-                                >
-                                    <ChevronLeft size={14} />
-                                </button>
-
-                                {Array.from({ length: totalPages }, (_, i) => i).map((p) => (
-                                    <button
-                                        key={p}
-                                        onClick={() => setCurrentPage(p)}
-                                        style={{
-                                            width: 28,
-                                            height: 28,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            border: "none",
-                                            cursor: "pointer",
-                                            fontSize: 12,
-                                            fontWeight: 600,
-                                            borderRadius: 6,
-                                            background: currentPage === p ? "#953002" : "transparent",
-                                            color: currentPage === p ? "#fff" : "#4f4f4f",
-                                        }}
-                                    >
-                                        {p + 1}
-                                    </button>
-                                ))}
-
-                                <button
-                                    onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                                    disabled={currentPage === totalPages - 1}
-                                    style={{
-                                        width: 28,
-                                        height: 28,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        background: "transparent",
-                                        border: "none",
-                                        cursor: currentPage === totalPages - 1 ? "not-allowed" : "pointer",
-                                        color: currentPage === totalPages - 1 ? "#c0c0c0" : "#4f4f4f",
-                                        borderRadius: 6,
-                                    }}
-                                >
-                                    <ChevronRight size={14} />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </main>
-        </div>
+      r.guest_name?.toLowerCase().includes(q) ||
+      r.comment?.toLowerCase().includes(q) ||
+      r.menu_item_name?.toLowerCase().includes(q)
     );
+  });
+
+  const renderStars = (rating: number) => (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          size={14}
+          className={star <= rating ? "fill-[#C05621] text-[#C05621]" : "text-[#E8E8E8]"}
+        />
+      ))}
+    </div>
+  );
+
+  return (
+    <>
+      <OwnerHeader
+        title="Reviews"
+        subtitle="See what guests are saying about your property and restaurant"
+        searchPlaceholder="Search reviews..."
+        onSearch={(q) => setSearch(q)}
+        actions={
+          properties.length > 0 ? (
+            <div className="flex items-center gap-2 bg-[#F5F6F8] border border-[#E8EAED] rounded-full px-3 py-1 text-xs">
+              <Building2 className="w-3.5 h-3.5 text-[#953002]" />
+              <select
+                value={selectedPropertyId ?? ""}
+                onChange={(e) => setSelectedPropertyId(Number(e.target.value))}
+                aria-label="Select property"
+                className="bg-transparent font-bold text-gray-800 outline-none cursor-pointer text-xs"
+              >
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null
+        }
+      />
+
+      <main className="mt-[64px] flex-1 p-4 lg:p-8 flex flex-col gap-6 max-w-7xl mx-auto w-full">
+        {/* Tab Switcher */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center gap-3">
+          <div className="flex items-center bg-[#F5F6F8] rounded-xl p-1 shadow-inner border border-[#E8E8E8]">
+            <button
+              onClick={() => setReviewType("booking")}
+              className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all ${
+                reviewType === "booking"
+                  ? "bg-white text-[#1A1A1A] shadow-sm"
+                  : "text-[#9E7B6A] hover:text-[#1A1A1A]"
+              }`}
+            >
+              Property Reviews
+            </button>
+            <button
+              onClick={() => setReviewType("item")}
+              className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all ${
+                reviewType === "item"
+                  ? "bg-white text-[#1A1A1A] shadow-sm"
+                  : "text-[#9E7B6A] hover:text-[#1A1A1A]"
+              }`}
+            >
+              Food &amp; Restaurant Reviews
+            </button>
+          </div>
+
+          <div className="ml-auto flex items-center gap-2 text-[13px] text-[#9E7B6A]">
+            <Star size={14} className="fill-[#C05621] text-[#C05621]" />
+            <span className="font-semibold">{filteredReviews.length} reviews</span>
+          </div>
+        </div>
+
+        {/* Reviews Table */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+          {/* Table Header */}
+          <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-4 border-b border-[#F0EBE7]">
+            <div className="col-span-3 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">
+              Guest &amp; Date
+            </div>
+            <div className="col-span-2 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">
+              {reviewType === "item" ? "Item" : "Property"}
+            </div>
+            <div className="col-span-2 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">
+              Rating
+            </div>
+            <div className="col-span-5 text-[11px] font-bold tracking-[0.1em] text-[#9E7B6A] uppercase">
+              Comment
+            </div>
+          </div>
+
+          <div className="p-3 flex flex-col gap-2">
+            {isLoading ? (
+              // Skeleton loading
+              Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="hidden lg:grid grid-cols-12 gap-4 px-4 py-4 rounded-2xl border border-[#F0EBE7] bg-white"
+                >
+                  <div className="col-span-3 flex flex-col gap-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <div className="col-span-2 flex items-center">
+                    <Skeleton className="h-7 w-24 rounded-lg" />
+                  </div>
+                  <div className="col-span-2 flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, s) => (
+                      <Skeleton key={s} className="h-3.5 w-3.5 rounded-sm" />
+                    ))}
+                  </div>
+                  <div className="col-span-5 flex flex-col gap-1.5">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-3/4" />
+                  </div>
+                </div>
+              ))
+            ) : filteredReviews.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-[#9E7B6A]">
+                <CheckCircle2 className="h-12 w-12 text-[#2D7D5C] opacity-40 mb-4" />
+                <p className="text-[15px] font-bold text-[#1c1917] m-0">No reviews yet</p>
+                <p className="text-[13px] mt-1">
+                  {reviewType === "booking"
+                    ? "Guest stay reviews will appear here."
+                    : "Food & restaurant reviews will appear here."}
+                </p>
+              </div>
+            ) : (
+              filteredReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="flex flex-col lg:grid lg:grid-cols-12 gap-3 lg:gap-4 px-4 py-4 lg:items-center rounded-2xl border border-[#F0EBE7] bg-white hover:border-[#E8DDD8] hover:shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all duration-200"
+                >
+                  {/* Guest & Date */}
+                  <div className="lg:col-span-3 flex flex-col justify-center">
+                    <span className="text-[14px] font-bold text-[#1A1A1A]">
+                      {review.guest_name || "Guest"}
+                    </span>
+                    <span className="text-[12px] font-medium text-[#9E7B6A]">
+                      {new Date(review.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  {/* Item / Property label */}
+                  <div className="lg:col-span-2 flex items-center">
+                    <span className="text-[13px] font-semibold text-[#1A1A1A] bg-[#FFF8F0] px-3 py-1 rounded-lg inline-block">
+                      {reviewType === "item" ? review.menu_item_name || "Menu Item" : "Stay Review"}
+                    </span>
+                  </div>
+
+                  {/* Rating */}
+                  <div className="lg:col-span-2 flex items-center">
+                    {renderStars(review.rating)}
+                    <span className="ml-2 text-[12px] font-bold text-[#C05621]">
+                      {review.rating}/5
+                    </span>
+                  </div>
+
+                  {/* Comment */}
+                  <div className="lg:col-span-5 flex flex-col justify-center">
+                    <p className="text-[13px] text-[#1A1A1A] leading-relaxed line-clamp-2 m-0">
+                      &quot;{review.comment}&quot;
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </main>
+    </>
+  );
 }
