@@ -7,6 +7,7 @@ import RoomBuilderForm from "@/components/owner/onboarding/room-builder-form";
 import PoliciesForm from "@/components/owner/onboarding/policies-form";
 import MediaUploader from "@/components/owner/onboarding/media-uploader";
 import { useEffect, useState } from "react";
+import OwnerHeader from "@/components/owner/layout/owner-header";
 
 export default function NewPropertyPage() {
   const { currentStep } = useOnboardingStore();
@@ -35,9 +36,7 @@ export default function NewPropertyPage() {
     }
   };
 
-  return (
+  return (<><OwnerHeader title="Add New Property" subtitle="List a new property on Primestay" /><main className="mt-[64px] flex-1">
     <OnboardingLayout>
       {renderStep()}
-    </OnboardingLayout>
-  );
-}
+    </OnboardingLayout></main></>);}

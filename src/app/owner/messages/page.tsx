@@ -7,7 +7,9 @@ import OwnerInbox from "@/components/owner/messages/OwnerInbox";
 import OwnerStaffInbox from "@/components/owner/messages/OwnerStaffInbox";
 import AutoReplyClient from "@/app/staff/auto-reply/auto-reply-client";
 import StaffQuickReplyClient from "@/components/owner/messages/StaffQuickReplyClient";
-import { MessageCircle, Bot, Users, Loader2 } from "lucide-react";
+import { MessageCircle, Bot, Users } from "lucide-react";
+import OwnerHeader from "@/components/owner/layout/owner-header";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRBACStore } from "@/store/auth/rbac.store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -37,30 +39,51 @@ export default function MessagesPage() {
 
   if (rbacLoading && !ownerPerms) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--brand-primary)]" />
-      </div>
+      <>
+        <OwnerHeader
+          title="Messages"
+          subtitle="Communicate with your guests"
+        />
+        <main className="mt-[64px] flex items-center justify-center h-[60vh]">
+          <div className="flex flex-col gap-4 w-full max-w-2xl px-6">
+            <Skeleton className="h-14 w-full rounded-xl" />
+            <Skeleton className="h-10 w-64 rounded-xl" />
+            <Skeleton className="h-[400px] w-full rounded-xl" />
+          </div>
+        </main>
+      </>
     );
   }
 
   if (!isMessagingEnabledByAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-slate-500">
-        <MessageCircle size={48} className="mb-4 opacity-20" />
-        <h2 className="text-xl font-semibold text-slate-900 mb-2">Messaging is Disabled</h2>
-        <p>Please contact the administrator to enable the guest messaging feature for your properties.</p>
-      </div>
+      <>
+        <OwnerHeader
+          title="Messages"
+          subtitle="Communicate with your guests"
+        />
+        <main className="mt-[64px] flex flex-col items-center justify-center h-full p-8 text-slate-500">
+          <MessageCircle size={48} className="mb-4 opacity-20" />
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">Messaging is Disabled</h2>
+          <p>Please contact the administrator to enable the guest messaging feature for your properties.</p>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Messages</h1>
-          <p className="text-slate-500 mt-1">Communicate with guests and staff, and manage automated replies.</p>
+    <>
+      <OwnerHeader
+        title="Messages"
+        subtitle="Communicate with your guests"
+      />
+      <main className="mt-[64px] p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Messages</h1>
+            <p className="text-slate-500 mt-1">Communicate with guests and staff, and manage automated replies.</p>
+          </div>
         </div>
-      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 shrink-0 gap-4">
@@ -134,6 +157,7 @@ export default function MessagesPage() {
           <OwnerStaffInbox propertyId={selectedPropertyId} />
         </TabsContent>
       </Tabs>
-    </div>
+      </main>
+    </>
   );
 }

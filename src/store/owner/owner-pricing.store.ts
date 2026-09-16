@@ -17,6 +17,7 @@ interface OwnerPricingState {
   seasonalRules: SeasonalRule[];
   selectedDates: string[]; // ['2026-10-01', '2026-10-02']
   isBulkModalOpen: boolean;
+  isBulkAvailabilityModalOpen: boolean;
   isSeasonalModalOpen: boolean;
   loading: boolean;
   actionLoading: boolean;
@@ -39,16 +40,24 @@ interface OwnerPricingState {
   selectDateRange: (startStr: string, endStr: string) => void;
   clearSelection: () => void;
   setBulkModalOpen: (open: boolean) => void;
+  setBulkAvailabilityModalOpen: (open: boolean) => void;
   setSeasonalModalOpen: (open: boolean) => void;
 
   // Updates
   bulkUpdatePrices: (
     customPrice: number | null,
     status?: "AVAILABLE" | "BLOCKED",
+    notes?: string,
+    availableRoomsOverride?: number | null
+  ) => Promise<void>;
+  bulkUpdateAvailabilityCount: (
+    availableRoomsOverride: number | null,
+    status?: "AVAILABLE" | "BLOCKED",
     notes?: string
   ) => Promise<void>;
   applyBlackoutDates: (dates: string[], notes?: string) => Promise<void>;
   clearPriceOverrides: (dates: string[]) => Promise<void>;
+  clearAvailabilityOverrides: (dates: string[]) => Promise<void>;
 
   // Seasonal Rules
   addSeasonalRule: (rule: Omit<SeasonalRule, "id">) => Promise<void>;
@@ -93,6 +102,7 @@ export const useOwnerPricingStore = create<OwnerPricingState>((set, get) => ({
   ],
   selectedDates: [],
   isBulkModalOpen: false,
+  isBulkAvailabilityModalOpen: false,
   isSeasonalModalOpen: false,
   loading: false,
   actionLoading: false,
@@ -204,6 +214,10 @@ export const useOwnerPricingStore = create<OwnerPricingState>((set, get) => ({
     set({ isBulkModalOpen: open });
   },
 
+  setBulkAvailabilityModalOpen: (open: boolean) => {
+    set({ isBulkAvailabilityModalOpen: open });
+  },
+
   setSeasonalModalOpen: (open: boolean) => {
     set({ isSeasonalModalOpen: open });
   },
@@ -211,7 +225,8 @@ export const useOwnerPricingStore = create<OwnerPricingState>((set, get) => ({
   bulkUpdatePrices: async (
     customPrice: number | null,
     status: "AVAILABLE" | "BLOCKED" = "AVAILABLE",
-    notes?: string
+    notes?: string,
+    availableRoomsOverride?: number | null
   ) => {
     const { propertyId, selectedRoomId, selectedDates } = get();
     if (!propertyId || selectedDates.length === 0) return;
@@ -225,12 +240,43 @@ export const useOwnerPricingStore = create<OwnerPricingState>((set, get) => ({
         newStatus: status,
         customPrice: customPrice,
         notes: notes || undefined,
+        availableRoomsOverride: availableRoomsOverride !== undefined ? availableRoomsOverride : undefined,
       });
       set({ isBulkModalOpen: false, selectedDates: [], actionLoading: false });
       await get().fetchCalendar();
     } catch (err: unknown) {
       set({
         error: formatApiError(err, "Failed to apply bulk pricing"),
+        actionLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  bulkUpdateAvailabilityCount: async (
+    availableRoomsOverride: number | null,
+    status: "AVAILABLE" | "BLOCKED" = "AVAILABLE",
+    notes?: string
+  ) => {
+    const { propertyId, selectedRoomId, selectedDates } = get();
+    if (!propertyId || selectedDates.length === 0) return;
+
+    set({ actionLoading: true, error: null });
+    try {
+      await ownerPricingApi.bulkUpdateAvailability({
+        propertyId,
+        roomId: selectedRoomId === "ALL" ? null : selectedRoomId,
+        dates: selectedDates,
+        newStatus: status,
+        customPrice: undefined, // Do not override custom price
+        notes: notes || undefined,
+        availableRoomsOverride,
+      });
+      set({ isBulkAvailabilityModalOpen: false, selectedDates: [], actionLoading: false });
+      await get().fetchCalendar();
+    } catch (err: unknown) {
+      set({
+        error: formatApiError(err, "Failed to apply bulk availability"),
         actionLoading: false,
       });
       throw err;
@@ -280,6 +326,32 @@ export const useOwnerPricingStore = create<OwnerPricingState>((set, get) => ({
     } catch (err: unknown) {
       set({
         error: formatApiError(err, "Failed to reset price overrides"),
+        actionLoading: false,
+      });
+      throw err;
+    }
+  },
+
+  clearAvailabilityOverrides: async (dates: string[]) => {
+    const { propertyId, selectedRoomId } = get();
+    if (!propertyId || dates.length === 0) return;
+
+    set({ actionLoading: true, error: null });
+    try {
+      await ownerPricingApi.bulkUpdateAvailability({
+        propertyId,
+        roomId: selectedRoomId === "ALL" ? null : selectedRoomId,
+        dates,
+        newStatus: "AVAILABLE",
+        customPrice: undefined, // ensure we don't reset price here
+        availableRoomsOverride: null, // this resets the override
+        notes: "Reset to full availability",
+      });
+      set({ actionLoading: false, selectedDates: [] });
+      await get().fetchCalendar();
+    } catch (err: unknown) {
+      set({
+        error: formatApiError(err, "Failed to reset availability overrides"),
         actionLoading: false,
       });
       throw err;

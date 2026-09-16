@@ -11,6 +11,7 @@ import { OwnerProperty } from "@/models/owner";
 import { Loader2, Edit, MapPin, Building2, BedDouble, Users, HandCoins, RefreshCcw, AlertCircle, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import PropertyStatusBadge from "@/components/owner/properties/property-status-badge";
+import RoomTypeSheet from "@/components/owner/properties/room-type-sheet";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AxiosError } from "axios";
@@ -28,6 +29,9 @@ export default function PropertyDetailsDashboard() {
   
   const [loading, setLoading] = useState(true);
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
+  
+  const [isRoomSheetOpen, setIsRoomSheetOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<OwnerRoomType | null>(null);
 
   // Modal states
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);

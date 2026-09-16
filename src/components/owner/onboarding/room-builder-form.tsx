@@ -18,6 +18,7 @@ const roomSchema = z.object({
   baseCapacity: z.number().min(1, "Minimum 1 person"),
   maxCapacity: z.number().min(1, "Minimum 1 person"),
   bedConfiguration: z.string().min(1, "Bed configuration is required"),
+  inventory: z.number().min(1, "Minimum 1 room"),
 });
 
 const formSchema = z.object({
@@ -34,6 +35,7 @@ export default function RoomBuilderForm() {
         ...r,
         roomType: r.roomType || "",
         price: r.price || 100,
+        inventory: r.inventory || 1,
       })) : [
         {
           id: uuidv4(),
@@ -41,7 +43,8 @@ export default function RoomBuilderForm() {
           price: 100,
           baseCapacity: 2,
           maxCapacity: 2,
-          bedConfiguration: "1 Double Bed"
+          bedConfiguration: "1 Double Bed",
+          inventory: 1
         }
       ],
     },
@@ -141,6 +144,27 @@ export default function RoomBuilderForm() {
 
                 <FormField
                   control={form.control}
+                  name={`rooms.${index}.inventory`}
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-slate-700 font-medium">Number of Rooms (How many do you have?)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min={1} 
+                          className="h-11 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] transition-all rounded-xl"
+                          {...field} 
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value === "" ? "" as unknown as number : parseInt(e.target.value, 10))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name={`rooms.${index}.baseCapacity`}
                   render={({ field }) => (
                     <FormItem>
@@ -217,7 +241,7 @@ export default function RoomBuilderForm() {
           type="button"
           variant="outline"
           className="w-full border-dashed border-2 border-slate-200 h-20 rounded-2xl text-slate-500 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/5 transition-all duration-300 flex items-center justify-center font-medium text-lg group"
-          onClick={() => append({ id: uuidv4(), roomType: "", price: 100, baseCapacity: 2, maxCapacity: 2, bedConfiguration: "1 Double Bed" })}
+          onClick={() => append({ id: uuidv4(), roomType: "", price: 100, baseCapacity: 2, maxCapacity: 2, bedConfiguration: "1 Double Bed", inventory: 1 })}
         >
           <div className="bg-slate-100 p-2 rounded-full mr-3 group-hover:bg-[var(--brand-primary)]/10 transition-colors">
             <Plus className="w-5 h-5" />

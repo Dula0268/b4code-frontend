@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import OwnerHeader from "@/components/owner/layout/owner-header";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import PropertyCard from "@/components/owner/properties/property-card";
 import PropertyListEmpty from "@/components/owner/properties/property-list-empty";
@@ -46,23 +48,8 @@ export default function OwnerPropertiesPage() {
 
   return (
     <>
-      <div className="p-6 lg:p-8 flex-1 w-full flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-[24px] font-bold text-[#1A1A1A]">My Properties</h1>
-            <p className="text-[14px] text-[#9E7B6A] mt-0.5">Manage your property listings and their lifecycle status.</p>
-          </div>
-          <button
-            onClick={() => {
-              resetOnboarding();
-              router.push("/owner/properties/new");
-            }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#953002] text-white text-[13px] font-bold hover:opacity-90 shadow-sm hover:-translate-y-0.5 transition-all"
-          >
-            <Plus size={16} /> Add Property
-          </button>
-        </div>
+      <OwnerHeader title="My Properties" subtitle="Manage your listed properties" actions={<button onClick={() => { resetOnboarding(); router.push("/owner/properties/new"); }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#953002] text-white text-[13px] font-bold hover:opacity-90 shadow-sm hover:-translate-y-0.5 transition-all"><Plus size={16} /> Add Property</button>} /> <main className="mt-[64px] p-6 lg:p-8 flex-1 w-full flex flex-col gap-6">
+        
 
         {/* Search + Tabs */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -95,9 +82,7 @@ export default function OwnerPropertiesPage() {
 
         {/* Grid */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 size={32} className="animate-spin text-[#953002]" />
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">{[1, 2, 3].map((i) => (<Skeleton key={i} className="h-[300px] w-full rounded-2xl" />))}</div>
         ) : properties.length === 0 ? (
           <PropertyListEmpty filtered={Boolean(statusFilter || debouncedSearch)} />
         ) : (
@@ -133,7 +118,4 @@ export default function OwnerPropertiesPage() {
             )}
           </>
         )}
-      </div>
-    </>
-  );
-}
+      </main></>  );}

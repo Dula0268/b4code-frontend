@@ -5,6 +5,7 @@ import OwnerHeader from "@/components/owner/layout/owner-header";
 import { useOwnerGuard } from "@/hooks/use-owner-guard";
 import { ownerStaffApi, PendingStaffMember } from "@/api/owner/staff.api";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {

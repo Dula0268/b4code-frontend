@@ -15,6 +15,7 @@ import SeasonalPricingTab from "@/components/owner/rates/seasonal-pricing-tab";
 import RatePlansTab from "@/components/owner/rates/rate-plans-tab";
 import PromotionsTab from "@/components/owner/rates/promotions-tab";
 import RestrictionsTab from "@/components/owner/rates/restrictions-tab";
+import RatesCalendar from "@/components/owner/rates/rates-calendar";
 import { Calendar, Sparkles, Tag, Building2, AlertCircle, TicketPercent, ShieldAlert } from "lucide-react";
 
 export default function OwnerRatesPage() {
@@ -23,7 +24,7 @@ export default function OwnerRatesPage() {
   const { propertyId, setPropertyId, error } = useOwnerPricingStore();
 
   const [properties, setProperties] = useState<Array<{ id: number; name: string }>>([]);
-  const [activeTab, setActiveTab] = useState("seasonal");
+  const [activeTab, setActiveTab] = useState("calendar");
 
   useEffect(() => {
     // Load ONLY the authenticated owner's properties
@@ -66,8 +67,8 @@ export default function OwnerRatesPage() {
   return (
     <>
       <OwnerHeader
-        title="Rates & Availability"
-        subtitle="Manage daily room rates, seasonal surges, and blackout dates"
+        title="Rates & Pricing"
+        subtitle="Manage daily room rates, seasonal surges, and price rules"
         actions={
           <div className="flex items-center gap-2 bg-[#F5F6F8] border border-[#E8EAED] rounded-full px-3 py-1 text-xs">
             <Building2 className="w-3.5 h-3.5 text-[#953002]" />
@@ -121,7 +122,14 @@ export default function OwnerRatesPage() {
 
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-          <TabsList className="bg-white border border-[#E8EAED] p-1.5 rounded-2xl shadow-2xs inline-flex h-auto gap-1">
+          <TabsList className="bg-white border border-[#E8EAED] p-1.5 rounded-2xl shadow-2xs inline-flex h-auto gap-1 flex-wrap">
+            <TabsTrigger
+              value="calendar"
+              className="rounded-xl text-xs font-bold px-4 py-2.5 data-[state=active]:bg-[#953002] data-[state=active]:text-white transition-all gap-2"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              Pricing Calendar
+            </TabsTrigger>
             <TabsTrigger
               value="seasonal"
               className="rounded-xl text-xs font-bold px-4 py-2.5 data-[state=active]:bg-[#953002] data-[state=active]:text-white transition-all gap-2"
@@ -151,6 +159,10 @@ export default function OwnerRatesPage() {
               Restrictions
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="calendar" className="mt-0 outline-none">
+            <RatesCalendar />
+          </TabsContent>
 
           {/* Tab 2: Seasonal Pricing */}
           <TabsContent value="seasonal" className="mt-0 outline-none">
