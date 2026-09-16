@@ -28,6 +28,10 @@
 - Verified successful compilation (TypeScript build).
 - Verified linting passes.
 
+## Fixes Implemented
+- **Bed Configuration Bug Fix**: Replaced direct binding to `formData.bedConfigurations` (which wiped out trailing commas due to array parsing on every keystroke) with a local string state (`bedInput`). This string maintains user input (like commas) while updating `formData.bedConfigurations` properly on every keystroke.
+- **Number Input Bug Fix**: Modified empty number fields (`basePrice`, `inventory`, `maxAdults`, `maxChildren`) to use string initialization (`"" as unknown as number`) instead of `0`. The `onChange` handler checks for empty string to prevent number input fields from erasing explicitly inputted `0` values.
+
 ## Next Steps
 - Implement room-specific image uploads or gallery if required.
 - Add delete room functionality to the UI.

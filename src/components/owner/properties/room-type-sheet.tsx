@@ -23,12 +23,13 @@ const CATEGORIES = ["Standard", "Deluxe", "Suite", "Family", "Studio", "Apartmen
 
 export default function RoomTypeSheet({ isOpen, onOpenChange, propertyId, roomType, onSuccess }: RoomTypeSheetProps) {
   const [loading, setLoading] = useState(false);
+  const [bedInput, setBedInput] = useState("");
   const [formData, setFormData] = useState<OwnerRoomTypeRequest>({
     propertyId: propertyId,
     name: "",
     description: "",
     roomCategory: "",
-    basePrice: 0,
+    basePrice: "" as unknown as number,
     inventory: 1,
     maxAdults: 2,
     maxChildren: 0,
@@ -43,26 +44,28 @@ export default function RoomTypeSheet({ isOpen, onOpenChange, propertyId, roomTy
         name: roomType.name || "",
         description: roomType.description || "",
         roomCategory: roomType.roomCategory || "",
-        basePrice: roomType.basePrice || 0,
+        basePrice: roomType.basePrice ?? 0,
         inventory: roomType.inventory || 1,
         maxAdults: roomType.maxAdults || 2,
-        maxChildren: roomType.maxChildren || 0,
+        maxChildren: roomType.maxChildren ?? 0,
         amenities: roomType.amenities || [],
         bedConfigurations: roomType.bedConfigurations || [],
       });
+      setBedInput((roomType.bedConfigurations || []).join(", "));
     } else if (!roomType && isOpen) {
       setFormData({
         propertyId,
         name: "",
         description: "",
         roomCategory: "",
-        basePrice: 0,
+        basePrice: "" as unknown as number,
         inventory: 1,
         maxAdults: 2,
-        maxChildren: 0,
+        maxChildren: "" as unknown as number,
         amenities: [],
         bedConfigurations: [],
       });
+      setBedInput("");
     }
   }, [roomType, propertyId, isOpen]);
 
@@ -144,8 +147,8 @@ export default function RoomTypeSheet({ isOpen, onOpenChange, propertyId, roomTy
               id="basePrice" 
               type="number" 
               min="0"
-              value={formData.basePrice === 0 && !roomType ? "" : formData.basePrice}
-              onChange={(e) => setFormData({ ...formData, basePrice: Number(e.target.value) })}
+              value={formData.basePrice}
+              onChange={(e) => setFormData({ ...formData, basePrice: e.target.value === "" ? "" as unknown as number : Number(e.target.value) })}
               required
             />
           </div>
@@ -156,8 +159,8 @@ export default function RoomTypeSheet({ isOpen, onOpenChange, propertyId, roomTy
               id="inventory" 
               type="number" 
               min="1"
-              value={formData.inventory === 0 ? "" : formData.inventory}
-              onChange={(e) => setFormData({ ...formData, inventory: Number(e.target.value) })}
+              value={formData.inventory}
+              onChange={(e) => setFormData({ ...formData, inventory: e.target.value === "" ? "" as unknown as number : Number(e.target.value) })}
               required
             />
           </div>
@@ -169,8 +172,8 @@ export default function RoomTypeSheet({ isOpen, onOpenChange, propertyId, roomTy
                 id="maxAdults" 
                 type="number" 
                 min="1"
-                value={formData.maxAdults === 0 ? "" : formData.maxAdults}
-                onChange={(e) => setFormData({ ...formData, maxAdults: Number(e.target.value) })}
+                value={formData.maxAdults}
+                onChange={(e) => setFormData({ ...formData, maxAdults: e.target.value === "" ? "" as unknown as number : Number(e.target.value) })}
                 required
               />
             </div>
@@ -180,8 +183,8 @@ export default function RoomTypeSheet({ isOpen, onOpenChange, propertyId, roomTy
                 id="maxChildren" 
                 type="number" 
                 min="0"
-                value={formData.maxChildren === 0 && !roomType ? "" : formData.maxChildren}
-                onChange={(e) => setFormData({ ...formData, maxChildren: Number(e.target.value) })}
+                value={formData.maxChildren}
+                onChange={(e) => setFormData({ ...formData, maxChildren: e.target.value === "" ? "" as unknown as number : Number(e.target.value) })}
                 required
               />
             </div>
@@ -191,8 +194,14 @@ export default function RoomTypeSheet({ isOpen, onOpenChange, propertyId, roomTy
             <Label htmlFor="bedConfigurations">Bed Configuration (comma separated)</Label>
             <Input 
               id="bedConfigurations" 
-              value={formData.bedConfigurations.join(", ")}
-              onChange={(e) => setFormData({ ...formData, bedConfigurations: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
+              value={bedInput}
+              onChange={(e) => {
+                setBedInput(e.target.value);
+                setFormData({ 
+                  ...formData, 
+                  bedConfigurations: e.target.value.split(",").map(s => s.trim()).filter(Boolean) 
+                });
+              }}
               placeholder="e.g. 1 King Bed, 1 Sofa Bed"
             />
           </div>
