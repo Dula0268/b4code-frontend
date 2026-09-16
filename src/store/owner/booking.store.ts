@@ -75,7 +75,13 @@ export const useOwnerBookingStore = create<OwnerBookingState>((set, get) => ({
 
   connect: () => {
     const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      // Use the shared getWsBrokerUrl utility which correctly formats
+      // the websocket URL for both dev (ws://localhost:8080) and production
+      // (wss://api.prime-stay.app) based on NEXT_PUBLIC_API_URL.
+      webSocketFactory: () => {
+        const { getWsBrokerUrl } = require('@/lib/ws');
+        return new SockJS(getWsBrokerUrl().replace('/ws/messages/raw', '/ws'));
+      },
       debug: (str) => console.log(str),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,

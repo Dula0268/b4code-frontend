@@ -2,7 +2,23 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 import { getToken, setToken, getRefreshToken, setRefreshToken } from './token';
 
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+// NEXT_PUBLIC_API_URL is inlined at build time. In dev the localhost fallback
+// keeps things working without a .env file; in production the variable MUST be
+// supplied as a Docker build-arg — if it is missing the bundle will call an
+// undefined base URL and every API request will fail immediately.
+const _apiUrl =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:8080' : undefined);
+
+if (!_apiUrl) {
+  throw new Error(
+    '[axios.ts] NEXT_PUBLIC_API_URL must be defined at build time in production. ' +
+    'Pass --build-arg NEXT_PUBLIC_API_URL=https://api.prime-stay.app to docker build.'
+  );
+}
+
+export const BASE_URL = _apiUrl;
+
 
 const api = axios.create({
   baseURL: `${BASE_URL}/api`,

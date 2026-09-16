@@ -44,7 +44,9 @@ export default function IcalSyncModal({
 
   // Derive export URL based on current origin
   const apiBase = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-  const backendBase = "http://localhost:8080";
+  const backendBase =
+    process.env.NEXT_PUBLIC_API_URL ??
+    (process.env.NODE_ENV === "development" ? "http://localhost:8080" : "");
   const exportUrl =
     exportRoomId === "ALL"
       ? `${backendBase}/api/v1/public/ical/properties/${propertyId}/calendar.ics`

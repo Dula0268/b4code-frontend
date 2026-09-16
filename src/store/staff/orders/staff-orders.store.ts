@@ -688,7 +688,9 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
         staffEventSource.close();
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL ??
+        (process.env.NODE_ENV === 'development' ? 'http://localhost:8080' : '');
       const apiBase = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
       const token = getToken() || "";
       console.log(`🔌 Establishing Staff SSE connection to property ${propertyId}...`);

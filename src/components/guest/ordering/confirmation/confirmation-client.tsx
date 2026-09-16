@@ -24,7 +24,9 @@ export default function ConfirmationClient() {
     if (!order?.id || simulated) return;
 
     const numericOrderId = order.id.replace('#ORD-', '');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL ??
+      (process.env.NODE_ENV === 'development' ? 'http://localhost:8080' : '');
     const apiBase = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
     const guestSessionId = useGuestSessionStore.getState().sessionId;
     const orderQuery = guestSessionId ? `?guestSessionId=${encodeURIComponent(guestSessionId)}` : "";

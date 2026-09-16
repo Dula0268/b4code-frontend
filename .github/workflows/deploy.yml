@@ -46,14 +46,14 @@ jobs:
           docker push $ECR_REGISTRY/$IMAGE:latest
 
       # Guard against the failure mode above: fail loudly if the built bundle
-      # still references localhost.
+      # does not contain the production API URL.
       - name: Verify API URL was baked in
         run: |
           n=$(docker run --rm --entrypoint sh $ECR_REGISTRY/$IMAGE:${{ github.sha }} \
-                -c 'grep -rl "localhost:8080" .next/static 2>/dev/null | wc -l')
-          echo "chunks referencing localhost:8080 = $n"
-          if [ "$n" != "0" ]; then
-            echo "::error::Client bundle still references localhost:8080 - NEXT_PUBLIC_API_URL was not applied"
+                -c 'grep -rl "https://api.prime-stay.app" .next/static 2>/dev/null | wc -l')
+          echo "chunks referencing production API = $n"
+          if [ "$n" = "0" ]; then
+            echo "::error::Production API URL was not found in the client bundle"
             exit 1
           fi
 

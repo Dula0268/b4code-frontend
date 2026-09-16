@@ -73,7 +73,10 @@ export const useStaffBookingsStore = create<StaffBookingsState & StaffBookingsAc
       bookingsEventSource.close();
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL ??
+      (process.env.NODE_ENV === 'development' ? 'http://localhost:8080' : '');
+
     const apiBase = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
     const token = getToken() || "";
 

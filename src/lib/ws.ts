@@ -7,7 +7,12 @@
  * block from a hardcoded "ws://localhost:8080".
  */
 export function getWsBrokerUrl(): string {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  // Use the same BASE_URL logic as axios.ts (dev fallback only; production
+  // requires NEXT_PUBLIC_API_URL to be baked in at Docker build time).
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ??
+    (process.env.NODE_ENV === 'development' ? 'http://localhost:8080' : '');
+
 
   // The broker path lives at the API host root, not under /api — strip it if present.
   const base = apiUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
