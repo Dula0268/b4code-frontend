@@ -102,26 +102,36 @@ interface KpiCardProps {
   loading: boolean;
 }
 function KpiCard({ title, value, subtitle, icon, iconBg, loading }: KpiCardProps) {
+  // Extract base color for the background blob effect (removing opacity modifiers)
+  const baseColorClass = iconBg.split('/')[0].replace(/\[rgba.*\]/, 'bg-[var(--brand-primary)]');
+  
   return (
-    <Card className="rounded-[20px] shadow-sm border-[#E8EAED] bg-white">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-bold text-[#6B7280]">{title}</CardTitle>
-        <div className={`w-9 h-9 rounded-full flex items-center justify-center ${iconBg}`}>{icon}</div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <>
-            <Skeleton className="h-7 w-28 mb-1" />
-            <Skeleton className="h-3 w-20" />
-          </>
-        ) : (
-          <>
-            <div className="text-2xl font-black text-[#1A1A1A]">{value}</div>
-            <p className="text-xs text-[#6B7280] mt-1">{subtitle}</p>
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <div className="group relative bg-gradient-to-br from-white to-[#FDFCFB] rounded-3xl border border-[#E8DDD8] shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(149,48,2,0.06)] hover:-translate-y-1 transition-all duration-300 p-5 flex flex-col justify-between overflow-hidden">
+      {/* Decorative subtle background blob */}
+      <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-[0.03] group-hover:opacity-[0.06] group-hover:scale-110 transition-all duration-500 blur-2xl ${baseColorClass}`} />
+      
+      <div className="relative z-10">
+        <div className="flex flex-row items-center justify-between mb-5">
+          <h3 className="text-[13px] font-bold text-[#8C7A73] group-hover:text-[#4A3F3A] transition-colors uppercase tracking-wider">{title}</h3>
+          <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center ${iconBg} shadow-inner group-hover:scale-110 transition-transform duration-300`}>{icon}</div>
+        </div>
+        <div>
+          {loading ? (
+            <>
+              <Skeleton className="h-8 w-28 mb-2" />
+              <Skeleton className="h-4 w-20" />
+            </>
+          ) : (
+            <>
+              <div className="text-[32px] font-black text-[#1A1A1A] tracking-tight leading-none mb-2">{value}</div>
+              <p className="text-[13px] font-medium text-[#9E7B6A] flex items-center gap-1.5 opacity-90">
+                {subtitle}
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
