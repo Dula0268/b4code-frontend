@@ -8,12 +8,14 @@ import { ownerRoomApi, OwnerRoomType } from "@/api/owner/room.api";
 import { ownerSettingsApi, BankAccountDto } from "@/api/owner/settings.api";
 import { ownerPayoutsApi } from "@/api/owner/payouts.api";
 import { OwnerProperty } from "@/models/owner";
-import { Loader2, Edit, MapPin, Building2, BedDouble, Users, HandCoins, RefreshCcw, AlertCircle } from "lucide-react";
+import { Loader2, Edit, MapPin, Building2, BedDouble, Users, HandCoins, RefreshCcw, AlertCircle, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import PropertyStatusBadge from "@/components/owner/properties/property-status-badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AxiosError } from "axios";
+import EditPropertyModal from "@/components/owner/properties/edit-property-modal";
+import RoomFormModal from "@/components/owner/properties/room-form-modal";
 
 export default function PropertyDetailsDashboard() {
   const { id } = useParams() as { id: string };
@@ -26,6 +28,11 @@ export default function PropertyDetailsDashboard() {
   
   const [loading, setLoading] = useState(true);
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
+
+  // Modal states
+  const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
+  const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+  const [selectedRoomForEdit, setSelectedRoomForEdit] = useState<OwnerRoomType | null>(null);
 
   const fetchDashboardData = useCallback(async () => {
     if (!id || id === "new") return;
@@ -137,7 +144,7 @@ export default function PropertyDetailsDashboard() {
                 )}
               </div>
               <Button 
-                onClick={() => router.push(`/owner/properties/${property.id}/edit`)}
+                onClick={() => setIsPropertyModalOpen(true)}
                 variant="outline" 
                 className="rounded-xl border-[#E8DDD8] text-[#1A1A1A] font-semibold flex items-center gap-2 hover:bg-[#FDF8F6] hover:text-[#953002] transition-colors duration-200"
               >
@@ -171,10 +178,23 @@ export default function PropertyDetailsDashboard() {
         {/* Rooms Section */}
         <div className="lg:col-span-2 flex flex-col gap-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-[20px] font-bold text-[#1A1A1A]">Rooms & Layout</h2>
-            <span className="bg-[#953002]/10 text-[#953002] px-3 py-1 rounded-full text-[13px] font-bold">
-              {rooms.length} Room Type{rooms.length !== 1 ? 's' : ''}
-            </span>
+            <div className="flex items-center gap-3">
+              <h2 className="text-[20px] font-bold text-[#1A1A1A]">Rooms & Layout</h2>
+              <span className="bg-[#953002]/10 text-[#953002] px-3 py-1 rounded-full text-[13px] font-bold">
+                {rooms.length} Room Type{rooms.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <Button 
+              onClick={() => {
+                setSelectedRoomForEdit(null);
+                setIsRoomModalOpen(true);
+              }}
+              className="rounded-xl bg-[#FDF8F6] hover:bg-[#F0EBE7] text-[#953002] border border-[#E8DDD8] font-bold shadow-sm"
+              variant="outline"
+              size="sm"
+            >
+              + Add Room
+            </Button>
           </div>
           
           {rooms.length === 0 ? (
@@ -182,39 +202,57 @@ export default function PropertyDetailsDashboard() {
               <p className="text-[#6B7280] text-sm">No rooms added yet.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {rooms.map((room) => (
-                <div key={room.id} className="bg-white border border-[#E8DDD8] rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#D9C4B8] transition-all duration-300">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-xl bg-[#FDF8F6] border border-[#F0EBE7] flex items-center justify-center text-[#C05621] shadow-sm">
-                         <BedDouble size={20} />
-                       </div>
-                       <div>
-                         <h3 className="text-[16px] font-bold text-[#1A1A1A]">{room.name}</h3>
-                         <p className="text-[13px] text-[#9E7B6A]">{room.roomCategory || 'Standard Room'}</p>
-                       </div>
-                    </div>
-                    <div className="text-right">
-                       <p className="text-[12px] font-bold text-[#9E7B6A] uppercase tracking-wider">Price per Night</p>
-                       <p className="text-[18px] font-extrabold text-[#1A1A1A]">LKR {room.basePrice?.toLocaleString() || 0}</p>
+                <div key={room.id} className="bg-white border border-[#E8DDD8] rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-[#D9C4B8] transition-all duration-300 flex flex-col">
+                  {/* Room Image Header */}
+                  <div className="relative h-48 bg-[#F3F4F6] w-full border-b border-[#F0EBE7]">
+                    {room.imageUrl ? (
+                      <Image src={room.imageUrl} alt={room.name} fill className="object-cover" unoptimized />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-[#D1D5DB]">
+                        <ImageIcon size={40} />
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3">
+                       <Button
+                         variant="secondary"
+                         size="sm"
+                         onClick={() => {
+                           setSelectedRoomForEdit(room);
+                           setIsRoomModalOpen(true);
+                         }}
+                         className="h-8 w-8 p-0 rounded-full bg-white/90 hover:bg-white text-[#1A1A1A] shadow-sm backdrop-blur-sm transition-transform hover:scale-105"
+                       >
+                         <Edit size={14} />
+                       </Button>
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-[#F0EBE7]">
-                    <div>
-                       <p className="text-[11px] font-medium text-[#9E7B6A] uppercase tracking-wider mb-1 flex items-center gap-1.5"><Users size={12}/> Base Capacity</p>
-                       <p className="text-[14px] font-semibold text-[#1A1A1A]">{room.maxAdults || 2}</p>
+
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-[18px] font-bold text-[#1A1A1A] leading-tight mb-1">{room.name}</h3>
+                        <p className="text-[13px] font-medium text-[#9E7B6A]">{room.roomCategory || 'Standard Room'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[12px] font-bold text-[#9E7B6A] uppercase tracking-wider mb-0.5">Price / Night</p>
+                        <p className="text-[18px] font-extrabold text-[#953002]">LKR {room.basePrice?.toLocaleString() || 0}</p>
+                      </div>
                     </div>
-                    <div>
-                       <p className="text-[11px] font-medium text-[#9E7B6A] uppercase tracking-wider mb-1 flex items-center gap-1.5"><Users size={12}/> Max Capacity</p>
-                       <p className="text-[14px] font-semibold text-[#1A1A1A]">{(room.maxAdults || 2) + (room.maxChildren || 0)}</p>
-                    </div>
-                    <div className="md:col-span-2">
-                       <p className="text-[11px] font-medium text-[#9E7B6A] uppercase tracking-wider mb-1 flex items-center gap-1.5"><BedDouble size={12}/> Bed Configuration</p>
-                       <p className="text-[14px] font-semibold text-[#1A1A1A]">
-                         {room.bedConfigurations?.length > 0 ? room.bedConfigurations.join(" + ") : "Not specified"}
-                       </p>
+                    
+                    <div className="mt-auto pt-4 border-t border-[#F0EBE7] grid grid-cols-2 gap-y-3 gap-x-2">
+                      <div>
+                         <p className="text-[11px] font-medium text-[#9E7B6A] uppercase tracking-wider mb-1 flex items-center gap-1.5"><Users size={12}/> Capacity</p>
+                         <p className="text-[13px] font-semibold text-[#1A1A1A]">{room.maxAdults || 2} Adults {room.maxChildren ? `, ${room.maxChildren} Children` : ''}</p>
+                      </div>
+                      <div>
+                         <p className="text-[11px] font-medium text-[#9E7B6A] uppercase tracking-wider mb-1 flex items-center gap-1.5"><BedDouble size={12}/> Beds</p>
+                         <p className="text-[13px] font-semibold text-[#1A1A1A] truncate" title={room.bedConfigurations?.join(" + ")}>
+                           {room.bedConfigurations?.length > 0 ? room.bedConfigurations[0] : "Not specified"}
+                           {room.bedConfigurations?.length > 1 && <span className="text-[#9E7B6A] font-normal"> +{room.bedConfigurations.length - 1}</span>}
+                         </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -284,6 +322,21 @@ export default function PropertyDetailsDashboard() {
            </div>
         </div>
       </div>
+      
+      <EditPropertyModal 
+        property={property} 
+        isOpen={isPropertyModalOpen} 
+        onClose={() => setIsPropertyModalOpen(false)} 
+        onSaved={fetchDashboardData} 
+      />
+
+      <RoomFormModal 
+        propertyId={property.id} 
+        roomToEdit={selectedRoomForEdit} 
+        isOpen={isRoomModalOpen} 
+        onClose={() => setIsRoomModalOpen(false)} 
+        onSaved={fetchDashboardData} 
+      />
     </div>
   );
 }
