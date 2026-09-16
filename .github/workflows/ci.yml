@@ -30,4 +30,6 @@ jobs:
         run: npm test -- --watch=false || true
 
       - name: Build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.prime-stay.app
         run: npm run build
