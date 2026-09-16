@@ -9,12 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   ChevronLeft,
   ChevronRight,
-  DollarSign,
   ShieldAlert,
   RotateCcw,
-  Sparkles,
-  SlidersHorizontal,
   Layers,
+  BedDouble,
 } from "lucide-react";
 
 const MONTH_NAMES = [
@@ -34,7 +32,7 @@ const MONTH_NAMES = [
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export default function RatesCalendar() {
+export default function AvailabilityCalendar() {
   const {
     currentYear,
     currentMonth,
@@ -48,9 +46,8 @@ export default function RatesCalendar() {
     nextMonth,
     prevMonth,
     setMonth,
-    setBulkModalOpen,
-    setSeasonalModalOpen,
-    clearPriceOverrides,
+    setBulkAvailabilityModalOpen,
+    clearAvailabilityOverrides,
     applyBlackoutDates,
     loading,
     actionLoading,
@@ -72,7 +69,7 @@ export default function RatesCalendar() {
       ? calendarDays
       : calendarDays.filter((d) => d.roomId === selectedRoomId);
 
-  // Group by date (so each cell shows consolidated or primary room price)
+  // Group by date
   const daysByDate = new Map<string, AvailabilityDay[]>();
   displayedDays.forEach((day) => {
     const arr = daysByDate.get(day.date) || [];
@@ -150,7 +147,7 @@ export default function RatesCalendar() {
           </Button>
         </div>
 
-        {/* Right: Room Filter & Quick Modal Triggers */}
+        {/* Right: Room Filter */}
         <div className="flex items-center flex-wrap gap-2.5">
           {/* Room Filter Dropdown */}
           <div className="flex items-center gap-1.5 bg-[#F9FAFB] border border-gray-200 rounded-xl px-2.5 py-1 text-xs">
@@ -162,7 +159,7 @@ export default function RatesCalendar() {
                   e.target.value === "ALL" ? "ALL" : Number(e.target.value)
                 )
               }
-              aria-label="Filter room pricing by type"
+              aria-label="Filter availability by room type"
               className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer py-1"
             >
               <option value="ALL">All Room Types</option>
@@ -173,16 +170,6 @@ export default function RatesCalendar() {
               ))}
             </select>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSeasonalModalOpen(true)}
-            className="rounded-xl text-xs h-9 border-amber-200 bg-amber-50/50 text-amber-800 hover:bg-amber-100/60 font-semibold gap-1.5"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            Seasonal Rule
-          </Button>
         </div>
       </div>
 
@@ -191,15 +178,15 @@ export default function RatesCalendar() {
         <div className="flex items-center flex-wrap gap-4">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-emerald-50 border border-emerald-300 inline-block" />
-            <span className="font-medium text-gray-700">Standard Base Rate</span>
+            <span className="font-medium text-gray-700">Full Availability</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-amber-50 border border-amber-400 inline-block" />
-            <span className="font-medium text-gray-700">Custom Rate Override</span>
+            <span className="font-medium text-gray-700">Partial/Override</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-red-50 border border-red-300 inline-block" />
-            <span className="font-medium text-gray-700">Blackout / Blocked</span>
+            <span className="font-medium text-gray-700">Blocked / Zero Rooms</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-[#953002] inline-block" />
@@ -207,7 +194,7 @@ export default function RatesCalendar() {
           </div>
         </div>
         <p className="text-gray-400 italic">
-          💡 Click or drag across days to edit prices in bulk.
+          💡 Click or drag across days to edit availability in bulk.
         </p>
       </div>
 
@@ -263,37 +250,41 @@ export default function RatesCalendar() {
             const recordsForDay = daysByDate.get(dateStr) || [];
             const isSelected = selectedDates.includes(dateStr);
 
-            // Determine if any record has custom price or blackout
             const isBlackout = recordsForDay.some((r) => r.status === "BLOCKED");
-            const hasCustomPrice = recordsForDay.some(
-              (r) => r.customPrice !== null && r.customPrice !== undefined
-            );
 
-            // Calculate displayed price
-            let displayPrice: string = "—";
+            // Availability display logic
+            let displayAvail = "—";
+            let hasOverride = false;
+            let isZeroAvail = false;
+
             if (recordsForDay.length > 0) {
               const firstRecord = recordsForDay[0];
-              if (firstRecord.customPrice) {
-                displayPrice = `LKR ${Number(firstRecord.customPrice).toLocaleString()}`;
-              } else if (firstRecord.basePrice) {
-                displayPrice = `LKR ${Number(firstRecord.basePrice).toLocaleString()}`;
-              } else {
-                displayPrice = "LKR 10,000";
+              const base = firstRecord.baseInventory ?? 0;
+              const current = firstRecord.availableRoomsOverride !== undefined && firstRecord.availableRoomsOverride !== null ? firstRecord.availableRoomsOverride : base;
+              if (firstRecord.availableRoomsOverride !== undefined && firstRecord.availableRoomsOverride !== null) {
+                hasOverride = true;
               }
-            } else {
-              displayPrice = "LKR 10,000";
+              if (isBlackout) {
+                displayAvail = `0 / ${base} (Blocked)`;
+                isZeroAvail = true;
+              } else if (current === 0) {
+                displayAvail = `0 / ${base} Available`;
+                isZeroAvail = true;
+              } else {
+                displayAvail = `${current} / ${base} Available`;
+              }
             }
 
             // Cell color scheme
             let cellBg = "bg-white hover:bg-gray-50/80 border-gray-200";
-            let priceColor = "text-emerald-700 bg-emerald-50 border-emerald-200";
+            let availColor = "text-emerald-700 bg-emerald-50 border-emerald-200";
 
-            if (isBlackout) {
+            if (isBlackout || isZeroAvail) {
               cellBg = "bg-red-50/40 border-red-200 hover:bg-red-50/60";
-              priceColor = "text-red-700 bg-red-100/80 border-red-300";
-            } else if (hasCustomPrice) {
+              availColor = "text-red-700 bg-red-100/80 border-red-300";
+            } else if (hasOverride) {
               cellBg = "bg-amber-50/30 border-amber-200 hover:bg-amber-50/50";
-              priceColor = "text-amber-800 bg-amber-100/90 border-amber-300";
+              availColor = "text-amber-800 bg-amber-100/90 border-amber-300";
             }
 
             if (isSelected) {
@@ -317,33 +308,26 @@ export default function RatesCalendar() {
                   >
                     {dayNum}
                   </span>
-                  {isBlackout ? (
+                  {isBlackout || isZeroAvail ? (
                     <Badge className="bg-red-500 hover:bg-red-600 text-white text-[9px] px-1.5 py-0 rounded-md font-bold">
-                      Blackout
+                      {isBlackout ? "Blackout" : "Full"}
                     </Badge>
-                  ) : hasCustomPrice ? (
+                  ) : hasOverride ? (
                     <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">
-                      Custom
+                      Override
                     </span>
                   ) : null}
                 </div>
 
-                {/* Price Display */}
+                {/* Availability Display */}
                 <div className="my-auto text-center py-1">
-                  {isBlackout ? (
-                    <div className="flex items-center justify-center gap-1 text-red-600 text-xs font-bold">
-                      <ShieldAlert className="w-3.5 h-3.5" />
-                      <span>Blocked</span>
+                  <div className="flex flex-col items-center gap-1">
+                    <div
+                      className={`inline-block px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs ${availColor}`}
+                    >
+                      {displayAvail}
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-1">
-                      <div
-                        className={`inline-block px-2.5 py-1 rounded-xl text-xs font-bold border shadow-2xs ${priceColor}`}
-                      >
-                        {displayPrice}
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Room indicator or small note */}
@@ -379,22 +363,33 @@ export default function RatesCalendar() {
           <div className="flex items-center flex-wrap gap-2">
             <Button
               size="sm"
-              onClick={() => setBulkModalOpen(true)}
+              onClick={() => setBulkAvailabilityModalOpen(true)}
               className="bg-[#953002] hover:bg-[#b03903] text-white rounded-xl text-xs font-bold h-9 px-4 gap-1.5 shadow-sm"
             >
-              <DollarSign className="w-4 h-4" />
-              Edit Price
+              <BedDouble className="w-4 h-4" />
+              Edit Availability
             </Button>
 
             <Button
               size="sm"
               variant="outline"
-              onClick={() => clearPriceOverrides(selectedDates)}
+              onClick={() => applyBlackoutDates(selectedDates)}
+              disabled={actionLoading}
+              className="border-red-500/50 bg-red-950/30 text-red-300 hover:bg-red-900/50 hover:text-white rounded-xl text-xs font-bold h-9 px-3 gap-1.5"
+            >
+              <ShieldAlert className="w-4 h-4 text-red-400" />
+              Mark Blackout
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => clearAvailabilityOverrides(selectedDates)}
               disabled={actionLoading}
               className="border-white/20 bg-white/5 text-gray-200 hover:bg-white/10 rounded-xl text-xs font-bold h-9 px-3 gap-1.5"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Reset to Base
+              Reset to Full Availability
             </Button>
 
             <Button
