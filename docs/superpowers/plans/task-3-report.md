@@ -19,3 +19,8 @@
 
 4. **Testing & Compilation**:
    - Successfully ran `npm run build` with no compilation errors, ensuring type safety and correct implementation of the frontend changes.
+
+5. **Code Review Fixes**:
+   - Fixed missing validation for invalid inputs in `BulkEditPriceModal`. Ensured users cannot input negative values by asserting parsed numbers are >= 0 and not `NaN`.
+   - Updated clearing override semantics in `BulkEditPriceModal`. Passed explicit `null` to the payload instead of relying on `undefined`, which guarantees that the backend clears overrides via PATCH semantics rather than silently dropping the field during JSON serialization.
+   - Enhanced modal to display local error state for invalid input conditions rather than silently failing to submit.
