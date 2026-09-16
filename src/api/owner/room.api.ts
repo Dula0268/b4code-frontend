@@ -13,6 +13,7 @@ export interface OwnerRoomType {
   inventory: number;
   status: string;
   isAvailable: boolean;
+  imageUrl?: string;
   amenities: string[];
   bedConfigurations: string[];
 }
@@ -34,4 +35,10 @@ export const ownerRoomApi = {
         },
       })
       .then((res) => res.data),
+
+  createRoom: (data: Partial<OwnerRoomType>): Promise<OwnerRoomType> =>
+    api.post("/owner/rooms", data).then((res) => res.data),
+
+  updateRoom: (id: number, data: Partial<OwnerRoomType>): Promise<OwnerRoomType> =>
+    api.put(`/owner/rooms/${id}`, data).then((res) => res.data),
 };
