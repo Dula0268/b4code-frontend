@@ -53,6 +53,8 @@ export interface Order {
   history: HistoryEntry[];
   internalNotes: { author: string; text: string; timeAgo: string }[];
   createdAt: string;
+  /** Set to `true` when auto-expiry logic cancels this order without staff action. */
+  autoCancelled?: boolean;
 }
 
 // ─── Next status mapping ───────────────────────────────────────────────────────
@@ -126,6 +128,14 @@ type StaffOrdersActions = {
   acceptOrder: (orderId: string) => Promise<void>;
   rejectOrder: (orderId: string, reason?: string) => Promise<void>;
   advanceStatus: (orderId: string) => Promise<void>;
+  /**
+   * Scans all orders in the local cache and cancels any that have been in the
+   * `"placed"` status for more than 24 hours. Each stale order is rejected via
+   * the existing `rejectOrder` action so the backend is updated too.
+   *
+   * @returns The number of orders that were auto-cancelled.
+   */
+  autoExpireStaleOrders: () => Promise<number>;
   clearToast: () => void;
   addInternalNote: (orderId: string, note: string) => void;
   getOrder: (orderId: string) => Order | undefined;
@@ -599,6 +609,40 @@ export const useStaffOrdersStore = create<StaffOrdersState & StaffOrdersActions>
           toast: { type: "error", message: "Action Failed", detail: errorMessage }
         });
       }
+    },
+
+    autoExpireStaleOrders: async () => {
+      const AUTO_CANCEL_REASON = "Auto-cancelled: no action taken within 24 hours";
+      const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+      const now = Date.now();
+
+      const staleOrders = get().orders.filter(
+        (o) =>
+          o.status === "placed" &&
+          now - new Date(o.createdAt).getTime() > TWENTY_FOUR_HOURS_MS
+      );
+
+      if (staleOrders.length === 0) return 0;
+
+      console.log(`⏰ autoExpireStaleOrders: found ${staleOrders.length} stale order(s) — auto-cancelling...`);
+
+      // Optimistically mark each stale order as auto-cancelled in local state so
+      // the ⏰ badge renders immediately, before the API round-trips complete.
+      const staleIds = new Set(staleOrders.map((o) => o.id));
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          staleIds.has(o.id) ? { ...o, autoCancelled: true } : o
+        ),
+      }));
+
+      // Fire all rejectOrder calls concurrently; swallow individual failures so
+      // a single bad order doesn't block the rest.
+      await Promise.allSettled(
+        staleOrders.map((o) => get().rejectOrder(o.id, AUTO_CANCEL_REASON))
+      );
+
+      console.log(`✅ autoExpireStaleOrders: auto-cancelled ${staleOrders.length} order(s).`);
+      return staleOrders.length;
     },
 
     clearToast: () => set({ toast: null }),
