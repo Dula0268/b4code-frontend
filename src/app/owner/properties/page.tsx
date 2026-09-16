@@ -48,11 +48,11 @@ export default function OwnerPropertiesPage() {
 
   return (
     <>
-      <OwnerHeader title="My Properties" subtitle="Manage your listed properties" actions={<button onClick={() => { resetOnboarding(); router.push("/owner/properties/new"); }} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#953002] text-white text-[13px] font-bold hover:opacity-90 shadow-sm hover:-translate-y-0.5 transition-all"><Plus size={16} /> Add Property</button>} /> <main className="mt-[64px] p-6 lg:p-8 flex-1 w-full flex flex-col gap-6">
+      <OwnerHeader title="My Properties" subtitle="Manage your listed properties" /> 
+      <main className="mt-[64px] p-6 lg:p-8 flex-1 w-full flex flex-col gap-6">
         
-
         {/* Search + Tabs */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
           <div className="relative w-full sm:max-w-xs group">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9E7B6A] group-focus-within:text-[#953002] transition-colors pointer-events-none" />
             <input
@@ -63,7 +63,7 @@ export default function OwnerPropertiesPage() {
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E8DDD8] bg-white text-[13px] text-[#1A1A1A] outline-none focus:border-[#C05621] focus:ring-4 focus:ring-[#C05621]/10 transition-all shadow-sm placeholder:text-[#9E7B6A]"
             />
           </div>
-          <div className="flex items-center gap-1.5 p-1 bg-[#F8F9FA] rounded-xl border border-[#E8DDD8] shadow-sm flex-wrap">
+          <div className="flex items-center gap-1.5 p-1 bg-[#F8F9FA] rounded-xl border border-[#E8DDD8] shadow-sm flex-wrap flex-1">
             {STATUS_TABS.map((tab) => (
               <button
                 key={tab.value}
@@ -78,6 +78,12 @@ export default function OwnerPropertiesPage() {
               </button>
             ))}
           </div>
+          <button 
+            onClick={() => { resetOnboarding(); router.push("/owner/properties/new"); }} 
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#953002] text-white text-[13px] font-bold hover:opacity-90 shadow-sm hover:-translate-y-0.5 transition-all whitespace-nowrap ml-auto"
+          >
+            <Plus size={16} /> Add Property
+          </button>
         </div>
 
         {/* Grid */}
